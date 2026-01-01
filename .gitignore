@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Keys (keep private!)
+keys/
+
+# Output files
+output/
+
+# OS files
+.DS_Store
