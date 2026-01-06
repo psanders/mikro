@@ -9,3 +9,6 @@ output/
 
 # OS files
 .DS_Store
+
+# Loans files
+loans/*.json

@@ -1,7 +1,7 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import QRCode from 'qrcode';
@@ -17,17 +17,19 @@ const WIDTH = 1024;
 const HEIGHT = 1536;
 
 /**
- * Load loan data from loan.json
+ * Load loan data from loan JSON file
  */
-function loadLoanData() {
-  const loanPath = join(ROOT_DIR, 'loan.json');
-  if (!existsSync(loanPath)) {
-    console.error('❌ loan.json not found!');
-    console.error('   Create a loan.json file with the payment data.\n');
+function loadLoanData(loanPath) {
+  // Resolve the path (handles both relative and absolute paths)
+  const resolvedPath = resolve(loanPath);
+  
+  if (!existsSync(resolvedPath)) {
+    console.error(`❌ Loan file not found: ${resolvedPath}`);
+    console.error('   Please provide a valid path to a loan JSON file.\n');
     process.exit(1);
   }
   
-  const content = readFileSync(loanPath, 'utf-8');
+  const content = readFileSync(resolvedPath, 'utf-8');
   return JSON.parse(content);
 }
 
@@ -144,7 +146,7 @@ function createReceiptLayout(data, qrCodeDataUrl, backgroundImage) {
     lastName = 'Doe',
     date = '24/04/2024',
     amountPaid = 'RD$ 650',
-    pendingBalance = 'RD$ XXXX',
+    pendingPayments = 9,
     paymentNumber = 'P1',
     agentName = 'Nombre del Agente',
   } = data;
@@ -155,7 +157,7 @@ function createReceiptLayout(data, qrCodeDataUrl, backgroundImage) {
     ['Apellido:', lastName],
     ['Fecha:', date],
     ['Monto Pagado:', amountPaid],
-    ['Balance Pendiente:', pendingBalance],
+    ['Pagos Pendientes:', String(pendingPayments)],
     ['Número de Pago:', paymentNumber],
     ['Agente:', agentName],
   ];
@@ -344,10 +346,19 @@ async function main() {
   console.log('🎨 Mikro Receipt Generator');
   console.log('==========================\n');
   
+  // Get loan file path from command-line arguments
+  const loanFilePath = process.argv[2];
+  if (!loanFilePath) {
+    console.error('❌ Error: Loan file path is required!');
+    console.error('\n   Usage: node src/generate.js <path-to-loan.json>');
+    console.error('   Example: node src/generate.js loans/10001.json\n');
+    process.exit(1);
+  }
+  
   // Load loan data
   console.log('📄 Loading loan data...');
-  const loanData = loadLoanData();
-  console.log('✅ Loan data loaded from loan.json\n');
+  const loanData = loadLoanData(loanFilePath);
+  console.log(`✅ Loan data loaded from ${loanFilePath}\n`);
   console.log('   Loan #:', loanData.loanNumber);
   console.log('   Name:', loanData.firstName, loanData.lastName);
   console.log('   Amount:', loanData.amountPaid, '\n');
