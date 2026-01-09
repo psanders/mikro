@@ -1,0 +1,20 @@
+# User data
+users.json
+
+# Conversation history
+conversations.json
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Node modules (handled at root level)
+node_modules/
+
+# PM2 logs
+pm2-error.log
+pm2-out.log

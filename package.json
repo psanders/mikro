@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "lerna clean",
     "build": "lerna run build",
-    "test": "lerna run test"
+    "test": "lerna run test",
+    "start:assistant": "npm start -w @mikro/assistant"
   },
   "devDependencies": {
     "lerna": "^9.0.3"
