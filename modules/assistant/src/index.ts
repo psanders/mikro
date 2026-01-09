@@ -1,7 +1,7 @@
 // Load environment variables from .env file first
 import 'dotenv/config';
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import webhookRouter from './webhook.js';
 import { getPort } from './config.js';
 import { logger } from './logger.js';
@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -21,7 +21,7 @@ app.get('/health', (req, res) => {
 app.use('/', webhookRouter);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   logger.error('Unhandled error', { error: err.message, stack: err.stack });
   res.status(500).json({ error: 'Internal server error' });
 });

@@ -3,19 +3,54 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const USERS_FILE = resolve(__dirname, '../../users.json');
+const USERS_FILE = resolve(__dirname, '../users.json');
+
+export interface User {
+  phone: string;
+  referrerName?: string;
+  name?: string;
+  idNumber?: string;
+  address?: string;
+  currentJobPosition?: string;
+  currentSalary?: string;
+  idCardFrontReceived?: boolean;
+  idCardBackReceived?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Users {
+  [phone: string]: User;
+}
+
+export interface CreateUserData {
+  phone: string;
+  referrerName?: string;
+  name?: string;
+  address?: string;
+  currentJobPosition?: string;
+  currentSalary?: string;
+  idCardFrontReceived?: boolean;
+  idCardBackReceived?: boolean;
+  idNumber?: string;
+}
+
+export interface UpdateUserData {
+  name?: string;
+  idNumber?: string;
+}
 
 /**
  * Load users from JSON file
  */
-export function loadUsers() {
+export function loadUsers(): Users {
   if (!existsSync(USERS_FILE)) {
     return {};
   }
   
   try {
     const content = readFileSync(USERS_FILE, 'utf-8');
-    return JSON.parse(content);
+    return JSON.parse(content) as Users;
   } catch (error) {
     console.error('Error loading users:', error);
     return {};
@@ -25,7 +60,7 @@ export function loadUsers() {
 /**
  * Save users to JSON file
  */
-export function saveUsers(users) {
+export function saveUsers(users: Users): void {
   try {
     writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (error) {
@@ -37,7 +72,7 @@ export function saveUsers(users) {
 /**
  * Check if a user exists by phone number
  */
-export function userExists(phone) {
+export function userExists(phone: string): boolean {
   const users = loadUsers();
   return phone in users;
 }
@@ -45,7 +80,7 @@ export function userExists(phone) {
 /**
  * Get user by phone number
  */
-export function getUser(phone) {
+export function getUser(phone: string): User | null {
   const users = loadUsers();
   return users[phone] || null;
 }
@@ -53,7 +88,7 @@ export function getUser(phone) {
 /**
  * Create a new user
  */
-export function createUser(userData) {
+export function createUser(userData: CreateUserData): User {
   const users = loadUsers();
   const { phone, referrerName, name, address, currentJobPosition, currentSalary, idCardFrontReceived, idCardBackReceived, idNumber } = userData;
   
@@ -85,7 +120,7 @@ export function createUser(userData) {
 /**
  * Update user information (for updating name/ID from ID card)
  */
-export function updateUser(phone, updates) {
+export function updateUser(phone: string, updates: UpdateUserData): User {
   const users = loadUsers();
   
   if (!users[phone]) {

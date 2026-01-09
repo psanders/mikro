@@ -1,3 +1,24 @@
+export interface ReceiptData {
+  loanNumber?: string;
+  firstName?: string;
+  lastName?: string;
+  date?: string;
+  amountPaid?: string;
+  pendingPayments?: number;
+  paymentNumber?: string;
+  agentName?: string;
+  [key: string]: unknown;
+}
+
+export interface ReceiptElement {
+  type: string;
+  props: {
+    [key: string]: unknown;
+    style?: Record<string, unknown>;
+    children?: unknown;
+  };
+}
+
 /**
  * Receipt dimensions (matching background.png)
  */
@@ -7,7 +28,11 @@ export const RECEIPT_HEIGHT = 1536;
 /**
  * Create the full receipt layout
  */
-export function createReceiptLayout(data, qrCodeDataUrl, backgroundImage) {
+export function createReceiptLayout(
+  data: ReceiptData,
+  qrCodeDataUrl: string | null,
+  backgroundImage: string | null
+): ReceiptElement {
   const {
     loanNumber = '123456',
     firstName = 'John',
@@ -19,7 +44,7 @@ export function createReceiptLayout(data, qrCodeDataUrl, backgroundImage) {
     agentName = 'Nombre del Agente',
   } = data;
 
-  const fields = [
+  const fields: Array<[string, string]> = [
     ['Número de Préstamo:', loanNumber],
     ['Nombre:', firstName],
     ['Apellido:', lastName],
@@ -41,7 +66,7 @@ export function createReceiptLayout(data, qrCodeDataUrl, backgroundImage) {
       };
 
   // QR Code element - either real QR or placeholder
-  const qrCodeElement = qrCodeDataUrl
+  const qrCodeElement: ReceiptElement = qrCodeDataUrl
     ? {
         type: 'img',
         props: {

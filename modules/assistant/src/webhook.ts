@@ -1,20 +1,55 @@
-import express from 'express';
+import express, { Request, Response, Router } from 'express';
 import { userExists } from './users.js';
 import { processMessage } from './openai.js';
 import { getWebhookVerifyToken, getWhatsAppPhoneNumberId, getWhatsAppAccessToken } from './config.js';
 import { logger } from './logger.js';
 import { clearConversation } from './conversations.js';
 
-const router = express.Router();
+const router: Router = express.Router();
+
+interface WhatsAppWebhookBody {
+  object?: string;
+  entry?: Array<{
+    changes?: Array<{
+      value?: {
+        messages?: Array<{
+          from: string;
+          type: string;
+          id: string;
+          text?: {
+            body: string;
+          };
+          image?: {
+            id: string;
+            caption?: string;
+          };
+        }>;
+      };
+    }>;
+  }>;
+}
+
+interface WhatsAppMessage {
+  from: string;
+  type: string;
+  id: string;
+  text?: {
+    body: string;
+  };
+  image?: {
+    id: string;
+    caption?: string;
+  };
+}
 
 /**
  * WhatsApp webhook verification endpoint
  * WhatsApp Business API will call this to verify the webhook
  */
-router.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
+router.get('/webhook', (req: Request, res: Response) => {
+  const mode = req.query['hub.mode'] as string | undefined;
+  const token = req.query['hub.verify_token'] as string | undefined;
+  const challenge = req.query['hub.challenge'] as string | undefined;
   
   const verifyToken = getWebhookVerifyToken();
   
@@ -30,7 +65,7 @@ router.get('/webhook', (req, res) => {
 /**
  * WhatsApp webhook endpoint for receiving messages
  */
-router.post('/webhook', async (req, res) => {
+router.post('/webhook', async (req: Request<{}, string, WhatsAppWebhookBody>, res: Response<string>) => {
   try {
     const body = req.body;
     
@@ -47,7 +82,7 @@ router.post('/webhook', async (req, res) => {
           const value = change.value;
           
           // Handle messages
-          if (value.messages) {
+          if (value?.messages) {
             for (const message of value.messages) {
               await handleMessage(message);
             }
@@ -59,7 +94,8 @@ router.post('/webhook', async (req, res) => {
     // Always respond with 200 to acknowledge receipt
     res.status(200).send('OK');
   } catch (error) {
-    logger.error('Error processing webhook', { error: error.message });
+    const err = error as Error;
+    logger.error('Error processing webhook', { error: err.message });
     res.status(500).send('Error processing webhook');
   }
 });
@@ -67,7 +103,7 @@ router.post('/webhook', async (req, res) => {
 /**
  * Download image from WhatsApp Business API
  */
-async function downloadWhatsAppImage(imageId) {
+async function downloadWhatsAppImage(imageId: string): Promise<string> {
   try {
     const accessToken = getWhatsAppAccessToken();
     
@@ -82,11 +118,11 @@ async function downloadWhatsAppImage(imageId) {
     });
     
     if (!mediaResponse.ok) {
-      const errorData = await mediaResponse.json();
+      const errorData = await mediaResponse.json() as { error?: unknown };
       throw new Error(`Failed to get media URL: ${JSON.stringify(errorData)}`);
     }
     
-    const mediaData = await mediaResponse.json();
+    const mediaData = await mediaResponse.json() as { url?: string };
     
     if (!mediaData.url) {
       throw new Error('Media URL not found in response');
@@ -118,15 +154,20 @@ async function downloadWhatsAppImage(imageId) {
     
     return dataUrl;
   } catch (error) {
-    logger.error('Error downloading WhatsApp image', { error: error.message, imageId });
+    const err = error as Error;
+    logger.error('Error downloading WhatsApp image', { error: err.message, imageId });
     throw error;
   }
+}
+
+interface WhatsAppSendResponse {
+  messages?: Array<{ id: string }>;
 }
 
 /**
  * Send WhatsApp message via WhatsApp Business API
  */
-export async function sendWhatsAppMessage(phone, message) {
+export async function sendWhatsAppMessage(phone: string, message: string): Promise<WhatsAppSendResponse> {
   try {
     const phoneNumberId = getWhatsAppPhoneNumberId();
     const accessToken = getWhatsAppAccessToken();
@@ -152,7 +193,7 @@ export async function sendWhatsAppMessage(phone, message) {
       })
     });
     
-    const data = await response.json();
+    const data = await response.json() as WhatsAppSendResponse & { error?: unknown };
     
     if (!response.ok) {
       logger.error('WhatsApp API error', { 
@@ -172,17 +213,18 @@ export async function sendWhatsAppMessage(phone, message) {
     
     return data;
   } catch (error) {
+    const err = error as Error;
     // If credentials are not set, log a helpful error
-    if (error.message.includes('environment variable is not set')) {
+    if (err.message.includes('environment variable is not set')) {
       logger.error('WhatsApp credentials not configured', { 
-        error: error.message,
+        error: err.message,
         hint: 'Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN environment variables'
       });
     } else {
       logger.error('Error sending WhatsApp message', { 
-        error: error.message, 
+        error: err.message, 
         phone,
-        stack: error.stack
+        stack: err.stack
       });
     }
     throw error;
@@ -192,7 +234,7 @@ export async function sendWhatsAppMessage(phone, message) {
 /**
  * Handle incoming WhatsApp message
  */
-async function handleMessage(message) {
+async function handleMessage(message: WhatsAppMessage): Promise<void> {
   try {
     const phone = message.from;
     const messageType = message.type;
@@ -211,7 +253,7 @@ async function handleMessage(message) {
     
     // Process message for new users
     let textMessage = '';
-    let imageUrl = null;
+    let imageUrl: string | null = null;
     
     if (messageType === 'text') {
       textMessage = message.text?.body || '';
@@ -222,15 +264,17 @@ async function handleMessage(message) {
         try {
           await sendWhatsAppMessage(phone, '⏳ Por favor espere mientras procesamos la imagen...');
         } catch (error) {
-          logger.warn('Failed to send processing message', { error: error.message });
+          const err = error as Error;
+          logger.warn('Failed to send processing message', { error: err.message });
         }
         
         try {
           imageUrl = await downloadWhatsAppImage(imageId);
           logger.info('Image downloaded for processing', { phone, imageId });
         } catch (error) {
+          const err = error as Error;
           logger.error('Error downloading image, continuing without image', { 
-            error: error.message, 
+            error: err.message, 
             imageId,
             phone 
           });
@@ -257,7 +301,8 @@ async function handleMessage(message) {
     await sendWhatsAppMessage(phone, response);
     
   } catch (error) {
-    logger.error('Error handling message', { error: error.message });
+    const err = error as Error;
+    logger.error('Error handling message', { error: err.message });
   }
 }
 

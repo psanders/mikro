@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Build output (TypeScript compiled files)
+dist/
+**/dist/
+
 # Keys (keep private!)
 keys/
 
@@ -17,7 +21,3 @@ loans/*.json
 .env
 .env.local
 .env.*.local
-
-# Users file and conversations file
-users.json
-conversations.json

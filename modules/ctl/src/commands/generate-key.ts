@@ -21,7 +21,7 @@ export default class GenerateKey extends Command {
     }),
   };
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = await this.parse(GenerateKey);
 
     const keysDir = flags['keys-dir']
@@ -59,7 +59,8 @@ export default class GenerateKey extends Command {
       );
       this.log('   Add "keys/" to your .gitignore file.\n');
     } catch (error) {
-      this.error(error.message, { exit: 1 });
+      const err = error as Error;
+      this.error(err.message, { exit: 1 });
     }
   }
 }

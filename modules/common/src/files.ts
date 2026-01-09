@@ -4,7 +4,7 @@ import { resolve, join } from 'path';
 /**
  * Load loan data from loan JSON file
  */
-export function loadLoanData(loanPath) {
+export function loadLoanData(loanPath: string): Record<string, unknown> {
   // Resolve the path (handles both relative and absolute paths)
   const resolvedPath = resolve(loanPath);
   
@@ -19,7 +19,7 @@ export function loadLoanData(loanPath) {
 /**
  * Load background image as base64 data URL
  */
-export function loadBackgroundImage(assetsDir) {
+export function loadBackgroundImage(assetsDir: string): string | null {
   const receiptBgPath = join(assetsDir, 'background.png');
   if (existsSync(receiptBgPath)) {
     const content = readFileSync(receiptBgPath);

@@ -14,6 +14,8 @@
     "start:assistant": "npm start -w @mikro/assistant"
   },
   "devDependencies": {
-    "lerna": "^9.0.3"
+    "@types/node": "^20.10.0",
+    "lerna": "^9.0.3",
+    "typescript": "^5.3.3"
   }
 }

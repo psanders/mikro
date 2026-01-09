@@ -3,19 +3,32 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CONVERSATIONS_FILE = resolve(__dirname, '../../conversations.json');
+const CONVERSATIONS_FILE = resolve(__dirname, '../conversations.json');
+
+export interface ConversationMessage {
+  role: string;
+  content: string | Array<{ type: string; [key: string]: unknown }>;
+  timestamp: string;
+  tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
+  name?: string;
+  tool_call_id?: string;
+}
+
+export interface Conversations {
+  [phone: string]: ConversationMessage[];
+}
 
 /**
  * Load conversations from JSON file
  */
-export function loadConversations() {
+export function loadConversations(): Conversations {
   if (!existsSync(CONVERSATIONS_FILE)) {
     return {};
   }
   
   try {
     const content = readFileSync(CONVERSATIONS_FILE, 'utf-8');
-    return JSON.parse(content);
+    return JSON.parse(content) as Conversations;
   } catch (error) {
     console.error('Error loading conversations:', error);
     return {};
@@ -25,7 +38,7 @@ export function loadConversations() {
 /**
  * Save conversations to JSON file
  */
-export function saveConversations(conversations) {
+export function saveConversations(conversations: Conversations): void {
   try {
     writeFileSync(CONVERSATIONS_FILE, JSON.stringify(conversations, null, 2), 'utf-8');
   } catch (error) {
@@ -37,7 +50,7 @@ export function saveConversations(conversations) {
 /**
  * Get conversation history for a phone number
  */
-export function getConversation(phone) {
+export function getConversation(phone: string): ConversationMessage[] {
   const conversations = loadConversations();
   return conversations[phone] || [];
 }
@@ -45,14 +58,21 @@ export function getConversation(phone) {
 /**
  * Add a message to conversation history
  */
-export function addMessage(phone, role, content, toolCalls = null, toolName = null, toolCallId = null) {
+export function addMessage(
+  phone: string,
+  role: string,
+  content: string | Array<{ type: string; [key: string]: unknown }>,
+  toolCalls: Array<{ id: string; function: { name: string; arguments: string } }> | null = null,
+  toolName: string | null = null,
+  toolCallId: string | null = null
+): void {
   const conversations = loadConversations();
   
   if (!conversations[phone]) {
     conversations[phone] = [];
   }
   
-  const message = {
+  const message: ConversationMessage = {
     role,
     content,
     timestamp: new Date().toISOString()
@@ -77,7 +97,7 @@ export function addMessage(phone, role, content, toolCalls = null, toolName = nu
 /**
  * Clear conversation history for a phone number
  */
-export function clearConversation(phone) {
+export function clearConversation(phone: string): void {
   const conversations = loadConversations();
   delete conversations[phone];
   saveConversations(conversations);
@@ -86,7 +106,13 @@ export function clearConversation(phone) {
 /**
  * Get conversation messages in OpenAI format
  */
-export function getConversationMessages(phone) {
+export function getConversationMessages(phone: string): Array<{
+  role: string;
+  content: string | Array<{ type: string; [key: string]: unknown }>;
+  tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
+  name?: string;
+  tool_call_id?: string;
+}> {
   const conversation = getConversation(phone);
   // Return messages in OpenAI format, filtering out system messages
   return conversation.filter(msg => msg.role !== 'system').map(msg => {
@@ -95,14 +121,17 @@ export function getConversationMessages(phone) {
     // Clean up old placeholder image URLs from history
     if (Array.isArray(content)) {
       content = content.filter(item => {
-        if (item.type === 'image_url' && typeof item.image_url?.url === 'string') {
-          // Remove placeholder URLs
-          if (item.image_url.url.startsWith('https://example.com/')) {
-            return false;
+        if (item.type === 'image_url') {
+          const imageUrl = item.image_url as { url?: string } | undefined;
+          if (imageUrl && typeof imageUrl.url === 'string') {
+            // Remove placeholder URLs
+            if (imageUrl.url.startsWith('https://example.com/')) {
+              return false;
+            }
           }
         }
         return true;
-      });
+      }) as Array<{ type: string; [key: string]: unknown }>;
       // If array becomes empty, convert to empty string
       if (content.length === 0) {
         content = '';
@@ -112,7 +141,13 @@ export function getConversationMessages(phone) {
       content = content.replace(/https:\/\/example\.com\/image\/[^\s]*/g, '').trim() || '';
     }
     
-    const message = {
+    const message: {
+      role: string;
+      content: string | Array<{ type: string; [key: string]: unknown }>;
+      tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
+      name?: string;
+      tool_call_id?: string;
+    } = {
       role: msg.role,
       content: content
     };

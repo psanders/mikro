@@ -3,7 +3,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGS_DIR = resolve(__dirname, '../../logs');
+const LOGS_DIR = resolve(__dirname, '../logs');
 
 // Ensure logs directory exists
 if (!existsSync(LOGS_DIR)) {
@@ -13,7 +13,7 @@ if (!existsSync(LOGS_DIR)) {
 /**
  * Get log file path for today
  */
-function getLogFile() {
+function getLogFile(): string {
   const today = new Date().toISOString().split('T')[0];
   return resolve(LOGS_DIR, `assistant-${today}.log`);
 }
@@ -21,7 +21,7 @@ function getLogFile() {
 /**
  * Format log message with timestamp
  */
-function formatLog(level, message, data = null) {
+function formatLog(level: string, message: string, data: Record<string, unknown> | null = null): string {
   const timestamp = new Date().toISOString();
   const logEntry = {
     timestamp,
@@ -35,7 +35,7 @@ function formatLog(level, message, data = null) {
 /**
  * Write log entry to file
  */
-export function log(level, message, data = null) {
+export function log(level: string, message: string, data: Record<string, unknown> | null = null): void {
   try {
     const logFile = getLogFile();
     const logEntry = formatLog(level, message, data);
@@ -49,20 +49,20 @@ export function log(level, message, data = null) {
  * Log levels
  */
 export const logger = {
-  info: (message, data) => {
-    log('INFO', message, data);
+  info: (message: string, data?: Record<string, unknown>) => {
+    log('INFO', message, data || null);
     console.log(`[INFO] ${message}`, data || '');
   },
-  error: (message, data) => {
-    log('ERROR', message, data);
+  error: (message: string, data?: Record<string, unknown>) => {
+    log('ERROR', message, data || null);
     console.error(`[ERROR] ${message}`, data || '');
   },
-  warn: (message, data) => {
-    log('WARN', message, data);
+  warn: (message: string, data?: Record<string, unknown>) => {
+    log('WARN', message, data || null);
     console.warn(`[WARN] ${message}`, data || '');
   },
-  debug: (message, data) => {
-    log('DEBUG', message, data);
+  debug: (message: string, data?: Record<string, unknown>) => {
+    log('DEBUG', message, data || null);
     console.debug(`[DEBUG] ${message}`, data || '');
   }
 };

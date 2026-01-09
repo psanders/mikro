@@ -14,6 +14,7 @@ import {
   createReceiptLayout,
   RECEIPT_WIDTH,
   RECEIPT_HEIGHT,
+  type ReceiptData,
 } from '@mikro/common';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +49,7 @@ export default class GenerateReceipt extends Command {
     }),
   };
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = await this.parse(GenerateReceipt);
 
     const outputDir = flags.output 
@@ -98,7 +99,7 @@ export default class GenerateReceipt extends Command {
       this.log('✅ Private key loaded\n');
 
       this.log('📝 Creating signed JWT...');
-      const token = createSignedToken(loanData, privateKey);
+      const token = createSignedToken(loanData as Parameters<typeof createSignedToken>[0], privateKey);
       this.log('✅ JWT created');
       this.log(`   Token length: ${token.length} characters\n`);
 
@@ -135,7 +136,7 @@ export default class GenerateReceipt extends Command {
       const svg = await satori(layout, {
         width: RECEIPT_WIDTH,
         height: RECEIPT_HEIGHT,
-        fonts,
+        fonts: fonts as Parameters<typeof satori>[1]['fonts'],
       });
 
       const svgPath = join(outputDir, 'receipt.svg');
@@ -158,7 +159,8 @@ export default class GenerateReceipt extends Command {
       this.log(`   - ${svgPath}`);
       this.log(`   - ${tokenPath}`);
     } catch (error) {
-      this.error(error.message, { exit: 1 });
+      const err = error as Error;
+      this.error(err.message, { exit: 1 });
     }
   }
 }

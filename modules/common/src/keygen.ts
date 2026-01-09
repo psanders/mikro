@@ -2,10 +2,15 @@ import { generateKeyPairSync } from 'crypto';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
+export interface GeneratedKeys {
+  privateKeyPath: string;
+  publicKeyPath: string;
+}
+
 /**
  * Generate RSA key pair for signing JWTs
  */
-export function generateKeys(keysDir) {
+export function generateKeys(keysDir: string): GeneratedKeys {
   // Create keys directory if it doesn't exist
   if (!existsSync(keysDir)) {
     mkdirSync(keysDir, { recursive: true });

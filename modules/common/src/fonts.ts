@@ -1,7 +1,14 @@
+export interface Font {
+  name: string;
+  data: ArrayBuffer;
+  weight: 400 | 700 | 900;
+  style: 'normal' | 'italic';
+}
+
 /**
  * Load fonts for Satori
  */
-export async function loadFonts() {
+export async function loadFonts(): Promise<Font[]> {
   const fontUrl = 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff';
   const fontUrlBold = 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff';
   const fontUrlBlack = 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hjp-Ek-_EeA.woff';

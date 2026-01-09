@@ -3,12 +3,25 @@
   "version": "1.0.0",
   "description": "Common utilities and shared code for Mikro",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.3",
     "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.3.3"
   }
 }
