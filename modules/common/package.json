@@ -1,0 +1,14 @@
+{
+  "name": "@mikro/common",
+  "version": "1.0.0",
+  "description": "Common utilities and shared code for Mikro",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3",
+    "qrcode": "^1.5.4"
+  }
+}

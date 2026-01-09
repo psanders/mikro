@@ -1,17 +1,18 @@
 {
-  "name": "mikro-receipt-generator",
+  "name": "mikro",
   "version": "1.0.0",
-  "description": "Generate beautiful payment receipts as images",
+  "description": "Mikro monorepo - Receipt generation and CLI tools",
   "type": "module",
+  "private": true,
+  "workspaces": [
+    "modules/*"
+  ],
   "scripts": {
-    "generate": "node src/generate.js",
-    "generate:key": "node src/generate-key.js",
-    "dev": "node --watch src/generate.js"
+    "clean": "lerna clean",
+    "build": "lerna run build",
+    "test": "lerna run test"
   },
-  "dependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "jsonwebtoken": "^9.0.3",
-    "qrcode": "^1.5.4",
-    "satori": "^0.12.0"
+  "devDependencies": {
+    "lerna": "^9.0.3"
   }
 }
