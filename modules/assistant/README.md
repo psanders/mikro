@@ -53,6 +53,7 @@ Then edit `.env` and add your credentials:
 ```bash
 # OpenAI Configuration
 OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-4o  # Optional: defaults to gpt-4o if not set
 
 # WhatsApp Business API Configuration
 WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id-here
@@ -211,6 +212,7 @@ All environment variables are loaded from a `.env` file in the `modules/assistan
 
 ### Optional Variables
 
+- `OPENAI_MODEL`: OpenAI model to use (default: 'gpt-4o'). Examples: 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'.
 - `PORT`: Server port (default: 3000).
 - `WHATSAPP_VERIFY_TOKEN`: Webhook verification token (default: 'mikro_webhook_token').
 - `NODE_ENV`: Node environment (e.g., 'production', 'development').

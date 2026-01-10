@@ -34,6 +34,13 @@ export function getOpenAIApiKey(): string {
 }
 
 /**
+ * Get OpenAI model from environment or default to gpt-4o
+ */
+export function getOpenAIModel(): string {
+  return process.env.OPENAI_MODEL || 'gpt-4o';
+}
+
+/**
  * Get server port from environment or default
  */
 export function getPort(): number {

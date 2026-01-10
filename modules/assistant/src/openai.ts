@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getSystemPrompt, getOpenAIApiKey } from './config.js';
+import { getSystemPrompt, getOpenAIApiKey, getOpenAIModel } from './config.js';
 import { tools, executeTool } from './tools.js';
 import { logger } from './logger.js';
 import { getConversationMessages, addMessage, clearConversation } from './conversations.js';
@@ -23,6 +23,7 @@ function getOpenAIClient(): OpenAI {
 export async function processMessage(phone: string, message: string, imageUrl: string | null = null): Promise<string> {
   const client = getOpenAIClient();
   const systemPrompt = getSystemPrompt();
+  const model = getOpenAIModel();
   
   // Load conversation history
   const history = getConversationMessages(phone);
@@ -85,7 +86,7 @@ export async function processMessage(phone: string, message: string, imageUrl: s
   
   try {
     let response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: model,
       messages: messages as Parameters<typeof client.chat.completions.create>[0]['messages'],
       tools: tools as Parameters<typeof client.chat.completions.create>[0]['tools'],
       tool_choice: 'auto',
@@ -133,7 +134,7 @@ export async function processMessage(phone: string, message: string, imageUrl: s
       
       // Get next response from OpenAI
       response = await client.chat.completions.create({
-        model: 'gpt-4o',
+        model: model,
         messages: messages as Parameters<typeof client.chat.completions.create>[0]['messages'],
         tools: tools as Parameters<typeof client.chat.completions.create>[0]['tools'],
         tool_choice: 'auto',
