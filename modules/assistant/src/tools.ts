@@ -32,7 +32,7 @@ export const tools: ToolFunction[] = [
     type: 'function',
     function: {
       name: 'createMember',
-      description: 'Crear una nueva cuenta de miembro después de recopilar toda la información requerida: si es propietario de negocio (y cuánto tiempo lleva si es propietario), nombre del referido, dirección, nombre completo (extraído de la cédula), número de cédula (extraído de la cédula), empleo, ingresos, y confirmar que se recibieron las fotos de la cédula (frente y reverso). El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula usando tu capacidad de visión. Solo llama esta función cuando tengas TODA la información.',
+      description: 'Crear una nueva cuenta de miembro después de recopilar toda la información requerida: si es propietario de negocio (y cuánto tiempo lleva operando si es propietario - acepta la respuesta como texto, por ejemplo: "6 meses", "un año", "dos años", etc.), nombre del referido, dirección, nombre completo (extraído de la cédula), número de cédula (extraído de la cédula), empleo, ingresos, y confirmar que se recibieron las fotos de la cédula (frente y reverso). El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula usando tu capacidad de visión. Solo llama esta función cuando tengas TODA la información.',
       parameters: {
         type: 'object',
         properties: {
@@ -64,9 +64,9 @@ export const tools: ToolFunction[] = [
             type: 'boolean',
             description: 'Indica si el miembro es propietario de un negocio'
           },
-          monthsInBusiness: {
-            type: 'number',
-            description: 'Número de meses que lleva operando el negocio (solo si isBusinessOwner es true). Debe ser un número entero, por ejemplo: 6, 24, 36, etc.'
+          timeInBusiness: {
+            type: 'string',
+            description: 'Tiempo que lleva operando el negocio expresado como texto (solo si isBusinessOwner es true). Acepta respuestas en texto como: "6 meses", "un año", "dos años", "3 años", etc. Guarda exactamente lo que el cliente responda.'
           },
           idCardFrontReceived: {
             type: 'boolean',
@@ -78,7 +78,7 @@ export const tools: ToolFunction[] = [
           },
           idNumber: {
             type: 'string',
-            description: 'Número de cédula extraído de la foto de la cédula de identidad'
+            description: 'Número de cédula extraído de la foto de la cédula de identidad. Debe estar en formato 000-0000000-0 (con guiones). Si lo extraes sin guiones, agrégalos en el formato correcto antes de enviarlo.'
           }
         },
         required: ['referrerName', 'name', 'address', 'currentJobPosition', 'currentSalary', 'idCardFrontReceived', 'idCardBackReceived', 'idNumber']
@@ -116,9 +116,11 @@ export async function executeTool(toolName: string, args: Record<string, unknown
         logger.info('Member created successfully', { phone: member.phone });
         // Clear conversation history after member is created
         clearConversation(member.phone);
+        // Extract first name from full name
+        const firstName = member.name ? member.name.split(' ')[0] : 'cliente';
         return {
           success: true,
-          message: `Estimado ${member.name}, registramos su información y el equipo se pondrá en contacto pronto.`,
+          message: `Estimado ${firstName}, registramos su información y el equipo se pondrá en contacto pronto.`,
           member: member
         };
       } catch (error) {

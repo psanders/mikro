@@ -16,7 +16,7 @@ export interface Member {
   currentJobPosition?: string;
   currentSalary?: string;
   isBusinessOwner?: boolean;
-  monthsInBusiness?: number;
+  timeInBusiness?: string;
   idCardFrontReceived?: boolean;
   idCardBackReceived?: boolean;
   createdAt: string;
@@ -35,7 +35,7 @@ export interface CreateMemberData {
   currentJobPosition?: string;
   currentSalary?: string;
   isBusinessOwner?: boolean;
-  monthsInBusiness?: number;
+  timeInBusiness?: string;
   idCardFrontReceived?: boolean;
   idCardBackReceived?: boolean;
   idNumber?: string;
@@ -44,6 +44,27 @@ export interface CreateMemberData {
 export interface UpdateMemberData {
   name?: string;
   idNumber?: string;
+}
+
+/**
+ * Format cédula number to standard format: 000-0000000-0
+ * This ensures Google Sheets treats it as text and not a number
+ */
+function formatCedulaNumber(idNumber: string | undefined): string {
+  if (!idNumber) {
+    return '';
+  }
+  
+  // Remove all non-digit characters
+  const digitsOnly = idNumber.replace(/\D/g, '');
+  
+  // If we don't have exactly 11 digits, return as-is (might be incomplete or invalid)
+  if (digitsOnly.length !== 11) {
+    return idNumber;
+  }
+  
+  // Format as XXX-XXXXXXX-X
+  return `${digitsOnly.substring(0, 3)}-${digitsOnly.substring(3, 10)}-${digitsOnly.substring(10, 11)}`;
 }
 
 /**
@@ -96,7 +117,7 @@ export function getMember(phone: string): Member | null {
  */
 export async function createMember(memberData: CreateMemberData): Promise<Member> {
   const members = loadMembers();
-  const { phone, referrerName, name, address, currentJobPosition, currentSalary, isBusinessOwner, monthsInBusiness, idCardFrontReceived, idCardBackReceived, idNumber } = memberData;
+  const { phone, referrerName, name, address, currentJobPosition, currentSalary, isBusinessOwner, timeInBusiness, idCardFrontReceived, idCardBackReceived, idNumber } = memberData;
   
   if (!phone) {
     throw new Error('Phone number is required');
@@ -110,12 +131,12 @@ export async function createMember(memberData: CreateMemberData): Promise<Member
     phone,
     referrerName,
     name,
-    idNumber: idNumber || '',
+    idNumber: formatCedulaNumber(idNumber),
     address,
     currentJobPosition,
     currentSalary,
     isBusinessOwner: isBusinessOwner || false,
-    monthsInBusiness,
+    timeInBusiness,
     idCardFrontReceived: idCardFrontReceived || false,
     idCardBackReceived: idCardBackReceived || false,
     createdAt: new Date().toISOString()
@@ -150,7 +171,7 @@ export function updateMember(phone: string, updates: UpdateMemberData): Member {
     members[phone].name = updates.name;
   }
   if (updates.idNumber !== undefined) {
-    members[phone].idNumber = updates.idNumber;
+    members[phone].idNumber = formatCedulaNumber(updates.idNumber);
   }
   
   members[phone].updatedAt = new Date().toISOString();
@@ -194,18 +215,18 @@ async function addMemberToGoogleSheets(member: Member): Promise<void> {
     if (!existingHeaders || existingHeaders.length === 0) {
       // Add headers
       const headers = [
-        'Created At',
-        'Phone',
         'Name',
+        'Phone',
         'ID Number',
         'Referred By',
         'Address',
         'Job Position',
         'Salary',
         'Is Business Owner',
-        'Months in Business',
+        'Time in Business',
         'ID Card Front Received',
         'ID Card Back Received',
+        'Created At',
       ];
       
       await sheets.spreadsheets.values.update({
@@ -227,18 +248,18 @@ async function addMemberToGoogleSheets(member: Member): Promise<void> {
     
     // Prepare row data
     const row = [
-      formatDate(member.createdAt),
-      member.phone,
       member.name || '',
+      member.phone,
       member.idNumber || '',
       member.referrerName || '',
       member.address || '',
       member.currentJobPosition || '',
       member.currentSalary || '',
       member.isBusinessOwner ? 'Yes' : 'No',
-      member.monthsInBusiness?.toString() || '',
+      member.timeInBusiness || '',
       member.idCardFrontReceived ? 'Yes' : 'No',
       member.idCardBackReceived ? 'Yes' : 'No',
+      formatDate(member.createdAt),
     ];
     
     // Append row to the sheet
