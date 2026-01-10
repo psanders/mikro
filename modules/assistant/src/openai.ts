@@ -39,12 +39,12 @@ export async function processMessage(phone: string, message: string, imageUrl: s
     ...history
   ];
   
-  // Build user message content
-  const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
+  // Build member message content
+  const memberContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
   
   // Add text message
   if (message) {
-    userContent.push({
+    memberContent.push({
       type: 'text',
       text: message
     });
@@ -56,7 +56,7 @@ export async function processMessage(phone: string, message: string, imageUrl: s
     if (imageUrl.startsWith('https://example.com/')) {
       logger.warn('Skipping placeholder image URL from history', { phone, imageUrl });
     } else {
-      userContent.push({
+      memberContent.push({
         type: 'image_url',
         image_url: {
           url: imageUrl
@@ -66,20 +66,20 @@ export async function processMessage(phone: string, message: string, imageUrl: s
   }
   
   // If no content, add a default message
-  if (userContent.length === 0) {
-    userContent.push({
+  if (memberContent.length === 0) {
+    memberContent.push({
       type: 'text',
       text: 'Hello'
     });
   }
   
-  // Add current user message
-  const currentUserMessage = { role: 'user', content: userContent };
-  messages.push(currentUserMessage);
+  // Add current member message
+  const currentMemberMessage = { role: 'user', content: memberContent };
+  messages.push(currentMemberMessage);
   
-  // Store user message in conversation history
+  // Store member message in conversation history
   // For storage, keep the full content structure
-  addMessage(phone, 'user', userContent);
+  addMessage(phone, 'user', memberContent);
   
   logger.debug('Sending message to OpenAI', { phone, hasImage: !!imageUrl });
   

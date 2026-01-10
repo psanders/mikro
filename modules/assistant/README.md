@@ -6,17 +6,18 @@ WhatsApp AI Assistant for Mikro Créditos using OpenAI's GPT-4o with vision supp
 
 - 🤖 AI-powered WhatsApp assistant using OpenAI GPT-4o
 - 👁️ Vision support for processing document images (PNG)
-- 🔧 Tool calling support (createUser tool)
-- 📝 User management with JSON file storage
-- 🔄 Automatic user detection and workflow triggering
+- 🔧 Tool calling support (createMember tool)
+- 📝 Member management with JSON file storage
+- 📊 Google Sheets integration for member data
+- 🔄 Automatic member detection and workflow triggering
 - 📊 Comprehensive logging
 - 🚀 PM2 process management
 
 ## Overview
 
 The assistant handles incoming WhatsApp messages and:
-- **New users**: Triggers the agent workflow to collect required information and create an account
-- **Existing users**: Ignores the request and allows human agents to handle
+- **New members**: Triggers the agent workflow to collect required information and create an account
+- **Existing members**: Ignores the request and allows human agents to handle
 
 ## Setup
 
@@ -26,8 +27,6 @@ The assistant handles incoming WhatsApp messages and:
 - PM2 installed globally: `npm install -g pm2`
 - OpenAI API key
 - WhatsApp Business API credentials (for production)
-
-> 📖 **For detailed WhatsApp integration instructions, see [WHATSAPP_GUIDE.md](./WHATSAPP_GUIDE.md)**
 
 ### Installation
 
@@ -128,9 +127,9 @@ GET /webhook?hub.mode=subscribe&hub.verify_token=TOKEN&hub.challenge=CHALLENGE
 POST /webhook
 ```
 
-## User Management
+## Member Management
 
-Users are stored in `modules/assistant/users.json` with the following structure:
+Members are stored in `modules/assistant/members.json` with the following structure:
 
 ```json
 {
@@ -148,20 +147,20 @@ Users are stored in `modules/assistant/users.json` with the following structure:
 
 ## Tool Calling
 
-### createUser
+### createMember
 
-Creates a new user account after collecting all required information.
+Creates a new member account after collecting all required information. The member data is saved to both `members.json` and optionally to a Google Sheet if configured.
 
 **Parameters:**
-- `phone` (string, required): User phone number
-- `name` (string, required): User full name
-- `idNumber` (string, required): User ID number (cédula)
-- `address` (string, required): User address
-- `currentSalary` (string, required): User current salary
-- `currentJobPosition` (string, required): User current job position
+- `phone` (string, required): Member phone number
+- `name` (string, required): Member full name
+- `idNumber` (string, required): Member ID number (cédula)
+- `address` (string, required): Member address
+- `currentSalary` (string, required): Member current salary
+- `currentJobPosition` (string, required): Member current job position
 
 **Returns:**
-- Success status and user object
+- Success status and member object
 
 ## Logging
 
@@ -183,14 +182,14 @@ modules/assistant/
 ├── src/
 │   ├── index.js          # Main server entry point
 │   ├── config.js         # Configuration loading
-│   ├── users.js          # User management (JSON file)
+│   ├── members.js        # Member management (JSON file + Google Sheets)
 │   ├── openai.js         # OpenAI integration
 │   ├── tools.js          # Tool definitions and execution
 │   ├── webhook.js        # WhatsApp webhook handler
 │   └── logger.js         # Logging utilities
 ├── agent.md              # System prompt configuration (markdown)
 ├── ecosystem.config.js   # PM2 configuration
-├── users.json            # User storage (generated)
+├── members.json          # Member storage (generated)
 └── logs/                 # Log files (generated)
 ```
 
@@ -215,6 +214,26 @@ All environment variables are loaded from a `.env` file in the `modules/assistan
 - `PORT`: Server port (default: 3000).
 - `WHATSAPP_VERIFY_TOKEN`: Webhook verification token (default: 'mikro_webhook_token').
 - `NODE_ENV`: Node environment (e.g., 'production', 'development').
+
+### Google Sheets Integration (Optional)
+
+To enable Google Sheets integration for member data:
+
+- `GOOGLE_SHEETS_SPREADSHEET_ID`: The ID of your Google Spreadsheet (found in the URL).
+- `GOOGLE_SHEETS_SHEET_NAME`: The name of the sheet tab to update (default: 'Sheet1').
+- `GOOGLE_SHEETS_CREDENTIALS`: JSON string containing Google service account credentials, OR
+- `GOOGLE_SHEETS_CREDENTIALS_PATH`: Path to a JSON file containing Google service account credentials.
+
+**Note**: If `GOOGLE_SHEETS_SPREADSHEET_ID` is not set, Google Sheets integration will be disabled and members will only be saved to `members.json`.
+
+**Setting up Google Sheets credentials:**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google Sheets API
+4. Create a Service Account and download the JSON key file
+5. Share your Google Sheet with the service account email (found in the credentials JSON)
+6. Set either `GOOGLE_SHEETS_CREDENTIALS` (JSON string) or `GOOGLE_SHEETS_CREDENTIALS_PATH` (path to JSON file)
 
 ### Getting WhatsApp Credentials
 

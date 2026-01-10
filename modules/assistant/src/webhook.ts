@@ -1,5 +1,5 @@
 import express, { Request, Response, Router } from 'express';
-import { userExists } from './users.js';
+import { memberExists } from './members.js';
 import { processMessage } from './openai.js';
 import { getWebhookVerifyToken, getWhatsAppPhoneNumberId, getWhatsAppAccessToken } from './config.js';
 import { logger } from './logger.js';
@@ -242,16 +242,16 @@ async function handleMessage(message: WhatsAppMessage): Promise<void> {
     
     logger.info('Message received', { phone, messageType, messageId });
     
-    // Check if user exists
-    if (userExists(phone)) {
-      logger.info('Existing user message - ignoring', { phone });
-      // For existing users, we ignore and let human handle
+    // Check if member exists
+    if (memberExists(phone)) {
+      logger.info('Existing member message - ignoring', { phone });
+      // For existing members, we ignore and let human handle
       // Clear their conversation history since they're done with onboarding
       clearConversation(phone);
       return;
     }
     
-    // Process message for new users
+    // Process message for new members
     let textMessage = '';
     let imageUrl: string | null = null;
     
