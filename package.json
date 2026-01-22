@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "modules/*"
+    "mods/*"
   ],
   "scripts": {
     "clean": "lerna clean",
