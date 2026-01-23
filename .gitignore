@@ -5,17 +5,8 @@ node_modules/
 dist/
 **/dist/
 
-# Keys (keep private!)
-keys/
-
-# Output files
-output/
-
 # OS files
 .DS_Store
-
-# Loans files
-loans/*.json
 
 # Environment variables
 .env

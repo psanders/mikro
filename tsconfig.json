@@ -19,9 +19,9 @@
     "incremental": true
   },
   "references": [
-    { "path": "./modules/common" },
-    { "path": "./modules/assistant" },
-    { "path": "./modules/ctl" }
+    { "path": "./mods/common" },
+    { "path": "./mods/agents" },
+    { "path": "./mods/ctl" }
   ],
   "files": [],
   "exclude": ["node_modules", "dist", "**/*.js"]
