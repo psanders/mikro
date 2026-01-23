@@ -1,0 +1,166 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ */
+/* eslint-disable */
+// biome-ignore-all lint: generated file
+// @ts-nocheck
+/*
+ * WARNING: This is an internal file that is subject to change!
+ *
+ * 🛑 Under no circumstances should you import this file directly! 🛑
+ *
+ * All exports from this file are wrapped under a `Prisma` namespace object in the browser.ts file.
+ * While this enables partial backward compatibility, it is not part of the stable public API.
+ *
+ * If you are looking for your Models, Enums, and Input Types, please import them from the respective
+ * model files in the `model` directory!
+ */
+
+import * as runtime from "@prisma/client/runtime/index-browser";
+
+export type * from "../models.js";
+export type * from "./prismaNamespace.js";
+
+export const Decimal = runtime.Decimal;
+
+export const NullTypes = {
+  DbNull: runtime.NullTypes.DbNull as new (secret: never) => typeof runtime.DbNull,
+  JsonNull: runtime.NullTypes.JsonNull as new (secret: never) => typeof runtime.JsonNull,
+  AnyNull: runtime.NullTypes.AnyNull as new (secret: never) => typeof runtime.AnyNull
+};
+/**
+ * Helper for filtering JSON entries that have `null` on the database (empty on the db)
+ *
+ * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+ */
+export const DbNull = runtime.DbNull;
+
+/**
+ * Helper for filtering JSON entries that have JSON `null` values (not empty on the db)
+ *
+ * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+ */
+export const JsonNull = runtime.JsonNull;
+
+/**
+ * Helper for filtering JSON entries that are `Prisma.DbNull` or `Prisma.JsonNull`
+ *
+ * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+ */
+export const AnyNull = runtime.AnyNull;
+
+export const ModelName = {
+  User: "User",
+  UserRole: "UserRole",
+  Member: "Member",
+  Loan: "Loan",
+  Message: "Message",
+  Attachment: "Attachment"
+} as const;
+
+export type ModelName = (typeof ModelName)[keyof typeof ModelName];
+
+/*
+ * Enums
+ */
+
+export const TransactionIsolationLevel = runtime.makeStrictEnum({
+  Serializable: "Serializable"
+} as const);
+
+export type TransactionIsolationLevel =
+  (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
+
+export const UserScalarFieldEnum = {
+  id: "id",
+  name: "name",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt"
+} as const;
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+
+export const UserRoleScalarFieldEnum = {
+  id: "id",
+  role: "role",
+  userId: "userId"
+} as const;
+
+export type UserRoleScalarFieldEnum =
+  (typeof UserRoleScalarFieldEnum)[keyof typeof UserRoleScalarFieldEnum];
+
+export const MemberScalarFieldEnum = {
+  id: "id",
+  name: "name",
+  phone: "phone",
+  idNumber: "idNumber",
+  collectionPoint: "collectionPoint",
+  homeAddress: "homeAddress",
+  jobPosition: "jobPosition",
+  income: "income",
+  isBusinessOwner: "isBusinessOwner",
+  isGuest: "isGuest",
+  idCardOnRecord: "idCardOnRecord",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+  createdById: "createdById",
+  referredById: "referredById",
+  assignedCollectorId: "assignedCollectorId"
+} as const;
+
+export type MemberScalarFieldEnum =
+  (typeof MemberScalarFieldEnum)[keyof typeof MemberScalarFieldEnum];
+
+export const LoanScalarFieldEnum = {
+  id: "id",
+  loanId: "loanId",
+  type: "type",
+  status: "status",
+  startedAt: "startedAt",
+  closedAt: "closedAt",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+  memberId: "memberId"
+} as const;
+
+export type LoanScalarFieldEnum = (typeof LoanScalarFieldEnum)[keyof typeof LoanScalarFieldEnum];
+
+export const MessageScalarFieldEnum = {
+  id: "id",
+  role: "role",
+  content: "content",
+  tools: "tools",
+  createdAt: "createdAt",
+  memberId: "memberId"
+} as const;
+
+export type MessageScalarFieldEnum =
+  (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum];
+
+export const AttachmentScalarFieldEnum = {
+  id: "id",
+  type: "type",
+  url: "url",
+  name: "name",
+  mimeType: "mimeType",
+  size: "size",
+  createdAt: "createdAt",
+  messageId: "messageId"
+} as const;
+
+export type AttachmentScalarFieldEnum =
+  (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum];
+
+export const SortOrder = {
+  asc: "asc",
+  desc: "desc"
+} as const;
+
+export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+
+export const NullsOrder = {
+  first: "first",
+  last: "last"
+} as const;
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];

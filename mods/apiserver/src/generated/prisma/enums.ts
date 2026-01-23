@@ -1,0 +1,50 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ */
+/* eslint-disable */
+// biome-ignore-all lint: generated file
+// @ts-nocheck
+/*
+ * This file exports all enum related types from the schema.
+ *
+ * 🟢 You can import this file directly.
+ */
+
+export const Role = {
+  ADMIN: "ADMIN",
+  COLLECTOR: "COLLECTOR",
+  REFERRER: "REFERRER"
+} as const;
+
+export type Role = (typeof Role)[keyof typeof Role];
+
+export const LoanType = {
+  FIVE_K_AT_10_WEEKS: "FIVE_K_AT_10_WEEKS"
+} as const;
+
+export type LoanType = (typeof LoanType)[keyof typeof LoanType];
+
+export const LoanStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  DEFAULTED: "DEFAULTED",
+  CANCELLED: "CANCELLED"
+} as const;
+
+export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus];
+
+export const MessageRole = {
+  AI: "AI",
+  HUMAN: "HUMAN"
+} as const;
+
+export type MessageRole = (typeof MessageRole)[keyof typeof MessageRole];
+
+export const AttachmentType = {
+  IMAGE: "IMAGE",
+  VIDEO: "VIDEO",
+  AUDIO: "AUDIO",
+  DOCUMENT: "DOCUMENT"
+} as const;
+
+export type AttachmentType = (typeof AttachmentType)[keyof typeof AttachmentType];

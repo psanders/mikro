@@ -1,0 +1,50 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ */
+/* eslint-disable */
+// biome-ignore-all lint: generated file
+// @ts-nocheck
+/*
+ * This file should be your main import to use Prisma-related types and utilities in a browser.
+ * Use it to get access to models, enums, and input types.
+ *
+ * This file does not contain a `PrismaClient` class, nor several other helpers that are intended as server-side only.
+ * See `client.ts` for the standard, server-side entry point.
+ *
+ * 🟢 You can import this file directly.
+ */
+
+import * as Prisma from "./internal/prismaNamespaceBrowser.js";
+export { Prisma };
+export * as $Enums from "./enums.js";
+export * from "./enums.js";
+/**
+ * Model User
+ *
+ */
+export type User = Prisma.UserModel;
+/**
+ * Model UserRole
+ *
+ */
+export type UserRole = Prisma.UserRoleModel;
+/**
+ * Model Member
+ *
+ */
+export type Member = Prisma.MemberModel;
+/**
+ * Model Loan
+ *
+ */
+export type Loan = Prisma.LoanModel;
+/**
+ * Model Message
+ *
+ */
+export type Message = Prisma.MessageModel;
+/**
+ * Model Attachment
+ *
+ */
+export type Attachment = Prisma.AttachmentModel;

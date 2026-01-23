@@ -1,0 +1,279 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ */
+/* eslint-disable */
+// biome-ignore-all lint: generated file
+// @ts-nocheck
+/*
+ * WARNING: This is an internal file that is subject to change!
+ *
+ * 🛑 Under no circumstances should you import this file directly! 🛑
+ *
+ * Please import the `PrismaClient` class from the `client.ts` file instead.
+ */
+
+import * as runtime from "@prisma/client/runtime/client";
+import type * as Prisma from "./prismaNamespace.js";
+
+const config: runtime.GetPrismaClientConfig = {
+  previewFeatures: [],
+  clientVersion: "7.3.0",
+  engineVersion: "9d6ad21cbbceab97458517b147a6a09ff43aa735",
+  activeProvider: "sqlite",
+  inlineSchema:
+    'generator client {\n  provider = "prisma-client"\n  output   = "../src/generated/prisma"\n}\n\ndatasource db {\n  provider = "sqlite"\n}\n\n// =============================================================================\n// Enums\n// =============================================================================\n\nenum Role {\n  ADMIN\n  COLLECTOR\n  REFERRER\n\n  @@map("roles")\n}\n\nenum LoanType {\n  FIVE_K_AT_10_WEEKS\n\n  @@map("loan_types")\n}\n\nenum LoanStatus {\n  ACTIVE\n  COMPLETED\n  DEFAULTED\n  CANCELLED\n\n  @@map("loan_statuses")\n}\n\nenum MessageRole {\n  AI\n  HUMAN\n\n  @@map("message_roles")\n}\n\nenum AttachmentType {\n  IMAGE\n  VIDEO\n  AUDIO\n  DOCUMENT\n\n  @@map("attachment_types")\n}\n\n// =============================================================================\n// Models\n// =============================================================================\n\nmodel User {\n  id        String   @id @default(uuid())\n  name      String\n  createdAt DateTime @default(now()) @map("created_at")\n  updatedAt DateTime @updatedAt @map("updated_at")\n\n  // Relations\n  roles           UserRole[]\n  createdMembers  Member[]   @relation("CreatedBy")\n  referredMembers Member[]   @relation("ReferredBy")\n  assignedMembers Member[]   @relation("AssignedCollector")\n\n  @@map("users")\n}\n\nmodel UserRole {\n  id     String @id @default(uuid())\n  role   Role\n  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)\n  userId String @map("user_id")\n\n  @@unique([userId, role])\n  @@index([userId])\n  @@map("user_roles")\n}\n\nmodel Member {\n  id              String   @id @default(uuid())\n  name            String\n  phone           String\n  idNumber        String   @map("id_number")\n  collectionPoint String   @map("collection_point")\n  homeAddress     String   @map("home_address")\n  jobPosition     String?  @map("job_position")\n  income          Decimal?\n  isBusinessOwner Boolean  @default(false) @map("is_business_owner")\n  isGuest         Boolean  @default(true) @map("is_guest")\n  idCardOnRecord  Boolean  @default(false) @map("id_card_on_record")\n  createdAt       DateTime @default(now()) @map("created_at")\n  updatedAt       DateTime @updatedAt @map("updated_at")\n\n  // Relations\n  createdBy           User?   @relation("CreatedBy", fields: [createdById], references: [id])\n  createdById         String? @map("created_by_id")\n  referredBy          User?   @relation("ReferredBy", fields: [referredById], references: [id])\n  referredById        String? @map("referred_by_id")\n  assignedCollector   User?   @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])\n  assignedCollectorId String? @map("assigned_collector_id")\n\n  loans    Loan[]\n  messages Message[]\n\n  @@index([createdById])\n  @@index([assignedCollectorId])\n  @@index([phone])\n  @@map("members")\n}\n\nmodel Loan {\n  id        String     @id @default(uuid())\n  loanId    Int        @unique @map("loan_id") // Generated in app code, starts at 10000\n  type      LoanType\n  status    LoanStatus @default(ACTIVE)\n  startedAt DateTime   @default(now()) @map("started_at")\n  closedAt  DateTime?  @map("closed_at")\n  createdAt DateTime   @default(now()) @map("created_at")\n  updatedAt DateTime   @updatedAt @map("updated_at")\n\n  // Relations\n  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)\n  memberId String @map("member_id")\n\n  @@index([memberId])\n  @@index([status])\n  @@map("loans")\n}\n\nmodel Message {\n  id        String      @id @default(uuid())\n  role      MessageRole\n  content   String\n  tools     String? // JSON array of tool names, e.g. ["search", "calculate"] - only for AI\n  createdAt DateTime    @default(now()) @map("created_at")\n\n  // Relations\n  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)\n  memberId    String       @map("member_id")\n  attachments Attachment[]\n\n  @@index([memberId])\n  @@index([createdAt])\n  @@map("messages")\n}\n\nmodel Attachment {\n  id        String         @id @default(uuid())\n  type      AttachmentType\n  url       String\n  name      String?\n  mimeType  String?        @map("mime_type")\n  size      Int?\n  createdAt DateTime       @default(now()) @map("created_at")\n\n  // Relations\n  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)\n  messageId String  @map("message_id")\n\n  @@index([messageId])\n  @@map("attachments")\n}\n',
+  runtimeDataModel: {
+    models: {},
+    enums: {},
+    types: {}
+  }
+};
+
+config.runtimeDataModel = JSON.parse(
+  '{"models":{"User":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime","dbName":"created_at"},{"name":"updatedAt","kind":"scalar","type":"DateTime","dbName":"updated_at"},{"name":"roles","kind":"object","type":"UserRole","relationName":"UserToUserRole"},{"name":"createdMembers","kind":"object","type":"Member","relationName":"CreatedBy"},{"name":"referredMembers","kind":"object","type":"Member","relationName":"ReferredBy"},{"name":"assignedMembers","kind":"object","type":"Member","relationName":"AssignedCollector"}],"dbName":"users"},"UserRole":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"role","kind":"enum","type":"Role"},{"name":"user","kind":"object","type":"User","relationName":"UserToUserRole"},{"name":"userId","kind":"scalar","type":"String","dbName":"user_id"}],"dbName":"user_roles"},"Member":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"phone","kind":"scalar","type":"String"},{"name":"idNumber","kind":"scalar","type":"String","dbName":"id_number"},{"name":"collectionPoint","kind":"scalar","type":"String","dbName":"collection_point"},{"name":"homeAddress","kind":"scalar","type":"String","dbName":"home_address"},{"name":"jobPosition","kind":"scalar","type":"String","dbName":"job_position"},{"name":"income","kind":"scalar","type":"Decimal"},{"name":"isBusinessOwner","kind":"scalar","type":"Boolean","dbName":"is_business_owner"},{"name":"isGuest","kind":"scalar","type":"Boolean","dbName":"is_guest"},{"name":"idCardOnRecord","kind":"scalar","type":"Boolean","dbName":"id_card_on_record"},{"name":"createdAt","kind":"scalar","type":"DateTime","dbName":"created_at"},{"name":"updatedAt","kind":"scalar","type":"DateTime","dbName":"updated_at"},{"name":"createdBy","kind":"object","type":"User","relationName":"CreatedBy"},{"name":"createdById","kind":"scalar","type":"String","dbName":"created_by_id"},{"name":"referredBy","kind":"object","type":"User","relationName":"ReferredBy"},{"name":"referredById","kind":"scalar","type":"String","dbName":"referred_by_id"},{"name":"assignedCollector","kind":"object","type":"User","relationName":"AssignedCollector"},{"name":"assignedCollectorId","kind":"scalar","type":"String","dbName":"assigned_collector_id"},{"name":"loans","kind":"object","type":"Loan","relationName":"LoanToMember"},{"name":"messages","kind":"object","type":"Message","relationName":"MemberToMessage"}],"dbName":"members"},"Loan":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"loanId","kind":"scalar","type":"Int","dbName":"loan_id"},{"name":"type","kind":"enum","type":"LoanType"},{"name":"status","kind":"enum","type":"LoanStatus"},{"name":"startedAt","kind":"scalar","type":"DateTime","dbName":"started_at"},{"name":"closedAt","kind":"scalar","type":"DateTime","dbName":"closed_at"},{"name":"createdAt","kind":"scalar","type":"DateTime","dbName":"created_at"},{"name":"updatedAt","kind":"scalar","type":"DateTime","dbName":"updated_at"},{"name":"member","kind":"object","type":"Member","relationName":"LoanToMember"},{"name":"memberId","kind":"scalar","type":"String","dbName":"member_id"}],"dbName":"loans"},"Message":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"role","kind":"enum","type":"MessageRole"},{"name":"content","kind":"scalar","type":"String"},{"name":"tools","kind":"scalar","type":"String"},{"name":"createdAt","kind":"scalar","type":"DateTime","dbName":"created_at"},{"name":"member","kind":"object","type":"Member","relationName":"MemberToMessage"},{"name":"memberId","kind":"scalar","type":"String","dbName":"member_id"},{"name":"attachments","kind":"object","type":"Attachment","relationName":"AttachmentToMessage"}],"dbName":"messages"},"Attachment":{"fields":[{"name":"id","kind":"scalar","type":"String"},{"name":"type","kind":"enum","type":"AttachmentType"},{"name":"url","kind":"scalar","type":"String"},{"name":"name","kind":"scalar","type":"String"},{"name":"mimeType","kind":"scalar","type":"String","dbName":"mime_type"},{"name":"size","kind":"scalar","type":"Int"},{"name":"createdAt","kind":"scalar","type":"DateTime","dbName":"created_at"},{"name":"message","kind":"object","type":"Message","relationName":"AttachmentToMessage"},{"name":"messageId","kind":"scalar","type":"String","dbName":"message_id"}],"dbName":"attachments"}},"enums":{},"types":{}}'
+);
+
+async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
+  const { Buffer } = await import("node:buffer");
+  const wasmArray = Buffer.from(wasmBase64, "base64");
+  return new WebAssembly.Module(wasmArray);
+}
+
+config.compilerWasm = {
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.sqlite.mjs"),
+
+  getQueryCompilerWasmModule: async () => {
+    const { wasm } =
+      await import("@prisma/client/runtime/query_compiler_fast_bg.sqlite.wasm-base64.mjs");
+    return await decodeBase64AsWasm(wasm);
+  },
+
+  importName: "./query_compiler_fast_bg.js"
+};
+
+export type LogOptions<ClientOptions extends Prisma.PrismaClientOptions> =
+  "log" extends keyof ClientOptions
+    ? ClientOptions["log"] extends Array<Prisma.LogLevel | Prisma.LogDefinition>
+      ? Prisma.GetEvents<ClientOptions["log"]>
+      : never
+    : never;
+
+export interface PrismaClientConstructor {
+  /**
+   * ## Prisma Client
+   *
+   * Type-safe database client for TypeScript
+   * @example
+   * ```
+   * const prisma = new PrismaClient()
+   * // Fetch zero or more Users
+   * const users = await prisma.user.findMany()
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/client).
+   */
+
+  new <
+    Options extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
+    LogOpts extends LogOptions<Options> = LogOptions<Options>,
+    OmitOpts extends Prisma.PrismaClientOptions["omit"] = Options extends { omit: infer U }
+      ? U
+      : Prisma.PrismaClientOptions["omit"],
+    ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
+  >(
+    options: Prisma.Subset<Options, Prisma.PrismaClientOptions>
+  ): PrismaClient<LogOpts, OmitOpts, ExtArgs>;
+}
+
+/**
+ * ## Prisma Client
+ *
+ * Type-safe database client for TypeScript
+ * @example
+ * ```
+ * const prisma = new PrismaClient()
+ * // Fetch zero or more Users
+ * const users = await prisma.user.findMany()
+ * ```
+ *
+ * Read more in our [docs](https://pris.ly/d/client).
+ */
+
+export interface PrismaClient<
+  in LogOpts extends Prisma.LogLevel = never,
+  in out OmitOpts extends Prisma.PrismaClientOptions["omit"] = undefined,
+  in out ExtArgs extends runtime.Types.Extensions.InternalArgs =
+    runtime.Types.Extensions.DefaultArgs
+> {
+  [K: symbol]: { types: Prisma.TypeMap<ExtArgs>["other"] };
+
+  $on<V extends LogOpts>(
+    eventType: V,
+    callback: (event: V extends "query" ? Prisma.QueryEvent : Prisma.LogEvent) => void
+  ): PrismaClient;
+
+  /**
+   * Connect with the database
+   */
+  $connect(): runtime.Types.Utils.JsPromise<void>;
+
+  /**
+   * Disconnect from the database
+   */
+  $disconnect(): runtime.Types.Utils.JsPromise<void>;
+
+  /**
+   * Executes a prepared raw query and returns the number of affected rows.
+   * @example
+   * ```
+   * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $executeRaw<T = unknown>(
+    query: TemplateStringsArray | Prisma.Sql,
+    ...values: any[]
+  ): Prisma.PrismaPromise<number>;
+
+  /**
+   * Executes a raw query and returns the number of affected rows.
+   * Susceptible to SQL injections, see documentation.
+   * @example
+   * ```
+   * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
+
+  /**
+   * Performs a prepared raw query and returns the `SELECT` data.
+   * @example
+   * ```
+   * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $queryRaw<T = unknown>(
+    query: TemplateStringsArray | Prisma.Sql,
+    ...values: any[]
+  ): Prisma.PrismaPromise<T>;
+
+  /**
+   * Performs a raw query and returns the `SELECT` data.
+   * Susceptible to SQL injections, see documentation.
+   * @example
+   * ```
+   * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
+
+  /**
+   * Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
+   * @example
+   * ```
+   * const [george, bob, alice] = await prisma.$transaction([
+   *   prisma.user.create({ data: { name: 'George' } }),
+   *   prisma.user.create({ data: { name: 'Bob' } }),
+   *   prisma.user.create({ data: { name: 'Alice' } }),
+   * ])
+   * ```
+   *
+   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
+   */
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(
+    arg: [...P],
+    options?: { isolationLevel?: Prisma.TransactionIsolationLevel }
+  ): runtime.Types.Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>;
+
+  $transaction<R>(
+    fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => runtime.Types.Utils.JsPromise<R>,
+    options?: {
+      maxWait?: number;
+      timeout?: number;
+      isolationLevel?: Prisma.TransactionIsolationLevel;
+    }
+  ): runtime.Types.Utils.JsPromise<R>;
+
+  $extends: runtime.Types.Extensions.ExtendsHook<
+    "extends",
+    Prisma.TypeMapCb<OmitOpts>,
+    ExtArgs,
+    runtime.Types.Utils.Call<
+      Prisma.TypeMapCb<OmitOpts>,
+      {
+        extArgs: ExtArgs;
+      }
+    >
+  >;
+
+  /**
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more Users
+   * const users = await prisma.user.findMany()
+   * ```
+   */
+  get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.userRole`: Exposes CRUD operations for the **UserRole** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more UserRoles
+   * const userRoles = await prisma.userRole.findMany()
+   * ```
+   */
+  get userRole(): Prisma.UserRoleDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.member`: Exposes CRUD operations for the **Member** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more Members
+   * const members = await prisma.member.findMany()
+   * ```
+   */
+  get member(): Prisma.MemberDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.loan`: Exposes CRUD operations for the **Loan** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more Loans
+   * const loans = await prisma.loan.findMany()
+   * ```
+   */
+  get loan(): Prisma.LoanDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.message`: Exposes CRUD operations for the **Message** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more Messages
+   * const messages = await prisma.message.findMany()
+   * ```
+   */
+  get message(): Prisma.MessageDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.attachment`: Exposes CRUD operations for the **Attachment** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more Attachments
+   * const attachments = await prisma.attachment.findMany()
+   * ```
+   */
+  get attachment(): Prisma.AttachmentDelegate<ExtArgs, { omit: OmitOpts }>;
+}
+
+export function getPrismaClientClass(): PrismaClientConstructor {
+  return runtime.getPrismaClient(config) as unknown as PrismaClientConstructor;
+}
