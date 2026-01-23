@@ -24,9 +24,12 @@
   },
   "dependencies": {
     "@mikro/common": "^1.0.0",
-    "@oclif/core": "^4.8.0"
+    "@oclif/core": "^4.8.0",
+    "@trpc/client": "^11.8.1",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
+    "@mikro/apiserver": "^1.0.0",
     "@types/node": "^25.0.10",
     "typescript": "^5.9.3"
   }

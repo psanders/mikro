@@ -57,6 +57,8 @@ enum AttachmentType {
 model User {
   id        String   @id @default(uuid())
   name      String
+  phone     String
+  enabled   Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -65,6 +67,7 @@ model User {
   createdMembers  Member[]   @relation("CreatedBy")
   referredMembers Member[]   @relation("ReferredBy")
   assignedMembers Member[]   @relation("AssignedCollector")
+  messages        Message[]
 
   @@map("users")
 }
@@ -90,7 +93,7 @@ model Member {
   jobPosition         String?  @map("job_position")
   income              Decimal?
   isBusinessOwner     Boolean  @default(false) @map("is_business_owner")
-  isGuest             Boolean  @default(true) @map("is_guest")
+  isActive            Boolean  @default(true) @map("is_active")
   idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
@@ -138,12 +141,15 @@ model Message {
   tools     String? // JSON array of tool names, e.g. ["search", "calculate"] - only for AI
   createdAt DateTime    @default(now()) @map("created_at")
 
-  // Relations
-  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId    String       @map("member_id")
+  // Relations - message belongs to either a Member OR a User
+  member      Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String?      @map("member_id")
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?      @map("user_id")
   attachments Attachment[]
 
   @@index([memberId])
+  @@index([userId])
   @@index([createdAt])
   @@map("messages")
 }
