@@ -5,13 +5,162 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum Role {
+  ADMIN
+  COLLECTOR
+  REFERRER
+
+  @@map("roles")
+}
+
+enum LoanType {
+  FIVE_K_AT_10_WEEKS
+
+  @@map("loan_types")
+}
+
+enum LoanStatus {
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  CANCELLED
+
+  @@map("loan_statuses")
+}
+
+enum MessageRole {
+  AI
+  HUMAN
+
+  @@map("message_roles")
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+
+  @@map("attachment_types")
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  roles           UserRole[]
+  createdMembers  Member[]   @relation("CreatedBy")
+  referredMembers Member[]   @relation("ReferredBy")
+  assignedMembers Member[]   @relation("AssignedCollector")
+
+  @@map("users")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  role   Role
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@map("user_roles")
 }
 
 model Member {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id                  String   @id @default(uuid())
+  name                String
+  phone               String
+  idNumber            String   @map("id_number")
+  collectionPoint     String   @map("collection_point")
+  homeAddress         String   @map("home_address")
+  jobPosition         String?  @map("job_position")
+  income              Decimal?
+  isBusinessOwner     Boolean  @default(false) @map("is_business_owner")
+  isGuest             Boolean  @default(true) @map("is_guest")
+  idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById         String?  @map("created_by_id")
+  referredBy          User?    @relation("ReferredBy", fields: [referredById], references: [id])
+  referredById        String?  @map("referred_by_id")
+  assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
+  assignedCollectorId String?  @map("assigned_collector_id")
+
+  loans    Loan[]
+  messages Message[]
+
+  @@index([createdById])
+  @@index([assignedCollectorId])
+  @@index([phone])
+  @@map("members")
+}
+
+model Loan {
+  id        String     @id @default(uuid())
+  loanId    Int        @unique @map("loan_id") // Generated in app code, starts at 10000
+  type      LoanType
+  status    LoanStatus @default(ACTIVE)
+  startedAt DateTime   @default(now()) @map("started_at")
+  closedAt  DateTime?  @map("closed_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String @map("member_id")
+
+  @@index([memberId])
+  @@index([status])
+  @@map("loans")
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  role      MessageRole
+  content   String
+  tools     String? // JSON array of tool names, e.g. ["search", "calculate"] - only for AI
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String       @map("member_id")
+  attachments Attachment[]
+
+  @@index([memberId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Attachment {
+  id        String         @id @default(uuid())
+  type      AttachmentType
+  url       String
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  mimeType  String?        @map("mime_type")
+  size      Int?
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String  @map("message_id")
+
+  @@index([messageId])
+  @@map("attachments")
 }

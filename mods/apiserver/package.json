@@ -21,6 +21,7 @@
   "dependencies": {
     "@mikro/agents": "^1.0.0",
     "@mikro/common": "^1.0.0",
+    "@prisma/adapter-better-sqlite3": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
