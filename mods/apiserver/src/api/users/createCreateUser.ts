@@ -6,7 +6,7 @@ import {
   createUserSchema,
   type CreateUserInput,
   type DbClient,
-  type User,
+  type User
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -25,8 +25,8 @@ export function createCreateUser(client: DbClient) {
     const user = await client.user.create({
       data: {
         name: userData.name,
-        phone: userData.phone,
-      },
+        phone: userData.phone
+      }
     });
 
     // If a role is provided, create the user role
@@ -34,8 +34,8 @@ export function createCreateUser(client: DbClient) {
       await client.userRole.create({
         data: {
           userId: user.id,
-          role,
-        },
+          role
+        }
       });
       logger.verbose("user role assigned", { userId: user.id, role });
     }

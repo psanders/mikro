@@ -22,7 +22,7 @@ export const createPaymentSchema = z.object({
   paidAt: z.coerce.date().optional(),
   method: paymentMethodEnum.optional(),
   collectedById: z.uuid({ error: "Invalid collector ID" }).optional(),
-  notes: z.string().optional(),
+  notes: z.string().optional()
 });
 
 /**
@@ -30,7 +30,7 @@ export const createPaymentSchema = z.object({
  */
 export const reversePaymentSchema = z.object({
   id: z.uuid({ error: "Invalid payment ID" }),
-  notes: z.string().optional(),
+  notes: z.string().optional()
 });
 
 /**
@@ -42,7 +42,7 @@ export const listPaymentsSchema = z.object({
   endDate: z.coerce.date(),
   showReversed: z.boolean().optional(), // If true, show all payments including reversed
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -55,7 +55,7 @@ export const listPaymentsByMemberSchema = z.object({
   endDate: z.coerce.date(),
   showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -68,7 +68,7 @@ export const listPaymentsByReferrerSchema = z.object({
   endDate: z.coerce.date(),
   showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**

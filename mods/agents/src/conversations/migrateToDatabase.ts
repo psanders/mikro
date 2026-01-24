@@ -46,8 +46,8 @@ function extractContent(content: string | MessageContentItem[]): string {
   }
 
   // For array content, extract text items
-  const textItems = content.filter(item => item.type === "text");
-  return textItems.map(item => item.text ?? "").join("\n");
+  const textItems = content.filter((item) => item.type === "text");
+  return textItems.map((item) => item.text ?? "").join("\n");
 }
 
 /**
@@ -62,8 +62,8 @@ function extractImageAttachments(content: string | MessageContentItem[]): Array<
   }
 
   return content
-    .filter(item => item.type === "image_url" && item.image_url?.url)
-    .map(item => ({
+    .filter((item) => item.type === "image_url" && item.image_url?.url)
+    .map((item) => ({
       type: "IMAGE" as const,
       url: item.image_url!.url
     }));

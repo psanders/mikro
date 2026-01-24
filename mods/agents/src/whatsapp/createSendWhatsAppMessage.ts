@@ -49,8 +49,8 @@ export function createSendWhatsAppMessage(client: WhatsAppClient) {
     const messageType = params.imageUrl ? "image" : "text";
     logger.verbose("sending whatsapp message", { phone: params.phone, type: messageType });
     const response = await client.sendMessage(params);
-    logger.verbose("whatsapp message sent", { 
-      phone: params.phone, 
+    logger.verbose("whatsapp message sent", {
+      phone: params.phone,
       messageId: response.messages?.[0]?.id,
       type: messageType
     });

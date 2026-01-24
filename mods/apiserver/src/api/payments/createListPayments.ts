@@ -6,7 +6,7 @@ import {
   listPaymentsSchema,
   type ListPaymentsInput,
   type DbClient,
-  type Payment,
+  type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,18 +20,18 @@ import { logger } from "../../logger.js";
 export function createListPayments(client: DbClient) {
   const fn = async (params: ListPaymentsInput): Promise<Payment[]> => {
     logger.verbose("listing payments", { startDate: params.startDate, endDate: params.endDate });
-    const payments = await client.payment.findMany({
+    const payments = (await client.payment.findMany({
       where: {
         paidAt: {
           gte: params.startDate,
-          lte: params.endDate,
+          lte: params.endDate
         },
-        ...(params.showReversed ? {} : { status: "COMPLETED" }),
+        ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
       orderBy: { paidAt: "desc" },
       take: params.limit,
-      skip: params.offset,
-    }) as unknown as Payment[];
+      skip: params.offset
+    })) as unknown as Payment[];
     logger.verbose("payments listed", { count: payments.length });
     return payments;
   };

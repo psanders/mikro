@@ -11,7 +11,7 @@ describe("createUpdateMember", () => {
     id: "550e8400-e29b-41d4-a716-446655440000",
     name: "Updated Name",
     phone: "+18091234567",
-    isActive: false,
+    isActive: false
   };
 
   afterEach(() => {
@@ -37,12 +37,12 @@ describe("createUpdateMember", () => {
         referredById: "550e8400-e29b-41d4-a716-446655440001",
         assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          update: sinon.stub().resolves(expectedMember),
-        },
+          update: sinon.stub().resolves(expectedMember)
+        }
       };
       const updateMember = createUpdateMember(mockClient as any);
 
@@ -60,7 +60,7 @@ describe("createUpdateMember", () => {
       // Arrange
       const partialInput = {
         id: "550e8400-e29b-41d4-a716-446655440000",
-        isActive: true,
+        isActive: true
       };
       const expectedMember = {
         id: partialInput.id,
@@ -78,12 +78,12 @@ describe("createUpdateMember", () => {
         referredById: "550e8400-e29b-41d4-a716-446655440001",
         assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          update: sinon.stub().resolves(expectedMember),
-        },
+          update: sinon.stub().resolves(expectedMember)
+        }
       };
       const updateMember = createUpdateMember(mockClient as any);
 
@@ -99,7 +99,7 @@ describe("createUpdateMember", () => {
       // Arrange
       const inputWithNote = {
         id: "550e8400-e29b-41d4-a716-446655440000",
-        note: "Updated note",
+        note: "Updated note"
       };
       const expectedMember = {
         id: inputWithNote.id,
@@ -117,12 +117,12 @@ describe("createUpdateMember", () => {
         referredById: "550e8400-e29b-41d4-a716-446655440001",
         assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          update: sinon.stub().resolves(expectedMember),
-        },
+          update: sinon.stub().resolves(expectedMember)
+        }
       };
       const updateMember = createUpdateMember(mockClient as any);
 
@@ -139,7 +139,7 @@ describe("createUpdateMember", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { update: sinon.stub() },
+        member: { update: sinon.stub() }
       };
       const updateMember = createUpdateMember(mockClient as any);
 
@@ -156,7 +156,7 @@ describe("createUpdateMember", () => {
     it("should throw ValidationError for empty name when provided", async () => {
       // Arrange
       const mockClient = {
-        member: { update: sinon.stub() },
+        member: { update: sinon.stub() }
       };
       const updateMember = createUpdateMember(mockClient as any);
 
@@ -164,7 +164,7 @@ describe("createUpdateMember", () => {
       try {
         await updateMember({
           id: "550e8400-e29b-41d4-a716-446655440000",
-          name: "",
+          name: ""
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -179,8 +179,8 @@ describe("createUpdateMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          update: sinon.stub().rejects(new Error("Member not found")),
-        },
+          update: sinon.stub().rejects(new Error("Member not found"))
+        }
       };
       const updateMember = createUpdateMember(mockClient as any);
 

@@ -8,7 +8,7 @@ import { ValidationError } from "@mikro/common";
 
 describe("createGetMember", () => {
   const validInput = {
-    id: "550e8400-e29b-41d4-a716-446655440000",
+    id: "550e8400-e29b-41d4-a716-446655440000"
   };
 
   afterEach(() => {
@@ -34,12 +34,12 @@ describe("createGetMember", () => {
         referredById: null,
         assignedCollectorId: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          findUnique: sinon.stub().resolves(expectedMember),
-        },
+          findUnique: sinon.stub().resolves(expectedMember)
+        }
       };
       const getMember = createGetMember(mockClient as any);
 
@@ -51,7 +51,7 @@ describe("createGetMember", () => {
       expect(mockClient.member.findUnique.calledOnce).to.be.true;
       expect(
         mockClient.member.findUnique.calledWith({
-          where: { id: validInput.id },
+          where: { id: validInput.id }
         })
       ).to.be.true;
     });
@@ -60,8 +60,8 @@ describe("createGetMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          findUnique: sinon.stub().resolves(null),
-        },
+          findUnique: sinon.stub().resolves(null)
+        }
       };
       const getMember = createGetMember(mockClient as any);
 
@@ -78,7 +78,7 @@ describe("createGetMember", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findUnique: sinon.stub() },
+        member: { findUnique: sinon.stub() }
       };
       const getMember = createGetMember(mockClient as any);
 
@@ -98,8 +98,8 @@ describe("createGetMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          findUnique: sinon.stub().rejects(new Error("Database error")),
-        },
+          findUnique: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const getMember = createGetMember(mockClient as any);
 

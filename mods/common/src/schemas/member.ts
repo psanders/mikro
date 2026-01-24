@@ -28,7 +28,7 @@ export const createMemberSchema = z.object({
   createdById: z.uuid().optional(),
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
-  notes: z.string().optional(),
+  notes: z.string().optional()
 });
 
 /**
@@ -47,21 +47,21 @@ export const updateMemberSchema = z.object({
     })
     .optional(),
   notes: z.string().optional(),
-  isActive: z.boolean().optional(),
+  isActive: z.boolean().optional()
 });
 
 /**
  * Schema for getting a member by ID.
  */
 export const getMemberSchema = z.object({
-  id: z.uuid({ error: "Invalid member ID" }),
+  id: z.uuid({ error: "Invalid member ID" })
 });
 
 /**
  * Schema for getting a member by phone number.
  */
 export const getMemberByPhoneSchema = z.object({
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z.string().min(1, "Phone number is required")
 });
 
 /**
@@ -71,7 +71,7 @@ export const getMemberByPhoneSchema = z.object({
 export const listMembersSchema = z.object({
   showInactive: z.boolean().optional(), // If true, show all members including inactive
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -82,7 +82,7 @@ export const listMembersByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -93,7 +93,7 @@ export const listMembersByCollectorSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
   showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**

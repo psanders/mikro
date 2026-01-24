@@ -23,7 +23,7 @@ describe("createListMembers", () => {
     referredById: null,
     assignedCollectorId: null,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
 
   afterEach(() => {
@@ -35,12 +35,12 @@ describe("createListMembers", () => {
       // Arrange
       const expectedMembers = [
         createMockMember("member-1", "John Doe"),
-        createMockMember("member-2", "Jane Smith"),
+        createMockMember("member-2", "Jane Smith")
       ];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembers = createListMembers(mockClient as any);
 
@@ -58,8 +58,8 @@ describe("createListMembers", () => {
       const expectedMembers = [createMockMember("member-2", "Jane Smith")];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembers = createListMembers(mockClient as any);
 
@@ -73,7 +73,7 @@ describe("createListMembers", () => {
         mockClient.member.findMany.calledWith({
           where: { isActive: true },
           take: 10,
-          skip: 1,
+          skip: 1
         })
       ).to.be.true;
     });
@@ -82,8 +82,8 @@ describe("createListMembers", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listMembers = createListMembers(mockClient as any);
 
@@ -99,7 +99,7 @@ describe("createListMembers", () => {
     it("should throw ValidationError for negative offset", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembers = createListMembers(mockClient as any);
 
@@ -116,7 +116,7 @@ describe("createListMembers", () => {
     it("should throw ValidationError for limit exceeding max", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembers = createListMembers(mockClient as any);
 
@@ -136,8 +136,8 @@ describe("createListMembers", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().rejects(new Error("Database error")),
-        },
+          findMany: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const listMembers = createListMembers(mockClient as any);
 

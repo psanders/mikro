@@ -112,7 +112,19 @@ app.post("/webhook", async (req, res) => {
 // Initialize message processor before starting server
 async function initializeMessageProcessor() {
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:entry',message:'initializing message processor',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "index.ts:initializeMessageProcessor:entry",
+      message: "initializing message processor",
+      data: {},
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A"
+    })
+  }).catch(() => {});
   logger.info("initializing message processor", { step: "entry" });
   // #endregion
 
@@ -137,7 +149,19 @@ async function initializeMessageProcessor() {
     const createLoan = createCreateLoan(dbClient);
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:api-functions',message:'api functions created',data:{functionsCreated:10},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:api-functions",
+        message: "api functions created",
+        data: { functionsCreated: 10 },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
 
     // Create router
@@ -166,7 +190,19 @@ async function initializeMessageProcessor() {
     });
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:router',message:'router created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:router",
+        message: "router created",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
 
     // Create tool executor
@@ -185,7 +221,7 @@ async function initializeMessageProcessor() {
       },
       listLoansByCollector: async (params) => {
         const loans = await listLoansByCollector(params);
-        return loans.map(loan => ({
+        return loans.map((loan) => ({
           id: loan.id,
           loanId: loan.loanId,
           principal: loan.principal,
@@ -203,7 +239,19 @@ async function initializeMessageProcessor() {
     });
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:tool-executor',message:'tool executor created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:tool-executor",
+        message: "tool executor created",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
 
     // Create WhatsApp client
@@ -211,7 +259,19 @@ async function initializeMessageProcessor() {
     const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:whatsapp-client',message:'whatsapp client created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:whatsapp-client",
+        message: "whatsapp client created",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
 
     // Create LLM invoker wrapper that selects agent based on name
@@ -227,13 +287,25 @@ async function initializeMessageProcessor() {
     };
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:llm-invoker',message:'llm invoker created',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:llm-invoker",
+        message: "llm invoker created",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)
     const getChatHistoryForUser = async (userId: string): Promise<Message[]> => {
       const dbMessages = await getChatHistory({ userId, limit: 100 });
-      return dbMessages.map(msg => ({
+      return dbMessages.map((msg) => ({
         role: msg.role === "AI" ? "assistant" : msg.role === "HUMAN" ? "user" : "system",
         content: msg.content
       }));
@@ -254,15 +326,31 @@ async function initializeMessageProcessor() {
 
     // Configure message processor
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:before-set-processor',message:'about to call setMessageProcessor',data:{hasRouteMessage:!!routeMessage,hasInvokeLLM:!!invokeLLM,hasSendWhatsAppMessage:!!sendWhatsAppMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    logger.info("calling setMessageProcessor", { 
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:before-set-processor",
+        message: "about to call setMessageProcessor",
+        data: {
+          hasRouteMessage: !!routeMessage,
+          hasInvokeLLM: !!invokeLLM,
+          hasSendWhatsAppMessage: !!sendWhatsAppMessage
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
+    logger.info("calling setMessageProcessor", {
       step: "before-set-processor",
       hasRouteMessage: !!routeMessage,
       hasInvokeLLM: !!invokeLLM,
       hasSendWhatsAppMessage: !!sendWhatsAppMessage
     });
     // #endregion
-    
+
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -272,16 +360,28 @@ async function initializeMessageProcessor() {
       addMessageForUser,
       getAgent: (name: "joan" | "juan" | "maria") => getAgent(agents, name)
     };
-    
+
     setMessageProcessor(processorConfig);
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:initializeMessageProcessor:after-set-processor',message:'setMessageProcessor completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "index.ts:initializeMessageProcessor:after-set-processor",
+        message: "setMessageProcessor completed",
+        data: {},
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     logger.info("setMessageProcessor completed", { step: "after-set-processor" });
-    
+
     // Verify processor was set
     const processorState = getMessageProcessorState();
-    logger.info("message processor state after setting", { 
+    logger.info("message processor state after setting", {
       step: "verify-processor",
       processorState,
       processorExists: processorState.exists
@@ -289,7 +389,7 @@ async function initializeMessageProcessor() {
     if (!processorState.exists) {
       throw new Error("Message processor was not set successfully");
     }
-    
+
     // Mark initialization as complete
     markInitializationComplete();
     const finalProcessorState = getMessageProcessorState();
@@ -311,32 +411,43 @@ initializeMessageProcessor()
     // Verify processor is set before starting server
     const finalState = getMessageProcessorState();
     logger.info("final processor state before server start", { finalState });
-    
+
     if (!finalState.exists) {
       logger.error("message processor not set - server will not process messages", { finalState });
       throw new Error("Message processor was not set during initialization");
     }
-    
+
     // Double-check by importing again (to test module isolation)
-    import("@mikro/agents").then((agentsModule) => {
-      const importedState = agentsModule.getMessageProcessorState();
-      logger.info("processor state from re-imported module", { importedState });
-      if (!importedState.exists) {
-        logger.error("processor not accessible from re-imported module - possible module isolation issue");
-      }
-    }).catch((err) => {
-      logger.warn("could not verify processor from re-import", { error: (err as Error).message });
-    });
-    
+    import("@mikro/agents")
+      .then((agentsModule) => {
+        const importedState = agentsModule.getMessageProcessorState();
+        logger.info("processor state from re-imported module", { importedState });
+        if (!importedState.exists) {
+          logger.error(
+            "processor not accessible from re-imported module - possible module isolation issue"
+          );
+        }
+      })
+      .catch((err) => {
+        logger.warn("could not verify processor from re-import", { error: (err as Error).message });
+      });
+
     app.listen(PORT, () => {
-      logger.info("api server started", { port: PORT, imagesPath: IMAGES_PATH, processorConfigured: finalState.exists });
-      
+      logger.info("api server started", {
+        port: PORT,
+        imagesPath: IMAGES_PATH,
+        processorConfigured: finalState.exists
+      });
+
       // Final verification after server starts
       const postStartState = getMessageProcessorState();
       logger.info("processor state after server start", { postStartState });
     });
   })
   .catch((error) => {
-    logger.error("failed to start server", { error: (error as Error).message, stack: (error as Error).stack });
+    logger.error("failed to start server", {
+      error: (error as Error).message,
+      stack: (error as Error).stack
+    });
     process.exit(1);
   });

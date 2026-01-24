@@ -13,7 +13,7 @@ describe("createCreateLoan", () => {
     principal: 5000,
     termLength: 10,
     paymentAmount: 650,
-    paymentFrequency: "WEEKLY" as const,
+    paymentFrequency: "WEEKLY" as const
   };
 
   afterEach(() => {
@@ -30,13 +30,13 @@ describe("createCreateLoan", () => {
         status: "ACTIVE",
         ...validInput,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         loan: {
           findFirst: sinon.stub().resolves(null),
-          create: sinon.stub().resolves(expectedLoan),
-        },
+          create: sinon.stub().resolves(expectedLoan)
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -60,13 +60,13 @@ describe("createCreateLoan", () => {
         status: "ACTIVE",
         ...validInput,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         loan: {
           findFirst: sinon.stub().resolves({ loanId: 10004 }),
-          create: sinon.stub().resolves(expectedLoan),
-        },
+          create: sinon.stub().resolves(expectedLoan)
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -78,7 +78,7 @@ describe("createCreateLoan", () => {
       expect(
         mockClient.loan.create.calledWith(
           sinon.match({
-            data: sinon.match({ loanId: 10005 }),
+            data: sinon.match({ loanId: 10005 })
           })
         )
       ).to.be.true;
@@ -93,13 +93,13 @@ describe("createCreateLoan", () => {
         ...inputWithType,
         status: "ACTIVE",
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         loan: {
           findFirst: sinon.stub().resolves(null),
-          create: sinon.stub().resolves(expectedLoan),
-        },
+          create: sinon.stub().resolves(expectedLoan)
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -117,8 +117,8 @@ describe("createCreateLoan", () => {
       const mockClient = {
         loan: {
           findFirst: sinon.stub(),
-          create: sinon.stub(),
-        },
+          create: sinon.stub()
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -137,8 +137,8 @@ describe("createCreateLoan", () => {
       const mockClient = {
         loan: {
           findFirst: sinon.stub(),
-          create: sinon.stub(),
-        },
+          create: sinon.stub()
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -157,8 +157,8 @@ describe("createCreateLoan", () => {
       const mockClient = {
         loan: {
           findFirst: sinon.stub(),
-          create: sinon.stub(),
-        },
+          create: sinon.stub()
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 
@@ -179,8 +179,8 @@ describe("createCreateLoan", () => {
       const mockClient = {
         loan: {
           findFirst: sinon.stub().resolves(null),
-          create: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          create: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const createLoan = createCreateLoan(mockClient as any);
 

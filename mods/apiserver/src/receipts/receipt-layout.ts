@@ -33,7 +33,7 @@ export function createReceiptLayout(
     amountPaid = "RD$ 650",
     pendingPayments = 9,
     paymentNumber = "P1",
-    agentName = "Nombre del Agente",
+    agentName = "Nombre del Agente"
   } = data;
 
   // Updated fields: single "Nombre" row instead of separate firstName/lastName
@@ -44,18 +44,18 @@ export function createReceiptLayout(
     ["Monto Pagado:", amountPaid],
     ["Pagos Pendientes:", String(pendingPayments)],
     ["Numero de Pago:", paymentNumber],
-    ["Agente:", agentName ?? ""],
+    ["Agente:", agentName ?? ""]
   ];
 
   const backgroundStyle = backgroundImage
     ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center"
       }
     : {
         background:
-          "linear-gradient(180deg, #1565a8 0%, #2980b9 25%, #3498db 45%, #5dade2 65%, #48c9b0 80%, #d4a76a 90%, #e8c98a 100%)",
+          "linear-gradient(180deg, #1565a8 0%, #2980b9 25%, #3498db 45%, #5dade2 65%, #48c9b0 80%, #d4a76a 90%, #e8c98a 100%)"
       };
 
   // QR Code element - either real QR or placeholder
@@ -67,9 +67,9 @@ export function createReceiptLayout(
           width: 220,
           height: 220,
           style: {
-            borderRadius: "8px",
-          },
-        },
+            borderRadius: "8px"
+          }
+        }
       }
     : {
         type: "div",
@@ -82,7 +82,7 @@ export function createReceiptLayout(
             borderRadius: "12px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "center"
           },
           children: {
             type: "div",
@@ -90,12 +90,12 @@ export function createReceiptLayout(
               style: {
                 fontSize: "16px",
                 color: "#aaaaaa",
-                fontFamily: "Inter",
+                fontFamily: "Inter"
               },
-              children: "QR CODE",
-            },
-          },
-        },
+              children: "QR CODE"
+            }
+          }
+        }
       };
 
   return {
@@ -106,7 +106,7 @@ export function createReceiptLayout(
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        ...backgroundStyle,
+        ...backgroundStyle
       },
       children: [
         // Spacer for header area
@@ -115,9 +115,9 @@ export function createReceiptLayout(
           props: {
             style: {
               height: "450px",
-              display: "flex",
-            },
-          },
+              display: "flex"
+            }
+          }
         },
 
         // Card
@@ -128,7 +128,7 @@ export function createReceiptLayout(
               display: "flex",
               justifyContent: "center",
               paddingLeft: "45px",
-              paddingRight: "45px",
+              paddingRight: "45px"
             },
             children: {
               type: "div",
@@ -140,7 +140,7 @@ export function createReceiptLayout(
                   padding: "35px",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
                   display: "flex",
-                  flexDirection: "row",
+                  flexDirection: "row"
                 },
                 children: [
                   // Left side - Fields
@@ -151,7 +151,7 @@ export function createReceiptLayout(
                         flex: 1,
                         display: "flex",
                         flexDirection: "column",
-                        gap: "24px",
+                        gap: "24px"
                       },
                       children: fields.map(([label, value]) => ({
                         type: "div",
@@ -159,7 +159,7 @@ export function createReceiptLayout(
                           style: {
                             display: "flex",
                             flexDirection: "row",
-                            gap: "12px",
+                            gap: "12px"
                           },
                           children: [
                             {
@@ -169,10 +169,10 @@ export function createReceiptLayout(
                                   fontSize: "36px",
                                   fontWeight: 700,
                                   fontFamily: "Inter",
-                                  color: "#1a5a96",
+                                  color: "#1a5a96"
                                 },
-                                children: label,
-                              },
+                                children: label
+                              }
                             },
                             {
                               type: "div",
@@ -181,15 +181,15 @@ export function createReceiptLayout(
                                   fontSize: "36px",
                                   fontWeight: 400,
                                   fontFamily: "Inter",
-                                  color: "#333333",
+                                  color: "#333333"
                                 },
-                                children: value,
-                              },
-                            },
-                          ],
-                        },
-                      })),
-                    },
+                                children: value
+                              }
+                            }
+                          ]
+                        }
+                      }))
+                    }
                   },
                   // Right side - QR Code
                   {
@@ -199,15 +199,15 @@ export function createReceiptLayout(
                         width: "240px",
                         display: "flex",
                         alignItems: "flex-start",
-                        justifyContent: "center",
+                        justifyContent: "center"
                       },
-                      children: qrCodeElement,
-                    },
-                  },
-                ],
-              },
-            },
-          },
+                      children: qrCodeElement
+                    }
+                  }
+                ]
+              }
+            }
+          }
         },
 
         // Spacer
@@ -216,11 +216,11 @@ export function createReceiptLayout(
           props: {
             style: {
               flex: 1,
-              display: "flex",
-            },
-          },
-        },
-      ],
-    },
+              display: "flex"
+            }
+          }
+        }
+      ]
+    }
   };
 }

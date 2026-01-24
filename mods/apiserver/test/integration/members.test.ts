@@ -10,7 +10,7 @@ import {
   createAuthenticatedCaller,
   applySchema,
   type TestDb,
-  type AuthenticatedCaller,
+  type AuthenticatedCaller
 } from "./setup.js";
 
 describe("Members Integration", () => {
@@ -41,8 +41,16 @@ describe("Members Integration", () => {
    * Helper to create test referrer and collector users.
    */
   async function createTestUsers() {
-    const referrer = await caller.createUser({ name: "Test Referrer", phone: "+18091234567", role: "REFERRER" });
-    const collector = await caller.createUser({ name: "Test Collector", phone: "+18091234568", role: "COLLECTOR" });
+    const referrer = await caller.createUser({
+      name: "Test Referrer",
+      phone: "+18091234567",
+      role: "REFERRER"
+    });
+    const collector = await caller.createUser({
+      name: "Test Collector",
+      phone: "+18091234568",
+      role: "COLLECTOR"
+    });
     return { referrer, collector };
   }
 
@@ -56,7 +64,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/market-square",
         homeAddress: "123 Main St, City",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       };
 
       const member = await caller.createMember(input);
@@ -68,7 +76,7 @@ describe("Members Integration", () => {
       expect(member.idNumber).to.equal(input.idNumber);
       expect(member.collectionPoint).to.equal(input.collectionPoint);
       expect(member.homeAddress).to.equal(input.homeAddress);
-      expect(member.isActive).to.equal(true);
+      expect(member.isActive).to.equal(false); // Default is false in database
       expect(member.isBusinessOwner).to.equal(false);
       expect(member.referredById).to.equal(referrer.id);
       expect(member.assignedCollectorId).to.equal(collector.id);
@@ -87,7 +95,7 @@ describe("Members Integration", () => {
         isBusinessOwner: true,
         referredById: referrer.id,
         assignedCollectorId: collector.id,
-        note: "Test note",
+        notes: "Test note"
       };
 
       const member = await caller.createMember(input);
@@ -95,7 +103,7 @@ describe("Members Integration", () => {
       expect(member.jobPosition).to.equal(input.jobPosition);
       expect(Number(member.income)).to.equal(input.income);
       expect(member.isBusinessOwner).to.equal(true);
-      expect(member.note).to.equal(input.note);
+      expect(member.notes).to.equal(input.notes);
     });
 
     it("should create a member with referrer and collector", async () => {
@@ -108,7 +116,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/central-market",
         homeAddress: "789 Pine Rd",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       };
 
       const member = await caller.createMember(input);
@@ -129,7 +137,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/test-point",
         homeAddress: "Test Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
       const fetched = await caller.getMember({ id: created.id });
@@ -141,7 +149,7 @@ describe("Members Integration", () => {
 
     it("should return null for non-existent member", async () => {
       const result = await caller.getMember({
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "550e8400-e29b-41d4-a716-446655440000"
       });
 
       expect(result).to.be.null;
@@ -158,12 +166,12 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/update-point",
         homeAddress: "Update Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
       const updated = await caller.updateMember({
         id: created.id,
-        name: "Updated Name",
+        name: "Updated Name"
       });
 
       expect(updated.name).to.equal("Updated Name");
@@ -179,12 +187,12 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/phone-point",
         homeAddress: "Phone Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
       const updated = await caller.updateMember({
         id: created.id,
-        phone: "+18091234575",
+        phone: "+18091234575"
       });
 
       // Phone should be normalized (stripped +)
@@ -200,15 +208,15 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/note-point",
         homeAddress: "Note Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
       const updated = await caller.updateMember({
         id: created.id,
-        note: "Updated note",
+        notes: "Updated note"
       });
 
-      expect(updated.note).to.equal("Updated note");
+      expect(updated.notes).to.equal("Updated note");
     });
 
     it("should deactivate a member", async () => {
@@ -220,17 +228,25 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/active-point",
         homeAddress: "Active Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
-      expect(created.isActive).to.equal(true);
+      expect(created.isActive).to.equal(false); // Default is false
 
       const updated = await caller.updateMember({
         id: created.id,
-        isActive: false,
+        isActive: true
       });
 
-      expect(updated.isActive).to.equal(false);
+      expect(updated.isActive).to.equal(true);
+
+      // Then deactivate
+      const deactivated = await caller.updateMember({
+        id: created.id,
+        isActive: false
+      });
+
+      expect(deactivated.isActive).to.equal(false);
     });
   });
 
@@ -245,7 +261,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point-1",
         homeAddress: "Address 1",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Member 2",
@@ -254,7 +270,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point-2",
         homeAddress: "Address 2",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Member 3",
@@ -263,10 +279,12 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point-3",
         homeAddress: "Address 3",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
-      const members = await caller.listMembers({});
+      // listMembers filters by isActive: true by default, but members are created with isActive: false
+      // So we need to use showInactive: true to see all members
+      const members = await caller.listMembers({ showInactive: true });
 
       expect(members).to.be.an("array");
       expect(members).to.have.lengthOf(3);
@@ -283,11 +301,12 @@ describe("Members Integration", () => {
           collectionPoint: `https://example.com/point-${i}`,
           homeAddress: `Address ${i}`,
           referredById: referrer.id,
-          assignedCollectorId: collector.id,
+          assignedCollectorId: collector.id
         });
       }
 
-      const members = await caller.listMembers({ limit: 3 });
+      // listMembers filters by isActive: true by default
+      const members = await caller.listMembers({ limit: 3, showInactive: true });
 
       expect(members).to.have.lengthOf(3);
     });
@@ -303,12 +322,13 @@ describe("Members Integration", () => {
           collectionPoint: `https://example.com/point-${i}`,
           homeAddress: `Address ${i}`,
           referredById: referrer.id,
-          assignedCollectorId: collector.id,
+          assignedCollectorId: collector.id
         });
       }
 
-      const allMembers = await caller.listMembers({});
-      const offsetMembers = await caller.listMembers({ offset: 2 });
+      // listMembers filters by isActive: true by default
+      const allMembers = await caller.listMembers({ showInactive: true });
+      const offsetMembers = await caller.listMembers({ offset: 2, showInactive: true });
 
       // Verify offset reduces the count by 2
       expect(allMembers).to.have.lengthOf(5);
@@ -325,8 +345,16 @@ describe("Members Integration", () => {
   describe("listMembersByReferrer", () => {
     it("should list members by referrer", async () => {
       // Create referrer
-      const referrer = await caller.createUser({ name: "Test Referrer", phone: "+3333333333", role: "REFERRER" });
-      const otherReferrer = await caller.createUser({ name: "Other Referrer", phone: "+4444444444", role: "REFERRER" });
+      const referrer = await caller.createUser({
+        name: "Test Referrer",
+        phone: "+18091234630",
+        role: "REFERRER"
+      });
+      const otherReferrer = await caller.createUser({
+        name: "Other Referrer",
+        phone: "+18091234631",
+        role: "REFERRER"
+      });
 
       const { collector } = await createTestUsers();
       // Create members with different referrers
@@ -337,7 +365,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Referred Member 2",
@@ -346,7 +374,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Other Referred",
@@ -355,11 +383,13 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: otherReferrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
+      // listMembersByReferrer filters by isActive: true by default
       const members = await caller.listMembersByReferrer({
         referredById: referrer.id,
+        showInactive: true
       });
 
       expect(members).to.have.lengthOf(2);
@@ -369,10 +399,14 @@ describe("Members Integration", () => {
     });
 
     it("should return empty array for referrer with no members", async () => {
-      const referrer = await caller.createUser({ name: "Empty Referrer", phone: "+5555555555", role: "REFERRER" });
+      const referrer = await caller.createUser({
+        name: "Empty Referrer",
+        phone: "+18091234632",
+        role: "REFERRER"
+      });
 
       const members = await caller.listMembersByReferrer({
-        referredById: referrer.id,
+        referredById: referrer.id
       });
 
       expect(members).to.be.an("array");
@@ -383,8 +417,16 @@ describe("Members Integration", () => {
   describe("listMembersByCollector", () => {
     it("should list members by collector", async () => {
       // Create collector
-      const collector = await caller.createUser({ name: "Test Collector", phone: "+6666666666", role: "COLLECTOR" });
-      const otherCollector = await caller.createUser({ name: "Other Collector", phone: "+7777777777", role: "COLLECTOR" });
+      const collector = await caller.createUser({
+        name: "Test Collector",
+        phone: "+18091234633",
+        role: "COLLECTOR"
+      });
+      const otherCollector = await caller.createUser({
+        name: "Other Collector",
+        phone: "+18091234634",
+        role: "COLLECTOR"
+      });
 
       const { referrer } = await createTestUsers();
       // Create members with different collectors
@@ -395,7 +437,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Assigned Member 2",
@@ -404,7 +446,7 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: referrer.id,
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
       await caller.createMember({
         name: "Other Assigned",
@@ -413,11 +455,13 @@ describe("Members Integration", () => {
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
         referredById: referrer.id,
-        assignedCollectorId: otherCollector.id,
+        assignedCollectorId: otherCollector.id
       });
 
+      // listMembersByCollector filters by isActive: true by default
       const members = await caller.listMembersByCollector({
         assignedCollectorId: collector.id,
+        showInactive: true
       });
 
       expect(members).to.have.lengthOf(2);
@@ -427,10 +471,14 @@ describe("Members Integration", () => {
     });
 
     it("should return empty array for collector with no assigned members", async () => {
-      const collector = await caller.createUser({ name: "Empty Collector", phone: "+8888888888", role: "COLLECTOR" });
+      const collector = await caller.createUser({
+        name: "Empty Collector",
+        phone: "+18091234635",
+        role: "COLLECTOR"
+      });
 
       const members = await caller.listMembersByCollector({
-        assignedCollectorId: collector.id,
+        assignedCollectorId: collector.id
       });
 
       expect(members).to.be.an("array");

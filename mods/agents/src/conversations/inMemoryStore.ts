@@ -39,7 +39,11 @@ export function addGuestMessage(phone: string, message: Message): void {
     guestConversations.set(phone, messages);
   }
   messages.push(message);
-  logger.verbose("guest message added", { phone, role: message.role, messageCount: messages.length });
+  logger.verbose("guest message added", {
+    phone,
+    role: message.role,
+    messageCount: messages.length
+  });
 }
 
 /**

@@ -6,7 +6,7 @@ import {
   listLoansByCollectorSchema,
   type ListLoansByCollectorInput,
   type DbClient,
-  type Loan,
+  type Loan
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -23,14 +23,17 @@ export function createListLoansByCollector(client: DbClient) {
     const loans = await client.loan.findMany({
       where: {
         member: {
-          assignedCollectorId: params.assignedCollectorId,
+          assignedCollectorId: params.assignedCollectorId
         },
-        ...(params.showAll ? {} : { status: "ACTIVE" }),
+        ...(params.showAll ? {} : { status: "ACTIVE" })
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
-    logger.verbose("loans by collector listed", { collectorId: params.assignedCollectorId, count: loans.length });
+    logger.verbose("loans by collector listed", {
+      collectorId: params.assignedCollectorId,
+      count: loans.length
+    });
     return loans;
   };
 

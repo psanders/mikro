@@ -10,28 +10,28 @@ import errorHandler from "../../errorHandler.js";
 export default class List extends BaseCommand<typeof List> {
   static override readonly description = "display all payments within a date range";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-01-31",
+    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-01-31"
   ];
   static override readonly flags = {
     "start-date": Flags.string({
       description: "start date (YYYY-MM-DD)",
-      required: true,
+      required: true
     }),
     "end-date": Flags.string({
       description: "end date (YYYY-MM-DD)",
-      required: true,
+      required: true
     }),
     "show-reversed": Flags.boolean({
       char: "a",
       description: "show all payments including reversed",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -43,7 +43,7 @@ export default class List extends BaseCommand<typeof List> {
         startDate: new Date(flags["start-date"]),
         endDate: new Date(flags["end-date"]),
         showReversed: flags["show-reversed"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 170 });
@@ -63,7 +63,11 @@ export default class List extends BaseCommand<typeof List> {
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
-          { text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"), padding: [0, 0, 0, 0], width: 20 },
+          {
+            text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
+            padding: [0, 0, 0, 0],
+            width: 20
+          },
           { text: payment.loanId, padding: [0, 0, 0, 0], width: 40 }
         );
       });

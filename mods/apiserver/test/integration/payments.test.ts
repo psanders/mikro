@@ -10,7 +10,7 @@ import {
   createAuthenticatedCaller,
   applySchema,
   type TestDb,
-  type AuthenticatedCaller,
+  type AuthenticatedCaller
 } from "./setup.js";
 
 describe("Payments Integration", () => {
@@ -40,17 +40,29 @@ describe("Payments Integration", () => {
   /**
    * Helper to create a member with a loan for payment tests.
    */
-  async function createMemberWithLoan(options?: {
-    referredById?: string;
-    memberName?: string;
-  }) {
+  async function createMemberWithLoan(options?: { referredById?: string; memberName?: string }) {
     const member = await caller.createMember({
       name: options?.memberName ?? "Payment Test Member",
-      phone: "+1234567890",
-      idNumber: `ID-PAY-${Date.now()}`,
-      collectionPoint: "Test Point",
+      phone: "+18091234591",
+      idNumber: `001-${String(Date.now()).slice(-7)}-9`,
+      collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
-      referredById: options?.referredById,
+      referredById:
+        options?.referredById ??
+        (
+          await caller.createUser({
+            name: "Test Referrer",
+            phone: "+18091234581",
+            role: "REFERRER"
+          })
+        ).id,
+      assignedCollectorId: (
+        await caller.createUser({
+          name: "Test Collector",
+          phone: "+18091234582",
+          role: "COLLECTOR"
+        })
+      ).id
     });
 
     const loan = await caller.createLoan({
@@ -58,7 +70,7 @@ describe("Payments Integration", () => {
       principal: 5000,
       termLength: 10,
       paymentAmount: 650,
-      paymentFrequency: "WEEKLY",
+      paymentFrequency: "WEEKLY"
     });
 
     return { member, loan };
@@ -70,7 +82,7 @@ describe("Payments Integration", () => {
 
       const payment = await caller.createPayment({
         loanId: loan.id,
-        amount: 650,
+        amount: 650
       });
 
       expect(payment.id).to.be.a("string");
@@ -86,7 +98,7 @@ describe("Payments Integration", () => {
       const payment = await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        method: "CASH",
+        method: "CASH"
       });
 
       expect(payment.method).to.equal("CASH");
@@ -98,7 +110,7 @@ describe("Payments Integration", () => {
       const payment = await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        method: "TRANSFER",
+        method: "TRANSFER"
       });
 
       expect(payment.method).to.equal("TRANSFER");
@@ -111,7 +123,7 @@ describe("Payments Integration", () => {
       const payment = await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: customDate,
+        paidAt: customDate
       });
 
       const paidAt = new Date(payment.paidAt);
@@ -121,15 +133,15 @@ describe("Payments Integration", () => {
     it("should create a payment with collector", async () => {
       const collector = await caller.createUser({
         name: "Test Collector",
-        phone: "+1234567890",
-        role: "COLLECTOR",
+        phone: "+18091234591",
+        role: "COLLECTOR"
       });
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        collectedById: collector.id,
+        collectedById: collector.id
       });
 
       expect(payment.collectedById).to.equal(collector.id);
@@ -141,7 +153,7 @@ describe("Payments Integration", () => {
       const payment = await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        notes: "Partial payment for week 3",
+        notes: "Partial payment for week 3"
       });
 
       expect(payment.notes).to.equal("Partial payment for week 3");
@@ -152,17 +164,17 @@ describe("Payments Integration", () => {
 
       const payment1 = await caller.createPayment({
         loanId: loan.id,
-        amount: 650,
+        amount: 650
       });
 
       const payment2 = await caller.createPayment({
         loanId: loan.id,
-        amount: 650,
+        amount: 650
       });
 
       const payment3 = await caller.createPayment({
         loanId: loan.id,
-        amount: 650,
+        amount: 650
       });
 
       expect(payment1.id).to.not.equal(payment2.id);
@@ -178,22 +190,22 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-10"),
+        paidAt: new Date("2026-01-10")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-20"),
+        paidAt: new Date("2026-01-20")
       });
 
       const payments = await caller.listPayments({
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.be.an("array");
@@ -207,22 +219,22 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-05"),
+        paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-02-05"),
+        paidAt: new Date("2026-02-05")
       });
 
       const payments = await caller.listPayments({
         startDate: new Date("2026-01-10"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.have.lengthOf(1);
@@ -234,22 +246,22 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 100,
-        paidAt: new Date("2026-01-10"),
+        paidAt: new Date("2026-01-10")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 200,
-        paidAt: new Date("2026-01-20"),
+        paidAt: new Date("2026-01-20")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 300,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
 
       const payments = await caller.listPayments({
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       // Should be ordered: Jan 20, Jan 15, Jan 10
@@ -265,14 +277,14 @@ describe("Payments Integration", () => {
         await caller.createPayment({
           loanId: loan.id,
           amount: 650,
-          paidAt: new Date(`2026-01-${10 + i}`),
+          paidAt: new Date(`2026-01-${10 + i}`)
         });
       }
 
       const payments = await caller.listPayments({
         startDate: new Date("2026-01-01"),
         endDate: new Date("2026-01-31"),
-        limit: 3,
+        limit: 3
       });
 
       expect(payments).to.have.lengthOf(3);
@@ -284,12 +296,12 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
 
       const payments = await caller.listPayments({
         startDate: new Date("2026-02-01"),
-        endDate: new Date("2026-02-28"),
+        endDate: new Date("2026-02-28")
       });
 
       expect(payments).to.be.an("array");
@@ -306,23 +318,23 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-20"),
+        paidAt: new Date("2026-01-20")
       });
       await caller.createPayment({
         loanId: otherLoan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
 
       const payments = await caller.listPaymentsByMember({
         memberId: member.id,
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.have.lengthOf(2);
@@ -334,23 +346,23 @@ describe("Payments Integration", () => {
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-05"),
+        paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-02-05"),
+        paidAt: new Date("2026-02-05")
       });
 
       const payments = await caller.listPaymentsByMember({
         memberId: member.id,
         startDate: new Date("2026-01-10"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.have.lengthOf(1);
@@ -362,7 +374,7 @@ describe("Payments Integration", () => {
       const payments = await caller.listPaymentsByMember({
         memberId: member.id,
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.be.an("array");
@@ -373,85 +385,101 @@ describe("Payments Integration", () => {
   describe("listPaymentsByReferrer", () => {
     it("should list payments for members referred by a specific user", async () => {
       // Create referrers
-      const referrer1 = await caller.createUser({ name: "Referrer 1", phone: "+1111111111", role: "REFERRER" });
-      const referrer2 = await caller.createUser({ name: "Referrer 2", phone: "+2222222222", role: "REFERRER" });
+      const referrer1 = await caller.createUser({
+        name: "Referrer 1",
+        phone: "+18091234592",
+        role: "REFERRER"
+      });
+      const referrer2 = await caller.createUser({
+        name: "Referrer 2",
+        phone: "+18091234593",
+        role: "REFERRER"
+      });
 
       // Create members with different referrers
       const { loan: loan1 } = await createMemberWithLoan({
         memberName: "Referred by 1 - A",
-        referredById: referrer1.id,
+        referredById: referrer1.id
       });
       const { loan: loan2 } = await createMemberWithLoan({
         memberName: "Referred by 1 - B",
-        referredById: referrer1.id,
+        referredById: referrer1.id
       });
       const { loan: loan3 } = await createMemberWithLoan({
         memberName: "Referred by 2",
-        referredById: referrer2.id,
+        referredById: referrer2.id
       });
 
       // Create payments
       await caller.createPayment({
         loanId: loan1.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan2.id,
         amount: 650,
-        paidAt: new Date("2026-01-16"),
+        paidAt: new Date("2026-01-16")
       });
       await caller.createPayment({
         loanId: loan3.id,
         amount: 650,
-        paidAt: new Date("2026-01-17"),
+        paidAt: new Date("2026-01-17")
       });
 
       const payments = await caller.listPaymentsByReferrer({
         referredById: referrer1.id,
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.have.lengthOf(2);
     });
 
     it("should filter by date range for referrer", async () => {
-      const referrer = await caller.createUser({ name: "Test Referrer", phone: "+3333333333", role: "REFERRER" });
+      const referrer = await caller.createUser({
+        name: "Test Referrer",
+        phone: "+18091234594",
+        role: "REFERRER"
+      });
       const { loan } = await createMemberWithLoan({ referredById: referrer.id });
 
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-05"),
+        paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-01-15"),
+        paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
         loanId: loan.id,
         amount: 650,
-        paidAt: new Date("2026-02-05"),
+        paidAt: new Date("2026-02-05")
       });
 
       const payments = await caller.listPaymentsByReferrer({
         referredById: referrer.id,
         startDate: new Date("2026-01-10"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.have.lengthOf(1);
     });
 
     it("should return empty array for referrer with no referred members", async () => {
-      const referrer = await caller.createUser({ name: "Empty Referrer", phone: "+4444444444", role: "REFERRER" });
+      const referrer = await caller.createUser({
+        name: "Empty Referrer",
+        phone: "+18091234595",
+        role: "REFERRER"
+      });
 
       const payments = await caller.listPaymentsByReferrer({
         referredById: referrer.id,
         startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+        endDate: new Date("2026-01-31")
       });
 
       expect(payments).to.be.an("array");

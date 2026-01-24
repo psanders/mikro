@@ -31,9 +31,7 @@ export interface ToolExecutorDependencies {
   }) => Promise<{ id: string; amount: number }>;
 
   /** Generate a receipt */
-  generateReceipt: (params: {
-    paymentId: string;
-  }) => Promise<{ image: string; token: string }>;
+  generateReceipt: (params: { paymentId: string }) => Promise<{ image: string; token: string }>;
 
   /** List loans by collector */
   listLoansByCollector: (params: {

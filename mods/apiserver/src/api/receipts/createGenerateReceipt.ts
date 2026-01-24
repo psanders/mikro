@@ -10,7 +10,7 @@ import {
   withErrorHandlingAndValidation,
   generateReceiptSchema,
   type GenerateReceiptInput,
-  type DbClient,
+  type DbClient
 } from "@mikro/common";
 import {
   loadPrivateKey,
@@ -20,7 +20,7 @@ import {
   createReceiptLayout,
   RECEIPT_WIDTH,
   RECEIPT_HEIGHT,
-  type ReceiptData,
+  type ReceiptData
 } from "../../receipts/index.js";
 import { logger } from "../../logger.js";
 
@@ -104,12 +104,12 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
             member: true,
             payments: {
               where: { status: "COMPLETED" },
-              orderBy: { paidAt: "asc" },
-            },
-          },
+              orderBy: { paidAt: "asc" }
+            }
+          }
         },
-        collectedBy: true,
-      },
+        collectedBy: true
+      }
     });
 
     if (!payment) {
@@ -131,12 +131,12 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
       date: payment.paidAt.toLocaleDateString("es-DO", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric",
+        year: "numeric"
       }),
       amountPaid: `RD$ ${Number(payment.amount).toLocaleString("es-DO")}`,
       pendingPayments: Math.max(0, pendingPayments),
       paymentNumber: `P${paymentNumber}`,
-      agentName: payment.collectedBy?.name,
+      agentName: payment.collectedBy?.name
     };
 
     // 4. Load private key and create signed JWT
@@ -156,12 +156,12 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     const svg = await satori(layout as Parameters<typeof satori>[0], {
       width: RECEIPT_WIDTH,
       height: RECEIPT_HEIGHT,
-      fonts: fonts as Parameters<typeof satori>[1]["fonts"],
+      fonts: fonts as Parameters<typeof satori>[1]["fonts"]
     });
 
     // 8. Convert to PNG with resvg
     const resvg = new Resvg(svg, {
-      fitTo: { mode: "width", value: RECEIPT_WIDTH * 2 },
+      fitTo: { mode: "width", value: RECEIPT_WIDTH * 2 }
     });
     const png = resvg.render().asPng();
     const image = png.toString("base64");
@@ -170,7 +170,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     return {
       image,
       token,
-      receiptData,
+      receiptData
     };
   };
 

@@ -25,7 +25,7 @@ describe("createListMembersByReferrer", () => {
     referredById: validReferrerId,
     assignedCollectorId: null,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
 
   afterEach(() => {
@@ -37,12 +37,12 @@ describe("createListMembersByReferrer", () => {
       // Arrange
       const expectedMembers = [
         createMockMember("member-1", "John Doe"),
-        createMockMember("member-2", "Jane Smith"),
+        createMockMember("member-2", "Jane Smith")
       ];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 
@@ -56,7 +56,7 @@ describe("createListMembersByReferrer", () => {
         mockClient.member.findMany.calledWith({
           where: { referredById: validReferrerId, isActive: true },
           take: undefined,
-          skip: undefined,
+          skip: undefined
         })
       ).to.be.true;
     });
@@ -66,8 +66,8 @@ describe("createListMembersByReferrer", () => {
       const expectedMembers = [createMockMember("member-1", "John Doe")];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 
@@ -75,7 +75,7 @@ describe("createListMembersByReferrer", () => {
       const result = await listMembersByReferrer({
         referredById: validReferrerId,
         limit: 10,
-        offset: 5,
+        offset: 5
       });
 
       // Assert
@@ -84,7 +84,7 @@ describe("createListMembersByReferrer", () => {
         mockClient.member.findMany.calledWith({
           where: { referredById: validReferrerId, isActive: true },
           take: 10,
-          skip: 5,
+          skip: 5
         })
       ).to.be.true;
     });
@@ -93,8 +93,8 @@ describe("createListMembersByReferrer", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 
@@ -110,7 +110,7 @@ describe("createListMembersByReferrer", () => {
     it("should throw ValidationError for invalid referrer UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 
@@ -127,7 +127,7 @@ describe("createListMembersByReferrer", () => {
     it("should throw ValidationError for missing referredById", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 
@@ -147,8 +147,8 @@ describe("createListMembersByReferrer", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().rejects(new Error("Database error")),
-        },
+          findMany: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const listMembersByReferrer = createListMembersByReferrer(mockClient as any);
 

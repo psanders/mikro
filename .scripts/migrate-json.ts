@@ -76,7 +76,7 @@ async function validateRequiredUsers(): Promise<Map<string, boolean>> {
     "7a8bbcaa-063d-4fce-ae02-da9356dac213", // Pedro Sanders (ADMIN)
     "6ce9e266-b2fb-4dce-b21b-d0842fd78b36", // Isaic Santos (Referrer)
     "3757f991-57b3-4163-a8b5-387b97fa7dfe", // Antonio Cabrera (Referrer)
-    "42fa3813-8b50-42bb-96c5-751642dae55f"  // Mariano Cabrera (Referrer)
+    "42fa3813-8b50-42bb-96c5-751642dae55f" // Mariano Cabrera (Referrer)
   ];
 
   const existingUsers = await prisma.user.findMany({
@@ -88,7 +88,7 @@ async function validateRequiredUsers(): Promise<Map<string, boolean>> {
     select: { id: true }
   });
 
-  const existingUserIds = new Set(existingUsers.map(u => u.id));
+  const existingUserIds = new Set(existingUsers.map((u) => u.id));
   const userValidationMap = new Map<string, boolean>();
 
   for (const userId of requiredUserIds) {
@@ -159,7 +159,7 @@ function normalizePhone(phone: string): string {
   try {
     // Use the same validation function as the API
     return validateDominicanPhone(phone);
-  } catch (error) {
+  } catch {
     console.warn(`Invalid phone number: ${phone}, using as-is`);
     return phone.trim();
   }
@@ -182,10 +182,7 @@ async function processMember(
     // Check if member already exists by phone or ID number
     const existingMember = await prisma.member.findFirst({
       where: {
-        OR: [
-          { phone: normalizedPhone },
-          { idNumber: memberData.idNumber }
-        ]
+        OR: [{ phone: normalizedPhone }, { idNumber: memberData.idNumber }]
       },
       include: {
         loans: {
@@ -199,7 +196,13 @@ async function processMember(
 
       // Check if loan needs to be processed for existing member
       if (memberData.loan) {
-        await processLoanForExistingMember(memberData.loan, existingMember, memberData.assignedCollectorId, rowIndex, stats);
+        await processLoanForExistingMember(
+          memberData.loan,
+          existingMember,
+          memberData.assignedCollectorId,
+          rowIndex,
+          stats
+        );
       }
 
       stats.membersSkipped++;
@@ -230,9 +233,14 @@ async function processMember(
 
     // Process loan if it exists
     if (memberData.loan) {
-      await processLoan(memberData.loan, createdMember.id, memberData.assignedCollectorId, rowIndex, stats);
+      await processLoan(
+        memberData.loan,
+        createdMember.id,
+        memberData.assignedCollectorId,
+        rowIndex,
+        stats
+      );
     }
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     stats.errors.push({
@@ -249,22 +257,30 @@ async function processMember(
  */
 async function processLoanForExistingMember(
   loanData: LoanData,
-  existingMember: any,
+  existingMember: {
+    id: string;
+    name: string;
+    loans: Array<{ loanId: number; payments?: unknown[] }>;
+  },
   assignedCollectorId: string,
   rowIndex: number,
   stats: MigrationStats
 ): Promise<void> {
   // Find the loan for this member
-  const existingLoan = existingMember.loans.find((loan: any) => loan.loanId === loanData.loanId);
+  const existingLoan = existingMember.loans.find((loan) => loan.loanId === loanData.loanId);
 
   if (!existingLoan) {
-    console.log(`Loan ${loanData.loanId} not found for existing member ${existingMember.name}, skipping`);
+    console.log(
+      `Loan ${loanData.loanId} not found for existing member ${existingMember.name}, skipping`
+    );
     return;
   }
 
   // Check if payments need to be created
   if (existingLoan.payments.length === 0 && loanData.payments.length > 0) {
-    console.log(`Creating ${loanData.payments.length} payments for existing loan: ${loanData.loanId}`);
+    console.log(
+      `Creating ${loanData.payments.length} payments for existing loan: ${loanData.loanId}`
+    );
     // Create payments for existing loan
     for (const paymentData of loanData.payments) {
       try {
@@ -382,7 +398,6 @@ async function processLoan(
         stats.paymentsSkipped++;
       }
     }
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     stats.errors.push({
@@ -421,8 +436,8 @@ async function main() {
   const userValidationMap = await validateRequiredUsers();
 
   const missingUsers = Array.from(userValidationMap.entries())
-    .filter(([_, exists]) => !exists)
-    .map(([id, _]) => id);
+    .filter(([, exists]) => !exists)
+    .map(([id]) => id);
 
   if (missingUsers.length > 0) {
     console.log(`Creating ${missingUsers.length} missing users...`);

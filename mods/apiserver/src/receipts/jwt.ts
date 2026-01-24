@@ -11,9 +11,7 @@ import { join } from "path";
 export function loadPrivateKey(keysDir: string): string {
   const keyPath = join(keysDir, "private.pem");
   if (!existsSync(keyPath)) {
-    throw new Error(
-      `Private key not found at ${keyPath}. Run the key generation command first.`
-    );
+    throw new Error(`Private key not found at ${keyPath}. Run the key generation command first.`);
   }
 
   return readFileSync(keyPath, "utf-8");
@@ -35,18 +33,15 @@ export interface ReceiptData {
 /**
  * Create signed JWT from receipt data.
  */
-export function createSignedToken(
-  receiptData: ReceiptData,
-  privateKey: string
-): string {
+export function createSignedToken(receiptData: ReceiptData, privateKey: string): string {
   const payload = {
     ...receiptData,
     iat: Math.floor(Date.now() / 1000),
-    iss: "mikro",
+    iss: "mikro"
   };
 
   return jwt.sign(payload, privateKey, {
     algorithm: "RS256",
-    expiresIn: "1y", // Token valid for 1 year
+    expiresIn: "1y" // Token valid for 1 year
   });
 }

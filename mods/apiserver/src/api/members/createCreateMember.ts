@@ -6,7 +6,7 @@ import {
   createMemberSchema,
   type CreateMemberInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -22,7 +22,7 @@ export function createCreateMember(client: DbClient) {
   const fn = async (params: CreateMemberInput): Promise<Member> => {
     logger.verbose("creating member", { phone: params.phone, name: params.name });
     const member = await client.member.create({
-      data: params,
+      data: params
     });
     logger.verbose("member created", { id: member.id, phone: member.phone });
     return member;

@@ -37,13 +37,19 @@ export interface MessageProcessorDependencies {
     context?: Record<string, unknown>
   ) => Promise<string>;
   /** Send a WhatsApp message (text or image) */
-  sendWhatsAppMessage: (params: SendWhatsAppMessageInput) => Promise<{ messages?: Array<{ id: string }> }>;
+  sendWhatsAppMessage: (
+    params: SendWhatsAppMessageInput
+  ) => Promise<{ messages?: Array<{ id: string }> }>;
   /** Download media from WhatsApp to get base64 data URL */
   downloadMedia: (mediaId: string) => Promise<string>;
   /** Get chat history from database for a user */
   getChatHistoryForUser: (userId: string) => Promise<Message[]>;
   /** Add message to database for a user */
-  addMessageForUser: (params: { userId: string; role: "AI" | "HUMAN"; content: string }) => Promise<void>;
+  addMessageForUser: (params: {
+    userId: string;
+    role: "AI" | "HUMAN";
+    content: string;
+  }) => Promise<void>;
   /** Get agent by name */
   getAgent: (name: "joan" | "juan" | "maria") => Agent;
 }
@@ -61,7 +67,11 @@ let initializationComplete = false;
  * Get the current message processor state (for debugging).
  * @returns The current processor state
  */
-export function getMessageProcessorState(): { exists: boolean; timestamp: number | null; initializationComplete: boolean } {
+export function getMessageProcessorState(): {
+  exists: boolean;
+  timestamp: number | null;
+  initializationComplete: boolean;
+} {
   return {
     exists: !!messageProcessor,
     timestamp: processorSetTimestamp,
@@ -86,17 +96,42 @@ export function markInitializationComplete(): void {
 export function setMessageProcessor(processor: MessageProcessorDependencies): void {
   // #region agent log
   const beforeState = { processorExists: !!messageProcessor, timestamp: processorSetTimestamp };
-  fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'handleWhatsAppMessage.ts:setMessageProcessor:entry',message:'setMessageProcessor called',data:{beforeState,hasRouteMessage:!!processor.routeMessage,hasInvokeLLM:!!processor.invokeLLM,hasSendWhatsAppMessage:!!processor.sendWhatsAppMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  logger.info("setMessageProcessor called", { 
+  fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "handleWhatsAppMessage.ts:setMessageProcessor:entry",
+      message: "setMessageProcessor called",
+      data: {
+        beforeState,
+        hasRouteMessage: !!processor.routeMessage,
+        hasInvokeLLM: !!processor.invokeLLM,
+        hasSendWhatsAppMessage: !!processor.sendWhatsAppMessage
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A"
+    })
+  }).catch(() => {});
+  logger.info("setMessageProcessor called", {
     beforeState,
     hasRouteMessage: !!processor.routeMessage,
     hasInvokeLLM: !!processor.invokeLLM,
     hasSendWhatsAppMessage: !!processor.sendWhatsAppMessage
   });
   // #endregion
-  
+
   // Validate processor has all required functions
-  if (!processor.routeMessage || !processor.invokeLLM || !processor.sendWhatsAppMessage || !processor.downloadMedia || !processor.getChatHistoryForUser || !processor.addMessageForUser || !processor.getAgent) {
+  if (
+    !processor.routeMessage ||
+    !processor.invokeLLM ||
+    !processor.sendWhatsAppMessage ||
+    !processor.downloadMedia ||
+    !processor.getChatHistoryForUser ||
+    !processor.addMessageForUser ||
+    !processor.getAgent
+  ) {
     const missing = [];
     if (!processor.routeMessage) missing.push("routeMessage");
     if (!processor.invokeLLM) missing.push("invokeLLM");
@@ -108,20 +143,36 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     logger.error("setMessageProcessor called with missing dependencies", { missing });
     throw new Error(`Message processor missing required dependencies: ${missing.join(", ")}`);
   }
-  
+
   messageProcessor = processor;
   processorSetTimestamp = Date.now();
-  
+
   // Verify it was set
   if (!messageProcessor) {
     logger.error("messageProcessor is null after assignment - this should never happen");
     throw new Error("Failed to set message processor");
   }
-  
+
   logger.verbose("message processor configured");
   // #region agent log
-  const afterState = { processorExists: !!messageProcessor, timestamp: processorSetTimestamp, initializationComplete };
-  fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'handleWhatsAppMessage.ts:setMessageProcessor:exit',message:'message processor set',data:{afterState},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  const afterState = {
+    processorExists: !!messageProcessor,
+    timestamp: processorSetTimestamp,
+    initializationComplete
+  };
+  fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "handleWhatsAppMessage.ts:setMessageProcessor:exit",
+      message: "message processor set",
+      data: { afterState },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A"
+    })
+  }).catch(() => {});
   logger.info("setMessageProcessor completed", { afterState, processorSet: !!messageProcessor });
   // #endregion
 }
@@ -167,7 +218,9 @@ export const handleWhatsAppMessage = (() => {
   const fn = async (webhookBody: WhatsAppWebhookBody): Promise<HandleWhatsAppMessageResult> => {
     // Only process whatsapp_business_account events
     if (webhookBody.object !== "whatsapp_business_account") {
-      logger.verbose("ignoring non-whatsapp_business_account event", { object: webhookBody.object });
+      logger.verbose("ignoring non-whatsapp_business_account event", {
+        object: webhookBody.object
+      });
       return { messagesProcessed: 0, senders: [] };
     }
 
@@ -223,26 +276,53 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
   // Check if message processor is configured
   // #region agent log
-  const processorState = { 
-    exists: !!messageProcessor, 
+  const processorState = {
+    exists: !!messageProcessor,
     setTimestamp: processorSetTimestamp,
     timeSinceSet: processorSetTimestamp ? Date.now() - processorSetTimestamp : null,
     initializationComplete,
     hasRouteMessage: !!messageProcessor?.routeMessage,
     hasInvokeLLM: !!messageProcessor?.invokeLLM
   };
-  fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'handleWhatsAppMessage.ts:processMessage:check-processor',message:'checking message processor',data:{phone,processorState},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "handleWhatsAppMessage.ts:processMessage:check-processor",
+      message: "checking message processor",
+      data: { phone, processorState },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A"
+    })
+  }).catch(() => {});
   logger.info("checking message processor", { phone, processorState });
   // #endregion
   if (!messageProcessor || !initializationComplete) {
-    logger.warn("message processor not configured or initialization not complete, message will not be processed", { 
-      phone, 
-      processorState,
-      processorExists: !!messageProcessor,
-      initializationComplete
-    });
+    logger.warn(
+      "message processor not configured or initialization not complete, message will not be processed",
+      {
+        phone,
+        processorState,
+        processorExists: !!messageProcessor,
+        initializationComplete
+      }
+    );
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'handleWhatsAppMessage.ts:processMessage:processor-missing',message:'message processor missing or not initialized',data:{phone,processorState},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "handleWhatsAppMessage.ts:processMessage:processor-missing",
+        message: "message processor missing or not initialized",
+        data: { phone, processorState },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A"
+      })
+    }).catch(() => {});
     // #endregion
     return;
   }
@@ -350,12 +430,13 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
   } catch (error) {
     const err = error as Error;
     logger.error("failed to process message", { phone, error: err.message });
-    
+
     // Try to send an error message to the user
     try {
       await messageProcessor.sendWhatsAppMessage({
         phone,
-        message: "Lo siento, hubo un error procesando tu mensaje. Por favor, intenta de nuevo más tarde."
+        message:
+          "Lo siento, hubo un error procesando tu mensaje. Por favor, intenta de nuevo más tarde."
       });
     } catch {
       logger.error("failed to send error message", { phone });

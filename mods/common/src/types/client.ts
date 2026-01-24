@@ -4,11 +4,11 @@
 import type { CreateMemberInput, UpdateMemberInput } from "../schemas/member.js";
 import type { UpdateUserInput, Role } from "../schemas/user.js";
 import type { MessageRole, AttachmentInput } from "../schemas/message.js";
-import type { CreateLoanInput, PaymentFrequency, LoanType } from "../schemas/loan.js";
-import type { CreatePaymentInput, PaymentMethod, PaymentStatus } from "../schemas/payment.js";
+import type { PaymentFrequency, LoanType } from "../schemas/loan.js";
+import type { PaymentMethod, PaymentStatus } from "../schemas/payment.js";
 import type { Member } from "./member.js";
 import type { User } from "./user.js";
-import type { Message, Attachment } from "./message.js";
+import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
 
 /**
@@ -27,23 +27,20 @@ export interface UserRole {
 export interface DbClient {
   user: {
     create(args: { data: { name: string; phone: string } }): Promise<User>;
-    update(args: {
-      where: { id: string };
-      data: Omit<UpdateUserInput, "id">;
-    }): Promise<User>;
+    update(args: { where: { id: string }; data: Omit<UpdateUserInput, "id"> }): Promise<User>;
     findUnique(args: { where: { id: string } }): Promise<User | null>;
-    findFirst(args: { 
+    findFirst(args: {
       where: { phone: string };
       include?: { roles?: { select?: { role: boolean } } };
     }): Promise<(User & { roles?: Array<{ role: Role }> }) | null>;
-    findMany(args?: { 
-      where?: { enabled?: boolean }; 
+    findMany(args?: {
+      where?: { enabled?: boolean };
       include?: {
         roles?: {
           select?: { role: boolean };
         };
       };
-      take?: number; 
+      take?: number;
       skip?: number;
     }): Promise<(User & { roles?: Array<{ role: Role }> })[]>;
   };
@@ -55,10 +52,7 @@ export interface DbClient {
 
   member: {
     create(args: { data: CreateMemberInput }): Promise<Member>;
-    update(args: {
-      where: { id: string };
-      data: Omit<UpdateMemberInput, "id">;
-    }): Promise<Member>;
+    update(args: { where: { id: string }; data: Omit<UpdateMemberInput, "id"> }): Promise<Member>;
     delete(args: { where: { id: string } }): Promise<Member>;
     findUnique(args: { where: { id: string } }): Promise<Member | null>;
     findFirst(args: { where: { phone: string } }): Promise<Member | null>;

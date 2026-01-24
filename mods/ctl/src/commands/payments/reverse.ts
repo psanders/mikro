@@ -12,8 +12,8 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
   static override readonly args = {
     ref: Args.string({
       description: "The Payment ID to reverse",
-      required: true,
-    }),
+      required: true
+    })
   };
 
   public async run(): Promise<void> {
@@ -25,11 +25,11 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
 
     const notes = await input({
       message: "Notes (reason for reversal)",
-      required: false,
+      required: false
     });
 
     const ready = await confirm({
-      message: "Are you sure you want to reverse this payment?",
+      message: "Are you sure you want to reverse this payment?"
     });
 
     if (!ready) {
@@ -40,7 +40,7 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
     try {
       await client.reversePayment.mutate({
         id: args.ref,
-        notes: notes || undefined,
+        notes: notes || undefined
       });
 
       this.log("Done! Payment has been reversed.");

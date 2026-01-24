@@ -17,7 +17,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
       enableJsonFlag: this.ctor.enableJsonFlag,
       args: this.ctor.args,
-      strict: this.ctor.strict,
+      strict: this.ctor.strict
     });
     this.flags = flags as Flags<T>;
     this.args = args as Args<T>;
@@ -43,7 +43,6 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   }
 }
 
-// eslint-disable-next-line no-redeclare
 export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
   (typeof BaseCommand)["baseFlags"] & T["flags"]
 >;

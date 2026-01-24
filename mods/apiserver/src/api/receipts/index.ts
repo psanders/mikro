@@ -4,5 +4,5 @@
 export {
   createGenerateReceipt,
   type GenerateReceiptResponse,
-  type ReceiptDependencies,
+  type ReceiptDependencies
 } from "./createGenerateReceipt.js";

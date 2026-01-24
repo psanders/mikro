@@ -6,7 +6,7 @@ import {
   listLoansSchema,
   type ListLoansInput,
   type DbClient,
-  type Loan,
+  type Loan
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -19,11 +19,15 @@ import { logger } from "../../logger.js";
  */
 export function createListLoans(client: DbClient) {
   const fn = async (params: ListLoansInput): Promise<Loan[]> => {
-    logger.verbose("listing loans", { limit: params.limit, offset: params.offset, showAll: params.showAll });
+    logger.verbose("listing loans", {
+      limit: params.limit,
+      offset: params.offset,
+      showAll: params.showAll
+    });
     const loans = await client.loan.findMany({
       where: params.showAll ? undefined : { status: "ACTIVE" },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
     logger.verbose("loans listed", { count: loans.length });
     return loans;

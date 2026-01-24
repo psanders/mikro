@@ -6,7 +6,7 @@ import {
   listMembersByCollectorSchema,
   type ListMembersByCollectorInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -23,12 +23,15 @@ export function createListMembersByCollector(client: DbClient) {
     const members = await client.member.findMany({
       where: {
         assignedCollectorId: params.assignedCollectorId,
-        ...(params.showInactive ? {} : { isActive: true }),
+        ...(params.showInactive ? {} : { isActive: true })
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
-    logger.verbose("members by collector listed", { collectorId: params.assignedCollectorId, count: members.length });
+    logger.verbose("members by collector listed", {
+      collectorId: params.assignedCollectorId,
+      count: members.length
+    });
     return members;
   };
 

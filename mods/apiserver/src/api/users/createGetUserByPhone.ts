@@ -7,7 +7,7 @@ import {
   type GetUserByPhoneInput,
   type DbClient,
   type User,
-  type Role,
+  type Role
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 

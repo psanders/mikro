@@ -10,7 +10,7 @@ import {
   createAuthenticatedCaller,
   applySchema,
   type TestDb,
-  type AuthenticatedCaller,
+  type AuthenticatedCaller
 } from "./setup.js";
 
 describe("Loans Integration", () => {
@@ -43,10 +43,20 @@ describe("Loans Integration", () => {
   async function createTestMember() {
     return caller.createMember({
       name: "Loan Test Member",
-      phone: "+1234567890",
-      idNumber: "ID-LOAN-TEST",
-      collectionPoint: "Test Point",
+      phone: "+18091234596",
+      idNumber: "001-1234567-8",
+      collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
+      referredById: (
+        await caller.createUser({ name: "Test Referrer", phone: "+18091234579", role: "REFERRER" })
+      ).id,
+      assignedCollectorId: (
+        await caller.createUser({
+          name: "Test Collector",
+          phone: "+18091234580",
+          role: "COLLECTOR"
+        })
+      ).id
     });
   }
 
@@ -59,7 +69,7 @@ describe("Loans Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY" as const,
+        paymentFrequency: "WEEKLY" as const
       };
 
       const loan = await caller.createLoan(input);
@@ -82,7 +92,7 @@ describe("Loans Integration", () => {
         principal: 3000,
         termLength: 30,
         paymentAmount: 120,
-        paymentFrequency: "DAILY",
+        paymentFrequency: "DAILY"
       });
 
       expect(loan.paymentFrequency).to.equal("DAILY");
@@ -97,7 +107,7 @@ describe("Loans Integration", () => {
         termLength: 20,
         paymentAmount: 600,
         paymentFrequency: "WEEKLY",
-        type: "SAN",
+        type: "SAN"
       });
 
       expect(loan.type).to.equal("SAN");
@@ -111,7 +121,7 @@ describe("Loans Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY",
+        paymentFrequency: "WEEKLY"
       });
 
       expect(loan.loanId).to.equal(10000);
@@ -126,7 +136,7 @@ describe("Loans Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY",
+        paymentFrequency: "WEEKLY"
       });
 
       // Create second loan
@@ -135,7 +145,7 @@ describe("Loans Integration", () => {
         principal: 3000,
         termLength: 5,
         paymentAmount: 700,
-        paymentFrequency: "WEEKLY",
+        paymentFrequency: "WEEKLY"
       });
 
       // Create third loan
@@ -144,7 +154,7 @@ describe("Loans Integration", () => {
         principal: 10000,
         termLength: 20,
         paymentAmount: 600,
-        paymentFrequency: "DAILY",
+        paymentFrequency: "DAILY"
       });
 
       expect(loan1.loanId).to.equal(10000);
@@ -154,20 +164,35 @@ describe("Loans Integration", () => {
 
     it("should create loans for different members with unique loanIds", async () => {
       // Create multiple members
+      const referrer = await caller.createUser({
+        name: "Test Referrer",
+        phone: "+18091234585",
+        role: "REFERRER"
+      });
+      const collector = await caller.createUser({
+        name: "Test Collector",
+        phone: "+18091234586",
+        role: "COLLECTOR"
+      });
+
       const member1 = await caller.createMember({
         name: "Member One",
-        phone: "+1111111111",
-        idNumber: "ID-M1",
-        collectionPoint: "Point 1",
+        phone: "+18091234597",
+        idNumber: "001-1234567-1",
+        collectionPoint: "https://example.com/point-1",
         homeAddress: "Address 1",
+        referredById: referrer.id,
+        assignedCollectorId: collector.id
       });
 
       const member2 = await caller.createMember({
         name: "Member Two",
-        phone: "+2222222222",
-        idNumber: "ID-M2",
-        collectionPoint: "Point 2",
+        phone: "+18091234598",
+        idNumber: "001-1234567-2",
+        collectionPoint: "https://example.com/point-2",
         homeAddress: "Address 2",
+        referredById: referrer.id,
+        assignedCollectorId: collector.id
       });
 
       // Create loans for different members
@@ -176,7 +201,7 @@ describe("Loans Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY",
+        paymentFrequency: "WEEKLY"
       });
 
       const loan2 = await caller.createLoan({
@@ -184,7 +209,7 @@ describe("Loans Integration", () => {
         principal: 3000,
         termLength: 5,
         paymentAmount: 700,
-        paymentFrequency: "DAILY",
+        paymentFrequency: "DAILY"
       });
 
       expect(loan1.memberId).to.equal(member1.id);
@@ -202,7 +227,7 @@ describe("Loans Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY",
+        paymentFrequency: "WEEKLY"
       });
 
       const afterCreate = new Date();

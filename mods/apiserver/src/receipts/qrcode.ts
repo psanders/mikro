@@ -13,8 +13,8 @@ export async function generateQRCode(data: string): Promise<string> {
     width: 512, // Higher resolution for better scanning
     color: {
       dark: "#000000",
-      light: "#ffffff",
-    },
+      light: "#ffffff"
+    }
   });
 
   return qrDataUrl;

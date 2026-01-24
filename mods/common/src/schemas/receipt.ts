@@ -7,7 +7,7 @@ import { z } from "zod/v4";
  * Schema for generating a receipt.
  */
 export const generateReceiptSchema = z.object({
-  paymentId: z.uuid({ error: "Invalid payment ID" }),
+  paymentId: z.uuid({ error: "Invalid payment ID" })
 });
 
 /**
@@ -25,7 +25,7 @@ export const receiptDataSchema = z.object({
   amountPaid: z.string(),
   pendingPayments: z.number(),
   paymentNumber: z.string(),
-  agentName: z.string().optional(),
+  agentName: z.string().optional()
 });
 
 /**

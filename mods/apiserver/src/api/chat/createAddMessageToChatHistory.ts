@@ -6,7 +6,7 @@ import {
   addMessageSchema,
   type AddMessageInput,
   type DbClient,
-  type Message,
+  type Message
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,10 +20,10 @@ import { logger } from "../../logger.js";
 export function createAddMessageToChatHistory(client: DbClient) {
   const fn = async (params: AddMessageInput): Promise<Message> => {
     const { attachments, ...messageData } = params;
-    logger.verbose("adding message to chat history", { 
-      role: messageData.role, 
-      memberId: messageData.memberId, 
-      userId: messageData.userId 
+    logger.verbose("adding message to chat history", {
+      role: messageData.role,
+      memberId: messageData.memberId,
+      userId: messageData.userId
     });
 
     // Create the message
@@ -33,8 +33,8 @@ export function createAddMessageToChatHistory(client: DbClient) {
         content: messageData.content,
         tools: messageData.tools ? JSON.stringify(messageData.tools) : undefined,
         memberId: messageData.memberId,
-        userId: messageData.userId,
-      },
+        userId: messageData.userId
+      }
     });
 
     // Create attachments if provided
@@ -42,10 +42,13 @@ export function createAddMessageToChatHistory(client: DbClient) {
       await client.attachment.createMany({
         data: attachments.map((attachment) => ({
           ...attachment,
-          messageId: message.id,
-        })),
+          messageId: message.id
+        }))
       });
-      logger.verbose("attachments added to message", { messageId: message.id, count: attachments.length });
+      logger.verbose("attachments added to message", {
+        messageId: message.id,
+        count: attachments.length
+      });
     }
 
     logger.verbose("message added to chat history", { id: message.id });

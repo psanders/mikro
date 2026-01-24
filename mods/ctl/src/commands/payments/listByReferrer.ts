@@ -10,34 +10,34 @@ import errorHandler from "../../errorHandler.js";
 export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
   static override readonly description = "display payments for members referred by a specific user";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> <referrer-id> --start-date 2026-01-01 --end-date 2026-01-31",
+    "<%= config.bin %> <%= command.id %> <referrer-id> --start-date 2026-01-01 --end-date 2026-01-31"
   ];
   static override readonly args = {
     ref: Args.string({
       description: "The Referrer ID to filter by",
-      required: true,
-    }),
+      required: true
+    })
   };
   static override readonly flags = {
     "start-date": Flags.string({
       description: "start date (YYYY-MM-DD)",
-      required: true,
+      required: true
     }),
     "end-date": Flags.string({
       description: "end date (YYYY-MM-DD)",
-      required: true,
+      required: true
     }),
     "show-reversed": Flags.boolean({
       char: "a",
       description: "show all payments including reversed",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -50,7 +50,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
         startDate: new Date(flags["start-date"]),
         endDate: new Date(flags["end-date"]),
         showReversed: flags["show-reversed"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 170 });
@@ -70,7 +70,11 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
-          { text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"), padding: [0, 0, 0, 0], width: 20 },
+          {
+            text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
+            padding: [0, 0, 0, 0],
+            width: 20
+          },
           { text: payment.loanId, padding: [0, 0, 0, 0], width: 40 }
         );
       });

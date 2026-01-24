@@ -6,7 +6,7 @@ import {
   getMemberByPhoneSchema,
   type GetMemberByPhoneInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,7 +20,7 @@ export function createGetMemberByPhone(client: DbClient) {
   const fn = async (params: GetMemberByPhoneInput): Promise<Member | null> => {
     logger.verbose("getting member by phone", { phone: params.phone });
     const member = await client.member.findFirst({
-      where: { phone: params.phone },
+      where: { phone: params.phone }
     });
     logger.verbose("member by phone retrieved", { phone: params.phone, found: !!member });
     return member;

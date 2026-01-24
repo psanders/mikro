@@ -31,9 +31,9 @@ function getOpenAIClient(): OpenAI {
  * Filter tools based on agent's allowed tools.
  */
 function filterTools(allTools: ToolFunction[], allowedTools: string[]): ToolFunction[] {
-  const toolMap = new Map(allTools.map(tool => [tool.function.name, tool]));
+  const toolMap = new Map(allTools.map((tool) => [tool.function.name, tool]));
   return allowedTools
-    .map(name => toolMap.get(name))
+    .map((name) => toolMap.get(name))
     .filter((tool): tool is ToolFunction => tool !== undefined);
 }
 
@@ -82,17 +82,14 @@ export function createInvokeLLM(
     imageUrl?: string | null,
     context?: Record<string, unknown>
   ): Promise<string> {
-    logger.verbose("invoking llm", { 
-      agent: agent.name, 
+    logger.verbose("invoking llm", {
+      agent: agent.name,
       historyLength: messages.length,
-      hasImage: !!imageUrl 
+      hasImage: !!imageUrl
     });
 
     // Build the full messages array with system prompt
-    const fullMessages: Message[] = [
-      { role: "system", content: agent.systemPrompt },
-      ...messages
-    ];
+    const fullMessages: Message[] = [{ role: "system", content: agent.systemPrompt }, ...messages];
 
     // Build current user message content
     const userContent: MessageContentItem[] = [];
@@ -134,7 +131,10 @@ export function createInvokeLLM(
       let response = await client.chat.completions.create({
         model: agent.model || "gpt-4o",
         messages: fullMessages as Parameters<typeof client.chat.completions.create>[0]["messages"],
-        tools: agentTools.length > 0 ? agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"] : undefined,
+        tools:
+          agentTools.length > 0
+            ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
+            : undefined,
         tool_choice: agentTools.length > 0 ? "auto" : undefined,
         temperature: agent.temperature ?? 0.7
       });
@@ -146,20 +146,24 @@ export function createInvokeLLM(
       while (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
         // Filter to only function type tool calls
         const functionCalls = assistantMessage.tool_calls.filter(
-          (tc): tc is typeof tc & { type: "function"; function: { name: string; arguments: string } } =>
-            tc.type === "function" && "function" in tc
+          (
+            tc
+          ): tc is typeof tc & {
+            type: "function";
+            function: { name: string; arguments: string };
+          } => tc.type === "function" && "function" in tc
         );
 
-        logger.verbose("tool calls detected", { 
-          agent: agent.name, 
-          tools: functionCalls.map(tc => tc.function.name) 
+        logger.verbose("tool calls detected", {
+          agent: agent.name,
+          tools: functionCalls.map((tc) => tc.function.name)
         });
 
         // Add assistant message with tool calls to conversation
         fullMessages.push({
           role: "assistant",
           content: assistantMessage.content || "",
-          tool_calls: functionCalls.map(tc => ({
+          tool_calls: functionCalls.map((tc) => ({
             id: tc.id,
             type: tc.type,
             function: tc.function
@@ -177,10 +181,10 @@ export function createInvokeLLM(
           // Execute the tool
           const result = await toolExecutor(toolName, toolArgs, context);
 
-          logger.verbose("tool executed", { 
-            agent: agent.name, 
-            tool: toolName, 
-            success: result.success 
+          logger.verbose("tool executed", {
+            agent: agent.name,
+            tool: toolName,
+            success: result.success
           });
 
           toolResults.push({
@@ -197,8 +201,13 @@ export function createInvokeLLM(
         // Get next response from OpenAI
         response = await client.chat.completions.create({
           model: agent.model || "gpt-4o",
-          messages: fullMessages as Parameters<typeof client.chat.completions.create>[0]["messages"],
-          tools: agentTools.length > 0 ? agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"] : undefined,
+          messages: fullMessages as Parameters<
+            typeof client.chat.completions.create
+          >[0]["messages"],
+          tools:
+            agentTools.length > 0
+              ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
+              : undefined,
           tool_choice: agentTools.length > 0 ? "auto" : undefined,
           temperature: agent.temperature ?? 0.7
         });
@@ -209,9 +218,9 @@ export function createInvokeLLM(
       // Get final text response
       finalResponse = assistantMessage.content || "";
 
-      logger.verbose("llm response received", { 
-        agent: agent.name, 
-        responseLength: finalResponse.length 
+      logger.verbose("llm response received", {
+        agent: agent.name,
+        responseLength: finalResponse.length
       });
 
       return finalResponse;

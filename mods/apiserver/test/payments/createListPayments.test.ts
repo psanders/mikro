@@ -9,7 +9,7 @@ import { ValidationError } from "@mikro/common";
 describe("createListPayments", () => {
   const validInput = {
     startDate: new Date("2026-01-01"),
-    endDate: new Date("2026-01-31"),
+    endDate: new Date("2026-01-31")
   };
 
   afterEach(() => {
@@ -30,7 +30,7 @@ describe("createListPayments", () => {
           notes: null,
           collectedById: null,
           createdAt: new Date(),
-          updatedAt: new Date(),
+          updatedAt: new Date()
         },
         {
           id: "payment-2",
@@ -42,13 +42,13 @@ describe("createListPayments", () => {
           notes: null,
           collectedById: null,
           createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       ];
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves(expectedPayments),
-        },
+          findMany: sinon.stub().resolves(expectedPayments)
+        }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -66,8 +66,8 @@ describe("createListPayments", () => {
       const inputWithPagination = { ...validInput, limit: 10, offset: 5 };
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -79,7 +79,7 @@ describe("createListPayments", () => {
         mockClient.payment.findMany.calledWith(
           sinon.match({
             take: 10,
-            skip: 5,
+            skip: 5
           })
         )
       ).to.be.true;
@@ -89,8 +89,8 @@ describe("createListPayments", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -106,7 +106,7 @@ describe("createListPayments", () => {
     it("should throw ValidationError for missing startDate", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -123,7 +123,7 @@ describe("createListPayments", () => {
     it("should throw ValidationError for negative offset", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -140,7 +140,7 @@ describe("createListPayments", () => {
     it("should throw ValidationError for limit exceeding max", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPayments = createListPayments(mockClient as any);
 
@@ -160,8 +160,8 @@ describe("createListPayments", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          findMany: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const listPayments = createListPayments(mockClient as any);
 

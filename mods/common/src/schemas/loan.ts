@@ -22,14 +22,14 @@ export const createLoanSchema = z.object({
   termLength: z.number().int().positive("Term length must be a positive integer"),
   paymentAmount: z.number().positive("Payment amount must be positive"),
   paymentFrequency: paymentFrequencyEnum,
-  type: loanTypeEnum.optional(),
+  type: loanTypeEnum.optional()
 });
 
 /**
  * Schema for getting a loan by ID.
  */
 export const getLoanSchema = z.object({
-  id: z.uuid({ error: "Invalid loan ID" }),
+  id: z.uuid({ error: "Invalid loan ID" })
 });
 
 /**
@@ -43,7 +43,7 @@ export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCE
 export const listLoansSchema = z.object({
   showAll: z.boolean().optional(), // If true, show all statuses; otherwise only ACTIVE
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -53,7 +53,7 @@ export const listLoansByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   showAll: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**
@@ -63,7 +63,7 @@ export const listLoansByCollectorSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
   showAll: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**

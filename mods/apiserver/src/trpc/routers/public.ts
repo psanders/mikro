@@ -12,6 +12,6 @@ export const publicRouter = router({
    */
   ping: publicProcedure.query(() => ({
     message: "pong",
-    timestamp: Date.now(),
-  })),
+    timestamp: Date.now()
+  }))
 });

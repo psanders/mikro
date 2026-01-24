@@ -18,32 +18,32 @@ export default class Create extends BaseCommand<typeof Create> {
     const answers = {
       loanId: await input({
         message: "Loan ID",
-        required: true,
+        required: true
       }),
       amount: await number({
         message: "Amount",
-        required: true,
+        required: true
       }),
       method: await select({
         message: "Payment Method",
         choices: [
           { name: "Cash", value: "CASH" as const },
-          { name: "Transfer", value: "TRANSFER" as const },
+          { name: "Transfer", value: "TRANSFER" as const }
         ],
-        default: "CASH",
+        default: "CASH"
       }),
       collectedById: await input({
         message: "Collector ID (optional)",
-        required: false,
+        required: false
       }),
       notes: await input({
         message: "Notes (optional)",
-        required: false,
-      }),
+        required: false
+      })
     };
 
     const ready = await confirm({
-      message: "Ready to create payment?",
+      message: "Ready to create payment?"
     });
 
     if (!ready) {
@@ -57,7 +57,7 @@ export default class Create extends BaseCommand<typeof Create> {
         amount: answers.amount!,
         method: answers.method,
         collectedById: answers.collectedById || undefined,
-        notes: answers.notes || undefined,
+        notes: answers.notes || undefined
       });
 
       this.log("Done!");

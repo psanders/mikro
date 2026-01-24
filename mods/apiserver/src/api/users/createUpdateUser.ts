@@ -6,7 +6,7 @@ import {
   updateUserSchema,
   type UpdateUserInput,
   type DbClient,
-  type User,
+  type User
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -25,7 +25,7 @@ export function createUpdateUser(client: DbClient) {
 
     const user = await client.user.update({
       where: { id },
-      data: updateData,
+      data: updateData
     });
     logger.verbose("user updated", { id: user.id });
     return user;

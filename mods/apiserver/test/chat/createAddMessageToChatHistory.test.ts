@@ -20,7 +20,7 @@ describe("createAddMessageToChatHistory", () => {
       const input = {
         memberId: validMemberId,
         role: "HUMAN" as const,
-        content: "Hello, I need help",
+        content: "Hello, I need help"
       };
       const expectedMessage = {
         id: "msg-123",
@@ -29,15 +29,15 @@ describe("createAddMessageToChatHistory", () => {
         tools: null,
         memberId: validMemberId,
         userId: null,
-        createdAt: new Date(),
+        createdAt: new Date()
       };
       const mockClient = {
         message: {
-          create: sinon.stub().resolves(expectedMessage),
+          create: sinon.stub().resolves(expectedMessage)
         },
         attachment: {
-          createMany: sinon.stub().resolves({ count: 0 }),
-        },
+          createMany: sinon.stub().resolves({ count: 0 })
+        }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -57,7 +57,7 @@ describe("createAddMessageToChatHistory", () => {
         userId: validUserId,
         role: "AI" as const,
         content: "How can I assist you?",
-        tools: ["search"],
+        tools: ["search"]
       };
       const expectedMessage = {
         id: "msg-456",
@@ -66,15 +66,15 @@ describe("createAddMessageToChatHistory", () => {
         tools: JSON.stringify(input.tools),
         memberId: null,
         userId: validUserId,
-        createdAt: new Date(),
+        createdAt: new Date()
       };
       const mockClient = {
         message: {
-          create: sinon.stub().resolves(expectedMessage),
+          create: sinon.stub().resolves(expectedMessage)
         },
         attachment: {
-          createMany: sinon.stub().resolves({ count: 0 }),
-        },
+          createMany: sinon.stub().resolves({ count: 0 })
+        }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -98,9 +98,9 @@ describe("createAddMessageToChatHistory", () => {
             url: "https://example.com/doc.pdf",
             name: "document.pdf",
             mimeType: "application/pdf",
-            size: 1024,
-          },
-        ],
+            size: 1024
+          }
+        ]
       };
       const expectedMessage = {
         id: "msg-789",
@@ -109,15 +109,15 @@ describe("createAddMessageToChatHistory", () => {
         tools: null,
         memberId: validMemberId,
         userId: null,
-        createdAt: new Date(),
+        createdAt: new Date()
       };
       const mockClient = {
         message: {
-          create: sinon.stub().resolves(expectedMessage),
+          create: sinon.stub().resolves(expectedMessage)
         },
         attachment: {
-          createMany: sinon.stub().resolves({ count: 1 }),
-        },
+          createMany: sinon.stub().resolves({ count: 1 })
+        }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -139,7 +139,7 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -157,7 +157,7 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -167,7 +167,7 @@ describe("createAddMessageToChatHistory", () => {
           memberId: validMemberId,
           userId: validUserId,
           role: "HUMAN",
-          content: "Hello",
+          content: "Hello"
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -180,7 +180,7 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -189,7 +189,7 @@ describe("createAddMessageToChatHistory", () => {
         await addMessage({
           memberId: validMemberId,
           role: "HUMAN",
-          content: "",
+          content: ""
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -202,7 +202,7 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -211,7 +211,7 @@ describe("createAddMessageToChatHistory", () => {
         await addMessage({
           memberId: validMemberId,
           role: "INVALID" as any,
-          content: "Hello",
+          content: "Hello"
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -224,7 +224,7 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -237,9 +237,9 @@ describe("createAddMessageToChatHistory", () => {
           attachments: [
             {
               type: "IMAGE" as const,
-              url: "not-a-valid-url",
-            },
-          ],
+              url: "not-a-valid-url"
+            }
+          ]
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -254,9 +254,9 @@ describe("createAddMessageToChatHistory", () => {
       // Arrange
       const mockClient = {
         message: {
-          create: sinon.stub().rejects(new Error("Database error")),
+          create: sinon.stub().rejects(new Error("Database error"))
         },
-        attachment: { createMany: sinon.stub() },
+        attachment: { createMany: sinon.stub() }
       };
       const addMessage = createAddMessageToChatHistory(mockClient as any);
 
@@ -265,7 +265,7 @@ describe("createAddMessageToChatHistory", () => {
         await addMessage({
           memberId: validMemberId,
           role: "HUMAN",
-          content: "Hello",
+          content: "Hello"
         });
         expect.fail("Expected error to be thrown");
       } catch (error) {

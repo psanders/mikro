@@ -18,7 +18,7 @@ describe("createGetChatHistory", () => {
     memberId: validMemberId,
     userId: null,
     createdAt: new Date(),
-    attachments: [],
+    attachments: []
   });
 
   afterEach(() => {
@@ -30,12 +30,12 @@ describe("createGetChatHistory", () => {
       // Arrange
       const expectedMessages = [
         createMockMessage("msg-1", "Hello", "HUMAN"),
-        createMockMessage("msg-2", "Hi there!", "AI"),
+        createMockMessage("msg-2", "Hi there!", "AI")
       ];
       const mockClient = {
         message: {
-          findMany: sinon.stub().resolves(expectedMessages),
-        },
+          findMany: sinon.stub().resolves(expectedMessages)
+        }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -51,12 +51,16 @@ describe("createGetChatHistory", () => {
     it("should return chat history for a user", async () => {
       // Arrange
       const expectedMessages = [
-        { ...createMockMessage("msg-1", "User message", "HUMAN"), memberId: null, userId: validUserId },
+        {
+          ...createMockMessage("msg-1", "User message", "HUMAN"),
+          memberId: null,
+          userId: validUserId
+        }
       ];
       const mockClient = {
         message: {
-          findMany: sinon.stub().resolves(expectedMessages),
-        },
+          findMany: sinon.stub().resolves(expectedMessages)
+        }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -75,8 +79,8 @@ describe("createGetChatHistory", () => {
       const expectedMessages = [createMockMessage("msg-1", "Hello", "HUMAN")];
       const mockClient = {
         message: {
-          findMany: sinon.stub().resolves(expectedMessages),
-        },
+          findMany: sinon.stub().resolves(expectedMessages)
+        }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -84,7 +88,7 @@ describe("createGetChatHistory", () => {
       const result = await getChatHistory({
         memberId: validMemberId,
         limit: 10,
-        offset: 5,
+        offset: 5
       });
 
       // Assert
@@ -98,8 +102,8 @@ describe("createGetChatHistory", () => {
       // Arrange
       const mockClient = {
         message: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -115,7 +119,7 @@ describe("createGetChatHistory", () => {
     it("should throw ValidationError when neither memberId nor userId provided", async () => {
       // Arrange
       const mockClient = {
-        message: { findMany: sinon.stub() },
+        message: { findMany: sinon.stub() }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -132,7 +136,7 @@ describe("createGetChatHistory", () => {
     it("should throw ValidationError when both memberId and userId provided", async () => {
       // Arrange
       const mockClient = {
-        message: { findMany: sinon.stub() },
+        message: { findMany: sinon.stub() }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -149,7 +153,7 @@ describe("createGetChatHistory", () => {
     it("should throw ValidationError for invalid memberId UUID", async () => {
       // Arrange
       const mockClient = {
-        message: { findMany: sinon.stub() },
+        message: { findMany: sinon.stub() }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 
@@ -169,8 +173,8 @@ describe("createGetChatHistory", () => {
       // Arrange
       const mockClient = {
         message: {
-          findMany: sinon.stub().rejects(new Error("Database error")),
-        },
+          findMany: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const getChatHistory = createGetChatHistory(mockClient as any);
 

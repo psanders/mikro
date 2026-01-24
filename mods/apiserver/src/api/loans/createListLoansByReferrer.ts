@@ -6,7 +6,7 @@ import {
   listLoansByReferrerSchema,
   type ListLoansByReferrerInput,
   type DbClient,
-  type Loan,
+  type Loan
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -23,14 +23,17 @@ export function createListLoansByReferrer(client: DbClient) {
     const loans = await client.loan.findMany({
       where: {
         member: {
-          referredById: params.referredById,
+          referredById: params.referredById
         },
-        ...(params.showAll ? {} : { status: "ACTIVE" }),
+        ...(params.showAll ? {} : { status: "ACTIVE" })
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
-    logger.verbose("loans by referrer listed", { referrerId: params.referredById, count: loans.length });
+    logger.verbose("loans by referrer listed", {
+      referrerId: params.referredById,
+      count: loans.length
+    });
     return loans;
   };
 

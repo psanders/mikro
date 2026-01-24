@@ -8,7 +8,7 @@ import { ValidationError } from "@mikro/common";
 
 describe("createGetUser", () => {
   const validInput = {
-    id: "550e8400-e29b-41d4-a716-446655440000",
+    id: "550e8400-e29b-41d4-a716-446655440000"
   };
 
   afterEach(() => {
@@ -24,12 +24,12 @@ describe("createGetUser", () => {
         phone: "+1234567890",
         enabled: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         user: {
-          findUnique: sinon.stub().resolves(expectedUser),
-        },
+          findUnique: sinon.stub().resolves(expectedUser)
+        }
       };
       const getUser = createGetUser(mockClient as any);
 
@@ -41,7 +41,7 @@ describe("createGetUser", () => {
       expect(mockClient.user.findUnique.calledOnce).to.be.true;
       expect(
         mockClient.user.findUnique.calledWith({
-          where: { id: validInput.id },
+          where: { id: validInput.id }
         })
       ).to.be.true;
     });
@@ -50,8 +50,8 @@ describe("createGetUser", () => {
       // Arrange
       const mockClient = {
         user: {
-          findUnique: sinon.stub().resolves(null),
-        },
+          findUnique: sinon.stub().resolves(null)
+        }
       };
       const getUser = createGetUser(mockClient as any);
 
@@ -68,7 +68,7 @@ describe("createGetUser", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        user: { findUnique: sinon.stub() },
+        user: { findUnique: sinon.stub() }
       };
       const getUser = createGetUser(mockClient as any);
 
@@ -85,7 +85,7 @@ describe("createGetUser", () => {
     it("should throw ValidationError for missing id", async () => {
       // Arrange
       const mockClient = {
-        user: { findUnique: sinon.stub() },
+        user: { findUnique: sinon.stub() }
       };
       const getUser = createGetUser(mockClient as any);
 
@@ -105,8 +105,8 @@ describe("createGetUser", () => {
       // Arrange
       const mockClient = {
         user: {
-          findUnique: sinon.stub().rejects(new Error("Database error")),
-        },
+          findUnique: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const getUser = createGetUser(mockClient as any);
 

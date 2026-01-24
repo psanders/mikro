@@ -34,12 +34,12 @@ export function generateKeys(keysDir: string): GeneratedKeys {
     modulusLength: 2048,
     publicKeyEncoding: {
       type: "spki",
-      format: "pem",
+      format: "pem"
     },
     privateKeyEncoding: {
       type: "pkcs8",
-      format: "pem",
-    },
+      format: "pem"
+    }
   });
 
   // Save keys to files
@@ -48,6 +48,6 @@ export function generateKeys(keysDir: string): GeneratedKeys {
 
   return {
     privateKeyPath,
-    publicKeyPath,
+    publicKeyPath
   };
 }

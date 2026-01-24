@@ -12,8 +12,8 @@ export default class Update extends BaseCommand<typeof Update> {
   static override readonly args = {
     ref: Args.string({
       description: "The User ID to update",
-      required: true,
-    }),
+      required: true
+    })
   };
 
   public async run(): Promise<void> {
@@ -35,25 +35,25 @@ export default class Update extends BaseCommand<typeof Update> {
         name: await input({
           message: "Name",
           default: userFromDB.name,
-          required: true,
+          required: true
         }),
         phone: await input({
           message: "Phone (e.g., 18091234567)",
           default: userFromDB.phone ?? undefined,
-          required: true,
+          required: true
         }),
         enabled: await select({
           message: "Enabled Status",
           choices: [
             { name: "Enabled", value: true },
-            { name: "Disabled", value: false },
+            { name: "Disabled", value: false }
           ],
-          default: userFromDB.enabled,
-        }),
+          default: userFromDB.enabled
+        })
       };
 
       const ready = await confirm({
-        message: "Ready to update user?",
+        message: "Ready to update user?"
       });
 
       if (!ready) {
@@ -65,7 +65,7 @@ export default class Update extends BaseCommand<typeof Update> {
         id: args.ref,
         name: answers.name,
         phone: answers.phone,
-        enabled: answers.enabled,
+        enabled: answers.enabled
       });
 
       this.log("Done!");

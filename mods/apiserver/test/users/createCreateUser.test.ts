@@ -9,13 +9,13 @@ import { ValidationError } from "@mikro/common";
 describe("createCreateUser", () => {
   const validInput = {
     name: "John Doe",
-    phone: "+1234567890",
+    phone: "+1234567890"
   };
 
   const validInputWithRole = {
     name: "Jane Admin",
     phone: "+0987654321",
-    role: "ADMIN" as const,
+    role: "ADMIN" as const
   };
 
   afterEach(() => {
@@ -31,15 +31,15 @@ describe("createCreateUser", () => {
         phone: validInput.phone,
         enabled: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         user: {
-          create: sinon.stub().resolves(expectedUser),
+          create: sinon.stub().resolves(expectedUser)
         },
         userRole: {
-          create: sinon.stub().resolves({}),
-        },
+          create: sinon.stub().resolves({})
+        }
       };
       const createUser = createCreateUser(mockClient as any);
 
@@ -61,19 +61,19 @@ describe("createCreateUser", () => {
         phone: validInputWithRole.phone,
         enabled: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         user: {
-          create: sinon.stub().resolves(expectedUser),
+          create: sinon.stub().resolves(expectedUser)
         },
         userRole: {
           create: sinon.stub().resolves({
             id: "role-123",
             userId: "user-456",
-            role: "ADMIN",
-          }),
-        },
+            role: "ADMIN"
+          })
+        }
       };
       const createUser = createCreateUser(mockClient as any);
 
@@ -86,7 +86,7 @@ describe("createCreateUser", () => {
       expect(mockClient.userRole.create.calledOnce).to.be.true;
       expect(
         mockClient.userRole.create.calledWith({
-          data: { userId: "user-456", role: "ADMIN" },
+          data: { userId: "user-456", role: "ADMIN" }
         })
       ).to.be.true;
     });
@@ -97,7 +97,7 @@ describe("createCreateUser", () => {
       // Arrange
       const mockClient = {
         user: { create: sinon.stub() },
-        userRole: { create: sinon.stub() },
+        userRole: { create: sinon.stub() }
       };
       const createUser = createCreateUser(mockClient as any);
 
@@ -115,7 +115,7 @@ describe("createCreateUser", () => {
       // Arrange
       const mockClient = {
         user: { create: sinon.stub() },
-        userRole: { create: sinon.stub() },
+        userRole: { create: sinon.stub() }
       };
       const createUser = createCreateUser(mockClient as any);
 
@@ -135,9 +135,9 @@ describe("createCreateUser", () => {
       // Arrange
       const mockClient = {
         user: {
-          create: sinon.stub().rejects(new Error("Connection failed")),
+          create: sinon.stub().rejects(new Error("Connection failed"))
         },
-        userRole: { create: sinon.stub() },
+        userRole: { create: sinon.stub() }
       };
       const createUser = createCreateUser(mockClient as any);
 

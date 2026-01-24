@@ -10,7 +10,7 @@ import { protectedRouter } from "./protected.js";
  */
 export const appRouter = router({
   ...publicRouter._def.procedures,
-  ...protectedRouter._def.procedures,
+  ...protectedRouter._def.procedures
 });
 
 /**

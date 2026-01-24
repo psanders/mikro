@@ -11,7 +11,7 @@ describe("createListPaymentsByMember", () => {
   const validInput = {
     memberId: validMemberId,
     startDate: new Date("2026-01-01"),
-    endDate: new Date("2026-01-31"),
+    endDate: new Date("2026-01-31")
   };
 
   afterEach(() => {
@@ -32,13 +32,13 @@ describe("createListPaymentsByMember", () => {
           notes: null,
           collectedById: null,
           createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       ];
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves(expectedPayments),
-        },
+          findMany: sinon.stub().resolves(expectedPayments)
+        }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -52,8 +52,8 @@ describe("createListPaymentsByMember", () => {
         mockClient.payment.findMany.calledWith(
           sinon.match({
             where: sinon.match({
-              loan: { memberId: validMemberId },
-            }),
+              loan: { memberId: validMemberId }
+            })
           })
         )
       ).to.be.true;
@@ -64,8 +64,8 @@ describe("createListPaymentsByMember", () => {
       const inputWithPagination = { ...validInput, limit: 10, offset: 5 };
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -77,7 +77,7 @@ describe("createListPaymentsByMember", () => {
         mockClient.payment.findMany.calledWith(
           sinon.match({
             take: 10,
-            skip: 5,
+            skip: 5
           })
         )
       ).to.be.true;
@@ -87,8 +87,8 @@ describe("createListPaymentsByMember", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -104,7 +104,7 @@ describe("createListPaymentsByMember", () => {
     it("should throw ValidationError for invalid member UUID", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -121,7 +121,7 @@ describe("createListPaymentsByMember", () => {
     it("should throw ValidationError for missing memberId", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -129,7 +129,7 @@ describe("createListPaymentsByMember", () => {
       try {
         await listPaymentsByMember({
           startDate: new Date(),
-          endDate: new Date(),
+          endDate: new Date()
         } as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -141,7 +141,7 @@ describe("createListPaymentsByMember", () => {
     it("should throw ValidationError for missing date range", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 
@@ -161,8 +161,8 @@ describe("createListPaymentsByMember", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          findMany: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
 

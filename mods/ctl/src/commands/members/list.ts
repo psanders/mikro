@@ -13,14 +13,14 @@ export default class List extends BaseCommand<typeof List> {
     "show-inactive": Flags.boolean({
       char: "a",
       description: "show all members including inactive",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -30,7 +30,7 @@ export default class List extends BaseCommand<typeof List> {
     try {
       const members = await client.listMembers.query({
         showInactive: flags["show-inactive"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 170 });

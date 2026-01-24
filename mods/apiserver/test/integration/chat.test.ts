@@ -10,7 +10,7 @@ import {
   createAuthenticatedCaller,
   applySchema,
   type TestDb,
-  type AuthenticatedCaller,
+  type AuthenticatedCaller
 } from "./setup.js";
 
 describe("Chat Integration", () => {
@@ -42,12 +42,24 @@ describe("Chat Integration", () => {
    * Helper to create a test member.
    */
   async function createTestMember(name = "Chat Test Member") {
+    const referrer = await caller.createUser({
+      name: "Test Referrer",
+      phone: "+18091234583",
+      role: "REFERRER"
+    });
+    const collector = await caller.createUser({
+      name: "Test Collector",
+      phone: "+18091234584",
+      role: "COLLECTOR"
+    });
     return caller.createMember({
       name,
-      phone: "+1234567890",
-      idNumber: `ID-CHAT-${Date.now()}`,
-      collectionPoint: "Test Point",
+      phone: "+18091234599",
+      idNumber: `001-${String(Date.now()).slice(-7)}-8`,
+      collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
+      referredById: referrer.id,
+      assignedCollectorId: collector.id
     });
   }
 
@@ -58,7 +70,7 @@ describe("Chat Integration", () => {
     return caller.createUser({
       name,
       phone: `+${Date.now()}`,
-      role: "ADMIN",
+      role: "ADMIN"
     });
   }
 
@@ -81,8 +93,8 @@ describe("Chat Integration", () => {
         role: options.role,
         content: options.content,
         tools: options.tools ? JSON.stringify(options.tools) : null,
-        createdAt: options.createdAt,
-      },
+        createdAt: options.createdAt
+      }
     });
   }
 
@@ -98,7 +110,7 @@ describe("Chat Integration", () => {
     size?: number;
   }) {
     return db.attachment.create({
-      data: options,
+      data: options
     });
   }
 
@@ -111,12 +123,12 @@ describe("Chat Integration", () => {
         await createMessage({
           memberId: member.id,
           role: "HUMAN",
-          content: "Hello, I need help with my loan.",
+          content: "Hello, I need help with my loan."
         });
         await createMessage({
           memberId: member.id,
           role: "AI",
-          content: "Hi! I can help you with that. What would you like to know?",
+          content: "Hi! I can help you with that. What would you like to know?"
         });
 
         const history = await caller.getChatHistory({ memberId: member.id });
@@ -135,19 +147,19 @@ describe("Chat Integration", () => {
           memberId: member.id,
           role: "HUMAN",
           content: "First message",
-          createdAt: new Date("2026-01-15T10:00:00Z"),
+          createdAt: new Date("2026-01-15T10:00:00Z")
         });
         await createMessage({
           memberId: member.id,
           role: "AI",
           content: "Second message",
-          createdAt: new Date("2026-01-15T10:01:00Z"),
+          createdAt: new Date("2026-01-15T10:01:00Z")
         });
         await createMessage({
           memberId: member.id,
           role: "HUMAN",
           content: "Third message",
-          createdAt: new Date("2026-01-15T10:02:00Z"),
+          createdAt: new Date("2026-01-15T10:02:00Z")
         });
 
         const history = await caller.getChatHistory({ memberId: member.id });
@@ -163,7 +175,7 @@ describe("Chat Integration", () => {
         const message = await createMessage({
           memberId: member.id,
           role: "HUMAN",
-          content: "Here is my ID photo",
+          content: "Here is my ID photo"
         });
 
         await createAttachment({
@@ -172,7 +184,7 @@ describe("Chat Integration", () => {
           url: "https://example.com/id-photo.jpg",
           name: "id-photo.jpg",
           mimeType: "image/jpeg",
-          size: 102400,
+          size: 102400
         });
 
         const history = await caller.getChatHistory({ memberId: member.id });
@@ -191,7 +203,7 @@ describe("Chat Integration", () => {
           memberId: member.id,
           role: "AI",
           content: "I checked your loan status. Here are the details...",
-          tools: ["check_loan_status", "get_member_info"],
+          tools: ["check_loan_status", "get_member_info"]
         });
 
         const history = await caller.getChatHistory({ memberId: member.id });
@@ -209,13 +221,13 @@ describe("Chat Integration", () => {
             memberId: member.id,
             role: i % 2 === 0 ? "AI" : "HUMAN",
             content: `Message ${i}`,
-            createdAt: new Date(`2026-01-15T10:0${i}:00Z`),
+            createdAt: new Date(`2026-01-15T10:0${i}:00Z`)
           });
         }
 
         const history = await caller.getChatHistory({
           memberId: member.id,
-          limit: 3,
+          limit: 3
         });
 
         expect(history).to.have.lengthOf(3);
@@ -230,13 +242,13 @@ describe("Chat Integration", () => {
             memberId: member.id,
             role: "HUMAN",
             content: `Message ${i}`,
-            createdAt: new Date(`2026-01-15T10:0${i}:00Z`),
+            createdAt: new Date(`2026-01-15T10:0${i}:00Z`)
           });
         }
 
         const history = await caller.getChatHistory({
           memberId: member.id,
-          offset: 2,
+          offset: 2
         });
 
         expect(history).to.have.lengthOf(3);
@@ -259,12 +271,12 @@ describe("Chat Integration", () => {
         await createMessage({
           memberId: member1.id,
           role: "HUMAN",
-          content: "Message from member 1",
+          content: "Message from member 1"
         });
         await createMessage({
           memberId: member2.id,
           role: "HUMAN",
-          content: "Message from member 2",
+          content: "Message from member 2"
         });
 
         const history = await caller.getChatHistory({ memberId: member1.id });
@@ -281,12 +293,12 @@ describe("Chat Integration", () => {
         await createMessage({
           userId: user.id,
           role: "HUMAN",
-          content: "User question",
+          content: "User question"
         });
         await createMessage({
           userId: user.id,
           role: "AI",
-          content: "AI response to user",
+          content: "AI response to user"
         });
 
         const history = await caller.getChatHistory({ userId: user.id });
@@ -311,12 +323,12 @@ describe("Chat Integration", () => {
         await createMessage({
           userId: user1.id,
           role: "HUMAN",
-          content: "Message from user 1",
+          content: "Message from user 1"
         });
         await createMessage({
           userId: user2.id,
           role: "HUMAN",
-          content: "Message from user 2",
+          content: "Message from user 2"
         });
 
         const history = await caller.getChatHistory({ userId: user1.id });

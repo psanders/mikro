@@ -12,19 +12,19 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> --payment-id 123e4567-e89b-12d3-a456-426614174000",
-    "<%= config.bin %> <%= command.id %> --payment-id 123e4567-e89b-12d3-a456-426614174000 --output ./receipts",
+    "<%= config.bin %> <%= command.id %> --payment-id 123e4567-e89b-12d3-a456-426614174000 --output ./receipts"
   ];
 
   static override readonly flags = {
     "payment-id": Flags.string({
       description: "Payment ID to generate receipt for",
-      required: true,
+      required: true
     }),
     output: Flags.string({
       char: "o",
       description: "Output directory for generated files",
-      default: "./output",
-    }),
+      default: "./output"
+    })
   };
 
   public async run(): Promise<void> {

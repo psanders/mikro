@@ -6,7 +6,7 @@ import {
   getMemberSchema,
   type GetMemberInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,7 +20,7 @@ export function createGetMember(client: DbClient) {
   const fn = async (params: GetMemberInput): Promise<Member | null> => {
     logger.verbose("getting member", { id: params.id });
     const member = await client.member.findUnique({
-      where: { id: params.id },
+      where: { id: params.id }
     });
     logger.verbose("member retrieved", { id: params.id, found: !!member });
     return member;

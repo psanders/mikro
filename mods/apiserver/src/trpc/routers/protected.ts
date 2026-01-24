@@ -28,7 +28,7 @@ import {
   listPaymentsByMemberSchema,
   listPaymentsByReferrerSchema,
   // Receipt schemas
-  generateReceiptSchema,
+  generateReceiptSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -68,42 +68,34 @@ export const protectedRouter = router({
   /**
    * Create a new member.
    */
-  createMember: protectedProcedure
-    .input(createMemberSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createCreateMember(ctx.db);
-      return fn(input);
-    }),
+  createMember: protectedProcedure.input(createMemberSchema).mutation(async ({ ctx, input }) => {
+    const fn = createCreateMember(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Update an existing member.
    */
-  updateMember: protectedProcedure
-    .input(updateMemberSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createUpdateMember(ctx.db);
-      return fn(input);
-    }),
+  updateMember: protectedProcedure.input(updateMemberSchema).mutation(async ({ ctx, input }) => {
+    const fn = createUpdateMember(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Get a member by ID.
    */
-  getMember: protectedProcedure
-    .input(getMemberSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createGetMember(ctx.db);
-      return fn(input);
-    }),
+  getMember: protectedProcedure.input(getMemberSchema).query(async ({ ctx, input }) => {
+    const fn = createGetMember(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List all members with optional pagination.
    */
-  listMembers: protectedProcedure
-    .input(listMembersSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListMembers(ctx.db);
-      return fn(input);
-    }),
+  listMembers: protectedProcedure.input(listMembersSchema).query(async ({ ctx, input }) => {
+    const fn = createListMembers(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List members by referrer ID.
@@ -130,77 +122,63 @@ export const protectedRouter = router({
   /**
    * Create a new user.
    */
-  createUser: protectedProcedure
-    .input(createUserSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createCreateUser(ctx.db);
-      return fn(input);
-    }),
+  createUser: protectedProcedure.input(createUserSchema).mutation(async ({ ctx, input }) => {
+    const fn = createCreateUser(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Update an existing user.
    */
-  updateUser: protectedProcedure
-    .input(updateUserSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createUpdateUser(ctx.db);
-      return fn(input);
-    }),
+  updateUser: protectedProcedure.input(updateUserSchema).mutation(async ({ ctx, input }) => {
+    const fn = createUpdateUser(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Get a user by ID.
    */
-  getUser: protectedProcedure
-    .input(getUserSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createGetUser(ctx.db);
-      return fn(input);
-    }),
+  getUser: protectedProcedure.input(getUserSchema).query(async ({ ctx, input }) => {
+    const fn = createGetUser(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List all users with optional pagination.
    */
-  listUsers: protectedProcedure
-    .input(listUsersSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListUsers(ctx.db);
-      return fn(input);
-    }),
+  listUsers: protectedProcedure.input(listUsersSchema).query(async ({ ctx, input }) => {
+    const fn = createListUsers(ctx.db);
+    return fn(input);
+  }),
 
   // ==================== Chat procedures ====================
 
   /**
    * Get chat history for a member or user.
    */
-  getChatHistory: protectedProcedure
-    .input(getChatHistorySchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createGetChatHistory(ctx.db);
-      return fn(input);
-    }),
+  getChatHistory: protectedProcedure.input(getChatHistorySchema).query(async ({ ctx, input }) => {
+    const fn = createGetChatHistory(ctx.db);
+    return fn(input);
+  }),
 
   // ==================== Loan procedures ====================
 
   /**
    * Create a new loan for a member.
    */
-  createLoan: protectedProcedure
-    .input(createLoanSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createCreateLoan(ctx.db);
-      return fn(input);
-    }),
+  createLoan: protectedProcedure.input(createLoanSchema).mutation(async ({ ctx, input }) => {
+    const fn = createCreateLoan(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List all loans with optional pagination.
    * By default only shows ACTIVE loans.
    */
-  listLoans: protectedProcedure
-    .input(listLoansSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListLoans(ctx.db);
-      return fn(input);
-    }),
+  listLoans: protectedProcedure.input(listLoansSchema).query(async ({ ctx, input }) => {
+    const fn = createListLoans(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List loans for members referred by a specific user.
@@ -227,12 +205,10 @@ export const protectedRouter = router({
   /**
    * Create a new payment for a loan.
    */
-  createPayment: protectedProcedure
-    .input(createPaymentSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createCreatePayment(ctx.db);
-      return fn(input);
-    }),
+  createPayment: protectedProcedure.input(createPaymentSchema).mutation(async ({ ctx, input }) => {
+    const fn = createCreatePayment(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Reverse a payment.
@@ -247,12 +223,10 @@ export const protectedRouter = router({
   /**
    * List all payments within a date range.
    */
-  listPayments: protectedProcedure
-    .input(listPaymentsSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListPayments(ctx.db);
-      return fn(input);
-    }),
+  listPayments: protectedProcedure.input(listPaymentsSchema).query(async ({ ctx, input }) => {
+    const fn = createListPayments(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * List payments for a specific member's loans within a date range.
@@ -285,5 +259,5 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateReceipt({ db: ctx.db });
       return fn(input);
-    }),
+    })
 });

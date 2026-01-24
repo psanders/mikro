@@ -22,9 +22,7 @@ function validateBasicAuth(authHeader: string | undefined): boolean {
 
   try {
     const base64Credentials = authHeader.slice(6); // Remove "Basic " prefix
-    const credentials = Buffer.from(base64Credentials, "base64").toString(
-      "utf-8"
-    );
+    const credentials = Buffer.from(base64Credentials, "base64").toString("utf-8");
     return credentials === expectedCredentials;
   } catch {
     return false;

@@ -11,7 +11,7 @@ describe("createCreatePayment", () => {
   const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
     loanId: validLoanId,
-    amount: 650,
+    amount: 650
   };
 
   afterEach(() => {
@@ -31,12 +31,12 @@ describe("createCreatePayment", () => {
         notes: null,
         collectedById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         payment: {
-          create: sinon.stub().resolves(expectedPayment),
-        },
+          create: sinon.stub().resolves(expectedPayment)
+        }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -60,12 +60,12 @@ describe("createCreatePayment", () => {
         notes: null,
         collectedById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         payment: {
-          create: sinon.stub().resolves(expectedPayment),
-        },
+          create: sinon.stub().resolves(expectedPayment)
+        }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -84,19 +84,19 @@ describe("createCreatePayment", () => {
         paidAt,
         method: "CASH" as const,
         collectedById: validCollectorId,
-        notes: "Weekly payment",
+        notes: "Weekly payment"
       };
       const expectedPayment = {
         id: "payment-789",
         ...fullInput,
         status: "COMPLETED",
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         payment: {
-          create: sinon.stub().resolves(expectedPayment),
-        },
+          create: sinon.stub().resolves(expectedPayment)
+        }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -113,7 +113,7 @@ describe("createCreatePayment", () => {
     it("should throw ValidationError for invalid loanId UUID", async () => {
       // Arrange
       const mockClient = {
-        payment: { create: sinon.stub() },
+        payment: { create: sinon.stub() }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -130,7 +130,7 @@ describe("createCreatePayment", () => {
     it("should throw ValidationError for negative amount", async () => {
       // Arrange
       const mockClient = {
-        payment: { create: sinon.stub() },
+        payment: { create: sinon.stub() }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -147,7 +147,7 @@ describe("createCreatePayment", () => {
     it("should throw ValidationError for invalid collectedById UUID", async () => {
       // Arrange
       const mockClient = {
-        payment: { create: sinon.stub() },
+        payment: { create: sinon.stub() }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -167,8 +167,8 @@ describe("createCreatePayment", () => {
       // Arrange
       const mockClient = {
         payment: {
-          create: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          create: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const createPayment = createCreatePayment(mockClient as any);
 

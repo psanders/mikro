@@ -12,21 +12,21 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
   static override readonly args = {
     id: Args.string({
       description: "The Referrer ID to filter by",
-      required: true,
-    }),
+      required: true
+    })
   };
   static override readonly flags = {
     "show-inactive": Flags.boolean({
       char: "a",
       description: "show all members including inactive",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -37,7 +37,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
       const members = await client.listMembersByReferrer.query({
         referredById: args.id,
         showInactive: flags["show-inactive"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 170 });

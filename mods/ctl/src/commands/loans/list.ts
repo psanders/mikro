@@ -14,14 +14,14 @@ export default class List extends BaseCommand<typeof List> {
     "show-all": Flags.boolean({
       char: "a",
       description: "show all loans including completed, defaulted, and cancelled",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -31,7 +31,7 @@ export default class List extends BaseCommand<typeof List> {
     try {
       const loans = await client.listLoans.query({
         showAll: flags["show-all"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 180 });

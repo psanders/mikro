@@ -63,7 +63,7 @@ export function createMessageRouter(deps: RouterDependencies) {
       }
 
       // Get the user's primary role (prefer ADMIN > COLLECTOR > REFERRER)
-      const roles = user.roles.map(r => r.role);
+      const roles = user.roles.map((r) => r.role);
       let primaryRole: "ADMIN" | "COLLECTOR" | "REFERRER" = "COLLECTOR";
 
       if (roles.includes("ADMIN")) {

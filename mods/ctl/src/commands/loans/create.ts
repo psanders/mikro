@@ -18,36 +18,36 @@ export default class Create extends BaseCommand<typeof Create> {
     const answers = {
       memberId: await input({
         message: "Member ID",
-        required: true,
+        required: true
       }),
       principal: await number({
         message: "Principal Amount",
-        required: true,
+        required: true
       }),
       termLength: await number({
         message: "Term Length (number of periods)",
-        required: true,
+        required: true
       }),
       paymentAmount: await number({
         message: "Payment Amount (per period)",
-        required: true,
+        required: true
       }),
       paymentFrequency: await select({
         message: "Payment Frequency",
         choices: [
           { name: "Daily", value: "DAILY" as const },
-          { name: "Weekly", value: "WEEKLY" as const },
-        ],
+          { name: "Weekly", value: "WEEKLY" as const }
+        ]
       }),
       type: await select({
         message: "Loan Type",
         choices: [{ name: "SAN (Fixed periodic payments)", value: "SAN" as const }],
-        default: "SAN",
-      }),
+        default: "SAN"
+      })
     };
 
     const ready = await confirm({
-      message: "Ready to create loan?",
+      message: "Ready to create loan?"
     });
 
     if (!ready) {
@@ -62,7 +62,7 @@ export default class Create extends BaseCommand<typeof Create> {
         termLength: answers.termLength!,
         paymentAmount: answers.paymentAmount!,
         paymentFrequency: answers.paymentFrequency,
-        type: answers.type,
+        type: answers.type
       });
 
       this.log("Done!");

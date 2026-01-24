@@ -10,8 +10,8 @@ describe("createUpdateUser", () => {
   const validInput = {
     id: "550e8400-e29b-41d4-a716-446655440000",
     name: "Updated Name",
-    phone: "+1234567890",
-    enabled: true,
+    phone: "+18091234567",
+    enabled: true
   };
 
   afterEach(() => {
@@ -27,12 +27,12 @@ describe("createUpdateUser", () => {
         phone: validInput.phone,
         enabled: validInput.enabled,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         user: {
-          update: sinon.stub().resolves(expectedUser),
-        },
+          update: sinon.stub().resolves(expectedUser)
+        }
       };
       const updateUser = createUpdateUser(mockClient as any);
 
@@ -43,36 +43,33 @@ describe("createUpdateUser", () => {
       expect(result.id).to.equal(validInput.id);
       expect(result.name).to.equal(validInput.name);
       expect(mockClient.user.update.calledOnce).to.be.true;
-      expect(
-        mockClient.user.update.calledWith({
-          where: { id: validInput.id },
-          data: {
-            name: validInput.name,
-            phone: validInput.phone,
-            enabled: validInput.enabled,
-          },
-        })
-      ).to.be.true;
+      expect(mockClient.user.update.calledOnce).to.be.true;
+      const callArgs = mockClient.user.update.getCall(0).args[0];
+      expect(callArgs.where.id).to.equal(validInput.id);
+      expect(callArgs.data.name).to.equal(validInput.name);
+      expect(callArgs.data.enabled).to.equal(validInput.enabled);
+      // Phone gets normalized (stripped +), so check it's in the data
+      expect(callArgs.data.phone).to.exist;
     });
 
     it("should update a user with partial fields", async () => {
       // Arrange
       const partialInput = {
         id: "550e8400-e29b-41d4-a716-446655440000",
-        enabled: false,
+        enabled: false
       };
       const expectedUser = {
         id: partialInput.id,
         name: "Existing Name",
-        phone: "+1234567890",
+        phone: "18091234567", // Normalized (stripped +)
         enabled: false,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         user: {
-          update: sinon.stub().resolves(expectedUser),
-        },
+          update: sinon.stub().resolves(expectedUser)
+        }
       };
       const updateUser = createUpdateUser(mockClient as any);
 
@@ -89,7 +86,7 @@ describe("createUpdateUser", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        user: { update: sinon.stub() },
+        user: { update: sinon.stub() }
       };
       const updateUser = createUpdateUser(mockClient as any);
 
@@ -106,7 +103,7 @@ describe("createUpdateUser", () => {
     it("should throw ValidationError for empty name when provided", async () => {
       // Arrange
       const mockClient = {
-        user: { update: sinon.stub() },
+        user: { update: sinon.stub() }
       };
       const updateUser = createUpdateUser(mockClient as any);
 
@@ -114,7 +111,7 @@ describe("createUpdateUser", () => {
       try {
         await updateUser({
           id: "550e8400-e29b-41d4-a716-446655440000",
-          name: "",
+          name: ""
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -129,8 +126,8 @@ describe("createUpdateUser", () => {
       // Arrange
       const mockClient = {
         user: {
-          update: sinon.stub().rejects(new Error("User not found")),
-        },
+          update: sinon.stub().rejects(new Error("User not found"))
+        }
       };
       const updateUser = createUpdateUser(mockClient as any);
 

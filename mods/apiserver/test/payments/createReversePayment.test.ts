@@ -9,7 +9,7 @@ import { ValidationError } from "@mikro/common";
 describe("createReversePayment", () => {
   const validPaymentId = "550e8400-e29b-41d4-a716-446655440000";
   const validInput = {
-    id: validPaymentId,
+    id: validPaymentId
   };
 
   afterEach(() => {
@@ -29,12 +29,12 @@ describe("createReversePayment", () => {
         notes: null,
         collectedById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         payment: {
-          update: sinon.stub().resolves(expectedPayment),
-        },
+          update: sinon.stub().resolves(expectedPayment)
+        }
       };
       const reversePayment = createReversePayment(mockClient as any);
 
@@ -48,7 +48,7 @@ describe("createReversePayment", () => {
         mockClient.payment.update.calledWith(
           sinon.match({
             where: { id: validPaymentId },
-            data: { status: "REVERSED" },
+            data: { status: "REVERSED" }
           })
         )
       ).to.be.true;
@@ -67,12 +67,12 @@ describe("createReversePayment", () => {
         notes: "Customer requested refund",
         collectedById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         payment: {
-          update: sinon.stub().resolves(expectedPayment),
-        },
+          update: sinon.stub().resolves(expectedPayment)
+        }
       };
       const reversePayment = createReversePayment(mockClient as any);
 
@@ -84,7 +84,7 @@ describe("createReversePayment", () => {
       expect(
         mockClient.payment.update.calledWith(
           sinon.match({
-            data: { status: "REVERSED", notes: "Customer requested refund" },
+            data: { status: "REVERSED", notes: "Customer requested refund" }
           })
         )
       ).to.be.true;
@@ -95,7 +95,7 @@ describe("createReversePayment", () => {
     it("should throw ValidationError for invalid payment ID UUID", async () => {
       // Arrange
       const mockClient = {
-        payment: { update: sinon.stub() },
+        payment: { update: sinon.stub() }
       };
       const reversePayment = createReversePayment(mockClient as any);
 
@@ -112,7 +112,7 @@ describe("createReversePayment", () => {
     it("should throw ValidationError for missing id", async () => {
       // Arrange
       const mockClient = {
-        payment: { update: sinon.stub() },
+        payment: { update: sinon.stub() }
       };
       const reversePayment = createReversePayment(mockClient as any);
 
@@ -132,8 +132,8 @@ describe("createReversePayment", () => {
       // Arrange
       const mockClient = {
         payment: {
-          update: sinon.stub().rejects(new Error("Payment not found")),
-        },
+          update: sinon.stub().rejects(new Error("Payment not found"))
+        }
       };
       const reversePayment = createReversePayment(mockClient as any);
 

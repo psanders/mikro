@@ -6,7 +6,7 @@ import {
   listMembersSchema,
   type ListMembersInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -23,7 +23,7 @@ export function createListMembers(client: DbClient) {
     const members = await client.member.findMany({
       where: params.showInactive ? undefined : { isActive: true },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
     logger.verbose("members listed", { count: members.length });
     return members;

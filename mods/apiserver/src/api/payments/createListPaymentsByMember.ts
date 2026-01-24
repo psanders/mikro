@@ -6,7 +6,7 @@ import {
   listPaymentsByMemberSchema,
   type ListPaymentsByMemberInput,
   type DbClient,
-  type Payment,
+  type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,22 +20,25 @@ import { logger } from "../../logger.js";
 export function createListPaymentsByMember(client: DbClient) {
   const fn = async (params: ListPaymentsByMemberInput): Promise<Payment[]> => {
     logger.verbose("listing payments by member", { memberId: params.memberId });
-    const payments = await client.payment.findMany({
+    const payments = (await client.payment.findMany({
       where: {
         loan: {
-          memberId: params.memberId,
+          memberId: params.memberId
         },
         paidAt: {
           gte: params.startDate,
-          lte: params.endDate,
+          lte: params.endDate
         },
-        ...(params.showReversed ? {} : { status: "COMPLETED" }),
+        ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
       orderBy: { paidAt: "desc" },
       take: params.limit,
-      skip: params.offset,
-    }) as unknown as Payment[];
-    logger.verbose("payments by member listed", { memberId: params.memberId, count: payments.length });
+      skip: params.offset
+    })) as unknown as Payment[];
+    logger.verbose("payments by member listed", {
+      memberId: params.memberId,
+      count: payments.length
+    });
     return payments;
   };
 

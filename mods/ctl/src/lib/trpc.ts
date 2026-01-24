@@ -16,9 +16,9 @@ export function createClient(baseUrl: string, credentials: string) {
       httpBatchLink({
         url: `${baseUrl}/trpc`,
         headers: () => ({
-          Authorization: `Basic ${Buffer.from(credentials).toString("base64")}`,
-        }),
-      }),
-    ],
+          Authorization: `Basic ${Buffer.from(credentials).toString("base64")}`
+        })
+      })
+    ]
   });
 }

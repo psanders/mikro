@@ -16,7 +16,7 @@ describe("createCreateMember", () => {
     collectionPoint: "https://example.com/main-office",
     homeAddress: "123 Main St",
     referredById: validReferrerId,
-    assignedCollectorId: validCollectorId,
+    assignedCollectorId: validCollectorId
   };
 
   afterEach(() => {
@@ -38,12 +38,12 @@ describe("createCreateMember", () => {
         note: null,
         createdById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          create: sinon.stub().resolves(expectedMember),
-        },
+          create: sinon.stub().resolves(expectedMember)
+        }
       };
       const createMember = createCreateMember(mockClient as any);
 
@@ -54,9 +54,11 @@ describe("createCreateMember", () => {
       expect(result.id).to.equal("member-123");
       expect(result.name).to.equal(validInput.name);
       expect(mockClient.member.create.calledOnce).to.be.true;
-      expect(
-        mockClient.member.create.calledWith({ data: validInput })
-      ).to.be.true;
+      // Phone gets normalized (stripped +) in the schema transform
+      const callArgs = mockClient.member.create.getCall(0).args[0];
+      expect(callArgs.data.name).to.equal(validInput.name);
+      expect(callArgs.data.phone).to.equal("18091234567"); // Normalized
+      expect(callArgs.data.idNumber).to.equal(validInput.idNumber);
     });
 
     it("should create a member with optional fields", async () => {
@@ -66,7 +68,7 @@ describe("createCreateMember", () => {
         jobPosition: "Engineer",
         income: 50000,
         isBusinessOwner: true,
-        note: "Test note",
+        note: "Test note"
       };
       const expectedMember = {
         id: "member-456",
@@ -76,12 +78,12 @@ describe("createCreateMember", () => {
         idCardOnRecord: false,
         createdById: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
       const mockClient = {
         member: {
-          create: sinon.stub().resolves(expectedMember),
-        },
+          create: sinon.stub().resolves(expectedMember)
+        }
       };
       const createMember = createCreateMember(mockClient as any);
 
@@ -99,7 +101,7 @@ describe("createCreateMember", () => {
     it("should throw ValidationError for missing required fields", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() },
+        member: { create: sinon.stub() }
       };
       const createMember = createCreateMember(mockClient as any);
 
@@ -116,7 +118,7 @@ describe("createCreateMember", () => {
     it("should throw ValidationError for empty name", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() },
+        member: { create: sinon.stub() }
       };
       const createMember = createCreateMember(mockClient as any);
 
@@ -133,7 +135,7 @@ describe("createCreateMember", () => {
     it("should throw ValidationError for invalid referredById UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() },
+        member: { create: sinon.stub() }
       };
       const createMember = createCreateMember(mockClient as any);
 
@@ -153,8 +155,8 @@ describe("createCreateMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          create: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          create: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const createMember = createCreateMember(mockClient as any);
 

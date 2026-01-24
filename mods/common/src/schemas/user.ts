@@ -15,7 +15,7 @@ export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REFERRER"]);
 export const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().min(1, "Phone is required"),
-  role: roleEnum.optional(),
+  role: roleEnum.optional()
 });
 
 /**
@@ -33,21 +33,21 @@ export const updateUserSchema = z.object({
       return validateDominicanPhone(val);
     })
     .optional(),
-  enabled: z.boolean().optional(),
+  enabled: z.boolean().optional()
 });
 
 /**
  * Schema for getting a user by ID.
  */
 export const getUserSchema = z.object({
-  id: z.uuid({ error: "Invalid user ID" }),
+  id: z.uuid({ error: "Invalid user ID" })
 });
 
 /**
  * Schema for getting a user by phone number.
  */
 export const getUserByPhoneSchema = z.object({
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z.string().min(1, "Phone number is required")
 });
 
 /**
@@ -57,7 +57,7 @@ export const getUserByPhoneSchema = z.object({
 export const listUsersSchema = z.object({
   showDisabled: z.boolean().optional(), // If true, show all users including disabled
   limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional()
 });
 
 /**

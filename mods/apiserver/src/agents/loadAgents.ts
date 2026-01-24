@@ -1,7 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { z } from "zod/v4";
 import type { Agent } from "@mikro/agents";
 import { logger } from "../logger.js";
 import { agentConfigSchema } from "./agentSchema.js";
@@ -26,9 +25,9 @@ function validateAgentConfig(agent: unknown, name: AgentName): Agent {
   // Validate using Zod schema (same validation approach as withErrorHandlingAndValidation)
   const result = agentConfigSchema.safeParse(agent);
   if (!result.success) {
-    const errorMessages = result.error.issues.map((e) => 
-      `${e.path.map(String).join(".")}: ${e.message}`
-    ).join(", ");
+    const errorMessages = result.error.issues
+      .map((e) => `${e.path.map(String).join(".")}: ${e.message}`)
+      .join(", ");
     throw new Error(`Invalid agent configuration for ${name}: ${errorMessages}`);
   }
 

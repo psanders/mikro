@@ -6,7 +6,7 @@ import {
   getChatHistorySchema,
   type GetChatHistoryInput,
   type DbClient,
-  type Message,
+  type Message
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -30,13 +30,13 @@ export function createGetChatHistory(client: DbClient) {
     const messages = await client.message.findMany({
       where,
       include: {
-        attachments: true,
+        attachments: true
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "asc"
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
     logger.verbose("chat history retrieved", { count: messages.length });
     return messages;

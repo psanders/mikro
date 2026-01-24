@@ -26,10 +26,7 @@ import { ValidationError } from "../errors/ValidationError.js";
  * const member = await createMember({ name: "John", ... });
  * ```
  */
-export function withErrorHandlingAndValidation<
-  TSchema extends z.ZodType,
-  TResult
->(
+export function withErrorHandlingAndValidation<TSchema extends z.ZodType, TResult>(
   fn: (params: z.infer<TSchema>) => Promise<TResult>,
   schema: TSchema
 ): (params: unknown) => Promise<TResult> {

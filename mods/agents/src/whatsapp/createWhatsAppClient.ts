@@ -54,14 +54,14 @@ export function createWhatsAppClient(): WhatsAppClient {
 
       const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
       const isImageMessage = !!params.imageUrl;
-      logger.verbose("sending whatsapp api request", { 
-        phone: params.phone, 
-        type: isImageMessage ? "image" : "text" 
+      logger.verbose("sending whatsapp api request", {
+        phone: params.phone,
+        type: isImageMessage ? "image" : "text"
       });
 
       // Build the request body based on message type
       let requestBody: Record<string, unknown>;
-      
+
       if (isImageMessage) {
         // Image message with optional caption
         requestBody = {
@@ -104,8 +104,8 @@ export function createWhatsAppClient(): WhatsAppClient {
         throw new Error(`WhatsApp API error: ${errorMessage}`);
       }
 
-      logger.verbose("whatsapp api response received", { 
-        phone: params.phone, 
+      logger.verbose("whatsapp api response received", {
+        phone: params.phone,
         messageId: data.messages?.[0]?.id,
         type: isImageMessage ? "image" : "text"
       });
@@ -160,7 +160,11 @@ export function createWhatsAppClient(): WhatsAppClient {
       // Determine content type from response or default to PNG
       const contentType = downloadResponse.headers.get("content-type") ?? "image/png";
 
-      logger.verbose("whatsapp media downloaded", { mediaId, contentType, size: arrayBuffer.byteLength });
+      logger.verbose("whatsapp media downloaded", {
+        mediaId,
+        contentType,
+        size: arrayBuffer.byteLength
+      });
       return `data:${contentType};base64,${base64}`;
     }
   };

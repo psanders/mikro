@@ -6,7 +6,7 @@ import {
   listPaymentsByReferrerSchema,
   type ListPaymentsByReferrerInput,
   type DbClient,
-  type Payment,
+  type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -21,24 +21,27 @@ import { logger } from "../../logger.js";
 export function createListPaymentsByReferrer(client: DbClient) {
   const fn = async (params: ListPaymentsByReferrerInput): Promise<Payment[]> => {
     logger.verbose("listing payments by referrer", { referrerId: params.referredById });
-    const payments = await client.payment.findMany({
+    const payments = (await client.payment.findMany({
       where: {
         loan: {
           member: {
-            referredById: params.referredById,
-          },
+            referredById: params.referredById
+          }
         },
         paidAt: {
           gte: params.startDate,
-          lte: params.endDate,
+          lte: params.endDate
         },
-        ...(params.showReversed ? {} : { status: "COMPLETED" }),
+        ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
       orderBy: { paidAt: "desc" },
       take: params.limit,
-      skip: params.offset,
-    }) as unknown as Payment[];
-    logger.verbose("payments by referrer listed", { referrerId: params.referredById, count: payments.length });
+      skip: params.offset
+    })) as unknown as Payment[];
+    logger.verbose("payments by referrer listed", {
+      referrerId: params.referredById,
+      count: payments.length
+    });
     return payments;
   };
 

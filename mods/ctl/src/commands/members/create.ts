@@ -17,8 +17,12 @@ export default class Create extends BaseCommand<typeof Create> {
 
     // Get users for referrer and collector selection
     const users = await client.listUsers.query({ showDisabled: true });
-    const referrers = users.filter((u: any) => u.roles?.some((r: { role: string }) => r.role === "REFERRER"));
-    const collectors = users.filter((u: any) => u.roles?.some((r: { role: string }) => r.role === "COLLECTOR"));
+    const referrers = users.filter((u: { roles?: Array<{ role: string }> }) =>
+      u.roles?.some((r: { role: string }) => r.role === "REFERRER")
+    );
+    const collectors = users.filter((u: { roles?: Array<{ role: string }> }) =>
+      u.roles?.some((r: { role: string }) => r.role === "COLLECTOR")
+    );
 
     if (referrers.length === 0) {
       this.error("No referrers found. Please create a user with REFERRER role first.");
@@ -32,56 +36,62 @@ export default class Create extends BaseCommand<typeof Create> {
     const answers = {
       name: await input({
         message: "Name",
-        required: true,
+        required: true
       }),
       phone: await input({
         message: "Phone (e.g., +18091234567)",
-        required: true,
+        required: true
       }),
       idNumber: await input({
         message: "ID Number (format: 000-0000000-0)",
-        required: true,
+        required: true
       }),
       collectionPoint: await input({
         message: "Collection Point (URL)",
-        required: true,
+        required: true
       }),
       homeAddress: await input({
         message: "Home Address",
-        required: true,
+        required: true
       }),
       referredById: await select({
         message: "Referrer",
-        choices: referrers.map((u: any) => ({ name: `${u.name} (${u.id})`, value: u.id })),
+        choices: referrers.map((u: { name: string; id: string }) => ({
+          name: `${u.name} (${u.id})`,
+          value: u.id
+        }))
       }),
       assignedCollectorId: await select({
         message: "Collector",
-        choices: collectors.map((u: any) => ({ name: `${u.name} (${u.id})`, value: u.id })),
+        choices: collectors.map((u: { name: string; id: string }) => ({
+          name: `${u.name} (${u.id})`,
+          value: u.id
+        }))
       }),
       jobPosition: await input({
         message: "Job Position (optional)",
-        required: false,
+        required: false
       }),
       income: await number({
         message: "Monthly Income (optional)",
-        required: false,
+        required: false
       }),
       isBusinessOwner: await select({
         message: "Is Business Owner?",
         choices: [
           { name: "No", value: false },
-          { name: "Yes", value: true },
+          { name: "Yes", value: true }
         ],
-        default: false,
+        default: false
       }),
       notes: await input({
         message: "Note (optional)",
-        required: false,
-      }),
+        required: false
+      })
     };
 
     const ready = await confirm({
-      message: "Ready to create member?",
+      message: "Ready to create member?"
     });
 
     if (!ready) {
@@ -101,7 +111,7 @@ export default class Create extends BaseCommand<typeof Create> {
         jobPosition: answers.jobPosition || undefined,
         income: answers.income || undefined,
         isBusinessOwner: answers.isBusinessOwner,
-        notes: answers.notes || undefined,
+        notes: answers.notes || undefined
       });
 
       this.log("Done!");

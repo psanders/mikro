@@ -23,18 +23,18 @@ export async function loadFonts(): Promise<Font[]> {
   const [regularRes, boldRes, blackRes] = await Promise.all([
     fetch(fontUrl),
     fetch(fontUrlBold),
-    fetch(fontUrlBlack),
+    fetch(fontUrlBlack)
   ]);
 
   const [regular, bold, black] = await Promise.all([
     regularRes.arrayBuffer(),
     boldRes.arrayBuffer(),
-    blackRes.arrayBuffer(),
+    blackRes.arrayBuffer()
   ]);
 
   return [
     { name: "Inter", data: regular, weight: 400, style: "normal" },
     { name: "Inter", data: bold, weight: 700, style: "normal" },
-    { name: "Inter", data: black, weight: 900, style: "normal" },
+    { name: "Inter", data: black, weight: 900, style: "normal" }
   ];
 }

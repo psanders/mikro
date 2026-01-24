@@ -21,7 +21,7 @@ export const attachmentInputSchema = z.object({
   url: z.url({ error: "Invalid attachment URL" }),
   name: z.string().optional(),
   mimeType: z.string().optional(),
-  size: z.number().int().positive().optional(),
+  size: z.number().int().positive().optional()
 });
 
 /**
@@ -33,13 +33,13 @@ export const getChatHistorySchema = z
     memberId: z.uuid({ error: "Invalid member ID" }).optional(),
     userId: z.uuid({ error: "Invalid user ID" }).optional(),
     limit: z.number().int().positive().max(100).optional(),
-    offset: z.number().int().nonnegative().optional(),
+    offset: z.number().int().nonnegative().optional()
   })
   .refine((data) => data.memberId || data.userId, {
-    message: "Either memberId or userId is required",
+    message: "Either memberId or userId is required"
   })
   .refine((data) => !(data.memberId && data.userId), {
-    message: "Cannot specify both memberId and userId",
+    message: "Cannot specify both memberId and userId"
   });
 
 /**
@@ -53,13 +53,13 @@ export const addMessageSchema = z
     role: messageRoleEnum,
     content: z.string().min(1, "Content is required"),
     tools: z.array(z.string()).optional(),
-    attachments: z.array(attachmentInputSchema).optional(),
+    attachments: z.array(attachmentInputSchema).optional()
   })
   .refine((data) => data.memberId || data.userId, {
-    message: "Either memberId or userId is required",
+    message: "Either memberId or userId is required"
   })
   .refine((data) => !(data.memberId && data.userId), {
-    message: "Cannot specify both memberId and userId",
+    message: "Cannot specify both memberId and userId"
   });
 
 /**

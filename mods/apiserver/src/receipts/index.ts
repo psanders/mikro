@@ -16,5 +16,5 @@ export {
   createReceiptLayout,
   RECEIPT_WIDTH,
   RECEIPT_HEIGHT,
-  type ReceiptElement,
+  type ReceiptElement
 } from "./receipt-layout.js";

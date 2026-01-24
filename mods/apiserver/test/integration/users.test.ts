@@ -10,7 +10,7 @@ import {
   createAuthenticatedCaller,
   applySchema,
   type TestDb,
-  type AuthenticatedCaller,
+  type AuthenticatedCaller
 } from "./setup.js";
 
 describe("Users Integration", () => {
@@ -41,22 +41,22 @@ describe("Users Integration", () => {
     it("should create a user with name and phone", async () => {
       const input = {
         name: "John Admin",
-        phone: "+1234567890",
+        phone: "+18091234567"
       };
 
       const user = await caller.createUser(input);
 
       expect(user.id).to.be.a("string");
       expect(user.name).to.equal(input.name);
-      expect(user.phone).to.equal(input.phone);
+      expect(user.phone).to.equal(input.phone); // Phone is not normalized in createUser
       expect(user.enabled).to.equal(true);
     });
 
     it("should create a user with ADMIN role", async () => {
       const input = {
         name: "Admin User",
-        phone: "+1111111111",
-        role: "ADMIN" as const,
+        phone: "+18091234568",
+        role: "ADMIN" as const
       };
 
       const user = await caller.createUser(input);
@@ -65,7 +65,7 @@ describe("Users Integration", () => {
 
       // Verify role was created by querying the database directly
       const roles = await db.userRole.findMany({
-        where: { userId: user.id },
+        where: { userId: user.id }
       });
       expect(roles).to.have.lengthOf(1);
       expect(roles[0].role).to.equal("ADMIN");
@@ -74,15 +74,15 @@ describe("Users Integration", () => {
     it("should create a user with COLLECTOR role", async () => {
       const input = {
         name: "Collector User",
-        phone: "+9876543210",
-        role: "COLLECTOR" as const,
+        phone: "+18091234569",
+        role: "COLLECTOR" as const
       };
 
       const user = await caller.createUser(input);
 
       // Verify role was created by querying the database directly
       const roles = await db.userRole.findMany({
-        where: { userId: user.id },
+        where: { userId: user.id }
       });
       expect(roles).to.have.lengthOf(1);
       expect(roles[0].role).to.equal("COLLECTOR");
@@ -91,15 +91,15 @@ describe("Users Integration", () => {
     it("should create a user with REFERRER role", async () => {
       const input = {
         name: "Referrer User",
-        phone: "+5555555555",
-        role: "REFERRER" as const,
+        phone: "+18091234570",
+        role: "REFERRER" as const
       };
 
       const user = await caller.createUser(input);
 
       // Verify role was created by querying the database directly
       const roles = await db.userRole.findMany({
-        where: { userId: user.id },
+        where: { userId: user.id }
       });
       expect(roles).to.have.lengthOf(1);
       expect(roles[0].role).to.equal("REFERRER");
@@ -110,8 +110,8 @@ describe("Users Integration", () => {
     it("should retrieve a user by ID", async () => {
       const created = await caller.createUser({
         name: "Test User",
-        phone: "+1111111111",
-        role: "ADMIN",
+        phone: "+18091234571",
+        role: "ADMIN"
       });
 
       const fetched = await caller.getUser({ id: created.id });
@@ -124,7 +124,7 @@ describe("Users Integration", () => {
 
     it("should return null for non-existent user", async () => {
       const result = await caller.getUser({
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: "550e8400-e29b-41d4-a716-446655440000"
       });
 
       expect(result).to.be.null;
@@ -135,12 +135,12 @@ describe("Users Integration", () => {
     it("should update user name", async () => {
       const created = await caller.createUser({
         name: "Original Name",
-        phone: "+2222222222",
+        phone: "+18091234572"
       });
 
       const updated = await caller.updateUser({
         id: created.id,
-        name: "Updated Name",
+        name: "Updated Name"
       });
 
       expect(updated.name).to.equal("Updated Name");
@@ -150,29 +150,29 @@ describe("Users Integration", () => {
     it("should update user phone", async () => {
       const created = await caller.createUser({
         name: "Phone Test",
-        phone: "+3333333333",
+        phone: "+18091234573"
       });
 
       const updated = await caller.updateUser({
         id: created.id,
-        phone: "+9999999999",
+        phone: "+18091234574"
       });
 
-      expect(updated.phone).to.equal("+9999999999");
+      expect(updated.phone).to.equal("18091234574"); // Normalized (stripped +)
       expect(updated.name).to.equal(created.name); // Unchanged
     });
 
     it("should disable a user", async () => {
       const created = await caller.createUser({
         name: "Enabled User",
-        phone: "+7777777777",
+        phone: "+18091234575"
       });
 
       expect(created.enabled).to.equal(true);
 
       const updated = await caller.updateUser({
         id: created.id,
-        enabled: false,
+        enabled: false
       });
 
       expect(updated.enabled).to.equal(false);
@@ -181,19 +181,19 @@ describe("Users Integration", () => {
     it("should re-enable a disabled user", async () => {
       const created = await caller.createUser({
         name: "Toggle User",
-        phone: "+8888888888",
+        phone: "+18091234576"
       });
 
       // Disable first
       await caller.updateUser({
         id: created.id,
-        enabled: false,
+        enabled: false
       });
 
       // Re-enable
       const updated = await caller.updateUser({
         id: created.id,
-        enabled: true,
+        enabled: true
       });
 
       expect(updated.enabled).to.equal(true);
@@ -202,18 +202,18 @@ describe("Users Integration", () => {
     it("should update multiple fields at once", async () => {
       const created = await caller.createUser({
         name: "Multi Update",
-        phone: "+4444444444",
+        phone: "+18091234577"
       });
 
       const updated = await caller.updateUser({
         id: created.id,
         name: "New Name",
-        phone: "+5555555555",
-        enabled: false,
+        phone: "+18091234578",
+        enabled: false
       });
 
       expect(updated.name).to.equal("New Name");
-      expect(updated.phone).to.equal("+5555555555");
+      expect(updated.phone).to.equal("18091234578"); // Normalized (stripped +)
       expect(updated.enabled).to.equal(false);
     });
   });

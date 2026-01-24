@@ -13,21 +13,21 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
   static override readonly args = {
     ref: Args.string({
       description: "The Referrer ID to filter by",
-      required: true,
-    }),
+      required: true
+    })
   };
   static override readonly flags = {
     "show-all": Flags.boolean({
       char: "a",
       description: "show all loans including completed, defaulted, and cancelled",
-      default: false,
+      default: false
     }),
     "page-size": Flags.string({
       char: "s",
       description: "the number of items to show",
       default: "100",
-      required: false,
-    }),
+      required: false
+    })
   };
 
   public async run(): Promise<void> {
@@ -38,7 +38,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
       const loans = await client.listLoansByReferrer.query({
         referredById: args.ref,
         showAll: flags["show-all"],
-        limit: parseInt(flags["page-size"]),
+        limit: parseInt(flags["page-size"])
       });
 
       const ui = cliui({ width: 180 });

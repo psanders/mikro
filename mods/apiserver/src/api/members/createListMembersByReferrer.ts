@@ -6,7 +6,7 @@ import {
   listMembersByReferrerSchema,
   type ListMembersByReferrerInput,
   type DbClient,
-  type Member,
+  type Member
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -23,12 +23,15 @@ export function createListMembersByReferrer(client: DbClient) {
     const members = await client.member.findMany({
       where: {
         referredById: params.referredById,
-        ...(params.showInactive ? {} : { isActive: true }),
+        ...(params.showInactive ? {} : { isActive: true })
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
-    logger.verbose("members by referrer listed", { referrerId: params.referredById, count: members.length });
+    logger.verbose("members by referrer listed", {
+      referrerId: params.referredById,
+      count: members.length
+    });
     return members;
   };
 

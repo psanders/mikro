@@ -45,6 +45,7 @@ CREATE TABLE "members" (
     "is_business_owner" BOOLEAN NOT NULL DEFAULT false,
     "is_active" BOOLEAN NOT NULL DEFAULT false,
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
+    "notes" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "created_by_id" TEXT,
@@ -65,6 +66,7 @@ CREATE TABLE "loans" (
     "term_length" INTEGER NOT NULL,
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
+    "notes" TEXT,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -154,7 +156,7 @@ export async function applySchema(db: PrismaClient) {
 
   for (const line of SCHEMA_SQL.split("\n")) {
     const trimmed = line.trim();
-    
+
     // Skip empty lines and comments
     if (!trimmed || trimmed.startsWith("--")) {
       continue;

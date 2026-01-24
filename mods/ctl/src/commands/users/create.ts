@@ -18,24 +18,24 @@ export default class Create extends BaseCommand<typeof Create> {
     const answers = {
       name: await input({
         message: "Name",
-        required: true,
+        required: true
       }),
       phone: await input({
         message: "Phone",
-        required: true,
+        required: true
       }),
       role: await select({
         message: "Role",
         choices: [
           { name: "Admin", value: "ADMIN" as const },
           { name: "Collector", value: "COLLECTOR" as const },
-          { name: "Referrer", value: "REFERRER" as const },
-        ],
-      }),
+          { name: "Referrer", value: "REFERRER" as const }
+        ]
+      })
     };
 
     const ready = await confirm({
-      message: "Ready to create user?",
+      message: "Ready to create user?"
     });
 
     if (!ready) {
@@ -47,7 +47,7 @@ export default class Create extends BaseCommand<typeof Create> {
       const user = await client.createUser.mutate({
         name: answers.name,
         phone: answers.phone,
-        role: answers.role,
+        role: answers.role
       });
 
       this.log("Done!");

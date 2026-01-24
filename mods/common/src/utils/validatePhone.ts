@@ -23,8 +23,8 @@ export function validateDominicanPhone(phoneNumber: string): string {
       {
         code: z.ZodIssueCode.custom,
         path: ["phone"],
-        message: "Phone number must be a valid Dominican Republic number",
-      },
+        message: "Phone number must be a valid Dominican Republic number"
+      }
     ]);
     throw new ValidationError(zodError);
   }

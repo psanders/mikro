@@ -7,7 +7,7 @@ import {
   type ListUsersInput,
   type DbClient,
   type User,
-  type Role,
+  type Role
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -19,19 +19,21 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists users
  */
 export function createListUsers(client: DbClient) {
-  const fn = async (params: ListUsersInput): Promise<(User & { roles?: Array<{ role: Role }> })[]> => {
+  const fn = async (
+    params: ListUsersInput
+  ): Promise<(User & { roles?: Array<{ role: Role }> })[]> => {
     logger.verbose("listing users", { limit: params.limit, offset: params.offset });
     const users = await client.user.findMany({
       where: params.showDisabled ? undefined : { enabled: true },
       include: {
         roles: {
           select: {
-            role: true,
-          },
-        },
+            role: true
+          }
+        }
       },
       take: params.limit,
-      skip: params.offset,
+      skip: params.offset
     });
     logger.verbose("users listed", { count: users.length });
     return users;

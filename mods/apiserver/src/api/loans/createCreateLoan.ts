@@ -6,7 +6,7 @@ import {
   createLoanSchema,
   type CreateLoanInput,
   type DbClient,
-  type Loan,
+  type Loan
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -19,16 +19,19 @@ import { logger } from "../../logger.js";
  */
 export function createCreateLoan(client: DbClient) {
   const fn = async (params: CreateLoanInput): Promise<Loan> => {
-    logger.verbose("creating loan", { memberId: params.memberId, principal: params.principal.toString() });
+    logger.verbose("creating loan", {
+      memberId: params.memberId,
+      principal: params.principal.toString()
+    });
 
     // Get the next loan ID (start at 10000 if no loans exist)
     const lastLoan = await client.loan.findFirst({
       orderBy: { loanId: "desc" },
-      select: { loanId: true },
+      select: { loanId: true }
     });
     const nextLoanId = lastLoan ? lastLoan.loanId + 1 : 10000;
 
-    const loan = await client.loan.create({
+    const loan = (await client.loan.create({
       data: {
         loanId: nextLoanId,
         memberId: params.memberId,
@@ -36,9 +39,9 @@ export function createCreateLoan(client: DbClient) {
         termLength: params.termLength,
         paymentAmount: params.paymentAmount,
         paymentFrequency: params.paymentFrequency,
-        type: params.type ?? "SAN",
-      },
-    }) as unknown as Loan;
+        type: params.type ?? "SAN"
+      }
+    })) as unknown as Loan;
 
     logger.verbose("loan created", { id: loan.id, loanId: nextLoanId, memberId: params.memberId });
     return loan;

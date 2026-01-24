@@ -6,7 +6,7 @@ import {
   reversePaymentSchema,
   type ReversePaymentInput,
   type DbClient,
-  type Payment,
+  type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,13 +20,13 @@ import { logger } from "../../logger.js";
 export function createReversePayment(client: DbClient) {
   const fn = async (params: ReversePaymentInput): Promise<Payment> => {
     logger.verbose("reversing payment", { id: params.id });
-    const payment = await client.payment.update({
+    const payment = (await client.payment.update({
       where: { id: params.id },
       data: {
         status: "REVERSED",
-        notes: params.notes,
-      },
-    }) as unknown as Payment;
+        notes: params.notes
+      }
+    })) as unknown as Payment;
     logger.verbose("payment reversed", { id: payment.id });
     return payment;
   };

@@ -24,7 +24,7 @@ export default class CustomHelp extends Help {
         horizontalLayout: "default",
         verticalLayout: "default",
         width: 60,
-        whitespaceBreak: true,
+        whitespaceBreak: true
       })
     );
     this.log("\x1b[0m");

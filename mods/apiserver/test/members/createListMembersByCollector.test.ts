@@ -25,7 +25,7 @@ describe("createListMembersByCollector", () => {
     referredById: null,
     assignedCollectorId: validCollectorId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
 
   afterEach(() => {
@@ -37,12 +37,12 @@ describe("createListMembersByCollector", () => {
       // Arrange
       const expectedMembers = [
         createMockMember("member-1", "John Doe"),
-        createMockMember("member-2", "Jane Smith"),
+        createMockMember("member-2", "Jane Smith")
       ];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 
@@ -56,7 +56,7 @@ describe("createListMembersByCollector", () => {
         mockClient.member.findMany.calledWith({
           where: { assignedCollectorId: validCollectorId, isActive: true },
           take: undefined,
-          skip: undefined,
+          skip: undefined
         })
       ).to.be.true;
     });
@@ -66,8 +66,8 @@ describe("createListMembersByCollector", () => {
       const expectedMembers = [createMockMember("member-1", "John Doe")];
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves(expectedMembers),
-        },
+          findMany: sinon.stub().resolves(expectedMembers)
+        }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 
@@ -75,7 +75,7 @@ describe("createListMembersByCollector", () => {
       const result = await listMembersByCollector({
         assignedCollectorId: validCollectorId,
         limit: 10,
-        offset: 5,
+        offset: 5
       });
 
       // Assert
@@ -84,7 +84,7 @@ describe("createListMembersByCollector", () => {
         mockClient.member.findMany.calledWith({
           where: { assignedCollectorId: validCollectorId, isActive: true },
           take: 10,
-          skip: 5,
+          skip: 5
         })
       ).to.be.true;
     });
@@ -93,8 +93,8 @@ describe("createListMembersByCollector", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 
@@ -110,7 +110,7 @@ describe("createListMembersByCollector", () => {
     it("should throw ValidationError for invalid collector UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 
@@ -127,7 +127,7 @@ describe("createListMembersByCollector", () => {
     it("should throw ValidationError for missing assignedCollectorId", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() },
+        member: { findMany: sinon.stub() }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 
@@ -147,8 +147,8 @@ describe("createListMembersByCollector", () => {
       // Arrange
       const mockClient = {
         member: {
-          findMany: sinon.stub().rejects(new Error("Database error")),
-        },
+          findMany: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const listMembersByCollector = createListMembersByCollector(mockClient as any);
 

@@ -13,8 +13,8 @@ export default class Get extends BaseCommand<typeof Get> {
   static override readonly args = {
     ref: Args.string({
       description: "The User ID to show details about",
-      required: true,
-    }),
+      required: true
+    })
   };
 
   public async run(): Promise<void> {

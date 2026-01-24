@@ -10,10 +10,10 @@ describe("createListUsers", () => {
   const createMockUser = (id: string, name: string) => ({
     id,
     name,
-    phone: "+1234567890",
+    phone: "18091234567", // Normalized phone (stripped +)
     enabled: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
 
   afterEach(() => {
@@ -25,12 +25,12 @@ describe("createListUsers", () => {
       // Arrange
       const expectedUsers = [
         createMockUser("user-1", "John Doe"),
-        createMockUser("user-2", "Jane Smith"),
+        createMockUser("user-2", "Jane Smith")
       ];
       const mockClient = {
         user: {
-          findMany: sinon.stub().resolves(expectedUsers),
-        },
+          findMany: sinon.stub().resolves(expectedUsers)
+        }
       };
       const listUsers = createListUsers(mockClient as any);
 
@@ -48,8 +48,8 @@ describe("createListUsers", () => {
       const expectedUsers = [createMockUser("user-2", "Jane Smith")];
       const mockClient = {
         user: {
-          findMany: sinon.stub().resolves(expectedUsers),
-        },
+          findMany: sinon.stub().resolves(expectedUsers)
+        }
       };
       const listUsers = createListUsers(mockClient as any);
 
@@ -59,21 +59,18 @@ describe("createListUsers", () => {
       // Assert
       expect(result).to.have.length(1);
       expect(mockClient.user.findMany.calledOnce).to.be.true;
-      expect(
-        mockClient.user.findMany.calledWith({
-          where: { enabled: true },
-          take: 10,
-          skip: 1,
-        })
-      ).to.be.true;
+      const callArgs = mockClient.user.findMany.getCall(0).args[0];
+      expect(callArgs.where.enabled).to.equal(true);
+      expect(callArgs.take).to.equal(10);
+      expect(callArgs.skip).to.equal(1);
     });
 
     it("should return empty array when no users exist", async () => {
       // Arrange
       const mockClient = {
         user: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listUsers = createListUsers(mockClient as any);
 
@@ -89,7 +86,7 @@ describe("createListUsers", () => {
     it("should throw ValidationError for negative offset", async () => {
       // Arrange
       const mockClient = {
-        user: { findMany: sinon.stub() },
+        user: { findMany: sinon.stub() }
       };
       const listUsers = createListUsers(mockClient as any);
 
@@ -106,7 +103,7 @@ describe("createListUsers", () => {
     it("should throw ValidationError for limit exceeding max", async () => {
       // Arrange
       const mockClient = {
-        user: { findMany: sinon.stub() },
+        user: { findMany: sinon.stub() }
       };
       const listUsers = createListUsers(mockClient as any);
 
@@ -126,8 +123,8 @@ describe("createListUsers", () => {
       // Arrange
       const mockClient = {
         user: {
-          findMany: sinon.stub().rejects(new Error("Database error")),
-        },
+          findMany: sinon.stub().rejects(new Error("Database error"))
+        }
       };
       const listUsers = createListUsers(mockClient as any);
 

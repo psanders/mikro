@@ -40,7 +40,7 @@ export class ValidationError extends Error {
     return zodError.issues.map((issue) => ({
       field: issue.path.join(".") || "root",
       message: issue.message,
-      code: issue.code,
+      code: issue.code
     }));
   }
 
@@ -71,7 +71,7 @@ export class ValidationError extends Error {
     return {
       code: this.code,
       message: this.message,
-      fieldErrors: this.fieldErrors,
+      fieldErrors: this.fieldErrors
     };
   }
 }

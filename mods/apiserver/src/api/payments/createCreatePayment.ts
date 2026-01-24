@@ -6,7 +6,7 @@ import {
   createPaymentSchema,
   type CreatePaymentInput,
   type DbClient,
-  type Payment,
+  type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,16 +20,16 @@ import { logger } from "../../logger.js";
 export function createCreatePayment(client: DbClient) {
   const fn = async (params: CreatePaymentInput): Promise<Payment> => {
     logger.verbose("creating payment", { loanId: params.loanId, amount: params.amount.toString() });
-    const payment = await client.payment.create({
+    const payment = (await client.payment.create({
       data: {
         loanId: params.loanId,
         amount: params.amount,
         paidAt: params.paidAt,
         method: params.method ?? "CASH",
         collectedById: params.collectedById,
-        notes: params.notes,
-      },
-    }) as unknown as Payment;
+        notes: params.notes
+      }
+    })) as unknown as Payment;
     logger.verbose("payment created", { id: payment.id, loanId: params.loanId });
     return payment;
   };

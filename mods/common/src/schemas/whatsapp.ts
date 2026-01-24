@@ -64,18 +64,19 @@ export const whatsappWebhookSchema = z.object({
  * - For text: provide phone and message
  * - For image: provide phone, imageUrl, and optional caption
  */
-export const sendWhatsAppMessageSchema = z.object({
-  phone: z.string().min(1, "Phone number is required"),
-  /** Text message content (required for text messages) */
-  message: z.string().optional(),
-  /** Public URL to the image (required for image messages) */
-  imageUrl: z.string().url().optional(),
-  /** Caption for image messages */
-  caption: z.string().optional()
-}).refine(
-  (data) => data.message || data.imageUrl,
-  { message: "Either message or imageUrl must be provided" }
-);
+export const sendWhatsAppMessageSchema = z
+  .object({
+    phone: z.string().min(1, "Phone number is required"),
+    /** Text message content (required for text messages) */
+    message: z.string().optional(),
+    /** Public URL to the image (required for image messages) */
+    imageUrl: z.string().url().optional(),
+    /** Caption for image messages */
+    caption: z.string().optional()
+  })
+  .refine((data) => data.message || data.imageUrl, {
+    message: "Either message or imageUrl must be provided"
+  });
 
 /**
  * Type for WhatsApp message text content.

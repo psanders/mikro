@@ -11,7 +11,7 @@ describe("createListPaymentsByReferrer", () => {
   const validInput = {
     referredById: validReferrerId,
     startDate: new Date("2026-01-01"),
-    endDate: new Date("2026-01-31"),
+    endDate: new Date("2026-01-31")
   };
 
   afterEach(() => {
@@ -32,7 +32,7 @@ describe("createListPaymentsByReferrer", () => {
           notes: null,
           collectedById: null,
           createdAt: new Date(),
-          updatedAt: new Date(),
+          updatedAt: new Date()
         },
         {
           id: "payment-2",
@@ -44,13 +44,13 @@ describe("createListPaymentsByReferrer", () => {
           notes: null,
           collectedById: null,
           createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       ];
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves(expectedPayments),
-        },
+          findMany: sinon.stub().resolves(expectedPayments)
+        }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -65,9 +65,9 @@ describe("createListPaymentsByReferrer", () => {
           sinon.match({
             where: sinon.match({
               loan: {
-                member: { referredById: validReferrerId },
-              },
-            }),
+                member: { referredById: validReferrerId }
+              }
+            })
           })
         )
       ).to.be.true;
@@ -78,8 +78,8 @@ describe("createListPaymentsByReferrer", () => {
       const inputWithPagination = { ...validInput, limit: 10, offset: 5 };
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -91,7 +91,7 @@ describe("createListPaymentsByReferrer", () => {
         mockClient.payment.findMany.calledWith(
           sinon.match({
             take: 10,
-            skip: 5,
+            skip: 5
           })
         )
       ).to.be.true;
@@ -101,8 +101,8 @@ describe("createListPaymentsByReferrer", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().resolves([]),
-        },
+          findMany: sinon.stub().resolves([])
+        }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -118,7 +118,7 @@ describe("createListPaymentsByReferrer", () => {
     it("should throw ValidationError for invalid referrer UUID", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -135,7 +135,7 @@ describe("createListPaymentsByReferrer", () => {
     it("should throw ValidationError for missing referredById", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -143,7 +143,7 @@ describe("createListPaymentsByReferrer", () => {
       try {
         await listPaymentsByReferrer({
           startDate: new Date(),
-          endDate: new Date(),
+          endDate: new Date()
         } as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
@@ -155,7 +155,7 @@ describe("createListPaymentsByReferrer", () => {
     it("should throw ValidationError for missing date range", async () => {
       // Arrange
       const mockClient = {
-        payment: { findMany: sinon.stub() },
+        payment: { findMany: sinon.stub() }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 
@@ -175,8 +175,8 @@ describe("createListPaymentsByReferrer", () => {
       // Arrange
       const mockClient = {
         payment: {
-          findMany: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          findMany: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const listPaymentsByReferrer = createListPaymentsByReferrer(mockClient as any);
 

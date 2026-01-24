@@ -5,6 +5,7 @@ Create a new function using the validation and error handling pattern with Zod s
 ## Pattern Overview
 
 This pattern uses a builder-style approach:
+
 1. **Outer function** (`createXxx`) accepts dependencies as parameters (dependency injection)
 2. **Inner function** (`fn`) contains the actual business logic with typed parameters
 3. **Wrapper** (`withErrorHandlingAndValidation`) handles validation and errors
@@ -14,14 +15,12 @@ This design enables **dependency injection**, making functions easy to test by s
 ## Instructions
 
 1. **Identify or create the Zod schema** in `@mikro/common`:
-
    - Check if a schema already exists in `mods/common/src/schemas/`
    - If not, create a new schema file following the naming convention: `<domain>.ts`
    - Export the schema and its inferred type from `mods/common/src/schemas/index.ts`
    - Export from `mods/common/src/index.ts`
 
 2. **Use existing client interfaces** from `@mikro/common`:
-
    - Client interfaces live in `mods/common/src/types/`
    - Import them: `import type { MemberClient } from "@mikro/common"`
    - If a new interface is needed, add it to the types folder
@@ -57,7 +56,7 @@ import {
   withErrorHandlingAndValidation,
   createMemberSchema,
   type CreateMemberInput,
-  type MemberClient,
+  type MemberClient
 } from "@mikro/common";
 
 export function createCreateMember(client: MemberClient) {
@@ -84,7 +83,7 @@ const member = await createMember({
   phone: "+1234567890",
   idNumber: "ABC123",
   collectionPoint: "Main Office",
-  homeAddress: "123 Main St",
+  homeAddress: "123 Main St"
 });
 ```
 
@@ -102,7 +101,7 @@ export const sendNotificationSchema = z.object({
   recipient: z.string().email(),
   subject: z.string().min(1),
   body: z.string().min(1),
-  priority: z.enum(["low", "normal", "high"]).optional(),
+  priority: z.enum(["low", "normal", "high"]).optional()
 });
 
 export type SendNotificationInput = z.infer<typeof sendNotificationSchema>;
@@ -126,7 +125,7 @@ import {
   withErrorHandlingAndValidation,
   sendNotificationSchema,
   type SendNotificationInput,
-  type NotificationClient,
+  type NotificationClient
 } from "@mikro/common";
 
 export function createSendNotification(client: NotificationClient) {
@@ -156,7 +155,7 @@ describe("createCreateMember", () => {
     phone: "+1234567890",
     idNumber: "ABC123",
     collectionPoint: "Main Office",
-    homeAddress: "123 Main St",
+    homeAddress: "123 Main St"
   };
 
   describe("with valid input", () => {
@@ -165,8 +164,8 @@ describe("createCreateMember", () => {
       const expectedMember = { id: "123", ...validInput };
       const mockClient = {
         member: {
-          create: sinon.stub().resolves(expectedMember),
-        },
+          create: sinon.stub().resolves(expectedMember)
+        }
       };
       const createMember = createCreateMember(mockClient);
 
@@ -185,8 +184,8 @@ describe("createCreateMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          create: sinon.stub(),
-        },
+          create: sinon.stub()
+        }
       };
       const createMember = createCreateMember(mockClient);
 
@@ -206,8 +205,8 @@ describe("createCreateMember", () => {
       // Arrange
       const mockClient = {
         member: {
-          create: sinon.stub().rejects(new Error("Connection failed")),
-        },
+          create: sinon.stub().rejects(new Error("Connection failed"))
+        }
       };
       const createMember = createCreateMember(mockClient);
 
@@ -234,11 +233,13 @@ describe("createCreateMember", () => {
 ## Error Handling
 
 The `withErrorHandlingAndValidation` wrapper:
+
 - Validates input against the Zod schema using `safeParse`
 - Throws `ValidationError` with detailed field-level errors if validation fails
 - Passes validated, typed data to the inner function
 
 The `ValidationError` includes:
+
 - `message`: Human-readable error message
 - `fieldErrors`: Array of `{ field, message, code }` for each validation error
 - `zodError`: Original Zod error for debugging

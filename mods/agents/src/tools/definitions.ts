@@ -14,13 +14,15 @@ export const createMemberTool: ToolFunction = {
   type: "function",
   function: {
     name: "createMember",
-    description: "Crear una nueva cuenta de miembro después de recopilar toda la información requerida. El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula.",
+    description:
+      "Crear una nueva cuenta de miembro después de recopilar toda la información requerida. El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula.",
     parameters: {
       type: "object",
       properties: {
         phone: {
           type: "string",
-          description: "Número de teléfono del miembro (se proporciona automáticamente del contexto)"
+          description:
+            "Número de teléfono del miembro (se proporciona automáticamente del contexto)"
         },
         referrerName: {
           type: "string",
@@ -126,7 +128,8 @@ export const listLoansByCollectorTool: ToolFunction = {
       properties: {
         showAll: {
           type: "string",
-          description: "Si es 'true', muestra todos los préstamos incluyendo los completados. Por defecto solo muestra activos."
+          description:
+            "Si es 'true', muestra todos los préstamos incluyendo los completados. Por defecto solo muestra activos."
         }
       },
       required: []
@@ -211,5 +214,5 @@ export const allTools: ToolFunction[] = [
  * Get tools by name.
  */
 export function getToolByName(name: string): ToolFunction | undefined {
-  return allTools.find(tool => tool.function.name === name);
+  return allTools.find((tool) => tool.function.name === name);
 }
