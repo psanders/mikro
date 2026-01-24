@@ -2,6 +2,8 @@
 CREATE TABLE "users" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL
 );
@@ -25,7 +27,7 @@ CREATE TABLE "members" (
     "job_position" TEXT,
     "income" DECIMAL,
     "is_business_owner" BOOLEAN NOT NULL DEFAULT false,
-    "is_guest" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT false,
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
@@ -41,8 +43,12 @@ CREATE TABLE "members" (
 CREATE TABLE "loans" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "loan_id" INTEGER NOT NULL,
-    "type" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'SAN',
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "principal" DECIMAL NOT NULL,
+    "term_length" INTEGER NOT NULL,
+    "payment_amount" DECIMAL NOT NULL,
+    "payment_frequency" TEXT NOT NULL,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,8 +64,10 @@ CREATE TABLE "messages" (
     "content" TEXT NOT NULL,
     "tools" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "member_id" TEXT NOT NULL,
-    CONSTRAINT "messages_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "members" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "member_id" TEXT,
+    "user_id" TEXT,
+    CONSTRAINT "messages_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "members" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "messages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -73,6 +81,22 @@ CREATE TABLE "attachments" (
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "message_id" TEXT NOT NULL,
     CONSTRAINT "attachments_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "messages" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "payments" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "amount" DECIMAL NOT NULL,
+    "paid_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "method" TEXT NOT NULL DEFAULT 'CASH',
+    "status" TEXT NOT NULL DEFAULT 'COMPLETED',
+    "notes" TEXT,
+    "loan_id" TEXT NOT NULL,
+    "collected_by_id" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL,
+    CONSTRAINT "payments_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "payments_collected_by_id_fkey" FOREIGN KEY ("collected_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -103,7 +127,19 @@ CREATE INDEX "loans_status_idx" ON "loans"("status");
 CREATE INDEX "messages_member_id_idx" ON "messages"("member_id");
 
 -- CreateIndex
+CREATE INDEX "messages_user_id_idx" ON "messages"("user_id");
+
+-- CreateIndex
 CREATE INDEX "messages_created_at_idx" ON "messages"("created_at");
 
 -- CreateIndex
 CREATE INDEX "attachments_message_id_idx" ON "attachments"("message_id");
+
+-- CreateIndex
+CREATE INDEX "payments_loan_id_idx" ON "payments"("loan_id");
+
+-- CreateIndex
+CREATE INDEX "payments_collected_by_id_idx" ON "payments"("collected_by_id");
+
+-- CreateIndex
+CREATE INDEX "payments_paid_at_idx" ON "payments"("paid_at");
