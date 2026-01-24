@@ -193,7 +193,7 @@ describe("Loans Integration", () => {
       expect(loan2.loanId).to.equal(10001);
     });
 
-    it("should set startedAt to current time", async () => {
+    it("should set createdAt to current time", async () => {
       const member = await createTestMember();
       const beforeCreate = new Date();
 
@@ -206,24 +206,10 @@ describe("Loans Integration", () => {
       });
 
       const afterCreate = new Date();
-      const startedAt = new Date(loan.startedAt);
+      const createdAt = new Date(loan.createdAt);
 
-      expect(startedAt.getTime()).to.be.at.least(beforeCreate.getTime() - 1000);
-      expect(startedAt.getTime()).to.be.at.most(afterCreate.getTime() + 1000);
-    });
-
-    it("should set closedAt to null for new loans", async () => {
-      const member = await createTestMember();
-
-      const loan = await caller.createLoan({
-        memberId: member.id,
-        principal: 5000,
-        termLength: 10,
-        paymentAmount: 650,
-        paymentFrequency: "WEEKLY",
-      });
-
-      expect(loan.closedAt).to.be.null;
+      expect(createdAt.getTime()).to.be.at.least(beforeCreate.getTime() - 1000);
+      expect(createdAt.getTime()).to.be.at.most(afterCreate.getTime() + 1000);
     });
   });
 });

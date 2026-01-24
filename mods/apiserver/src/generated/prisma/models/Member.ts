@@ -46,6 +46,7 @@ export type MemberMinAggregateOutputType = {
   isBusinessOwner: boolean | null
   isActive: boolean | null
   idCardOnRecord: boolean | null
+  notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
   createdById: string | null
@@ -65,6 +66,7 @@ export type MemberMaxAggregateOutputType = {
   isBusinessOwner: boolean | null
   isActive: boolean | null
   idCardOnRecord: boolean | null
+  notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
   createdById: string | null
@@ -84,6 +86,7 @@ export type MemberCountAggregateOutputType = {
   isBusinessOwner: number
   isActive: number
   idCardOnRecord: number
+  notes: number
   createdAt: number
   updatedAt: number
   createdById: number
@@ -113,6 +116,7 @@ export type MemberMinAggregateInputType = {
   isBusinessOwner?: true
   isActive?: true
   idCardOnRecord?: true
+  notes?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -132,6 +136,7 @@ export type MemberMaxAggregateInputType = {
   isBusinessOwner?: true
   isActive?: true
   idCardOnRecord?: true
+  notes?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -151,6 +156,7 @@ export type MemberCountAggregateInputType = {
   isBusinessOwner?: true
   isActive?: true
   idCardOnRecord?: true
+  notes?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -250,18 +256,19 @@ export type MemberGroupByOutputType = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint: string | null
   homeAddress: string
   jobPosition: string | null
   income: runtime.Decimal | null
   isBusinessOwner: boolean
   isActive: boolean
   idCardOnRecord: boolean
+  notes: string | null
   createdAt: Date
   updatedAt: Date
   createdById: string | null
-  referredById: string | null
-  assignedCollectorId: string | null
+  referredById: string
+  assignedCollectorId: string
   _count: MemberCountAggregateOutputType | null
   _avg: MemberAvgAggregateOutputType | null
   _sum: MemberSumAggregateOutputType | null
@@ -292,21 +299,22 @@ export type MemberWhereInput = {
   name?: Prisma.StringFilter<"Member"> | string
   phone?: Prisma.StringFilter<"Member"> | string
   idNumber?: Prisma.StringFilter<"Member"> | string
-  collectionPoint?: Prisma.StringFilter<"Member"> | string
+  collectionPoint?: Prisma.StringNullableFilter<"Member"> | string | null
   homeAddress?: Prisma.StringFilter<"Member"> | string
   jobPosition?: Prisma.StringNullableFilter<"Member"> | string | null
   income?: Prisma.DecimalNullableFilter<"Member"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFilter<"Member"> | boolean
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
+  notes?: Prisma.StringNullableFilter<"Member"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
-  referredById?: Prisma.StringNullableFilter<"Member"> | string | null
-  assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null
+  referredById?: Prisma.StringFilter<"Member"> | string
+  assignedCollectorId?: Prisma.StringFilter<"Member"> | string
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  assignedCollector?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
 }
@@ -316,18 +324,19 @@ export type MemberOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   idNumber?: Prisma.SortOrder
-  collectionPoint?: Prisma.SortOrder
+  collectionPoint?: Prisma.SortOrderInput | Prisma.SortOrder
   homeAddress?: Prisma.SortOrder
   jobPosition?: Prisma.SortOrderInput | Prisma.SortOrder
   income?: Prisma.SortOrderInput | Prisma.SortOrder
   isBusinessOwner?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
-  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
-  assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  referredById?: Prisma.SortOrder
+  assignedCollectorId?: Prisma.SortOrder
   createdBy?: Prisma.UserOrderByWithRelationInput
   referredBy?: Prisma.UserOrderByWithRelationInput
   assignedCollector?: Prisma.UserOrderByWithRelationInput
@@ -343,21 +352,22 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Member"> | string
   phone?: Prisma.StringFilter<"Member"> | string
   idNumber?: Prisma.StringFilter<"Member"> | string
-  collectionPoint?: Prisma.StringFilter<"Member"> | string
+  collectionPoint?: Prisma.StringNullableFilter<"Member"> | string | null
   homeAddress?: Prisma.StringFilter<"Member"> | string
   jobPosition?: Prisma.StringNullableFilter<"Member"> | string | null
   income?: Prisma.DecimalNullableFilter<"Member"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFilter<"Member"> | boolean
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
+  notes?: Prisma.StringNullableFilter<"Member"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
-  referredById?: Prisma.StringNullableFilter<"Member"> | string | null
-  assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null
+  referredById?: Prisma.StringFilter<"Member"> | string
+  assignedCollectorId?: Prisma.StringFilter<"Member"> | string
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  assignedCollector?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
 }, "id">
@@ -367,18 +377,19 @@ export type MemberOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   idNumber?: Prisma.SortOrder
-  collectionPoint?: Prisma.SortOrder
+  collectionPoint?: Prisma.SortOrderInput | Prisma.SortOrder
   homeAddress?: Prisma.SortOrder
   jobPosition?: Prisma.SortOrderInput | Prisma.SortOrder
   income?: Prisma.SortOrderInput | Prisma.SortOrder
   isBusinessOwner?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
-  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
-  assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  referredById?: Prisma.SortOrder
+  assignedCollectorId?: Prisma.SortOrder
   _count?: Prisma.MemberCountOrderByAggregateInput
   _avg?: Prisma.MemberAvgOrderByAggregateInput
   _max?: Prisma.MemberMaxOrderByAggregateInput
@@ -394,18 +405,19 @@ export type MemberScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Member"> | string
   phone?: Prisma.StringWithAggregatesFilter<"Member"> | string
   idNumber?: Prisma.StringWithAggregatesFilter<"Member"> | string
-  collectionPoint?: Prisma.StringWithAggregatesFilter<"Member"> | string
+  collectionPoint?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
   homeAddress?: Prisma.StringWithAggregatesFilter<"Member"> | string
   jobPosition?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
   income?: Prisma.DecimalNullableWithAggregatesFilter<"Member"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolWithAggregatesFilter<"Member"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolWithAggregatesFilter<"Member"> | boolean
+  notes?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
-  referredById?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
-  assignedCollectorId?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
+  referredById?: Prisma.StringWithAggregatesFilter<"Member"> | string
+  assignedCollectorId?: Prisma.StringWithAggregatesFilter<"Member"> | string
 }
 
 export type MemberCreateInput = {
@@ -413,18 +425,19 @@ export type MemberCreateInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
-  referredBy?: Prisma.UserCreateNestedOneWithoutReferredMembersInput
-  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
 }
@@ -434,18 +447,19 @@ export type MemberUncheckedCreateInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
 }
@@ -455,18 +469,19 @@ export type MemberUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
-  referredBy?: Prisma.UserUpdateOneWithoutReferredMembersNestedInput
-  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
 }
@@ -476,18 +491,19 @@ export type MemberUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
@@ -497,18 +513,19 @@ export type MemberCreateManyInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
 }
 
 export type MemberUpdateManyMutationInput = {
@@ -516,13 +533,14 @@ export type MemberUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -532,18 +550,19 @@ export type MemberUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MemberListRelationFilter = {
@@ -568,6 +587,7 @@ export type MemberCountOrderByAggregateInput = {
   isBusinessOwner?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -591,6 +611,7 @@ export type MemberMaxOrderByAggregateInput = {
   isBusinessOwner?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -610,6 +631,7 @@ export type MemberMinOrderByAggregateInput = {
   isBusinessOwner?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -804,17 +826,18 @@ export type MemberCreateWithoutCreatedByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredBy?: Prisma.UserCreateNestedOneWithoutReferredMembersInput
-  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
 }
@@ -824,17 +847,18 @@ export type MemberUncheckedCreateWithoutCreatedByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
 }
@@ -853,17 +877,18 @@ export type MemberCreateWithoutReferredByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
-  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
 }
@@ -873,17 +898,18 @@ export type MemberUncheckedCreateWithoutReferredByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  assignedCollectorId?: string | null
+  assignedCollectorId: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
 }
@@ -902,17 +928,18 @@ export type MemberCreateWithoutAssignedCollectorInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
-  referredBy?: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
 }
@@ -922,17 +949,18 @@ export type MemberUncheckedCreateWithoutAssignedCollectorInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
+  referredById: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
 }
@@ -970,18 +998,19 @@ export type MemberScalarWhereInput = {
   name?: Prisma.StringFilter<"Member"> | string
   phone?: Prisma.StringFilter<"Member"> | string
   idNumber?: Prisma.StringFilter<"Member"> | string
-  collectionPoint?: Prisma.StringFilter<"Member"> | string
+  collectionPoint?: Prisma.StringNullableFilter<"Member"> | string | null
   homeAddress?: Prisma.StringFilter<"Member"> | string
   jobPosition?: Prisma.StringNullableFilter<"Member"> | string | null
   income?: Prisma.DecimalNullableFilter<"Member"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFilter<"Member"> | boolean
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
+  notes?: Prisma.StringNullableFilter<"Member"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
-  referredById?: Prisma.StringNullableFilter<"Member"> | string | null
-  assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null
+  referredById?: Prisma.StringFilter<"Member"> | string
+  assignedCollectorId?: Prisma.StringFilter<"Member"> | string
 }
 
 export type MemberUpsertWithWhereUniqueWithoutReferredByInput = {
@@ -1021,18 +1050,19 @@ export type MemberCreateWithoutLoansInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
-  referredBy?: Prisma.UserCreateNestedOneWithoutReferredMembersInput
-  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
 }
 
@@ -1041,18 +1071,19 @@ export type MemberUncheckedCreateWithoutLoansInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
 }
 
@@ -1077,18 +1108,19 @@ export type MemberUpdateWithoutLoansInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
-  referredBy?: Prisma.UserUpdateOneWithoutReferredMembersNestedInput
-  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
 }
 
@@ -1097,18 +1129,19 @@ export type MemberUncheckedUpdateWithoutLoansInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
 
@@ -1117,18 +1150,19 @@ export type MemberCreateWithoutMessagesInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
-  referredBy?: Prisma.UserCreateNestedOneWithoutReferredMembersInput
-  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
 }
 
@@ -1137,18 +1171,19 @@ export type MemberUncheckedCreateWithoutMessagesInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
 }
 
@@ -1173,18 +1208,19 @@ export type MemberUpdateWithoutMessagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
-  referredBy?: Prisma.UserUpdateOneWithoutReferredMembersNestedInput
-  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
 }
 
@@ -1193,18 +1229,19 @@ export type MemberUncheckedUpdateWithoutMessagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
 }
 
@@ -1213,17 +1250,18 @@ export type MemberCreateManyCreatedByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredById?: string | null
-  assignedCollectorId?: string | null
+  referredById: string
+  assignedCollectorId: string
 }
 
 export type MemberCreateManyReferredByInput = {
@@ -1231,17 +1269,18 @@ export type MemberCreateManyReferredByInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  assignedCollectorId?: string | null
+  assignedCollectorId: string
 }
 
 export type MemberCreateManyAssignedCollectorInput = {
@@ -1249,17 +1288,18 @@ export type MemberCreateManyAssignedCollectorInput = {
   name: string
   phone: string
   idNumber: string
-  collectionPoint: string
+  collectionPoint?: string | null
   homeAddress: string
   jobPosition?: string | null
   income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById?: string | null
+  referredById: string
 }
 
 export type MemberUpdateWithoutCreatedByInput = {
@@ -1267,17 +1307,18 @@ export type MemberUpdateWithoutCreatedByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredBy?: Prisma.UserUpdateOneWithoutReferredMembersNestedInput
-  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
 }
@@ -1287,17 +1328,18 @@ export type MemberUncheckedUpdateWithoutCreatedByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
@@ -1307,17 +1349,18 @@ export type MemberUncheckedUpdateManyWithoutCreatedByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MemberUpdateWithoutReferredByInput = {
@@ -1325,17 +1368,18 @@ export type MemberUpdateWithoutReferredByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
-  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
 }
@@ -1345,17 +1389,18 @@ export type MemberUncheckedUpdateWithoutReferredByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
@@ -1365,17 +1410,18 @@ export type MemberUncheckedUpdateManyWithoutReferredByInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type MemberUpdateWithoutAssignedCollectorInput = {
@@ -1383,17 +1429,18 @@ export type MemberUpdateWithoutAssignedCollectorInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
-  referredBy?: Prisma.UserUpdateOneWithoutReferredMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
 }
@@ -1403,17 +1450,18 @@ export type MemberUncheckedUpdateWithoutAssignedCollectorInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
@@ -1423,17 +1471,18 @@ export type MemberUncheckedUpdateManyWithoutAssignedCollectorInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   idNumber?: Prisma.StringFieldUpdateOperationsInput | string
-  collectionPoint?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
   jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -1488,14 +1537,15 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   loans?: boolean | Prisma.Member$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
@@ -1513,14 +1563,15 @@ export type MemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["member"]>
 
 export type MemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1535,14 +1586,15 @@ export type MemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["member"]>
 
 export type MemberSelectScalar = {
@@ -1557,6 +1609,7 @@ export type MemberSelectScalar = {
   isBusinessOwner?: boolean
   isActive?: boolean
   idCardOnRecord?: boolean
+  notes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
@@ -1564,32 +1617,32 @@ export type MemberSelectScalar = {
   assignedCollectorId?: boolean
 }
 
-export type MemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "idNumber" | "collectionPoint" | "homeAddress" | "jobPosition" | "income" | "isBusinessOwner" | "isActive" | "idCardOnRecord" | "createdAt" | "updatedAt" | "createdById" | "referredById" | "assignedCollectorId", ExtArgs["result"]["member"]>
+export type MemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "idNumber" | "collectionPoint" | "homeAddress" | "jobPosition" | "income" | "isBusinessOwner" | "isActive" | "idCardOnRecord" | "notes" | "createdAt" | "updatedAt" | "createdById" | "referredById" | "assignedCollectorId", ExtArgs["result"]["member"]>
 export type MemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   loans?: boolean | Prisma.Member$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type MemberIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.Member$referredByArgs<ExtArgs>
-  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
+  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Member"
   objects: {
     createdBy: Prisma.$UserPayload<ExtArgs> | null
-    referredBy: Prisma.$UserPayload<ExtArgs> | null
-    assignedCollector: Prisma.$UserPayload<ExtArgs> | null
+    referredBy: Prisma.$UserPayload<ExtArgs>
+    assignedCollector: Prisma.$UserPayload<ExtArgs>
     loans: Prisma.$LoanPayload<ExtArgs>[]
     messages: Prisma.$MessagePayload<ExtArgs>[]
   }
@@ -1598,18 +1651,19 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     name: string
     phone: string
     idNumber: string
-    collectionPoint: string
+    collectionPoint: string | null
     homeAddress: string
     jobPosition: string | null
     income: runtime.Decimal | null
     isBusinessOwner: boolean
     isActive: boolean
     idCardOnRecord: boolean
+    notes: string | null
     createdAt: Date
     updatedAt: Date
     createdById: string | null
-    referredById: string | null
-    assignedCollectorId: string | null
+    referredById: string
+    assignedCollectorId: string
   }, ExtArgs["result"]["member"]>
   composites: {}
 }
@@ -2005,8 +2059,8 @@ readonly fields: MemberFieldRefs;
 export interface Prisma__MemberClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   createdBy<T extends Prisma.Member$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  referredBy<T extends Prisma.Member$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  assignedCollector<T extends Prisma.Member$assignedCollectorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$assignedCollectorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  referredBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  assignedCollector<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   loans<T extends Prisma.Member$loansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$loansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.Member$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2049,6 +2103,7 @@ export interface MemberFieldRefs {
   readonly isBusinessOwner: Prisma.FieldRef<"Member", 'Boolean'>
   readonly isActive: Prisma.FieldRef<"Member", 'Boolean'>
   readonly idCardOnRecord: Prisma.FieldRef<"Member", 'Boolean'>
+  readonly notes: Prisma.FieldRef<"Member", 'String'>
   readonly createdAt: Prisma.FieldRef<"Member", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Member", 'DateTime'>
   readonly createdById: Prisma.FieldRef<"Member", 'String'>
@@ -2451,44 +2506,6 @@ export type MemberDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
  * Member.createdBy
  */
 export type Member$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the User
-   */
-  select?: Prisma.UserSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the User
-   */
-  omit?: Prisma.UserOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserInclude<ExtArgs> | null
-  where?: Prisma.UserWhereInput
-}
-
-/**
- * Member.referredBy
- */
-export type Member$referredByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the User
-   */
-  select?: Prisma.UserSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the User
-   */
-  omit?: Prisma.UserOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserInclude<ExtArgs> | null
-  where?: Prisma.UserWhereInput
-}
-
-/**
- * Member.assignedCollector
- */
-export type Member$assignedCollectorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */

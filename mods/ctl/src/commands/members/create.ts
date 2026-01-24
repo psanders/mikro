@@ -15,26 +15,48 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("This utility will help you create a Member.");
     this.log("Press ^C at any time to quit.");
 
+    // Get users for referrer and collector selection
+    const users = await client.listUsers.query({ showDisabled: true });
+    const referrers = users.filter((u: any) => u.roles?.some((r: { role: string }) => r.role === "REFERRER"));
+    const collectors = users.filter((u: any) => u.roles?.some((r: { role: string }) => r.role === "COLLECTOR"));
+
+    if (referrers.length === 0) {
+      this.error("No referrers found. Please create a user with REFERRER role first.");
+      return;
+    }
+    if (collectors.length === 0) {
+      this.error("No collectors found. Please create a user with COLLECTOR role first.");
+      return;
+    }
+
     const answers = {
       name: await input({
         message: "Name",
         required: true,
       }),
       phone: await input({
-        message: "Phone",
+        message: "Phone (e.g., +18091234567)",
         required: true,
       }),
       idNumber: await input({
-        message: "ID Number",
+        message: "ID Number (format: 000-0000000-0)",
         required: true,
       }),
       collectionPoint: await input({
-        message: "Collection Point",
+        message: "Collection Point (URL)",
         required: true,
       }),
       homeAddress: await input({
         message: "Home Address",
         required: true,
+      }),
+      referredById: await select({
+        message: "Referrer",
+        choices: referrers.map((u: any) => ({ name: `${u.name} (${u.id})`, value: u.id })),
+      }),
+      assignedCollectorId: await select({
+        message: "Collector",
+        choices: collectors.map((u: any) => ({ name: `${u.name} (${u.id})`, value: u.id })),
       }),
       jobPosition: await input({
         message: "Job Position (optional)",
@@ -51,6 +73,10 @@ export default class Create extends BaseCommand<typeof Create> {
           { name: "Yes", value: true },
         ],
         default: false,
+      }),
+      notes: await input({
+        message: "Note (optional)",
+        required: false,
       }),
     };
 
@@ -70,9 +96,12 @@ export default class Create extends BaseCommand<typeof Create> {
         idNumber: answers.idNumber,
         collectionPoint: answers.collectionPoint,
         homeAddress: answers.homeAddress,
+        referredById: answers.referredById,
+        assignedCollectorId: answers.assignedCollectorId,
         jobPosition: answers.jobPosition || undefined,
         income: answers.income || undefined,
         isBusinessOwner: answers.isBusinessOwner,
+        notes: answers.notes || undefined,
       });
 
       this.log("Done!");

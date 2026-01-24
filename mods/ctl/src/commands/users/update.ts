@@ -7,11 +7,11 @@ import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class Update extends BaseCommand<typeof Update> {
-  static override readonly description = "modify a member's information";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <member-id>"];
+  static override readonly description = "modify a user's information";
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <user-id>"];
   static override readonly args = {
     ref: Args.string({
-      description: "The Member ID to update",
+      description: "The User ID to update",
       required: true,
     }),
   };
@@ -21,44 +21,39 @@ export default class Update extends BaseCommand<typeof Update> {
     const client = this.createClient();
 
     try {
-      const memberFromDB = await client.getMember.query({ id: args.ref });
+      const userFromDB = await client.getUser.query({ id: args.ref });
 
-      if (!memberFromDB) {
-        this.error("Member not found.");
+      if (!userFromDB) {
+        this.error("User not found.");
         return;
       }
 
-      this.log("This utility will help you update a Member.");
+      this.log("This utility will help you update a User.");
       this.log("Press ^C at any time to quit.");
 
       const answers = {
         name: await input({
           message: "Name",
-          default: memberFromDB.name,
+          default: userFromDB.name,
           required: true,
         }),
         phone: await input({
           message: "Phone (e.g., 18091234567)",
-          default: memberFromDB.phone,
+          default: userFromDB.phone ?? undefined,
           required: true,
         }),
-        notes: await input({
-          message: "Note (optional)",
-          default: memberFromDB.notes || "",
-          required: false,
-        }),
-        isActive: await select({
-          message: "Active Status",
+        enabled: await select({
+          message: "Enabled Status",
           choices: [
-            { name: "Active", value: true },
-            { name: "Inactive", value: false },
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false },
           ],
-          default: memberFromDB.isActive,
+          default: userFromDB.enabled,
         }),
       };
 
       const ready = await confirm({
-        message: "Ready to update member?",
+        message: "Ready to update user?",
       });
 
       if (!ready) {
@@ -66,12 +61,11 @@ export default class Update extends BaseCommand<typeof Update> {
         return;
       }
 
-      await client.updateMember.mutate({
+      await client.updateUser.mutate({
         id: args.ref,
         name: answers.name,
         phone: answers.phone,
-        notes: answers.notes || undefined,
-        isActive: answers.isActive,
+        enabled: answers.enabled,
       });
 
       this.log("Done!");

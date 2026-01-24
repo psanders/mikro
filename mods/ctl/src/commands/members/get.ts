@@ -43,6 +43,7 @@ export default class Get extends BaseCommand<typeof Get> {
           `JOB POSITION: \t${member.jobPosition || "N/A"}\n` +
           `INCOME: \t${member.income || "N/A"}\n` +
           `BUSINESS OWNER: \t${member.isBusinessOwner ? "Yes" : "No"}\n` +
+          `NOTES: \t${member.notes || ""}\n` +
           `ACTIVE: \t${member.isActive ? "Yes" : "No"}\n` +
           `CREATED: \t${moment(member.createdAt).format("YYYY-MM-DD HH:mm:ss")}\n` +
           `UPDATED: \t${moment(member.updatedAt).format("YYYY-MM-DD HH:mm:ss")}`

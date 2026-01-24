@@ -14,9 +14,8 @@ export interface Loan {
   termLength: number;
   paymentAmount: number;
   paymentFrequency: "DAILY" | "WEEKLY";
+  notes?: string | null;
   memberId: string;
-  startedAt: Date;
-  closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

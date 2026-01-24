@@ -2,32 +2,51 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { validateDominicanPhone } from "../utils/validatePhone.js";
 
 /**
  * Schema for creating a new member.
  */
 export const createMemberSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  phone: z.string().min(1, "Phone is required"),
-  idNumber: z.string().min(1, "ID number is required"),
-  collectionPoint: z.string().min(1, "Collection point is required"),
+  phone: z
+    .string()
+    .min(1, "Phone is required")
+    .transform((val) => {
+      // Validate and normalize phone (strips +)
+      return validateDominicanPhone(val);
+    }),
+  idNumber: z
+    .string()
+    .min(1, "ID number is required")
+    .regex(/^\d{3}-\d{7}-\d{1}$/, "ID number must be in format 000-0000000-0"),
+  collectionPoint: z.string().url("Collection point must be a valid URL"),
   homeAddress: z.string().min(1, "Home address is required"),
   jobPosition: z.string().optional(),
   income: z.number().optional(),
   isBusinessOwner: z.boolean().optional(),
   createdById: z.uuid().optional(),
-  referredById: z.uuid().optional(),
-  assignedCollectorId: z.uuid().optional(),
+  referredById: z.uuid({ error: "Invalid referrer ID" }),
+  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
+  notes: z.string().optional(),
 });
 
 /**
  * Schema for updating an existing member.
- * Only name, phone, and isActive can be updated.
+ * Only name, phone, notes, and isActive can be updated.
  */
 export const updateMemberSchema = z.object({
   id: z.uuid({ error: "Invalid member ID" }),
   name: z.string().min(1, "Name is required").optional(),
-  phone: z.string().min(1, "Phone is required").optional(),
+  phone: z
+    .string()
+    .min(1, "Phone is required")
+    .transform((val) => {
+      // Validate and normalize phone (strips +)
+      return validateDominicanPhone(val);
+    })
+    .optional(),
+  notes: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 

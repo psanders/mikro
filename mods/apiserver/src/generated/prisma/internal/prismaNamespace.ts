@@ -997,6 +997,7 @@ export const MemberScalarFieldEnum = {
   isBusinessOwner: 'isBusinessOwner',
   isActive: 'isActive',
   idCardOnRecord: 'idCardOnRecord',
+  notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   createdById: 'createdById',
@@ -1016,8 +1017,7 @@ export const LoanScalarFieldEnum = {
   termLength: 'termLength',
   paymentAmount: 'paymentAmount',
   paymentFrequency: 'paymentFrequency',
-  startedAt: 'startedAt',
-  closedAt: 'closedAt',
+  notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   memberId: 'memberId'

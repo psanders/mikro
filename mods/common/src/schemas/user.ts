@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { validateDominicanPhone } from "../utils/validatePhone.js";
 
 /**
  * Role enum matching Prisma schema.
@@ -20,11 +21,18 @@ export const createUserSchema = z.object({
 /**
  * Schema for updating an existing user.
  * Only name, phone, and enabled can be updated.
+ * Phone is validated and normalized (strips +) if provided.
  */
 export const updateUserSchema = z.object({
   id: z.uuid({ error: "Invalid user ID" }),
   name: z.string().min(1, "Name is required").optional(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .transform((val) => {
+      // Validate and normalize phone (strips +)
+      return validateDominicanPhone(val);
+    })
+    .optional(),
   enabled: z.boolean().optional(),
 });
 

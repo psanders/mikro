@@ -7,12 +7,16 @@ import { createCreateMember } from "../../src/api/members/createCreateMember.js"
 import { ValidationError } from "@mikro/common";
 
 describe("createCreateMember", () => {
+  const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
+  const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
     name: "John Doe",
-    phone: "+1234567890",
-    idNumber: "ABC123",
-    collectionPoint: "Main Office",
+    phone: "+18091234567",
+    idNumber: "001-1234567-8",
+    collectionPoint: "https://example.com/main-office",
     homeAddress: "123 Main St",
+    referredById: validReferrerId,
+    assignedCollectorId: validCollectorId,
   };
 
   afterEach(() => {
@@ -25,14 +29,14 @@ describe("createCreateMember", () => {
       const expectedMember = {
         id: "member-123",
         ...validInput,
+        phone: "18091234567", // Normalized (stripped +)
         jobPosition: null,
         income: null,
         isBusinessOwner: false,
         isActive: true,
         idCardOnRecord: false,
+        note: null,
         createdById: null,
-        referredById: null,
-        assignedCollectorId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -62,15 +66,15 @@ describe("createCreateMember", () => {
         jobPosition: "Engineer",
         income: 50000,
         isBusinessOwner: true,
-        referredById: "550e8400-e29b-41d4-a716-446655440000",
+        note: "Test note",
       };
       const expectedMember = {
         id: "member-456",
         ...inputWithOptional,
+        phone: "18091234567", // Normalized (stripped +)
         isActive: true,
         idCardOnRecord: false,
         createdById: null,
-        assignedCollectorId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

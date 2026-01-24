@@ -111,23 +111,24 @@ model Member {
   name                String
   phone               String
   idNumber            String   @map("id_number")
-  collectionPoint     String   @map("collection_point")
+  collectionPoint     String?   @map("collection_point")
   homeAddress         String   @map("home_address")
   jobPosition         String?  @map("job_position")
   income              Decimal?
   isBusinessOwner     Boolean  @default(false) @map("is_business_owner")
   isActive            Boolean  @default(false) @map("is_active")
   idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
+  notes               String?  @map("notes")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   // Relations
   createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
   createdById         String?  @map("created_by_id")
-  referredBy          User?    @relation("ReferredBy", fields: [referredById], references: [id])
-  referredById        String?  @map("referred_by_id")
-  assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
-  assignedCollectorId String?  @map("assigned_collector_id")
+  referredBy          User     @relation("ReferredBy", fields: [referredById], references: [id])
+  referredById         String   @map("referred_by_id")
+  assignedCollector   User     @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
+  assignedCollectorId String   @map("assigned_collector_id")
 
   loans    Loan[]
   messages Message[]
@@ -149,9 +150,8 @@ model Loan {
   termLength       Int              @map("term_length") // Number of periods (e.g., 10)
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
   paymentFrequency PaymentFrequency @map("payment_frequency") // DAILY or WEEKLY
+  notes            String?
 
-  startedAt        DateTime         @default(now()) @map("started_at")
-  closedAt         DateTime?        @map("closed_at")
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 

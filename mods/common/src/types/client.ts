@@ -36,7 +36,16 @@ export interface DbClient {
       where: { phone: string };
       include?: { roles?: { select?: { role: boolean } } };
     }): Promise<(User & { roles?: Array<{ role: Role }> }) | null>;
-    findMany(args?: { where?: { enabled?: boolean }; take?: number; skip?: number }): Promise<User[]>;
+    findMany(args?: { 
+      where?: { enabled?: boolean }; 
+      include?: {
+        roles?: {
+          select?: { role: boolean };
+        };
+      };
+      take?: number; 
+      skip?: number;
+    }): Promise<(User & { roles?: Array<{ role: Role }> })[]>;
   };
 
   userRole: {

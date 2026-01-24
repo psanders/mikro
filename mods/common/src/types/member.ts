@@ -10,16 +10,17 @@ export interface Member {
   name: string;
   phone: string;
   idNumber: string;
-  collectionPoint: string;
+  collectionPoint?: string;
   homeAddress: string;
   jobPosition?: string | null;
   income?: number | null;
   isBusinessOwner: boolean;
   isActive: boolean;
   idCardOnRecord: boolean;
+  notes?: string | null;
   createdById?: string | null;
-  referredById?: string | null;
-  assignedCollectorId?: string | null;
+  referredById: string;
+  assignedCollectorId: string;
   createdAt: Date;
   updatedAt: Date;
 }

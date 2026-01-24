@@ -12,6 +12,8 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to create a new member.
+ * Phone is validated and normalized (strips +) via Zod schema transform.
+ * Referrer and collector are required.
  *
  * @param client - The database client
  * @returns A validated function that creates a member

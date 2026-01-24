@@ -22,21 +22,22 @@ CREATE TABLE "members" (
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "id_number" TEXT NOT NULL,
-    "collection_point" TEXT NOT NULL,
+    "collection_point" TEXT,
     "home_address" TEXT NOT NULL,
     "job_position" TEXT,
     "income" DECIMAL,
     "is_business_owner" BOOLEAN NOT NULL DEFAULT false,
     "is_active" BOOLEAN NOT NULL DEFAULT false,
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
+    "notes" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "created_by_id" TEXT,
-    "referred_by_id" TEXT,
-    "assigned_collector_id" TEXT,
+    "referred_by_id" TEXT NOT NULL,
+    "assigned_collector_id" TEXT NOT NULL,
     CONSTRAINT "members_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "members_referred_by_id_fkey" FOREIGN KEY ("referred_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "members_assigned_collector_id_fkey" FOREIGN KEY ("assigned_collector_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "members_referred_by_id_fkey" FOREIGN KEY ("referred_by_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "members_assigned_collector_id_fkey" FOREIGN KEY ("assigned_collector_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -49,8 +50,7 @@ CREATE TABLE "loans" (
     "term_length" INTEGER NOT NULL,
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
-    "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "closed_at" DATETIME,
+    "notes" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "member_id" TEXT NOT NULL,

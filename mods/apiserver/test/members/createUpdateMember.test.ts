@@ -10,7 +10,7 @@ describe("createUpdateMember", () => {
   const validInput = {
     id: "550e8400-e29b-41d4-a716-446655440000",
     name: "Updated Name",
-    phone: "+0987654321",
+    phone: "+18091234567",
     isActive: false,
   };
 
@@ -24,18 +24,18 @@ describe("createUpdateMember", () => {
       const expectedMember = {
         id: validInput.id,
         name: validInput.name,
-        phone: validInput.phone,
-        idNumber: "ABC123",
-        collectionPoint: "Main Office",
+        phone: "18091234567", // Normalized (stripped +)
+        idNumber: "001-1234567-8",
+        collectionPoint: "https://example.com/main-office",
         homeAddress: "123 Main St",
         jobPosition: null,
         income: null,
         isBusinessOwner: false,
         isActive: validInput.isActive,
         idCardOnRecord: false,
-        createdById: null,
-        referredById: null,
-        assignedCollectorId: null,
+        note: null,
+        referredById: "550e8400-e29b-41d4-a716-446655440001",
+        assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -65,18 +65,18 @@ describe("createUpdateMember", () => {
       const expectedMember = {
         id: partialInput.id,
         name: "Existing Name",
-        phone: "+1234567890",
-        idNumber: "ABC123",
-        collectionPoint: "Main Office",
+        phone: "18091234567",
+        idNumber: "001-1234567-8",
+        collectionPoint: "https://example.com/main-office",
         homeAddress: "123 Main St",
         jobPosition: null,
         income: null,
         isBusinessOwner: false,
         isActive: true,
         idCardOnRecord: false,
-        createdById: null,
-        referredById: null,
-        assignedCollectorId: null,
+        note: null,
+        referredById: "550e8400-e29b-41d4-a716-446655440001",
+        assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -92,6 +92,45 @@ describe("createUpdateMember", () => {
 
       // Assert
       expect(result.isActive).to.be.true;
+      expect(mockClient.member.update.calledOnce).to.be.true;
+    });
+
+    it("should update a member with note field", async () => {
+      // Arrange
+      const inputWithNote = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        note: "Updated note",
+      };
+      const expectedMember = {
+        id: inputWithNote.id,
+        name: "Existing Name",
+        phone: "18091234567",
+        idNumber: "001-1234567-8",
+        collectionPoint: "https://example.com/main-office",
+        homeAddress: "123 Main St",
+        jobPosition: null,
+        income: null,
+        isBusinessOwner: false,
+        isActive: true,
+        idCardOnRecord: false,
+        note: "Updated note",
+        referredById: "550e8400-e29b-41d4-a716-446655440001",
+        assignedCollectorId: "550e8400-e29b-41d4-a716-446655440002",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const mockClient = {
+        member: {
+          update: sinon.stub().resolves(expectedMember),
+        },
+      };
+      const updateMember = createUpdateMember(mockClient as any);
+
+      // Act
+      const result = await updateMember(inputWithNote);
+
+      // Assert
+      expect(result.note).to.equal("Updated note");
       expect(mockClient.member.update.calledOnce).to.be.true;
     });
   });

@@ -433,22 +433,18 @@ export type UserUpdateOneWithoutCreatedMembersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedMembersInput, Prisma.UserUpdateWithoutCreatedMembersInput>, Prisma.UserUncheckedUpdateWithoutCreatedMembersInput>
 }
 
-export type UserUpdateOneWithoutReferredMembersNestedInput = {
+export type UserUpdateOneRequiredWithoutReferredMembersNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutReferredMembersInput, Prisma.UserUncheckedCreateWithoutReferredMembersInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferredMembersInput
   upsert?: Prisma.UserUpsertWithoutReferredMembersInput
-  disconnect?: Prisma.UserWhereInput | boolean
-  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReferredMembersInput, Prisma.UserUpdateWithoutReferredMembersInput>, Prisma.UserUncheckedUpdateWithoutReferredMembersInput>
 }
 
-export type UserUpdateOneWithoutAssignedMembersNestedInput = {
+export type UserUpdateOneRequiredWithoutAssignedMembersNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedMembersInput, Prisma.UserUncheckedCreateWithoutAssignedMembersInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedMembersInput
   upsert?: Prisma.UserUpsertWithoutAssignedMembersInput
-  disconnect?: Prisma.UserWhereInput | boolean
-  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedMembersInput, Prisma.UserUpdateWithoutAssignedMembersInput>, Prisma.UserUncheckedUpdateWithoutAssignedMembersInput>
 }

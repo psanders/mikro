@@ -10,7 +10,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
   static override readonly description = "display members by referrer";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <referrer-id>"];
   static override readonly args = {
-    ref: Args.string({
+    id: Args.string({
       description: "The Referrer ID to filter by",
       required: true,
     }),
@@ -35,7 +35,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
 
     try {
       const members = await client.listMembersByReferrer.query({
-        referredById: args.ref,
+        referredById: args.id,
         showInactive: flags["show-inactive"],
         limit: parseInt(flags["page-size"]),
       });
@@ -44,18 +44,16 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
 
       ui.div(
         { text: "ID", padding: [0, 0, 0, 0], width: 40 },
-        { text: "NAME", padding: [0, 0, 0, 0], width: 25 },
+        { text: "NAME", padding: [0, 0, 0, 0], width: 35 },
         { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
-        { text: "COLLECTION POINT", padding: [0, 0, 0, 0], width: 25 },
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
       );
 
       members.forEach((member) => {
         ui.div(
           { text: member.id, padding: [0, 0, 0, 0], width: 40 },
-          { text: member.name, padding: [0, 0, 0, 0], width: 25 },
+          { text: member.name, padding: [0, 0, 0, 0], width: 35 },
           { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
-          { text: member.collectionPoint, padding: [0, 0, 0, 0], width: 25 },
           { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
         );
       });

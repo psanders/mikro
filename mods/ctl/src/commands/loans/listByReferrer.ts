@@ -50,7 +50,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
         { text: "PAYMENT", padding: [0, 0, 0, 0], width: 10 },
         { text: "FREQ", padding: [0, 0, 0, 0], width: 8 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "STARTED", padding: [0, 0, 0, 0], width: 12 },
+        { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
         { text: "MEMBER ID", padding: [0, 0, 0, 0], width: 40 }
       );
 
@@ -62,7 +62,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
           { text: String(loan.paymentAmount), padding: [0, 0, 0, 0], width: 10 },
           { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 8 },
           { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
-          { text: moment(loan.startedAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
+          { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
           { text: loan.memberId, padding: [0, 0, 0, 0], width: 40 }
         );
       });

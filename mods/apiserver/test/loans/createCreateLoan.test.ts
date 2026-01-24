@@ -29,8 +29,6 @@ describe("createCreateLoan", () => {
         type: "SAN",
         status: "ACTIVE",
         ...validInput,
-        startedAt: new Date(),
-        closedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -61,8 +59,6 @@ describe("createCreateLoan", () => {
         type: "SAN",
         status: "ACTIVE",
         ...validInput,
-        startedAt: new Date(),
-        closedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -96,8 +92,6 @@ describe("createCreateLoan", () => {
         loanId: 10000,
         ...inputWithType,
         status: "ACTIVE",
-        startedAt: new Date(),
-        closedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

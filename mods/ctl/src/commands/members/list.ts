@@ -37,18 +37,16 @@ export default class List extends BaseCommand<typeof List> {
 
       ui.div(
         { text: "ID", padding: [0, 0, 0, 0], width: 40 },
-        { text: "NAME", padding: [0, 0, 0, 0], width: 25 },
+        { text: "NAME", padding: [0, 0, 0, 0], width: 35 },
         { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
-        { text: "COLLECTION POINT", padding: [0, 0, 0, 0], width: 25 },
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
       );
 
       members.forEach((member) => {
         ui.div(
           { text: member.id, padding: [0, 0, 0, 0], width: 40 },
-          { text: member.name, padding: [0, 0, 0, 0], width: 25 },
+          { text: member.name, padding: [0, 0, 0, 0], width: 35 },
           { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
-          { text: member.collectionPoint, padding: [0, 0, 0, 0], width: 25 },
           { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
         );
       });
