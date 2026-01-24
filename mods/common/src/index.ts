@@ -95,13 +95,21 @@ export {
   type ListPaymentsByMemberInput,
   type ListPaymentsByReferrerInput,
   type PaymentMethod,
-  type PaymentStatus
+  type PaymentStatus,
+  // Receipt schemas
+  generateReceiptSchema,
+  receiptDataSchema,
+  type GenerateReceiptInput,
+  type ReceiptDataInput
 } from "./schemas/index.js";
 
 // Types (entities and client)
 export type { Member } from "./types/index.js";
 export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
-export type { DbClient, UserRole } from "./types/index.js";
+export type { DbClient, UserRole, PaymentWithRelations } from "./types/index.js";
 export type { WhatsAppClient, WhatsAppSendResponse } from "./types/index.js";
 export type { Loan, Payment } from "./types/index.js";
+
+// Receipt utilities
+export { generateKeys, type GeneratedKeys } from "./receipt/index.js";

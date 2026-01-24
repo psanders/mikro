@@ -12,3 +12,6 @@ dist/
 .env
 .env.local
 .env.*.local
+
+# Keys
+.keys/*.pem

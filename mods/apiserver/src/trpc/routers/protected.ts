@@ -27,6 +27,8 @@ import {
   listPaymentsSchema,
   listPaymentsByMemberSchema,
   listPaymentsByReferrerSchema,
+  // Receipt schemas
+  generateReceiptSchema,
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -54,6 +56,8 @@ import { createReversePayment } from "../../api/payments/createReversePayment.js
 import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByMember } from "../../api/payments/createListPaymentsByMember.js";
 import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
+// Receipt API functions
+import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -267,6 +271,19 @@ export const protectedRouter = router({
     .input(listPaymentsByReferrerSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByReferrer(ctx.db);
+      return fn(input);
+    }),
+
+  // ==================== Receipt procedures ====================
+
+  /**
+   * Generate a receipt for a payment as a PNG image.
+   * Returns base64-encoded PNG, JWT token, and receipt metadata.
+   */
+  generateReceipt: protectedProcedure
+    .input(generateReceiptSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateReceipt({ db: ctx.db });
       return fn(input);
     }),
 });

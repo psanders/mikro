@@ -23,7 +23,8 @@
     "db:migrate:deploy": "npm run db:migrate:deploy -w @mikro/apiserver",
     "db:push": "npm run db:push -w @mikro/apiserver",
     "db:studio": "npm run db:studio -w @mikro/apiserver",
-    "db:seed": "npm run db:seed -w @mikro/apiserver"
+    "db:seed": "npm run db:seed -w @mikro/apiserver",
+    "generate-keys": "npx tsx scripts/generate-keys.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [

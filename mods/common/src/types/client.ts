@@ -144,6 +144,21 @@ export interface DbClient {
       };
     }): Promise<Payment>;
     findUnique(args: { where: { id: string } }): Promise<Payment | null>;
+    findUnique(args: {
+      where: { id: string };
+      include: {
+        loan?: {
+          include?: {
+            member?: boolean;
+            payments?: {
+              where?: { status?: PaymentStatus };
+              orderBy?: { paidAt: "asc" | "desc" };
+            };
+          };
+        };
+        collectedBy?: boolean;
+      };
+    }): Promise<PaymentWithRelations | null>;
     findMany(args: {
       where?: {
         status?: PaymentStatus;
@@ -163,4 +178,15 @@ export interface DbClient {
       skip?: number;
     }): Promise<Payment[]>;
   };
+}
+
+/**
+ * Payment with related entities for receipt generation.
+ */
+export interface PaymentWithRelations extends Payment {
+  loan: Loan & {
+    member: Member;
+    payments: Payment[];
+  };
+  collectedBy?: User | null;
 }

@@ -42,3 +42,10 @@ export {
   createListPaymentsByMember,
   createListPaymentsByReferrer,
 } from "./payments/index.js";
+
+// Receipt operations
+export {
+  createGenerateReceipt,
+  type GenerateReceiptResponse,
+  type ReceiptDependencies,
+} from "./receipts/index.js";
