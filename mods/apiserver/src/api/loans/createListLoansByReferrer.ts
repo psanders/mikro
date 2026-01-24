@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Loan,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list loans for members referred by a specific user.
@@ -18,7 +19,8 @@ import {
  */
 export function createListLoansByReferrer(client: DbClient) {
   const fn = async (params: ListLoansByReferrerInput): Promise<Loan[]> => {
-    return client.loan.findMany({
+    logger.verbose("listing loans by referrer", { referrerId: params.referredById });
+    const loans = await client.loan.findMany({
       where: {
         member: {
           referredById: params.referredById,
@@ -28,6 +30,8 @@ export function createListLoansByReferrer(client: DbClient) {
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("loans by referrer listed", { referrerId: params.referredById, count: loans.length });
+    return loans;
   };
 
   return withErrorHandlingAndValidation(fn, listLoansByReferrerSchema);

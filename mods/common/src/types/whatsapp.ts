@@ -16,8 +16,8 @@ export interface WhatsAppSendResponse {
  */
 export interface WhatsAppClient {
   /**
-   * Send a text message via WhatsApp.
-   * @param params - The phone number and message to send
+   * Send a message via WhatsApp (text or image).
+   * @param params - The phone number, message/image, and optional caption
    * @returns The API response with message ID
    */
   sendMessage(params: SendWhatsAppMessageInput): Promise<WhatsAppSendResponse>;

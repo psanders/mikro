@@ -5,12 +5,14 @@ export {
   createMemberSchema,
   updateMemberSchema,
   getMemberSchema,
+  getMemberByPhoneSchema,
   listMembersSchema,
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
   type GetMemberInput,
+  type GetMemberByPhoneInput,
   type ListMembersInput,
   type ListMembersByReferrerInput,
   type ListMembersByCollectorInput
@@ -21,10 +23,12 @@ export {
   createUserSchema,
   updateUserSchema,
   getUserSchema,
+  getUserByPhoneSchema,
   listUsersSchema,
   type CreateUserInput,
   type UpdateUserInput,
   type GetUserInput,
+  type GetUserByPhoneInput,
   type ListUsersInput,
   type Role
 } from "./user.js";

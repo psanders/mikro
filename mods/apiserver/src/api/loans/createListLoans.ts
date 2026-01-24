@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Loan,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list all loans with optional pagination.
@@ -18,11 +19,14 @@ import {
  */
 export function createListLoans(client: DbClient) {
   const fn = async (params: ListLoansInput): Promise<Loan[]> => {
-    return client.loan.findMany({
+    logger.verbose("listing loans", { limit: params.limit, offset: params.offset, showAll: params.showAll });
+    const loans = await client.loan.findMany({
       where: params.showAll ? undefined : { status: "ACTIVE" },
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("loans listed", { count: loans.length });
+    return loans;
   };
 
   return withErrorHandlingAndValidation(fn, listLoansSchema);

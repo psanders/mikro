@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Member,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list all members with optional pagination.
@@ -18,11 +19,14 @@ import {
  */
 export function createListMembers(client: DbClient) {
   const fn = async (params: ListMembersInput): Promise<Member[]> => {
-    return client.member.findMany({
+    logger.verbose("listing members", { limit: params.limit, offset: params.offset });
+    const members = await client.member.findMany({
       where: params.showInactive ? undefined : { isActive: true },
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("members listed", { count: members.length });
+    return members;
   };
 
   return withErrorHandlingAndValidation(fn, listMembersSchema);

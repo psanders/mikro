@@ -32,6 +32,10 @@ export interface DbClient {
       data: Omit<UpdateUserInput, "id">;
     }): Promise<User>;
     findUnique(args: { where: { id: string } }): Promise<User | null>;
+    findFirst(args: { 
+      where: { phone: string };
+      include?: { roles?: { select?: { role: boolean } } };
+    }): Promise<(User & { roles?: Array<{ role: Role }> }) | null>;
     findMany(args?: { where?: { enabled?: boolean }; take?: number; skip?: number }): Promise<User[]>;
   };
 
@@ -48,6 +52,7 @@ export interface DbClient {
     }): Promise<Member>;
     delete(args: { where: { id: string } }): Promise<Member>;
     findUnique(args: { where: { id: string } }): Promise<Member | null>;
+    findFirst(args: { where: { phone: string } }): Promise<Member | null>;
     findMany(args?: {
       where?: {
         isActive?: boolean;

@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Payment,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list payments for all loans belonging to members
@@ -19,7 +20,8 @@ import {
  */
 export function createListPaymentsByReferrer(client: DbClient) {
   const fn = async (params: ListPaymentsByReferrerInput): Promise<Payment[]> => {
-    return client.payment.findMany({
+    logger.verbose("listing payments by referrer", { referrerId: params.referredById });
+    const payments = await client.payment.findMany({
       where: {
         loan: {
           member: {
@@ -36,6 +38,8 @@ export function createListPaymentsByReferrer(client: DbClient) {
       take: params.limit,
       skip: params.offset,
     }) as unknown as Payment[];
+    logger.verbose("payments by referrer listed", { referrerId: params.referredById, count: payments.length });
+    return payments;
   };
 
   return withErrorHandlingAndValidation(fn, listPaymentsByReferrerSchema);

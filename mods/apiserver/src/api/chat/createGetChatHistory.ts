@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Message,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to get chat history for a member or user.
@@ -17,6 +18,7 @@ import {
  */
 export function createGetChatHistory(client: DbClient) {
   const fn = async (params: GetChatHistoryInput): Promise<Message[]> => {
+    logger.verbose("getting chat history", { memberId: params.memberId, userId: params.userId });
     const where: { memberId?: string; userId?: string } = {};
 
     if (params.memberId) {
@@ -25,7 +27,7 @@ export function createGetChatHistory(client: DbClient) {
       where.userId = params.userId;
     }
 
-    return client.message.findMany({
+    const messages = await client.message.findMany({
       where,
       include: {
         attachments: true,
@@ -36,6 +38,8 @@ export function createGetChatHistory(client: DbClient) {
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("chat history retrieved", { count: messages.length });
+    return messages;
   };
 
   return withErrorHandlingAndValidation(fn, getChatHistorySchema);

@@ -43,7 +43,7 @@ CREATE TABLE "members" (
     "job_position" TEXT,
     "income" DECIMAL,
     "is_business_owner" BOOLEAN NOT NULL DEFAULT false,
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT false,
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,

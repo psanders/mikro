@@ -8,6 +8,7 @@ import {
   type DbClient,
   type User,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to create a new user.
@@ -18,6 +19,7 @@ import {
 export function createCreateUser(client: DbClient) {
   const fn = async (params: CreateUserInput): Promise<User> => {
     const { role, ...userData } = params;
+    logger.verbose("creating user", { name: userData.name, role });
 
     // Create the user
     const user = await client.user.create({
@@ -35,8 +37,10 @@ export function createCreateUser(client: DbClient) {
           role,
         },
       });
+      logger.verbose("user role assigned", { userId: user.id, role });
     }
 
+    logger.verbose("user created", { id: user.id, name: user.name });
     return user;
   };
 

@@ -3,7 +3,11 @@
  */
 export {
   handleWhatsAppMessage,
-  type HandleWhatsAppMessageResult
+  setMessageProcessor,
+  getMessageProcessorState,
+  markInitializationComplete,
+  type HandleWhatsAppMessageResult,
+  type MessageProcessorDependencies
 } from "./handleWhatsAppMessage.js";
 export { createSendWhatsAppMessage } from "./createSendWhatsAppMessage.js";
 export { createWhatsAppClient } from "./createWhatsAppClient.js";

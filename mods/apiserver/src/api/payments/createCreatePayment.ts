@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Payment,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to record a new payment for a loan.
@@ -18,7 +19,8 @@ import {
  */
 export function createCreatePayment(client: DbClient) {
   const fn = async (params: CreatePaymentInput): Promise<Payment> => {
-    return client.payment.create({
+    logger.verbose("creating payment", { loanId: params.loanId, amount: params.amount.toString() });
+    const payment = await client.payment.create({
       data: {
         loanId: params.loanId,
         amount: params.amount,
@@ -28,6 +30,8 @@ export function createCreatePayment(client: DbClient) {
         notes: params.notes,
       },
     }) as unknown as Payment;
+    logger.verbose("payment created", { id: payment.id, loanId: params.loanId });
+    return payment;
   };
 
   return withErrorHandlingAndValidation(fn, createPaymentSchema);

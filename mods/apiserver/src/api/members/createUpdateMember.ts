@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Member,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to update an existing member.
@@ -19,11 +20,13 @@ import {
 export function createUpdateMember(client: DbClient) {
   const fn = async (params: UpdateMemberInput): Promise<Member> => {
     const { id, ...updateData } = params;
-
-    return client.member.update({
+    logger.verbose("updating member", { id, fields: Object.keys(updateData) });
+    const member = await client.member.update({
       where: { id },
       data: updateData,
     });
+    logger.verbose("member updated", { id: member.id });
+    return member;
   };
 
   return withErrorHandlingAndValidation(fn, updateMemberSchema);

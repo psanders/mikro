@@ -36,6 +36,13 @@ export const getUserSchema = z.object({
 });
 
 /**
+ * Schema for getting a user by phone number.
+ */
+export const getUserByPhoneSchema = z.object({
+  phone: z.string().min(1, "Phone number is required"),
+});
+
+/**
  * Schema for listing users with optional pagination.
  * By default only shows enabled users unless showDisabled is true.
  */
@@ -59,6 +66,11 @@ export type UpdateUserInput = z.infer<typeof updateUserSchema>;
  * Input type for getting a user.
  */
 export type GetUserInput = z.infer<typeof getUserSchema>;
+
+/**
+ * Input type for getting a user by phone.
+ */
+export type GetUserByPhoneInput = z.infer<typeof getUserByPhoneSchema>;
 
 /**
  * Input type for listing users.

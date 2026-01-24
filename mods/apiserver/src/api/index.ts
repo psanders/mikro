@@ -7,7 +7,9 @@ export {
   createCreateUser,
   createUpdateUser,
   createGetUser,
+  createGetUserByPhone,
   createListUsers,
+  type UserWithRoles,
 } from "./users/index.js";
 
 // Member operations
@@ -15,6 +17,7 @@ export {
   createCreateMember,
   createUpdateMember,
   createGetMember,
+  createGetMemberByPhone,
   createListMembers,
   createListMembersByReferrer,
   createListMembersByCollector,

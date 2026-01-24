@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Message,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to add a message to chat history.
@@ -19,6 +20,11 @@ import {
 export function createAddMessageToChatHistory(client: DbClient) {
   const fn = async (params: AddMessageInput): Promise<Message> => {
     const { attachments, ...messageData } = params;
+    logger.verbose("adding message to chat history", { 
+      role: messageData.role, 
+      memberId: messageData.memberId, 
+      userId: messageData.userId 
+    });
 
     // Create the message
     const message = await client.message.create({
@@ -39,8 +45,10 @@ export function createAddMessageToChatHistory(client: DbClient) {
           messageId: message.id,
         })),
       });
+      logger.verbose("attachments added to message", { messageId: message.id, count: attachments.length });
     }
 
+    logger.verbose("message added to chat history", { id: message.id });
     return message;
   };
 

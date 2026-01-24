@@ -1,4 +1,4 @@
- /**
+/**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import {
@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Member,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to create a new member.
@@ -17,9 +18,12 @@ import {
  */
 export function createCreateMember(client: DbClient) {
   const fn = async (params: CreateMemberInput): Promise<Member> => {
-    return client.member.create({
+    logger.verbose("creating member", { phone: params.phone, name: params.name });
+    const member = await client.member.create({
       data: params,
     });
+    logger.verbose("member created", { id: member.id, phone: member.phone });
+    return member;
   };
 
   return withErrorHandlingAndValidation(fn, createMemberSchema);

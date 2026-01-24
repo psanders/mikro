@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Payment,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to reverse a payment.
@@ -18,13 +19,16 @@ import {
  */
 export function createReversePayment(client: DbClient) {
   const fn = async (params: ReversePaymentInput): Promise<Payment> => {
-    return client.payment.update({
+    logger.verbose("reversing payment", { id: params.id });
+    const payment = await client.payment.update({
       where: { id: params.id },
       data: {
         status: "REVERSED",
         notes: params.notes,
       },
     }) as unknown as Payment;
+    logger.verbose("payment reversed", { id: payment.id });
+    return payment;
   };
 
   return withErrorHandlingAndValidation(fn, reversePaymentSchema);

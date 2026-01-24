@@ -3,6 +3,7 @@
  */
 import type { SendWhatsAppMessageInput, WhatsAppClient, WhatsAppSendResponse } from "@mikro/common";
 import { getWhatsAppPhoneNumberId, getWhatsAppAccessToken } from "../config.js";
+import { logger } from "../logger.js";
 
 /**
  * WhatsApp API response for media URL lookup.
@@ -52,14 +53,30 @@ export function createWhatsAppClient(): WhatsAppClient {
       const accessToken = getWhatsAppAccessToken();
 
       const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+      const isImageMessage = !!params.imageUrl;
+      logger.verbose("sending whatsapp api request", { 
+        phone: params.phone, 
+        type: isImageMessage ? "image" : "text" 
+      });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+      // Build the request body based on message type
+      let requestBody: Record<string, unknown>;
+      
+      if (isImageMessage) {
+        // Image message with optional caption
+        requestBody = {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: params.phone,
+          type: "image",
+          image: {
+            link: params.imageUrl,
+            ...(params.caption && { caption: params.caption })
+          }
+        };
+      } else {
+        // Text message
+        requestBody = {
           messaging_product: "whatsapp",
           recipient_type: "individual",
           to: params.phone,
@@ -67,21 +84,37 @@ export function createWhatsAppClient(): WhatsAppClient {
           text: {
             body: params.message
           }
-        })
+        };
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestBody)
       });
 
       const data = (await response.json()) as WhatsAppSendResponse & WhatsAppApiError;
 
       if (!response.ok) {
         const errorMessage = data.error?.message ?? JSON.stringify(data);
+        logger.error("whatsapp api error", { phone: params.phone, error: errorMessage });
         throw new Error(`WhatsApp API error: ${errorMessage}`);
       }
 
+      logger.verbose("whatsapp api response received", { 
+        phone: params.phone, 
+        messageId: data.messages?.[0]?.id,
+        type: isImageMessage ? "image" : "text"
+      });
       return data;
     },
 
     downloadMedia: async (mediaId: string): Promise<string> => {
       const accessToken = getWhatsAppAccessToken();
+      logger.verbose("downloading whatsapp media", { mediaId });
 
       // Step 1: Get media URL from WhatsApp API
       const mediaUrl = `https://graph.facebook.com/v18.0/${mediaId}`;
@@ -95,12 +128,14 @@ export function createWhatsAppClient(): WhatsAppClient {
       if (!mediaResponse.ok) {
         const errorData = (await mediaResponse.json()) as WhatsAppApiError;
         const errorMessage = errorData.error?.message ?? JSON.stringify(errorData);
+        logger.error("failed to get media url", { mediaId, error: errorMessage });
         throw new Error(`Failed to get media URL: ${errorMessage}`);
       }
 
       const mediaData = (await mediaResponse.json()) as MediaUrlResponse;
 
       if (!mediaData.url) {
+        logger.error("media url not found in response", { mediaId });
         throw new Error("Media URL not found in response");
       }
 
@@ -112,6 +147,7 @@ export function createWhatsAppClient(): WhatsAppClient {
       });
 
       if (!downloadResponse.ok) {
+        logger.error("failed to download media", { mediaId, status: downloadResponse.status });
         throw new Error(
           `Failed to download media: ${downloadResponse.status} ${downloadResponse.statusText}`
         );
@@ -124,6 +160,7 @@ export function createWhatsAppClient(): WhatsAppClient {
       // Determine content type from response or default to PNG
       const contentType = downloadResponse.headers.get("content-type") ?? "image/png";
 
+      logger.verbose("whatsapp media downloaded", { mediaId, contentType, size: arrayBuffer.byteLength });
       return `data:${contentType};base64,${base64}`;
     }
   };

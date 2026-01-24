@@ -47,3 +47,40 @@ export function getWhatsAppPhoneNumberId(): string {
 export function getWhatsAppAccessToken(): string {
   return validateRequired(process.env.WHATSAPP_ACCESS_TOKEN, "WHATSAPP_ACCESS_TOKEN");
 }
+
+/**
+ * Get the images path for storing/serving images.
+ * @returns The images path, defaults to './images'
+ */
+export function getImagesPath(): string {
+  return process.env.IMAGES_PATH || "./images";
+}
+
+/**
+ * Get the public URL for the API server.
+ * @returns The public URL, defaults to 'http://localhost:3000'
+ */
+export function getPublicUrl(): string {
+  return process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`;
+}
+
+/**
+ * Build a public URL for an image file.
+ * @param filename - The image filename
+ * @returns The full public URL to the image
+ * @example
+ * getPublicImageUrl("10000.png") → "https://api.mikro.com/images/10000.png"
+ */
+export function getPublicImageUrl(filename: string): string {
+  const publicUrl = getPublicUrl();
+  return `${publicUrl}/images/${filename}`;
+}
+
+/**
+ * Get OpenAI API key from environment.
+ * @returns The OpenAI API key
+ * @throws Error if not set
+ */
+export function getOpenAIApiKey(): string {
+  return validateRequired(process.env.OPENAI_API_KEY, "OPENAI_API_KEY");
+}

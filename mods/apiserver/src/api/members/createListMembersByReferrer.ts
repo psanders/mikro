@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Member,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list members by referrer ID.
@@ -18,7 +19,8 @@ import {
  */
 export function createListMembersByReferrer(client: DbClient) {
   const fn = async (params: ListMembersByReferrerInput): Promise<Member[]> => {
-    return client.member.findMany({
+    logger.verbose("listing members by referrer", { referrerId: params.referredById });
+    const members = await client.member.findMany({
       where: {
         referredById: params.referredById,
         ...(params.showInactive ? {} : { isActive: true }),
@@ -26,6 +28,8 @@ export function createListMembersByReferrer(client: DbClient) {
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("members by referrer listed", { referrerId: params.referredById, count: members.length });
+    return members;
   };
 
   return withErrorHandlingAndValidation(fn, listMembersByReferrerSchema);

@@ -39,6 +39,13 @@ export const getMemberSchema = z.object({
 });
 
 /**
+ * Schema for getting a member by phone number.
+ */
+export const getMemberByPhoneSchema = z.object({
+  phone: z.string().min(1, "Phone number is required"),
+});
+
+/**
  * Schema for listing members with optional pagination.
  * By default only shows active members unless showInactive is true.
  */
@@ -84,6 +91,11 @@ export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
  * Input type for getting a member.
  */
 export type GetMemberInput = z.infer<typeof getMemberSchema>;
+
+/**
+ * Input type for getting a member by phone.
+ */
+export type GetMemberByPhoneInput = z.infer<typeof getMemberByPhoneSchema>;
 
 /**
  * Input type for listing members.

@@ -8,6 +8,7 @@ import {
   type DbClient,
   type Loan,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list loans for members assigned to a specific collector.
@@ -18,7 +19,8 @@ import {
  */
 export function createListLoansByCollector(client: DbClient) {
   const fn = async (params: ListLoansByCollectorInput): Promise<Loan[]> => {
-    return client.loan.findMany({
+    logger.verbose("listing loans by collector", { collectorId: params.assignedCollectorId });
+    const loans = await client.loan.findMany({
       where: {
         member: {
           assignedCollectorId: params.assignedCollectorId,
@@ -28,6 +30,8 @@ export function createListLoansByCollector(client: DbClient) {
       take: params.limit,
       skip: params.offset,
     });
+    logger.verbose("loans by collector listed", { collectorId: params.assignedCollectorId, count: loans.length });
+    return loans;
   };
 
   return withErrorHandlingAndValidation(fn, listLoansByCollectorSchema);

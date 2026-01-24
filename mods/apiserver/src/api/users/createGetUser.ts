@@ -8,6 +8,7 @@ import {
   type DbClient,
   type User,
 } from "@mikro/common";
+import { logger } from "../../logger.js";
 
 /**
  * Creates a function to get a user by ID.
@@ -17,9 +18,12 @@ import {
  */
 export function createGetUser(client: DbClient) {
   const fn = async (params: GetUserInput): Promise<User | null> => {
-    return client.user.findUnique({
+    logger.verbose("getting user", { id: params.id });
+    const user = await client.user.findUnique({
       where: { id: params.id },
     });
+    logger.verbose("user retrieved", { id: params.id, found: !!user });
+    return user;
   };
 
   return withErrorHandlingAndValidation(fn, getUserSchema);

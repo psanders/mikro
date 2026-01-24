@@ -20,6 +20,7 @@
     "db:seed": "prisma db seed"
   },
   "dependencies": {
+    "@fonoster/logger": "^0.9.23",
     "@mikro/agents": "^1.0.0",
     "@mikro/common": "^1.0.0",
     "@prisma/adapter-better-sqlite3": "^7.3.0",

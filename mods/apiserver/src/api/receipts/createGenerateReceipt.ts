@@ -22,6 +22,7 @@ import {
   RECEIPT_HEIGHT,
   type ReceiptData,
 } from "../../receipts/index.js";
+import { logger } from "../../logger.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APISERVER_ROOT = join(__dirname, "../../../");
@@ -92,6 +93,8 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
   const { db, keysDir = getKeysDir(), assetsDir = join(APISERVER_ROOT, "assets") } = deps;
 
   const fn = async (params: GenerateReceiptInput): Promise<GenerateReceiptResponse> => {
+    logger.verbose("generating receipt", { paymentId: params.paymentId });
+
     // 1. Fetch Payment with Loan and Member
     const payment = await db.payment.findUnique({
       where: { id: params.paymentId },
@@ -163,6 +166,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     const png = resvg.render().asPng();
     const image = png.toString("base64");
 
+    logger.verbose("receipt generated", { paymentId: params.paymentId, loanId: loan.loanId });
     return {
       image,
       token,

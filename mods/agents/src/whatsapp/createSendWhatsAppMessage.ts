@@ -8,6 +8,7 @@ import {
   type WhatsAppClient,
   type WhatsAppSendResponse
 } from "@mikro/common";
+import { logger } from "../logger.js";
 
 /**
  * Creates a function to send WhatsApp messages.
@@ -45,7 +46,15 @@ import {
  */
 export function createSendWhatsAppMessage(client: WhatsAppClient) {
   const fn = async (params: SendWhatsAppMessageInput): Promise<WhatsAppSendResponse> => {
-    return client.sendMessage(params);
+    const messageType = params.imageUrl ? "image" : "text";
+    logger.verbose("sending whatsapp message", { phone: params.phone, type: messageType });
+    const response = await client.sendMessage(params);
+    logger.verbose("whatsapp message sent", { 
+      phone: params.phone, 
+      messageId: response.messages?.[0]?.id,
+      type: messageType
+    });
+    return response;
   };
 
   return withErrorHandlingAndValidation(fn, sendWhatsAppMessageSchema);
