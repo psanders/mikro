@@ -13,7 +13,7 @@ export {
   type GetMemberInput,
   type ListMembersInput,
   type ListMembersByReferrerInput,
-  type ListMembersByCollectorInput,
+  type ListMembersByCollectorInput
 } from "./member.js";
 
 export {
@@ -24,7 +24,7 @@ export {
   type CreateUserInput,
   type UpdateUserInput,
   type GetUserInput,
-  type Role,
+  type Role
 } from "./user.js";
 
 export {
@@ -37,5 +37,24 @@ export {
   type AddMessageInput,
   type AttachmentInput,
   type MessageRole,
-  type AttachmentType,
+  type AttachmentType
 } from "./message.js";
+
+export {
+  whatsappTextSchema,
+  whatsappImageSchema,
+  whatsappMessageSchema,
+  whatsappChangeValueSchema,
+  whatsappChangeSchema,
+  whatsappEntrySchema,
+  whatsappWebhookSchema,
+  sendWhatsAppMessageSchema,
+  type WhatsAppText,
+  type WhatsAppImage,
+  type WhatsAppMessage,
+  type WhatsAppChangeValue,
+  type WhatsAppChange,
+  type WhatsAppEntry,
+  type WhatsAppWebhookBody,
+  type SendWhatsAppMessageInput
+} from "./whatsapp.js";

@@ -45,6 +45,23 @@ export {
   type AttachmentInput,
   type MessageRole,
   type AttachmentType,
+  // WhatsApp schemas
+  whatsappTextSchema,
+  whatsappImageSchema,
+  whatsappMessageSchema,
+  whatsappChangeValueSchema,
+  whatsappChangeSchema,
+  whatsappEntrySchema,
+  whatsappWebhookSchema,
+  sendWhatsAppMessageSchema,
+  type WhatsAppText,
+  type WhatsAppImage,
+  type WhatsAppMessage,
+  type WhatsAppChangeValue,
+  type WhatsAppChange,
+  type WhatsAppEntry,
+  type WhatsAppWebhookBody,
+  type SendWhatsAppMessageInput
 } from "./schemas/index.js";
 
 // Types (entities and client)
@@ -52,3 +69,4 @@ export type { Member } from "./types/index.js";
 export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
 export type { DbClient, UserRole } from "./types/index.js";
+export type { WhatsAppClient, WhatsAppSendResponse } from "./types/index.js";
