@@ -20,7 +20,7 @@ enum Role {
 }
 
 enum LoanType {
-  FIVE_K_AT_10_WEEKS
+  SAN // Fixed periodic payments until paid in full
 
   @@map("loan_types")
 }
@@ -32,6 +32,28 @@ enum LoanStatus {
   CANCELLED
 
   @@map("loan_statuses")
+}
+
+enum PaymentFrequency {
+  DAILY
+  WEEKLY
+
+  @@map("payment_frequencies")
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+
+  @@map("payment_methods")
+}
+
+enum PaymentStatus {
+  COMPLETED
+  REVERSED
+  PENDING
+
+  @@map("payment_statuses")
 }
 
 enum MessageRole {
@@ -63,11 +85,12 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  roles           UserRole[]
-  createdMembers  Member[]   @relation("CreatedBy")
-  referredMembers Member[]   @relation("ReferredBy")
-  assignedMembers Member[]   @relation("AssignedCollector")
-  messages        Message[]
+  roles             UserRole[]
+  createdMembers    Member[]   @relation("CreatedBy")
+  referredMembers   Member[]   @relation("ReferredBy")
+  assignedMembers   Member[]   @relation("AssignedCollector")
+  messages          Message[]
+  collectedPayments Payment[]  @relation("CollectedPayments")
 
   @@map("users")
 }
@@ -116,18 +139,26 @@ model Member {
 }
 
 model Loan {
-  id        String     @id @default(uuid())
-  loanId    Int        @unique @map("loan_id") // Generated in app code, starts at 10000
-  type      LoanType
-  status    LoanStatus @default(ACTIVE)
-  startedAt DateTime   @default(now()) @map("started_at")
-  closedAt  DateTime?  @map("closed_at")
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  id               String           @id @default(uuid())
+  loanId           Int              @unique @map("loan_id") // Generated in app code, starts at 10000
+  type             LoanType         @default(SAN)
+  status           LoanStatus       @default(ACTIVE)
+
+  // Flexible loan configuration
+  principal        Decimal          // Amount borrowed (e.g., 5000 or 10000)
+  termLength       Int              @map("term_length") // Number of periods (e.g., 10)
+  paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
+  paymentFrequency PaymentFrequency @map("payment_frequency") // DAILY or WEEKLY
+
+  startedAt        DateTime         @default(now()) @map("started_at")
+  closedAt         DateTime?        @map("closed_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId String @map("member_id")
+  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String    @map("member_id")
+  payments Payment[]
 
   @@index([memberId])
   @@index([status])
@@ -169,4 +200,27 @@ model Attachment {
 
   @@index([messageId])
   @@map("attachments")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  amount    Decimal       // Amount paid
+  paidAt    DateTime      @default(now()) @map("paid_at")
+  method    PaymentMethod @default(CASH)
+  status    PaymentStatus @default(COMPLETED)
+  notes     String?
+
+  // Relations
+  loan          Loan    @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId        String  @map("loan_id")
+  collectedBy   User?   @relation("CollectedPayments", fields: [collectedById], references: [id])
+  collectedById String? @map("collected_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([loanId])
+  @@index([collectedById])
+  @@index([paidAt])
+  @@map("payments")
 }

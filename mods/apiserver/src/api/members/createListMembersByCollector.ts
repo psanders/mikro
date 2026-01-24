@@ -11,6 +11,7 @@ import {
 
 /**
  * Creates a function to list members by assigned collector ID.
+ * By default, only returns active members unless showInactive is true.
  *
  * @param client - The database client
  * @returns A validated function that lists members by collector
@@ -20,6 +21,7 @@ export function createListMembersByCollector(client: DbClient) {
     return client.member.findMany({
       where: {
         assignedCollectorId: params.assignedCollectorId,
+        ...(params.showInactive ? {} : { isActive: true }),
       },
       take: params.limit,
       skip: params.offset,

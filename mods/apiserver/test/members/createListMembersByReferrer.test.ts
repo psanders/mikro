@@ -54,7 +54,7 @@ describe("createListMembersByReferrer", () => {
       expect(mockClient.member.findMany.calledOnce).to.be.true;
       expect(
         mockClient.member.findMany.calledWith({
-          where: { referredById: validReferrerId },
+          where: { referredById: validReferrerId, isActive: true },
           take: undefined,
           skip: undefined,
         })
@@ -82,7 +82,7 @@ describe("createListMembersByReferrer", () => {
       expect(result).to.have.length(1);
       expect(
         mockClient.member.findMany.calledWith({
-          where: { referredById: validReferrerId },
+          where: { referredById: validReferrerId, isActive: true },
           take: 10,
           skip: 5,
         })

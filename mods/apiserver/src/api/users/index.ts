@@ -4,3 +4,4 @@
 export { createCreateUser } from "./createCreateUser.js";
 export { createUpdateUser } from "./createUpdateUser.js";
 export { createGetUser } from "./createGetUser.js";
+export { createListUsers } from "./createListUsers.js";

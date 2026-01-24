@@ -54,7 +54,7 @@ describe("createListMembersByCollector", () => {
       expect(mockClient.member.findMany.calledOnce).to.be.true;
       expect(
         mockClient.member.findMany.calledWith({
-          where: { assignedCollectorId: validCollectorId },
+          where: { assignedCollectorId: validCollectorId, isActive: true },
           take: undefined,
           skip: undefined,
         })
@@ -82,7 +82,7 @@ describe("createListMembersByCollector", () => {
       expect(result).to.have.length(1);
       expect(
         mockClient.member.findMany.calledWith({
-          where: { assignedCollectorId: validCollectorId },
+          where: { assignedCollectorId: validCollectorId, isActive: true },
           take: 10,
           skip: 5,
         })

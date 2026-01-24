@@ -19,7 +19,7 @@ export type Role = (typeof Role)[keyof typeof Role]
 
 
 export const LoanType = {
-  FIVE_K_AT_10_WEEKS: 'FIVE_K_AT_10_WEEKS'
+  SAN: 'SAN'
 } as const
 
 export type LoanType = (typeof LoanType)[keyof typeof LoanType]
@@ -33,6 +33,31 @@ export const LoanStatus = {
 } as const
 
 export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus]
+
+
+export const PaymentFrequency = {
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY'
+} as const
+
+export type PaymentFrequency = (typeof PaymentFrequency)[keyof typeof PaymentFrequency]
+
+
+export const PaymentMethod = {
+  CASH: 'CASH',
+  TRANSFER: 'TRANSFER'
+} as const
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
+export const PaymentStatus = {
+  COMPLETED: 'COMPLETED',
+  REVERSED: 'REVERSED',
+  PENDING: 'PENDING'
+} as const
+
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
 export const MessageRole = {

@@ -4,9 +4,12 @@
 import type { CreateMemberInput, UpdateMemberInput } from "../schemas/member.js";
 import type { UpdateUserInput, Role } from "../schemas/user.js";
 import type { MessageRole, AttachmentInput } from "../schemas/message.js";
+import type { CreateLoanInput, PaymentFrequency, LoanType } from "../schemas/loan.js";
+import type { CreatePaymentInput, PaymentMethod, PaymentStatus } from "../schemas/payment.js";
 import type { Member } from "./member.js";
 import type { User } from "./user.js";
 import type { Message, Attachment } from "./message.js";
+import type { Loan, Payment } from "./loan.js";
 
 /**
  * UserRole entity type.
@@ -23,12 +26,13 @@ export interface UserRole {
  */
 export interface DbClient {
   user: {
-    create(args: { data: { name: string; phone?: string } }): Promise<User>;
+    create(args: { data: { name: string; phone: string } }): Promise<User>;
     update(args: {
       where: { id: string };
       data: Omit<UpdateUserInput, "id">;
     }): Promise<User>;
     findUnique(args: { where: { id: string } }): Promise<User | null>;
+    findMany(args?: { where?: { enabled?: boolean }; take?: number; skip?: number }): Promise<User[]>;
   };
 
   userRole: {
@@ -46,6 +50,7 @@ export interface DbClient {
     findUnique(args: { where: { id: string } }): Promise<Member | null>;
     findMany(args?: {
       where?: {
+        isActive?: boolean;
         referredById?: string;
         assignedCollectorId?: string;
       };
@@ -84,5 +89,78 @@ export interface DbClient {
     createMany(args: {
       data: Array<AttachmentInput & { messageId: string }>;
     }): Promise<{ count: number }>;
+  };
+
+  loan: {
+    create(args: {
+      data: {
+        loanId: number;
+        memberId: string;
+        principal: number;
+        termLength: number;
+        paymentAmount: number;
+        paymentFrequency: PaymentFrequency;
+        type?: LoanType;
+      };
+    }): Promise<Loan>;
+    findFirst(args: {
+      orderBy: { loanId: "asc" | "desc" };
+      select?: { loanId: boolean };
+    }): Promise<{ loanId: number } | null>;
+    findUnique(args: { where: { id: string } }): Promise<Loan | null>;
+    findMany(args?: {
+      where?: {
+        memberId?: string;
+        status?: string | { not: string };
+        member?: {
+          referredById?: string;
+          assignedCollectorId?: string;
+        };
+      };
+      include?: {
+        member?: boolean;
+      };
+      take?: number;
+      skip?: number;
+    }): Promise<Loan[]>;
+  };
+
+  payment: {
+    create(args: {
+      data: {
+        loanId: string;
+        amount: number;
+        paidAt?: Date;
+        method?: PaymentMethod;
+        collectedById?: string;
+        notes?: string;
+      };
+    }): Promise<Payment>;
+    update(args: {
+      where: { id: string };
+      data: {
+        status?: PaymentStatus;
+        notes?: string;
+      };
+    }): Promise<Payment>;
+    findUnique(args: { where: { id: string } }): Promise<Payment | null>;
+    findMany(args: {
+      where?: {
+        status?: PaymentStatus;
+        paidAt?: {
+          gte?: Date;
+          lte?: Date;
+        };
+        loan?: {
+          memberId?: string;
+          member?: {
+            referredById?: string;
+          };
+        };
+      };
+      orderBy?: { paidAt: "asc" | "desc" };
+      take?: number;
+      skip?: number;
+    }): Promise<Payment[]>;
   };
 }

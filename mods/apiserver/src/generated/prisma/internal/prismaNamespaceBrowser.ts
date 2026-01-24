@@ -56,7 +56,8 @@ export const ModelName = {
   Member: 'Member',
   Loan: 'Loan',
   Message: 'Message',
-  Attachment: 'Attachment'
+  Attachment: 'Attachment',
+  Payment: 'Payment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -120,6 +121,10 @@ export const LoanScalarFieldEnum = {
   loanId: 'loanId',
   type: 'type',
   status: 'status',
+  principal: 'principal',
+  termLength: 'termLength',
+  paymentAmount: 'paymentAmount',
+  paymentFrequency: 'paymentFrequency',
   startedAt: 'startedAt',
   closedAt: 'closedAt',
   createdAt: 'createdAt',
@@ -155,6 +160,22 @@ export const AttachmentScalarFieldEnum = {
 } as const
 
 export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum]
+
+
+export const PaymentScalarFieldEnum = {
+  id: 'id',
+  amount: 'amount',
+  paidAt: 'paidAt',
+  method: 'method',
+  status: 'status',
+  notes: 'notes',
+  loanId: 'loanId',
+  collectedById: 'collectedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
 export const SortOrder = {

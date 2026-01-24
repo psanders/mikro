@@ -13,7 +13,7 @@ export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REFERRER"]);
  */
 export const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  phone: z.string().optional(),
+  phone: z.string().min(1, "Phone is required"),
   role: roleEnum.optional(),
 });
 
@@ -36,6 +36,16 @@ export const getUserSchema = z.object({
 });
 
 /**
+ * Schema for listing users with optional pagination.
+ * By default only shows enabled users unless showDisabled is true.
+ */
+export const listUsersSchema = z.object({
+  showDisabled: z.boolean().optional(), // If true, show all users including disabled
+  limit: z.number().int().positive().max(100).optional(),
+  offset: z.number().int().nonnegative().optional(),
+});
+
+/**
  * Input type for creating a user.
  */
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -49,6 +59,11 @@ export type UpdateUserInput = z.infer<typeof updateUserSchema>;
  * Input type for getting a user.
  */
 export type GetUserInput = z.infer<typeof getUserSchema>;
+
+/**
+ * Input type for listing users.
+ */
+export type ListUsersInput = z.infer<typeof listUsersSchema>;
 
 /**
  * Role type.

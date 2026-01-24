@@ -30,9 +30,11 @@ export {
   createUserSchema,
   updateUserSchema,
   getUserSchema,
+  listUsersSchema,
   type CreateUserInput,
   type UpdateUserInput,
   type GetUserInput,
+  type ListUsersInput,
   type Role,
   // Message schemas
   messageRoleEnum,
@@ -61,7 +63,39 @@ export {
   type WhatsAppChange,
   type WhatsAppEntry,
   type WhatsAppWebhookBody,
-  type SendWhatsAppMessageInput
+  type SendWhatsAppMessageInput,
+  // Loan schemas
+  loanTypeEnum,
+  loanStatusEnum,
+  paymentFrequencyEnum,
+  createLoanSchema,
+  getLoanSchema,
+  listLoansSchema,
+  listLoansByReferrerSchema,
+  listLoansByCollectorSchema,
+  type CreateLoanInput,
+  type GetLoanInput,
+  type ListLoansInput,
+  type ListLoansByReferrerInput,
+  type ListLoansByCollectorInput,
+  type LoanType,
+  type LoanStatus,
+  type PaymentFrequency,
+  // Payment schemas
+  paymentMethodEnum,
+  paymentStatusEnum,
+  createPaymentSchema,
+  reversePaymentSchema,
+  listPaymentsSchema,
+  listPaymentsByMemberSchema,
+  listPaymentsByReferrerSchema,
+  type CreatePaymentInput,
+  type ReversePaymentInput,
+  type ListPaymentsInput,
+  type ListPaymentsByMemberInput,
+  type ListPaymentsByReferrerInput,
+  type PaymentMethod,
+  type PaymentStatus
 } from "./schemas/index.js";
 
 // Types (entities and client)
@@ -70,3 +104,4 @@ export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
 export type { DbClient, UserRole } from "./types/index.js";
 export type { WhatsAppClient, WhatsAppSendResponse } from "./types/index.js";
+export type { Loan, Payment } from "./types/index.js";

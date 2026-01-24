@@ -195,6 +195,7 @@ export type UserWhereInput = {
   referredMembers?: Prisma.MemberListRelationFilter
   assignedMembers?: Prisma.MemberListRelationFilter
   messages?: Prisma.MessageListRelationFilter
+  collectedPayments?: Prisma.PaymentListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -209,6 +210,7 @@ export type UserOrderByWithRelationInput = {
   referredMembers?: Prisma.MemberOrderByRelationAggregateInput
   assignedMembers?: Prisma.MemberOrderByRelationAggregateInput
   messages?: Prisma.MessageOrderByRelationAggregateInput
+  collectedPayments?: Prisma.PaymentOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -226,6 +228,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   referredMembers?: Prisma.MemberListRelationFilter
   assignedMembers?: Prisma.MemberListRelationFilter
   messages?: Prisma.MessageListRelationFilter
+  collectedPayments?: Prisma.PaymentListRelationFilter
 }, "id">
 
 export type UserOrderByWithAggregationInput = {
@@ -264,6 +267,7 @@ export type UserCreateInput = {
   referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -278,6 +282,7 @@ export type UserUncheckedCreateInput = {
   referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUpdateInput = {
@@ -292,6 +297,7 @@ export type UserUpdateInput = {
   referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -306,6 +312,7 @@ export type UserUncheckedUpdateInput = {
   referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -462,6 +469,22 @@ export type UserUpdateOneWithoutMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMessagesInput, Prisma.UserUpdateWithoutMessagesInput>, Prisma.UserUncheckedUpdateWithoutMessagesInput>
 }
 
+export type UserCreateNestedOneWithoutCollectedPaymentsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCollectedPaymentsInput, Prisma.UserUncheckedCreateWithoutCollectedPaymentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCollectedPaymentsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutCollectedPaymentsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCollectedPaymentsInput, Prisma.UserUncheckedCreateWithoutCollectedPaymentsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCollectedPaymentsInput
+  upsert?: Prisma.UserUpsertWithoutCollectedPaymentsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCollectedPaymentsInput, Prisma.UserUpdateWithoutCollectedPaymentsInput>, Prisma.UserUncheckedUpdateWithoutCollectedPaymentsInput>
+}
+
 export type UserCreateWithoutRolesInput = {
   id?: string
   name: string
@@ -473,6 +496,7 @@ export type UserCreateWithoutRolesInput = {
   referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateWithoutRolesInput = {
@@ -486,6 +510,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserCreateOrConnectWithoutRolesInput = {
@@ -515,6 +540,7 @@ export type UserUpdateWithoutRolesInput = {
   referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRolesInput = {
@@ -528,6 +554,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserCreateWithoutCreatedMembersInput = {
@@ -541,6 +568,7 @@ export type UserCreateWithoutCreatedMembersInput = {
   referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateWithoutCreatedMembersInput = {
@@ -554,6 +582,7 @@ export type UserUncheckedCreateWithoutCreatedMembersInput = {
   referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserCreateOrConnectWithoutCreatedMembersInput = {
@@ -572,6 +601,7 @@ export type UserCreateWithoutReferredMembersInput = {
   createdMembers?: Prisma.MemberCreateNestedManyWithoutCreatedByInput
   assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateWithoutReferredMembersInput = {
@@ -585,6 +615,7 @@ export type UserUncheckedCreateWithoutReferredMembersInput = {
   createdMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutCreatedByInput
   assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserCreateOrConnectWithoutReferredMembersInput = {
@@ -603,6 +634,7 @@ export type UserCreateWithoutAssignedMembersInput = {
   createdMembers?: Prisma.MemberCreateNestedManyWithoutCreatedByInput
   referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateWithoutAssignedMembersInput = {
@@ -616,6 +648,7 @@ export type UserUncheckedCreateWithoutAssignedMembersInput = {
   createdMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutCreatedByInput
   referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserCreateOrConnectWithoutAssignedMembersInput = {
@@ -645,6 +678,7 @@ export type UserUpdateWithoutCreatedMembersInput = {
   referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedMembersInput = {
@@ -658,6 +692,7 @@ export type UserUncheckedUpdateWithoutCreatedMembersInput = {
   referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUpsertWithoutReferredMembersInput = {
@@ -682,6 +717,7 @@ export type UserUpdateWithoutReferredMembersInput = {
   createdMembers?: Prisma.MemberUpdateManyWithoutCreatedByNestedInput
   assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReferredMembersInput = {
@@ -695,6 +731,7 @@ export type UserUncheckedUpdateWithoutReferredMembersInput = {
   createdMembers?: Prisma.MemberUncheckedUpdateManyWithoutCreatedByNestedInput
   assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUpsertWithoutAssignedMembersInput = {
@@ -719,6 +756,7 @@ export type UserUpdateWithoutAssignedMembersInput = {
   createdMembers?: Prisma.MemberUpdateManyWithoutCreatedByNestedInput
   referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedMembersInput = {
@@ -732,6 +770,7 @@ export type UserUncheckedUpdateWithoutAssignedMembersInput = {
   createdMembers?: Prisma.MemberUncheckedUpdateManyWithoutCreatedByNestedInput
   referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserCreateWithoutMessagesInput = {
@@ -745,6 +784,7 @@ export type UserCreateWithoutMessagesInput = {
   createdMembers?: Prisma.MemberCreateNestedManyWithoutCreatedByInput
   referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserUncheckedCreateWithoutMessagesInput = {
@@ -758,6 +798,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   createdMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutCreatedByInput
   referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
   assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
 }
 
 export type UserCreateOrConnectWithoutMessagesInput = {
@@ -787,6 +828,7 @@ export type UserUpdateWithoutMessagesInput = {
   createdMembers?: Prisma.MemberUpdateManyWithoutCreatedByNestedInput
   referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMessagesInput = {
@@ -800,6 +842,79 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   createdMembers?: Prisma.MemberUncheckedUpdateManyWithoutCreatedByNestedInput
   referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
   assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+}
+
+export type UserCreateWithoutCollectedPaymentsInput = {
+  id?: string
+  name: string
+  phone: string
+  enabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  createdMembers?: Prisma.MemberCreateNestedManyWithoutCreatedByInput
+  referredMembers?: Prisma.MemberCreateNestedManyWithoutReferredByInput
+  assignedMembers?: Prisma.MemberCreateNestedManyWithoutAssignedCollectorInput
+  messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCollectedPaymentsInput = {
+  id?: string
+  name: string
+  phone: string
+  enabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  createdMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutCreatedByInput
+  referredMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutReferredByInput
+  assignedMembers?: Prisma.MemberUncheckedCreateNestedManyWithoutAssignedCollectorInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCollectedPaymentsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCollectedPaymentsInput, Prisma.UserUncheckedCreateWithoutCollectedPaymentsInput>
+}
+
+export type UserUpsertWithoutCollectedPaymentsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCollectedPaymentsInput, Prisma.UserUncheckedUpdateWithoutCollectedPaymentsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCollectedPaymentsInput, Prisma.UserUncheckedCreateWithoutCollectedPaymentsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCollectedPaymentsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCollectedPaymentsInput, Prisma.UserUncheckedUpdateWithoutCollectedPaymentsInput>
+}
+
+export type UserUpdateWithoutCollectedPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  createdMembers?: Prisma.MemberUpdateManyWithoutCreatedByNestedInput
+  referredMembers?: Prisma.MemberUpdateManyWithoutReferredByNestedInput
+  assignedMembers?: Prisma.MemberUpdateManyWithoutAssignedCollectorNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCollectedPaymentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  createdMembers?: Prisma.MemberUncheckedUpdateManyWithoutCreatedByNestedInput
+  referredMembers?: Prisma.MemberUncheckedUpdateManyWithoutReferredByNestedInput
+  assignedMembers?: Prisma.MemberUncheckedUpdateManyWithoutAssignedCollectorNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -813,6 +928,7 @@ export type UserCountOutputType = {
   referredMembers: number
   assignedMembers: number
   messages: number
+  collectedPayments: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -821,6 +937,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   referredMembers?: boolean | UserCountOutputTypeCountReferredMembersArgs
   assignedMembers?: boolean | UserCountOutputTypeCountAssignedMembersArgs
   messages?: boolean | UserCountOutputTypeCountMessagesArgs
+  collectedPayments?: boolean | UserCountOutputTypeCountCollectedPaymentsArgs
 }
 
 /**
@@ -868,6 +985,13 @@ export type UserCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.MessageWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCollectedPaymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PaymentWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -881,6 +1005,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   referredMembers?: boolean | Prisma.User$referredMembersArgs<ExtArgs>
   assignedMembers?: boolean | Prisma.User$assignedMembersArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
+  collectedPayments?: boolean | Prisma.User$collectedPaymentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -918,6 +1043,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   referredMembers?: boolean | Prisma.User$referredMembersArgs<ExtArgs>
   assignedMembers?: boolean | Prisma.User$assignedMembersArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
+  collectedPayments?: boolean | Prisma.User$collectedPaymentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -931,6 +1057,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     referredMembers: Prisma.$MemberPayload<ExtArgs>[]
     assignedMembers: Prisma.$MemberPayload<ExtArgs>[]
     messages: Prisma.$MessagePayload<ExtArgs>[]
+    collectedPayments: Prisma.$PaymentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1338,6 +1465,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   referredMembers<T extends Prisma.User$referredMembersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredMembersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedMembers<T extends Prisma.User$assignedMembersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedMembersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.User$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  collectedPayments<T extends Prisma.User$collectedPaymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$collectedPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1876,6 +2004,30 @@ export type User$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.MessageScalarFieldEnum | Prisma.MessageScalarFieldEnum[]
+}
+
+/**
+ * User.collectedPayments
+ */
+export type User$collectedPaymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Payment
+   */
+  select?: Prisma.PaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Payment
+   */
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
+  orderBy?: Prisma.PaymentOrderByWithRelationInput | Prisma.PaymentOrderByWithRelationInput[]
+  cursor?: Prisma.PaymentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
 }
 
 /**

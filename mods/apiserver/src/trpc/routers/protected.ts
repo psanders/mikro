@@ -13,8 +13,20 @@ import {
   createUserSchema,
   updateUserSchema,
   getUserSchema,
+  listUsersSchema,
   // Chat schemas
   getChatHistorySchema,
+  // Loan schemas
+  createLoanSchema,
+  listLoansSchema,
+  listLoansByReferrerSchema,
+  listLoansByCollectorSchema,
+  // Payment schemas
+  createPaymentSchema,
+  reversePaymentSchema,
+  listPaymentsSchema,
+  listPaymentsByMemberSchema,
+  listPaymentsByReferrerSchema,
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -28,8 +40,20 @@ import { createListMembersByCollector } from "../../api/members/createListMember
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
 import { createGetUser } from "../../api/users/createGetUser.js";
+import { createListUsers } from "../../api/users/createListUsers.js";
 // Chat API functions
 import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
+// Loan API functions
+import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
+import { createListLoans } from "../../api/loans/createListLoans.js";
+import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
+import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
+// Payment API functions
+import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
+import { createReversePayment } from "../../api/payments/createReversePayment.js";
+import { createListPayments } from "../../api/payments/createListPayments.js";
+import { createListPaymentsByMember } from "../../api/payments/createListPaymentsByMember.js";
+import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -129,6 +153,16 @@ export const protectedRouter = router({
       return fn(input);
     }),
 
+  /**
+   * List all users with optional pagination.
+   */
+  listUsers: protectedProcedure
+    .input(listUsersSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListUsers(ctx.db);
+      return fn(input);
+    }),
+
   // ==================== Chat procedures ====================
 
   /**
@@ -138,6 +172,101 @@ export const protectedRouter = router({
     .input(getChatHistorySchema)
     .query(async ({ ctx, input }) => {
       const fn = createGetChatHistory(ctx.db);
+      return fn(input);
+    }),
+
+  // ==================== Loan procedures ====================
+
+  /**
+   * Create a new loan for a member.
+   */
+  createLoan: protectedProcedure
+    .input(createLoanSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreateLoan(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List all loans with optional pagination.
+   * By default only shows ACTIVE loans.
+   */
+  listLoans: protectedProcedure
+    .input(listLoansSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListLoans(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List loans for members referred by a specific user.
+   */
+  listLoansByReferrer: protectedProcedure
+    .input(listLoansByReferrerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListLoansByReferrer(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List loans for members assigned to a specific collector.
+   */
+  listLoansByCollector: protectedProcedure
+    .input(listLoansByCollectorSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListLoansByCollector(ctx.db);
+      return fn(input);
+    }),
+
+  // ==================== Payment procedures ====================
+
+  /**
+   * Create a new payment for a loan.
+   */
+  createPayment: protectedProcedure
+    .input(createPaymentSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreatePayment(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Reverse a payment.
+   */
+  reversePayment: protectedProcedure
+    .input(reversePaymentSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createReversePayment(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List all payments within a date range.
+   */
+  listPayments: protectedProcedure
+    .input(listPaymentsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListPayments(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List payments for a specific member's loans within a date range.
+   */
+  listPaymentsByMember: protectedProcedure
+    .input(listPaymentsByMemberSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListPaymentsByMember(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List payments for all members referred by a specific user within a date range.
+   */
+  listPaymentsByReferrer: protectedProcedure
+    .input(listPaymentsByReferrerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListPaymentsByReferrer(ctx.db);
       return fn(input);
     }),
 });

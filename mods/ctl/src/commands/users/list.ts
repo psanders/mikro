@@ -1,0 +1,59 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ */
+import { Flags } from "@oclif/core";
+import cliui from "cliui";
+import { BaseCommand } from "../../BaseCommand.js";
+import errorHandler from "../../errorHandler.js";
+
+export default class List extends BaseCommand<typeof List> {
+  static override readonly description = "display all users";
+  static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
+  static override readonly flags = {
+    "show-disabled": Flags.boolean({
+      char: "a",
+      description: "show all users including disabled",
+      default: false,
+    }),
+    "page-size": Flags.string({
+      char: "s",
+      description: "the number of items to show",
+      default: "100",
+      required: false,
+    }),
+  };
+
+  public async run(): Promise<void> {
+    const { flags } = await this.parse(List);
+    const client = this.createClient();
+
+    try {
+      const users = await client.listUsers.query({
+        showDisabled: flags["show-disabled"],
+        limit: parseInt(flags["page-size"]),
+      });
+
+      const ui = cliui({ width: 150 });
+
+      ui.div(
+        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
+        { text: "NAME", padding: [0, 0, 0, 0], width: 30 },
+        { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
+        { text: "ENABLED", padding: [0, 0, 0, 0], width: 10 }
+      );
+
+      users.forEach((user) => {
+        ui.div(
+          { text: user.id, padding: [0, 0, 0, 0], width: 40 },
+          { text: user.name, padding: [0, 0, 0, 0], width: 30 },
+          { text: user.phone || "N/A", padding: [0, 0, 0, 0], width: 18 },
+          { text: user.enabled ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
+        );
+      });
+
+      this.log(ui.toString());
+    } catch (e) {
+      errorHandler(e, this.error.bind(this));
+    }
+  }
+}

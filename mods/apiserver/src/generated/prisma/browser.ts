@@ -47,3 +47,8 @@ export type Message = Prisma.MessageModel
  * 
  */
 export type Attachment = Prisma.AttachmentModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel

@@ -71,6 +71,7 @@ describe("createListMembers", () => {
       expect(mockClient.member.findMany.calledOnce).to.be.true;
       expect(
         mockClient.member.findMany.calledWith({
+          where: { isActive: true },
           take: 10,
           skip: 1,
         })

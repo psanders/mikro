@@ -7,6 +7,7 @@ export {
   createCreateUser,
   createUpdateUser,
   createGetUser,
+  createListUsers,
 } from "./users/index.js";
 
 // Member operations
@@ -24,3 +25,20 @@ export {
   createGetChatHistory,
   createAddMessageToChatHistory,
 } from "./chat/index.js";
+
+// Loan operations
+export {
+  createCreateLoan,
+  createListLoans,
+  createListLoansByReferrer,
+  createListLoansByCollector,
+} from "./loans/index.js";
+
+// Payment operations
+export {
+  createCreatePayment,
+  createReversePayment,
+  createListPayments,
+  createListPaymentsByMember,
+  createListPaymentsByReferrer,
+} from "./payments/index.js";

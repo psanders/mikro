@@ -11,6 +11,7 @@ import {
 
 /**
  * Creates a function to list members by referrer ID.
+ * By default, only returns active members unless showInactive is true.
  *
  * @param client - The database client
  * @returns A validated function that lists members by referrer
@@ -20,6 +21,7 @@ export function createListMembersByReferrer(client: DbClient) {
     return client.member.findMany({
       where: {
         referredById: params.referredById,
+        ...(params.showInactive ? {} : { isActive: true }),
       },
       take: params.limit,
       skip: params.offset,

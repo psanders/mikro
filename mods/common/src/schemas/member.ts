@@ -40,26 +40,32 @@ export const getMemberSchema = z.object({
 
 /**
  * Schema for listing members with optional pagination.
+ * By default only shows active members unless showInactive is true.
  */
 export const listMembersSchema = z.object({
+  showInactive: z.boolean().optional(), // If true, show all members including inactive
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
 });
 
 /**
  * Schema for listing members by referrer.
+ * By default only shows active members unless showInactive is true.
  */
 export const listMembersByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
+  showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
 });
 
 /**
  * Schema for listing members by collector.
+ * By default only shows active members unless showInactive is true.
  */
 export const listMembersByCollectorSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
+  showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
 });
