@@ -1,0 +1,47 @@
+services:
+  apiserver:
+    build:
+      context: .
+      dockerfile: mods/apiserver/Dockerfile
+    container_name: mikro-apiserver
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Database (use absolute path in container)
+      - DATABASE_URL=${DATABASE_URL:-file:/app/data/mikro.db}
+      # API Server
+      - PORT=${PORT:-3000}
+      # Basic auth credentials for system API access (format: username:password)
+      - SYSTEM_BASICAUTH=${SYSTEM_BASICAUTH:-admin:secret}
+      # API URL for CLI and other clients
+      - MIKRO_API_URL=${MIKRO_API_URL:-http://localhost:3000}
+      # WhatsApp Business API
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
+      # Images path (use absolute path in container)
+      - IMAGES_PATH=${IMAGES_PATH:-/app/images}
+    volumes:
+      # Database persistence
+      - ./data:/app/data
+      # Images directory for serving receipts
+      - ./images:/app/images
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+        ]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    networks:
+      - mikro-network
+
+networks:
+  mikro-network:
+    driver: bridge
