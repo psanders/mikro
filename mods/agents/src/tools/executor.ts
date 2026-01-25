@@ -37,7 +37,7 @@ export interface ToolExecutorDependencies {
 
   /** Create a payment */
   createPayment: (params: {
-    loanId: string;
+    loanId: number; // Numeric loanId - function converts to UUID internally
     amount: number;
     collectedById?: string;
     notes?: string;
@@ -76,6 +76,23 @@ export interface ToolExecutorDependencies {
     memberId: string;
     showAll?: boolean;
   }) => Promise<Array<{ id: string; loanId: number; principal: number; status: string }>>;
+
+  /** Get loan by numeric loan ID */
+  getLoanByLoanId: (params: { loanId: number }) => Promise<{
+    id: string; // UUID
+    loanId: number; // Numeric loan ID
+    principal: number;
+    termLength: number;
+    paymentAmount: number;
+    paymentFrequency: string;
+    status: string;
+    member: {
+      id: string;
+      name: string;
+      phone: string;
+      assignedCollectorId: string | null; // Required for validation
+    };
+  } | null>;
 }
 
 /**
@@ -150,20 +167,149 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
 
         case "createPayment": {
           // Get collector ID from context
-          const collectedById = context?.userId as string | undefined;
+          const collectorId = context?.userId as string | undefined;
+          if (!collectorId) {
+            return {
+              success: false,
+              message: "Collector ID is required but not available in context"
+            };
+          }
 
+          // Parse numeric loanId from string (e.g., "10000" -> 10000)
+          const loanIdInput = args.loanId as string;
+          const numericLoanId = Number(loanIdInput);
+          if (isNaN(numericLoanId) || numericLoanId <= 0) {
+            return {
+              success: false,
+              message: `ID de préstamo inválido: ${loanIdInput}. Debe ser un número positivo (ej: 10000, 10001).`
+            };
+          }
+
+          // Get loan by numeric loanId (includes member with assignedCollectorId)
+          const loan = await deps.getLoanByLoanId({
+            loanId: numericLoanId
+          });
+
+          if (!loan) {
+            return {
+              success: false,
+              message: `Préstamo no encontrado con ID: ${numericLoanId}`
+            };
+          }
+
+          // Validate loan is active
+          if (loan.status !== "ACTIVE") {
+            return {
+              success: false,
+              message: `El préstamo ${numericLoanId} no está activo. Estado actual: ${loan.status}`
+            };
+          }
+
+          // Validate collector assignment
+          if (!loan.member.assignedCollectorId) {
+            return {
+              success: false,
+              message: "Este préstamo no tiene un cobrador asignado"
+            };
+          }
+
+          if (loan.member.assignedCollectorId !== collectorId) {
+            return {
+              success: false,
+              message:
+                "No tienes permiso para registrar pagos para este préstamo. Este préstamo está asignado a otro cobrador."
+            };
+          }
+
+          // Parse payment amount
+          const amount = Number(args.amount);
+          if (isNaN(amount) || amount <= 0) {
+            return {
+              success: false,
+              message: `Monto de pago inválido: ${args.amount}. Debe ser un número positivo.`
+            };
+          }
+
+          // Create payment using numeric loanId - createPayment will handle UUID conversion internally
           const payment = await deps.createPayment({
-            loanId: args.loanId as string,
-            amount: Number(args.amount),
-            collectedById,
+            loanId: numericLoanId, // Numeric loanId - createPayment converts to UUID internally
+            amount,
+            collectedById: collectorId,
             notes: args.notes as string | undefined
           });
 
-          logger.verbose("payment created via tool", { paymentId: payment.id });
+          logger.verbose("payment created via tool", {
+            paymentId: payment.id,
+            loanId: loan.loanId,
+            collectorId
+          });
+
+          // Generate receipt
+          let receipt;
+          try {
+            receipt = await deps.generateReceipt({
+              paymentId: payment.id
+            });
+            logger.verbose("receipt generated via tool", {
+              paymentId: payment.id
+            });
+          } catch (error) {
+            const err = error as Error;
+            logger.error("receipt generation failed in createPayment", {
+              paymentId: payment.id,
+              error: err.message
+            });
+            // Payment was created, but receipt generation failed
+            return {
+              success: true,
+              message: `Pago de RD$ ${payment.amount} registrado correctamente, pero hubo un error al generar el recibo. Puedes generar el recibo más tarde usando generateReceipt con el paymentId: ${payment.id}`,
+              data: {
+                paymentId: payment.id,
+                amount: payment.amount,
+                loan: {
+                  loanId: loan.loanId,
+                  principal: loan.principal,
+                  termLength: loan.termLength,
+                  paymentAmount: loan.paymentAmount,
+                  paymentFrequency: loan.paymentFrequency,
+                  status: loan.status
+                },
+                member: {
+                  id: loan.member.id,
+                  name: loan.member.name,
+                  phone: loan.member.phone
+                }
+              }
+            };
+          }
+
+          // Format success message
+          const successMessage = `Pago registrado para ${loan.member.name}\n\nPréstamo #${loan.loanId}\nMonto: RD$ ${amount.toLocaleString("es-DO")}\nRecibo generado correctamente`;
+
           return {
             success: true,
-            message: `Pago de RD$ ${payment.amount} registrado correctamente.`,
-            data: { paymentId: payment.id, amount: payment.amount }
+            message: successMessage,
+            data: {
+              paymentId: payment.id,
+              amount: payment.amount,
+              receipt: {
+                image: receipt.image,
+                token: receipt.token
+              },
+              loan: {
+                loanId: loan.loanId,
+                principal: loan.principal,
+                termLength: loan.termLength,
+                paymentAmount: loan.paymentAmount,
+                paymentFrequency: loan.paymentFrequency,
+                status: loan.status
+              },
+              member: {
+                id: loan.member.id,
+                name: loan.member.name,
+                phone: loan.member.phone
+              }
+            }
           };
         }
 

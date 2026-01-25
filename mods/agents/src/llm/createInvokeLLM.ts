@@ -143,7 +143,23 @@ export function createInvokeLLM(
       let finalResponse = "";
 
       // Handle tool calls loop
+      let toolCallIteration = 0;
+      const MAX_TOOL_ITERATIONS = 20; // Safety limit to prevent infinite loops
       while (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+        toolCallIteration++;
+
+        // Safety check to prevent infinite loops
+        if (toolCallIteration > MAX_TOOL_ITERATIONS) {
+          logger.error("tool call loop exceeded maximum iterations", {
+            agent: agent.name,
+            iterations: toolCallIteration,
+            messageCount: fullMessages.length
+          });
+          throw new Error(
+            `Tool call loop exceeded maximum iterations (${MAX_TOOL_ITERATIONS}). This may indicate an infinite loop.`
+          );
+        }
+
         // Filter to only function type tool calls
         const functionCalls = assistantMessage.tool_calls.filter(
           (
@@ -187,9 +203,68 @@ export function createInvokeLLM(
             success: result.success
           });
 
+          // Truncate large tool results to prevent token limit errors
+          // Specifically handle base64 images and other large data
+          let truncatedResult: typeof result = { ...result };
+          if (result.data && typeof result.data === "object" && result.data !== null) {
+            const data = result.data as Record<string, unknown>;
+            truncatedResult = {
+              ...result,
+              data: { ...data }
+            };
+
+            const truncatedData = truncatedResult.data as Record<string, unknown>;
+
+            // If result contains base64 image data in receipt, replace with placeholder to save tokens
+            if (
+              truncatedData.receipt &&
+              typeof truncatedData.receipt === "object" &&
+              truncatedData.receipt !== null
+            ) {
+              const receipt = truncatedData.receipt as Record<string, unknown>;
+              if (typeof receipt.image === "string" && receipt.image.length > 1000) {
+                const imageSize = receipt.image.length;
+                truncatedData.receipt = {
+                  ...receipt,
+                  image: `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`
+                };
+                logger.verbose("truncated large image in tool result", {
+                  tool: toolName,
+                  originalSize: imageSize
+                });
+              }
+            }
+
+            // If result contains base64 image data directly (from generateReceipt)
+            if (typeof truncatedData.image === "string" && truncatedData.image.length > 1000) {
+              const imageSize = truncatedData.image.length;
+              truncatedData.image = `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`;
+              logger.verbose("truncated large image in tool result", {
+                tool: toolName,
+                originalSize: imageSize
+              });
+            }
+
+            // Truncate any other large string fields (>10KB) in data
+            for (const [key, value] of Object.entries(truncatedData)) {
+              if (typeof value === "string" && value.length > 10000 && key !== "token") {
+                // Don't truncate tokens, but truncate other large strings
+                truncatedData[key] =
+                  `[Large data truncated - ${Math.round(value.length / 1024)}KB]`;
+                logger.verbose("truncated large field in tool result", {
+                  tool: toolName,
+                  field: key,
+                  originalSize: value.length
+                });
+              }
+            }
+          }
+
+          const truncatedJson = JSON.stringify(truncatedResult);
+
           toolResults.push({
             role: "tool",
-            content: JSON.stringify(result),
+            content: truncatedJson,
             name: toolName,
             tool_call_id: toolCall.id
           });

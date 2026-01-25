@@ -81,7 +81,8 @@ export const createPaymentTool: ToolFunction = {
       properties: {
         loanId: {
           type: "string",
-          description: "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
+          description:
+            "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
         },
         amount: {
           type: "string",

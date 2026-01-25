@@ -32,7 +32,6 @@ import { logger } from "./logger.js";
 import {
   createGetUserByPhone,
   createGetMemberByPhone,
-  createGetChatHistory,
   createAddMessageToChatHistory,
   createCreateMember,
   createCreatePayment,
@@ -114,22 +113,7 @@ app.post("/webhook", async (req, res) => {
 
 // Initialize message processor before starting server
 async function initializeMessageProcessor() {
-  // #region agent log
-  fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "index.ts:initializeMessageProcessor:entry",
-      message: "initializing message processor",
-      data: {},
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "run1",
-      hypothesisId: "A"
-    })
-  }).catch(() => {});
   logger.info("initializing message processor", { step: "entry" });
-  // #endregion
 
   try {
     // Load agents
@@ -152,22 +136,6 @@ async function initializeMessageProcessor() {
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const listUsers = createListUsers(dbClient);
-
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:api-functions",
-        message: "api functions created",
-        data: { functionsCreated: 10 },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
-    // #endregion
 
     // Create router
     const routeMessage = createMessageRouter({
@@ -193,22 +161,6 @@ async function initializeMessageProcessor() {
         };
       }
     });
-
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:router",
-        message: "router created",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
-    // #endregion
 
     // Create tool executor
     const toolExecutor = createToolExecutor({
@@ -292,41 +244,9 @@ async function initializeMessageProcessor() {
       }
     } as Parameters<typeof createToolExecutor>[0]);
 
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:tool-executor",
-        message: "tool executor created",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
-    // #endregion
-
     // Create WhatsApp client
     const whatsAppClient = createWhatsAppClient();
     const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
-
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:whatsapp-client",
-        message: "whatsapp client created",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
-    // #endregion
 
     // Create LLM invoker wrapper that selects agent based on name
     const invokeLLM = async (
@@ -339,22 +259,6 @@ async function initializeMessageProcessor() {
       const invokeFn = createInvokeLLM(agent, allTools, toolExecutor);
       return invokeFn(messages, userMessage, imageUrl, context);
     };
-
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:llm-invoker",
-        message: "llm invoker created",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
-    // #endregion
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)
     // Gets the most recent messages to avoid token limit issues
@@ -390,31 +294,12 @@ async function initializeMessageProcessor() {
     };
 
     // Configure message processor
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:before-set-processor",
-        message: "about to call setMessageProcessor",
-        data: {
-          hasRouteMessage: !!routeMessage,
-          hasInvokeLLM: !!invokeLLM,
-          hasSendWhatsAppMessage: !!sendWhatsAppMessage
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
     logger.info("calling setMessageProcessor", {
       step: "before-set-processor",
       hasRouteMessage: !!routeMessage,
       hasInvokeLLM: !!invokeLLM,
       hasSendWhatsAppMessage: !!sendWhatsAppMessage
     });
-    // #endregion
 
     const processorConfig = {
       routeMessage,
@@ -428,20 +313,6 @@ async function initializeMessageProcessor() {
 
     setMessageProcessor(processorConfig);
 
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "index.ts:initializeMessageProcessor:after-set-processor",
-        message: "setMessageProcessor completed",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A"
-      })
-    }).catch(() => {});
     logger.info("setMessageProcessor completed", { step: "after-set-processor" });
 
     // Verify processor was set
