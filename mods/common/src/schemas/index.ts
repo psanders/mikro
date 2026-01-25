@@ -9,13 +9,15 @@ export {
   listMembersSchema,
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
+  exportCollectorMembersSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
   type GetMemberInput,
   type GetMemberByPhoneInput,
   type ListMembersInput,
   type ListMembersByReferrerInput,
-  type ListMembersByCollectorInput
+  type ListMembersByCollectorInput,
+  type ExportCollectorMembersInput
 } from "./member.js";
 
 export {

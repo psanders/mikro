@@ -20,7 +20,8 @@ export {
   createGetMemberByPhone,
   createListMembers,
   createListMembersByReferrer,
-  createListMembersByCollector
+  createListMembersByCollector,
+  createExportCollectorMembers
 } from "./members/index.js";
 
 // Chat operations

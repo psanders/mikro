@@ -9,6 +9,7 @@ import {
   listMembersSchema,
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
+  exportCollectorMembersSchema,
   // User schemas
   createUserSchema,
   updateUserSchema,
@@ -40,6 +41,7 @@ import { createGetMember } from "../../api/members/createGetMember.js";
 import { createListMembers } from "../../api/members/createListMembers.js";
 import { createListMembersByReferrer } from "../../api/members/createListMembersByReferrer.js";
 import { createListMembersByCollector } from "../../api/members/createListMembersByCollector.js";
+import { createExportCollectorMembers } from "../../api/members/createExportCollectorMembers.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -120,6 +122,17 @@ export const protectedRouter = router({
     .input(listMembersByCollectorSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListMembersByCollector(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Export members by collector ID with loans and referrer for CSV generation.
+   * Returns members with active loans, payment status, and referrer info.
+   */
+  exportCollectorMembers: protectedProcedure
+    .input(exportCollectorMembersSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createExportCollectorMembers(ctx.db);
       return fn(input);
     }),
 

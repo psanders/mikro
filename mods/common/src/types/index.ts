@@ -4,7 +4,12 @@
 export type { Member } from "./member.js";
 export type { User, UserWithRole } from "./user.js";
 export type { Attachment, Message } from "./message.js";
-export type { DbClient, UserRole, PaymentWithRelations } from "./client.js";
+export type {
+  DbClient,
+  UserRole,
+  PaymentWithRelations,
+  MemberWithLoansAndReferrer
+} from "./client.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

@@ -366,6 +366,24 @@ export const listUsersTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for exporting collector members as CSV.
+ * Used by Juan (collector) to generate a report of assigned members.
+ */
+export const exportCollectorMembersTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "exportCollectorMembers",
+    description:
+      "Generar un reporte CSV de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Notas del Miembro, Notas del Prestamo, y Dias de Atraso.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -380,7 +398,8 @@ export const allTools: ToolFunction[] = [
   listLoansByMemberTool,
   listMemberLoansByPhoneTool,
   listUsersTool,
-  getLoanByLoanIdTool
+  getLoanByLoanIdTool,
+  exportCollectorMembersTool
 ];
 
 /**

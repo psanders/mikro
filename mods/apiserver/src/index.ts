@@ -43,7 +43,8 @@ import {
   createGetLoanByLoanId,
   createGetMember,
   createCreateLoan,
-  createListUsers
+  createListUsers,
+  createExportCollectorMembers
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 
@@ -139,6 +140,7 @@ async function initializeMessageProcessor() {
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const listUsers = createListUsers(dbClient);
+    const exportCollectorMembers = createExportCollectorMembers(dbClient);
 
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
@@ -280,6 +282,29 @@ async function initializeMessageProcessor() {
             assignedCollectorId: loan.member.assignedCollectorId
           }
         };
+      },
+      exportCollectorMembers: async (params: { assignedCollectorId: string }) => {
+        const members = await exportCollectorMembers(params);
+        return members.map((member) => ({
+          name: member.name,
+          phone: member.phone,
+          collectionPoint: member.collectionPoint,
+          notes: member.notes,
+          referredBy: { name: member.referredBy.name },
+          loans: member.loans.map((loan) => ({
+            loanId: loan.loanId,
+            notes: loan.notes,
+            paymentFrequency: loan.paymentFrequency,
+            createdAt: loan.createdAt,
+            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
+          }))
+        }));
+      },
+      uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
+        return whatsAppClient.uploadMedia(fileBuffer, mimeType);
+      },
+      sendWhatsAppMessage: async (params) => {
+        return sendWhatsAppMessage(params);
       }
     } as Parameters<typeof createToolExecutor>[0]);
 

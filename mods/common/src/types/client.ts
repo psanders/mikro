@@ -65,6 +65,28 @@ export interface DbClient {
       take?: number;
       skip?: number;
     }): Promise<Member[]>;
+    findMany(args: {
+      where?: {
+        isActive?: boolean;
+        referredById?: string;
+        assignedCollectorId?: string;
+      };
+      include: {
+        loans?: {
+          where?: { status?: string };
+          include?: {
+            payments?: {
+              where?: { status?: string };
+              orderBy?: { paidAt: "asc" | "desc" };
+              take?: number;
+            };
+          };
+        };
+        referredBy?: { select?: { name?: boolean } };
+      };
+      take?: number;
+      skip?: number;
+    }): Promise<MemberWithLoansAndReferrer[]>;
   };
 
   message: {
@@ -217,4 +239,16 @@ export interface PaymentWithRelations extends Payment {
     payments: Payment[];
   };
   collectedBy?: User | null;
+}
+
+/**
+ * Member with loans and referrer for CSV export.
+ */
+export interface MemberWithLoansAndReferrer extends Member {
+  loans: Array<
+    Loan & {
+      payments: Payment[];
+    }
+  >;
+  referredBy: { name: string };
 }

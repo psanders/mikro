@@ -20,6 +20,7 @@ export {
   listMembersSchema,
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
+  exportCollectorMembersSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
   type GetMemberInput,
@@ -27,6 +28,7 @@ export {
   type ListMembersInput,
   type ListMembersByReferrerInput,
   type ListMembersByCollectorInput,
+  type ExportCollectorMembersInput,
   // User schemas
   roleEnum,
   createUserSchema,
@@ -119,7 +121,12 @@ export {
 export type { Member } from "./types/index.js";
 export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
-export type { DbClient, UserRole, PaymentWithRelations } from "./types/index.js";
+export type {
+  DbClient,
+  UserRole,
+  PaymentWithRelations,
+  MemberWithLoansAndReferrer
+} from "./types/index.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

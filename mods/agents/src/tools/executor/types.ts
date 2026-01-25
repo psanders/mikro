@@ -110,4 +110,37 @@ export interface ToolExecutorDependencies {
       method: string;
     }>
   >;
+
+  /** Export collector members with loans and referrer for CSV generation */
+  exportCollectorMembers: (params: { assignedCollectorId: string }) => Promise<
+    Array<{
+      name: string;
+      phone: string;
+      collectionPoint: string | null;
+      notes: string | null;
+      referredBy: { name: string };
+      loans: Array<{
+        loanId: number;
+        notes: string | null;
+        paymentFrequency: string;
+        createdAt: Date;
+        payments: Array<{ paidAt: Date }>;
+      }>;
+    }>
+  >;
+
+  /** Upload media to WhatsApp and get media ID */
+  uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;
+
+  /** Send a WhatsApp message (text, image, or document) */
+  sendWhatsAppMessage: (params: {
+    phone: string;
+    message?: string;
+    mediaId?: string;
+    mediaType?: "image" | "document" | "video" | "audio";
+    documentFilename?: string;
+    caption?: string;
+  }) => Promise<{
+    messages?: Array<{ id: string }>;
+  }>;
 }

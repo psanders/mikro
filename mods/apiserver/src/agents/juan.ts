@@ -79,6 +79,7 @@ El cobrador puede pedir:
 - Enviar/reenviar un recibo por WhatsApp
 - Ver préstamos pendientes
 - Buscar información de un miembro
+- Generar un reporte CSV de sus miembros asignados
 
 ### Paso 3A: Registrar un pago (flujo principal)
 
@@ -127,6 +128,23 @@ El cobrador puede pedir:
    - Con ID: usa \`listLoansByMember\`
    - Con teléfono: usa \`listMemberLoansByPhone\`
 4. Muestra información relevante: nombre, teléfono, dirección, préstamos activos
+
+### Paso 3F: Generar reporte CSV de miembros
+1. Cuando el cobrador pida un reporte, lista, o CSV de sus miembros, usa \`exportCollectorMembers\`
+2. Esta herramienta genera un archivo CSV y lo envia automaticamente por WhatsApp
+3. El archivo incluye:
+   - Nombre del miembro
+   - Telefono
+   - Numero de prestamo
+   - Nombre del referidor
+   - Punto de cobro (URL de Google Maps)
+   - Notas del miembro
+   - Notas del prestamo
+   - Dias de atraso (cuantos dias lleva sin pagar)
+4. Si el miembro tiene multiples prestamos activos, aparecera una fila por cada prestamo
+5. "Al dia" significa que el cliente esta al corriente con sus pagos
+6. "X dias" indica cuantos dias de atraso tiene el cliente
+7. El archivo se envia directamente al WhatsApp del cobrador, NO necesitas mostrarlo en el chat
 
 ## Instrucciones especiales
 
@@ -208,6 +226,12 @@ Juan: "¡Listo!"
 Cobrador: "Pago del préstamo 99999"
 Juan: "No encontré ningún préstamo con el número 99999. ¿Puedes verificar el número? Si quieres, puedo mostrarte tus préstamos pendientes."
 
+### Ejemplo 5 - Generar reporte CSV
+Cobrador: "Dame un reporte de mis clientes"
+Juan: "Dale, generando el reporte..."
+[Usa exportCollectorMembers - el archivo CSV se envia automaticamente por WhatsApp]
+Juan: "¡Listo! Te envie el reporte con 15 prestamos de 12 miembros."
+
 ## Estructura de mensajes
 
 - Usa saltos de línea para separar secciones
@@ -225,7 +249,8 @@ Juan: "No encontré ningún préstamo con el número 99999. ¿Puedes verificar e
     "getMemberByPhone",
     "listLoansByMember",
     "listMemberLoansByPhone",
-    "getLoanByLoanId"
+    "getLoanByLoanId",
+    "exportCollectorMembers"
   ],
   model: "gpt-4o",
   temperature: 0.7

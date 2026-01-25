@@ -16,6 +16,7 @@
   "dependencies": {
     "@fonoster/logger": "^0.9.23",
     "@mikro/common": "^1.0.0",
+    "exceljs": "^4.4.0",
     "openai": "^6.16.0"
   },
   "devDependencies": {

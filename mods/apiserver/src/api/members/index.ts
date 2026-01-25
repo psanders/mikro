@@ -8,3 +8,4 @@ export { createGetMemberByPhone } from "./createGetMemberByPhone.js";
 export { createListMembers } from "./createListMembers.js";
 export { createListMembersByReferrer } from "./createListMembersByReferrer.js";
 export { createListMembersByCollector } from "./createListMembersByCollector.js";
+export { createExportCollectorMembers } from "./createExportCollectorMembers.js";

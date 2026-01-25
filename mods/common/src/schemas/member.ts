@@ -103,6 +103,14 @@ export const listMembersByCollectorSchema = z.object({
 });
 
 /**
+ * Schema for exporting collector members as CSV.
+ * Returns members with loans, referrer, and payment status for CSV generation.
+ */
+export const exportCollectorMembersSchema = z.object({
+  assignedCollectorId: z.uuid({ error: "Invalid collector ID" })
+});
+
+/**
  * Input type for creating a member.
  */
 export type CreateMemberInput = z.infer<typeof createMemberSchema>;
@@ -136,3 +144,8 @@ export type ListMembersByReferrerInput = z.infer<typeof listMembersByReferrerSch
  * Input type for listing members by collector.
  */
 export type ListMembersByCollectorInput = z.infer<typeof listMembersByCollectorSchema>;
+
+/**
+ * Input type for exporting collector members.
+ */
+export type ExportCollectorMembersInput = z.infer<typeof exportCollectorMembersSchema>;
