@@ -33,7 +33,7 @@ export async function handleCreateMember(
     name: args.name as string,
     phone,
     idNumber: args.idNumber as string,
-    collectionPoint: args.collectionPoint as string,
+    collectionPoint: args.collectionPoint as string | undefined,
     homeAddress: args.homeAddress as string,
     referredById,
     jobPosition: args.jobPosition as string | undefined,

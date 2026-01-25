@@ -159,7 +159,7 @@ export interface DbClient {
         amount: number;
         paidAt?: Date;
         method?: PaymentMethod;
-        collectedById?: string;
+        collectedById: string;
         notes?: string;
       };
     }): Promise<Payment>;

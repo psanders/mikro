@@ -20,7 +20,7 @@ export const createMemberSchema = z.object({
     .string()
     .min(1, "ID number is required")
     .regex(/^\d{3}-\d{7}-\d{1}$/, "ID number must be in format 000-0000000-0"),
-  collectionPoint: z.string().url("Collection point must be a valid URL"),
+  collectionPoint: z.string().url("Collection point must be a valid URL").optional(),
   homeAddress: z.string().min(1, "Home address is required"),
   jobPosition: z.string().optional(),
   income: z.number().optional(),

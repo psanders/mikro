@@ -5,60 +5,89 @@ import type { SendWhatsAppMessageInput, WhatsAppSendResponse } from "@mikro/comm
 import type { WhatsAppApiError } from "./types.js";
 import { logger } from "../../logger.js";
 
+/**
+ * Determine the media type from the input parameters.
+ */
+function getMediaType(
+  params: SendWhatsAppMessageInput
+): "text" | "image" | "document" | "video" | "audio" {
+  // Explicit mediaType with mediaId
+  if (params.mediaId && params.mediaType) {
+    return params.mediaType;
+  }
+
+  // Specific media type fields
+  if (params.documentUrl || params.documentId) return "document";
+  if (params.videoUrl || params.videoId) return "video";
+  if (params.audioUrl || params.audioId) return "audio";
+  if (params.imageUrl || params.mediaId) return "image"; // Default mediaId to image for backward compatibility
+
+  return "text";
+}
+
+/**
+ * Get the media ID or URL for the given media type.
+ */
+function getMediaIdOrUrl(
+  params: SendWhatsAppMessageInput,
+  mediaType: "image" | "document" | "video" | "audio"
+): { id?: string; link?: string } {
+  switch (mediaType) {
+    case "document":
+      if (params.documentId) return { id: params.documentId };
+      if (params.documentUrl) return { link: params.documentUrl };
+      if (params.mediaId) return { id: params.mediaId };
+      break;
+    case "video":
+      if (params.videoId) return { id: params.videoId };
+      if (params.videoUrl) return { link: params.videoUrl };
+      if (params.mediaId) return { id: params.mediaId };
+      break;
+    case "audio":
+      if (params.audioId) return { id: params.audioId };
+      if (params.audioUrl) return { link: params.audioUrl };
+      if (params.mediaId) return { id: params.mediaId };
+      break;
+    case "image":
+    default:
+      if (params.mediaId) return { id: params.mediaId };
+      if (params.imageUrl) return { link: params.imageUrl };
+      break;
+  }
+
+  return {};
+}
+
+/**
+ * Send a WhatsApp message (text, image, document, video, or audio).
+ *
+ * @param phoneNumberId - WhatsApp phone number ID
+ * @param accessToken - WhatsApp API access token
+ * @param params - Message parameters including phone, message/media, and optional caption
+ * @returns The API response with message ID
+ */
 export async function sendMessage(
   phoneNumberId: string,
   accessToken: string,
   params: SendWhatsAppMessageInput
 ): Promise<WhatsAppSendResponse> {
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
-  const isImageMessage = !!(params.imageUrl || params.mediaId);
+  const mediaType = getMediaType(params);
+
   logger.verbose("sending whatsapp api request", {
     phone: params.phone,
-    type: isImageMessage ? "image" : "text",
-    usingMediaId: !!params.mediaId,
-    usingImageUrl: !!params.imageUrl
+    type: mediaType,
+    hasMediaId: !!params.mediaId,
+    hasImageUrl: !!params.imageUrl,
+    hasDocumentUrl: !!params.documentUrl,
+    hasVideoUrl: !!params.videoUrl,
+    hasAudioUrl: !!params.audioUrl
   });
 
   // Build the request body based on message type
   let requestBody: Record<string, unknown>;
 
-  if (isImageMessage) {
-    // Image message with optional caption
-    // Prefer mediaId over imageUrl (more reliable)
-    // IMPORTANT: Never send both mediaId and imageUrl - WhatsApp may show a link instead
-    if (params.mediaId) {
-      requestBody = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: params.phone,
-        type: "image",
-        image: {
-          id: params.mediaId,
-          ...(params.caption && { caption: params.caption })
-        }
-      };
-      // Log warning if imageUrl is also provided (should not happen)
-      if (params.imageUrl) {
-        logger.warn("both mediaId and imageUrl provided, using mediaId only", {
-          phone: params.phone,
-          mediaId: params.mediaId
-        });
-      }
-    } else if (params.imageUrl) {
-      requestBody = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: params.phone,
-        type: "image",
-        image: {
-          link: params.imageUrl,
-          ...(params.caption && { caption: params.caption })
-        }
-      };
-    } else {
-      throw new Error("Either imageUrl or mediaId must be provided for image messages");
-    }
-  } else {
+  if (mediaType === "text") {
     // Text message
     requestBody = {
       messaging_product: "whatsapp",
@@ -69,13 +98,67 @@ export async function sendMessage(
         body: params.message
       }
     };
+  } else if (mediaType === "image") {
+    // Image message
+    const mediaRef = getMediaIdOrUrl(params, "image");
+    requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "image",
+      image: {
+        ...mediaRef,
+        ...(params.caption && { caption: params.caption })
+      }
+    };
+  } else if (mediaType === "document") {
+    // Document message
+    const mediaRef = getMediaIdOrUrl(params, "document");
+    requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "document",
+      document: {
+        ...mediaRef,
+        ...(params.caption && { caption: params.caption }),
+        ...(params.documentFilename && { filename: params.documentFilename })
+      }
+    };
+  } else if (mediaType === "video") {
+    // Video message
+    const mediaRef = getMediaIdOrUrl(params, "video");
+    requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "video",
+      video: {
+        ...mediaRef,
+        ...(params.caption && { caption: params.caption })
+      }
+    };
+  } else if (mediaType === "audio") {
+    // Audio message (no caption supported)
+    const mediaRef = getMediaIdOrUrl(params, "audio");
+    requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "audio",
+      audio: {
+        ...mediaRef
+      }
+    };
+  } else {
+    throw new Error(`Unsupported media type: ${mediaType}`);
   }
 
   // Log the request body for debugging (without sensitive data)
-  if (isImageMessage && params.mediaId) {
-    logger.verbose("sending whatsapp image message with mediaId", {
+  if (mediaType !== "text") {
+    logger.verbose(`sending whatsapp ${mediaType} message`, {
       phone: params.phone,
-      mediaId: params.mediaId,
+      mediaType,
       hasCaption: !!params.caption,
       requestBody: JSON.stringify(requestBody)
     });
@@ -115,20 +198,19 @@ export async function sendMessage(
       errorType,
       status: response.status,
       fullResponse: JSON.stringify(data),
-      requestBody: isImageMessage && params.mediaId ? JSON.stringify(requestBody) : undefined
+      requestBody: mediaType !== "text" ? JSON.stringify(requestBody) : undefined
     });
     throw new Error(
       `WhatsApp API error: ${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ""}`
     );
   }
 
-  // Log full response for debugging image issues
-  if (isImageMessage) {
-    logger.verbose("whatsapp image message response", {
+  // Log response for debugging
+  if (mediaType !== "text") {
+    logger.verbose(`whatsapp ${mediaType} message response`, {
       phone: params.phone,
       messageId: data.messages?.[0]?.id,
-      imageUrl: params.imageUrl,
-      mediaId: params.mediaId,
+      mediaType,
       fullResponse: JSON.stringify(data),
       status: response.status
     });
@@ -139,5 +221,6 @@ export async function sendMessage(
       type: "text"
     });
   }
+
   return data;
 }

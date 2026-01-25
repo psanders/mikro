@@ -59,26 +59,80 @@ export const whatsappWebhookSchema = z.object({
 });
 
 /**
+ * Media type enum for WhatsApp messages.
+ */
+export const mediaTypeEnum = z.enum(["image", "document", "video", "audio"]);
+
+/**
  * Schema for sending a WhatsApp message.
- * Supports both text messages and image messages.
- * - For text: provide phone and message
- * - For image: provide phone, imageUrl (or mediaId), and optional caption
+ * Supports text, image, document, video, and audio messages.
+ *
+ * For text messages: provide phone and message
+ * For media messages: provide phone and either:
+ *   - imageUrl/mediaId with mediaType="image" and optional caption
+ *   - documentUrl/documentId with mediaType="document", optional caption and filename
+ *   - videoUrl/videoId with mediaType="video" and optional caption
+ *   - audioUrl/audioId with mediaType="audio" (no caption supported)
+ *
+ * When using mediaId (uploaded media), mediaType should be specified.
+ * When using URL fields (imageUrl, documentUrl, etc.), mediaType is inferred.
  */
 export const sendWhatsAppMessageSchema = z
   .object({
     phone: z.string().min(1, "Phone number is required"),
+
     /** Text message content (required for text messages) */
     message: z.string().optional(),
-    /** Public URL to the image (for image messages using URL) */
+
+    // Image fields (backward compatible)
+    /** Public URL to the image */
     imageUrl: z.string().url().optional(),
-    /** Media ID from WhatsApp upload (for image messages using uploaded media) */
+
+    // Document fields
+    /** Public URL to the document */
+    documentUrl: z.string().url().optional(),
+    /** Document ID from WhatsApp upload */
+    documentId: z.string().optional(),
+    /** Filename for the document (displayed to recipient) */
+    documentFilename: z.string().optional(),
+
+    // Video fields
+    /** Public URL to the video */
+    videoUrl: z.string().url().optional(),
+    /** Video ID from WhatsApp upload */
+    videoId: z.string().optional(),
+
+    // Audio fields
+    /** Public URL to the audio */
+    audioUrl: z.string().url().optional(),
+    /** Audio ID from WhatsApp upload */
+    audioId: z.string().optional(),
+
+    // Generic media fields
+    /** Media ID from WhatsApp upload (for any media type) */
     mediaId: z.string().optional(),
-    /** Caption for image messages */
+    /** Media type when using mediaId (required when mediaId is used without specific URL) */
+    mediaType: mediaTypeEnum.optional(),
+
+    /** Caption for image, document, or video messages (not supported for audio) */
     caption: z.string().optional()
   })
-  .refine((data) => data.message || data.imageUrl || data.mediaId, {
-    message: "Either message, imageUrl, or mediaId must be provided"
-  });
+  .refine(
+    (data) =>
+      data.message ||
+      data.imageUrl ||
+      data.mediaId ||
+      data.documentUrl ||
+      data.documentId ||
+      data.videoUrl ||
+      data.videoId ||
+      data.audioUrl ||
+      data.audioId,
+    {
+      message:
+        "Either message, imageUrl, mediaId, documentUrl, documentId, videoUrl, videoId, audioUrl, or audioId must be provided"
+    }
+  );
 
 /**
  * Type for WhatsApp message text content.
@@ -119,3 +173,8 @@ export type WhatsAppWebhookBody = z.infer<typeof whatsappWebhookSchema>;
  * Input type for sending a WhatsApp message.
  */
 export type SendWhatsAppMessageInput = z.infer<typeof sendWhatsAppMessageSchema>;
+
+/**
+ * Media type for WhatsApp messages.
+ */
+export type MediaType = z.infer<typeof mediaTypeEnum>;

@@ -47,8 +47,8 @@ export default class Create extends BaseCommand<typeof Create> {
         required: true
       }),
       collectionPoint: await input({
-        message: "Collection Point (URL)",
-        required: true
+        message: "Collection Point URL (optional)",
+        required: false
       }),
       homeAddress: await input({
         message: "Home Address",
@@ -104,7 +104,7 @@ export default class Create extends BaseCommand<typeof Create> {
         name: answers.name,
         phone: answers.phone,
         idNumber: answers.idNumber,
-        collectionPoint: answers.collectionPoint,
+        collectionPoint: answers.collectionPoint || undefined,
         homeAddress: answers.homeAddress,
         referredById: answers.referredById,
         assignedCollectorId: answers.assignedCollectorId,

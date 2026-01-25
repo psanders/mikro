@@ -23,19 +23,34 @@ export interface WhatsAppMediaUploadResponse {
  */
 export interface WhatsAppClient {
   /**
-   * Send a message via WhatsApp (text or image).
-   * @param params - The phone number, message/image, and optional caption
+   * Send a message via WhatsApp (text, image, document, video, or audio).
+   *
+   * Supported message types:
+   * - Text: provide phone and message
+   * - Image: provide phone and (imageUrl or mediaId with mediaType="image"), optional caption
+   * - Document: provide phone and (documentUrl or documentId or mediaId with mediaType="document"), optional caption and filename
+   * - Video: provide phone and (videoUrl or videoId or mediaId with mediaType="video"), optional caption
+   * - Audio: provide phone and (audioUrl or audioId or mediaId with mediaType="audio"), no caption
+   *
+   * @param params - The phone number, message/media, and optional caption
    * @returns The API response with message ID
    */
   sendMessage(params: SendWhatsAppMessageInput): Promise<WhatsAppSendResponse>;
 
   /**
-   * Upload media to WhatsApp and get a media ID.
-   * @param imageBuffer - Buffer containing the image data
-   * @param mimeType - MIME type of the image (e.g., "image/png")
-   * @returns The media ID that can be used to send the image
+   * Upload media (image, document, video, or audio) to WhatsApp and get a media ID.
+   *
+   * Supported formats:
+   * - Images: PNG, JPEG, GIF, WebP (max 5 MB)
+   * - Documents: PDF, Word, Excel, PowerPoint, TXT (max 100 MB)
+   * - Video: MP4, 3GPP (max 16 MB)
+   * - Audio: AAC, AMR, MP3, M4A, OGG (max 16 MB)
+   *
+   * @param fileBuffer - Buffer containing the media data
+   * @param mimeType - MIME type of the media (e.g., "image/png", "application/pdf", "video/mp4")
+   * @returns The media ID that can be used to send the media
    */
-  uploadMedia(imageBuffer: Buffer, mimeType: string): Promise<string>;
+  uploadMedia(fileBuffer: Buffer, mimeType: string): Promise<string>;
 
   /**
    * Download media from WhatsApp.

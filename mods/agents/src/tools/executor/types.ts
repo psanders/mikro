@@ -13,7 +13,7 @@ export interface ToolExecutorDependencies {
     name: string;
     phone: string;
     idNumber: string;
-    collectionPoint: string;
+    collectionPoint?: string;
     homeAddress: string;
     referredById: string;
     assignedCollectorId?: string;
@@ -36,7 +36,7 @@ export interface ToolExecutorDependencies {
   createPayment: (params: {
     loanId: number; // Numeric loanId - function converts to UUID internally
     amount: number;
-    collectedById?: string;
+    collectedById: string;
     notes?: string;
   }) => Promise<{ id: string; amount: number }>;
 

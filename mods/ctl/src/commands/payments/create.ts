@@ -33,8 +33,8 @@ export default class Create extends BaseCommand<typeof Create> {
         default: "CASH"
       }),
       collectedById: await input({
-        message: "Collector ID (optional)",
-        required: false
+        message: "Collector ID (required)",
+        required: true
       }),
       notes: await input({
         message: "Notes (optional)",
@@ -56,7 +56,7 @@ export default class Create extends BaseCommand<typeof Create> {
         loanId: answers.loanId,
         amount: answers.amount!,
         method: answers.method,
-        collectedById: answers.collectedById || undefined,
+        collectedById: answers.collectedById,
         notes: answers.notes || undefined
       });
 

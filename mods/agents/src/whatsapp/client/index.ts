@@ -37,10 +37,10 @@ export function createWhatsAppClient(): WhatsAppClient {
       return sendMessageImpl(phoneNumberId, accessToken, params);
     },
 
-    uploadMedia: async (imageBuffer, mimeType) => {
+    uploadMedia: async (fileBuffer, mimeType) => {
       const phoneNumberId = getWhatsAppPhoneNumberId();
       const accessToken = getWhatsAppAccessToken();
-      return uploadMediaImpl(phoneNumberId, accessToken, imageBuffer, mimeType);
+      return uploadMediaImpl(phoneNumberId, accessToken, fileBuffer, mimeType);
     },
 
     downloadMedia: async (mediaId) => {

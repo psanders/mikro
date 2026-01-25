@@ -40,7 +40,7 @@ export const createMemberTool: ToolFunction = {
         collectionPoint: {
           type: "string",
           description:
-            "URL del punto de cobro (debe ser una URL válida, por ejemplo: https://maps.google.com/?q=Dirección)"
+            "URL del punto de cobro (opcional, debe ser una URL válida, por ejemplo: https://maps.google.com/?q=Dirección)"
         },
         homeAddress: {
           type: "string",
@@ -59,7 +59,7 @@ export const createMemberTool: ToolFunction = {
           description: "Indica si el miembro es propietario de un negocio (true/false)"
         }
       },
-      required: ["name", "idNumber", "collectionPoint", "homeAddress", "referredById"]
+      required: ["name", "idNumber", "homeAddress", "referredById"]
     }
   }
 };

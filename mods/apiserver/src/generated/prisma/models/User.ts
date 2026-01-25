@@ -473,12 +473,10 @@ export type UserCreateNestedOneWithoutCollectedPaymentsInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneWithoutCollectedPaymentsNestedInput = {
+export type UserUpdateOneRequiredWithoutCollectedPaymentsNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutCollectedPaymentsInput, Prisma.UserUncheckedCreateWithoutCollectedPaymentsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutCollectedPaymentsInput
   upsert?: Prisma.UserUpsertWithoutCollectedPaymentsInput
-  disconnect?: Prisma.UserWhereInput | boolean
-  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCollectedPaymentsInput, Prisma.UserUpdateWithoutCollectedPaymentsInput>, Prisma.UserUncheckedUpdateWithoutCollectedPaymentsInput>
 }

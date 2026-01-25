@@ -22,7 +22,7 @@ export const createPaymentSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
   paidAt: z.coerce.date().optional(),
   method: paymentMethodEnum.optional(),
-  collectedById: z.uuid({ error: "Invalid collector ID" }).optional(),
+  collectedById: z.uuid({ error: "Collector ID is required and must be a valid UUID" }),
   notes: z.string().optional()
 });
 

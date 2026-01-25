@@ -31,7 +31,7 @@ export interface Payment {
   status: "COMPLETED" | "REVERSED" | "PENDING";
   notes: string | null;
   loanId: string;
-  collectedById: string | null;
+  collectedById: string;
   createdAt: Date;
   updatedAt: Date;
 }
