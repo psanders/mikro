@@ -6,6 +6,7 @@
  */
 import type { RouteResult, RouterDependencies } from "./types.js";
 import { logger } from "../logger.js";
+import { validateDominicanPhone } from "@mikro/common";
 
 /**
  * Creates a message router that determines routing based on phone number lookup.
@@ -35,30 +36,35 @@ export function createMessageRouter(deps: RouterDependencies) {
   const { getUserByPhone, getMemberByPhone } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
-    logger.verbose("routing message", { phone });
+    // Normalize phone number to E.164 format (with +)
+    const normalizedPhone = validateDominicanPhone(phone);
+    logger.verbose("routing message", { phone, normalizedPhone });
 
     // Step 1: Check if phone belongs to a member
-    const member = await getMemberByPhone({ phone });
+    const member = await getMemberByPhone({ phone: normalizedPhone });
     if (member) {
       // Members don't interact with agents - log and ignore
-      logger.verbose("phone belongs to member, ignoring", { phone, memberId: member.id });
+      logger.verbose("phone belongs to member, ignoring", {
+        phone: normalizedPhone,
+        memberId: member.id
+      });
       return {
         type: "member",
         memberId: member.id,
-        phone
+        phone: normalizedPhone
       };
     }
 
     // Step 2: Check if phone belongs to a user
-    const user = await getUserByPhone({ phone });
+    const user = await getUserByPhone({ phone: normalizedPhone });
     if (user) {
       // Check if user is enabled
       if (!user.enabled) {
-        logger.verbose("user is disabled, ignoring", { phone, userId: user.id });
+        logger.verbose("user is disabled, ignoring", { phone: normalizedPhone, userId: user.id });
         return {
           type: "ignored",
           reason: "user is disabled",
-          phone
+          phone: normalizedPhone
         };
       }
 
@@ -75,20 +81,24 @@ export function createMessageRouter(deps: RouterDependencies) {
         primaryRole = "COLLECTOR";
       }
 
-      logger.verbose("phone belongs to user", { phone, userId: user.id, role: primaryRole });
+      logger.verbose("phone belongs to user", {
+        phone: normalizedPhone,
+        userId: user.id,
+        role: primaryRole
+      });
       return {
         type: "user",
         userId: user.id,
         role: primaryRole,
-        phone
+        phone: normalizedPhone
       };
     }
 
     // Step 3: Unknown phone - this is a guest
-    logger.verbose("phone is unknown, routing to guest agent", { phone });
+    logger.verbose("phone is unknown, routing to guest agent", { phone: normalizedPhone });
     return {
       type: "guest",
-      phone
+      phone: normalizedPhone
     };
   };
 }

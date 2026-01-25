@@ -38,6 +38,7 @@ import {
   createCreatePayment,
   createGenerateReceipt,
   createListLoansByCollector,
+  createListLoansByMember,
   createGetMember,
   createCreateLoan
 } from "./api/index.js";
@@ -145,6 +146,7 @@ async function initializeMessageProcessor() {
     const createPayment = createCreatePayment(dbClient);
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
+    const listLoansByMember = createListLoansByMember(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
 
@@ -231,6 +233,19 @@ async function initializeMessageProcessor() {
       getMember: async (params) => {
         const member = await getMember(params);
         return member ? { id: member.id, name: member.name, phone: member.phone } : null;
+      },
+      getMemberByPhone: async (params) => {
+        const member = await getMemberByPhone(params);
+        return member ? { id: member.id, name: member.name, phone: member.phone } : null;
+      },
+      listLoansByMember: async (params) => {
+        const loans = await listLoansByMember(params);
+        return loans.map((loan) => ({
+          id: loan.id,
+          loanId: loan.loanId,
+          principal: loan.principal,
+          status: loan.status
+        }));
       },
       createLoan: async (params) => {
         const loan = await createLoan(params);

@@ -21,7 +21,7 @@ export const createUserSchema = z.object({
 /**
  * Schema for updating an existing user.
  * Only name, phone, and enabled can be updated.
- * Phone is validated and normalized (strips +) if provided.
+ * Phone is validated and normalized to E.164 format if provided.
  */
 export const updateUserSchema = z.object({
   id: z.uuid({ error: "Invalid user ID" }),
@@ -29,7 +29,7 @@ export const updateUserSchema = z.object({
   phone: z
     .string()
     .transform((val) => {
-      // Validate and normalize phone (strips +)
+      // Validate and normalize phone to E.164 format
       return validateDominicanPhone(val);
     })
     .optional(),
@@ -47,7 +47,13 @@ export const getUserSchema = z.object({
  * Schema for getting a user by phone number.
  */
 export const getUserByPhoneSchema = z.object({
-  phone: z.string().min(1, "Phone number is required")
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .transform((val) => {
+      // Validate and normalize phone to E.164 format
+      return validateDominicanPhone(val);
+    })
 });
 
 /**

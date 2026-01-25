@@ -7,10 +7,10 @@ import { ValidationError } from "../errors/index.js";
 
 /**
  * Validates and normalizes a Dominican Republic phone number.
- * Returns the phone number in e164 format without the leading +.
+ * Returns the phone number in E.164 format with the leading +.
  *
  * @param phoneNumber - The phone number to validate (can include or exclude +)
- * @returns The normalized phone number without + (e.g., "18091234567")
+ * @returns The normalized phone number in E.164 format with + (e.g., "+18091234567")
  * @throws ValidationError if the phone number is invalid
  */
 export function validateDominicanPhone(phoneNumber: string): string {
@@ -29,12 +29,8 @@ export function validateDominicanPhone(phoneNumber: string): string {
     throw new ValidationError(zodError);
   }
 
-  // Strip the leading + from the e164 format
+  // Return the phone number in E.164 format
   // phone library returns e164 format like "+18091234567"
-  // We want "18091234567" (without the +)
-  const normalized = result.phoneNumber.startsWith("+")
-    ? result.phoneNumber.slice(1)
-    : result.phoneNumber;
-
-  return normalized;
+  // We keep the + for consistent storage and querying
+  return result.phoneNumber;
 }

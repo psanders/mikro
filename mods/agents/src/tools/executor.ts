@@ -5,6 +5,7 @@
  */
 import type { ToolResult, ToolExecutor } from "../llm/types.js";
 import { logger } from "../logger.js";
+import { validateDominicanPhone } from "@mikro/common";
 
 /**
  * API functions required by the tool executor.
@@ -52,6 +53,17 @@ export interface ToolExecutorDependencies {
     paymentAmount: number;
     paymentFrequency: "WEEKLY" | "DAILY";
   }) => Promise<{ id: string; loanId: number }>;
+
+  /** Get member by phone number */
+  getMemberByPhone: (params: {
+    phone: string;
+  }) => Promise<{ id: string; name: string; phone: string } | null>;
+
+  /** List loans by member ID */
+  listLoansByMember: (params: {
+    memberId: string;
+    showAll?: boolean;
+  }) => Promise<Array<{ id: string; loanId: number; principal: number; status: string }>>;
 }
 
 /**
@@ -202,6 +214,85 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
             success: true,
             message: `Préstamo creado con número ${loan.loanId}.`,
             data: { loanId: loan.loanId, id: loan.id }
+          };
+        }
+
+        case "getMemberByPhone": {
+          // Normalize phone number
+          const phoneInput = args.phone as string;
+          const normalizedPhone = validateDominicanPhone(phoneInput);
+
+          const member = await deps.getMemberByPhone({
+            phone: normalizedPhone
+          });
+
+          if (!member) {
+            return {
+              success: false,
+              message: `Miembro no encontrado con el teléfono: ${phoneInput}`
+            };
+          }
+
+          logger.verbose("member retrieved via tool by phone", {
+            memberId: member.id,
+            phone: normalizedPhone
+          });
+          return {
+            success: true,
+            message: "Información del miembro obtenida.",
+            data: { member }
+          };
+        }
+
+        case "listLoansByMember": {
+          const loans = await deps.listLoansByMember({
+            memberId: args.memberId as string,
+            showAll: args.showAll === "true" || args.showAll === true
+          });
+
+          logger.verbose("loans listed via tool by member", {
+            memberId: args.memberId,
+            count: loans.length
+          });
+          return {
+            success: true,
+            message: `Se encontraron ${loans.length} préstamos para el miembro.`,
+            data: { loans }
+          };
+        }
+
+        case "listMemberLoansByPhone": {
+          // Normalize phone number
+          const phoneInput = args.phone as string;
+          const normalizedPhone = validateDominicanPhone(phoneInput);
+
+          // First get the member by phone
+          const member = await deps.getMemberByPhone({
+            phone: normalizedPhone
+          });
+
+          if (!member) {
+            return {
+              success: false,
+              message: `Miembro no encontrado con el teléfono: ${phoneInput}`
+            };
+          }
+
+          // Then list loans for that member
+          const loans = await deps.listLoansByMember({
+            memberId: member.id,
+            showAll: args.showAll === "true" || args.showAll === true
+          });
+
+          logger.verbose("loans listed via tool by phone", {
+            phone: normalizedPhone,
+            memberId: member.id,
+            count: loans.length
+          });
+          return {
+            success: true,
+            message: `Se encontraron ${loans.length} préstamos para ${member.name}.`,
+            data: { member, loans }
           };
         }
 

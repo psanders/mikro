@@ -8,7 +8,7 @@ import { ValidationError } from "@mikro/common";
 
 describe("createGetMemberByPhone", () => {
   const validInput = {
-    phone: "+1234567890"
+    phone: "+18091234567"
   };
 
   afterEach(() => {
@@ -21,7 +21,7 @@ describe("createGetMemberByPhone", () => {
       const expectedMember = {
         id: "550e8400-e29b-41d4-a716-446655440000",
         name: "John Doe",
-        phone: "+1234567890",
+        phone: "+18091234567",
         idNumber: "ABC123",
         collectionPoint: "Main Office",
         homeAddress: "123 Main St",

@@ -199,6 +199,84 @@ export const createLoanTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for getting a member by phone number.
+ * Used by Juan (collector).
+ */
+export const getMemberByPhoneTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getMemberByPhone",
+    description:
+      "Obtener información de un miembro por su número de teléfono. El número puede incluir o no el signo +.",
+    parameters: {
+      type: "object",
+      properties: {
+        phone: {
+          type: "string",
+          description: "Número de teléfono del miembro (puede incluir o no el signo +)"
+        }
+      },
+      required: ["phone"]
+    }
+  }
+};
+
+/**
+ * Tool definition for listing loans by member ID.
+ * Used by Juan (collector).
+ */
+export const listLoansByMemberTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listLoansByMember",
+    description: "Listar todos los préstamos de un miembro específico por su ID.",
+    parameters: {
+      type: "object",
+      properties: {
+        memberId: {
+          type: "string",
+          description: "ID del miembro"
+        },
+        showAll: {
+          type: "string",
+          description:
+            "Si es 'true', muestra todos los préstamos incluyendo los completados. Por defecto solo muestra activos."
+        }
+      },
+      required: ["memberId"]
+    }
+  }
+};
+
+/**
+ * Tool definition for listing loans by member phone number.
+ * Used by Juan (collector). This is a convenience tool that combines getMemberByPhone and listLoansByMember.
+ */
+export const listMemberLoansByPhoneTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listMemberLoansByPhone",
+    description:
+      "Listar todos los préstamos de un miembro por su número de teléfono. El número puede incluir o no el signo +. Esta herramienta busca el miembro por teléfono y luego lista sus préstamos.",
+    parameters: {
+      type: "object",
+      properties: {
+        phone: {
+          type: "string",
+          description: "Número de teléfono del miembro (puede incluir o no el signo +)"
+        },
+        showAll: {
+          type: "string",
+          description:
+            "Si es 'true', muestra todos los préstamos incluyendo los completados. Por defecto solo muestra activos."
+        }
+      },
+      required: ["phone"]
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -207,7 +285,10 @@ export const allTools: ToolFunction[] = [
   generateReceiptTool,
   listLoansByCollectorTool,
   getMemberTool,
-  createLoanTool
+  createLoanTool,
+  getMemberByPhoneTool,
+  listLoansByMemberTool,
+  listMemberLoansByPhoneTool
 ];
 
 /**

@@ -71,8 +71,8 @@ describe("Members Integration", () => {
 
       expect(member.id).to.be.a("string");
       expect(member.name).to.equal(input.name);
-      // Phone should be normalized (stripped +)
-      expect(member.phone).to.equal("18091234569");
+      // Phone should be normalized to E.164 format (with +)
+      expect(member.phone).to.equal("+18091234569");
       expect(member.idNumber).to.equal(input.idNumber);
       expect(member.collectionPoint).to.equal(input.collectionPoint);
       expect(member.homeAddress).to.equal(input.homeAddress);
@@ -195,8 +195,8 @@ describe("Members Integration", () => {
         phone: "+18091234575"
       });
 
-      // Phone should be normalized (stripped +)
-      expect(updated.phone).to.equal("18091234575");
+      // Phone should be normalized to E.164 format (with +)
+      expect(updated.phone).to.equal("+18091234575");
     });
 
     it("should update member note", async () => {

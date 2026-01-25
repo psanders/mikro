@@ -67,6 +67,16 @@ export const listLoansByCollectorSchema = z.object({
 });
 
 /**
+ * Schema for listing loans by member ID.
+ */
+export const listLoansByMemberSchema = z.object({
+  memberId: z.uuid({ error: "Invalid member ID" }),
+  showAll: z.boolean().optional(),
+  limit: z.number().int().positive().max(100).optional(),
+  offset: z.number().int().nonnegative().optional()
+});
+
+/**
  * Input type for creating a loan.
  */
 export type CreateLoanInput = z.infer<typeof createLoanSchema>;
@@ -90,6 +100,11 @@ export type ListLoansByReferrerInput = z.infer<typeof listLoansByReferrerSchema>
  * Input type for listing loans by collector.
  */
 export type ListLoansByCollectorInput = z.infer<typeof listLoansByCollectorSchema>;
+
+/**
+ * Input type for listing loans by member.
+ */
+export type ListLoansByMemberInput = z.infer<typeof listLoansByMemberSchema>;
 
 /**
  * Loan type enum type.

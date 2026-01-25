@@ -54,10 +54,10 @@ describe("createCreateMember", () => {
       expect(result.id).to.equal("member-123");
       expect(result.name).to.equal(validInput.name);
       expect(mockClient.member.create.calledOnce).to.be.true;
-      // Phone gets normalized (stripped +) in the schema transform
+      // Phone gets normalized to E.164 format (with +) in the schema transform
       const callArgs = mockClient.member.create.getCall(0).args[0];
       expect(callArgs.data.name).to.equal(validInput.name);
-      expect(callArgs.data.phone).to.equal("18091234567"); // Normalized
+      expect(callArgs.data.phone).to.equal("+18091234567"); // Normalized to E.164 format
       expect(callArgs.data.idNumber).to.equal(validInput.idNumber);
     });
 

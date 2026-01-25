@@ -74,11 +74,13 @@ export {
   listLoansSchema,
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
+  listLoansByMemberSchema,
   type CreateLoanInput,
   type GetLoanInput,
   type ListLoansInput,
   type ListLoansByReferrerInput,
   type ListLoansByCollectorInput,
+  type ListLoansByMemberInput,
   type LoanType,
   type LoanStatus,
   type PaymentFrequency

@@ -13,7 +13,7 @@ export const createMemberSchema = z.object({
     .string()
     .min(1, "Phone is required")
     .transform((val) => {
-      // Validate and normalize phone (strips +)
+      // Validate and normalize phone to E.164 format
       return validateDominicanPhone(val);
     }),
   idNumber: z
@@ -61,7 +61,13 @@ export const getMemberSchema = z.object({
  * Schema for getting a member by phone number.
  */
 export const getMemberByPhoneSchema = z.object({
-  phone: z.string().min(1, "Phone number is required")
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .transform((val) => {
+      // Validate and normalize phone to E.164 format
+      return validateDominicanPhone(val);
+    })
 });
 
 /**
