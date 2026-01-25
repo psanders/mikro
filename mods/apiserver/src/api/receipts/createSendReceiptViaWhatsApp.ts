@@ -78,7 +78,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       }
 
       const recipientPhone = params.phone;
-      
+
       logger.verbose("sending receipt to collector (requestor)", {
         paymentId: params.paymentId,
         recipientPhone: params.phone
@@ -137,7 +137,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
 
       // Get imageUrl for response only (not for sending)
       const imageUrl = getPublicImageUrl(filename);
-      
+
       logger.verbose("sending whatsapp message with mediaId", {
         paymentId: params.paymentId,
         mediaId,
@@ -152,7 +152,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
         mediaId: mediaId, // Only mediaId - explicitly exclude imageUrl
         caption: `Recibo de pago - Préstamo #${loanNumber}`
       };
-      
+
       const whatsappResponse = await sendWhatsAppMessage(messageParams);
 
       const messageId = whatsappResponse.messages?.[0]?.id;

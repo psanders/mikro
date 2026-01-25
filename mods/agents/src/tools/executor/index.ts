@@ -37,7 +37,14 @@ import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
  * ```
  */
 export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor {
-  const handlers: Record<string, (deps: ToolExecutorDependencies, args: Record<string, unknown>, context?: Record<string, unknown>) => Promise<ToolResult>> = {
+  const handlers: Record<
+    string,
+    (
+      deps: ToolExecutorDependencies,
+      args: Record<string, unknown>,
+      context?: Record<string, unknown>
+    ) => Promise<ToolResult>
+  > = {
     createMember: handleCreateMember,
     createPayment: handleCreatePayment,
     sendReceiptViaWhatsApp: handleSendReceiptViaWhatsApp,

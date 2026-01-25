@@ -28,7 +28,8 @@ export async function handleSendReceiptViaWhatsApp(
     if (!collectorPhone) {
       return {
         success: false,
-        message: "No se pudo obtener el número de teléfono del cobrador. Por favor, intenta de nuevo."
+        message:
+          "No se pudo obtener el número de teléfono del cobrador. Por favor, intenta de nuevo."
       };
     }
 
