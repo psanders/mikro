@@ -158,7 +158,7 @@ describe("Users Integration", () => {
         phone: "+18091234574"
       });
 
-      expect(updated.phone).to.equal("+18091234574"); // Normalized to E.164 format (with +)
+      expect(updated.phone).to.equal("+18091234574"); // Normalized to E.164 format
       expect(updated.name).to.equal(created.name); // Unchanged
     });
 
@@ -213,7 +213,7 @@ describe("Users Integration", () => {
       });
 
       expect(updated.name).to.equal("New Name");
-      expect(updated.phone).to.equal("+18091234578"); // Normalized to E.164 format (with +)
+      expect(updated.phone).to.equal("+18091234578"); // Normalized to E.164 format
       expect(updated.enabled).to.equal(false);
     });
   });

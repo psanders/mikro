@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to create a new member.
- * Phone is validated and normalized to E.164 format (with +) via Zod schema transform.
+ * Phone is validated and normalized to E.164 format via Zod schema transform.
  * Referrer and collector are required.
  *
  * @param client - The database client

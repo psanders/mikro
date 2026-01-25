@@ -13,7 +13,7 @@ import { logger } from "../../logger.js";
 /**
  * Creates a function to update an existing user.
  * Only name, phone, and enabled can be updated.
- * Phone is validated and normalized to E.164 format (with +) via Zod schema transform if provided.
+ * Phone is validated and normalized to E.164 format via Zod schema transform if provided.
  *
  * @param client - The database client
  * @returns A validated function that updates a user

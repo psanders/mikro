@@ -71,7 +71,7 @@ describe("Members Integration", () => {
 
       expect(member.id).to.be.a("string");
       expect(member.name).to.equal(input.name);
-      // Phone should be normalized to E.164 format (with +)
+      // Phone should be normalized to E.164 format
       expect(member.phone).to.equal("+18091234569");
       expect(member.idNumber).to.equal(input.idNumber);
       expect(member.collectionPoint).to.equal(input.collectionPoint);
@@ -195,7 +195,7 @@ describe("Members Integration", () => {
         phone: "+18091234575"
       });
 
-      // Phone should be normalized to E.164 format (with +)
+      // Phone should be normalized to E.164 format
       expect(updated.phone).to.equal("+18091234575");
     });
 
