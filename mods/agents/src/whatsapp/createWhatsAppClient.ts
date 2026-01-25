@@ -53,10 +53,12 @@ export function createWhatsAppClient(): WhatsAppClient {
       const accessToken = getWhatsAppAccessToken();
 
       const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
-      const isImageMessage = !!params.imageUrl;
+      const isImageMessage = !!(params.imageUrl || params.mediaId);
       logger.verbose("sending whatsapp api request", {
         phone: params.phone,
-        type: isImageMessage ? "image" : "text"
+        type: isImageMessage ? "image" : "text",
+        usingMediaId: !!params.mediaId,
+        usingImageUrl: !!params.imageUrl
       });
 
       // Build the request body based on message type
@@ -64,16 +66,40 @@ export function createWhatsAppClient(): WhatsAppClient {
 
       if (isImageMessage) {
         // Image message with optional caption
-        requestBody = {
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: params.phone,
-          type: "image",
-          image: {
-            link: params.imageUrl,
-            ...(params.caption && { caption: params.caption })
+        // Prefer mediaId over imageUrl (more reliable)
+        // IMPORTANT: Never send both mediaId and imageUrl - WhatsApp may show a link instead
+        if (params.mediaId) {
+          requestBody = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: params.phone,
+            type: "image",
+            image: {
+              id: params.mediaId,
+              ...(params.caption && { caption: params.caption })
+            }
+          };
+          // Log warning if imageUrl is also provided (should not happen)
+          if (params.imageUrl) {
+            logger.warn("both mediaId and imageUrl provided, using mediaId only", {
+              phone: params.phone,
+              mediaId: params.mediaId
+            });
           }
-        };
+        } else if (params.imageUrl) {
+          requestBody = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: params.phone,
+            type: "image",
+            image: {
+              link: params.imageUrl,
+              ...(params.caption && { caption: params.caption })
+            }
+          };
+        } else {
+          throw new Error("Either imageUrl or mediaId must be provided for image messages");
+        }
       } else {
         // Text message
         requestBody = {
@@ -87,6 +113,16 @@ export function createWhatsAppClient(): WhatsAppClient {
         };
       }
 
+      // Log the request body for debugging (without sensitive data)
+      if (isImageMessage && params.mediaId) {
+        logger.verbose("sending whatsapp image message with mediaId", {
+          phone: params.phone,
+          mediaId: params.mediaId,
+          hasCaption: !!params.caption,
+          requestBody: JSON.stringify(requestBody)
+        });
+      }
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -96,20 +132,157 @@ export function createWhatsAppClient(): WhatsAppClient {
         body: JSON.stringify(requestBody)
       });
 
-      const data = (await response.json()) as WhatsAppSendResponse & WhatsAppApiError;
+      const responseText = await response.text();
+      let data: WhatsAppSendResponse & WhatsAppApiError;
+      
+      try {
+        data = JSON.parse(responseText) as WhatsAppSendResponse & WhatsAppApiError;
+      } catch (parseError) {
+        logger.error("failed to parse whatsapp response", {
+          phone: params.phone,
+          status: response.status,
+          responseText
+        });
+        throw new Error(`WhatsApp API returned invalid JSON: ${responseText}`);
+      }
 
       if (!response.ok) {
         const errorMessage = data.error?.message ?? JSON.stringify(data);
-        logger.error("whatsapp api error", { phone: params.phone, error: errorMessage });
-        throw new Error(`WhatsApp API error: ${errorMessage}`);
+        const errorCode = data.error?.code;
+        const errorType = data.error?.type;
+        logger.error("whatsapp api error", {
+          phone: params.phone,
+          error: errorMessage,
+          errorCode,
+          errorType,
+          status: response.status,
+          fullResponse: JSON.stringify(data),
+          requestBody: isImageMessage && params.mediaId ? JSON.stringify(requestBody) : undefined
+        });
+        throw new Error(`WhatsApp API error: ${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ""}`);
       }
 
-      logger.verbose("whatsapp api response received", {
-        phone: params.phone,
-        messageId: data.messages?.[0]?.id,
-        type: isImageMessage ? "image" : "text"
-      });
+      // Log full response for debugging image issues
+      if (isImageMessage) {
+        logger.verbose("whatsapp image message response", {
+          phone: params.phone,
+          messageId: data.messages?.[0]?.id,
+          imageUrl: params.imageUrl,
+          mediaId: params.mediaId,
+          fullResponse: JSON.stringify(data),
+          status: response.status
+        });
+      } else {
+        logger.verbose("whatsapp api response received", {
+          phone: params.phone,
+          messageId: data.messages?.[0]?.id,
+          type: "text"
+        });
+      }
       return data;
+    },
+
+    uploadMedia: async (imageBuffer: Buffer, mimeType: string): Promise<string> => {
+      const phoneNumberId = getWhatsAppPhoneNumberId();
+      const accessToken = getWhatsAppAccessToken();
+
+      const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/media`;
+      logger.verbose("uploading media to whatsapp", {
+        size: imageBuffer.length,
+        mimeType
+      });
+
+      // Use manual multipart/form-data construction
+      // WhatsApp API requires: file, type, messaging_product
+      // Boundary format should not start with dashes (standard format)
+      const boundary = `FormBoundary${Date.now()}${Math.random().toString(36).substring(2, 15)}`;
+      const CRLF = "\r\n";
+      const parts: Buffer[] = [];
+
+      // File part - WhatsApp expects this first
+      const fileHeader = Buffer.from(
+        `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename="receipt.png"${CRLF}Content-Type: ${mimeType}${CRLF}${CRLF}`,
+        "utf-8"
+      );
+      parts.push(fileHeader);
+      parts.push(imageBuffer);
+
+      // Type part
+      const typePart = Buffer.from(
+        `${CRLF}--${boundary}${CRLF}Content-Disposition: form-data; name="type"${CRLF}${CRLF}${mimeType}${CRLF}`,
+        "utf-8"
+      );
+      parts.push(typePart);
+
+      // Messaging product part - must be exactly "whatsapp"
+      const productPart = Buffer.from(
+        `${CRLF}--${boundary}${CRLF}Content-Disposition: form-data; name="messaging_product"${CRLF}${CRLF}whatsapp${CRLF}--${boundary}--${CRLF}`,
+        "utf-8"
+      );
+      parts.push(productPart);
+
+      const body = Buffer.concat(parts);
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`
+      };
+
+      logger.verbose("sending media upload request", {
+        url,
+        bodySize: body.length,
+        boundary,
+        hasFile: true,
+        type: mimeType
+      });
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body
+      });
+
+      const responseText = await response.text();
+      let data: { id?: string } & WhatsAppApiError;
+      
+      try {
+        data = JSON.parse(responseText) as { id: string } & WhatsAppApiError;
+      } catch (parseError) {
+        logger.error("failed to parse whatsapp response", {
+          responseText,
+          status: response.status
+        });
+        throw new Error(`WhatsApp API returned invalid JSON: ${responseText}`);
+      }
+
+      if (!response.ok) {
+        const errorMessage = data.error?.message ?? JSON.stringify(data);
+        const errorCode = data.error?.code;
+        const errorType = data.error?.type;
+        logger.error("whatsapp media upload error", {
+          error: errorMessage,
+          errorCode,
+          errorType,
+          status: response.status,
+          statusText: response.statusText,
+          fullResponse: JSON.stringify(data),
+          requestUrl: url,
+          bodySize: body.length,
+          contentType: headers["Content-Type"]
+        });
+        throw new Error(`WhatsApp media upload error: ${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ""}`);
+      }
+
+      if (!data.id) {
+        logger.error("media id not found in upload response", { response: JSON.stringify(data) });
+        throw new Error("Media ID not found in upload response");
+      }
+
+      logger.verbose("media uploaded to whatsapp", {
+        mediaId: data.id,
+        size: imageBuffer.length
+      });
+
+      return data.id;
     },
 
     downloadMedia: async (mediaId: string): Promise<string> => {

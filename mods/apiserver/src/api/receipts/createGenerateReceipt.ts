@@ -6,6 +6,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
+import sharp from "sharp";
 import {
   withErrorHandlingAndValidation,
   generateReceiptSchema,
@@ -160,13 +161,66 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     });
 
     // 8. Convert to PNG with resvg
+    // Use 1.5x resolution instead of 2x to reduce file size for WhatsApp (5MB limit)
     const resvg = new Resvg(svg, {
-      fitTo: { mode: "width", value: RECEIPT_WIDTH * 2 }
+      fitTo: { mode: "width", value: Math.round(RECEIPT_WIDTH * 1.5) }
     });
-    const png = resvg.render().asPng();
-    const image = png.toString("base64");
+    const pngBuffer = resvg.render().asPng();
 
-    logger.verbose("receipt generated", { paymentId: params.paymentId, loanId: loan.loanId });
+    // 9. Compress PNG to ensure it's under WhatsApp's 5MB limit (5 * 1024 * 1024 bytes)
+    const WHATSAPP_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    let compressedBuffer = pngBuffer;
+
+    // If original is already under limit, still compress for optimization
+    if (pngBuffer.length > WHATSAPP_MAX_SIZE || pngBuffer.length > 2 * 1024 * 1024) {
+      // Aggressive compression needed - try palette mode for smaller files
+      compressedBuffer = await sharp(pngBuffer)
+        .png({
+          compressionLevel: 9, // Maximum compression
+          adaptiveFiltering: true,
+          palette: true // Use palette mode for smaller file size
+        })
+        .toBuffer();
+
+      // If still too large, try reducing resolution further
+      if (compressedBuffer.length > WHATSAPP_MAX_SIZE) {
+        logger.verbose("image still too large after compression, reducing resolution", {
+          size: compressedBuffer.length,
+          target: WHATSAPP_MAX_SIZE
+        });
+        // Resize to 1x (original receipt size) and compress again
+        compressedBuffer = await sharp(pngBuffer)
+          .resize(RECEIPT_WIDTH, RECEIPT_HEIGHT, {
+            fit: "contain",
+            withoutEnlargement: true
+          })
+          .png({
+            compressionLevel: 9,
+            adaptiveFiltering: true,
+            palette: true
+          })
+          .toBuffer();
+      }
+    } else {
+      // Light compression for optimization
+      compressedBuffer = await sharp(pngBuffer)
+        .png({
+          compressionLevel: 9, // Maximum compression
+          adaptiveFiltering: true
+        })
+        .toBuffer();
+    }
+
+    const image = compressedBuffer.toString("base64");
+
+    logger.verbose("receipt generated", {
+      paymentId: params.paymentId,
+      loanId: loan.loanId,
+      originalSize: pngBuffer.length,
+      compressedSize: compressedBuffer.length,
+      sizeReduction: `${((1 - compressedBuffer.length / pngBuffer.length) * 100).toFixed(1)}%`,
+      underLimit: compressedBuffer.length < WHATSAPP_MAX_SIZE
+    });
     return {
       image,
       token,

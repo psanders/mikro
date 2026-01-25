@@ -5,7 +5,7 @@
  */
 import type { ToolResult, ToolExecutor } from "../llm/types.js";
 import { logger } from "../logger.js";
-import { validatePhone } from "@mikro/common";
+import { validatePhone, ValidationError } from "@mikro/common";
 
 /**
  * API functions required by the tool executor.
@@ -45,6 +45,11 @@ export interface ToolExecutorDependencies {
 
   /** Generate a receipt */
   generateReceipt: (params: { paymentId: string }) => Promise<{ image: string; token: string }>;
+
+  /** Send receipt via WhatsApp */
+  sendReceiptViaWhatsApp: (params: {
+    paymentId: string;
+  }) => Promise<{ success: boolean; message: string; messageId?: string; imageUrl?: string; error?: string }>;
 
   /** List loans by collector */
   listLoansByCollector: (params: {
@@ -93,6 +98,18 @@ export interface ToolExecutorDependencies {
       assignedCollectorId: string | null; // Required for validation
     };
   } | null>;
+
+  /** List payments by loan ID (numeric) */
+  listPaymentsByLoanId: (params: {
+    loanId: number;
+    limit?: number;
+  }) => Promise<Array<{
+    id: string; // Payment UUID
+    amount: number;
+    paidAt: Date;
+    status: string;
+    method: string;
+  }>>;
 }
 
 /**
@@ -262,7 +279,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
             // Payment was created, but receipt generation failed
             return {
               success: true,
-              message: `Pago de RD$ ${payment.amount} registrado correctamente, pero hubo un error al generar el recibo. Puedes generar el recibo más tarde usando generateReceipt con el paymentId: ${payment.id}`,
+              message: `Pago de RD$ ${payment.amount} registrado correctamente, pero hubo un error al generar el recibo. Puedes enviar el recibo más tarde usando sendReceiptViaWhatsApp con el paymentId: ${payment.id}`,
               data: {
                 paymentId: payment.id,
                 amount: payment.amount,
@@ -313,16 +330,129 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
           };
         }
 
-        case "generateReceipt": {
-          const receipt = await deps.generateReceipt({
-            paymentId: args.paymentId as string
+        case "sendReceiptViaWhatsApp": {
+          try {
+            const paymentId = args.paymentId as string;
+            
+            // Validate paymentId is a valid UUID format
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!paymentId || !uuidRegex.test(paymentId)) {
+              return {
+                success: false,
+                message: `ID de pago inválido: "${paymentId}". El ID debe ser un UUID válido (formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx). Asegúrate de usar el ID del pago, no el número de préstamo.`
+              };
+            }
+
+            const result = await deps.sendReceiptViaWhatsApp({
+              paymentId
+            });
+
+            logger.verbose("receipt sent via whatsapp via tool", {
+              paymentId,
+              success: result.success,
+              messageId: result.messageId
+            });
+
+            if (result.success) {
+              return {
+                success: true,
+                message: `Recibo enviado por WhatsApp correctamente. La imagen del recibo fue enviada directamente al chat de WhatsApp.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`,
+                data: {
+                  messageId: result.messageId
+                  // Note: imageUrl is not included - the image is already sent via WhatsApp
+                }
+              };
+            } else {
+              return {
+                success: false,
+                message: `Error al enviar el recibo por WhatsApp: ${result.error || "Error desconocido"}`
+              };
+            }
+          } catch (error) {
+            // Handle ValidationError from withErrorHandlingAndValidation
+            if (error instanceof ValidationError) {
+              logger.error("validation error in sendReceiptViaWhatsApp", {
+                error: error.message,
+                fieldErrors: error.fieldErrors
+              });
+              return {
+                success: false,
+                message: `Error de validación: ${error.message}. Asegúrate de usar un ID de pago válido (UUID).`
+              };
+            }
+            
+            // Re-throw other errors
+            throw error;
+          }
+        }
+
+        case "listPaymentsByLoanId": {
+          // Parse numeric loanId from string
+          const loanIdInput = args.loanId as string;
+          const numericLoanId = Number(loanIdInput);
+          if (isNaN(numericLoanId) || numericLoanId <= 0) {
+            return {
+              success: false,
+              message: `ID de préstamo inválido: ${loanIdInput}. Debe ser un número positivo (ej: 10000, 10001).`
+            };
+          }
+
+          // Parse limit if provided
+          const limit = args.limit ? Number(args.limit) : undefined;
+          if (limit !== undefined && (isNaN(limit) || limit <= 0 || limit > 100)) {
+            return {
+              success: false,
+              message: `Límite inválido: ${args.limit}. Debe ser un número entre 1 y 100.`
+            };
+          }
+
+          const payments = await deps.listPaymentsByLoanId({
+            loanId: numericLoanId,
+            limit: limit || 10 // Default to 10 most recent payments
           });
 
-          logger.verbose("receipt generated via tool", { paymentId: args.paymentId });
+          logger.verbose("payments listed via tool by loan ID", {
+            loanId: numericLoanId,
+            count: payments.length
+          });
+
+          if (payments.length === 0) {
+            return {
+              success: true,
+              message: `No se encontraron pagos para el préstamo #${numericLoanId}.`,
+              data: { payments: [] }
+            };
+          }
+
+          // Format payment information for display
+          const paymentInfo = payments.map((p, index) => {
+            const isLast = index === 0;
+            return {
+              ...p,
+              isLastPayment: isLast,
+              displayText: `${isLast ? "ÚLTIMO PAGO - " : ""}Monto: RD$ ${Number(p.amount).toLocaleString("es-DO")}, Fecha: ${new Date(p.paidAt).toLocaleDateString("es-DO")}, Estado: ${p.status}`
+            };
+          });
+
+          const lastPayment = payments[0]; // Most recent payment
+          const message = payments.length === 1
+            ? `Se encontró 1 pago para el préstamo #${numericLoanId}. Último pago: RD$ ${Number(lastPayment.amount).toLocaleString("es-DO")} el ${new Date(lastPayment.paidAt).toLocaleDateString("es-DO")}. ID del pago: ${lastPayment.id}`
+            : `Se encontraron ${payments.length} pagos para el préstamo #${numericLoanId}. Último pago: RD$ ${Number(lastPayment.amount).toLocaleString("es-DO")} el ${new Date(lastPayment.paidAt).toLocaleDateString("es-DO")}. ID del último pago: ${lastPayment.id}`;
+
           return {
             success: true,
-            message: "Recibo generado correctamente.",
-            data: { image: receipt.image, token: receipt.token }
+            message,
+            data: {
+              payments: paymentInfo,
+              lastPayment: {
+                id: lastPayment.id,
+                amount: lastPayment.amount,
+                paidAt: lastPayment.paidAt,
+                status: lastPayment.status,
+                method: lastPayment.method
+              },
+              count: payments.length
+            }
           };
         }
 
