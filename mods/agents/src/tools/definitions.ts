@@ -65,20 +65,23 @@ export const createMemberTool: ToolFunction = {
 };
 
 /**
- * Tool definition for creating a payment.
- * Used by Juan (collector).
+ * Tool definition for creating a payment (complete workflow).
+ * Used by Juan (collector). This tool handles the complete payment registration:
+ * gets loan by loan ID (numeric), retrieves member information, validates collector assignment,
+ * creates payment, and generates receipt.
  */
 export const createPaymentTool: ToolFunction = {
   type: "function",
   function: {
     name: "createPayment",
-    description: "Registrar un nuevo pago para un préstamo.",
+    description:
+      "Registrar un nuevo pago para un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Esta herramienta obtiene el préstamo, recupera la información del miembro, valida que el cobrador esté asignado, crea el pago y genera el recibo automáticamente.",
     parameters: {
       type: "object",
       properties: {
         loanId: {
           type: "string",
-          description: "ID del préstamo"
+          description: "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
         },
         amount: {
           type: "string",

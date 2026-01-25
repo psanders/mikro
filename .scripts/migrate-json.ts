@@ -107,7 +107,7 @@ async function createRequiredUsers(userValidationMap: Map<string, boolean>): Pro
       id: "7a8bbcaa-063d-4fce-ae02-da9356dac213",
       name: "Pedro Sanders",
       phone: "+17853178070",
-      roles: [{ role: "ADMIN" }, { role: "COLLECTOR" }]
+      roles: [{ role: "COLLECTOR" }]
     },
     {
       id: "6ce9e266-b2fb-4dce-b21b-d0842fd78b36",

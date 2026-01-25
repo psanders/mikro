@@ -27,6 +27,7 @@ import {
   listPaymentsSchema,
   listPaymentsByMemberSchema,
   listPaymentsByReferrerSchema,
+  listPaymentsByLoanIdSchema,
   // Receipt schemas
   generateReceiptSchema
 } from "@mikro/common";
@@ -56,6 +57,7 @@ import { createReversePayment } from "../../api/payments/createReversePayment.js
 import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByMember } from "../../api/payments/createListPaymentsByMember.js";
 import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
+import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
 // Receipt API functions
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
 
@@ -245,6 +247,17 @@ export const protectedRouter = router({
     .input(listPaymentsByReferrerSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByReferrer(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List payments for a specific loan by numeric loan ID (e.g., 10000, 10001).
+   * By default only shows COMPLETED payments unless showReversed is true.
+   */
+  listPaymentsByLoanId: protectedProcedure
+    .input(listPaymentsByLoanIdSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListPaymentsByLoanId(ctx.db);
       return fn(input);
     }),
 

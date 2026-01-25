@@ -115,7 +115,26 @@ export interface DbClient {
       orderBy: { loanId: "asc" | "desc" };
       select?: { loanId: boolean };
     }): Promise<{ loanId: number } | null>;
-    findUnique(args: { where: { id: string } }): Promise<Loan | null>;
+    findUnique(args: {
+      where: { id: string } | { loanId: number };
+      include?: {
+        member?:
+          | boolean
+          | {
+              select?: {
+                id?: boolean;
+                name?: boolean;
+                phone?: boolean;
+                assignedCollectorId?: boolean;
+              };
+            };
+      };
+      select?: {
+        id?: boolean;
+        loanId?: boolean;
+        [key: string]: boolean | undefined;
+      };
+    }): Promise<Loan | null>;
     findMany(args?: {
       where?: {
         memberId?: string;
@@ -170,6 +189,7 @@ export interface DbClient {
     findMany(args: {
       where?: {
         status?: PaymentStatus;
+        loanId?: string;
         paidAt?: {
           gte?: Date;
           lte?: Date;

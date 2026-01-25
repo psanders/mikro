@@ -39,6 +39,7 @@ import {
   createGenerateReceipt,
   createListLoansByCollector,
   createListLoansByMember,
+  createGetLoanByLoanId,
   createGetMember,
   createCreateLoan,
   createListUsers
@@ -141,13 +142,13 @@ async function initializeMessageProcessor() {
     const dbClient = prisma as unknown as Parameters<typeof createGetUserByPhone>[0];
     const getUserByPhone = createGetUserByPhone(dbClient);
     const getMemberByPhone = createGetMemberByPhone(dbClient);
-    const getChatHistory = createGetChatHistory(dbClient);
     const addMessageToChatHistory = createAddMessageToChatHistory(dbClient);
     const createMember = createCreateMember(dbClient);
     const createPayment = createCreatePayment(dbClient);
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
     const listLoansByMember = createListLoansByMember(dbClient);
+    const getLoanByLoanId = createGetLoanByLoanId(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const listUsers = createListUsers(dbClient);
@@ -266,8 +267,30 @@ async function initializeMessageProcessor() {
       createLoan: async (params) => {
         const loan = await createLoan(params);
         return { id: loan.id, loanId: loan.loanId };
+      },
+      // @ts-ignore - getLoanByLoanId is defined in ToolExecutorDependencies interface
+      getLoanByLoanId: async (params: { loanId: number }) => {
+        const loan = await getLoanByLoanId(params);
+        if (!loan) {
+          return null;
+        }
+        return {
+          id: loan.id,
+          loanId: loan.loanId,
+          principal: Number(loan.principal),
+          termLength: loan.termLength,
+          paymentAmount: Number(loan.paymentAmount),
+          paymentFrequency: loan.paymentFrequency,
+          status: loan.status,
+          member: {
+            id: loan.member.id,
+            name: loan.member.name,
+            phone: loan.member.phone,
+            assignedCollectorId: loan.member.assignedCollectorId
+          }
+        };
       }
-    });
+    } as Parameters<typeof createToolExecutor>[0]);
 
     // #region agent log
     fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
@@ -334,9 +357,20 @@ async function initializeMessageProcessor() {
     // #endregion
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)
+    // Gets the most recent messages to avoid token limit issues
     const getChatHistoryForUser = async (userId: string): Promise<Message[]> => {
-      const dbMessages = await getChatHistory({ userId, limit: 100 });
-      return dbMessages.map((msg) => ({
+      // Query directly to get most recent 20 messages (ordered by desc, then reverse for chronological order)
+      // This prevents token limit errors from very long chat histories
+      const dbMessages = await dbClient.message.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 20 // Get only the 20 most recent messages
+      });
+
+      // Reverse to get chronological order (oldest to newest) for LLM context
+      const chronologicalMessages = [...dbMessages].reverse();
+
+      return chronologicalMessages.map((msg) => ({
         role: msg.role === "AI" ? "assistant" : msg.role === "HUMAN" ? "user" : "system",
         content: msg.content
       }));

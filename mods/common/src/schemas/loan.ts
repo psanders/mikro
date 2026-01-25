@@ -33,6 +33,13 @@ export const getLoanSchema = z.object({
 });
 
 /**
+ * Schema for getting a loan by numeric loan ID.
+ */
+export const getLoanByLoanIdSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer")
+});
+
+/**
  * Enum for loan status.
  */
 export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]);
@@ -105,6 +112,11 @@ export type ListLoansByCollectorInput = z.infer<typeof listLoansByCollectorSchem
  * Input type for listing loans by member.
  */
 export type ListLoansByMemberInput = z.infer<typeof listLoansByMemberSchema>;
+
+/**
+ * Input type for getting a loan by numeric loan ID.
+ */
+export type GetLoanByLoanIdInput = z.infer<typeof getLoanByLoanIdSchema>;
 
 /**
  * Loan type enum type.

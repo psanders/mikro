@@ -81,12 +81,12 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650
       });
 
       expect(payment.id).to.be.a("string");
-      expect(payment.loanId).to.equal(loan.id);
+      expect(payment.loanId).to.equal(loan.id); // Payment stores UUID
       expect(Number(payment.amount)).to.equal(650);
       expect(payment.status).to.equal("COMPLETED");
       expect(payment.method).to.equal("CASH"); // Default method
@@ -96,7 +96,7 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         method: "CASH"
       });
@@ -108,7 +108,7 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         method: "TRANSFER"
       });
@@ -121,7 +121,7 @@ describe("Payments Integration", () => {
       const customDate = new Date("2026-01-15T10:00:00Z");
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: customDate
       });
@@ -139,7 +139,7 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         collectedById: collector.id
       });
@@ -151,7 +151,7 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         notes: "Partial payment for week 3"
       });
@@ -163,17 +163,17 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       const payment1 = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650
       });
 
       const payment2 = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650
       });
 
       const payment3 = await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650
       });
 
@@ -188,17 +188,17 @@ describe("Payments Integration", () => {
 
       // Create payments on different dates
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-10")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-20")
       });
@@ -217,17 +217,17 @@ describe("Payments Integration", () => {
 
       // Create payments on different dates
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-02-05")
       });
@@ -244,17 +244,17 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 100,
         paidAt: new Date("2026-01-10")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 200,
         paidAt: new Date("2026-01-20")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 300,
         paidAt: new Date("2026-01-15")
       });
@@ -275,7 +275,7 @@ describe("Payments Integration", () => {
 
       for (let i = 0; i < 5; i++) {
         await caller.createPayment({
-          loanId: loan.id,
+          loanId: loan.loanId, // Use numeric loanId
           amount: 650,
           paidAt: new Date(`2026-01-${10 + i}`)
         });
@@ -294,7 +294,7 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan();
 
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
@@ -316,17 +316,17 @@ describe("Payments Integration", () => {
 
       // Create payments for both members
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-20")
       });
       await caller.createPayment({
-        loanId: otherLoan.id,
+        loanId: otherLoan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
@@ -344,17 +344,17 @@ describe("Payments Integration", () => {
       const { member, loan } = await createMemberWithLoan();
 
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-02-05")
       });
@@ -412,17 +412,17 @@ describe("Payments Integration", () => {
 
       // Create payments
       await caller.createPayment({
-        loanId: loan1.id,
+        loanId: loan1.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan2.id,
+        loanId: loan2.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-16")
       });
       await caller.createPayment({
-        loanId: loan3.id,
+        loanId: loan3.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-17")
       });
@@ -445,17 +445,17 @@ describe("Payments Integration", () => {
       const { loan } = await createMemberWithLoan({ referredById: referrer.id });
 
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-05")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-01-15")
       });
       await caller.createPayment({
-        loanId: loan.id,
+        loanId: loan.loanId, // Use numeric loanId
         amount: 650,
         paidAt: new Date("2026-02-05")
       });

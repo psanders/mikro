@@ -32,7 +32,8 @@ export {
   createListLoans,
   createListLoansByReferrer,
   createListLoansByCollector,
-  createListLoansByMember
+  createListLoansByMember,
+  createGetLoanByLoanId
 } from "./loans/index.js";
 
 // Payment operations
@@ -41,7 +42,8 @@ export {
   createReversePayment,
   createListPayments,
   createListPaymentsByMember,
-  createListPaymentsByReferrer
+  createListPaymentsByReferrer,
+  createListPaymentsByLoanId
 } from "./payments/index.js";
 
 // Receipt operations

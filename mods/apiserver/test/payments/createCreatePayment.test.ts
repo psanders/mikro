@@ -7,10 +7,11 @@ import { createCreatePayment } from "../../src/api/payments/createCreatePayment.
 import { ValidationError } from "@mikro/common";
 
 describe("createCreatePayment", () => {
-  const validLoanId = "550e8400-e29b-41d4-a716-446655440000";
+  const validNumericLoanId = 10000;
+  const validLoanUuid = "550e8400-e29b-41d4-a716-446655440000";
   const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
-    loanId: validLoanId,
+    loanId: validNumericLoanId,
     amount: 650
   };
 
@@ -23,7 +24,7 @@ describe("createCreatePayment", () => {
       // Arrange
       const expectedPayment = {
         id: "payment-123",
-        loanId: validLoanId,
+        loanId: validLoanUuid,
         amount: 650,
         paidAt: new Date(),
         method: "CASH",
@@ -34,6 +35,9 @@ describe("createCreatePayment", () => {
         updatedAt: new Date()
       };
       const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
         payment: {
           create: sinon.stub().resolves(expectedPayment)
         }
@@ -46,7 +50,26 @@ describe("createCreatePayment", () => {
       // Assert
       expect(result.id).to.equal("payment-123");
       expect(result.method).to.equal("CASH");
+      expect(mockClient.loan.findUnique.calledOnce).to.be.true;
+      expect(
+        mockClient.loan.findUnique.calledWith({
+          where: { loanId: validNumericLoanId },
+          select: { id: true }
+        })
+      ).to.be.true;
       expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(
+        mockClient.payment.create.calledWith({
+          data: {
+            loanId: validLoanUuid,
+            amount: 650,
+            method: "CASH",
+            paidAt: undefined,
+            collectedById: undefined,
+            notes: undefined
+          }
+        })
+      ).to.be.true;
     });
 
     it("should create a payment with explicit method TRANSFER", async () => {
@@ -54,7 +77,9 @@ describe("createCreatePayment", () => {
       const inputWithMethod = { ...validInput, method: "TRANSFER" as const };
       const expectedPayment = {
         id: "payment-456",
-        ...inputWithMethod,
+        loanId: validLoanUuid,
+        amount: 650,
+        method: "TRANSFER",
         paidAt: new Date(),
         status: "COMPLETED",
         notes: null,
@@ -63,6 +88,9 @@ describe("createCreatePayment", () => {
         updatedAt: new Date()
       };
       const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
         payment: {
           create: sinon.stub().resolves(expectedPayment)
         }
@@ -88,12 +116,20 @@ describe("createCreatePayment", () => {
       };
       const expectedPayment = {
         id: "payment-789",
-        ...fullInput,
+        loanId: validLoanUuid,
+        amount: 650,
+        paidAt,
+        method: "CASH",
         status: "COMPLETED",
+        notes: "Weekly payment",
+        collectedById: validCollectorId,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
         payment: {
           create: sinon.stub().resolves(expectedPayment)
         }
@@ -110,19 +146,41 @@ describe("createCreatePayment", () => {
   });
 
   describe("with invalid input", () => {
-    it("should throw ValidationError for invalid loanId UUID", async () => {
+    it("should throw ValidationError for invalid loanId (not a positive integer)", async () => {
       // Arrange
       const mockClient = {
+        loan: { findUnique: sinon.stub() },
         payment: { create: sinon.stub() }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
       // Act & Assert
       try {
-        await createPayment({ ...validInput, loanId: "invalid-uuid" });
+        await createPayment({ ...validInput, loanId: -1 });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
+        expect(mockClient.loan.findUnique.called).to.be.false;
+        expect(mockClient.payment.create.called).to.be.false;
+      }
+    });
+
+    it("should throw error when loan not found", async () => {
+      // Arrange
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves(null)
+        },
+        payment: { create: sinon.stub() }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+
+      // Act & Assert
+      try {
+        await createPayment(validInput);
+        expect.fail("Expected error to be thrown");
+      } catch (error) {
+        expect((error as Error).message).to.include("Loan not found");
         expect(mockClient.payment.create.called).to.be.false;
       }
     });
@@ -163,11 +221,14 @@ describe("createCreatePayment", () => {
   });
 
   describe("when client throws an error", () => {
-    it("should propagate the error", async () => {
+    it("should propagate the error from loan lookup", async () => {
       // Arrange
       const mockClient = {
+        loan: {
+          findUnique: sinon.stub().rejects(new Error("Connection failed"))
+        },
         payment: {
-          create: sinon.stub().rejects(new Error("Connection failed"))
+          create: sinon.stub()
         }
       };
       const createPayment = createCreatePayment(mockClient as any);
@@ -178,6 +239,28 @@ describe("createCreatePayment", () => {
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Connection failed");
+        expect(mockClient.payment.create.called).to.be.false;
+      }
+    });
+
+    it("should propagate the error from payment creation", async () => {
+      // Arrange
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
+        payment: {
+          create: sinon.stub().rejects(new Error("Payment creation failed"))
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+
+      // Act & Assert
+      try {
+        await createPayment(validInput);
+        expect.fail("Expected error to be thrown");
+      } catch (error) {
+        expect((error as Error).message).to.equal("Payment creation failed");
       }
     });
   });

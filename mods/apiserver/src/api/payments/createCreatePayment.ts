@@ -12,6 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to record a new payment for a loan.
+ * Accepts numeric loanId (e.g., 10000, 10001) and converts it to UUID internally.
  * Default payment method is CASH.
  *
  * @param client - The database client
@@ -20,9 +21,22 @@ import { logger } from "../../logger.js";
 export function createCreatePayment(client: DbClient) {
   const fn = async (params: CreatePaymentInput): Promise<Payment> => {
     logger.verbose("creating payment", { loanId: params.loanId, amount: params.amount.toString() });
+
+    // Look up loan by numeric loanId to get the UUID
+    // params.loanId is validated as a number by the schema
+    const numericLoanId = typeof params.loanId === "string" ? Number(params.loanId) : params.loanId;
+    const loan = await client.loan.findUnique({
+      where: { loanId: numericLoanId },
+      select: { id: true }
+    });
+
+    if (!loan) {
+      throw new Error(`Loan not found with loanId: ${params.loanId}`);
+    }
+
     const payment = (await client.payment.create({
       data: {
-        loanId: params.loanId,
+        loanId: loan.id, // Use UUID from loan lookup
         amount: params.amount,
         paidAt: params.paidAt,
         method: params.method ?? "CASH",
@@ -30,7 +44,7 @@ export function createCreatePayment(client: DbClient) {
         notes: params.notes
       }
     })) as unknown as Payment;
-    logger.verbose("payment created", { id: payment.id, loanId: params.loanId });
+    logger.verbose("payment created", { id: payment.id, loanId: params.loanId, loanUuid: loan.id });
     return payment;
   };
 

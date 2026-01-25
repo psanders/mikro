@@ -16,8 +16,8 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("Press ^C at any time to quit.");
 
     const answers = {
-      loanId: await input({
-        message: "Loan ID",
+      loanId: await number({
+        message: "Loan ID (numeric, e.g., 10000, 10001)",
         required: true
       }),
       amount: await number({

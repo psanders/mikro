@@ -15,9 +15,10 @@ export const paymentStatusEnum = z.enum(["COMPLETED", "REVERSED", "PENDING"]);
 
 /**
  * Schema for creating a new payment.
+ * Uses numeric loanId (e.g., 10000, 10001) instead of UUID.
  */
 export const createPaymentSchema = z.object({
-  loanId: z.uuid({ error: "Invalid loan ID" }),
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
   amount: z.number().positive("Amount must be positive"),
   paidAt: z.coerce.date().optional(),
   method: paymentMethodEnum.optional(),
@@ -72,6 +73,17 @@ export const listPaymentsByReferrerSchema = z.object({
 });
 
 /**
+ * Schema for listing payments by loan ID (numeric loanId, e.g., 10000, 10001).
+ * By default only shows COMPLETED payments unless showReversed is true.
+ */
+export const listPaymentsByLoanIdSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
+  showReversed: z.boolean().optional(),
+  limit: z.number().int().positive().max(100).optional(),
+  offset: z.number().int().nonnegative().optional()
+});
+
+/**
  * Input type for creating a payment.
  */
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
@@ -95,6 +107,11 @@ export type ListPaymentsByMemberInput = z.infer<typeof listPaymentsByMemberSchem
  * Input type for listing payments by referrer.
  */
 export type ListPaymentsByReferrerInput = z.infer<typeof listPaymentsByReferrerSchema>;
+
+/**
+ * Input type for listing payments by loan ID.
+ */
+export type ListPaymentsByLoanIdInput = z.infer<typeof listPaymentsByLoanIdSchema>;
 
 /**
  * Payment method enum type.
