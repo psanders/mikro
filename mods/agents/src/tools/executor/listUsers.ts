@@ -7,8 +7,7 @@ import { logger } from "../../logger.js";
 
 export async function handleListUsers(
   deps: ToolExecutorDependencies,
-  args: Record<string, unknown>,
-  context?: Record<string, unknown>
+  args: Record<string, unknown>
 ): Promise<ToolResult> {
   const role = args.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined;
   const users = await deps.listUsers(role ? { role } : undefined);

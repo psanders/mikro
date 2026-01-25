@@ -25,10 +25,10 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
 
   protected createClient() {
     const apiUrl = process.env.MIKRO_API_URL || "http://localhost:3000";
-    const credentials = process.env.SYSTEM_BASICAUTH;
+    const credentials = process.env.MIKRO_CREDENTIALS;
 
     if (!credentials) {
-      this.error("SYSTEM_BASICAUTH environment variable is required");
+      this.error("MIKRO_CREDENTIALS environment variable is required");
     }
 
     return createClient(apiUrl, credentials);

@@ -21,7 +21,7 @@ function validateRequired(value: string | undefined, fieldName: string): string 
  * @returns The verify token, defaults to 'mikro_webhook_token'
  */
 export function getWebhookVerifyToken(): string {
-  const token = process.env.WHATSAPP_VERIFY_TOKEN;
+  const token = process.env.MIKRO_WHATSAPP_VERIFY_TOKEN;
 
   if (!token || token.trim().length === 0) {
     return "mikro_webhook_token"; // Default value
@@ -36,7 +36,10 @@ export function getWebhookVerifyToken(): string {
  * @throws Error if not set
  */
 export function getWhatsAppPhoneNumberId(): string {
-  return validateRequired(process.env.WHATSAPP_PHONE_NUMBER_ID, "WHATSAPP_PHONE_NUMBER_ID");
+  return validateRequired(
+    process.env.MIKRO_WHATSAPP_PHONE_NUMBER_ID,
+    "MIKRO_WHATSAPP_PHONE_NUMBER_ID"
+  );
 }
 
 /**
@@ -45,7 +48,7 @@ export function getWhatsAppPhoneNumberId(): string {
  * @throws Error if not set
  */
 export function getWhatsAppAccessToken(): string {
-  return validateRequired(process.env.WHATSAPP_ACCESS_TOKEN, "WHATSAPP_ACCESS_TOKEN");
+  return validateRequired(process.env.MIKRO_WHATSAPP_ACCESS_TOKEN, "MIKRO_WHATSAPP_ACCESS_TOKEN");
 }
 
 /**
@@ -53,7 +56,7 @@ export function getWhatsAppAccessToken(): string {
  * @returns The public path, defaults to './public'
  */
 export function getPublicPath(): string {
-  return process.env.PUBLIC_PATH || "./public";
+  return process.env.MIKRO_PUBLIC_PATH || "./public";
 }
 
 /**
@@ -61,7 +64,7 @@ export function getPublicPath(): string {
  * @returns The public URL, defaults to 'http://localhost:3000'
  */
 export function getPublicUrl(): string {
-  return process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`;
+  return process.env.MIKRO_PUBLIC_URL || `http://localhost:${process.env.MIKRO_PORT || 3000}`;
 }
 
 /**
@@ -82,5 +85,5 @@ export function getPublicImageUrl(filename: string): string {
  * @throws Error if not set
  */
 export function getOpenAIApiKey(): string {
-  return validateRequired(process.env.OPENAI_API_KEY, "OPENAI_API_KEY");
+  return validateRequired(process.env.MIKRO_OPENAI_API_KEY, "MIKRO_OPENAI_API_KEY");
 }

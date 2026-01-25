@@ -178,7 +178,7 @@ export async function sendMessage(
 
   try {
     data = JSON.parse(responseText) as WhatsAppSendResponse & WhatsAppApiError;
-  } catch (parseError) {
+  } catch {
     logger.error("failed to parse whatsapp response", {
       phone: params.phone,
       status: response.status,

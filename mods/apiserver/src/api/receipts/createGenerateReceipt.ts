@@ -31,10 +31,10 @@ const PROJECT_ROOT = join(APISERVER_ROOT, "../../");
 
 /**
  * Get the keys directory path.
- * Uses KEYS_PATH env var if set, otherwise defaults to PROJECT_ROOT/.keys for development.
+ * Uses MIKRO_KEYS_PATH env var if set, otherwise defaults to PROJECT_ROOT/.keys for development.
  */
 function getKeysDir(): string {
-  const keysPath = process.env.KEYS_PATH;
+  const keysPath = process.env.MIKRO_KEYS_PATH;
   if (keysPath) {
     return keysPath;
   }

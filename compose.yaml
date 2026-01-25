@@ -6,25 +6,25 @@ services:
     container_name: mikro-apiserver
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
+      - "${MIKRO_PORT:-3000}:3000"
     environment:
       # Database (use absolute path in container)
-      - DATABASE_URL=${DATABASE_URL:-file:/app/data/mikro.db}
+      - MIKRO_DATABASE_URL=${MIKRO_DATABASE_URL:-file:/app/data/mikro.db}
       # API Server
-      - PORT=${PORT:-3000}
+      - MIKRO_PORT=${MIKRO_PORT:-3000}
       # Basic auth credentials for system API access (format: username:password)
-      - SYSTEM_BASICAUTH=${SYSTEM_BASICAUTH:-admin:secret}
+      - MIKRO_CREDENTIALS=${MIKRO_CREDENTIALS:-admin:secret}
       # API URL for CLI and other clients
       - MIKRO_API_URL=${MIKRO_API_URL:-http://localhost:3000}
       # Public URL for serving images (required for WhatsApp receipt sending)
       # Must be a publicly accessible HTTPS URL
-      - PUBLIC_URL=${PUBLIC_URL:-https://app.mikro.com}
+      - MIKRO_PUBLIC_URL=${MIKRO_PUBLIC_URL:-https://app.mikro.com}
       # Public path for static files (use absolute path in container)
-      - PUBLIC_PATH=${PUBLIC_PATH:-/app/public}
+      - MIKRO_PUBLIC_PATH=${MIKRO_PUBLIC_PATH:-/app/public}
       # WhatsApp Business API
-      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
-      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
-      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
+      - MIKRO_WHATSAPP_PHONE_NUMBER_ID=${MIKRO_WHATSAPP_PHONE_NUMBER_ID}
+      - MIKRO_WHATSAPP_ACCESS_TOKEN=${MIKRO_WHATSAPP_ACCESS_TOKEN}
+      - MIKRO_WHATSAPP_VERIFY_TOKEN=${MIKRO_WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
     volumes:
       # Database persistence
       - ./data:/app/data

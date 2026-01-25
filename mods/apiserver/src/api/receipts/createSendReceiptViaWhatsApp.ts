@@ -58,13 +58,7 @@ export interface SendReceiptViaWhatsAppDependencies {
  * @returns A validated function that sends receipts via WhatsApp
  */
 export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDependencies) {
-  const {
-    db,
-    generateReceipt,
-    sendWhatsAppMessage,
-    uploadMedia,
-    publicPath = getPublicPath()
-  } = deps;
+  const { generateReceipt, sendWhatsAppMessage, uploadMedia, publicPath = getPublicPath() } = deps;
 
   const fn = async (
     params: SendReceiptViaWhatsAppInput
@@ -149,8 +143,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       // This ensures WhatsApp receives only the mediaId and doesn't show a link
       const messageParams = {
         phone: recipientPhone, // Send to collector (requestor)
-        mediaId: mediaId, // Only mediaId - explicitly exclude imageUrl
-
+        mediaId: mediaId // Only mediaId - explicitly exclude imageUrl
       };
 
       const whatsappResponse = await sendWhatsAppMessage(messageParams);

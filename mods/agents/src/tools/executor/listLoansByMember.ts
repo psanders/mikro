@@ -7,8 +7,7 @@ import { logger } from "../../logger.js";
 
 export async function handleListLoansByMember(
   deps: ToolExecutorDependencies,
-  args: Record<string, unknown>,
-  context?: Record<string, unknown>
+  args: Record<string, unknown>
 ): Promise<ToolResult> {
   const loans = await deps.listLoansByMember({
     memberId: args.memberId as string,

@@ -51,10 +51,10 @@ import { loadAgents, getAgent } from "./agents/index.js";
 export type { AppRouter } from "./trpc/index.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.MIKRO_PORT || 3000;
 
 // Public path for serving static files (receipts, images, etc.)
-const PUBLIC_PATH = process.env.PUBLIC_PATH || "./public";
+const PUBLIC_PATH = process.env.MIKRO_PUBLIC_PATH || "./public";
 
 app.use(express.json());
 
@@ -260,7 +260,6 @@ async function initializeMessageProcessor() {
         const loan = await createLoan(params);
         return { id: loan.id, loanId: loan.loanId };
       },
-      // @ts-ignore - getLoanByLoanId is defined in ToolExecutorDependencies interface
       getLoanByLoanId: async (params: { loanId: number }) => {
         const loan = await getLoanByLoanId(params);
         if (!loan) {

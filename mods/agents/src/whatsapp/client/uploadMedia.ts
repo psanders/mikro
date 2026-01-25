@@ -122,7 +122,7 @@ export async function uploadMedia(
 
   try {
     data = JSON.parse(responseText) as { id: string } & WhatsAppApiError;
-  } catch (parseError) {
+  } catch {
     logger.error("failed to parse whatsapp response", {
       responseText,
       status: response.status

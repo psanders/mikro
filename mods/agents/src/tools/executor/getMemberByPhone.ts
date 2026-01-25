@@ -8,8 +8,7 @@ import { validatePhone } from "@mikro/common";
 
 export async function handleGetMemberByPhone(
   deps: ToolExecutorDependencies,
-  args: Record<string, unknown>,
-  context?: Record<string, unknown>
+  args: Record<string, unknown>
 ): Promise<ToolResult> {
   // Normalize phone number
   const phoneInput = args.phone as string;

@@ -6,7 +6,7 @@ import type { DbClient } from "@mikro/common";
 import { prisma } from "../db.js";
 
 /**
- * Validates Basic Auth header against SYSTEM_BASICAUTH env var.
+ * Validates Basic Auth header against MIKRO_CREDENTIALS env var.
  * @param authHeader - The Authorization header value
  * @returns true if credentials match, false otherwise
  */
@@ -15,7 +15,7 @@ function validateBasicAuth(authHeader: string | undefined): boolean {
     return false;
   }
 
-  const expectedCredentials = process.env.SYSTEM_BASICAUTH;
+  const expectedCredentials = process.env.MIKRO_CREDENTIALS;
   if (!expectedCredentials) {
     return false;
   }

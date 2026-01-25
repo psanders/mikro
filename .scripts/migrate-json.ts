@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, "..");
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL || "file:./mods/apiserver/data/dev.db"
+  url: process.env.MIKRO_DATABASE_URL || "file:./mods/apiserver/data/dev.db"
 });
 
 const prisma = new PrismaClient({ adapter });

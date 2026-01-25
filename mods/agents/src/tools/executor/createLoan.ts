@@ -7,8 +7,7 @@ import { logger } from "../../logger.js";
 
 export async function handleCreateLoan(
   deps: ToolExecutorDependencies,
-  args: Record<string, unknown>,
-  context?: Record<string, unknown>
+  args: Record<string, unknown>
 ): Promise<ToolResult> {
   const loan = await deps.createLoan({
     memberId: args.memberId as string,

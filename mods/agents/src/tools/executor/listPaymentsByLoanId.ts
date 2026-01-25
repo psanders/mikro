@@ -7,8 +7,7 @@ import { logger } from "../../logger.js";
 
 export async function handleListPaymentsByLoanId(
   deps: ToolExecutorDependencies,
-  args: Record<string, unknown>,
-  context?: Record<string, unknown>
+  args: Record<string, unknown>
 ): Promise<ToolResult> {
   // Parse numeric loanId from string
   const loanIdInput = args.loanId as string;
