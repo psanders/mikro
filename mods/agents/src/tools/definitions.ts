@@ -101,7 +101,7 @@ export const createPaymentTool: ToolFunction = {
 /**
  * Tool definition for sending a receipt via WhatsApp.
  * Used by Juan (collector).
- * 
+ *
  * This is the tool for sending receipts to members.
  * It generates the receipt, saves it to disk, and sends it via WhatsApp automatically.
  */

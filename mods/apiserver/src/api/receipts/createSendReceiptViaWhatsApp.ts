@@ -58,9 +58,7 @@ export interface SendReceiptViaWhatsAppDependencies {
  * @param deps - Dependencies including database client, receipt generator, and WhatsApp sender
  * @returns A validated function that sends receipts via WhatsApp
  */
-export function createSendReceiptViaWhatsApp(
-  deps: SendReceiptViaWhatsAppDependencies
-) {
+export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDependencies) {
   const {
     db,
     generateReceipt,
