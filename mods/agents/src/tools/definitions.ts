@@ -99,20 +99,25 @@ export const createPaymentTool: ToolFunction = {
 };
 
 /**
- * Tool definition for generating a receipt.
+ * Tool definition for sending a receipt via WhatsApp.
  * Used by Juan (collector).
+ * 
+ * This is the tool for sending receipts to members.
+ * It generates the receipt, saves it to disk, and sends it via WhatsApp automatically.
  */
-export const generateReceiptTool: ToolFunction = {
+export const sendReceiptViaWhatsAppTool: ToolFunction = {
   type: "function",
   function: {
-    name: "generateReceipt",
-    description: "Generar un recibo para un pago existente. Devuelve una imagen del recibo.",
+    name: "sendReceiptViaWhatsApp",
+    description:
+      "Generar y enviar un recibo por WhatsApp al miembro asociado al pago. Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del miembro.",
     parameters: {
       type: "object",
       properties: {
         paymentId: {
           type: "string",
-          description: "ID del pago para el cual generar el recibo"
+          description:
+            "ID del pago (UUID) para el cual enviar el recibo. Debe ser un UUID válido en formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Este es el ID del pago, NO el número de préstamo. Puedes obtener el paymentId del resultado de createPayment."
         }
       },
       required: ["paymentId"]
@@ -283,6 +288,35 @@ export const listMemberLoansByPhoneTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for listing payments by loan ID.
+ * Used by Juan (collector) to see payment history and get payment IDs for sending receipts.
+ */
+export const listPaymentsByLoanIdTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listPaymentsByLoanId",
+    description:
+      "Listar los pagos de un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Útil para ver el historial de pagos y obtener el ID del último pago para enviar recibos. Los pagos se muestran del más reciente al más antiguo.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description:
+            "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
+        },
+        limit: {
+          type: "string",
+          description:
+            "Número máximo de pagos a mostrar (opcional, por defecto muestra los más recientes). Para obtener solo el último pago, usa limit: '1'."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
  * Tool definition for listing users.
  * Used by Joan (guest onboarding) and Maria (admin) to find referrers and collectors.
  */
@@ -313,7 +347,8 @@ export const listUsersTool: ToolFunction = {
 export const allTools: ToolFunction[] = [
   createMemberTool,
   createPaymentTool,
-  generateReceiptTool,
+  sendReceiptViaWhatsAppTool,
+  listPaymentsByLoanIdTool,
   listLoansByCollectorTool,
   getMemberTool,
   createLoanTool,

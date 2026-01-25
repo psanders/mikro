@@ -18,3 +18,6 @@ export {
   RECEIPT_HEIGHT,
   type ReceiptElement
 } from "./receipt-layout.js";
+
+// Storage utilities
+export { saveReceiptImage } from "./storage.js";

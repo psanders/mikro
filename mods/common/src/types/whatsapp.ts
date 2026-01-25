@@ -11,6 +11,13 @@ export interface WhatsAppSendResponse {
 }
 
 /**
+ * Response from WhatsApp media upload.
+ */
+export interface WhatsAppMediaUploadResponse {
+  id: string;
+}
+
+/**
  * WhatsApp client interface for dependency injection.
  * Implement this interface to provide WhatsApp API functionality.
  */
@@ -21,6 +28,14 @@ export interface WhatsAppClient {
    * @returns The API response with message ID
    */
   sendMessage(params: SendWhatsAppMessageInput): Promise<WhatsAppSendResponse>;
+
+  /**
+   * Upload media to WhatsApp and get a media ID.
+   * @param imageBuffer - Buffer containing the image data
+   * @param mimeType - MIME type of the image (e.g., "image/png")
+   * @returns The media ID that can be used to send the image
+   */
+  uploadMedia(imageBuffer: Buffer, mimeType: string): Promise<string>;
 
   /**
    * Download media from WhatsApp.

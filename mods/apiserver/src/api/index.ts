@@ -49,6 +49,9 @@ export {
 // Receipt operations
 export {
   createGenerateReceipt,
+  createSendReceiptViaWhatsApp,
   type GenerateReceiptResponse,
-  type ReceiptDependencies
+  type ReceiptDependencies,
+  type SendReceiptViaWhatsAppResponse,
+  type SendReceiptViaWhatsAppDependencies
 } from "./receipts/index.js";

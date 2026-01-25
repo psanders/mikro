@@ -29,7 +29,8 @@ import {
   listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   // Receipt schemas
-  generateReceiptSchema
+  generateReceiptSchema,
+  sendReceiptViaWhatsAppSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -60,6 +61,9 @@ import { createListPaymentsByReferrer } from "../../api/payments/createListPayme
 import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
 // Receipt API functions
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
+import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendReceiptViaWhatsApp.js";
+// WhatsApp functions
+import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -271,6 +275,31 @@ export const protectedRouter = router({
     .input(generateReceiptSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateReceipt({ db: ctx.db });
+      return fn(input);
+    }),
+
+  /**
+   * Send a receipt via WhatsApp to the member associated with the payment.
+   * Generates the receipt, saves it to disk, and sends it via WhatsApp.
+   */
+  sendReceiptViaWhatsApp: protectedProcedure
+    .input(sendReceiptViaWhatsAppSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Create WhatsApp client and sender
+      const whatsAppClient = createWhatsAppClient();
+      const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
+
+      // Create receipt generator
+      const generateReceipt = createGenerateReceipt({ db: ctx.db });
+
+      // Create send receipt function
+      const fn = createSendReceiptViaWhatsApp({
+        db: ctx.db,
+        generateReceipt,
+        sendWhatsAppMessage,
+        uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
+      });
+
       return fn(input);
     })
 });

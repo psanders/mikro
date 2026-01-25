@@ -36,8 +36,10 @@ import {
   createCreateMember,
   createCreatePayment,
   createGenerateReceipt,
+  createSendReceiptViaWhatsApp,
   createListLoansByCollector,
   createListLoansByMember,
+  createListPaymentsByLoanId,
   createGetLoanByLoanId,
   createGetMember,
   createCreateLoan,
@@ -132,10 +134,23 @@ async function initializeMessageProcessor() {
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
     const listLoansByMember = createListLoansByMember(dbClient);
+    const listPaymentsByLoanId = createListPaymentsByLoanId(dbClient);
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const listUsers = createListUsers(dbClient);
+
+    // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
+    const whatsAppClient = createWhatsAppClient();
+    const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
+
+    // Create send receipt via WhatsApp function
+    const sendReceiptViaWhatsAppFn = createSendReceiptViaWhatsApp({
+      db: dbClient,
+      generateReceipt,
+      sendWhatsAppMessage,
+      uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
+    });
 
     // Create router
     const routeMessage = createMessageRouter({
@@ -190,6 +205,18 @@ async function initializeMessageProcessor() {
         const receipt = await generateReceipt(params);
         return { image: receipt.image, token: receipt.token };
       },
+      sendReceiptViaWhatsApp: async (params: { paymentId: string }) => {
+        const result = await sendReceiptViaWhatsAppFn({ paymentId: params.paymentId });
+        return {
+          success: result.success,
+          message: result.success
+            ? `Recibo enviado por WhatsApp correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
+            : `Error al enviar el recibo por WhatsApp: ${result.error || "Error desconocido"}`,
+          messageId: result.messageId,
+          imageUrl: result.imageUrl,
+          error: result.error
+        };
+      },
       listLoansByCollector: async (params) => {
         const loans = await listLoansByCollector(params);
         return loans.map((loan) => ({
@@ -214,6 +241,16 @@ async function initializeMessageProcessor() {
           loanId: loan.loanId,
           principal: loan.principal,
           status: loan.status
+        }));
+      },
+      listPaymentsByLoanId: async (params) => {
+        const payments = await listPaymentsByLoanId(params);
+        return payments.map((payment) => ({
+          id: payment.id,
+          amount: Number(payment.amount),
+          paidAt: payment.paidAt,
+          status: payment.status,
+          method: payment.method
         }));
       },
       createLoan: async (params) => {
@@ -243,10 +280,6 @@ async function initializeMessageProcessor() {
         };
       }
     } as Parameters<typeof createToolExecutor>[0]);
-
-    // Create WhatsApp client
-    const whatsAppClient = createWhatsAppClient();
-    const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
 
     // Create LLM invoker wrapper that selects agent based on name
     const invokeLLM = async (

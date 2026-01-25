@@ -6,3 +6,9 @@ export {
   type GenerateReceiptResponse,
   type ReceiptDependencies
 } from "./createGenerateReceipt.js";
+
+export {
+  createSendReceiptViaWhatsApp,
+  type SendReceiptViaWhatsAppResponse,
+  type SendReceiptViaWhatsAppDependencies
+} from "./createSendReceiptViaWhatsApp.js";

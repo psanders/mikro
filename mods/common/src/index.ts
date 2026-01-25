@@ -109,8 +109,10 @@ export {
   // Receipt schemas
   generateReceiptSchema,
   receiptDataSchema,
+  sendReceiptViaWhatsAppSchema,
   type GenerateReceiptInput,
-  type ReceiptDataInput
+  type ReceiptDataInput,
+  type SendReceiptViaWhatsAppInput
 } from "./schemas/index.js";
 
 // Types (entities and client)
@@ -118,7 +120,11 @@ export type { Member } from "./types/index.js";
 export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
 export type { DbClient, UserRole, PaymentWithRelations } from "./types/index.js";
-export type { WhatsAppClient, WhatsAppSendResponse } from "./types/index.js";
+export type {
+  WhatsAppClient,
+  WhatsAppSendResponse,
+  WhatsAppMediaUploadResponse
+} from "./types/index.js";
 export type { Loan, Payment } from "./types/index.js";
 
 // Receipt utilities

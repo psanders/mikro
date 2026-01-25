@@ -4,7 +4,8 @@
 export {
   createMemberTool,
   createPaymentTool,
-  generateReceiptTool,
+  sendReceiptViaWhatsAppTool,
+  listPaymentsByLoanIdTool,
   listLoansByCollectorTool,
   getMemberTool,
   createLoanTool,

@@ -110,6 +110,8 @@ export {
 export {
   generateReceiptSchema,
   receiptDataSchema,
+  sendReceiptViaWhatsAppSchema,
   type GenerateReceiptInput,
-  type ReceiptDataInput
+  type ReceiptDataInput,
+  type SendReceiptViaWhatsAppInput
 } from "./receipt.js";
