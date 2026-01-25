@@ -1,21 +1,22 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import phone from "phone";
+import { phone } from "phone";
 import { z } from "zod/v4";
 import { ValidationError } from "../errors/index.js";
 
 /**
- * Validates and normalizes a Dominican Republic phone number.
+ * Validates and normalizes an international phone number to E.164 format.
  * Returns the phone number in E.164 format with the leading +.
+ * Accepts phone numbers from any country.
  *
  * @param phoneNumber - The phone number to validate (can include or exclude +)
  * @returns The normalized phone number in E.164 format with + (e.g., "+18091234567")
  * @throws ValidationError if the phone number is invalid
  */
-export function validateDominicanPhone(phoneNumber: string): string {
-  // phone library expects country code as ISO2 (DO for Dominican Republic)
-  const result = phone(phoneNumber, { country: "DO" });
+export function validatePhone(phoneNumber: string): string {
+  // phone library validates any international phone number when called without country restriction
+  const result = phone(phoneNumber);
 
   if (!result.isValid) {
     // Create a ZodError to match ValidationError's expected format
@@ -23,7 +24,7 @@ export function validateDominicanPhone(phoneNumber: string): string {
       {
         code: z.ZodIssueCode.custom,
         path: ["phone"],
-        message: "Phone number must be a valid Dominican Republic number"
+        message: "Phone number must be a valid e164 format"
       }
     ]);
     throw new ValidationError(zodError);

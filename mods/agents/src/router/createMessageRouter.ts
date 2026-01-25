@@ -6,7 +6,7 @@
  */
 import type { RouteResult, RouterDependencies } from "./types.js";
 import { logger } from "../logger.js";
-import { validateDominicanPhone } from "@mikro/common";
+import { validatePhone } from "@mikro/common";
 
 /**
  * Creates a message router that determines routing based on phone number lookup.
@@ -37,7 +37,7 @@ export function createMessageRouter(deps: RouterDependencies) {
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
-    const normalizedPhone = validateDominicanPhone(phone);
+    const normalizedPhone = validatePhone(phone);
     logger.verbose("routing message", { phone, normalizedPhone });
 
     // Step 1: Check if phone belongs to a member

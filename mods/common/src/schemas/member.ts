@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
-import { validateDominicanPhone } from "../utils/validatePhone.js";
+import { validatePhone } from "../utils/validatePhone.js";
 
 /**
  * Schema for creating a new member.
@@ -14,7 +14,7 @@ export const createMemberSchema = z.object({
     .min(1, "Phone is required")
     .transform((val) => {
       // Validate and normalize phone to E.164 format
-      return validateDominicanPhone(val);
+      return validatePhone(val);
     }),
   idNumber: z
     .string()
@@ -27,7 +27,7 @@ export const createMemberSchema = z.object({
   isBusinessOwner: z.boolean().optional(),
   createdById: z.uuid().optional(),
   referredById: z.uuid({ error: "Invalid referrer ID" }),
-  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
+  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
   notes: z.string().optional()
 });
 
@@ -43,7 +43,7 @@ export const updateMemberSchema = z.object({
     .min(1, "Phone is required")
     .transform((val) => {
       // Validate and normalize phone (strips +)
-      return validateDominicanPhone(val);
+      return validatePhone(val);
     })
     .optional(),
   notes: z.string().optional(),
@@ -66,7 +66,7 @@ export const getMemberByPhoneSchema = z.object({
     .min(1, "Phone number is required")
     .transform((val) => {
       // Validate and normalize phone to E.164 format
-      return validateDominicanPhone(val);
+      return validatePhone(val);
     })
 });
 

@@ -10,7 +10,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../mods/apiserver/src/generated/prisma/client.js";
-import { validateDominicanPhone } from "../mods/common/src/utils/validatePhone.js";
+import { validatePhone } from "../mods/common/src/utils/validatePhone.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, "..");
@@ -106,7 +106,7 @@ async function createRequiredUsers(userValidationMap: Map<string, boolean>): Pro
     {
       id: "7a8bbcaa-063d-4fce-ae02-da9356dac213",
       name: "Pedro Sanders",
-      phone: "+18091234567",
+      phone: "+17853178070",
       roles: [{ role: "ADMIN" }, { role: "COLLECTOR" }]
     },
     {
@@ -158,7 +158,7 @@ function normalizePhone(phone: string): string {
   }
   try {
     // Use the same validation function as the API
-    return validateDominicanPhone(phone);
+    return validatePhone(phone);
   } catch {
     console.warn(`Invalid phone number: ${phone}, using as-is`);
     return phone.trim();

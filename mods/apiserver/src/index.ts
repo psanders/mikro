@@ -40,7 +40,8 @@ import {
   createListLoansByCollector,
   createListLoansByMember,
   createGetMember,
-  createCreateLoan
+  createCreateLoan,
+  createListUsers
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 
@@ -149,6 +150,7 @@ async function initializeMessageProcessor() {
     const listLoansByMember = createListLoansByMember(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
+    const listUsers = createListUsers(dbClient);
 
     // #region agent log
     fetch("http://127.0.0.1:7242/ingest/23713f02-dc24-44ba-908b-cf00c268d600", {
@@ -212,6 +214,20 @@ async function initializeMessageProcessor() {
       createMember: async (params) => {
         const member = await createMember(params);
         return { id: member.id, name: member.name, phone: member.phone };
+      },
+      listUsers: async (params?: { role?: "ADMIN" | "COLLECTOR" | "REFERRER" }) => {
+        const allUsers = await listUsers({});
+        // Filter by role if provided
+        let filteredUsers = allUsers;
+        if (params?.role) {
+          filteredUsers = allUsers.filter((u) => u.roles?.some((r) => r.role === params.role));
+        }
+        return filteredUsers.map((u) => ({
+          id: u.id,
+          name: u.name,
+          phone: u.phone ?? "",
+          roles: u.roles?.map((r) => ({ role: String(r.role) }))
+        }));
       },
       createPayment: async (params) => {
         const payment = await createPayment(params);

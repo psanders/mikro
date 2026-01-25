@@ -127,8 +127,8 @@ model Member {
   createdById         String?  @map("created_by_id")
   referredBy          User     @relation("ReferredBy", fields: [referredById], references: [id])
   referredById         String   @map("referred_by_id")
-  assignedCollector   User     @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
-  assignedCollectorId String   @map("assigned_collector_id")
+  assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
+  assignedCollectorId String?  @map("assigned_collector_id")
 
   loans    Loan[]
   messages Message[]

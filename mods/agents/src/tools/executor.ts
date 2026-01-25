@@ -5,7 +5,7 @@
  */
 import type { ToolResult, ToolExecutor } from "../llm/types.js";
 import { logger } from "../logger.js";
-import { validateDominicanPhone } from "@mikro/common";
+import { validatePhone } from "@mikro/common";
 
 /**
  * API functions required by the tool executor.
@@ -18,10 +18,22 @@ export interface ToolExecutorDependencies {
     idNumber: string;
     collectionPoint: string;
     homeAddress: string;
+    referredById: string;
+    assignedCollectorId?: string;
     jobPosition?: string;
     income?: number;
     isBusinessOwner?: boolean;
   }) => Promise<{ id: string; name: string; phone: string }>;
+
+  /** List users with optional role filter */
+  listUsers: (params?: { role?: "ADMIN" | "COLLECTOR" | "REFERRER" }) => Promise<
+    Array<{
+      id: string;
+      name: string;
+      phone: string;
+      roles?: Array<{ role: string }>;
+    }>
+  >;
 
   /** Create a payment */
   createPayment: (params: {
@@ -103,12 +115,23 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
             };
           }
 
+          // Get referredById from args (LLM should have already obtained it using listUsers)
+          const referredById = args.referredById as string | undefined;
+          if (!referredById) {
+            return {
+              success: false,
+              message:
+                "Se requiere referredById. Pregunta al usuario '¿Quién te refirió?' y luego usa listUsers con role='REFERRER' para obtener la lista de referidores con sus IDs, haz coincidir el nombre, y usa el ID del referidor seleccionado."
+            };
+          }
+
           const member = await deps.createMember({
             name: args.name as string,
             phone,
             idNumber: args.idNumber as string,
             collectionPoint: args.collectionPoint as string,
             homeAddress: args.homeAddress as string,
+            referredById,
             jobPosition: args.jobPosition as string | undefined,
             income: args.income ? Number(args.income) : undefined,
             isBusinessOwner: args.isBusinessOwner === "true" || args.isBusinessOwner === true
@@ -220,7 +243,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
         case "getMemberByPhone": {
           // Normalize phone number
           const phoneInput = args.phone as string;
-          const normalizedPhone = validateDominicanPhone(phoneInput);
+          const normalizedPhone = validatePhone(phoneInput);
 
           const member = await deps.getMemberByPhone({
             phone: normalizedPhone
@@ -264,7 +287,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
         case "listMemberLoansByPhone": {
           // Normalize phone number
           const phoneInput = args.phone as string;
-          const normalizedPhone = validateDominicanPhone(phoneInput);
+          const normalizedPhone = validatePhone(phoneInput);
 
           // First get the member by phone
           const member = await deps.getMemberByPhone({
@@ -293,6 +316,37 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
             success: true,
             message: `Se encontraron ${loans.length} préstamos para ${member.name}.`,
             data: { member, loans }
+          };
+        }
+
+        case "listUsers": {
+          const role = args.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined;
+          const users = await deps.listUsers(role ? { role } : undefined);
+
+          logger.verbose("users listed via tool", { role, count: users.length });
+
+          if (users.length === 0) {
+            const roleMsg = role ? ` con rol ${role}` : "";
+            return {
+              success: true,
+              message: `No se encontraron usuarios${roleMsg} en el sistema.`,
+              data: { users: [] }
+            };
+          }
+
+          // Format users for display
+          const usersList = users
+            .map((u) => {
+              const roles = u.roles?.map((r) => r.role).join(", ") || "Sin roles";
+              return `- ${u.name} (ID: ${u.id}, Tel: ${u.phone}, Roles: ${roles})`;
+            })
+            .join("\n");
+
+          const roleMsg = role ? ` con rol ${role}` : "";
+          return {
+            success: true,
+            message: `Usuarios disponibles${roleMsg}:\n${usersList}`,
+            data: { users }
           };
         }
 

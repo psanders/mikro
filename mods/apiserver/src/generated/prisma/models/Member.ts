@@ -267,7 +267,7 @@ export type MemberGroupByOutputType = {
   updatedAt: Date;
   createdById: string | null;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId: string | null;
   _count: MemberCountAggregateOutputType | null;
   _avg: MemberAvgAggregateOutputType | null;
   _sum: MemberSumAggregateOutputType | null;
@@ -313,10 +313,13 @@ export type MemberWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string;
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null;
   referredById?: Prisma.StringFilter<"Member"> | string;
-  assignedCollectorId?: Prisma.StringFilter<"Member"> | string;
+  assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null;
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
   referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
-  assignedCollector?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+  assignedCollector?: Prisma.XOR<
+    Prisma.UserNullableScalarRelationFilter,
+    Prisma.UserWhereInput
+  > | null;
   loans?: Prisma.LoanListRelationFilter;
   messages?: Prisma.MessageListRelationFilter;
 };
@@ -338,7 +341,7 @@ export type MemberOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder;
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder;
   referredById?: Prisma.SortOrder;
-  assignedCollectorId?: Prisma.SortOrder;
+  assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder;
   createdBy?: Prisma.UserOrderByWithRelationInput;
   referredBy?: Prisma.UserOrderByWithRelationInput;
   assignedCollector?: Prisma.UserOrderByWithRelationInput;
@@ -373,10 +376,13 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<
     updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string;
     createdById?: Prisma.StringNullableFilter<"Member"> | string | null;
     referredById?: Prisma.StringFilter<"Member"> | string;
-    assignedCollectorId?: Prisma.StringFilter<"Member"> | string;
+    assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null;
     createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null;
     referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
-    assignedCollector?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+    assignedCollector?: Prisma.XOR<
+      Prisma.UserNullableScalarRelationFilter,
+      Prisma.UserWhereInput
+    > | null;
     loans?: Prisma.LoanListRelationFilter;
     messages?: Prisma.MessageListRelationFilter;
   },
@@ -400,7 +406,7 @@ export type MemberOrderByWithAggregationInput = {
   updatedAt?: Prisma.SortOrder;
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder;
   referredById?: Prisma.SortOrder;
-  assignedCollectorId?: Prisma.SortOrder;
+  assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder;
   _count?: Prisma.MemberCountOrderByAggregateInput;
   _avg?: Prisma.MemberAvgOrderByAggregateInput;
   _max?: Prisma.MemberMaxOrderByAggregateInput;
@@ -434,7 +440,7 @@ export type MemberScalarWhereWithAggregatesInput = {
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Member"> | Date | string;
   createdById?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null;
   referredById?: Prisma.StringWithAggregatesFilter<"Member"> | string;
-  assignedCollectorId?: Prisma.StringWithAggregatesFilter<"Member"> | string;
+  assignedCollectorId?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null;
 };
 
 export type MemberCreateInput = {
@@ -454,7 +460,7 @@ export type MemberCreateInput = {
   updatedAt?: Date | string;
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput;
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput;
-  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput;
 };
@@ -476,7 +482,7 @@ export type MemberUncheckedCreateInput = {
   updatedAt?: Date | string;
   createdById?: string | null;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput;
 };
@@ -504,7 +510,7 @@ export type MemberUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput;
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput;
-  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput;
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput;
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput;
 };
@@ -532,7 +538,7 @@ export type MemberUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput;
 };
@@ -554,7 +560,7 @@ export type MemberCreateManyInput = {
   updatedAt?: Date | string;
   createdById?: string | null;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
 };
 
 export type MemberUpdateManyMutationInput = {
@@ -603,7 +609,7 @@ export type MemberUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type MemberListRelationFilter = {
@@ -1034,7 +1040,7 @@ export type MemberCreateWithoutCreatedByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput;
-  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput;
 };
@@ -1055,7 +1061,7 @@ export type MemberUncheckedCreateWithoutCreatedByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput;
 };
@@ -1088,7 +1094,7 @@ export type MemberCreateWithoutReferredByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput;
-  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput;
 };
@@ -1109,7 +1115,7 @@ export type MemberUncheckedCreateWithoutReferredByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   createdById?: string | null;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput;
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput;
 };
@@ -1236,7 +1242,7 @@ export type MemberScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string;
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null;
   referredById?: Prisma.StringFilter<"Member"> | string;
-  assignedCollectorId?: Prisma.StringFilter<"Member"> | string;
+  assignedCollectorId?: Prisma.StringNullableFilter<"Member"> | string | null;
 };
 
 export type MemberUpsertWithWhereUniqueWithoutReferredByInput = {
@@ -1312,7 +1318,7 @@ export type MemberCreateWithoutLoansInput = {
   updatedAt?: Date | string;
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput;
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput;
-  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput;
 };
 
@@ -1333,7 +1339,7 @@ export type MemberUncheckedCreateWithoutLoansInput = {
   updatedAt?: Date | string;
   createdById?: string | null;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput;
 };
 
@@ -1388,7 +1394,7 @@ export type MemberUpdateWithoutLoansInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput;
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput;
-  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput;
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput;
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput;
 };
 
@@ -1415,7 +1421,7 @@ export type MemberUncheckedUpdateWithoutLoansInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput;
 };
 
@@ -1436,7 +1442,7 @@ export type MemberCreateWithoutMessagesInput = {
   updatedAt?: Date | string;
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput;
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput;
-  assignedCollector: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput;
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput;
 };
 
@@ -1457,7 +1463,7 @@ export type MemberUncheckedCreateWithoutMessagesInput = {
   updatedAt?: Date | string;
   createdById?: string | null;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput;
 };
 
@@ -1512,7 +1518,7 @@ export type MemberUpdateWithoutMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput;
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput;
-  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput;
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput;
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput;
 };
 
@@ -1539,7 +1545,7 @@ export type MemberUncheckedUpdateWithoutMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput;
 };
 
@@ -1559,7 +1565,7 @@ export type MemberCreateManyCreatedByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   referredById: string;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
 };
 
 export type MemberCreateManyReferredByInput = {
@@ -1578,7 +1584,7 @@ export type MemberCreateManyReferredByInput = {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   createdById?: string | null;
-  assignedCollectorId: string;
+  assignedCollectorId?: string | null;
 };
 
 export type MemberCreateManyAssignedCollectorInput = {
@@ -1622,7 +1628,7 @@ export type MemberUpdateWithoutCreatedByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput;
-  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput;
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput;
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput;
 };
@@ -1649,7 +1655,7 @@ export type MemberUncheckedUpdateWithoutCreatedByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput;
 };
@@ -1676,7 +1682,7 @@ export type MemberUncheckedUpdateManyWithoutCreatedByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   referredById?: Prisma.StringFieldUpdateOperationsInput | string;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type MemberUpdateWithoutReferredByInput = {
@@ -1701,7 +1707,7 @@ export type MemberUpdateWithoutReferredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput;
-  assignedCollector?: Prisma.UserUpdateOneRequiredWithoutAssignedMembersNestedInput;
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput;
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput;
 };
@@ -1728,7 +1734,7 @@ export type MemberUncheckedUpdateWithoutReferredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput;
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput;
 };
@@ -1755,7 +1761,7 @@ export type MemberUncheckedUpdateManyWithoutReferredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  assignedCollectorId?: Prisma.StringFieldUpdateOperationsInput | string;
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
 
 export type MemberUpdateWithoutAssignedCollectorInput = {
@@ -1906,7 +1912,7 @@ export type MemberSelect<
     assignedCollectorId?: boolean;
     createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
     referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+    assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
     loans?: boolean | Prisma.Member$loansArgs<ExtArgs>;
     messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>;
     _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1937,7 +1943,7 @@ export type MemberSelectCreateManyAndReturn<
     assignedCollectorId?: boolean;
     createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
     referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+    assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
   },
   ExtArgs["result"]["member"]
 >;
@@ -1965,7 +1971,7 @@ export type MemberSelectUpdateManyAndReturn<
     assignedCollectorId?: boolean;
     createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
     referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-    assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+    assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
   },
   ExtArgs["result"]["member"]
 >;
@@ -2017,7 +2023,7 @@ export type MemberInclude<
 > = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
   referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
   loans?: boolean | Prisma.Member$loansArgs<ExtArgs>;
   messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>;
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>;
@@ -2027,14 +2033,14 @@ export type MemberIncludeCreateManyAndReturn<
 > = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
   referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
 };
 export type MemberIncludeUpdateManyAndReturn<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
 > = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>;
   referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
-  assignedCollector?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+  assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>;
 };
 
 export type $MemberPayload<
@@ -2044,7 +2050,7 @@ export type $MemberPayload<
   objects: {
     createdBy: Prisma.$UserPayload<ExtArgs> | null;
     referredBy: Prisma.$UserPayload<ExtArgs>;
-    assignedCollector: Prisma.$UserPayload<ExtArgs>;
+    assignedCollector: Prisma.$UserPayload<ExtArgs> | null;
     loans: Prisma.$LoanPayload<ExtArgs>[];
     messages: Prisma.$MessagePayload<ExtArgs>[];
   };
@@ -2066,7 +2072,7 @@ export type $MemberPayload<
       updatedAt: Date;
       createdById: string | null;
       referredById: string;
-      assignedCollectorId: string;
+      assignedCollectorId: string | null;
     },
     ExtArgs["result"]["member"]
   >;
@@ -2604,17 +2610,16 @@ export interface Prisma__MemberClient<
     ExtArgs,
     GlobalOmitOptions
   >;
-  assignedCollector<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(
-    args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>
+  assignedCollector<T extends Prisma.Member$assignedCollectorArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.Member$assignedCollectorArgs<ExtArgs>>
   ): Prisma.Prisma__UserClient<
-    | runtime.Types.Result.GetResult<
-        Prisma.$UserPayload<ExtArgs>,
-        T,
-        "findUniqueOrThrow",
-        GlobalOmitOptions
-      >
-    | Null,
-    Null,
+    runtime.Types.Result.GetResult<
+      Prisma.$UserPayload<ExtArgs>,
+      T,
+      "findUniqueOrThrow",
+      GlobalOmitOptions
+    > | null,
+    null,
     ExtArgs,
     GlobalOmitOptions
   >;
@@ -3107,6 +3112,27 @@ export type MemberDeleteManyArgs<
  * Member.createdBy
  */
 export type Member$createdByArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
+> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null;
+  where?: Prisma.UserWhereInput;
+};
+
+/**
+ * Member.assignedCollector
+ */
+export type Member$assignedCollectorArgs<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
 > = {
   /**

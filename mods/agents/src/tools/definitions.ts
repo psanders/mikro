@@ -24,9 +24,10 @@ export const createMemberTool: ToolFunction = {
           description:
             "Número de teléfono del miembro (se proporciona automáticamente del contexto)"
         },
-        referrerName: {
+        referredById: {
           type: "string",
-          description: "Nombre de la persona que refirió al cliente"
+          description:
+            "ID del referidor (UUID). REQUERIDO. Proceso: 1) Pregunta al usuario '¿Quién te refirió?' o '¿Quién te habló de Mikro Créditos?', 2) Llama listUsers con role='REFERRER' para obtener la lista de referidores disponibles con sus IDs, 3) Haz coincidir el nombre proporcionado por el usuario con uno de la lista, 4) Si no estás seguro, muestra las opciones al usuario y confirma, 5) Usa el ID (campo 'id') del referidor seleccionado aquí."
         },
         name: {
           type: "string",
@@ -38,7 +39,8 @@ export const createMemberTool: ToolFunction = {
         },
         collectionPoint: {
           type: "string",
-          description: "Dirección del punto de cobro"
+          description:
+            "URL del punto de cobro (debe ser una URL válida, por ejemplo: https://maps.google.com/?q=Dirección)"
         },
         homeAddress: {
           type: "string",
@@ -57,7 +59,7 @@ export const createMemberTool: ToolFunction = {
           description: "Indica si el miembro es propietario de un negocio (true/false)"
         }
       },
-      required: ["name", "idNumber", "collectionPoint", "homeAddress"]
+      required: ["name", "idNumber", "collectionPoint", "homeAddress", "referredById"]
     }
   }
 };
@@ -277,6 +279,31 @@ export const listMemberLoansByPhoneTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for listing users.
+ * Used by Joan (guest onboarding) and Maria (admin) to find referrers and collectors.
+ */
+export const listUsersTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listUsers",
+    description:
+      "Listar todos los usuarios disponibles. Útil para encontrar referidores (REFERRER) y cobradores (COLLECTOR) al crear un nuevo miembro. Los usuarios incluyen sus roles.",
+    parameters: {
+      type: "object",
+      properties: {
+        role: {
+          type: "string",
+          description:
+            "Filtrar usuarios por rol: 'REFERRER' para referidores, 'COLLECTOR' para cobradores, 'ADMIN' para administradores. Si no se especifica, muestra todos los usuarios.",
+          enum: ["ADMIN", "COLLECTOR", "REFERRER"]
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -288,7 +315,8 @@ export const allTools: ToolFunction[] = [
   createLoanTool,
   getMemberByPhoneTool,
   listLoansByMemberTool,
-  listMemberLoansByPhoneTool
+  listMemberLoansByPhoneTool,
+  listUsersTool
 ];
 
 /**

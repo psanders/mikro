@@ -479,13 +479,15 @@ export type UserUpdateOneRequiredWithoutReferredMembersNestedInput = {
   >;
 };
 
-export type UserUpdateOneRequiredWithoutAssignedMembersNestedInput = {
+export type UserUpdateOneWithoutAssignedMembersNestedInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutAssignedMembersInput,
     Prisma.UserUncheckedCreateWithoutAssignedMembersInput
   >;
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedMembersInput;
   upsert?: Prisma.UserUpsertWithoutAssignedMembersInput;
+  disconnect?: Prisma.UserWhereInput | boolean;
+  delete?: Prisma.UserWhereInput | boolean;
   connect?: Prisma.UserWhereUniqueInput;
   update?: Prisma.XOR<
     Prisma.XOR<

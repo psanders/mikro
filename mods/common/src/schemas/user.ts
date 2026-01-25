@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
-import { validateDominicanPhone } from "../utils/validatePhone.js";
+import { validatePhone } from "../utils/validatePhone.js";
 
 /**
  * Role enum matching Prisma schema.
@@ -30,7 +30,7 @@ export const updateUserSchema = z.object({
     .string()
     .transform((val) => {
       // Validate and normalize phone to E.164 format
-      return validateDominicanPhone(val);
+      return validatePhone(val);
     })
     .optional(),
   enabled: z.boolean().optional()
@@ -52,7 +52,7 @@ export const getUserByPhoneSchema = z.object({
     .min(1, "Phone number is required")
     .transform((val) => {
       // Validate and normalize phone to E.164 format
-      return validateDominicanPhone(val);
+      return validatePhone(val);
     })
 });
 

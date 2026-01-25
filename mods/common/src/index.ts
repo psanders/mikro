@@ -8,7 +8,7 @@
 export { ValidationError, type FieldError } from "./errors/index.js";
 
 // Utilities
-export { withErrorHandlingAndValidation, validateDominicanPhone } from "./utils/index.js";
+export { withErrorHandlingAndValidation, validatePhone } from "./utils/index.js";
 
 // Schemas
 export {
