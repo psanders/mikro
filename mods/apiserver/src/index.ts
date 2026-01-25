@@ -53,13 +53,13 @@ export type { AppRouter } from "./trpc/index.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Images path for serving static files (receipts, etc.)
-const IMAGES_PATH = process.env.IMAGES_PATH || "./images";
+// Public path for serving static files (receipts, images, etc.)
+const PUBLIC_PATH = process.env.PUBLIC_PATH || "./public";
 
 app.use(express.json());
 
-// Serve images publicly at /images/:filename
-app.use("/images", express.static(IMAGES_PATH));
+// Serve static files publicly at /images/:filename
+app.use("/images", express.static(PUBLIC_PATH));
 
 // Health check endpoint
 app.get("/health", (_req, res) => {
@@ -407,7 +407,7 @@ initializeMessageProcessor()
     app.listen(PORT, () => {
       logger.info("api server started", {
         port: PORT,
-        imagesPath: IMAGES_PATH,
+        publicPath: PUBLIC_PATH,
         processorConfigured: finalState.exists
       });
 

@@ -19,19 +19,17 @@ services:
       # Public URL for serving images (required for WhatsApp receipt sending)
       # Must be a publicly accessible HTTPS URL
       - PUBLIC_URL=${PUBLIC_URL:-https://app.mikro.com}
-      # Images path (use absolute path in container)
-      - IMAGES_PATH=${IMAGES_PATH:-/app/images}
+      # Public path for static files (use absolute path in container)
+      - PUBLIC_PATH=${PUBLIC_PATH:-/app/public}
       # WhatsApp Business API
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
       - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
-      # Images path (use absolute path in container)
-      - IMAGES_PATH=${IMAGES_PATH:-/app/images}
     volumes:
       # Database persistence
       - ./data:/app/data
-      # Images directory for serving receipts
-      - ./images:/app/images
+      # Public directory for serving static files (receipts, images, etc.)
+      - ./public:/app/public
     healthcheck:
       test:
         [

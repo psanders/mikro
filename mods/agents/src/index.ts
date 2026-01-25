@@ -68,7 +68,7 @@ export {
   getWebhookVerifyToken,
   getWhatsAppPhoneNumberId,
   getWhatsAppAccessToken,
-  getImagesPath,
+  getPublicPath,
   getPublicUrl,
   getPublicImageUrl,
   getOpenAIApiKey

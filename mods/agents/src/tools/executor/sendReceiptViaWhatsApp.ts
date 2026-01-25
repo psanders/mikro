@@ -48,7 +48,7 @@ export async function handleSendReceiptViaWhatsApp(
     if (result.success) {
       return {
         success: true,
-        message: "Aquí está el recibo solicitado.",
+        message: "OK",
         data: {
           messageId: result.messageId
           // Note: imageUrl is not included - the image is already sent via WhatsApp

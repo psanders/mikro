@@ -49,11 +49,11 @@ export function getWhatsAppAccessToken(): string {
 }
 
 /**
- * Get the images path for storing/serving images.
- * @returns The images path, defaults to './images'
+ * Get the public path for storing/serving static files.
+ * @returns The public path, defaults to './public'
  */
-export function getImagesPath(): string {
-  return process.env.IMAGES_PATH || "./images";
+export function getPublicPath(): string {
+  return process.env.PUBLIC_PATH || "./public";
 }
 
 /**

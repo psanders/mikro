@@ -103,10 +103,10 @@ export async function handleCreatePayment(
       paymentId: payment.id,
       error: err.message
     });
-    // Payment was created, but receipt generation failed
+    // Payment was created, but receipt generation failed - keep message minimal
     return {
       success: true,
-      message: `Pago de RD$ ${payment.amount} registrado correctamente, pero hubo un error al generar el recibo. Puedes enviar el recibo más tarde usando sendReceiptViaWhatsApp con el paymentId: ${payment.id}`,
+      message: `OK - recibo pendiente, paymentId: ${payment.id}`,
       data: {
         paymentId: payment.id,
         amount: payment.amount,
@@ -127,8 +127,8 @@ export async function handleCreatePayment(
     };
   }
 
-  // Format success message
-  const successMessage = `Pago registrado para ${loan.member.name}\n\nPréstamo #${loan.loanId}\nMonto: RD$ ${amount.toLocaleString("es-DO")}\nRecibo generado correctamente`;
+  // Format success message - keep minimal so LLM doesn't elaborate
+  const successMessage = `OK`;
 
   return {
     success: true,

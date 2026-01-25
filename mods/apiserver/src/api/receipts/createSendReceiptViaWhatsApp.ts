@@ -10,7 +10,7 @@ import {
 } from "@mikro/common";
 import { type GenerateReceiptResponse } from "./createGenerateReceipt.js";
 import { saveReceiptImage } from "../../receipts/storage.js";
-import { getImagesPath, getPublicImageUrl, getWhatsAppAccessToken } from "@mikro/agents";
+import { getPublicPath, getPublicImageUrl } from "@mikro/agents";
 import { logger } from "../../logger.js";
 
 /**
@@ -42,7 +42,7 @@ export interface SendReceiptViaWhatsAppDependencies {
     caption?: string;
   }) => Promise<WhatsAppSendResponse>;
   uploadMedia: (imageBuffer: Buffer, mimeType: string) => Promise<string>;
-  imagesPath?: string;
+  publicPath?: string;
 }
 
 /**
@@ -63,7 +63,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
     generateReceipt,
     sendWhatsAppMessage,
     uploadMedia,
-    imagesPath = getImagesPath()
+    publicPath = getPublicPath()
   } = deps;
 
   const fn = async (
@@ -89,7 +89,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       const loanNumber = receipt.receiptData.loanNumber;
 
       // 3. Save image to disk (for backup/archival purposes)
-      const filename = saveReceiptImage(loanNumber, receipt.image, imagesPath);
+      const filename = saveReceiptImage(loanNumber, receipt.image, publicPath);
 
       // 4. Convert base64 image to buffer and upload to WhatsApp
       const imageBuffer = Buffer.from(receipt.image, "base64");
@@ -150,7 +150,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       const messageParams = {
         phone: recipientPhone, // Send to collector (requestor)
         mediaId: mediaId, // Only mediaId - explicitly exclude imageUrl
-        caption: `Recibo de pago - Préstamo #${loanNumber}`
+
       };
 
       const whatsappResponse = await sendWhatsAppMessage(messageParams);

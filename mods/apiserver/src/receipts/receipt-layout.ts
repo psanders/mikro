@@ -140,15 +140,15 @@ export function createReceiptLayout(
                   padding: "35px",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
                   display: "flex",
-                  flexDirection: "row"
+                  flexDirection: "column",
+                  position: "relative"
                 },
                 children: [
-                  // Left side - Fields
+                  // Fields (full width)
                   {
                     type: "div",
                     props: {
                       style: {
-                        flex: 1,
                         display: "flex",
                         flexDirection: "column",
                         gap: "24px"
@@ -191,15 +191,15 @@ export function createReceiptLayout(
                       }))
                     }
                   },
-                  // Right side - QR Code
+                  // QR Code (absolute positioned bottom-right)
                   {
                     type: "div",
                     props: {
                       style: {
-                        width: "240px",
                         display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "center"
+                        position: "absolute",
+                        bottom: "35px",
+                        right: "35px"
                       },
                       children: qrCodeElement
                     }
