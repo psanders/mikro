@@ -13,4 +13,4 @@ export {
   getToolByName
 } from "./definitions.js";
 
-export { createToolExecutor } from "./executor.js";
+export { createToolExecutor } from "./executor/index.js";

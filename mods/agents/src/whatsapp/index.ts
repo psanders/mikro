@@ -10,4 +10,4 @@ export {
   type MessageProcessorDependencies
 } from "./handleWhatsAppMessage.js";
 export { createSendWhatsAppMessage } from "./createSendWhatsAppMessage.js";
-export { createWhatsAppClient } from "./createWhatsAppClient.js";
+export { createWhatsAppClient } from "./client/index.js";

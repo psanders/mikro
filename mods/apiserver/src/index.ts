@@ -205,8 +205,8 @@ async function initializeMessageProcessor() {
         const receipt = await generateReceipt(params);
         return { image: receipt.image, token: receipt.token };
       },
-      sendReceiptViaWhatsApp: async (params: { paymentId: string }) => {
-        const result = await sendReceiptViaWhatsAppFn({ paymentId: params.paymentId });
+      sendReceiptViaWhatsApp: async (params: { paymentId: string; phone: string }) => {
+        const result = await sendReceiptViaWhatsAppFn({ paymentId: params.paymentId, phone: params.phone });
         return {
           success: result.success,
           message: result.success

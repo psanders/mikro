@@ -12,7 +12,7 @@
     "build": "lerna run build",
     "test": "lerna run test",
     "typecheck": "lerna run typecheck",
-    "start:apiserver": "npm start -w @mikro/apiserver",
+    "start:apiserver": "LOGS_LEVEL=verbose npm start -w @mikro/apiserver",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

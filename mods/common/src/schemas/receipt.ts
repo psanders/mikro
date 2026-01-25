@@ -35,9 +35,11 @@ export type ReceiptDataInput = z.infer<typeof receiptDataSchema>;
 
 /**
  * Schema for sending a receipt via WhatsApp.
+ * Sends to the provided phone (e.g., collector requesting the receipt).
  */
 export const sendReceiptViaWhatsAppSchema = z.object({
-  paymentId: z.uuid({ error: "Invalid payment ID" })
+  paymentId: z.uuid({ error: "Invalid payment ID" }),
+  phone: z.string() // Required: phone number of the recipient (collector)
 });
 
 /**

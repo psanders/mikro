@@ -279,7 +279,7 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Send a receipt via WhatsApp to the member associated with the payment.
+   * Send a receipt via WhatsApp to the collector (requestor).
    * Generates the receipt, saves it to disk, and sends it via WhatsApp.
    */
   sendReceiptViaWhatsApp: protectedProcedure

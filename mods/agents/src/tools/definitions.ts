@@ -102,7 +102,7 @@ export const createPaymentTool: ToolFunction = {
  * Tool definition for sending a receipt via WhatsApp.
  * Used by Juan (collector).
  *
- * This is the tool for sending receipts to members.
+ * This is the tool for sending receipts to the collector (requestor).
  * It generates the receipt, saves it to disk, and sends it via WhatsApp automatically.
  */
 export const sendReceiptViaWhatsAppTool: ToolFunction = {
@@ -110,7 +110,7 @@ export const sendReceiptViaWhatsAppTool: ToolFunction = {
   function: {
     name: "sendReceiptViaWhatsApp",
     description:
-      "Generar y enviar un recibo por WhatsApp al miembro asociado al pago. Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del miembro.",
+      "Generar y enviar un recibo por WhatsApp al cobrador (la persona que solicita el recibo). Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del cobrador.",
     parameters: {
       type: "object",
       properties: {
@@ -288,6 +288,30 @@ export const listMemberLoansByPhoneTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for getting loan information by loan ID.
+ * Used by Juan (collector) to get loan details including payment amount before creating a payment.
+ */
+export const getLoanByLoanIdTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getLoanByLoanId",
+    description:
+      "Obtener información detallada de un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Incluye información del miembro, monto del préstamo, monto de pago esperado, frecuencia de pago, y estado.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description:
+            "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
  * Tool definition for listing payments by loan ID.
  * Used by Juan (collector) to see payment history and get payment IDs for sending receipts.
  */
@@ -355,7 +379,8 @@ export const allTools: ToolFunction[] = [
   getMemberByPhoneTool,
   listLoansByMemberTool,
   listMemberLoansByPhoneTool,
-  listUsersTool
+  listUsersTool,
+  getLoanByLoanIdTool
 ];
 
 /**
