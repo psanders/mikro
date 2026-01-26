@@ -45,6 +45,20 @@ services:
     networks:
       - mikro-network
 
+  ngrok:
+    image: ngrok/ngrok:alpine
+    container_name: mikro-ngrok
+    restart: unless-stopped
+    ports:
+      - "4040:4040"
+    environment:
+      NGROK_AUTHTOKEN: ${MIKRO_NGROK_AUTHTOKEN}
+    command: ["http", "apiserver:3000"]
+    depends_on:
+      - apiserver
+    networks:
+      - mikro-network
+
 networks:
   mikro-network:
     driver: bridge
