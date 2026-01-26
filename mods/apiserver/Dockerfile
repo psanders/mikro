@@ -29,19 +29,16 @@ COPY mods/common/ ./mods/common/
 COPY mods/agents/ ./mods/agents/
 COPY mods/apiserver/ ./mods/apiserver/
 
-# Build workspace packages in dependency order
+# Build workspace packages in dependency order from root (ensures proper workspace resolution)
 # 1. Build @mikro/common (no internal dependencies)
-WORKDIR /app/mods/common
-RUN npm run build
+RUN npm run build -w @mikro/common
 
 # 2. Build @mikro/agents (depends on common)
-WORKDIR /app/mods/agents
-RUN npm run build
+RUN npm run build -w @mikro/agents
 
 # 3. Generate Prisma client and build @mikro/apiserver (depends on both)
-WORKDIR /app/mods/apiserver
-RUN npm run db:generate
-RUN npm run build
+RUN npm run db:generate -w @mikro/apiserver
+RUN npm run build -w @mikro/apiserver
 
 # Stage 2: Production
 FROM node:20-alpine AS production
