@@ -2,10 +2,6 @@
 node_modules/
 **/node_modules/
 
-# Build output
-dist/
-**/dist/
-
 # Test files
 test/
 **/test/

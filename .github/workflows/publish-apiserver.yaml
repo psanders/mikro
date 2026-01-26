@@ -26,6 +26,16 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: |
+          npm run build -w @mikro/common
+          npm run build -w @mikro/agents
+          npm run db:generate -w @mikro/apiserver
+          npm run build -w @mikro/apiserver
+
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
