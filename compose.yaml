@@ -1,8 +1,6 @@
 services:
   apiserver:
-    build:
-      context: .
-      dockerfile: mods/apiserver/Dockerfile
+    image: ${MIKRO_IMAGE:-psanders/mikro:latest}
     container_name: mikro-apiserver
     restart: unless-stopped
     ports:
@@ -25,11 +23,17 @@ services:
       - MIKRO_WHATSAPP_PHONE_NUMBER_ID=${MIKRO_WHATSAPP_PHONE_NUMBER_ID}
       - MIKRO_WHATSAPP_ACCESS_TOKEN=${MIKRO_WHATSAPP_ACCESS_TOKEN}
       - MIKRO_WHATSAPP_VERIFY_TOKEN=${MIKRO_WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
+      # OpenAI API for AI agents
+      - MIKRO_OPENAI_API_KEY=${MIKRO_OPENAI_API_KEY}
+      # Path to signing keys (use absolute path in container)
+      - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
     volumes:
       # Database persistence
       - ./data:/app/data
       # Public directory for serving static files (receipts, images, etc.)
       - ./public:/app/public
+      # Signing keys for receipts
+      - ./keys:/app/keys
     healthcheck:
       test:
         [
@@ -53,7 +57,7 @@ services:
       - "4040:4040"
     environment:
       NGROK_AUTHTOKEN: ${MIKRO_NGROK_AUTHTOKEN}
-    command: ["http", "apiserver:3000"]
+    command: ["http", "apiserver:${MIKRO_PORT:-3000}"]
     depends_on:
       - apiserver
     networks:

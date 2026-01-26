@@ -34,11 +34,11 @@ COPY mods/apiserver/assets ./mods/apiserver/assets
 COPY mods/apiserver/docker-entrypoint.sh ./mods/apiserver/docker-entrypoint.sh
 RUN chmod +x ./mods/apiserver/docker-entrypoint.sh
 
-# Install only production dependencies
-# Use --ignore-scripts to skip husky prepare script (not needed in production containers)
-RUN npm ci --omit=dev --ignore-scripts
+# Install production dependencies and rebuild native modules
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm rebuild better-sqlite3
 
-# Install Prisma CLI globally for migrations (needed for db:migrate:deploy)
+# Install Prisma CLI globally for migrations
 RUN npm install -g prisma@^7.3.0 && \
     npm cache clean --force
 

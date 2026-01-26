@@ -1,0 +1,7 @@
+# Development overrides - use with: docker compose -f compose.yaml -f compose.dev.yaml up
+services:
+  apiserver:
+    image: mikro:latest
+    build:
+      context: .
+      dockerfile: mods/apiserver/Dockerfile
