@@ -31,10 +31,8 @@ jobs:
 
       - name: Build packages
         run: |
-          npm run build -w @mikro/common
-          npm run build -w @mikro/agents
+          npm run build
           npm run db:generate -w @mikro/apiserver
-          npm run build -w @mikro/apiserver
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
