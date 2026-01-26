@@ -63,8 +63,6 @@ README.md
 .prettierrc
 .prettierignore
 eslint.config.mjs
-tsconfig.json
-**/tsconfig.json
 
 # Scripts
 .scripts/
