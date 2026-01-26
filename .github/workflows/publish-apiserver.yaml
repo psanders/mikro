@@ -1,0 +1,50 @@
+name: Publish API Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mods/**"
+      - "package.json"
+      - "package-lock.json"
+      - "lerna.json"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (defaults to lerna.json)"
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "LERNA_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          else
+            lerna_version=$(node -p "require('./lerna.json').version")
+            echo "LERNA_VERSION=$lerna_version" >> $GITHUB_ENV
+          fi
+
+      - name: Publish to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: psanders/mikro
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          dockerfile: mods/apiserver/Dockerfile
+          context: .
+          platforms: linux/amd64,linux/arm64
+          tags: "latest,${{ env.LERNA_VERSION }}"
