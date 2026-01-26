@@ -92,11 +92,11 @@ CREATE TABLE "payments" (
     "status" TEXT NOT NULL DEFAULT 'COMPLETED',
     "notes" TEXT,
     "loan_id" TEXT NOT NULL,
-    "collected_by_id" TEXT,
+    "collected_by_id" TEXT NOT NULL,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     CONSTRAINT "payments_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "payments_collected_by_id_fkey" FOREIGN KEY ("collected_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "payments_collected_by_id_fkey" FOREIGN KEY ("collected_by_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateIndex

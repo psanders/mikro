@@ -25,7 +25,9 @@ import {
   createSendWhatsAppMessage,
   createWhatsAppClient,
   allTools,
-  type Message
+  getDisabledAgents,
+  type Message,
+  type AgentName
 } from "@mikro/agents";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
@@ -154,6 +156,15 @@ async function initializeMessageProcessor() {
       uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
     });
 
+    // Get disabled agents from environment
+    const disabledAgents = getDisabledAgents();
+    logger.verbose("disabled agents loaded", { disabledAgents: Array.from(disabledAgents) });
+
+    // Create function to check if an agent is disabled
+    const isAgentDisabled = (agentName: AgentName): boolean => {
+      return disabledAgents.has(agentName);
+    };
+
     // Create router
     const routeMessage = createMessageRouter({
       getUserByPhone: async (params: { phone: string }) => {
@@ -176,7 +187,8 @@ async function initializeMessageProcessor() {
           phone: member.phone,
           isActive: member.isActive
         };
-      }
+      },
+      isAgentDisabled
     });
 
     // Create tool executor
@@ -368,7 +380,7 @@ async function initializeMessageProcessor() {
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,
-      getAgent: (name: "joan" | "juan" | "maria") => getAgent(agents, name)
+      getAgent: (name: AgentName) => getAgent(agents, name)
     };
 
     setMessageProcessor(processorConfig);

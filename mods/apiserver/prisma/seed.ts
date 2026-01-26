@@ -28,6 +28,7 @@ async function main() {
     create: {
       id: "user-admin-001",
       name: "Admin User",
+      phone: "+1000000001",
       roles: {
         create: [{ role: "ADMIN" }]
       }
@@ -40,6 +41,7 @@ async function main() {
     create: {
       id: "user-collector-001",
       name: "Juan Collector",
+      phone: "+1000000002",
       roles: {
         create: [{ role: "COLLECTOR" }]
       }
@@ -52,6 +54,7 @@ async function main() {
     create: {
       id: "user-referrer-001",
       name: "Maria Referrer",
+      phone: "+1000000003",
       roles: {
         create: [{ role: "REFERRER" }]
       }
@@ -74,7 +77,6 @@ async function main() {
       jobPosition: "Shop Owner",
       income: 5000,
       isBusinessOwner: true,
-      isGuest: false,
       idCardOnRecord: true,
       createdById: admin.id,
       referredById: referrer.id,
@@ -92,8 +94,8 @@ async function main() {
       idNumber: "ID-67890",
       collectionPoint: "Downtown Plaza",
       homeAddress: "456 Oak Ave, Town",
-      isGuest: true,
-      createdById: admin.id
+      createdById: admin.id,
+      referredById: referrer.id
     }
   });
 
@@ -109,6 +111,8 @@ async function main() {
       loanId: loanId,
       type: "FIVE_K_AT_10_WEEKS",
       status: "ACTIVE",
+      principal: 5000,
+      termLength: 10,
       memberId: member1.id
     }
   });

@@ -71,5 +71,18 @@ export {
   getPublicPath,
   getPublicUrl,
   getPublicImageUrl,
-  getOpenAIApiKey
+  getOpenAIApiKey,
+  getDisabledAgents
 } from "./config.js";
+
+// Constants
+export {
+  AGENT_NAMES,
+  AGENT_JOAN,
+  AGENT_JUAN,
+  AGENT_MARIA,
+  VALID_AGENT_NAMES,
+  ROLE_TO_AGENT,
+  GUEST_AGENT,
+  type AgentName
+} from "./constants.js";

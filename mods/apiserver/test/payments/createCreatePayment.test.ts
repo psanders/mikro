@@ -12,7 +12,8 @@ describe("createCreatePayment", () => {
   const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
     loanId: validNumericLoanId,
-    amount: 650
+    amount: 650,
+    collectedById: validCollectorId
   };
 
   afterEach(() => {
@@ -30,7 +31,7 @@ describe("createCreatePayment", () => {
         method: "CASH",
         status: "COMPLETED",
         notes: null,
-        collectedById: null,
+        collectedById: validCollectorId,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -58,18 +59,15 @@ describe("createCreatePayment", () => {
         })
       ).to.be.true;
       expect(mockClient.payment.create.calledOnce).to.be.true;
-      expect(
-        mockClient.payment.create.calledWith({
-          data: {
-            loanId: validLoanUuid,
-            amount: 650,
-            method: "CASH",
-            paidAt: undefined,
-            collectedById: undefined,
-            notes: undefined
-          }
-        })
-      ).to.be.true;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      const createCall = mockClient.payment.create.getCall(0);
+      expect(createCall.args[0].data.loanId).to.equal(validLoanUuid);
+      expect(createCall.args[0].data.amount).to.equal(650);
+      expect(createCall.args[0].data.method).to.equal("CASH");
+      expect(createCall.args[0].data.collectedById).to.equal(validCollectorId);
+      // paidAt and notes should be undefined (not included in data)
+      expect(createCall.args[0].data.paidAt).to.be.undefined;
+      expect(createCall.args[0].data.notes).to.be.undefined;
     });
 
     it("should create a payment with explicit method TRANSFER", async () => {
@@ -83,7 +81,7 @@ describe("createCreatePayment", () => {
         paidAt: new Date(),
         status: "COMPLETED",
         notes: null,
-        collectedById: null,
+        collectedById: validCollectorId,
         createdAt: new Date(),
         updatedAt: new Date()
       };

@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { Role } from "@mikro/common";
+import type { AgentName } from "../constants.js";
 
 /**
  * Result of routing a message.
@@ -41,4 +42,6 @@ export interface RouterDependencies {
   getUserByPhone: (params: { phone: string }) => Promise<UserLookupResult | null>;
   /** Get member by phone number */
   getMemberByPhone: (params: { phone: string }) => Promise<MemberLookupResult | null>;
+  /** Check if an agent is disabled */
+  isAgentDisabled: (agentName: AgentName) => boolean;
 }

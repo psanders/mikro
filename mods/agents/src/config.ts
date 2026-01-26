@@ -87,3 +87,41 @@ export function getPublicImageUrl(filename: string): string {
 export function getOpenAIApiKey(): string {
   return validateRequired(process.env.MIKRO_OPENAI_API_KEY, "MIKRO_OPENAI_API_KEY");
 }
+
+import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";
+
+/**
+ * Get disabled agents from environment variable.
+ * Reads MIKRO_DISABLED_AGENTS as a comma-separated list of agent names.
+ * Validates that all agent names are valid.
+ *
+ * @returns A Set of disabled agent names, or empty Set if not set
+ * @example
+ * // MIKRO_DISABLED_AGENTS=joan,maria
+ * getDisabledAgents() → Set(["joan", "maria"])
+ */
+export function getDisabledAgents(): Set<string> {
+  const disabledAgentsEnv = process.env.MIKRO_DISABLED_AGENTS;
+
+  if (!disabledAgentsEnv || disabledAgentsEnv.trim().length === 0) {
+    return new Set<string>();
+  }
+
+  // Parse comma-separated list and trim whitespace
+  const agentNames = disabledAgentsEnv
+    .split(",")
+    .map((name) => name.trim().toLowerCase())
+    .filter((name) => name.length > 0);
+
+  // Validate all agent names are valid
+  const invalidNames = agentNames.filter(
+    (name): name is string => !VALID_AGENT_NAMES.has(name as AgentName)
+  );
+  if (invalidNames.length > 0) {
+    throw new Error(
+      `Invalid agent names in MIKRO_DISABLED_AGENTS: ${invalidNames.join(", ")}. Valid names are: ${AGENT_NAMES.join(", ")}`
+    );
+  }
+
+  return new Set(agentNames);
+}

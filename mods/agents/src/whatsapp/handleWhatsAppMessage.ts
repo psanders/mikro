@@ -12,6 +12,7 @@ import type { Agent, Message } from "../llm/types.js";
 import type { RouteResult } from "../router/types.js";
 import { getGuestConversation, addGuestMessage } from "../conversations/inMemoryStore.js";
 import { logger } from "../logger.js";
+import { GUEST_AGENT, ROLE_TO_AGENT, type AgentName } from "../constants.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -51,7 +52,7 @@ export interface MessageProcessorDependencies {
     content: string;
   }) => Promise<void>;
   /** Get agent by name */
-  getAgent: (name: "joan" | "juan" | "maria") => Agent;
+  getAgent: (name: AgentName) => Agent;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -306,8 +307,8 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     let context: Record<string, unknown>;
 
     if (route.type === "guest") {
-      // Guest: use Joan agent, in-memory chat history
-      agent = getAgent("joan");
+      // Guest: use guest agent, in-memory chat history
+      agent = getAgent(GUEST_AGENT);
       chatHistory = getGuestConversation(phone);
       context = { phone };
 
@@ -323,7 +324,8 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       });
     } else {
       // User: route to appropriate agent based on role
-      agent = route.role === "ADMIN" ? getAgent("maria") : getAgent("juan");
+      const targetAgent = ROLE_TO_AGENT[route.role];
+      agent = getAgent(targetAgent);
       chatHistory = await getChatHistoryForUser(route.userId);
       context = { userId: route.userId, phone };
 

@@ -7,6 +7,7 @@
 import type { RouteResult, RouterDependencies } from "./types.js";
 import { logger } from "../logger.js";
 import { validatePhone } from "@mikro/common";
+import { ROLE_TO_AGENT, GUEST_AGENT } from "../constants.js";
 
 /**
  * Creates a message router that determines routing based on phone number lookup.
@@ -33,7 +34,7 @@ import { validatePhone } from "@mikro/common";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getMemberByPhone } = deps;
+  const { getUserByPhone, getMemberByPhone, isAgentDisabled } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
@@ -81,6 +82,26 @@ export function createMessageRouter(deps: RouterDependencies) {
         primaryRole = "COLLECTOR";
       }
 
+      // Determine which agent would handle this user
+      const targetAgent = ROLE_TO_AGENT[primaryRole];
+
+      // Check if the target agent is disabled
+      if (isAgentDisabled(targetAgent)) {
+        logger.info("agent is disabled, ignoring request", {
+          phone: normalizedPhone,
+          agentName: targetAgent,
+          routeType: "user",
+          userId: user.id,
+          role: primaryRole,
+          reason: "agent is disabled"
+        });
+        return {
+          type: "ignored",
+          reason: "agent is disabled",
+          phone: normalizedPhone
+        };
+      }
+
       logger.verbose("phone belongs to user", {
         phone: normalizedPhone,
         userId: user.id,
@@ -95,6 +116,21 @@ export function createMessageRouter(deps: RouterDependencies) {
     }
 
     // Step 3: Unknown phone - this is a guest
+    // Check if guest agent is disabled
+    if (isAgentDisabled(GUEST_AGENT)) {
+      logger.info("agent is disabled, ignoring request", {
+        phone: normalizedPhone,
+        agentName: GUEST_AGENT,
+        routeType: "guest",
+        reason: "agent is disabled"
+      });
+      return {
+        type: "ignored",
+        reason: "agent is disabled",
+        phone: normalizedPhone
+      };
+    }
+
     logger.verbose("phone is unknown, routing to guest agent", { phone: normalizedPhone });
     return {
       type: "guest",
