@@ -113,16 +113,16 @@ export async function compareArgs(
 ): Promise<{ match: boolean; reason: string }> {
   const client = getOpenAIClient();
 
-  const systemPrompt = `You are an evaluation judge for function arguments. Your task is to determine if two sets of arguments are semantically equivalent, meaning they represent the same intent and values.
+  const systemPrompt = `You are an evaluation judge for function arguments. Your task is to determine if the EXPECTED arguments are present and match in the ACTUAL arguments.
 
-Consider:
-- Do the arguments represent the same request?
-- Are values semantically equivalent (e.g., "Isaic" matches "Isaac", "REFERRER" matches "referrer")?
-- Are all expected keys present in actual?
-- Extra keys in actual are acceptable if expected keys match
+IMPORTANT RULES:
+1. ONLY check if expected keys exist in actual with matching values
+2. IGNORE any extra keys in actual that are not in expected - they DO NOT affect the result
+3. For person names: names with the same words in different order ARE equivalent (e.g., "Pedro Santiago Sanders Almonte" = "Sanders Almonte Pedro Santiago" = "Pedro Sanders Almonte")
+4. Values are semantically equivalent if they represent the same thing (e.g., "Isaic" matches "Isaac", "REFERRER" matches "referrer")
 
 Respond with a JSON object containing:
-- "match": boolean (true if semantically equivalent)
+- "match": boolean (true if ALL expected keys are present in actual with matching values)
 - "reason": string (brief explanation)`;
 
   const userPrompt = `Expected arguments:
