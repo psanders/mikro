@@ -27,6 +27,8 @@ services:
       - MIKRO_OPENAI_API_KEY=${MIKRO_OPENAI_API_KEY}
       # Path to signing keys (use absolute path in container)
       - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
+      # Disabled agents
+      - MIKRO_DISABLED_AGENTS=${MIKRO_DISABLED_AGENTS}
     volumes:
       # Database persistence
       - ./data:/app/data

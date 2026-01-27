@@ -25,8 +25,8 @@
     "db:studio": "npm run db:studio -w @mikro/apiserver",
     "db:seed": "npm run db:seed -w @mikro/apiserver",
     "db:reset": "npm run db:reset -w @mikro/apiserver",
-    "generate-keys": "npx tsx .scripts/generate-keys.ts",
-    "migrate:json": "npx tsx .scripts/migrate-json.ts"
+    "keys:generate": "npx tsx .scripts/generate-keys.ts",
+    "json:migrate": "npx tsx .scripts/migrate-json.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
