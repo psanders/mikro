@@ -110,7 +110,7 @@ export const sendReceiptViaWhatsAppTool: ToolFunction = {
   function: {
     name: "sendReceiptViaWhatsApp",
     description:
-      "Generar y enviar un recibo por WhatsApp al cobrador (la persona que solicita el recibo). Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del cobrador.",
+      "Generar y enviar un recibo por WhatsApp al cobrador (la persona que solicita el recibo). Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del cobrador. IMPORTANTE: Esta herramienta REQUIERE el paymentId de la respuesta de createPayment. DEBES llamar createPayment primero y esperar su respuesta antes de llamar esta herramienta.",
     parameters: {
       type: "object",
       properties: {
