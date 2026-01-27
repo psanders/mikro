@@ -73,7 +73,8 @@ interface MigrationStats {
  */
 async function validateRequiredUsers(): Promise<Map<string, boolean>> {
   const requiredUserIds = [
-    "7a8bbcaa-063d-4fce-ae02-da9356dac213", // Pedro Sanders (ADMIN)
+    "7a8bbcaa-063d-4fce-ae02-da9356dac213", // Pedro Sanders (Collector)
+    "7a8bbcaa-063d-4fce-ae02-da9356dac214", // Jhoel Walwyn (Collector)
     "6ce9e266-b2fb-4dce-b21b-d0842fd78b36", // Isaic Santos (Referrer)
     "3757f991-57b3-4163-a8b5-387b97fa7dfe", // Antonio Cabrera (Referrer)
     "42fa3813-8b50-42bb-96c5-751642dae55f" // Mariano Cabrera (Referrer)
@@ -107,6 +108,12 @@ async function createRequiredUsers(userValidationMap: Map<string, boolean>): Pro
       id: "7a8bbcaa-063d-4fce-ae02-da9356dac213",
       name: "Pedro Sanders",
       phone: "+17853178070",
+      roles: [{ role: "COLLECTOR" }]
+    },
+    {
+      id: "7a8bbcaa-063d-4fce-ae02-da9356dac214",
+      name: "Jhoel Walwyn",
+      phone: "+18298700152",
       roles: [{ role: "COLLECTOR" }]
     },
     {

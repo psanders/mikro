@@ -164,29 +164,57 @@ describe("Payments Integration", () => {
       expect(payment.notes).to.equal("Partial payment for week 3");
     });
 
-    it("should create multiple payments for same loan", async () => {
+    it("should block duplicate payments within 10 minutes", async () => {
       const { loan, collector } = await createMemberWithLoan();
 
+      await caller.createPayment({
+        loanId: loan.loanId, // Use numeric loanId
+        amount: 650,
+        collectedById: collector.id
+      });
+
+      // Try to create another payment immediately - should be blocked
+      try {
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          collectedById: collector.id
+        });
+        expect.fail("Expected duplicate payment to be blocked");
+      } catch (error) {
+        expect((error as Error).message).to.include("Duplicate payment blocked");
+      }
+    });
+
+    it("should allow multiple payments for same loan when spaced 10+ minutes apart", async () => {
+      const { loan, collector } = await createMemberWithLoan();
+
+      // Create first payment with backdated paidAt
       const payment1 = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
         amount: 650,
+        paidAt: new Date("2026-01-10T10:00:00Z"),
         collectedById: collector.id
       });
 
+      // Manually update createdAt to be more than 10 minutes ago
+      // This simulates payments created at different times
+      await db.payment.update({
+        where: { id: payment1.id },
+        data: {
+          createdAt: new Date(Date.now() - 11 * 60 * 1000) // 11 minutes ago
+        }
+      });
+
+      // Now create second payment - should succeed
       const payment2 = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
         amount: 650,
-        collectedById: collector.id
-      });
-
-      const payment3 = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
+        paidAt: new Date("2026-01-10T10:15:00Z"),
         collectedById: collector.id
       });
 
       expect(payment1.id).to.not.equal(payment2.id);
-      expect(payment2.id).to.not.equal(payment3.id);
     });
   });
 

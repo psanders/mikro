@@ -14,6 +14,17 @@ Run with:
 docker run -p 3000:3000 psanders/mikro:latest
 ```
 
+## Docker Compose Setup
+
+Before running with `docker compose up`, create the data directory with proper ownership:
+
+```bash
+mkdir -p data
+sudo chown -R 1001:1001 data
+```
+
+The container runs as UID 1001 (`nodejs` user), so mounted volumes need matching ownership to allow writes (e.g., SQLite database).
+
 TODO:
 
 - Create a guardrail to prevent more payments than the loan amount

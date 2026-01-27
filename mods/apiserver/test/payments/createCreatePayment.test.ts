@@ -40,6 +40,7 @@ describe("createCreatePayment", () => {
           findUnique: sinon.stub().resolves({ id: validLoanUuid })
         },
         payment: {
+          findMany: sinon.stub().resolves([]), // No recent payments
           create: sinon.stub().resolves(expectedPayment)
         }
       };
@@ -90,6 +91,7 @@ describe("createCreatePayment", () => {
           findUnique: sinon.stub().resolves({ id: validLoanUuid })
         },
         payment: {
+          findMany: sinon.stub().resolves([]), // No recent payments
           create: sinon.stub().resolves(expectedPayment)
         }
       };
@@ -129,6 +131,7 @@ describe("createCreatePayment", () => {
           findUnique: sinon.stub().resolves({ id: validLoanUuid })
         },
         payment: {
+          findMany: sinon.stub().resolves([]), // No recent payments
           create: sinon.stub().resolves(expectedPayment)
         }
       };
@@ -169,7 +172,10 @@ describe("createCreatePayment", () => {
         loan: {
           findUnique: sinon.stub().resolves(null)
         },
-        payment: { create: sinon.stub() }
+        payment: {
+          findMany: sinon.stub(),
+          create: sinon.stub()
+        }
       };
       const createPayment = createCreatePayment(mockClient as any);
 
@@ -179,8 +185,133 @@ describe("createCreatePayment", () => {
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.include("Loan not found");
+        expect(mockClient.payment.findMany.called).to.be.false;
         expect(mockClient.payment.create.called).to.be.false;
       }
+    });
+
+    it("should throw error when duplicate payment detected within 10 minutes", async () => {
+      // Arrange
+      const recentPayment = {
+        id: "recent-payment-123",
+        amount: 650,
+        paidAt: new Date(),
+        createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+        method: "CASH",
+        status: "COMPLETED",
+        notes: null,
+        loanId: validLoanUuid,
+        collectedById: validCollectorId,
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
+        payment: {
+          findMany: sinon.stub().resolves([recentPayment]),
+          create: sinon.stub()
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+
+      // Act & Assert
+      try {
+        await createPayment(validInput);
+        expect.fail("Expected error to be thrown");
+      } catch (error) {
+        expect((error as Error).message).to.include("Duplicate payment blocked");
+        expect((error as Error).message).to.include(`loan ${validNumericLoanId}`);
+        expect((error as Error).message).to.include("Wait at least 10 minutes");
+        expect(mockClient.payment.findMany.calledOnce).to.be.true;
+        expect(mockClient.payment.create.called).to.be.false;
+        const findManyCall = mockClient.payment.findMany.getCall(0);
+        expect(findManyCall.args[0].where.loanId).to.equal(validLoanUuid);
+        expect(findManyCall.args[0].where.status).to.equal("COMPLETED");
+        expect(findManyCall.args[0].where.paidAt.gte).to.be.instanceOf(Date);
+        expect(findManyCall.args[0].orderBy.paidAt).to.equal("desc");
+        expect(findManyCall.args[0].take).to.equal(5);
+      }
+    });
+
+    it("should allow payment when no recent payment exists", async () => {
+      // Arrange
+      const expectedPayment = {
+        id: "payment-123",
+        loanId: validLoanUuid,
+        amount: 650,
+        paidAt: new Date(),
+        method: "CASH",
+        status: "COMPLETED",
+        notes: null,
+        collectedById: validCollectorId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
+        payment: {
+          findMany: sinon.stub().resolves([]), // No recent payment
+          create: sinon.stub().resolves(expectedPayment)
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+
+      // Act
+      const result = await createPayment(validInput);
+
+      // Assert
+      expect(result.id).to.equal("payment-123");
+      expect(mockClient.payment.findMany.calledOnce).to.be.true;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+    });
+
+    it("should allow payment when existing payment is older than 10 minutes", async () => {
+      // Arrange
+      const oldPayment = {
+        id: "old-payment-123",
+        amount: 650,
+        paidAt: new Date(),
+        createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+        method: "CASH",
+        status: "COMPLETED",
+        notes: null,
+        loanId: validLoanUuid,
+        collectedById: validCollectorId,
+        updatedAt: new Date()
+      };
+      const expectedPayment = {
+        id: "payment-123",
+        loanId: validLoanUuid,
+        amount: 650,
+        paidAt: new Date(),
+        method: "CASH",
+        status: "COMPLETED",
+        notes: null,
+        collectedById: validCollectorId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+        },
+        payment: {
+          findMany: sinon.stub().resolves([oldPayment]), // Old payment exists but > 10 min ago
+          create: sinon.stub().resolves(expectedPayment)
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+
+      // Act
+      const result = await createPayment(validInput);
+
+      // Assert
+      expect(result.id).to.equal("payment-123");
+      expect(mockClient.payment.findMany.calledOnce).to.be.true;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
     });
 
     it("should throw ValidationError for negative amount", async () => {
@@ -248,6 +379,7 @@ describe("createCreatePayment", () => {
           findUnique: sinon.stub().resolves({ id: validLoanUuid })
         },
         payment: {
+          findMany: sinon.stub().resolves([]), // No recent payments
           create: sinon.stub().rejects(new Error("Payment creation failed"))
         }
       };

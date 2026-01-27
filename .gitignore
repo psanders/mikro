@@ -18,3 +18,7 @@ dist/
 
 # Evaluation results
 eval-results/
+
+# Runtime data (Docker volumes)
+data/
+public/

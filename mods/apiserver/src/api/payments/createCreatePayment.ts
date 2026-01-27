@@ -34,6 +34,28 @@ export function createCreatePayment(client: DbClient) {
       throw new Error(`Loan not found with loanId: ${params.loanId}`);
     }
 
+    // Check for recent payments on this loan (duplicate guard)
+    const recentPaymentCutoff = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago for query optimization
+    const recentPayments = await client.payment.findMany({
+      where: {
+        loanId: loan.id,
+        status: "COMPLETED",
+        paidAt: { gte: oneHourAgo } // Limit query scope to last hour
+      },
+      orderBy: { paidAt: "desc" },
+      take: 5 // Only need to check a few recent payments
+    });
+
+    const recentPayment = recentPayments.find((p) => p.createdAt >= recentPaymentCutoff);
+
+    if (recentPayment) {
+      throw new Error(
+        `Duplicate payment blocked: A payment was already recorded for loan ${params.loanId} ` +
+          `at ${recentPayment.createdAt.toISOString()}. Wait at least 10 minutes between payments.`
+      );
+    }
+
     const payment = (await client.payment.create({
       data: {
         loanId: loan.id, // Use UUID from loan lookup
