@@ -15,8 +15,11 @@ import { ValidationError } from "../errors/index.js";
  * @throws ValidationError if the phone number is invalid
  */
 export function validatePhone(phoneNumber: string): string {
+  // Normalize: add + prefix if missing for international format
+  const normalizedInput = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
+
   // phone library validates any international phone number when called without country restriction
-  const result = phone(phoneNumber);
+  const result = phone(normalizedInput);
 
   if (!result.isValid) {
     // Create a ZodError to match ValidationError's expected format
