@@ -50,6 +50,15 @@ describe("handleWhatsAppMessage", () => {
   };
 
   beforeEach(() => {
+    // Reset all stub call histories
+    mockMessageProcessor.routeMessage.resetHistory();
+    mockMessageProcessor.invokeLLM.resetHistory();
+    mockMessageProcessor.sendWhatsAppMessage.resetHistory();
+    mockMessageProcessor.downloadMedia.resetHistory();
+    mockMessageProcessor.getChatHistoryForUser.resetHistory();
+    mockMessageProcessor.addMessageForUser.resetHistory();
+    mockMessageProcessor.getAgent.resetHistory();
+
     setMessageProcessor(mockMessageProcessor);
     markInitializationComplete();
   });
@@ -152,6 +161,47 @@ describe("handleWhatsAppMessage", () => {
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
       }
+    });
+  });
+
+  describe("voice note handling", () => {
+    it("should respond with unsupported message for audio/voice notes", async () => {
+      // Arrange
+      const voiceNoteWebhook = {
+        object: "whatsapp_business_account",
+        entry: [
+          {
+            changes: [
+              {
+                value: {
+                  messages: [
+                    {
+                      from: "+1234567890",
+                      type: "audio",
+                      id: "voice-msg-123"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      // Act
+      const result = await handleWhatsAppMessage(voiceNoteWebhook);
+
+      // Assert
+      expect(result.messagesProcessed).to.equal(1);
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(
+        mockMessageProcessor.sendWhatsAppMessage.calledWithMatch({
+          phone: "+1234567890",
+          message: sinon.match(/notas de voz/)
+        })
+      ).to.be.true;
+      // LLM should NOT be invoked for voice notes
+      expect(mockMessageProcessor.invokeLLM.called).to.be.false;
     });
   });
 

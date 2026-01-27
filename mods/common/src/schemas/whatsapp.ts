@@ -19,11 +19,30 @@ export const whatsappImageSchema = z.object({
 });
 
 /**
+ * Enum for WhatsApp incoming message types.
+ * These are the message types that can be received from the WhatsApp webhook.
+ */
+export const whatsappMessageTypeEnum = z.enum([
+  "text",
+  "image",
+  "audio",
+  "video",
+  "document",
+  "sticker",
+  "location",
+  "contacts",
+  "interactive",
+  "button",
+  "reaction",
+  "unsupported"
+]);
+
+/**
  * Schema for an individual WhatsApp message from webhook.
  */
 export const whatsappMessageSchema = z.object({
   from: z.string(),
-  type: z.string(),
+  type: whatsappMessageTypeEnum,
   id: z.string(),
   text: whatsappTextSchema.optional(),
   image: whatsappImageSchema.optional()
@@ -143,6 +162,11 @@ export type WhatsAppText = z.infer<typeof whatsappTextSchema>;
  * Type for WhatsApp message image content.
  */
 export type WhatsAppImage = z.infer<typeof whatsappImageSchema>;
+
+/**
+ * Type for WhatsApp incoming message types.
+ */
+export type WhatsAppMessageType = z.infer<typeof whatsappMessageTypeEnum>;
 
 /**
  * Type for an individual WhatsApp message from webhook.

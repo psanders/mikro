@@ -271,6 +271,21 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     getAgent
   } = messageProcessor;
 
+  // Early check for voice notes (audio messages) - we don't support them
+  if (type === "audio") {
+    logger.verbose("voice note received, sending unsupported message", { phone, messageId: id });
+    try {
+      await sendWhatsAppMessage({
+        phone,
+        message: "No puedo escuchar notas de voz. Por favor, escríbeme un mensaje de texto."
+      });
+    } catch (error) {
+      const err = error as Error;
+      logger.error("failed to send voice note unsupported message", { phone, error: err.message });
+    }
+    return;
+  }
+
   try {
     // Step 1: Route the message
     const route = await routeMessage(phone);
