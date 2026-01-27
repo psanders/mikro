@@ -5,7 +5,7 @@ This is the main repository for the Mikro project. It is a monorepo that contain
 Build a linux compatible docker image.
 
 ```bash
-docker build --platform linux/amd64 --no-cache -t psanders/mikro:latest -f mods/apiserver/Dockerfile .
+docker build --platform linux/amd64 --no-cache -t psanders/mikro:latest -f mods/apiserver/Dockerfile --push .
 ```
 
 Run with:
