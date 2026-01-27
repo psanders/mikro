@@ -28,6 +28,8 @@ export interface Agent {
   model: string;
   /** Temperature setting for the model */
   temperature: number;
+  /** Optional evaluation configuration */
+  evaluations?: AgentEvaluation;
 }
 
 /**
@@ -109,3 +111,58 @@ export type ToolExecutor = (
   args: Record<string, unknown>,
   context?: Record<string, unknown>
 ) => Promise<ToolResult>;
+
+/**
+ * Mode for argument verification in evaluations.
+ */
+export type ArgMatchMode = "strict" | "judge";
+
+/**
+ * Expected tool call with verification and mock data.
+ */
+export interface ExpectedToolCall {
+  /** Tool name that should be called */
+  name: string;
+  /** Expected arguments - verified against actual args */
+  expectedArgs?: Record<string, unknown>;
+  /** How to match arguments: "strict" (exact) or "judge" (LLM semantic) */
+  matchMode?: ArgMatchMode;
+  /** Mock response returned by the tool during eval */
+  mockResponse: ToolResult;
+}
+
+/**
+ * A single conversation turn in an evaluation scenario.
+ */
+export interface ConversationTurn {
+  /** Human input message (optional if image provided) */
+  human?: string;
+  /** Optional image as URL or base64 data URL (e.g., "data:image/jpeg;base64,...") */
+  image?: string;
+  /** Expected AI response */
+  expectedAI: string;
+  /** Optional tool calls expected in this turn */
+  tools?: ExpectedToolCall[];
+}
+
+/**
+ * Evaluation scenario containing multiple conversation turns.
+ */
+export interface EvaluationScenario {
+  /** Unique identifier for the scenario */
+  id: string;
+  /** Description of what the scenario tests */
+  description: string;
+  /** Conversation turns in order */
+  turns: ConversationTurn[];
+}
+
+/**
+ * Evaluation configuration for an agent.
+ */
+export interface AgentEvaluation {
+  /** Context that emulates production environment */
+  context?: Record<string, unknown>;
+  /** Scenarios to test */
+  scenarios: EvaluationScenario[];
+}

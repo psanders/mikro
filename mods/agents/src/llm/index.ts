@@ -11,7 +11,12 @@ export type {
   ToolCall,
   ToolFunction,
   ToolResult,
-  ToolExecutor
+  ToolExecutor,
+  ArgMatchMode,
+  ExpectedToolCall,
+  ConversationTurn,
+  EvaluationScenario,
+  AgentEvaluation
 } from "./types.js";
 
 // Functions

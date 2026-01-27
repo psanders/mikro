@@ -16,6 +16,8 @@
   "dependencies": {
     "@fonoster/logger": "^0.9.23",
     "@mikro/common": "^1.0.0",
+    "ansis": "^3.17.0",
+    "cli-table3": "^0.6.5",
     "exceljs": "^4.4.0",
     "openai": "^6.16.0"
   },
