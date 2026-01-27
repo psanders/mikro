@@ -4,16 +4,16 @@ services:
     container_name: mikro-apiserver
     restart: unless-stopped
     ports:
-      - "${MIKRO_PORT:-3000}:3000"
+      - "${MIKRO_PORT:-4000}:4000"
     environment:
       # Database (use absolute path in container)
       - MIKRO_DATABASE_URL=${MIKRO_DATABASE_URL:-file:/app/data/mikro.db}
       # API Server
-      - MIKRO_PORT=${MIKRO_PORT:-3000}
+      - MIKRO_PORT=${MIKRO_PORT:-4000}
       # Basic auth credentials for system API access (format: username:password)
       - MIKRO_CREDENTIALS=${MIKRO_CREDENTIALS:-admin:secret}
       # API URL for CLI and other clients
-      - MIKRO_API_URL=${MIKRO_API_URL:-http://localhost:3000}
+      - MIKRO_API_URL=${MIKRO_API_URL:-http://localhost:4000}
       # Public URL for serving images (required for WhatsApp receipt sending)
       # Must be a publicly accessible HTTPS URL
       - MIKRO_PUBLIC_URL=${MIKRO_PUBLIC_URL:-https://app.mikro.com}
@@ -40,7 +40,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+          "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
         ]
       interval: 30s
       timeout: 3s
@@ -57,7 +57,7 @@ services:
       - "4040:4040"
     environment:
       NGROK_AUTHTOKEN: ${MIKRO_NGROK_AUTHTOKEN}
-    command: ["http", "apiserver:${MIKRO_PORT:-3000}"]
+    command: ["http", "apiserver:${MIKRO_PORT:-4000}"]
     depends_on:
       - apiserver
     networks:
