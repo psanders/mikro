@@ -13,3 +13,9 @@ Run with:
 ```bash
 docker run -p 3000:3000 psanders/mikro:latest
 ```
+
+TODO:
+
+- Create a guardrail to prevent more payments than the loan amount
+- Create a guardrail to enforce payment amount for the loan frequency
+- Add a feature to allow partial payments for some loans

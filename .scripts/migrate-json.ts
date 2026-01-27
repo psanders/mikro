@@ -179,10 +179,17 @@ async function processMember(
     // Normalize phone number
     const normalizedPhone = normalizePhone(memberData.phone);
 
-    // Check if member already exists by phone or ID number
+    // Check if phone is a valid phone for deduplication (not a placeholder)
+    const isValidPhoneForDedup = normalizedPhone && !normalizedPhone.startsWith("+0");
+
+    // Check if member already exists by phone (only if valid) or ID number
     const existingMember = await prisma.member.findFirst({
       where: {
-        OR: [{ phone: normalizedPhone }, { idNumber: memberData.idNumber }]
+        OR: [
+          // Only match on phone if it's a valid phone (not placeholder like +00000000000)
+          ...(isValidPhoneForDedup ? [{ phone: normalizedPhone }] : []),
+          { idNumber: memberData.idNumber }
+        ]
       },
       include: {
         loans: {
