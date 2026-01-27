@@ -88,6 +88,30 @@ export function getOpenAIApiKey(): string {
   return validateRequired(process.env.MIKRO_OPENAI_API_KEY, "MIKRO_OPENAI_API_KEY");
 }
 
+/**
+ * Get model for text-only requests.
+ * @returns The model name, defaults to 'gpt-4o-mini'
+ */
+export function getTextModel(): string {
+  return process.env.MIKRO_TEXT_MODEL || "gpt-4o-mini";
+}
+
+/**
+ * Get model for requests with images.
+ * @returns The model name, defaults to 'gpt-4o'
+ */
+export function getVisionModel(): string {
+  return process.env.MIKRO_VISION_MODEL || "gpt-4o";
+}
+
+/**
+ * Get model for similarity/response judging.
+ * @returns The model name, defaults to 'gpt-4o-mini'
+ */
+export function getJudgeModel(): string {
+  return process.env.MIKRO_JUDGE_MODEL || "gpt-4o-mini";
+}
+
 import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";
 
 /**

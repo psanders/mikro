@@ -133,7 +133,6 @@ Joan: "A perfecto. Y tienes negocio propio o eres empleado?"
 Cliente: "Soy empleado"
 Joan: "Entiendo. Y cuanto ganas mas o menos al mes?"`,
   allowedTools: ["createMember", "listUsers"],
-  model: "gpt-4o",
   temperature: 0.7,
   evaluations: {
     context: { phone: "+18091234567" },
@@ -203,7 +202,7 @@ Joan: "Entiendo. Y cuanto ganas mas o menos al mes?"`,
           {
             human: "Sí",
             expectedAI:
-              "Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. Gracias!",
+              "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!",
             tools: [
               {
                 name: "createMember",
@@ -247,8 +246,7 @@ Joan: "Entiendo. Y cuanto ganas mas o menos al mes?"`,
           },
           {
             human: "Fue Pedro Martinez",
-            expectedAI:
-              "A perfecto. Pedro Martinez está en nuestra lista de referidores. Y tienes negocio propio o eres empleado?",
+            expectedAI: "A perfecto. Y tienes negocio propio o eres empleado?",
             tools: [
               {
                 name: "listUsers",
@@ -289,7 +287,7 @@ Joan: "Entiendo. Y cuanto ganas mas o menos al mes?"`,
           {
             human: "Sí",
             expectedAI:
-              "Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. Gracias!",
+              "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!",
             tools: [
               {
                 name: "createMember",

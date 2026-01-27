@@ -252,6 +252,151 @@ Juan: "¡Listo! Te envie el reporte con 15 prestamos de 12 miembros."
     "getLoanByLoanId",
     "exportCollectorMembers"
   ],
-  model: "gpt-4o",
-  temperature: 0.7
+  temperature: 0.7,
+  evaluations: {
+    context: {
+      collectorId: "collector-1",
+      collectorPhone: "+18097654321",
+      userId: "collector-1",
+      phone: "+18097654321"
+    },
+    scenarios: [
+      {
+        id: "happy-path-register-payment",
+        description: "Happy path for registering a payment with loan number",
+        turns: [
+          {
+            human: "Hola!",
+            expectedAI:
+              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+          },
+          {
+            human: "Quisiera registrar un pago",
+            expectedAI: "Dale, necesito el número de préstamo para poder ayudarte."
+          },
+          {
+            human: "Si, el numero de prestamos es 10019.",
+            expectedAI:
+              "Encontré el préstamo. Verifica la información: Préstamo #10019, Cliente: Maria Garcia, Monto del préstamo: RD$ 5,000, Pago esperado: RD$ 650, Frecuencia: Semanal. ¿Confirmas el pago de RD$ 650 para Maria Garcia?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10019" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Informacion del prestamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10019",
+                      loanId: 10019,
+                      principal: 5000,
+                      termLength: 8,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    member: {
+                      id: "member-1",
+                      name: "Maria Garcia",
+                      phone: "+18091234567"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "si",
+            expectedAI: "¡Listo!",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: {
+                  loanId: "10019",
+                  amount: "650"
+                },
+                matchMode: "judge",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "payment-uuid-p3",
+                    amount: 650,
+                    loan: {
+                      loanId: 10019,
+                      principal: 5000,
+                      termLength: 8,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    member: {
+                      id: "member-1",
+                      name: "Maria Garcia",
+                      phone: "+18091234567"
+                    }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: {
+                  paymentId: "payment-uuid-p3"
+                },
+                matchMode: "judge",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    messageId: "msg-123"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "happy-path-export-members",
+        description: "Happy path for exporting collector members list",
+        turns: [
+          {
+            human: "Hola!",
+            expectedAI:
+              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+          },
+          {
+            human: "Necesito la lista de los miembros.",
+            expectedAI: "¡Listo! Te envié el reporte con 15 préstamos de 12 miembros.",
+            tools: [
+              {
+                name: "exportCollectorMembers",
+                expectedArgs: {},
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Reporte enviado con 15 prestamos de 12 miembros.",
+                  data: {
+                    messageId: "msg-456",
+                    filename: "reporte-miembros-2026-01-27.xlsx",
+                    loanCount: 15,
+                    memberCount: 12
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "gracias",
+            expectedAI: "De nada. ¿Necesitas algo más?"
+          },
+          {
+            human: "no",
+            expectedAI: "Perfecto."
+          }
+        ]
+      }
+    ]
+  }
 };

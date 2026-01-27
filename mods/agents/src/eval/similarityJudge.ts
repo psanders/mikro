@@ -2,10 +2,8 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import OpenAI from "openai";
-import { getOpenAIApiKey } from "../config.js";
+import { getOpenAIApiKey, getJudgeModel } from "../config.js";
 
-// Uses gpt-4o-mini for cost efficiency
-const JUDGE_MODEL = "gpt-4o-mini";
 const CONFIDENCE_THRESHOLD = 0.7;
 
 // Singleton OpenAI client
@@ -67,7 +65,7 @@ Are these responses semantically equivalent?`;
 
   try {
     const response = await client.chat.completions.create({
-      model: JUDGE_MODEL,
+      model: getJudgeModel(),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -137,7 +135,7 @@ Are these arguments semantically equivalent?`;
 
   try {
     const response = await client.chat.completions.create({
-      model: JUDGE_MODEL,
+      model: getJudgeModel(),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }

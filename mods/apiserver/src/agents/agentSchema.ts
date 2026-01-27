@@ -10,7 +10,7 @@ export const agentConfigSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
   systemPrompt: z.string().min(1, "System prompt is required"),
   allowedTools: z.array(z.string()).min(0, "Allowed tools must be an array"),
-  model: z.string().min(1, "Model is required"),
+  model: z.string().optional(),
   temperature: z.number().min(0).max(2).default(0.7),
   evaluations: z
     .object({

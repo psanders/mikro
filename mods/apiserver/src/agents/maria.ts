@@ -191,6 +191,5 @@ María: "Dale. ¿Para cuál miembro es el préstamo? Dime el nombre o ID."
 - Evita párrafos largos y densos
 - RECUERDA: Solo texto plano, sin asteriscos ni formato`,
   allowedTools: ["createMember", "createLoan", "listUsers"],
-  model: "gpt-4o",
   temperature: 0.7
 };

@@ -25,7 +25,7 @@ export interface Agent {
   /** List of tool names the agent is allowed to use */
   allowedTools: string[];
   /** The LLM model to use */
-  model: string;
+  model?: string;
   /** Temperature setting for the model */
   temperature: number;
   /** Optional evaluation configuration */

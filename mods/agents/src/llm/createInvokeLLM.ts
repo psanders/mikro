@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import OpenAI from "openai";
-import { getOpenAIApiKey } from "../config.js";
+import { getOpenAIApiKey, getTextModel, getVisionModel } from "../config.js";
 import { logger } from "../logger.js";
 import type {
   Agent,
@@ -103,7 +103,8 @@ export function createInvokeLLM(
     }
 
     // Add image if provided (and it's a valid data URL, not a placeholder)
-    if (imageUrl && !imageUrl.startsWith("https://example.com/")) {
+    const hasImage = imageUrl && !imageUrl.startsWith("https://example.com/");
+    if (hasImage) {
       userContent.push({
         type: "image_url",
         image_url: {
@@ -126,20 +127,78 @@ export function createInvokeLLM(
       content: userContent
     });
 
-    try {
-      // Call OpenAI
-      let response = await client.chat.completions.create({
-        model: agent.model || "gpt-4o",
-        messages: fullMessages as Parameters<typeof client.chat.completions.create>[0]["messages"],
-        tools:
-          agentTools.length > 0
-            ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
-            : undefined,
-        tool_choice: agentTools.length > 0 ? "auto" : undefined,
-        temperature: agent.temperature ?? 0.7
-      });
+    // Select model based on whether image is present
+    const model = hasImage ? getVisionModel() : getTextModel();
 
-      let assistantMessage = response.choices[0].message;
+    try {
+      // Call OpenAI with retry logic for rate limits
+      let response: OpenAI.Chat.Completions.ChatCompletion | undefined;
+      const maxRetries = 5;
+      let retryCount = 0;
+
+      while (retryCount <= maxRetries) {
+        try {
+          response = await client.chat.completions.create({
+            model,
+            messages: fullMessages as Parameters<
+              typeof client.chat.completions.create
+            >[0]["messages"],
+            tools:
+              agentTools.length > 0
+                ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
+                : undefined,
+            tool_choice: agentTools.length > 0 ? "auto" : undefined,
+            temperature: agent.temperature ?? 0.7
+          });
+          break; // Success, exit retry loop
+        } catch (error: unknown) {
+          const err = error as { status?: number; message?: string };
+
+          // Check if it's a rate limit error (429)
+          if (err.status === 429 || (err.message && err.message.includes("Rate limit"))) {
+            retryCount++;
+
+            if (retryCount > maxRetries) {
+              logger.error("max retries exceeded for rate limit", {
+                agent: agent.name,
+                retries: retryCount - 1
+              });
+              throw error;
+            }
+
+            // Extract retry-after time from error message if available
+            // Format: "Please try again in 268ms"
+            let waitTime = 1000 * Math.pow(2, retryCount - 1); // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+            const retryAfterMatch = err.message?.match(/try again in (\d+)ms/i);
+            if (retryAfterMatch) {
+              const suggestedWait = parseInt(retryAfterMatch[1], 10);
+              // Use the suggested wait time plus a buffer, but cap at 60 seconds
+              waitTime = Math.min(suggestedWait + 100, 60000);
+            }
+
+            logger.warn("rate limit hit, retrying", {
+              agent: agent.name,
+              retryCount,
+              waitTimeMs: waitTime,
+              error: err.message
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, waitTime));
+            continue; // Retry
+          }
+
+          // Not a rate limit error, throw immediately
+          throw error;
+        }
+      }
+
+      if (!response) {
+        throw new Error("Failed to get response from OpenAI after retries");
+      }
+
+      // Type assertion: we know response is ChatCompletion (not Stream) since we don't use streaming
+      const completion = response as OpenAI.Chat.Completions.ChatCompletion;
+      let assistantMessage = completion.choices[0].message;
       let finalResponse = "";
 
       // Handle tool calls loop
@@ -275,7 +334,7 @@ export function createInvokeLLM(
 
         // Get next response from OpenAI
         response = await client.chat.completions.create({
-          model: agent.model || "gpt-4o",
+          model,
           messages: fullMessages as Parameters<
             typeof client.chat.completions.create
           >[0]["messages"],

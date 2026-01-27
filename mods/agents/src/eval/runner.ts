@@ -7,6 +7,7 @@ import { allTools } from "../tools/index.js";
 import { similarityTest } from "./similarityJudge.js";
 import { createMockToolExecutor } from "./mockToolExecutor.js";
 import { logger } from "../logger.js";
+import { getTextModel, getVisionModel } from "../config.js";
 
 /**
  * Result of evaluating a single turn.
@@ -80,6 +81,15 @@ async function runTurn(
 ): Promise<TurnResult> {
   logger.verbose("running turn", { turnNumber, agent: agent.name });
 
+  // Determine model based on whether turn has image
+  const model = turn.image ? getVisionModel() : getTextModel();
+
+  // Create agent with selected model
+  const evalAgent: Agent = {
+    ...agent,
+    model
+  };
+
   // Create mock executor for this turn
   const expectedTools = turn.tools || [];
   const {
@@ -88,8 +98,8 @@ async function runTurn(
     getCalls
   } = createMockToolExecutor(expectedTools);
 
-  // Create LLM invoker with mock executor
-  const invokeLLM = createInvokeLLM(agent, allTools, mockExecutor);
+  // Create LLM invoker with mock executor using eval agent
+  const invokeLLM = createInvokeLLM(evalAgent, allTools, mockExecutor);
 
   // Get user message and image (both optional)
   const userMessage = turn.human || "";
