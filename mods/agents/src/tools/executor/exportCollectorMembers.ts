@@ -103,15 +103,20 @@ export async function handleExportCollectorMembers(
     { header: "Prestamo", key: "prestamo", width: 12 },
     { header: "Referidor", key: "referidor", width: 20 },
     { header: "Punto de Cobro", key: "punto", width: 36 },
-    { header: "Notas del Miembro", key: "notasMiembro", width: 25 },
-    { header: "Notas del Prestamo", key: "notasPrestamo", width: 25 },
-    { header: "Estado", key: "estado", width: 15 }
+    { header: "Estado", key: "estado", width: 15 },
+    { header: "Notas del Miembro", key: "notasMiembro", width: 25 }
   ];
 
   // Set left alignment for all columns
   worksheet.columns.forEach((column) => {
     column.alignment = { horizontal: "left" };
   });
+
+  // Enable text wrapping for member notes column
+  const notasColumn = worksheet.getColumn("notasMiembro");
+  if (notasColumn) {
+    notasColumn.alignment = { horizontal: "left", wrapText: true };
+  }
 
   // Add data rows
   let loanCount = 0;
@@ -124,9 +129,8 @@ export async function handleExportCollectorMembers(
         prestamo: loan.loanId,
         referidor: member.referredBy.name,
         punto: member.collectionPoint ?? "",
-        notasMiembro: member.notes ?? "",
-        notasPrestamo: loan.notes ?? "",
-        estado: status
+        estado: status,
+        notasMiembro: member.notes ?? ""
       });
       loanCount++;
     }
