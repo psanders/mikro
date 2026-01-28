@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Flags } from "@oclif/core";
+import { select } from "@inquirer/prompts";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptTextIfMissing, promptConfirmIfMissing } from "../../lib/prompts.js";
