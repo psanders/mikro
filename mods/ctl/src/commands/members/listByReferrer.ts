@@ -39,9 +39,10 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 130 });
+      const ui = cliui({ width: 180 });
 
       ui.div(
+        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
         { text: "NAME", padding: [0, 0, 0, 0], width: 35 },
         { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
@@ -49,6 +50,7 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
 
       members.forEach((member) => {
         ui.div(
+          { text: member.id, padding: [0, 0, 0, 0], width: 38 },
           { text: member.name, padding: [0, 0, 0, 0], width: 35 },
           { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
           { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }

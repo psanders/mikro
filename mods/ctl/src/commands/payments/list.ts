@@ -49,9 +49,10 @@ export default class List extends BaseCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 150 });
+      const ui = cliui({ width: 200 });
 
       ui.div(
+        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
         { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
         { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 30 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
@@ -62,6 +63,7 @@ export default class List extends BaseCommand<typeof List> {
 
       payments.forEach((payment) => {
         ui.div(
+          { text: payment.id, padding: [0, 0, 0, 0], width: 38 },
           { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
           { text: payment.loan.member.name, padding: [0, 0, 0, 0], width: 30 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },

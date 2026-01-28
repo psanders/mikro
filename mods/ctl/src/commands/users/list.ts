@@ -32,9 +32,10 @@ export default class List extends BaseCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 110 });
+      const ui = cliui({ width: 160 });
 
       ui.div(
+        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
         { text: "NAME", padding: [0, 0, 0, 0], width: 30 },
         { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
         { text: "ENABLED", padding: [0, 0, 0, 0], width: 10 }
@@ -42,6 +43,7 @@ export default class List extends BaseCommand<typeof List> {
 
       users.forEach((user) => {
         ui.div(
+          { text: user.id, padding: [0, 0, 0, 0], width: 38 },
           { text: user.name, padding: [0, 0, 0, 0], width: 30 },
           { text: user.phone || "N/A", padding: [0, 0, 0, 0], width: 18 },
           { text: user.enabled ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }

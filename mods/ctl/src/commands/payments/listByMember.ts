@@ -56,9 +56,10 @@ export default class ListByMember extends BaseCommand<typeof ListByMember> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 120 });
+      const ui = cliui({ width: 170 });
 
       ui.div(
+        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
         { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
         { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
@@ -68,6 +69,7 @@ export default class ListByMember extends BaseCommand<typeof ListByMember> {
 
       payments.forEach((payment) => {
         ui.div(
+          { text: payment.id, padding: [0, 0, 0, 0], width: 38 },
           { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
