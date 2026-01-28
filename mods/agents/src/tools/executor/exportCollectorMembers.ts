@@ -102,7 +102,7 @@ export async function handleExportCollectorMembers(
     { header: "Teléfono", key: "phone", width: 15 },
     { header: "Préstamo", key: "loanId", width: 12 },
     { header: "Afiliado por", key: "referredBy", width: 20 },
-    { header: "Punto de Cobro", key: "collectionPoint", width: 36 },
+    { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
     { header: "Estado", key: "status", width: 15 },
     { header: "Notas", key: "notes", width: 25 }
   ];
