@@ -3,6 +3,7 @@
  */
 import { Command, Interfaces } from "@oclif/core";
 import { createClient } from "./lib/trpc.js";
+import { loadConfig } from "./lib/config.js";
 
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
@@ -24,14 +25,14 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   }
 
   protected createClient() {
-    const apiUrl = process.env.MIKRO_API_URL || "http://localhost:3000";
-    const credentials = process.env.MIKRO_CREDENTIALS;
+    const config = loadConfig();
 
-    if (!credentials) {
-      this.error("MIKRO_CREDENTIALS environment variable is required");
+    if (!config) {
+      this.error('Not logged in. Run "mikro auth:login" to authenticate.');
     }
 
-    return createClient(apiUrl, credentials);
+    const credentials = `${config.username}:${config.password}`;
+    return createClient(config.apiUrl, credentials);
   }
 
   protected async catch(err: Error & { exitCode?: number }) {
