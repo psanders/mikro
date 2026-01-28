@@ -1,50 +1,83 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm, input, number, select } from "@inquirer/prompts";
+import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import {
+  promptTextIfMissing,
+  promptNumberIfMissing,
+  promptSelectIfMissing,
+  promptConfirmIfMissing
+} from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new payment for a loan";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
+  static override readonly examples = [
+    "<%= config.bin %> <%= command.id %>",
+    "<%= config.bin %> <%= command.id %> --loan-id 10000 --amount 500 --method CASH --collector-id abc-def --yes"
+  ];
+  static override readonly flags = {
+    "loan-id": Flags.integer({
+      description: "Loan ID (numeric, e.g., 10000, 10001)",
+      required: false
+    }),
+    amount: Flags.integer({
+      description: "Payment Amount",
+      required: false
+    }),
+    method: Flags.string({
+      description: "Payment Method",
+      options: ["CASH", "TRANSFER"],
+      required: false
+    }),
+    "collector-id": Flags.string({
+      description: "Collector ID",
+      required: false
+    }),
+    notes: Flags.string({
+      description: "Notes (optional)",
+      required: false
+    })
+  };
 
   public async run(): Promise<void> {
+    const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    this.log("This utility will help you create a Payment.");
-    this.log("Press ^C at any time to quit.");
+    if (!flags.yes) {
+      this.log("This utility will help you create a Payment.");
+      this.log("Press ^C at any time to quit.");
+    }
 
-    const answers = {
-      loanId: await number({
-        message: "Loan ID (numeric, e.g., 10000, 10001)",
-        required: true
-      }),
-      amount: await number({
-        message: "Amount",
-        required: true
-      }),
-      method: await select({
-        message: "Payment Method",
-        choices: [
-          { name: "Cash", value: "CASH" as const },
-          { name: "Transfer", value: "TRANSFER" as const }
-        ],
-        default: "CASH"
-      }),
-      collectedById: await input({
-        message: "Collector ID (required)",
-        required: true
-      }),
-      notes: await input({
-        message: "Notes (optional)",
-        required: false
-      })
-    };
+    const loanId = await promptNumberIfMissing(
+      flags["loan-id"],
+      "Loan ID (numeric, e.g., 10000, 10001)",
+      "loan-id"
+    );
+    const amount = await promptNumberIfMissing(flags.amount, "Amount", "amount");
+    const method = await promptSelectIfMissing(
+      flags.method as "CASH" | "TRANSFER" | undefined,
+      "Payment Method",
+      "method",
+      [
+        { name: "Cash", value: "CASH" as const },
+        { name: "Transfer", value: "TRANSFER" as const }
+      ],
+      { default: "CASH" as const }
+    );
+    const collectedById = await promptTextIfMissing(
+      flags["collector-id"],
+      "Collector ID (required)",
+      "collector-id"
+    );
+    const notes = flags.notes || undefined;
 
-    const ready = await confirm({
-      message: "Ready to create payment?"
-    });
+    const ready = await promptConfirmIfMissing(
+      flags.yes ? true : undefined,
+      "Ready to create payment?",
+      "yes"
+    );
 
     if (!ready) {
       this.log("Aborted!");
@@ -53,11 +86,11 @@ export default class Create extends BaseCommand<typeof Create> {
 
     try {
       const payment = await client.createPayment.mutate({
-        loanId: answers.loanId,
-        amount: answers.amount!,
-        method: answers.method,
-        collectedById: answers.collectedById,
-        notes: answers.notes || undefined
+        loanId,
+        amount,
+        method,
+        collectedById,
+        notes
       });
 
       this.log("Done!");

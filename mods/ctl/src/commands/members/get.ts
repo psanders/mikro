@@ -9,9 +9,9 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Get extends BaseCommand<typeof Get> {
   static override readonly description = "retrieve details of a member by ID";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <member-id>"];
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <memberId>"];
   static override readonly args = {
-    ref: Args.string({
+    memberId: Args.string({
       description: "The Member ID to show details about",
       required: true
     })
@@ -22,7 +22,7 @@ export default class Get extends BaseCommand<typeof Get> {
     const client = this.createClient();
 
     try {
-      const member = await client.getMember.query({ id: args.ref });
+      const member = await client.getMember.query({ id: args.memberId });
 
       if (!member) {
         this.error("Member not found.");

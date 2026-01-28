@@ -57,6 +57,14 @@ describe("createListLoansByCollector", () => {
             },
             status: "ACTIVE"
           },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          },
           take: undefined,
           skip: undefined
         })
@@ -83,6 +91,14 @@ describe("createListLoansByCollector", () => {
           where: {
             member: {
               assignedCollectorId: validCollectorId
+            }
+          },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
             }
           },
           take: undefined,
@@ -117,6 +133,14 @@ describe("createListLoansByCollector", () => {
               assignedCollectorId: validCollectorId
             },
             status: "ACTIVE"
+          },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
           },
           take: 10,
           skip: 1

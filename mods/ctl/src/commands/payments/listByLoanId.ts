@@ -11,7 +11,7 @@ export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
   static override readonly description = "display payments for a specific loan by numeric loan ID";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> 10000",
-    "<%= config.bin %> <%= command.id %> 10001 --show-reversed"
+    "<%= config.bin %> <%= command.id %> 10001 --include-reversed"
   ];
   static override readonly args = {
     loanId: Args.string({
@@ -20,16 +20,15 @@ export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
     })
   };
   static override readonly flags = {
-    "show-reversed": Flags.boolean({
+    "include-reversed": Flags.boolean({
       char: "a",
-      description: "show all payments including reversed",
+      description: "include reversed payments",
       default: false
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of items to show",
-      default: "100",
-      required: false
+      default: 100
     })
   };
 
@@ -40,24 +39,23 @@ export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
     try {
       const payments = await client.listPaymentsByLoanId.query({
         loanId: parseInt(args.loanId),
-        showReversed: flags["show-reversed"],
-        limit: parseInt(flags["page-size"])
+        showReversed: flags["include-reversed"],
+        limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
+      const ui = cliui({ width: 120 });
 
       ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
+        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 30 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
         { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 },
-        { text: "LOAN ID", padding: [0, 0, 0, 0], width: 40 }
+        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 }
       );
 
       payments.forEach((payment) => {
         ui.div(
-          { text: payment.id, padding: [0, 0, 0, 0], width: 40 },
+          { text: payment.loan.member.name, padding: [0, 0, 0, 0], width: 30 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
@@ -65,8 +63,7 @@ export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
             text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
             padding: [0, 0, 0, 0],
             width: 20
-          },
-          { text: payment.loanId, padding: [0, 0, 0, 0], width: 40 }
+          }
         );
       });
 

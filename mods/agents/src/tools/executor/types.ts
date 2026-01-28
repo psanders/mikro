@@ -124,6 +124,7 @@ export interface ToolExecutorDependencies {
         notes: string | null;
         paymentFrequency: string;
         createdAt: Date;
+        termLength: number;
         payments: Array<{ paidAt: Date }>;
       }>;
     }>

@@ -18,7 +18,13 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists loans
  */
 export function createListLoans(client: DbClient) {
-  const fn = async (params: ListLoansInput): Promise<Loan[]> => {
+  const fn = async (
+    params: ListLoansInput
+  ): Promise<
+    (Loan & {
+      member: { name: string; phone: string };
+    })[]
+  > => {
     logger.verbose("listing loans", {
       limit: params.limit,
       offset: params.offset,
@@ -26,11 +32,21 @@ export function createListLoans(client: DbClient) {
     });
     const loans = await client.loan.findMany({
       where: params.showAll ? undefined : { status: "ACTIVE" },
+      include: {
+        member: {
+          select: {
+            name: true,
+            phone: true
+          }
+        }
+      },
       take: params.limit,
       skip: params.offset
     });
     logger.verbose("loans listed", { count: loans.length });
-    return loans;
+    return loans as (Loan & {
+      member: { name: string; phone: string };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listLoansSchema);

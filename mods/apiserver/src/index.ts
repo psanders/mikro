@@ -308,6 +308,7 @@ async function initializeMessageProcessor() {
             notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
+            termLength: loan.termLength,
             payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
           }))
         }));

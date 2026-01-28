@@ -18,7 +18,13 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists loans by referrer
  */
 export function createListLoansByReferrer(client: DbClient) {
-  const fn = async (params: ListLoansByReferrerInput): Promise<Loan[]> => {
+  const fn = async (
+    params: ListLoansByReferrerInput
+  ): Promise<
+    (Loan & {
+      member: { name: string; phone: string };
+    })[]
+  > => {
     logger.verbose("listing loans by referrer", { referrerId: params.referredById });
     const loans = await client.loan.findMany({
       where: {
@@ -27,6 +33,14 @@ export function createListLoansByReferrer(client: DbClient) {
         },
         ...(params.showAll ? {} : { status: "ACTIVE" })
       },
+      include: {
+        member: {
+          select: {
+            name: true,
+            phone: true
+          }
+        }
+      },
       take: params.limit,
       skip: params.offset
     });
@@ -34,7 +48,9 @@ export function createListLoansByReferrer(client: DbClient) {
       referrerId: params.referredById,
       count: loans.length
     });
-    return loans;
+    return loans as (Loan & {
+      member: { name: string; phone: string };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listLoansByReferrerSchema);

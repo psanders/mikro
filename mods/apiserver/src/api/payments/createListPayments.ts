@@ -18,9 +18,18 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists payments
  */
 export function createListPayments(client: DbClient) {
-  const fn = async (params: ListPaymentsInput): Promise<Payment[]> => {
+  const fn = async (
+    params: ListPaymentsInput
+  ): Promise<
+    (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[]
+  > => {
     logger.verbose("listing payments", { startDate: params.startDate, endDate: params.endDate });
-    const payments = (await client.payment.findMany({
+    const payments = await client.payment.findMany({
       where: {
         paidAt: {
           gte: params.startDate,
@@ -28,12 +37,29 @@ export function createListPayments(client: DbClient) {
         },
         ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
+      include: {
+        loan: {
+          select: {
+            loanId: true,
+            member: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { paidAt: "desc" },
       take: params.limit,
       skip: params.offset
-    })) as unknown as Payment[];
+    });
     logger.verbose("payments listed", { count: payments.length });
-    return payments;
+    return payments as (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listPaymentsSchema);

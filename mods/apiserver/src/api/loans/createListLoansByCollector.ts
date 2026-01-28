@@ -18,7 +18,13 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists loans by collector
  */
 export function createListLoansByCollector(client: DbClient) {
-  const fn = async (params: ListLoansByCollectorInput): Promise<Loan[]> => {
+  const fn = async (
+    params: ListLoansByCollectorInput
+  ): Promise<
+    (Loan & {
+      member: { name: string; phone: string };
+    })[]
+  > => {
     logger.verbose("listing loans by collector", { collectorId: params.assignedCollectorId });
     const loans = await client.loan.findMany({
       where: {
@@ -27,6 +33,14 @@ export function createListLoansByCollector(client: DbClient) {
         },
         ...(params.showAll ? {} : { status: "ACTIVE" })
       },
+      include: {
+        member: {
+          select: {
+            name: true,
+            phone: true
+          }
+        }
+      },
       take: params.limit,
       skip: params.offset
     });
@@ -34,7 +48,9 @@ export function createListLoansByCollector(client: DbClient) {
       collectorId: params.assignedCollectorId,
       count: loans.length
     });
-    return loans;
+    return loans as (Loan & {
+      member: { name: string; phone: string };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listLoansByCollectorSchema);

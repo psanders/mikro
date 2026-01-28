@@ -19,9 +19,18 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists payments by referrer
  */
 export function createListPaymentsByReferrer(client: DbClient) {
-  const fn = async (params: ListPaymentsByReferrerInput): Promise<Payment[]> => {
+  const fn = async (
+    params: ListPaymentsByReferrerInput
+  ): Promise<
+    (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[]
+  > => {
     logger.verbose("listing payments by referrer", { referrerId: params.referredById });
-    const payments = (await client.payment.findMany({
+    const payments = await client.payment.findMany({
       where: {
         loan: {
           member: {
@@ -34,15 +43,32 @@ export function createListPaymentsByReferrer(client: DbClient) {
         },
         ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
+      include: {
+        loan: {
+          select: {
+            loanId: true,
+            member: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { paidAt: "desc" },
       take: params.limit,
       skip: params.offset
-    })) as unknown as Payment[];
+    });
     logger.verbose("payments by referrer listed", {
       referrerId: params.referredById,
       count: payments.length
     });
-    return payments;
+    return payments as (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listPaymentsByReferrerSchema);

@@ -7,32 +7,44 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 
 /**
- * Loan with payments for days late calculation.
+ * Loan with payments for payment status calculation.
  */
-interface LoanWithPayments {
+export interface LoanWithPayments {
   loanId: number;
   notes: string | null;
   paymentFrequency: string;
   createdAt: Date;
+  termLength: number;
   payments: Array<{ paidAt: Date }>;
 }
 
 /**
- * Calculate how many days late a loan payment is.
- * Returns 0 if the loan is current ("Al dia").
+ * Payment status based on cycle comparison.
  */
-function calculateDaysLate(loan: LoanWithPayments): number {
-  const lastPaymentDate = loan.payments[0]?.paidAt ?? loan.createdAt;
+export type PaymentStatus = "AL DIA" | "ATRASADO" | "MUY ATRASADO";
+
+/**
+ * Calculate payment status by comparing elapsed cycles since loan creation
+ * against completed payments. For SAN-type loans with fixed intervals.
+ */
+export function calculatePaymentStatus(loan: LoanWithPayments): PaymentStatus {
   const intervalDays = loan.paymentFrequency === "DAILY" ? 1 : 7;
-
-  const nextDueDate = new Date(lastPaymentDate);
-  nextDueDate.setDate(nextDueDate.getDate() + intervalDays);
-
   const today = new Date();
-  const diffMs = today.getTime() - nextDueDate.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const loanStart = new Date(loan.createdAt);
 
-  return Math.max(0, diffDays);
+  // Calculate elapsed cycles since loan creation
+  const msSinceLoan = today.getTime() - loanStart.getTime();
+  const daysSinceLoan = Math.floor(msSinceLoan / (1000 * 60 * 60 * 24));
+  const cyclesElapsed = Math.floor(daysSinceLoan / intervalDays);
+
+  // Count payments made
+  const paymentsMade = loan.payments.length;
+
+  const missedCycles = cyclesElapsed - paymentsMade;
+
+  if (missedCycles <= 0) return "AL DIA";
+  if (missedCycles === 1) return "ATRASADO";
+  return "MUY ATRASADO";
 }
 
 /**
@@ -93,7 +105,7 @@ export async function handleExportCollectorMembers(
     { header: "Punto de Cobro", key: "punto", width: 36 },
     { header: "Notas del Miembro", key: "notasMiembro", width: 25 },
     { header: "Notas del Prestamo", key: "notasPrestamo", width: 25 },
-    { header: "Dias de Atraso", key: "diasAtraso", width: 15 }
+    { header: "Estado", key: "estado", width: 15 }
   ];
 
   // Set left alignment for all columns
@@ -105,7 +117,7 @@ export async function handleExportCollectorMembers(
   let loanCount = 0;
   for (const member of members) {
     for (const loan of member.loans) {
-      const daysLate = calculateDaysLate(loan);
+      const status = calculatePaymentStatus(loan);
       worksheet.addRow({
         nombre: member.name,
         telefono: member.phone,
@@ -114,7 +126,7 @@ export async function handleExportCollectorMembers(
         punto: member.collectionPoint ?? "",
         notasMiembro: member.notes ?? "",
         notasPrestamo: loan.notes ?? "",
-        diasAtraso: daysLate === 0 ? "Al dia" : `${daysLate} dias`
+        estado: status
       });
       loanCount++;
     }

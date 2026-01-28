@@ -22,11 +22,10 @@ export default class History extends BaseCommand<typeof History> {
       description: "The User ID to get chat history for",
       exclusive: ["member-id"]
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of messages to show",
-      default: "50",
-      required: false
+      default: 50
     })
   };
 
@@ -43,7 +42,7 @@ export default class History extends BaseCommand<typeof History> {
       const messages = await client.getChatHistory.query({
         memberId: flags["member-id"],
         userId: flags["user-id"],
-        limit: parseInt(flags["page-size"])
+        limit: flags["page-size"]
       });
 
       const ui = cliui({ width: 170 });

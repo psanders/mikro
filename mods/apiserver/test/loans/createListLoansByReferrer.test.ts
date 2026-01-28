@@ -57,6 +57,14 @@ describe("createListLoansByReferrer", () => {
             },
             status: "ACTIVE"
           },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          },
           take: undefined,
           skip: undefined
         })
@@ -83,6 +91,14 @@ describe("createListLoansByReferrer", () => {
           where: {
             member: {
               referredById: validReferrerId
+            }
+          },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
             }
           },
           take: undefined,
@@ -117,6 +133,14 @@ describe("createListLoansByReferrer", () => {
               referredById: validReferrerId
             },
             status: "ACTIVE"
+          },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
           },
           take: 10,
           skip: 1

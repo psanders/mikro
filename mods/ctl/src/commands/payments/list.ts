@@ -4,7 +4,7 @@
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { BaseCommand, validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class List extends BaseCommand<typeof List> {
@@ -21,16 +21,15 @@ export default class List extends BaseCommand<typeof List> {
       description: "end date (YYYY-MM-DD)",
       required: true
     }),
-    "show-reversed": Flags.boolean({
+    "include-reversed": Flags.boolean({
       char: "a",
-      description: "show all payments including reversed",
+      description: "include reversed payments",
       default: false
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of items to show",
-      default: "100",
-      required: false
+      default: 100
     })
   };
 
@@ -38,28 +37,33 @@ export default class List extends BaseCommand<typeof List> {
     const { flags } = await this.parse(List);
     const client = this.createClient();
 
+    // Validate date formats
+    validateDate(flags["start-date"]!);
+    validateDate(flags["end-date"]!);
+
     try {
       const payments = await client.listPayments.query({
-        startDate: new Date(flags["start-date"]),
-        endDate: new Date(flags["end-date"]),
-        showReversed: flags["show-reversed"],
-        limit: parseInt(flags["page-size"])
+        startDate: new Date(flags["start-date"]!),
+        endDate: new Date(flags["end-date"]!),
+        showReversed: flags["include-reversed"],
+        limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
+      const ui = cliui({ width: 150 });
 
       ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
+        { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
+        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 30 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
         { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 },
-        { text: "LOAN ID", padding: [0, 0, 0, 0], width: 40 }
+        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 }
       );
 
       payments.forEach((payment) => {
         ui.div(
-          { text: payment.id, padding: [0, 0, 0, 0], width: 40 },
+          { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
+          { text: payment.loan.member.name, padding: [0, 0, 0, 0], width: 30 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
@@ -67,8 +71,7 @@ export default class List extends BaseCommand<typeof List> {
             text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
             padding: [0, 0, 0, 0],
             width: 20
-          },
-          { text: payment.loanId, padding: [0, 0, 0, 0], width: 40 }
+          }
         );
       });
 

@@ -49,6 +49,14 @@ describe("createListLoans", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: { status: "ACTIVE" },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          },
           take: undefined,
           skip: undefined
         })
@@ -73,6 +81,14 @@ describe("createListLoans", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: undefined,
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          },
           take: undefined,
           skip: undefined
         })
@@ -100,6 +116,14 @@ describe("createListLoans", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: { status: "ACTIVE" },
+          include: {
+            member: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          },
           take: 10,
           skip: 1
         })

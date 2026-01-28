@@ -167,7 +167,14 @@ export interface DbClient {
         };
       };
       include?: {
-        member?: boolean;
+        member?:
+          | boolean
+          | {
+              select?: {
+                name?: boolean;
+                phone?: boolean;
+              };
+            };
       };
       take?: number;
       skip?: number;
@@ -220,6 +227,18 @@ export interface DbClient {
           memberId?: string;
           member?: {
             referredById?: string;
+          };
+        };
+      };
+      include?: {
+        loan?: {
+          select?: {
+            loanId?: boolean;
+            member?: {
+              select?: {
+                name?: boolean;
+              };
+            };
           };
         };
       };

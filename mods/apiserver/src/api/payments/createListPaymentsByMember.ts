@@ -18,9 +18,18 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists payments by member
  */
 export function createListPaymentsByMember(client: DbClient) {
-  const fn = async (params: ListPaymentsByMemberInput): Promise<Payment[]> => {
+  const fn = async (
+    params: ListPaymentsByMemberInput
+  ): Promise<
+    (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[]
+  > => {
     logger.verbose("listing payments by member", { memberId: params.memberId });
-    const payments = (await client.payment.findMany({
+    const payments = await client.payment.findMany({
       where: {
         loan: {
           memberId: params.memberId
@@ -31,15 +40,32 @@ export function createListPaymentsByMember(client: DbClient) {
         },
         ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
+      include: {
+        loan: {
+          select: {
+            loanId: true,
+            member: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { paidAt: "desc" },
       take: params.limit,
       skip: params.offset
-    })) as unknown as Payment[];
+    });
     logger.verbose("payments by member listed", {
       memberId: params.memberId,
       count: payments.length
     });
-    return payments;
+    return payments as (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listPaymentsByMemberSchema);

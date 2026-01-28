@@ -8,9 +8,9 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Reverse extends BaseCommand<typeof Reverse> {
   static override readonly description = "reverse a payment";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <payment-id>"];
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <paymentId>"];
   static override readonly args = {
-    ref: Args.string({
+    paymentId: Args.string({
       description: "The Payment ID to reverse",
       required: true
     })
@@ -39,7 +39,7 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
 
     try {
       await client.reversePayment.mutate({
-        id: args.ref,
+        id: args.paymentId,
         notes: notes || undefined
       });
 

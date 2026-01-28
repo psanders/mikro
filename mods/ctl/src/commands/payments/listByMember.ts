@@ -4,16 +4,16 @@
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { BaseCommand, validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class ListByMember extends BaseCommand<typeof ListByMember> {
   static override readonly description = "display payments for a specific member";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> <member-id> --start-date 2026-01-01 --end-date 2026-01-31"
+    "<%= config.bin %> <%= command.id %> <memberId> --start-date 2026-01-01 --end-date 2026-01-31"
   ];
   static override readonly args = {
-    ref: Args.string({
+    memberId: Args.string({
       description: "The Member ID to filter by",
       required: true
     })
@@ -27,16 +27,15 @@ export default class ListByMember extends BaseCommand<typeof ListByMember> {
       description: "end date (YYYY-MM-DD)",
       required: true
     }),
-    "show-reversed": Flags.boolean({
+    "include-reversed": Flags.boolean({
       char: "a",
-      description: "show all payments including reversed",
+      description: "include reversed payments",
       default: false
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of items to show",
-      default: "100",
-      required: false
+      default: 100
     })
   };
 
@@ -44,29 +43,32 @@ export default class ListByMember extends BaseCommand<typeof ListByMember> {
     const { args, flags } = await this.parse(ListByMember);
     const client = this.createClient();
 
+    // Validate date formats
+    validateDate(flags["start-date"]!);
+    validateDate(flags["end-date"]!);
+
     try {
       const payments = await client.listPaymentsByMember.query({
-        memberId: args.ref,
-        startDate: new Date(flags["start-date"]),
-        endDate: new Date(flags["end-date"]),
-        showReversed: flags["show-reversed"],
-        limit: parseInt(flags["page-size"])
+        memberId: args.memberId,
+        startDate: new Date(flags["start-date"]!),
+        endDate: new Date(flags["end-date"]!),
+        showReversed: flags["include-reversed"],
+        limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
+      const ui = cliui({ width: 120 });
 
       ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
+        { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
         { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 },
-        { text: "LOAN ID", padding: [0, 0, 0, 0], width: 40 }
+        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 }
       );
 
       payments.forEach((payment) => {
         ui.div(
-          { text: payment.id, padding: [0, 0, 0, 0], width: 40 },
+          { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
@@ -74,8 +76,7 @@ export default class ListByMember extends BaseCommand<typeof ListByMember> {
             text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
             padding: [0, 0, 0, 0],
             width: 20
-          },
-          { text: payment.loanId, padding: [0, 0, 0, 0], width: 40 }
+          }
         );
       });
 

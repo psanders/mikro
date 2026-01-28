@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet\"",
+    "test": "mocha",
     "start": "node dist/index.js",
     "dev": "tsc --watch & node --watch dist/index.js",
     "clean": "rm -rf dist"
@@ -22,7 +22,14 @@
     "openai": "^6.16.0"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.10",
+    "@types/sinon": "^21.0.0",
+    "chai": "^6.2.2",
+    "mocha": "^11.7.5",
+    "sinon": "^21.0.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

@@ -8,9 +8,9 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Update extends BaseCommand<typeof Update> {
   static override readonly description = "modify a member's information";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <member-id>"];
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <memberId>"];
   static override readonly args = {
-    ref: Args.string({
+    memberId: Args.string({
       description: "The Member ID to update",
       required: true
     })
@@ -21,7 +21,7 @@ export default class Update extends BaseCommand<typeof Update> {
     const client = this.createClient();
 
     try {
-      const memberFromDB = await client.getMember.query({ id: args.ref });
+      const memberFromDB = await client.getMember.query({ id: args.memberId });
 
       if (!memberFromDB) {
         this.error("Member not found.");
@@ -67,7 +67,7 @@ export default class Update extends BaseCommand<typeof Update> {
       }
 
       await client.updateMember.mutate({
-        id: args.ref,
+        id: args.memberId,
         name: answers.name,
         phone: answers.phone,
         notes: answers.notes || undefined,

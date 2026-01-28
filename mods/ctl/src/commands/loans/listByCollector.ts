@@ -10,24 +10,23 @@ import errorHandler from "../../errorHandler.js";
 export default class ListByCollector extends BaseCommand<typeof ListByCollector> {
   static override readonly description =
     "display loans for members assigned to a specific collector";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <collector-id>"];
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <collectorId>"];
   static override readonly args = {
-    ref: Args.string({
+    collectorId: Args.string({
       description: "The Collector ID to filter by",
       required: true
     })
   };
   static override readonly flags = {
-    "show-all": Flags.boolean({
+    "include-closed": Flags.boolean({
       char: "a",
-      description: "show all loans including completed, defaulted, and cancelled",
+      description: "include closed loans (completed, defaulted, and cancelled)",
       default: false
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of items to show",
-      default: "100",
-      required: false
+      default: 100
     })
   };
 
@@ -37,34 +36,32 @@ export default class ListByCollector extends BaseCommand<typeof ListByCollector>
 
     try {
       const loans = await client.listLoansByCollector.query({
-        assignedCollectorId: args.ref,
-        showAll: flags["show-all"],
-        limit: parseInt(flags["page-size"])
+        assignedCollectorId: args.collectorId,
+        showAll: flags["include-closed"],
+        limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 180 });
+      const ui = cliui({ width: 140 });
 
       ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
         { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
         { text: "PRINCIPAL", padding: [0, 0, 0, 0], width: 12 },
         { text: "PAYMENT", padding: [0, 0, 0, 0], width: 10 },
         { text: "FREQ", padding: [0, 0, 0, 0], width: 8 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
         { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
-        { text: "MEMBER ID", padding: [0, 0, 0, 0], width: 40 }
+        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 35 }
       );
 
       loans.forEach((loan) => {
         ui.div(
-          { text: loan.id, padding: [0, 0, 0, 0], width: 40 },
           { text: String(loan.loanId), padding: [0, 0, 0, 0], width: 10 },
           { text: String(loan.principal), padding: [0, 0, 0, 0], width: 12 },
           { text: String(loan.paymentAmount), padding: [0, 0, 0, 0], width: 10 },
           { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 8 },
           { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
           { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
-          { text: loan.memberId, padding: [0, 0, 0, 0], width: 40 }
+          { text: loan.member.name, padding: [0, 0, 0, 0], width: 35 }
         );
       });
 

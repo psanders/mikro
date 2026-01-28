@@ -10,16 +10,15 @@ export default class List extends BaseCommand<typeof List> {
   static override readonly description = "display all members";
   static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
   static override readonly flags = {
-    "show-inactive": Flags.boolean({
+    "include-inactive": Flags.boolean({
       char: "a",
-      description: "show all members including inactive",
+      description: "include inactive members",
       default: false
     }),
-    "page-size": Flags.string({
+    "page-size": Flags.integer({
       char: "s",
       description: "the number of items to show",
-      default: "100",
-      required: false
+      default: 100
     })
   };
 
@@ -29,14 +28,13 @@ export default class List extends BaseCommand<typeof List> {
 
     try {
       const members = await client.listMembers.query({
-        showInactive: flags["show-inactive"],
-        limit: parseInt(flags["page-size"])
+        showInactive: flags["include-inactive"],
+        limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
+      const ui = cliui({ width: 130 });
 
       ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 40 },
         { text: "NAME", padding: [0, 0, 0, 0], width: 35 },
         { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
@@ -44,7 +42,6 @@ export default class List extends BaseCommand<typeof List> {
 
       members.forEach((member) => {
         ui.div(
-          { text: member.id, padding: [0, 0, 0, 0], width: 40 },
           { text: member.name, padding: [0, 0, 0, 0], width: 35 },
           { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
           { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }

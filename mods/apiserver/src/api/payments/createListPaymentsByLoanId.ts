@@ -19,7 +19,16 @@ import { logger } from "../../logger.js";
  * @returns A validated function that lists payments by loan ID
  */
 export function createListPaymentsByLoanId(client: DbClient) {
-  const fn = async (params: ListPaymentsByLoanIdInput): Promise<Payment[]> => {
+  const fn = async (
+    params: ListPaymentsByLoanIdInput
+  ): Promise<
+    (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[]
+  > => {
     logger.verbose("listing payments by loan ID", { loanId: params.loanId });
 
     // Look up loan by numeric loanId to get the UUID
@@ -33,22 +42,39 @@ export function createListPaymentsByLoanId(client: DbClient) {
       throw new Error(`Loan not found with loanId: ${params.loanId}`);
     }
 
-    const payments = (await client.payment.findMany({
+    const payments = await client.payment.findMany({
       where: {
         loanId: loan.id, // Use UUID from loan lookup
         ...(params.showReversed ? {} : { status: "COMPLETED" })
       },
+      include: {
+        loan: {
+          select: {
+            loanId: true,
+            member: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { paidAt: "desc" },
       take: params.limit,
       skip: params.offset
-    })) as unknown as Payment[];
+    });
 
     logger.verbose("payments by loan ID listed", {
       loanId: params.loanId,
       loanUuid: loan.id,
       count: payments.length
     });
-    return payments;
+    return payments as (Payment & {
+      loan: {
+        loanId: number;
+        member: { name: string };
+      };
+    })[];
   };
 
   return withErrorHandlingAndValidation(fn, listPaymentsByLoanIdSchema);
