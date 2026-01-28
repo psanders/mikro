@@ -113,7 +113,7 @@ export async function handleExportCollectorMembers(
   });
 
   // Enable text wrapping for member notes column
-  const notasColumn = worksheet.getColumn("notasMiembro");
+  const notasColumn = worksheet.getColumn("notes");
   if (notasColumn) {
     notasColumn.alignment = { horizontal: "left", wrapText: true };
   }
