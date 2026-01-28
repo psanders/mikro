@@ -98,13 +98,13 @@ export async function handleExportCollectorMembers(
 
   // Define columns with headers and widths
   worksheet.columns = [
-    { header: "Nombre", key: "nombre", width: 25 },
-    { header: "Telefono", key: "telefono", width: 15 },
-    { header: "Prestamo", key: "prestamo", width: 12 },
-    { header: "Referidor", key: "referidor", width: 20 },
-    { header: "Punto de Cobro", key: "punto", width: 36 },
-    { header: "Estado", key: "estado", width: 15 },
-    { header: "Notas del Miembro", key: "notasMiembro", width: 25 }
+    { header: "Nombre", key: "name", width: 25 },
+    { header: "Teléfono", key: "phone", width: 15 },
+    { header: "Préstamo", key: "loanId", width: 12 },
+    { header: "Afiliado por", key: "referredBy", width: 20 },
+    { header: "Punto de Cobro", key: "collectionPoint", width: 36 },
+    { header: "Estado", key: "status", width: 15 },
+    { header: "Notas", key: "notes", width: 25 }
   ];
 
   // Set left alignment for all columns
@@ -124,13 +124,13 @@ export async function handleExportCollectorMembers(
     for (const loan of member.loans) {
       const status = calculatePaymentStatus(loan);
       worksheet.addRow({
-        nombre: member.name,
-        telefono: member.phone,
-        prestamo: loan.loanId,
-        referidor: member.referredBy.name,
-        punto: member.collectionPoint ?? "",
-        estado: status,
-        notasMiembro: member.notes ?? ""
+        name: member.name,
+        phone: member.phone,
+        loanId: loan.loanId,
+        referredBy: member.referredBy.name,
+        collectionPoint: member.collectionPoint ?? "",
+        status: status,
+        notes: member.notes ?? ""
       });
       loanCount++;
     }

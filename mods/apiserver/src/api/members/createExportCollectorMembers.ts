@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to export members by collector ID with loans and referrer.
- * Returns members with active loans, last payment date, and referrer info for CSV generation.
+ * Returns members with active loans, all completed payments, and referrer info for CSV generation.
  *
  * @param client - The database client
  * @returns A validated function that exports collector members
@@ -32,8 +32,8 @@ export function createExportCollectorMembers(client: DbClient) {
           include: {
             payments: {
               where: { status: "COMPLETED" },
-              orderBy: { paidAt: "desc" },
-              take: 1 // Only need last payment for days late calculation
+              orderBy: { paidAt: "desc" }
+              // Need all completed payments for payment status calculation
             }
           }
         },
