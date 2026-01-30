@@ -105,8 +105,15 @@ async function runTurn(
   const userMessage = turn.human || "";
   const imageUrl = turn.image || null;
 
-  // Invoke LLM
-  const actualAI = await invokeLLM(conversationHistory, userMessage, imageUrl, context);
+  // First turn = new session (full greeting); later turns = active session
+  const isNewSession = conversationHistory.length === 0;
+  const actualAI = await invokeLLM(
+    conversationHistory,
+    userMessage,
+    imageUrl,
+    context,
+    isNewSession
+  );
 
   // Test similarity
   const similarity = await similarityTest(turn.expectedAI, actualAI);

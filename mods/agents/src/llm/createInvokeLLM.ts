@@ -74,22 +74,30 @@ export function createInvokeLLM(
    * @param userMessage - The current user message text
    * @param imageUrl - Optional base64 data URL for image (for vision)
    * @param context - Optional context to pass to tool executor (e.g., phone number)
+   * @param isNewSession - Optional. If true (default), inject directive for full greeting when user greets. If false, inject directive to continue without re-introducing.
    * @returns The assistant's text response
    */
   return async function invokeLLM(
     messages: Message[],
     userMessage: string,
     imageUrl?: string | null,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
+    isNewSession: boolean = true
   ): Promise<string> {
     logger.verbose("invoking llm", {
       agent: agent.name,
       historyLength: messages.length,
-      hasImage: !!imageUrl
+      hasImage: !!imageUrl,
+      isNewSession
     });
 
+    const sessionDirective = isNewSession
+      ? "[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n\n"
+      : "[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n\n";
+    const systemContent = sessionDirective + agent.systemPrompt;
+
     // Build the full messages array with system prompt
-    const fullMessages: Message[] = [{ role: "system", content: agent.systemPrompt }, ...messages];
+    const fullMessages: Message[] = [{ role: "system", content: systemContent }, ...messages];
 
     // Build current user message content
     const userContent: MessageContentItem[] = [];

@@ -327,10 +327,11 @@ async function initializeMessageProcessor() {
       messages: Message[],
       userMessage: string,
       imageUrl?: string | null,
-      context?: Record<string, unknown>
+      context?: Record<string, unknown>,
+      isNewSession?: boolean
     ): Promise<string> => {
       const invokeFn = createInvokeLLM(agent, allTools, toolExecutor);
-      return invokeFn(messages, userMessage, imageUrl, context);
+      return invokeFn(messages, userMessage, imageUrl, context, isNewSession ?? true);
     };
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)

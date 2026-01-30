@@ -63,6 +63,9 @@ export {
   migrateGuestToDatabase
 } from "./conversations/index.js";
 
+// Sessions
+export { isNewSession, touchSession } from "./sessions/index.js";
+
 // Config utilities
 export {
   getWebhookVerifyToken,

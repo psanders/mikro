@@ -122,6 +122,16 @@ export function getMessageMaxAgeSeconds(): number {
   return value ? parseInt(value, 10) : 60;
 }
 
+/**
+ * Get session timeout in seconds.
+ * If the last message was older than this, the next message starts a new session (full greeting).
+ * @returns Timeout in seconds (default: 1800 = 30 minutes)
+ */
+export function getSessionTimeoutSeconds(): number {
+  const value = process.env.MIKRO_SESSION_TIMEOUT_SECONDS;
+  return value ? parseInt(value, 10) : 1800;
+}
+
 import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";
 
 /**

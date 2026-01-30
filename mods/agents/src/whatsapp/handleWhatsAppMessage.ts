@@ -11,6 +11,7 @@ import {
 import type { Agent, Message } from "../llm/types.js";
 import type { RouteResult } from "../router/types.js";
 import { getGuestConversation, addGuestMessage } from "../conversations/inMemoryStore.js";
+import { isNewSession, touchSession } from "../sessions/index.js";
 import { getMessageMaxAgeSeconds } from "../config.js";
 import { logger } from "../logger.js";
 import { GUEST_AGENT, ROLE_TO_AGENT, type AgentName } from "../constants.js";
@@ -36,7 +37,8 @@ export interface MessageProcessorDependencies {
     messages: Message[],
     userMessage: string,
     imageUrl?: string | null,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
+    isNewSession?: boolean
   ) => Promise<string>;
   /** Send a WhatsApp message (text or image) */
   sendWhatsAppMessage: (
@@ -366,8 +368,20 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       });
     }
 
+    const sessionIdentifier = route.type === "guest" ? phone : route.userId;
+    const newSession = isNewSession(sessionIdentifier);
+
     // Step 3: Invoke the LLM
-    const response = await invokeLLM(agent, chatHistory, userMessage, imageUrl, context);
+    const response = await invokeLLM(
+      agent,
+      chatHistory,
+      userMessage,
+      imageUrl,
+      context,
+      newSession
+    );
+
+    touchSession(sessionIdentifier);
 
     // Step 4: Save AI response to history
     if (route.type === "guest") {
