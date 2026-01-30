@@ -112,6 +112,16 @@ export function getJudgeModel(): string {
   return process.env.MIKRO_JUDGE_MODEL || "gpt-4o-mini";
 }
 
+/**
+ * Get the maximum message age in seconds.
+ * Messages older than this will be discarded.
+ * @returns Max age in seconds (default: 60)
+ */
+export function getMessageMaxAgeSeconds(): number {
+  const value = process.env.MIKRO_MESSAGE_MAX_AGE_SECONDS;
+  return value ? parseInt(value, 10) : 60;
+}
+
 import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";
 
 /**

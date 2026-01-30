@@ -44,6 +44,7 @@ export const whatsappMessageSchema = z.object({
   from: z.string(),
   type: whatsappMessageTypeEnum,
   id: z.string(),
+  timestamp: z.string(),
   text: whatsappTextSchema.optional(),
   image: whatsappImageSchema.optional()
 });

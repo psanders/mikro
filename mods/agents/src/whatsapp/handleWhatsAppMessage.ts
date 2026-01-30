@@ -11,6 +11,7 @@ import {
 import type { Agent, Message } from "../llm/types.js";
 import type { RouteResult } from "../router/types.js";
 import { getGuestConversation, addGuestMessage } from "../conversations/inMemoryStore.js";
+import { getMessageMaxAgeSeconds } from "../config.js";
 import { logger } from "../logger.js";
 import { GUEST_AGENT, ROLE_TO_AGENT, type AgentName } from "../constants.js";
 
@@ -227,7 +228,20 @@ export const handleWhatsAppMessage = (() => {
  * @param message - The WhatsApp message to process
  */
 async function processMessage(message: WhatsAppMessage): Promise<void> {
-  const { from: phone, type, id, text, image } = message;
+  const { from: phone, type, id, text, image, timestamp } = message;
+
+  const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
+  const maxAgeSeconds = getMessageMaxAgeSeconds();
+
+  if (messageAgeSeconds > maxAgeSeconds) {
+    logger.verbose("discarding old message", {
+      messageId: id,
+      phone,
+      messageAgeSeconds,
+      maxAgeSeconds
+    });
+    return;
+  }
 
   logger.verbose("incoming whatsapp message", {
     messageId: id,
