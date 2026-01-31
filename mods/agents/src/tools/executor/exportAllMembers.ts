@@ -6,48 +6,40 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 import { generateMembersExcel } from "./excelUtils.js";
 
-// Re-export types and utilities for backwards compatibility
-export {
-  calculatePaymentStatus,
-  generateFilename,
-  type LoanPaymentStatus,
-  type ExportedMember,
-  type ExportedLoan
-} from "./excelUtils.js";
-
 /**
- * Handle the exportCollectorMembers tool call.
- * Generates a report and sends it as a document via WhatsApp.
+ * Handle the exportAllMembers tool call.
+ * Generates a report of all active members and sends it as a document via WhatsApp.
+ * This is an admin-only operation.
  */
-export async function handleExportCollectorMembers(
+export async function handleExportAllMembers(
   deps: ToolExecutorDependencies,
   _args: Record<string, unknown>,
   context?: Record<string, unknown>
 ): Promise<ToolResult> {
-  // Get collector ID and phone from context
-  const collectorId = context?.userId as string;
-  const collectorPhone = context?.phone as string;
+  // Get admin ID and phone from context
+  const adminId = context?.userId as string;
+  const adminPhone = context?.phone as string;
 
-  if (!collectorId) {
+  if (!adminId) {
     return {
       success: false,
-      message: "ID de cobrador requerido pero no disponible en el contexto"
+      message: "ID de admin requerido pero no disponible en el contexto"
     };
   }
 
-  if (!collectorPhone) {
+  if (!adminPhone) {
     return {
       success: false,
-      message: "Numero de telefono del cobrador requerido pero no disponible en el contexto"
+      message: "Numero de telefono del admin requerido pero no disponible en el contexto"
     };
   }
 
-  const members = await deps.exportCollectorMembers({ assignedCollectorId: collectorId });
+  const members = await deps.exportAllMembers();
 
   if (members.length === 0) {
     return {
       success: true,
-      message: "No hay miembros asignados a este cobrador."
+      message: "No hay miembros activos en el sistema."
     };
   }
 
@@ -57,10 +49,10 @@ export async function handleExportCollectorMembers(
     filename,
     memberCount,
     loanCount
-  } = await generateMembersExcel(members, "reporte-cobrador");
+  } = await generateMembersExcel(members, "reporte-todos-miembros");
 
   logger.verbose("uploading report to WhatsApp", {
-    collectorId,
+    adminId,
     memberCount,
     loanCount,
     filename,
@@ -78,7 +70,7 @@ export async function handleExportCollectorMembers(
 
     // Send document via WhatsApp
     const response = await deps.sendWhatsAppMessage({
-      phone: collectorPhone,
+      phone: adminPhone,
       mediaId,
       mediaType: "document",
       documentFilename: filename
@@ -87,7 +79,7 @@ export async function handleExportCollectorMembers(
     const messageId = response.messages?.[0]?.id;
 
     logger.verbose("report sent via WhatsApp", {
-      collectorId,
+      adminId,
       memberCount,
       loanCount,
       messageId
@@ -101,7 +93,7 @@ export async function handleExportCollectorMembers(
   } catch (error) {
     const err = error as Error;
     logger.error("failed to send report via WhatsApp", {
-      collectorId,
+      adminId,
       error: err.message
     });
 

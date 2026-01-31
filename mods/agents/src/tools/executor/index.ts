@@ -19,6 +19,8 @@ import { handleListMemberLoansByPhone } from "./listMemberLoansByPhone.js";
 import { handleListUsers } from "./listUsers.js";
 import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
 import { handleExportCollectorMembers } from "./exportCollectorMembers.js";
+import { handleExportMembersByReferrer } from "./exportMembersByReferrer.js";
+import { handleExportAllMembers } from "./exportAllMembers.js";
 
 /**
  * Creates a tool executor that delegates to the provided API functions.
@@ -58,7 +60,9 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     listMemberLoansByPhone: handleListMemberLoansByPhone,
     listUsers: handleListUsers,
     getLoanByLoanId: handleGetLoanByLoanId,
-    exportCollectorMembers: handleExportCollectorMembers
+    exportCollectorMembers: handleExportCollectorMembers,
+    exportMembersByReferrer: handleExportMembersByReferrer,
+    exportAllMembers: handleExportAllMembers
   };
 
   return async function executeTool(

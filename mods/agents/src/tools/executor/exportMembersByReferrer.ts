@@ -6,48 +6,39 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 import { generateMembersExcel } from "./excelUtils.js";
 
-// Re-export types and utilities for backwards compatibility
-export {
-  calculatePaymentStatus,
-  generateFilename,
-  type LoanPaymentStatus,
-  type ExportedMember,
-  type ExportedLoan
-} from "./excelUtils.js";
-
 /**
- * Handle the exportCollectorMembers tool call.
+ * Handle the exportMembersByReferrer tool call.
  * Generates a report and sends it as a document via WhatsApp.
  */
-export async function handleExportCollectorMembers(
+export async function handleExportMembersByReferrer(
   deps: ToolExecutorDependencies,
   _args: Record<string, unknown>,
   context?: Record<string, unknown>
 ): Promise<ToolResult> {
-  // Get collector ID and phone from context
-  const collectorId = context?.userId as string;
-  const collectorPhone = context?.phone as string;
+  // Get referrer ID and phone from context
+  const referrerId = context?.userId as string;
+  const referrerPhone = context?.phone as string;
 
-  if (!collectorId) {
+  if (!referrerId) {
     return {
       success: false,
-      message: "ID de cobrador requerido pero no disponible en el contexto"
+      message: "ID de referidor requerido pero no disponible en el contexto"
     };
   }
 
-  if (!collectorPhone) {
+  if (!referrerPhone) {
     return {
       success: false,
-      message: "Numero de telefono del cobrador requerido pero no disponible en el contexto"
+      message: "Numero de telefono del referidor requerido pero no disponible en el contexto"
     };
   }
 
-  const members = await deps.exportCollectorMembers({ assignedCollectorId: collectorId });
+  const members = await deps.exportMembersByReferrer({ referredById: referrerId });
 
   if (members.length === 0) {
     return {
       success: true,
-      message: "No hay miembros asignados a este cobrador."
+      message: "No hay miembros referidos por este usuario."
     };
   }
 
@@ -57,10 +48,10 @@ export async function handleExportCollectorMembers(
     filename,
     memberCount,
     loanCount
-  } = await generateMembersExcel(members, "reporte-cobrador");
+  } = await generateMembersExcel(members, "reporte-referidos");
 
   logger.verbose("uploading report to WhatsApp", {
-    collectorId,
+    referrerId,
     memberCount,
     loanCount,
     filename,
@@ -78,7 +69,7 @@ export async function handleExportCollectorMembers(
 
     // Send document via WhatsApp
     const response = await deps.sendWhatsAppMessage({
-      phone: collectorPhone,
+      phone: referrerPhone,
       mediaId,
       mediaType: "document",
       documentFilename: filename
@@ -87,7 +78,7 @@ export async function handleExportCollectorMembers(
     const messageId = response.messages?.[0]?.id;
 
     logger.verbose("report sent via WhatsApp", {
-      collectorId,
+      referrerId,
       memberCount,
       loanCount,
       messageId
@@ -95,13 +86,13 @@ export async function handleExportCollectorMembers(
 
     return {
       success: true,
-      message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros.`,
+      message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros referidos.`,
       data: { messageId, filename, loanCount, memberCount: members.length }
     };
   } catch (error) {
     const err = error as Error;
     logger.error("failed to send report via WhatsApp", {
-      collectorId,
+      referrerId,
       error: err.message
     });
 

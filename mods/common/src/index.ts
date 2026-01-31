@@ -8,7 +8,13 @@
 export { ValidationError, type FieldError } from "./errors/index.js";
 
 // Utilities
-export { withErrorHandlingAndValidation, validatePhone } from "./utils/index.js";
+export {
+  withErrorHandlingAndValidation,
+  validatePhone,
+  calculatePaymentStatus,
+  type LoanPaymentData,
+  type LoanPaymentStatus
+} from "./utils/index.js";
 
 // Schemas
 export {
@@ -21,6 +27,8 @@ export {
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
   exportCollectorMembersSchema,
+  exportMembersByReferrerSchema,
+  exportAllMembersSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
   type GetMemberInput,
@@ -29,6 +37,8 @@ export {
   type ListMembersByReferrerInput,
   type ListMembersByCollectorInput,
   type ExportCollectorMembersInput,
+  type ExportMembersByReferrerInput,
+  type ExportAllMembersInput,
   // User schemas
   roleEnum,
   createUserSchema,

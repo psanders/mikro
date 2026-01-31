@@ -5,6 +5,30 @@
  */
 
 /**
+ * Loan data for member export reports.
+ */
+export interface ExportedLoan {
+  loanId: number;
+  notes: string | null;
+  paymentFrequency: string;
+  createdAt: Date;
+  termLength: number;
+  payments: Array<{ paidAt: Date }>;
+}
+
+/**
+ * Member data for export reports. Used by all export functions.
+ */
+export interface ExportedMember {
+  name: string;
+  phone: string;
+  collectionPoint: string | null;
+  notes: string | null;
+  referredBy: { name: string };
+  loans: ExportedLoan[];
+}
+
+/**
  * API functions required by the tool executor.
  */
 export interface ToolExecutorDependencies {
@@ -111,24 +135,14 @@ export interface ToolExecutorDependencies {
     }>
   >;
 
-  /** Export collector members with loans and referrer for CSV generation */
-  exportCollectorMembers: (params: { assignedCollectorId: string }) => Promise<
-    Array<{
-      name: string;
-      phone: string;
-      collectionPoint: string | null;
-      notes: string | null;
-      referredBy: { name: string };
-      loans: Array<{
-        loanId: number;
-        notes: string | null;
-        paymentFrequency: string;
-        createdAt: Date;
-        termLength: number;
-        payments: Array<{ paidAt: Date }>;
-      }>;
-    }>
-  >;
+  /** Export collector members with loans and referrer for report generation */
+  exportCollectorMembers: (params: { assignedCollectorId: string }) => Promise<ExportedMember[]>;
+
+  /** Export members by referrer with loans and referrer for report generation */
+  exportMembersByReferrer: (params: { referredById: string }) => Promise<ExportedMember[]>;
+
+  /** Export all members with loans and referrer for report generation (admin only) */
+  exportAllMembers: () => Promise<ExportedMember[]>;
 
   /** Upload media to WhatsApp and get media ID */
   uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;

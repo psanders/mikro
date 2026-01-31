@@ -366,7 +366,7 @@ export const listUsersTool: ToolFunction = {
 };
 
 /**
- * Tool definition for exporting collector members as CSV.
+ * Tool definition for exporting collector members.
  * Used by Juan (collector) to generate a report of assigned members.
  */
 export const exportCollectorMembersTool: ToolFunction = {
@@ -374,7 +374,43 @@ export const exportCollectorMembersTool: ToolFunction = {
   function: {
     name: "exportCollectorMembers",
     description:
-      "Generar un reporte CSV de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Notas del Miembro, Notas del Prestamo, y Dias de Atraso.",
+      "Generar un reporte de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Notas del Miembro, Notas del Prestamo, y Dias de Atraso.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
+ * Tool definition for exporting members by referrer.
+ * Used by referrers to generate a report of members they referred.
+ */
+export const exportMembersByReferrerTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "exportMembersByReferrer",
+    description:
+      "Generar un reporte de los miembros referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Estado de Pago, y Notas.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
+ * Tool definition for exporting all members (admin only).
+ * Used by admin to generate a report of all active members.
+ */
+export const exportAllMembersTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "exportAllMembers",
+    description:
+      "Generar un reporte de todos los miembros activos (solo admin). Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Estado de Pago, y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -399,7 +435,9 @@ export const allTools: ToolFunction[] = [
   listMemberLoansByPhoneTool,
   listUsersTool,
   getLoanByLoanIdTool,
-  exportCollectorMembersTool
+  exportCollectorMembersTool,
+  exportMembersByReferrerTool,
+  exportAllMembersTool
 ];
 
 /**

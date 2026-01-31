@@ -3,27 +3,27 @@
  */
 import {
   withErrorHandlingAndValidation,
-  exportCollectorMembersSchema,
-  type ExportCollectorMembersInput,
+  exportAllMembersSchema,
+  type ExportAllMembersInput,
   type DbClient,
   type MemberWithLoansAndReferrer
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to export members by collector ID with loans and referrer.
- * Returns members with active loans, all completed payments, and referrer info for report generation.
+ * Creates a function to export all active members with loans and referrer.
+ * Returns all active members with active loans, completed payments, and referrer info for report generation.
+ * This is an admin-only operation.
  *
  * @param client - The database client
- * @returns A validated function that exports collector members
+ * @returns A validated function that exports all members
  */
-export function createExportCollectorMembers(client: DbClient) {
-  const fn = async (params: ExportCollectorMembersInput): Promise<MemberWithLoansAndReferrer[]> => {
-    logger.verbose("exporting members by collector", { collectorId: params.assignedCollectorId });
+export function createExportAllMembers(client: DbClient) {
+  const fn = async (_params: ExportAllMembersInput): Promise<MemberWithLoansAndReferrer[]> => {
+    logger.verbose("exporting all members");
 
     const members = await client.member.findMany({
       where: {
-        assignedCollectorId: params.assignedCollectorId,
         isActive: true
       },
       include: {
@@ -41,8 +41,7 @@ export function createExportCollectorMembers(client: DbClient) {
       }
     });
 
-    logger.verbose("members exported for collector", {
-      collectorId: params.assignedCollectorId,
+    logger.verbose("all members exported", {
       memberCount: members.length,
       loanCount: members.reduce((acc, m) => acc + m.loans.length, 0)
     });
@@ -50,5 +49,5 @@ export function createExportCollectorMembers(client: DbClient) {
     return members;
   };
 
-  return withErrorHandlingAndValidation(fn, exportCollectorMembersSchema);
+  return withErrorHandlingAndValidation(fn, exportAllMembersSchema);
 }

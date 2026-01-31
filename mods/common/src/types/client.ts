@@ -261,7 +261,7 @@ export interface PaymentWithRelations extends Payment {
 }
 
 /**
- * Member with loans and referrer for CSV export.
+ * Member with loans and referrer for report export.
  */
 export interface MemberWithLoansAndReferrer extends Member {
   loans: Array<

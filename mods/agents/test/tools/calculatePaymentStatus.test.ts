@@ -3,10 +3,7 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import {
-  calculatePaymentStatus,
-  type LoanWithPayments
-} from "../../src/tools/executor/exportCollectorMembers.js";
+import { calculatePaymentStatus, type LoanPaymentData } from "@mikro/common";
 
 describe("calculatePaymentStatus", () => {
   let clock: sinon.SinonFakeTimers;
@@ -16,13 +13,10 @@ describe("calculatePaymentStatus", () => {
     createdAt: Date;
     paymentFrequency: "DAILY" | "WEEKLY";
     paymentsCount: number;
-  }): LoanWithPayments {
+  }): LoanPaymentData {
     return {
-      loanId: 1,
-      notes: null,
       paymentFrequency: params.paymentFrequency,
       createdAt: params.createdAt,
-      termLength: 10,
       payments: Array(params.paymentsCount).fill({ paidAt: new Date() })
     };
   }

@@ -3,3 +3,8 @@
  */
 export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation.js";
 export { validatePhone } from "./validatePhone.js";
+export {
+  calculatePaymentStatus,
+  type LoanPaymentData,
+  type LoanPaymentStatus
+} from "./calculatePaymentStatus.js";

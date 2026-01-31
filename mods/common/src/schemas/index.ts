@@ -10,6 +10,8 @@ export {
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
   exportCollectorMembersSchema,
+  exportMembersByReferrerSchema,
+  exportAllMembersSchema,
   type CreateMemberInput,
   type UpdateMemberInput,
   type GetMemberInput,
@@ -17,7 +19,9 @@ export {
   type ListMembersInput,
   type ListMembersByReferrerInput,
   type ListMembersByCollectorInput,
-  type ExportCollectorMembersInput
+  type ExportCollectorMembersInput,
+  type ExportMembersByReferrerInput,
+  type ExportAllMembersInput
 } from "./member.js";
 
 export {

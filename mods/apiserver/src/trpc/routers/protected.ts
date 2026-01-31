@@ -10,6 +10,8 @@ import {
   listMembersByReferrerSchema,
   listMembersByCollectorSchema,
   exportCollectorMembersSchema,
+  exportMembersByReferrerSchema,
+  exportAllMembersSchema,
   // User schemas
   createUserSchema,
   updateUserSchema,
@@ -42,6 +44,8 @@ import { createListMembers } from "../../api/members/createListMembers.js";
 import { createListMembersByReferrer } from "../../api/members/createListMembersByReferrer.js";
 import { createListMembersByCollector } from "../../api/members/createListMembersByCollector.js";
 import { createExportCollectorMembers } from "../../api/members/createExportCollectorMembers.js";
+import { createExportMembersByReferrer } from "../../api/members/createExportMembersByReferrer.js";
+import { createExportAllMembers } from "../../api/members/createExportAllMembers.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -126,7 +130,7 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Export members by collector ID with loans and referrer for CSV generation.
+   * Export members by collector ID with loans and referrer for report generation.
    * Returns members with active loans, payment status, and referrer info.
    */
   exportCollectorMembers: protectedProcedure
@@ -135,6 +139,26 @@ export const protectedRouter = router({
       const fn = createExportCollectorMembers(ctx.db);
       return fn(input);
     }),
+
+  /**
+   * Export members by referrer ID with loans and referrer for report generation.
+   * Returns members referred by a specific user with active loans and payment status.
+   */
+  exportMembersByReferrer: protectedProcedure
+    .input(exportMembersByReferrerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createExportMembersByReferrer(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Export all active members with loans and referrer for report generation.
+   * Admin-only operation that returns all members with active loans and payment status.
+   */
+  exportAllMembers: protectedProcedure.input(exportAllMembersSchema).query(async ({ ctx }) => {
+    const fn = createExportAllMembers(ctx.db);
+    return fn({});
+  }),
 
   // ==================== User procedures ====================
 

@@ -26,7 +26,6 @@
     "db:seed": "npm run db:seed -w @mikro/apiserver",
     "db:reset": "npm run db:reset -w @mikro/apiserver",
     "keys:generate": "npx tsx .scripts/generate-keys.ts",
-    "json:migrate": "npx tsx .scripts/migrate-json.ts",
     "agents:eval": "npx tsx mods/agents/src/eval/cli.ts"
   },
   "lint-staged": {
