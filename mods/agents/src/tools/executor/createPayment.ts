@@ -19,6 +19,9 @@ export async function handleCreatePayment(
     };
   }
 
+  const role = context?.role as string | undefined;
+  const isAdmin = role === "ADMIN";
+
   // Parse numeric loanId from string (e.g., "10000" -> 10000)
   const loanIdInput = args.loanId as string;
   const numericLoanId = Number(loanIdInput);
@@ -49,20 +52,22 @@ export async function handleCreatePayment(
     };
   }
 
-  // Validate collector assignment
-  if (!loan.member.assignedCollectorId) {
-    return {
-      success: false,
-      message: "Este préstamo no tiene un cobrador asignado"
-    };
-  }
+  // Skip collector validation for admins
+  if (!isAdmin) {
+    if (!loan.member.assignedCollectorId) {
+      return {
+        success: false,
+        message: "Este préstamo no tiene un cobrador asignado"
+      };
+    }
 
-  if (loan.member.assignedCollectorId !== collectorId) {
-    return {
-      success: false,
-      message:
-        "No tienes permiso para registrar pagos para este préstamo. Este préstamo está asignado a otro cobrador."
-    };
+    if (loan.member.assignedCollectorId !== collectorId) {
+      return {
+        success: false,
+        message:
+          "No tienes permiso para registrar pagos para este préstamo. Este préstamo está asignado a otro cobrador."
+      };
+    }
   }
 
   // Parse payment amount
