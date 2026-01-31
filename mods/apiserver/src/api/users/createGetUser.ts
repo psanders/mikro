@@ -6,7 +6,8 @@ import {
   getUserSchema,
   type GetUserInput,
   type DbClient,
-  type User
+  type User,
+  type Role
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -17,10 +18,11 @@ import { logger } from "../../logger.js";
  * @returns A validated function that retrieves a user
  */
 export function createGetUser(client: DbClient) {
-  const fn = async (params: GetUserInput): Promise<User | null> => {
+  const fn = async (params: GetUserInput): Promise<(User & { roles?: Array<{ role: Role }> }) | null> => {
     logger.verbose("getting user", { id: params.id });
     const user = await client.user.findUnique({
-      where: { id: params.id }
+      where: { id: params.id },
+      include: { roles: { select: { role: true } } }
     });
     logger.verbose("user retrieved", { id: params.id, found: !!user });
     return user;

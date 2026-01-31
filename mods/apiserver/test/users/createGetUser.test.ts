@@ -41,7 +41,8 @@ describe("createGetUser", () => {
       expect(mockClient.user.findUnique.calledOnce).to.be.true;
       expect(
         mockClient.user.findUnique.calledWith({
-          where: { id: validInput.id }
+          where: { id: validInput.id },
+          include: { roles: { select: { role: true } } }
         })
       ).to.be.true;
     });

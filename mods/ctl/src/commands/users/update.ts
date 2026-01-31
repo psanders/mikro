@@ -31,6 +31,8 @@ export default class Update extends BaseCommand<typeof Update> {
       this.log("This utility will help you update a User.");
       this.log("Press ^C at any time to quit.");
 
+      const currentRole = userFromDB.roles?.[0]?.role;
+
       const answers = {
         name: await input({
           message: "Name",
@@ -49,6 +51,15 @@ export default class Update extends BaseCommand<typeof Update> {
             { name: "Disabled", value: false }
           ],
           default: userFromDB.enabled
+        }),
+        role: await select({
+          message: "Role",
+          choices: [
+            { name: "Admin", value: "ADMIN" as const },
+            { name: "Collector", value: "COLLECTOR" as const },
+            { name: "Referrer", value: "REFERRER" as const }
+          ],
+          default: currentRole ?? "REFERRER"
         })
       };
 
@@ -65,7 +76,8 @@ export default class Update extends BaseCommand<typeof Update> {
         id: args.userId,
         name: answers.name,
         phone: answers.phone,
-        enabled: answers.enabled
+        enabled: answers.enabled,
+        role: answers.role
       });
 
       this.log("Done!");

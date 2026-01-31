@@ -20,8 +20,9 @@ export const createUserSchema = z.object({
 
 /**
  * Schema for updating an existing user.
- * Only name, phone, and enabled can be updated.
+ * Name, phone, enabled, and role can be updated.
  * Phone is validated and normalized to E.164 format if provided.
+ * Role replaces all existing roles when provided.
  */
 export const updateUserSchema = z.object({
   id: z.uuid({ error: "Invalid user ID" }),
@@ -33,7 +34,8 @@ export const updateUserSchema = z.object({
       return validatePhone(val);
     })
     .optional(),
-  enabled: z.boolean().optional()
+  enabled: z.boolean().optional(),
+  role: roleEnum.optional()
 });
 
 /**

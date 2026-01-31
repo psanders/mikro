@@ -28,7 +28,10 @@ export interface DbClient {
   user: {
     create(args: { data: { name: string; phone: string } }): Promise<User>;
     update(args: { where: { id: string }; data: Omit<UpdateUserInput, "id"> }): Promise<User>;
-    findUnique(args: { where: { id: string } }): Promise<User | null>;
+    findUnique(args: {
+      where: { id: string };
+      include?: { roles: { select: { role: true } } };
+    }): Promise<(User & { roles?: Array<{ role: Role }> }) | null>;
     findFirst(args: {
       where: { phone: string };
       include?: { roles?: { select?: { role: boolean } } };
@@ -48,6 +51,7 @@ export interface DbClient {
   userRole: {
     create(args: { data: { userId: string; role: Role } }): Promise<UserRole>;
     findFirst(args: { where: { userId: string } }): Promise<UserRole | null>;
+    deleteMany(args: { where: { userId: string } }): Promise<{ count: number }>;
   };
 
   member: {
