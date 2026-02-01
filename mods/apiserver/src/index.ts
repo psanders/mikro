@@ -26,6 +26,7 @@ import {
   createWhatsAppClient,
   allTools,
   getDisabledAgents,
+  initializeLLM,
   type Message,
   type AgentName
 } from "@mikro/agents";
@@ -121,6 +122,11 @@ async function initializeMessageProcessor() {
   logger.info("initializing message processor", { step: "entry" });
 
   try {
+    // Validate LLM configurations first (fail fast on misconfiguration)
+    logger.info("validating LLM configurations", { step: "validate-llm" });
+    initializeLLM();
+    logger.info("LLM configurations validated", { step: "llm-validated" });
+
     // Load agents
     logger.info("loading agents", { step: "load-agents" });
     const agents = loadAgents();

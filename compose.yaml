@@ -21,8 +21,10 @@ services:
       - MIKRO_WHATSAPP_PHONE_NUMBER_ID=${MIKRO_WHATSAPP_PHONE_NUMBER_ID}
       - MIKRO_WHATSAPP_ACCESS_TOKEN=${MIKRO_WHATSAPP_ACCESS_TOKEN}
       - MIKRO_WHATSAPP_VERIFY_TOKEN=${MIKRO_WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
-      # OpenAI API for AI agents
-      - MIKRO_OPENAI_API_KEY=${MIKRO_OPENAI_API_KEY}
+      # LLM Configuration (JSON format: {"vendor":"openai|anthropic|google","apiKey":"...","model":"..."})
+      - MIKRO_LLM_TEXT=${MIKRO_LLM_TEXT}
+      - MIKRO_LLM_VISION=${MIKRO_LLM_VISION}
+      - MIKRO_LLM_EVALS=${MIKRO_LLM_EVALS}
       # Path to signing keys (use absolute path in container)
       - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
       # Disabled agents

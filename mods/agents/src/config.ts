@@ -1,6 +1,14 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import {
+  type LLMConfig,
+  type LLMPurpose,
+  LLM_PURPOSES,
+  DEFAULT_CONFIGS,
+  parseLLMConfig,
+  validateModelForVendor
+} from "./llm/providers.js";
 
 /**
  * Validate that a string environment variable is set and non-empty.
@@ -15,6 +23,85 @@ function validateRequired(value: string | undefined, fieldName: string): string 
   }
   return value;
 }
+
+// Cache for parsed LLM configs
+const llmConfigCache = new Map<LLMPurpose, LLMConfig>();
+
+/**
+ * Get LLM configuration for a specific purpose.
+ * Parses the JSON environment variable and validates vendor/model combination.
+ *
+ * @param purpose - The LLM purpose (general, vision, evals)
+ * @returns The validated LLM configuration
+ * @throws Error if env var is missing or config is invalid
+ *
+ * @example
+ * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
+ * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-4o-mini" }
+ */
+export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
+  // Return cached config if available
+  const cached = llmConfigCache.get(purpose);
+  if (cached) {
+    return cached;
+  }
+
+  const envVarName = `MIKRO_LLM_${purpose.toUpperCase()}`;
+  const envValue = process.env[envVarName];
+
+  if (!envValue || envValue.trim().length === 0) {
+    throw new Error(
+      `${envVarName} environment variable is not set. ` +
+        `Expected JSON: {"vendor":"openai|anthropic|google","apiKey":"...","model":"..."}`
+    );
+  }
+
+  const config = parseLLMConfig(purpose, envValue);
+
+  // Cache the config
+  llmConfigCache.set(purpose, config);
+
+  return config;
+}
+
+/**
+ * Validate all LLM configurations at startup.
+ * Should be called during application initialization to fail fast on misconfiguration.
+ *
+ * @throws Error if any LLM configuration is invalid
+ */
+export function validateAllLLMConfigs(): void {
+  const errors: string[] = [];
+
+  for (const purpose of LLM_PURPOSES) {
+    try {
+      const config = getLLMConfig(purpose);
+
+      // Additional validation for vision purpose - must support vision
+      if (purpose === "vision") {
+        validateModelForVendor(config, { requireVision: true });
+      }
+    } catch (error) {
+      errors.push(`${purpose}: ${(error as Error).message}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`LLM configuration errors:\n${errors.map((e) => `  - ${e}`).join("\n")}`);
+  }
+}
+
+/**
+ * Clear the LLM config cache.
+ * Useful for testing or when env vars change at runtime.
+ */
+export function clearLLMConfigCache(): void {
+  llmConfigCache.clear();
+}
+
+// Re-export types and utilities for convenience
+export type { LLMConfig, LLMPurpose };
+export { DEFAULT_CONFIGS };
 
 /**
  * Get WhatsApp webhook verify token from environment.
@@ -77,39 +164,6 @@ export function getPublicUrl(): string {
 export function getPublicImageUrl(filename: string): string {
   const publicUrl = getPublicUrl();
   return `${publicUrl}/images/${filename}`;
-}
-
-/**
- * Get OpenAI API key from environment.
- * @returns The OpenAI API key
- * @throws Error if not set
- */
-export function getOpenAIApiKey(): string {
-  return validateRequired(process.env.MIKRO_OPENAI_API_KEY, "MIKRO_OPENAI_API_KEY");
-}
-
-/**
- * Get model for text-only requests.
- * @returns The model name, defaults to 'gpt-4o-mini'
- */
-export function getTextModel(): string {
-  return process.env.MIKRO_TEXT_MODEL || "gpt-4o-mini";
-}
-
-/**
- * Get model for requests with images.
- * @returns The model name, defaults to 'gpt-4o'
- */
-export function getVisionModel(): string {
-  return process.env.MIKRO_VISION_MODEL || "gpt-4o";
-}
-
-/**
- * Get model for similarity/response judging.
- * @returns The model name, defaults to 'gpt-4o-mini'
- */
-export function getJudgeModel(): string {
-  return process.env.MIKRO_JUDGE_MODEL || "gpt-4o-mini";
 }
 
 /**

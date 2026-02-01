@@ -1,31 +1,25 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import OpenAI from "openai";
-import { getOpenAIApiKey, getTextModel, getVisionModel } from "../config.js";
+import {
+  HumanMessage,
+  SystemMessage,
+  AIMessage,
+  ToolMessage,
+  type BaseMessage
+} from "@langchain/core/messages";
+import type { Runnable } from "@langchain/core/runnables";
+import { getLLMConfig } from "../config.js";
+import { createChatModel, isVisionModel } from "./providers.js";
 import { logger } from "../logger.js";
-import type {
-  Agent,
-  Message,
-  MessageContentItem,
-  ToolFunction,
-  ToolExecutor,
-  ToolCall
-} from "./types.js";
-
-// Singleton OpenAI client
-let openaiClient: OpenAI | null = null;
+import type { Agent, Message, MessageContentItem, ToolFunction, ToolExecutor } from "./types.js";
 
 /**
- * Get or create OpenAI client instance.
+ * Content block types for multimodal messages.
  */
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = getOpenAIApiKey();
-    openaiClient = new OpenAI({ apiKey });
-  }
-  return openaiClient;
-}
+type TextContent = { type: "text"; text: string };
+type ImageUrlContent = { type: "image_url"; image_url: { url: string } };
+type MessageContent = TextContent | ImageUrlContent;
 
 /**
  * Filter tools based on agent's allowed tools.
@@ -35,6 +29,105 @@ function filterTools(allTools: ToolFunction[], allowedTools: string[]): ToolFunc
   return allowedTools
     .map((name) => toolMap.get(name))
     .filter((tool): tool is ToolFunction => tool !== undefined);
+}
+
+/**
+ * Convert internal Message format to LangChain BaseMessage format.
+ */
+function convertToLangChainMessage(msg: Message): BaseMessage {
+  if (msg.role === "system") {
+    return new SystemMessage(typeof msg.content === "string" ? msg.content : "");
+  }
+
+  if (msg.role === "user") {
+    if (typeof msg.content === "string") {
+      return new HumanMessage(msg.content);
+    }
+    // Multimodal message
+    const content: MessageContent[] = msg.content.map((item) => {
+      if (item.type === "text") {
+        return { type: "text", text: item.text || "" };
+      }
+      return {
+        type: "image_url",
+        image_url: { url: item.image_url?.url || "" }
+      };
+    });
+    return new HumanMessage({ content });
+  }
+
+  if (msg.role === "assistant") {
+    const aiMsg = new AIMessage(typeof msg.content === "string" ? msg.content : "");
+    // Add tool calls if present
+    if (msg.tool_calls && msg.tool_calls.length > 0) {
+      aiMsg.tool_calls = msg.tool_calls.map((tc) => ({
+        id: tc.id,
+        name: tc.function.name,
+        args: JSON.parse(tc.function.arguments),
+        type: "tool_call" as const
+      }));
+    }
+    return aiMsg;
+  }
+
+  if (msg.role === "tool") {
+    return new ToolMessage({
+      content: typeof msg.content === "string" ? msg.content : "",
+      tool_call_id: msg.tool_call_id || "",
+      name: msg.name
+    });
+  }
+
+  throw new Error(`Unknown message role: ${msg.role}`);
+}
+
+/**
+ * Truncate large data in tool results to prevent token limit errors.
+ */
+function truncateToolResult(result: { success: boolean; message: string; data?: unknown }): {
+  success: boolean;
+  message: string;
+  data?: unknown;
+} {
+  if (!result.data || typeof result.data !== "object" || result.data === null) {
+    return result;
+  }
+
+  const data = result.data as Record<string, unknown>;
+  const truncatedData: Record<string, unknown> = { ...data };
+
+  // If result contains base64 image data in receipt, replace with placeholder
+  if (truncatedData.receipt && typeof truncatedData.receipt === "object") {
+    const receipt = truncatedData.receipt as Record<string, unknown>;
+    if (typeof receipt.image === "string" && receipt.image.length > 1000) {
+      const imageSize = receipt.image.length;
+      truncatedData.receipt = {
+        ...receipt,
+        image: `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`
+      };
+      logger.verbose("truncated large image in tool result", { originalSize: imageSize });
+    }
+  }
+
+  // If result contains base64 image data directly
+  if (typeof truncatedData.image === "string" && truncatedData.image.length > 1000) {
+    const imageSize = truncatedData.image.length;
+    truncatedData.image = `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`;
+    logger.verbose("truncated large image in tool result", { originalSize: imageSize });
+  }
+
+  // Truncate any other large string fields (>10KB)
+  for (const [key, value] of Object.entries(truncatedData)) {
+    if (typeof value === "string" && value.length > 10000 && key !== "token") {
+      truncatedData[key] = `[Large data truncated - ${Math.round(value.length / 1024)}KB]`;
+      logger.verbose("truncated large field in tool result", {
+        field: key,
+        originalSize: value.length
+      });
+    }
+  }
+
+  return { ...result, data: truncatedData };
 }
 
 /**
@@ -64,8 +157,17 @@ export function createInvokeLLM(
   allTools: ToolFunction[],
   toolExecutor: ToolExecutor
 ) {
-  const client = getOpenAIClient();
   const agentTools = filterTools(allTools, agent.allowedTools);
+
+  // Convert OpenAI tool format to LangChain tool format for bindTools
+  const langchainTools = agentTools.map((tool) => ({
+    type: "function" as const,
+    function: {
+      name: tool.function.name,
+      description: tool.function.description,
+      parameters: tool.function.parameters
+    }
+  }));
 
   /**
    * Invoke the LLM with the given messages and user input.
@@ -91,122 +193,115 @@ export function createInvokeLLM(
       isNewSession
     });
 
+    // Determine if we need vision model
+    const hasImage = imageUrl && !imageUrl.startsWith("https://example.com/");
+    const purpose = hasImage ? "vision" : "text";
+
+    // Get LLM config and create model
+    const config = getLLMConfig(purpose);
+
+    // Validate vision capability if needed
+    if (hasImage && !isVisionModel(config.vendor, config.model)) {
+      throw new Error(
+        `Model "${config.model}" for vendor "${config.vendor}" does not support vision. ` +
+          `Configure MIKRO_LLM_VISION with a vision-capable model.`
+      );
+    }
+
+    // Create chat model with agent's temperature
+    const model = createChatModel(config, { temperature: agent.temperature ?? 0.7 });
+
+    // Bind tools if available - bindTools returns a Runnable
+
+    const modelWithTools: Runnable =
+      langchainTools.length > 0 && model.bindTools
+        ? model.bindTools(langchainTools, { tool_choice: "auto" })
+        : model;
+
+    // Build system message with session directive
     const sessionDirective = isNewSession
       ? "[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n\n"
       : "[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n\n";
     const systemContent = sessionDirective + agent.systemPrompt;
 
-    // Build the full messages array with system prompt
-    const fullMessages: Message[] = [{ role: "system", content: systemContent }, ...messages];
+    // Convert existing messages to LangChain format
+    const langchainMessages: BaseMessage[] = [
+      new SystemMessage(systemContent),
+      ...messages.map(convertToLangChainMessage)
+    ];
 
     // Build current user message content
     const userContent: MessageContentItem[] = [];
 
-    // Add text message
     if (userMessage) {
-      userContent.push({
-        type: "text",
-        text: userMessage
-      });
+      userContent.push({ type: "text", text: userMessage });
     }
 
-    // Add image if provided (and it's a valid data URL, not a placeholder)
-    const hasImage = imageUrl && !imageUrl.startsWith("https://example.com/");
     if (hasImage) {
       userContent.push({
         type: "image_url",
-        image_url: {
-          url: imageUrl
-        }
+        image_url: { url: imageUrl }
       });
     }
 
-    // If no content, add default
     if (userContent.length === 0) {
-      userContent.push({
-        type: "text",
-        text: "Hello"
-      });
+      userContent.push({ type: "text", text: "Hello" });
     }
 
     // Add current user message
-    fullMessages.push({
-      role: "user",
-      content: userContent
-    });
-
-    // Select model based on whether image is present
-    const model = hasImage ? getVisionModel() : getTextModel();
+    if (userContent.length === 1 && userContent[0].type === "text") {
+      langchainMessages.push(new HumanMessage(userContent[0].text || "Hello"));
+    } else {
+      const content: MessageContent[] = userContent.map((item) => {
+        if (item.type === "text") {
+          return { type: "text", text: item.text || "" };
+        }
+        return {
+          type: "image_url",
+          image_url: { url: item.image_url?.url || "" }
+        };
+      });
+      langchainMessages.push(new HumanMessage({ content }));
+    }
 
     try {
-      let response = await client.chat.completions.create({
-        model,
-        messages: fullMessages as Parameters<typeof client.chat.completions.create>[0]["messages"],
-        tools:
-          agentTools.length > 0
-            ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
-            : undefined,
-        tool_choice: agentTools.length > 0 ? "auto" : undefined,
-        temperature: agent.temperature ?? 0.7
-      });
-
-      const completion = response as OpenAI.Chat.Completions.ChatCompletion;
-      let assistantMessage = completion.choices[0].message;
-      let finalResponse = "";
+      let response = await modelWithTools.invoke(langchainMessages);
 
       // Handle tool calls loop
       let toolCallIteration = 0;
-      const MAX_TOOL_ITERATIONS = 20; // Safety limit to prevent infinite loops
-      while (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      const MAX_TOOL_ITERATIONS = 20;
+
+      while (response.tool_calls && response.tool_calls.length > 0) {
         toolCallIteration++;
 
-        // Safety check to prevent infinite loops
         if (toolCallIteration > MAX_TOOL_ITERATIONS) {
           logger.error("tool call loop exceeded maximum iterations", {
             agent: agent.name,
             iterations: toolCallIteration,
-            messageCount: fullMessages.length
+            messageCount: langchainMessages.length
           });
           throw new Error(
             `Tool call loop exceeded maximum iterations (${MAX_TOOL_ITERATIONS}). This may indicate an infinite loop.`
           );
         }
 
-        // Filter to only function type tool calls
-        const functionCalls = assistantMessage.tool_calls.filter(
-          (
-            tc
-          ): tc is typeof tc & {
-            type: "function";
-            function: { name: string; arguments: string };
-          } => tc.type === "function" && "function" in tc
-        );
-
         logger.verbose("tool calls detected", {
           agent: agent.name,
-          tools: functionCalls.map((tc) => tc.function.name)
+          tools: response.tool_calls.map((tc: { name: string }) => tc.name)
         });
 
-        // Add assistant message with tool calls to conversation
-        fullMessages.push({
-          role: "assistant",
-          content: assistantMessage.content || "",
-          tool_calls: functionCalls.map((tc) => ({
-            id: tc.id,
-            type: tc.type,
-            function: tc.function
-          })) as ToolCall[]
-        });
+        // Add assistant message with tool calls
+        langchainMessages.push(response);
 
         // Execute all tool calls
-        const toolResults: Message[] = [];
-        for (const toolCall of functionCalls) {
-          const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
+        const toolMessages: ToolMessage[] = [];
+
+        for (const toolCall of response.tool_calls) {
+          const toolName = toolCall.name;
+          const toolArgs = toolCall.args as Record<string, unknown>;
 
           logger.verbose("executing tool", { agent: agent.name, tool: toolName, args: toolArgs });
 
-          // Execute the tool
           const result = await toolExecutor(toolName, toolArgs, context);
 
           logger.verbose("tool executed", {
@@ -215,95 +310,35 @@ export function createInvokeLLM(
             success: result.success
           });
 
-          // Truncate large tool results to prevent token limit errors
-          // Specifically handle base64 images and other large data
-          let truncatedResult: typeof result = { ...result };
-          if (result.data && typeof result.data === "object" && result.data !== null) {
-            const data = result.data as Record<string, unknown>;
-            truncatedResult = {
-              ...result,
-              data: { ...data }
-            };
+          // Truncate large results
+          const truncatedResult = truncateToolResult(result);
 
-            const truncatedData = truncatedResult.data as Record<string, unknown>;
-
-            // If result contains base64 image data in receipt, replace with placeholder to save tokens
-            if (
-              truncatedData.receipt &&
-              typeof truncatedData.receipt === "object" &&
-              truncatedData.receipt !== null
-            ) {
-              const receipt = truncatedData.receipt as Record<string, unknown>;
-              if (typeof receipt.image === "string" && receipt.image.length > 1000) {
-                const imageSize = receipt.image.length;
-                truncatedData.receipt = {
-                  ...receipt,
-                  image: `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`
-                };
-                logger.verbose("truncated large image in tool result", {
-                  tool: toolName,
-                  originalSize: imageSize
-                });
-              }
-            }
-
-            // If result contains base64 image data directly (from generateReceipt)
-            if (typeof truncatedData.image === "string" && truncatedData.image.length > 1000) {
-              const imageSize = truncatedData.image.length;
-              truncatedData.image = `[Base64 image data truncated - ${Math.round(imageSize / 1024)}KB - receipt generated successfully]`;
-              logger.verbose("truncated large image in tool result", {
-                tool: toolName,
-                originalSize: imageSize
-              });
-            }
-
-            // Truncate any other large string fields (>10KB) in data
-            for (const [key, value] of Object.entries(truncatedData)) {
-              if (typeof value === "string" && value.length > 10000 && key !== "token") {
-                // Don't truncate tokens, but truncate other large strings
-                truncatedData[key] =
-                  `[Large data truncated - ${Math.round(value.length / 1024)}KB]`;
-                logger.verbose("truncated large field in tool result", {
-                  tool: toolName,
-                  field: key,
-                  originalSize: value.length
-                });
-              }
-            }
-          }
-
-          const truncatedJson = JSON.stringify(truncatedResult);
-
-          toolResults.push({
-            role: "tool",
-            content: truncatedJson,
-            name: toolName,
-            tool_call_id: toolCall.id
-          });
+          toolMessages.push(
+            new ToolMessage({
+              content: JSON.stringify(truncatedResult),
+              tool_call_id: toolCall.id || "",
+              name: toolName
+            })
+          );
         }
 
-        // Add tool results to conversation
-        fullMessages.push(...toolResults);
+        // Add tool results
+        langchainMessages.push(...toolMessages);
 
-        // Get next response from OpenAI
-        response = await client.chat.completions.create({
-          model,
-          messages: fullMessages as Parameters<
-            typeof client.chat.completions.create
-          >[0]["messages"],
-          tools:
-            agentTools.length > 0
-              ? (agentTools as Parameters<typeof client.chat.completions.create>[0]["tools"])
-              : undefined,
-          tool_choice: agentTools.length > 0 ? "auto" : undefined,
-          temperature: agent.temperature ?? 0.7
-        });
-
-        assistantMessage = response.choices[0].message;
+        // Get next response
+        response = await modelWithTools.invoke(langchainMessages);
       }
 
       // Get final text response
-      finalResponse = assistantMessage.content || "";
+      const finalResponse =
+        typeof response.content === "string"
+          ? response.content
+          : Array.isArray(response.content)
+            ? (response.content as Array<{ type: string; text?: string }>)
+                .filter((c): c is { type: "text"; text: string } => c.type === "text")
+                .map((c) => c.text)
+                .join("")
+            : "";
 
       logger.verbose("llm response received", {
         agent: agent.name,

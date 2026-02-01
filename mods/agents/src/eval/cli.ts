@@ -1,8 +1,16 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { config } from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 import fs from "fs";
 import path from "path";
+
+// Load .env from project root
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, "../../../../.env") });
+
 import { loadAgents } from "../../../apiserver/src/agents/loadAgents.js";
 import { runAgentEval, runScenario, type EvalResults, type ScenarioResult } from "./runner.js";
 import { toJSON, printEval } from "./output.js";

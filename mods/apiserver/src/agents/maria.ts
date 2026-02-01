@@ -5,7 +5,7 @@ import type { Agent } from "@mikro/agents";
 
 export const maria: Agent = {
   name: "maria",
-  systemPrompt: `Eres María, la asistente administrativa de Mikro Créditos para administradores. Ayudas a crear miembros, préstamos, registrar pagos, enviar recibos y generar reportes.
+  systemPrompt: `Eres María, la asistente administrativa de Mikro Créditos para administradores. Ayudas a registrar pagos, enviar recibos y generar reportes.
 
 ## REGLAS CRÍTICAS
 
@@ -25,21 +25,11 @@ export const maria: Agent = {
 
 ## Herramientas - LLAMAR INMEDIATAMENTE
 
-- \`listUsers\`: Para verificar referidores (role="REFERRER") al crear miembro
-- \`createMember\`: Después de recopilar datos y confirmar (nombre, cédula 000-0000000-0, direcciones, referidor)
-- \`getMemberByPhone\`: Cuando den teléfono para buscar miembro (antes de crear préstamo)
-- \`createLoan\`: Después de confirmar miembro, monto, cuotas, monto por cuota, frecuencia (WEEKLY o DAILY)
 - \`getLoanByLoanId\`: Cuando den número de préstamo (cada número = una llamada)
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
 - \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
 - \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros
-
-## Flujo crear miembro
-CRÍTICO: Haz UNA SOLA pregunta por turno. Recopila en orden: nombre → teléfono → cédula (000-0000000-0) → dirección cobro → dirección hogar → trabajo/ingresos (opcional) → dueño negocio (sí/no) → referidor. Para referidor → \`listUsers\` role="REFERRER", confirma nombre. Confirma todo → \`createMember\`.
-
-## Flujo crear préstamo
-Pregunta miembro (nombre o teléfono). Si dan teléfono → \`getMemberByPhone\` para obtener memberId. Recopila: monto principal, número de cuotas, monto por cuota, frecuencia (WEEKLY/DAILY). Confirma → \`createLoan\`.
 
 ## Flujo registrar pago
 Dan número de préstamo (o teléfono) → \`getLoanByLoanId\` (o \`listMemberLoansByPhone\` si dan teléfono). Muestra: Préstamo #X, Cliente, Pago RD$ Y. ¿Confirmas? → \`createPayment\` → \`sendReceiptViaWhatsApp\` con paymentId → "¡Listo!"
@@ -51,17 +41,12 @@ Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id �
 Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCount y memberCount de la respuesta.
 
 ## Guardrails
-- Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."
-- Cédula mal formato: "El número de cédula debe estar en formato 000-0000000-0."`,
+- Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
   allowedTools: [
-    "createMember",
-    "createLoan",
-    "listUsers",
     "createPayment",
     "sendReceiptViaWhatsApp",
     "listPaymentsByLoanId",
     "getLoanByLoanId",
-    "getMemberByPhone",
     "listMemberLoansByPhone",
     "exportAllMembers"
   ],
@@ -84,7 +69,8 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
           },
           {
             human: "Quisiera registrar un pago.",
-            expectedAI: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
+            expectedAI:
+              "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
           },
           {
             human: "El numero de prestamo es 10019.",
@@ -261,155 +247,6 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
         ]
       },
       {
-        id: "happy-path-create-member",
-        description: "Happy path for creating a new member with referrer",
-        turns: [
-          {
-            human: "Hola",
-            expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
-          },
-          {
-            human: "Necesito registrar un cliente nuevo.",
-            expectedAI: "Dale. Dime el nombre completo del cliente."
-          },
-          {
-            human: "Juan Pérez",
-            expectedAI: "Perfecto. ¿Cuál es su número de teléfono?"
-          },
-          {
-            human: "+18091234567",
-            expectedAI: "Listo. Necesito el número de cédula en formato 000-0000000-0."
-          },
-          {
-            human: "001-1234567-8",
-            expectedAI: "¿Cuál es la dirección de cobro?"
-          },
-          {
-            human: "Calle Principal 123",
-            expectedAI: "¿Y la dirección del hogar?"
-          },
-          {
-            human: "La misma",
-            expectedAI: "¿Quién refirió a este cliente?",
-            tools: []
-          },
-          {
-            human: "Pedro Martínez",
-            expectedAI: "Déjame verificar. Sí, Pedro Martínez está en la lista. ¿Confirmas los datos?",
-            tools: [
-              {
-                name: "listUsers",
-                expectedArgs: { role: "REFERRER" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message: "Users found",
-                  data: [
-                    {
-                      id: "user-1",
-                      name: "Pedro Martínez",
-                      role: "REFERRER",
-                      phone: "+18091234568"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            human: "Sí, dale",
-            expectedAI: "¡Miembro creado exitosamente!",
-            tools: [
-              {
-                name: "createMember",
-                expectedArgs: {
-                  name: "Juan Pérez",
-                  idNumber: "001-1234567-8",
-                  homeAddress: "La misma",
-                  referredById: "user-1"
-                },
-                matchMode: "judge",
-                mockResponse: {
-                  success: true,
-                  message: "Member created",
-                  data: {
-                    id: "member-1",
-                    name: "Juan Pérez",
-                    phone: "+18091234567",
-                    cedula: "001-1234567-8"
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "happy-path-create-loan",
-        description: "Happy path for creating a loan for existing member",
-        turns: [
-          {
-            human: "Hola",
-            expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
-          },
-          {
-            human: "Quiero crear un préstamo para el cliente con teléfono +18091234567",
-            expectedAI:
-              "Préstamo: monto principal, número de cuotas, monto por cuota, frecuencia (WEEKLY o DAILY). ¿Cuál es el monto del préstamo?",
-            tools: [
-              {
-                name: "getMemberByPhone",
-                expectedArgs: { phone: "+18091234567" },
-                matchMode: "judge",
-                mockResponse: {
-                  success: true,
-                  message: "Member found",
-                  data: {
-                    member: {
-                      id: "member-1",
-                      name: "Juan Pérez",
-                      phone: "+18091234567"
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          {
-            human: "5000 pesos, 10 cuotas, 650 por cuota, semanal",
-            expectedAI: "¿Confirmas? Miembro: Juan Pérez, Monto: RD$ 5,000, Cuotas: 10, Monto por cuota: RD$ 650, Frecuencia: Semanal",
-            tools: []
-          },
-          {
-            human: "Sí",
-            expectedAI: "¡Listo! El préstamo ha sido creado exitosamente.",
-            tools: [
-              {
-                name: "createLoan",
-                expectedArgs: {
-                  memberId: "member-1",
-                  principal: "5000",
-                  termLength: "10",
-                  paymentAmount: "650",
-                  paymentFrequency: "WEEKLY"
-                },
-                matchMode: "judge",
-                mockResponse: {
-                  success: true,
-                  message: "Loan created",
-                  data: {
-                    id: "loan-uuid-1",
-                    loanId: 10001
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
         id: "off-topic-question",
         description: "Handle off-topic questions",
         turns: [
@@ -420,7 +257,8 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
           },
           {
             human: "Oye, cuánto está el dólar hoy?",
-            expectedAI: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."
+            expectedAI:
+              "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."
           }
         ]
       }

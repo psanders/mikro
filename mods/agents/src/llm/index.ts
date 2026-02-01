@@ -19,5 +19,22 @@ export type {
   AgentEvaluation
 } from "./types.js";
 
-// Functions
+// LLM invocation
 export { createInvokeLLM } from "./createInvokeLLM.js";
+
+// LLM providers (LangChain)
+export {
+  createChatModel,
+  parseLLMConfig,
+  validateModelForVendor,
+  getModelsForVendor,
+  getVisionModelsForVendor,
+  isVisionModel,
+  llmConfigSchema,
+  LLM_VENDORS,
+  LLM_PURPOSES,
+  DEFAULT_CONFIGS,
+  type LLMConfig,
+  type LLMVendor,
+  type LLMPurpose
+} from "./providers.js";

@@ -74,9 +74,36 @@ export {
   getPublicPath,
   getPublicUrl,
   getPublicImageUrl,
-  getOpenAIApiKey,
-  getDisabledAgents
+  getDisabledAgents,
+  getLLMConfig,
+  validateAllLLMConfigs,
+  clearLLMConfigCache,
+  type LLMConfig,
+  type LLMPurpose
 } from "./config.js";
+
+// LLM providers
+export {
+  createChatModel,
+  parseLLMConfig,
+  validateModelForVendor,
+  getModelsForVendor,
+  getVisionModelsForVendor,
+  isVisionModel,
+  LLM_VENDORS,
+  LLM_PURPOSES,
+  DEFAULT_CONFIGS,
+  type LLMVendor
+} from "./llm/providers.js";
+
+/**
+ * Initialize LLM configuration.
+ * Validates all LLM configs at startup to fail fast on misconfiguration.
+ * Call this during application initialization before using any LLM features.
+ *
+ * @throws Error if any LLM configuration is invalid
+ */
+export { validateAllLLMConfigs as initializeLLM } from "./config.js";
 
 // Constants
 export {
