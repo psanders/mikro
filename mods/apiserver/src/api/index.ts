@@ -21,7 +21,9 @@ export {
   createListMembers,
   createListMembersByReferrer,
   createListMembersByCollector,
-  createExportCollectorMembers
+  createExportCollectorMembers,
+  createExportMembersByReferrer,
+  createExportAllMembers
 } from "./members/index.js";
 
 // Chat operations

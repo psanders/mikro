@@ -47,7 +47,9 @@ import {
   createGetMember,
   createCreateLoan,
   createListUsers,
-  createExportCollectorMembers
+  createExportCollectorMembers,
+  createExportMembersByReferrer,
+  createExportAllMembers
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 
@@ -149,6 +151,8 @@ async function initializeMessageProcessor() {
     const createLoan = createCreateLoan(dbClient);
     const listUsers = createListUsers(dbClient);
     const exportCollectorMembers = createExportCollectorMembers(dbClient);
+    const exportMembersByReferrer = createExportMembersByReferrer(dbClient);
+    const exportAllMembers = createExportAllMembers(dbClient);
 
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
@@ -303,6 +307,42 @@ async function initializeMessageProcessor() {
       },
       exportCollectorMembers: async (params: { assignedCollectorId: string }) => {
         const members = await exportCollectorMembers(params);
+        return members.map((member) => ({
+          name: member.name,
+          phone: member.phone,
+          collectionPoint: member.collectionPoint,
+          notes: member.notes,
+          referredBy: { name: member.referredBy.name },
+          loans: member.loans.map((loan) => ({
+            loanId: loan.loanId,
+            notes: loan.notes,
+            paymentFrequency: loan.paymentFrequency,
+            createdAt: loan.createdAt,
+            termLength: loan.termLength,
+            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
+          }))
+        }));
+      },
+      exportMembersByReferrer: async (params: { referredById: string }) => {
+        const members = await exportMembersByReferrer(params);
+        return members.map((member) => ({
+          name: member.name,
+          phone: member.phone,
+          collectionPoint: member.collectionPoint,
+          notes: member.notes,
+          referredBy: { name: member.referredBy.name },
+          loans: member.loans.map((loan) => ({
+            loanId: loan.loanId,
+            notes: loan.notes,
+            paymentFrequency: loan.paymentFrequency,
+            createdAt: loan.createdAt,
+            termLength: loan.termLength,
+            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
+          }))
+        }));
+      },
+      exportAllMembers: async () => {
+        const members = await exportAllMembers({});
         return members.map((member) => ({
           name: member.name,
           phone: member.phone,
