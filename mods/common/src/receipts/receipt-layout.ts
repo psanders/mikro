@@ -36,7 +36,6 @@ export function createReceiptLayout(
     agentName = "Nombre del Agente"
   } = data;
 
-  // Updated fields: single "Nombre" row instead of separate firstName/lastName
   const fields: Array<[string, string]> = [
     ["Numero de Prestamo:", loanNumber],
     ["Nombre:", name],
@@ -58,7 +57,6 @@ export function createReceiptLayout(
           "linear-gradient(180deg, #1565a8 0%, #2980b9 25%, #3498db 45%, #5dade2 65%, #48c9b0 80%, #d4a76a 90%, #e8c98a 100%)"
       };
 
-  // QR Code element - either real QR or placeholder
   const qrCodeElement: ReceiptElement = qrCodeDataUrl
     ? {
         type: "img",
@@ -109,7 +107,6 @@ export function createReceiptLayout(
         ...backgroundStyle
       },
       children: [
-        // Spacer for header area
         {
           type: "div",
           props: {
@@ -119,8 +116,6 @@ export function createReceiptLayout(
             }
           }
         },
-
-        // Card
         {
           type: "div",
           props: {
@@ -144,7 +139,6 @@ export function createReceiptLayout(
                   position: "relative"
                 },
                 children: [
-                  // Fields (full width)
                   {
                     type: "div",
                     props: {
@@ -191,7 +185,6 @@ export function createReceiptLayout(
                       }))
                     }
                   },
-                  // QR Code (absolute positioned bottom-right)
                   {
                     type: "div",
                     props: {
@@ -209,8 +202,6 @@ export function createReceiptLayout(
             }
           }
         },
-
-        // Spacer
         {
           type: "div",
           props: {

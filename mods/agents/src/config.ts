@@ -4,7 +4,6 @@
 import {
   type LLMConfig,
   type LLMPurpose,
-  LLM_PURPOSES,
   DEFAULT_CONFIGS,
   parseLLMConfig,
   validateModelForVendor
@@ -64,16 +63,20 @@ export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
   return config;
 }
 
+/** LLM purposes required at apiserver/agents startup. Evals is only required when running evals. */
+const LLM_PURPOSES_REQUIRED_AT_STARTUP: readonly LLMPurpose[] = ["text", "vision"];
+
 /**
- * Validate all LLM configurations at startup.
+ * Validate LLM configurations required at startup (text, vision).
+ * Evals config is only validated when evals are run.
  * Should be called during application initialization to fail fast on misconfiguration.
  *
- * @throws Error if any LLM configuration is invalid
+ * @throws Error if any required LLM configuration is invalid
  */
 export function validateAllLLMConfigs(): void {
   const errors: string[] = [];
 
-  for (const purpose of LLM_PURPOSES) {
+  for (const purpose of LLM_PURPOSES_REQUIRED_AT_STARTUP) {
     try {
       const config = getLLMConfig(purpose);
 

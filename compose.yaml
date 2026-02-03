@@ -24,7 +24,6 @@ services:
       # LLM Configuration (JSON format: {"vendor":"openai|anthropic|google","apiKey":"...","model":"..."})
       - MIKRO_LLM_TEXT=${MIKRO_LLM_TEXT}
       - MIKRO_LLM_VISION=${MIKRO_LLM_VISION}
-      - MIKRO_LLM_EVALS=${MIKRO_LLM_EVALS}
       # Path to signing keys (use absolute path in container)
       - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
       # Disabled agents

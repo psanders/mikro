@@ -8,7 +8,7 @@ import {
   type DbClient,
   type WhatsAppSendResponse
 } from "@mikro/common";
-import { type GenerateReceiptResponse } from "./createGenerateReceipt.js";
+import { type GenerateReceiptResponse } from "@mikro/common";
 import { saveReceiptImage } from "../../receipts/storage.js";
 import { getPublicPath, getPublicImageUrl } from "@mikro/agents";
 import { logger } from "../../logger.js";

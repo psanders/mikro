@@ -148,3 +148,22 @@ export type { Loan, Payment } from "./types/index.js";
 
 // Receipt utilities
 export { generateKeys, type GeneratedKeys } from "./receipt/index.js";
+
+// Receipt generator (from data, no DB)
+export {
+  createGenerateReceiptFromData,
+  renderReceiptToImage,
+  loadPrivateKey,
+  createSignedToken,
+  generateQRCode,
+  loadFonts,
+  createReceiptLayout,
+  RECEIPT_WIDTH,
+  RECEIPT_HEIGHT,
+  type GenerateReceiptResponse,
+  type ReceiptData,
+  type ReceiptLogger,
+  type CreateGenerateReceiptFromDataDeps,
+  type Font,
+  type ReceiptElement
+} from "./receipts/index.js";
