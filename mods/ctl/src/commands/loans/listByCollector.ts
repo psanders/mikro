@@ -4,10 +4,10 @@
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByCollector extends BaseCommand<typeof ListByCollector> {
+export default class ListByCollector extends ListCommand<typeof ListByCollector> {
   static override readonly description =
     "display loans for members assigned to a specific collector";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <collectorId>"];
@@ -22,11 +22,6 @@ export default class ListByCollector extends BaseCommand<typeof ListByCollector>
       char: "a",
       description: "include closed loans (completed, defaulted, and cancelled)",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

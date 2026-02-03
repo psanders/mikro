@@ -3,10 +3,10 @@
  */
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByCollector extends BaseCommand<typeof ListByCollector> {
+export default class ListByCollector extends ListCommand<typeof ListByCollector> {
   static override readonly description = "display members by assigned collector";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <collectorId>"];
   static override readonly args = {
@@ -20,11 +20,6 @@ export default class ListByCollector extends BaseCommand<typeof ListByCollector>
       char: "a",
       description: "include inactive members",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

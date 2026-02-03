@@ -4,10 +4,11 @@
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand, validateDate } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
+import { validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
+export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly description = "display payments for members referred by a specific user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <referrerId> --start-date 2026-01-01 --end-date 2026-01-31"
@@ -31,11 +32,6 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
       char: "a",
       description: "include reversed payments",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

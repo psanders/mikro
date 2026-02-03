@@ -4,10 +4,10 @@
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class List extends BaseCommand<typeof List> {
+export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all loans";
   static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
   static override readonly flags = {
@@ -15,11 +15,6 @@ export default class List extends BaseCommand<typeof List> {
       char: "a",
       description: "include closed loans (completed, defaulted, and cancelled)",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

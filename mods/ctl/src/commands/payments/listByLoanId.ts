@@ -4,10 +4,10 @@
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
+export default class ListByLoanId extends ListCommand<typeof ListByLoanId> {
   static override readonly description = "display payments for a specific loan by numeric loan ID";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> 10000",
@@ -24,11 +24,6 @@ export default class ListByLoanId extends BaseCommand<typeof ListByLoanId> {
       char: "a",
       description: "include reversed payments",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

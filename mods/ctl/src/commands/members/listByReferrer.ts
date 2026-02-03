@@ -3,10 +3,10 @@
  */
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
+export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly description = "display members by referrer";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <referrerId>"];
   static override readonly args = {
@@ -20,11 +20,6 @@ export default class ListByReferrer extends BaseCommand<typeof ListByReferrer> {
       char: "a",
       description: "include inactive members",
       default: false
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of items to show",
-      default: 100
     })
   };
 

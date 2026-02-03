@@ -31,25 +31,29 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       char: "y",
       description: "Skip confirmation prompts",
       default: false
-    }),
-    "page-size": OclifFlags.integer({
-      char: "s",
-      description: "The number of items to show",
-      default: 100
-    }),
-    "start-date": OclifFlags.string({
-      description: "Start date (YYYY-MM-DD)"
-    }),
-    "end-date": OclifFlags.string({
-      description: "End date (YYYY-MM-DD)"
     })
   };
+
+  /**
+   * Merges baseFlags from the command's class hierarchy (BaseCommand, ListCommand, etc.)
+   * so that list commands get page-size and other list-specific flags.
+   */
+  protected static getMergedBaseFlags(ctor: typeof Command): Interfaces.FlagInput {
+    const chain: Interfaces.FlagInput[] = [];
+    let c: typeof Command | null = ctor;
+    while (c && c !== Command) {
+      const base = (c as { baseFlags?: Interfaces.FlagInput }).baseFlags;
+      if (base) chain.unshift(base);
+      c = Object.getPrototypeOf(c);
+    }
+    return Object.assign({}, ...chain);
+  }
 
   public async init(): Promise<void> {
     await super.init();
     const { args, flags } = await this.parse({
       flags: this.ctor.flags,
-      baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+      baseFlags: (this.ctor as typeof BaseCommand).getMergedBaseFlags(this.ctor),
       enableJsonFlag: this.ctor.enableJsonFlag,
       args: this.ctor.args,
       strict: this.ctor.strict

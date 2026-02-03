@@ -4,10 +4,10 @@
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { BaseCommand } from "../../BaseCommand.js";
+import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class History extends BaseCommand<typeof History> {
+export default class History extends ListCommand<typeof History> {
   static override readonly description = "retrieve chat history for a member or user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> --member-id <member-id>",
@@ -21,11 +21,6 @@ export default class History extends BaseCommand<typeof History> {
     "user-id": Flags.string({
       description: "The User ID to get chat history for",
       exclusive: ["member-id"]
-    }),
-    "page-size": Flags.integer({
-      char: "s",
-      description: "the number of messages to show",
-      default: 50
     })
   };
 
