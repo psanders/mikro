@@ -32,6 +32,7 @@ export { createGetChatHistory, createAddMessageToChatHistory } from "./chat/inde
 // Loan operations
 export {
   createCreateLoan,
+  createUpdateLoanStatus,
   createListLoans,
   createListLoansByReferrer,
   createListLoansByCollector,

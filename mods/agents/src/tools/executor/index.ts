@@ -13,6 +13,7 @@ import { handleListPaymentsByLoanId } from "./listPaymentsByLoanId.js";
 import { handleListLoansByCollector } from "./listLoansByCollector.js";
 import { handleGetMember } from "./getMember.js";
 import { handleCreateLoan } from "./createLoan.js";
+import { handleUpdateLoanStatus } from "./updateLoanStatus.js";
 import { handleGetMemberByPhone } from "./getMemberByPhone.js";
 import { handleListLoansByMember } from "./listLoansByMember.js";
 import { handleListMemberLoansByPhone } from "./listMemberLoansByPhone.js";
@@ -55,6 +56,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     listLoansByCollector: handleListLoansByCollector,
     getMember: handleGetMember,
     createLoan: handleCreateLoan,
+    updateLoanStatus: handleUpdateLoanStatus,
     getMemberByPhone: handleGetMemberByPhone,
     listLoansByMember: handleListLoansByMember,
     listMemberLoansByPhone: handleListMemberLoansByPhone,

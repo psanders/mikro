@@ -21,6 +21,7 @@ import {
   getChatHistorySchema,
   // Loan schemas
   createLoanSchema,
+  updateLoanStatusSchema,
   listLoansSchema,
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
@@ -55,6 +56,7 @@ import { createListUsers } from "../../api/users/createListUsers.js";
 import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
 // Loan API functions
 import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
+import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
 import { createListLoans } from "../../api/loans/createListLoans.js";
 import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
@@ -240,6 +242,16 @@ export const protectedRouter = router({
     .input(listLoansByCollectorSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListLoansByCollector(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED.
+   */
+  updateLoanStatus: protectedProcedure
+    .input(updateLoanStatusSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createUpdateLoanStatus(ctx.db);
       return fn(input);
     }),
 

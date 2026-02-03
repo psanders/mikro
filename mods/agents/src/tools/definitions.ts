@@ -210,6 +210,35 @@ export const createLoanTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for updating a loan's status.
+ * Used by Maria (admin) only.
+ */
+export const updateLoanStatusTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "updateLoanStatus",
+    description:
+      "Cambiar el estado de un préstamo a COMPLETED (completado), DEFAULTED (en mora) o CANCELLED (cancelado). Usa el número de préstamo (loan ID numérico, ej: 10000, 10001).",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description:
+            "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
+        },
+        status: {
+          type: "string",
+          description: "Nuevo estado del préstamo",
+          enum: ["COMPLETED", "DEFAULTED", "CANCELLED"]
+        }
+      },
+      required: ["loanId", "status"]
+    }
+  }
+};
+
+/**
  * Tool definition for getting a member by phone number.
  * Used by Juan (collector).
  */
@@ -430,6 +459,7 @@ export const allTools: ToolFunction[] = [
   listLoansByCollectorTool,
   getMemberTool,
   createLoanTool,
+  updateLoanStatusTool,
   getMemberByPhoneTool,
   listLoansByMemberTool,
   listMemberLoansByPhoneTool,

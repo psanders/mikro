@@ -237,4 +237,50 @@ describe("Loans Integration", () => {
       expect(createdAt.getTime()).to.be.at.most(afterCreate.getTime() + 1000);
     });
   });
+
+  describe("updateLoanStatus", () => {
+    it("should update loan status to COMPLETED", async () => {
+      const member = await createTestMember();
+      const loan = await caller.createLoan({
+        memberId: member.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY"
+      });
+      expect(loan.status).to.equal("ACTIVE");
+
+      const result = await caller.updateLoanStatus({
+        loanId: loan.loanId,
+        status: "COMPLETED"
+      });
+
+      expect(result.loanId).to.equal(loan.loanId);
+      expect(result.status).to.equal("COMPLETED");
+      expect(result.id).to.equal(loan.id);
+    });
+
+    it("should update loan status to DEFAULTED and CANCELLED", async () => {
+      const member = await createTestMember();
+      const loan = await caller.createLoan({
+        memberId: member.id,
+        principal: 3000,
+        termLength: 5,
+        paymentAmount: 600,
+        paymentFrequency: "WEEKLY"
+      });
+
+      const defaulted = await caller.updateLoanStatus({
+        loanId: loan.loanId,
+        status: "DEFAULTED"
+      });
+      expect(defaulted.status).to.equal("DEFAULTED");
+
+      const cancelled = await caller.updateLoanStatus({
+        loanId: loan.loanId,
+        status: "CANCELLED"
+      });
+      expect(cancelled.status).to.equal("CANCELLED");
+    });
+  });
 });

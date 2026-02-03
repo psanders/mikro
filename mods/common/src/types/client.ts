@@ -183,6 +183,11 @@ export interface DbClient {
       take?: number;
       skip?: number;
     }): Promise<Loan[]>;
+    update(args: {
+      where: { id: string };
+      data: { status: string };
+      select?: { id: boolean; loanId: boolean; status: boolean };
+    }): Promise<{ id: string; loanId: number; status: string }>;
   };
 
   payment: {

@@ -46,6 +46,7 @@ import {
   createGetLoanByLoanId,
   createGetMember,
   createCreateLoan,
+  createUpdateLoanStatus,
   createListUsers,
   createExportCollectorMembers,
   createExportMembersByReferrer,
@@ -149,6 +150,7 @@ async function initializeMessageProcessor() {
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
+    const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
     const exportCollectorMembers = createExportCollectorMembers(dbClient);
     const exportMembersByReferrer = createExportMembersByReferrer(dbClient);
@@ -283,6 +285,9 @@ async function initializeMessageProcessor() {
       createLoan: async (params) => {
         const loan = await createLoan(params);
         return { id: loan.id, loanId: loan.loanId };
+      },
+      updateLoanStatus: async (params: { loanId: number; status: string }) => {
+        return updateLoanStatus(params);
       },
       getLoanByLoanId: async (params: { loanId: number }) => {
         const loan = await getLoanByLoanId(params);

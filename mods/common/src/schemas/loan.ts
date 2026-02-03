@@ -45,6 +45,19 @@ export const getLoanByLoanIdSchema = z.object({
 export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]);
 
 /**
+ * Terminal statuses only (for updateLoanStatus). ACTIVE cannot be set via this endpoint.
+ */
+export const updateLoanStatusStatusEnum = z.enum(["COMPLETED", "DEFAULTED", "CANCELLED"]);
+
+/**
+ * Schema for updating a loan's status.
+ */
+export const updateLoanStatusSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
+  status: updateLoanStatusStatusEnum
+});
+
+/**
  * Schema for listing loans with optional pagination and status filter.
  */
 export const listLoansSchema = z.object({
@@ -117,6 +130,11 @@ export type ListLoansByMemberInput = z.infer<typeof listLoansByMemberSchema>;
  * Input type for getting a loan by numeric loan ID.
  */
 export type GetLoanByLoanIdInput = z.infer<typeof getLoanByLoanIdSchema>;
+
+/**
+ * Input type for updating a loan's status.
+ */
+export type UpdateLoanStatusInput = z.infer<typeof updateLoanStatusSchema>;
 
 /**
  * Loan type enum type.

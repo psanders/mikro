@@ -18,7 +18,9 @@ import { logger } from "../../logger.js";
  * @returns A validated function that retrieves a user
  */
 export function createGetUser(client: DbClient) {
-  const fn = async (params: GetUserInput): Promise<(User & { roles?: Array<{ role: Role }> }) | null> => {
+  const fn = async (
+    params: GetUserInput
+  ): Promise<(User & { roles?: Array<{ role: Role }> }) | null> => {
     logger.verbose("getting user", { id: params.id });
     const user = await client.user.findUnique({
       where: { id: params.id },

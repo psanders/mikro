@@ -96,6 +96,12 @@ export interface ToolExecutorDependencies {
     paymentFrequency: "WEEKLY" | "DAILY";
   }) => Promise<{ id: string; loanId: number }>;
 
+  /** Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED */
+  updateLoanStatus: (params: {
+    loanId: number;
+    status: "COMPLETED" | "DEFAULTED" | "CANCELLED";
+  }) => Promise<{ id: string; loanId: number; status: string }>;
+
   /** Get member by phone number */
   getMemberByPhone: (params: {
     phone: string;

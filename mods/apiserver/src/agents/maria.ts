@@ -48,7 +48,8 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
     "listPaymentsByLoanId",
     "getLoanByLoanId",
     "listMemberLoansByPhone",
-    "exportAllMembers"
+    "exportAllMembers",
+    "updateLoanStatus"
   ],
   temperature: 0.4,
   evaluations: {
@@ -239,6 +240,32 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
                   message: "OK",
                   data: {
                     messageId: "msg-receipt-001"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "update-loan-status-completed",
+        description: "Admin asks to set a loan status to COMPLETED",
+        turns: [
+          {
+            human: "Cambia el préstamo 10019 a completado.",
+            expectedAI: "¡Listo! Estado del préstamo actualizado.",
+            tools: [
+              {
+                name: "updateLoanStatus",
+                expectedArgs: { loanId: "10019", status: "COMPLETED" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Estado del préstamo #10019 actualizado a COMPLETED.",
+                  data: {
+                    id: "loan-uuid-10019",
+                    loanId: 10019,
+                    status: "COMPLETED"
                   }
                 }
               }
