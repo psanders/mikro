@@ -11,7 +11,8 @@
     "test": "mocha",
     "start": "node dist/index.js",
     "dev": "tsc --watch & node --watch dist/index.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "report:example": "tsx scripts/generateExampleReport.ts"
   },
   "dependencies": {
     "@fonoster/logger": "^0.9.23",

@@ -149,41 +149,93 @@ describe("excelUtils", () => {
       const members = [createMockMember("John Doe")];
       const result = await generateMembersExcel(members);
 
-      // Parse the buffer back to verify structure
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(result.buffer);
 
       const worksheet = workbook.getWorksheet("Reporte de Miembros");
       expect(worksheet).to.exist;
 
-      // Check header row
       const headerRow = worksheet!.getRow(1);
       expect(headerRow.getCell(1).value).to.equal("Nombre");
       expect(headerRow.getCell(2).value).to.equal("Teléfono");
       expect(headerRow.getCell(3).value).to.equal("Préstamo");
-      expect(headerRow.getCell(4).value).to.equal("Afiliado por");
-      expect(headerRow.getCell(5).value).to.equal("Lugar de Cobro");
-      expect(headerRow.getCell(6).value).to.equal("Estado");
-      expect(headerRow.getCell(7).value).to.equal("Notas");
+      expect(headerRow.getCell(4).value).to.equal("Rating");
+      expect(headerRow.getCell(5).value).to.equal("Pagos atrasados");
+      expect(headerRow.getCell(6).value).to.equal("Tendencia");
+      expect(headerRow.getCell(7).value).to.equal("Afiliado por");
+      expect(headerRow.getCell(8).value).to.equal("Lugar de Cobro");
+      expect(headerRow.getCell(9).value).to.equal("Notas");
     });
 
     it("should include member data in rows", async () => {
       const members = [createMockMember("John Doe")];
       const result = await generateMembersExcel(members);
 
-      // Parse the buffer back to verify data
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(result.buffer);
 
       const worksheet = workbook.getWorksheet("Reporte de Miembros");
       expect(worksheet).to.exist;
 
-      // Check data row
       const dataRow = worksheet!.getRow(2);
       expect(dataRow.getCell(1).value).to.equal("John Doe");
       expect(dataRow.getCell(2).value).to.equal("+18091234567");
       expect(dataRow.getCell(3).value).to.equal(10001);
-      expect(dataRow.getCell(4).value).to.equal("John Referrer");
+      expect(dataRow.getCell(4).value).to.match(/^★+$/);
+      expect(dataRow.getCell(7).value).to.equal("John Referrer");
+    });
+
+    it("should sort rows by rating ascending then missed count descending", async () => {
+      const now = new Date();
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+      const start = new Date(now.getTime() - 5 * msPerWeek);
+      const pay = (weeksFromStart: number) =>
+        new Date(start.getTime() + weeksFromStart * msPerWeek);
+
+      const members: MemberExportData[] = [
+        {
+          name: "On time",
+          phone: "+1",
+          collectionPoint: null,
+          notes: null,
+          referredBy: { name: "R" },
+          loans: [
+            {
+              loanId: 1,
+              notes: null,
+              paymentFrequency: "WEEKLY",
+              createdAt: start,
+              termLength: 10,
+              payments: [pay(1), pay(2), pay(3), pay(4), pay(5)].map((paidAt) => ({ paidAt }))
+            }
+          ]
+        },
+        {
+          name: "Two behind",
+          phone: "+2",
+          collectionPoint: null,
+          notes: null,
+          referredBy: { name: "R" },
+          loans: [
+            {
+              loanId: 2,
+              notes: null,
+              paymentFrequency: "WEEKLY",
+              createdAt: start,
+              termLength: 10,
+              payments: [pay(3), pay(4), pay(5)].map((paidAt) => ({ paidAt }))
+            }
+          ]
+        }
+      ];
+      const result = await generateMembersExcel(members);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(result.buffer);
+      const worksheet = workbook.getWorksheet("Reporte de Miembros")!;
+      const row2 = worksheet.getRow(2);
+      const row3 = worksheet.getRow(3);
+      expect(row2.getCell(1).value).to.equal("Two behind");
+      expect(row3.getCell(1).value).to.equal("On time");
     });
   });
 });

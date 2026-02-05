@@ -403,7 +403,7 @@ export const exportCollectorMembersTool: ToolFunction = {
   function: {
     name: "exportCollectorMembers",
     description:
-      "Generar un reporte de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Notas del Miembro, Notas del Prestamo, y Dias de Atraso.",
+      "Generar un reporte de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -421,7 +421,7 @@ export const exportMembersByReferrerTool: ToolFunction = {
   function: {
     name: "exportMembersByReferrer",
     description:
-      "Generar un reporte de los miembros referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Estado de Pago, y Notas.",
+      "Generar un reporte de los miembros referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -439,7 +439,7 @@ export const exportAllMembersTool: ToolFunction = {
   function: {
     name: "exportAllMembers",
     description:
-      "Generar un reporte de todos los miembros activos (solo admin). Incluye: Nombre, Telefono, Prestamo, Referidor, Punto de Cobro, Estado de Pago, y Notas.",
+      "Generar un reporte de todos los miembros activos (solo admin). Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},

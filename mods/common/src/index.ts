@@ -11,10 +11,28 @@ export { ValidationError, type FieldError } from "./errors/index.js";
 export {
   withErrorHandlingAndValidation,
   validatePhone,
-  calculatePaymentStatus,
+  getCycleMetrics,
   type LoanPaymentData,
-  type LoanPaymentStatus
+  type CycleMetrics
 } from "./utils/index.js";
+export {
+  LOOKBACK_WEEKS_FOR_LATENESS,
+  TREND_LOOKBACK_WEEKS,
+  LATE_DAYS_THRESHOLD,
+  HIGHLIGHT_YELLOW_MIN_MISSED,
+  HIGHLIGHT_YELLOW_TIMES_LATE_IN_LOOKBACK,
+  HIGHLIGHT_RED_MIN_MISSED,
+  HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
+} from "./utils/memberReportConstants.js";
+export {
+  getMissedPaymentsCount,
+  getTimesLateInLastWeeks,
+  getLatenessTrend,
+  getPaymentRating,
+  getReportRowHighlight,
+  type LatenessTrend,
+  type ReportRowHighlight
+} from "./utils/memberReportHelpers.js";
 
 // Schemas
 export {

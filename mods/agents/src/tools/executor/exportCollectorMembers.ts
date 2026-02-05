@@ -6,14 +6,7 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 import { generateMembersExcel } from "./excelUtils.js";
 
-// Re-export types and utilities for backwards compatibility
-export {
-  calculatePaymentStatus,
-  generateFilename,
-  type LoanPaymentStatus,
-  type ExportedMember,
-  type ExportedLoan
-} from "./excelUtils.js";
+export { generateFilename, type ExportedMember, type ExportedLoan } from "./excelUtils.js";
 
 /**
  * Handle the exportCollectorMembers tool call.

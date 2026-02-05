@@ -4,11 +4,14 @@
  * Shared utilities for generating Excel member reports.
  */
 import ExcelJS from "exceljs";
-import { calculatePaymentStatus, type LoanPaymentStatus } from "@mikro/common";
+import {
+  getPaymentRating,
+  getMissedPaymentsCount,
+  getLatenessTrend,
+  getReportRowHighlight
+} from "@mikro/common";
 import type { ExportedMember, ExportedLoan } from "./types.js";
 
-// Re-export types for backwards compatibility
-export { calculatePaymentStatus, type LoanPaymentStatus };
 export type { ExportedMember, ExportedLoan };
 
 // Deprecated aliases - use ExportedMember and ExportedLoan instead
@@ -36,24 +39,21 @@ export function generateFilename(prefix = "reporte-miembros"): string {
   return `${prefix}-${date}.xlsx`;
 }
 
-/**
- * Get background color for payment status (only for late statuses).
- */
-function getStatusColor(status: LoanPaymentStatus): { argb: string } | null {
-  switch (status) {
-    case "AL DIA":
-      return null; // No background color for on-time
-    case "ATRASADO":
-      return { argb: "FFFFF4E6" }; // Light orange/yellow
-    case "MUY ATRASADO":
-      return { argb: "FFFFEBEE" }; // Light red
-    default:
-      return null;
-  }
+const STAR = "★";
+
+function ratingToStars(rating: 1 | 2 | 3 | 4 | 5): string {
+  return STAR.repeat(rating);
+}
+
+function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } | null {
+  if (highlight === "yellow") return { argb: "FFFFF4E6" };
+  if (highlight === "red") return { argb: "FFFFEBEE" };
+  return null;
 }
 
 /**
  * Generate an Excel report from member data.
+ * Rows are sorted by rating (1 star = worst first), then by missed count descending.
  *
  * @param members - Array of member data with loans
  * @param filenamePrefix - Optional prefix for the filename (default: "reporte-miembros")
@@ -63,87 +63,116 @@ export async function generateMembersExcel(
   members: ExportedMember[],
   filenamePrefix = "reporte-miembros"
 ): Promise<ExcelGenerationResult> {
-  // Create Excel workbook and worksheet
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Reporte de Miembros");
 
-  // Define columns with headers and widths
   worksheet.columns = [
     { header: "Nombre", key: "name", width: 25 },
     { header: "Teléfono", key: "phone", width: 15 },
     { header: "Préstamo", key: "loanId", width: 12 },
+    { header: "Rating", key: "rating", width: 8 },
+    { header: "Pagos atrasados", key: "missedCount", width: 16 },
+    { header: "Tendencia", key: "trend", width: 12 },
     { header: "Afiliado por", key: "referredBy", width: 20 },
     { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
-    { header: "Estado", key: "status", width: 15 },
     { header: "Notas", key: "notes", width: 25 }
   ];
 
-  // Set left alignment and top vertical alignment for all columns
   worksheet.columns.forEach((column) => {
     column.alignment = { horizontal: "left", vertical: "top" };
   });
 
-  // Enable text wrapping for member notes column
   const notasColumn = worksheet.getColumn("notes");
   if (notasColumn) {
     notasColumn.alignment = { horizontal: "left", vertical: "top", wrapText: true };
   }
 
-  // Define border style for gridlines (used throughout the worksheet)
   const borderStyle = {
     style: "thin" as const,
-    color: { argb: "FFD3D3D3" } // Light gray
+    color: { argb: "FFD3D3D3" }
   };
 
-  // Add data rows
-  let loanCount = 0;
+  const loanData = (loan: ExportedLoan) => ({
+    paymentFrequency: loan.paymentFrequency,
+    createdAt: loan.createdAt,
+    payments: loan.payments
+  });
+
+  type RowData = {
+    name: string;
+    phone: string;
+    loanId: number;
+    rating: string;
+    missedCount: number;
+    trend: string;
+    referredBy: string;
+    collectionPoint: string;
+    notes: string;
+    highlight: "yellow" | "red" | null;
+  };
+
+  const rows: RowData[] = [];
   for (const member of members) {
     for (const loan of member.loans) {
-      const status = calculatePaymentStatus(loan);
-      const row = worksheet.addRow({
+      const data = loanData(loan);
+      const rating = getPaymentRating(data);
+      const missedCount = getMissedPaymentsCount(data);
+      const trend = getLatenessTrend(data);
+      const highlight = getReportRowHighlight(data);
+      rows.push({
         name: member.name,
         phone: member.phone,
         loanId: loan.loanId,
+        rating: ratingToStars(rating),
+        missedCount,
+        trend,
         referredBy: member.referredBy.name,
         collectionPoint: member.collectionPoint ?? "",
-        status: status,
-        notes: member.notes ?? ""
+        notes: member.notes ?? "",
+        highlight
       });
-
-      // Get status color for row highlighting (only for late statuses)
-      const statusColor = getStatusColor(status);
-
-      // Apply top vertical alignment, row coloring, and borders to all cells in the row
-      row.eachCell((cell, colNumber) => {
-        const columnKey = worksheet.getColumn(colNumber).key;
-        const shouldWrap = columnKey === "notes";
-        cell.alignment = { horizontal: "left", vertical: "top", wrapText: shouldWrap };
-
-        // Apply borders to maintain gridlines
-        cell.border = {
-          top: borderStyle,
-          left: borderStyle,
-          bottom: borderStyle,
-          right: borderStyle
-        };
-
-        // Apply background color to entire row for late statuses
-        if (statusColor) {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: statusColor
-          };
-        }
-      });
-
-      // Make status cell bold
-      const statusCell = row.getCell("status");
-      statusCell.font = { bold: true };
-
-      loanCount++;
     }
   }
+
+  rows.sort((a, b) => {
+    const ratingA = a.rating.length;
+    const ratingB = b.rating.length;
+    if (ratingA !== ratingB) return ratingA - ratingB;
+    return b.missedCount - a.missedCount;
+  });
+
+  for (const r of rows) {
+    const row = worksheet.addRow({
+      name: r.name,
+      phone: r.phone,
+      loanId: r.loanId,
+      rating: r.rating,
+      missedCount: r.missedCount,
+      trend: r.trend,
+      referredBy: r.referredBy,
+      collectionPoint: r.collectionPoint,
+      notes: r.notes
+    });
+
+    const fillColor = highlightToArgb(r.highlight);
+
+    row.eachCell((cell, colNumber) => {
+      const columnKey = worksheet.getColumn(colNumber).key;
+      const shouldWrap = columnKey === "notes";
+      cell.alignment = { horizontal: "left", vertical: "top", wrapText: shouldWrap };
+      cell.border = {
+        top: borderStyle,
+        left: borderStyle,
+        bottom: borderStyle,
+        right: borderStyle
+      };
+      if (fillColor) {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: fillColor };
+      }
+    });
+  }
+
+  const loanCount = rows.length;
 
   // Style header row (bold, left-aligned, top-vertical-aligned)
   const headerRow = worksheet.getRow(1);
