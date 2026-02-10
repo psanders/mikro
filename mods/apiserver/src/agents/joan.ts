@@ -63,7 +63,7 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           },
           {
             human: "Si, está bien.",
-            expectedAI: "Me puedes decir quien te refiero a Mikro?"
+            expectedAI: "Me puedes decir quien te refirió a Mikro?"
           },
           {
             human: "Si, fue Isaic",
