@@ -36,26 +36,26 @@ export type LLMConfig = z.infer<typeof llmConfigSchema>;
  */
 const MODEL_REGISTRY: Record<LLMVendor, { models: string[]; visionModels: string[] }> = {
   openai: {
-    models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "o1", "o1-mini", "o3-mini"],
-    visionModels: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
+    models: ["gpt-5.2", "gpt-5-mini", "gpt-4.1"],
+    visionModels: ["gpt-5.2", "gpt-5-mini", "gpt-4.1"]
   },
   anthropic: {
     models: [
+      "claude-opus-4-6",
+      "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-20250514",
-      "claude-3-5-sonnet-20241022",
-      "claude-3-5-haiku-20241022",
-      "claude-3-opus-20240229"
+      "claude-haiku-4-5-20251001"
     ],
     visionModels: [
+      "claude-opus-4-6",
+      "claude-sonnet-4-5-20250929",
       "claude-sonnet-4-20250514",
-      "claude-3-5-sonnet-20241022",
-      "claude-3-5-haiku-20241022",
-      "claude-3-opus-20240229"
+      "claude-haiku-4-5-20251001"
     ]
   },
   google: {
-    models: ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
-    visionModels: ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"]
+    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+    visionModels: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
   }
 };
 
@@ -64,9 +64,9 @@ const MODEL_REGISTRY: Record<LLMVendor, { models: string[]; visionModels: string
  * Used when environment variable is not set.
  */
 export const DEFAULT_CONFIGS: Record<LLMPurpose, Omit<LLMConfig, "apiKey">> = {
-  text: { vendor: "openai", model: "gpt-4o-mini" },
-  vision: { vendor: "openai", model: "gpt-4o" },
-  evals: { vendor: "openai", model: "gpt-4o-mini" }
+  text: { vendor: "openai", model: "gpt-5-mini" },
+  vision: { vendor: "openai", model: "gpt-5.2" },
+  evals: { vendor: "openai", model: "gpt-5-mini" }
 };
 
 /**

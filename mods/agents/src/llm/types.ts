@@ -6,7 +6,7 @@
  * Model settings for LLM inference.
  */
 export interface ModelSettings {
-  /** The model to use (e.g., "gpt-4o", "gpt-4o-mini") */
+  /** The model to use (e.g., "gpt-5.2", "gpt-5-mini") */
   model: string;
   /** Temperature for response randomness (0-2, default 0.7) */
   temperature?: number;

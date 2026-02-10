@@ -35,8 +35,8 @@ const llmConfigCache = new Map<LLMPurpose, LLMConfig>();
  * @throws Error if env var is missing or config is invalid
  *
  * @example
- * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
- * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-4o-mini" }
+ * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-5-mini"}'
+ * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-5-mini" }
  */
 export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
   // Return cached config if available
