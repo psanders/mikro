@@ -162,7 +162,10 @@ export function createChatModel(
       return new ChatOpenAI({
         apiKey,
         model,
-        temperature
+        temperature,
+        // Use maxCompletionTokens so newer models (gpt-5.x) get the correct API parameter
+        // instead of deprecated max_tokens which they reject
+        maxCompletionTokens: 4096
       });
 
     case "anthropic":

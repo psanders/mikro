@@ -407,7 +407,12 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("failed to process message", { phone, error: err.message });
+    logger.error("failed to process message", {
+      phone,
+      error: err.message,
+      stack: err.stack,
+      cause: err.cause != null ? String(err.cause) : undefined
+    });
 
     // Try to send an error message to the user
     try {
