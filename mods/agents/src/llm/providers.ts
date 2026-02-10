@@ -36,8 +36,8 @@ export type LLMConfig = z.infer<typeof llmConfigSchema>;
  */
 const MODEL_REGISTRY: Record<LLMVendor, { models: string[]; visionModels: string[] }> = {
   openai: {
-    models: ["gpt-5.2", "gpt-5-mini", "gpt-4.1"],
-    visionModels: ["gpt-5.2", "gpt-5-mini", "gpt-4.1"]
+    models: ["gpt-4o", "gpt-4o-mini", "gpt-5.2", "gpt-5-mini", "gpt-4.1"],
+    visionModels: ["gpt-4o", "gpt-4o-mini", "gpt-5.2", "gpt-5-mini", "gpt-4.1"]
   },
   anthropic: {
     models: [
@@ -64,9 +64,9 @@ const MODEL_REGISTRY: Record<LLMVendor, { models: string[]; visionModels: string
  * Used when environment variable is not set.
  */
 export const DEFAULT_CONFIGS: Record<LLMPurpose, Omit<LLMConfig, "apiKey">> = {
-  text: { vendor: "openai", model: "gpt-5-mini" },
-  vision: { vendor: "openai", model: "gpt-5.2" },
-  evals: { vendor: "openai", model: "gpt-5-mini" }
+  text: { vendor: "openai", model: "gpt-4o-mini" },
+  vision: { vendor: "openai", model: "gpt-4o" },
+  evals: { vendor: "openai", model: "gpt-4o-mini" }
 };
 
 /**
@@ -145,6 +145,12 @@ export function parseLLMConfig(purpose: LLMPurpose, jsonString: string): LLMConf
 }
 
 /**
+ * OpenAI models that only support the default temperature (1).
+ * Passing any other temperature causes: "Only the default (1) value is supported."
+ */
+const OPENAI_FIXED_TEMPERATURE_MODELS = ["gpt-5.2", "gpt-5-mini", "gpt-4.1"];
+
+/**
  * Create a LangChain chat model based on configuration.
  * @param config - LLM configuration with vendor, apiKey, and model
  * @param options - Additional options for the model
@@ -155,10 +161,16 @@ export function createChatModel(
   options?: { temperature?: number }
 ): BaseChatModel {
   const { vendor, apiKey, model } = config;
-  const temperature = options?.temperature ?? 0.7;
+  const requestedTemp = options?.temperature ?? 0.7;
 
   switch (vendor) {
-    case "openai":
+    case "openai": {
+      // Some models only support temperature=1; use 1 for those, else requested value
+      const temperature = OPENAI_FIXED_TEMPERATURE_MODELS.some(
+        (m) => model === m || model.startsWith(`${m}-`)
+      )
+        ? 1
+        : requestedTemp;
       return new ChatOpenAI({
         apiKey,
         model,
@@ -167,19 +179,20 @@ export function createChatModel(
         // instead of deprecated max_tokens which they reject
         maxCompletionTokens: 4096
       });
+    }
 
     case "anthropic":
       return new ChatAnthropic({
         apiKey,
         model,
-        temperature
+        temperature: requestedTemp
       });
 
     case "google":
       return new ChatGoogleGenerativeAI({
         apiKey,
         model,
-        temperature
+        temperature: requestedTemp
       });
 
     default:

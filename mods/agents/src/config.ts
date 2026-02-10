@@ -35,8 +35,8 @@ const llmConfigCache = new Map<LLMPurpose, LLMConfig>();
  * @throws Error if env var is missing or config is invalid
  *
  * @example
- * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-5-mini"}'
- * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-5-mini" }
+ * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
+ * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-4o-mini" }
  */
 export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
   // Return cached config if available
@@ -187,6 +187,18 @@ export function getMessageMaxAgeSeconds(): number {
 export function getSessionTimeoutSeconds(): number {
   const value = process.env.MIKRO_SESSION_TIMEOUT_SECONDS;
   return value ? parseInt(value, 10) : 1800;
+}
+
+/**
+ * Get the similarity confidence threshold for eval judge (0-1).
+ * Responses are considered similar when judge confidence >= this value.
+ * @returns Threshold (default: 0.7)
+ */
+export function getEvalSimilarityThreshold(): number {
+  const value = process.env.MIKRO_EVAL_SIMILARITY_THRESHOLD;
+  if (value == null || value.trim() === "") return 0.7;
+  const n = parseFloat(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.7;
 }
 
 import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";

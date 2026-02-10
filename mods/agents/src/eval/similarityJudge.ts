@@ -3,10 +3,8 @@
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
+import { getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
 import { createChatModel } from "../llm/providers.js";
-
-const CONFIDENCE_THRESHOLD = 0.7;
 
 /**
  * Result from similarity test.
@@ -51,13 +49,17 @@ export async function similarityTest(expected: string, actual: string): Promise<
   // Use structured output for type-safe responses
   const structuredModel = model.withStructuredOutput(similarityResponseSchema);
 
-  const systemPrompt = `You are an evaluation judge for AI agent responses. Your task is to determine if two responses are semantically equivalent, meaning they convey the same meaning and intent, even if the wording differs.
+  const systemPrompt = `You are an evaluation judge for AI agent responses in Spanish. Your task is to determine if two responses are semantically equivalent: they convey the same meaning and intent.
 
-Consider:
-- Do both responses answer the same question or address the same point?
-- Do they have the same tone and style?
-- Are key information points present in both?
-- Minor wording differences are acceptable if the meaning is the same`;
+Treat as EQUIVALENT (similar: true, high confidence):
+- Same meaning with different wording or minor typos (e.g. "refiero" vs "refirió", "que" vs "qué").
+- Same information in a slightly different order or phrasing.
+- Same tone and intent (e.g. both are a greeting, both ask the same question, both give the same instruction).
+
+Treat as NOT EQUIVALENT (similar: false):
+- Missing or wrong key information (e.g. different name, number, or instruction).
+- Different intent (e.g. one asks a question and the other does not).
+- Substantially different tone or message.`;
 
   const userPrompt = `Expected response:
 ${expected}
@@ -75,9 +77,10 @@ Are these responses semantically equivalent?`;
 
     // Normalize confidence to 0-1 range
     const confidence = Math.max(0, Math.min(1, result.confidence));
+    const threshold = getEvalSimilarityThreshold();
 
     return {
-      similar: result.similar && confidence >= CONFIDENCE_THRESHOLD,
+      similar: result.similar && confidence >= threshold,
       confidence,
       reason: result.reason || "No reason provided"
     };
