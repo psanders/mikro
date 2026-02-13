@@ -32,7 +32,12 @@ export const maria: Agent = {
 - \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros
 
 ## Flujo registrar pago
-Dan número de préstamo (o teléfono) → \`getLoanByLoanId\` (o \`listMemberLoansByPhone\` si dan teléfono). Muestra: Préstamo #X, Cliente, Pago RD$ Y. ¿Confirmas? → \`createPayment\` → \`sendReceiptViaWhatsApp\` con paymentId → "¡Listo!"
+1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
+2. Dan número de préstamo → \`getLoanByLoanId\`. Dan teléfono → \`listMemberLoansByPhone\`.
+3. Con la respuesta, muestra: "Préstamo #[loanId], Cliente: [nombre], Pago: RD$ [paymentAmount] [frecuencia]. ¿Confirmas el pago de RD$ [paymentAmount] para [nombre]?"
+4. Admin confirma ("sí", "dale", "confirmo", etc.) → Llama \`createPayment\` con loanId y amount=paymentAmount del préstamo → luego \`sendReceiptViaWhatsApp\` con data.paymentId → responde SOLO "¡Listo!"
+
+IMPORTANTE: El monto del pago SIEMPRE es el paymentAmount del préstamo. NUNCA preguntes el monto al usuario. Cuando el usuario confirma, registra el pago inmediatamente con el paymentAmount.
 
 ## Flujo recibo (pago ya registrado)
 Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id → \`sendReceiptViaWhatsApp\` → "¡Listo! Te envié el recibo del último pago." Si no hay pagos: "No hay pagos registrados para el préstamo #X."
