@@ -41,7 +41,8 @@ function convertToLangChainMessage(msg: Message): BaseMessage {
 
   if (msg.role === "user") {
     if (typeof msg.content === "string") {
-      return new HumanMessage(msg.content);
+      // Guard against empty user messages (Anthropic rejects them)
+      return new HumanMessage(msg.content || "[Message]");
     }
     // Multimodal message
     const content: MessageContent[] = msg.content.map((item) => {

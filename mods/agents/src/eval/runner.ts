@@ -98,6 +98,7 @@ async function runTurn(
 
   // First turn = new session (full greeting); later turns = active session
   const isNewSession = conversationHistory.length === 0;
+
   const actualAI = await invokeLLM(
     conversationHistory,
     userMessage,
@@ -120,7 +121,11 @@ async function runTurn(
   const passed = toolsPassed && responsePassed;
 
   // Update conversation history
-  conversationHistory.push({ role: "user", content: userMessage });
+  // Use text placeholder for image-only turns to avoid: (1) empty user messages
+  // (Anthropic rejects them), (2) replaying large images to text models on later
+  // turns, and (3) unnecessary token usage.
+  const savedUserContent = userMessage || (imageUrl ? "[Image]" : userMessage);
+  conversationHistory.push({ role: "user", content: savedUserContent });
   conversationHistory.push({ role: "assistant", content: actualAI });
 
   return {
