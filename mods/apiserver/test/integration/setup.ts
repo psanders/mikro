@@ -46,6 +46,7 @@ CREATE TABLE "members" (
     "is_active" BOOLEAN NOT NULL DEFAULT false,
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
     "notes" TEXT,
+    "preferred_payment_day" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "created_by_id" TEXT,
@@ -117,6 +118,22 @@ CREATE TABLE "attachments" (
     CONSTRAINT "attachments_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "messages" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- Collection attempts table
+CREATE TABLE "collection_attempts" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "channel" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'SENT',
+    "message_id" TEXT,
+    "template_name" TEXT,
+    "notes" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "member_id" TEXT NOT NULL,
+    "loan_id" TEXT NOT NULL,
+    CONSTRAINT "collection_attempts_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "members" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "collection_attempts_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 -- Indexes
 CREATE INDEX "user_roles_user_id_idx" ON "user_roles"("user_id");
 CREATE UNIQUE INDEX "user_roles_user_id_role_key" ON "user_roles"("user_id", "role");
@@ -133,6 +150,9 @@ CREATE INDEX "messages_member_id_idx" ON "messages"("member_id");
 CREATE INDEX "messages_user_id_idx" ON "messages"("user_id");
 CREATE INDEX "messages_created_at_idx" ON "messages"("created_at");
 CREATE INDEX "attachments_message_id_idx" ON "attachments"("message_id");
+CREATE INDEX "collection_attempts_member_id_idx" ON "collection_attempts"("member_id");
+CREATE INDEX "collection_attempts_loan_id_idx" ON "collection_attempts"("loan_id");
+CREATE INDEX "collection_attempts_created_at_idx" ON "collection_attempts"("created_at");
 `;
 
 /**
