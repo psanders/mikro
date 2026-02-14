@@ -20,21 +20,6 @@ export interface InitiateCollectionCallParams {
   };
 }
 
-/**
- * Build the partialPrompt string from loan context for the Fonoster Autopilot app.
- */
-export function buildCollectionCallPartialPrompt(params: InitiateCollectionCallParams): string {
-  const { loan } = params;
-  return [
-    `Loan ID: ${loan.loanId}`,
-    `Principal: ${loan.principal}`,
-    `Payment Amount: ${loan.paymentAmount}`,
-    `Payment Frequency: ${loan.paymentFrequency}`,
-    `Missed Payments: ${loan.missedPayments}`,
-    `Member Name: ${loan.memberName}`
-  ].join(", ");
-}
-
 function isFonosterEnabled(): boolean {
   return process.env.MIKRO_FONOSTER_ENABLED === "true";
 }
@@ -85,16 +70,24 @@ async function getClient(): Promise<SDK.Client> {
 export async function initiateCollectionCall(
   params: InitiateCollectionCallParams
 ): Promise<{ ref: string }> {
-  const partialPrompt = buildCollectionCallPartialPrompt(params);
+  const { loan } = params;
+  const metadata: Record<string, string> = {
+    loanId: String(loan.loanId),
+    principal: String(loan.principal),
+    paymentAmount: String(loan.paymentAmount),
+    paymentFrequency: loan.paymentFrequency,
+    missedPayments: String(loan.missedPayments),
+    memberName: loan.memberName
+  };
 
   if (!isFonosterEnabled()) {
     logger.info("collection call placeholder (fonoster disabled)", {
       phone: params.phone,
-      loanId: params.loan.loanId,
-      missedPayments: params.loan.missedPayments,
-      partialPrompt
+      loanId: loan.loanId,
+      missedPayments: loan.missedPayments,
+      metadata
     });
-    return { ref: `placeholder-${Date.now()}-${params.loan.loanId}` };
+    return { ref: `placeholder-${Date.now()}-${loan.loanId}` };
   }
 
   const from = process.env.MIKRO_FONOSTER_FROM_NUMBER!;
@@ -109,7 +102,7 @@ export async function initiateCollectionCall(
       to,
       appRef,
       timeout: 30,
-      metadata: { partialPrompt }
+      metadata
     });
     // Consume statusStream in the background so the call lifecycle is tracked.
     // NOTE: The Fonoster SDK has a bug – it throws synchronously inside an
@@ -162,7 +155,7 @@ export async function initiateCollectionCall(
     logger.error("fonoster createCall failed", {
       phone: to,
       loanId: params.loan.loanId,
-      partialPrompt,
+      metadata,
       err
     });
     throw err;
