@@ -99,7 +99,7 @@ function legendRow(items: Array<{ color: string; label: string }>): SatoriElemen
         color: "#555"
       }
     },
-    items.map(({ color, label }, idx) =>
+    items.map(({ color, label }) =>
       el(
         "div",
         {

@@ -19,7 +19,7 @@ import { logger } from "../../logger.js";
  * @returns A validated function that exports all members
  */
 export function createExportAllMembers(client: DbClient) {
-  const fn = async (_params: ExportAllMembersInput): Promise<MemberWithLoansAndReferrer[]> => {
+  const fn = async (_: ExportAllMembersInput): Promise<MemberWithLoansAndReferrer[]> => {
     logger.verbose("exporting all members");
 
     const members = await client.member.findMany({
