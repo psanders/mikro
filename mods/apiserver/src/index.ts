@@ -33,7 +33,7 @@ import {
 import cron from "node-cron";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
-import { runDailyCollections, sendPaymentConfirmation } from "./collections/index.js";
+import { runDailyCollections, runSingleCollection, sendPaymentConfirmation } from "./collections/index.js";
 import {
   createGetUserByPhone,
   createGetMemberByPhone,
@@ -390,6 +390,25 @@ async function initializeMessageProcessor() {
           endDate: params.endDate ? new Date(params.endDate) : undefined
         });
         return { image: result.image };
+      },
+      runSingleCollection: async (params) => {
+        const result = await runSingleCollection(
+          {
+            loanId: params.loanId,
+            channel: params.channel,
+            type: params.type,
+            dryRun: params.dryRun ?? false
+          },
+          {
+            db: prisma,
+            sendWhatsAppTemplate: (p) =>
+              whatsAppClient.sendTemplateMessage({
+                ...p,
+                bodyParameters: p.bodyParameters ?? []
+              })
+          }
+        );
+        return result;
       },
       renderMembersReportToPng: async (members) => {
         const logoPath = resolve(__dirname, "../assets/logo.png");

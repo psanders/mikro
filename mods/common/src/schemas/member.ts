@@ -4,6 +4,16 @@
 import { z } from "zod/v4";
 import { validatePhone } from "../utils/validatePhone.js";
 
+const dayOfWeekEnum = z.enum([
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY"
+]);
+
 /**
  * Schema for creating a new member.
  */
@@ -28,18 +38,9 @@ export const createMemberSchema = z.object({
   createdById: z.uuid().optional(),
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  preferredPaymentDay: dayOfWeekEnum.default("MONDAY")
 });
-
-const dayOfWeekEnum = z.enum([
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY"
-]);
 
 /**
  * Schema for updating an existing member.

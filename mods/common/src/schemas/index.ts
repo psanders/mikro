@@ -136,4 +136,9 @@ export {
   type GeneratePortfolioMetricsInput
 } from "./report.js";
 
-export { runCollectionsSchema, type RunCollectionsInput } from "./collection.js";
+export {
+  runCollectionsSchema,
+  runSingleCollectionSchema,
+  type RunCollectionsInput,
+  type RunSingleCollectionInput
+} from "./collection.js";

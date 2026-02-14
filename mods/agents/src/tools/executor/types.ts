@@ -44,6 +44,7 @@ export interface ToolExecutorDependencies {
     jobPosition?: string;
     income?: number;
     isBusinessOwner?: boolean;
+    preferredPaymentDay?: string;
   }) => Promise<{ id: string; name: string; phone: string }>;
 
   /** List users with optional role filter */
@@ -155,6 +156,22 @@ export interface ToolExecutorDependencies {
     startDate?: string;
     endDate?: string;
   }) => Promise<{ image: string }>;
+
+  /** Run a single collection action (reminder, overdue notice, or call) for one loan. */
+  runSingleCollection: (params: {
+    loanId: number;
+    channel?: "WHATSAPP" | "PHONE_CALL";
+    type?: "PAYMENT_REMINDER" | "OVERDUE_NOTICE" | "COLLECTION_CALL";
+    dryRun?: boolean;
+  }) => Promise<{
+    success: boolean;
+    loanId: number;
+    type: string;
+    channel: string;
+    memberName: string;
+    dryRun: boolean;
+    error?: string;
+  }>;
 
   /** Render members report (grouped by payment health) to PNG buffer. Used for simplified format. */
   renderMembersReportToPng: (members: ExportedMember[]) => Promise<Buffer>;

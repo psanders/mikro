@@ -5,6 +5,11 @@ import { Flags } from "@oclif/core";
 import { select } from "@inquirer/prompts";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import {
+  PREFERRED_PAYMENT_DAY_CHOICES,
+  PREFERRED_PAYMENT_DAY_OPTIONS,
+  type PreferredPaymentDay
+} from "../../lib/preferredPaymentDay.js";
 import { promptTextIfMissing, promptConfirmIfMissing } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
@@ -57,6 +62,11 @@ export default class Create extends BaseCommand<typeof Create> {
     notes: Flags.string({
       description: "Note (optional)",
       required: false
+    }),
+    "preferred-payment-day": Flags.string({
+      description: "Preferred payment day (MONDAY-SUNDAY)",
+      required: false,
+      options: PREFERRED_PAYMENT_DAY_OPTIONS
     })
   };
 
@@ -131,6 +141,13 @@ export default class Create extends BaseCommand<typeof Create> {
             ],
             default: false
           });
+    const preferredPaymentDay: PreferredPaymentDay =
+      (flags["preferred-payment-day"] as PreferredPaymentDay | undefined) ??
+      (await select({
+        message: "Preferred payment day",
+        choices: PREFERRED_PAYMENT_DAY_CHOICES,
+        default: "MONDAY"
+      }));
     const notes = flags.notes || undefined;
 
     const ready = await promptConfirmIfMissing(
@@ -156,6 +173,7 @@ export default class Create extends BaseCommand<typeof Create> {
         jobPosition,
         income,
         isBusinessOwner,
+        preferredPaymentDay,
         notes
       });
 

@@ -38,7 +38,8 @@ export async function handleCreateMember(
     referredById,
     jobPosition: args.jobPosition as string | undefined,
     income: args.income ? Number(args.income) : undefined,
-    isBusinessOwner: args.isBusinessOwner === "true" || args.isBusinessOwner === true
+    isBusinessOwner: args.isBusinessOwner === "true" || args.isBusinessOwner === true,
+    preferredPaymentDay: (args.preferredPaymentDay as string) || undefined
   });
 
   logger.verbose("member created via tool", { memberId: member.id });

@@ -26,8 +26,9 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
 3. REFERIDOR (cuando acepten): "Me puedes decir quien te refirió a Mikro?"
 4. VERIFICAR REFERIDOR: Cuando digan el nombre → llama \`listUsers\` con role="REFERRER". Si está en la lista, pregunta: "A perfecto. Y tienes negocio propio o eres empleado?"
 5. SEGÚN RESPUESTA:
-   - Si dice NEGOCIO: "Entiendo. Y que tiempo tiene tu negocio?" → espera respuesta → "Perfecto. Y mas o menos cuales son los ingresos mensuales?" → espera respuesta → pasa a CÉDULA
-   - Si dice EMPLEADO: "Entiendo. Y cuanto ganas mas o menos al mes?" → espera respuesta → pasa a CÉDULA
+   - Si dice NEGOCIO: "Entiendo. Y que tiempo tiene tu negocio?" → espera respuesta → "Perfecto. Y mas o menos cuales son los ingresos mensuales?" → espera respuesta → pasa a DÍA DE PAGO
+   - Si dice EMPLEADO: "Entiendo. Y cuanto ganas mas o menos al mes?" → espera respuesta → pasa a DÍA DE PAGO
+5.5. DÍA DE PAGO: "Y que dia de la semana prefieres para hacer tus pagos?" → espera respuesta (ej: lunes, martes, miércoles...) → pasa a CÉDULA. Al llamar \`createMember\` usa preferredPaymentDay: el día en inglés (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY). Si no dicen ninguno usa MONDAY.
 6. CÉDULA FRENTE: "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
 7. CÉDULA ATRÁS: "Muy bien. Ahora necesito la foto de la parte de atrás de la cédula."
 8. CONFIRMAR: "Ya revisé tu cédula. Tu nombre es [nombre] y tu número de cédula es [número]. ¿Está correcto?"
@@ -36,7 +37,7 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
 ## Herramientas
 
 - \`listUsers\`: Llama INMEDIATAMENTE cuando digan quién los refirió
-- \`createMember\`: Llama INMEDIATAMENTE cuando confirmen que los datos están correctos
+- \`createMember\`: Llama INMEDIATAMENTE cuando confirmen que los datos están correctos. Incluye preferredPaymentDay (día que dijo el usuario, en inglés: MONDAY-SUNDAY; por defecto MONDAY).
 
 ## Guardrails
 
@@ -98,6 +99,10 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           },
           {
             human: "Mas o menos hacemos 1000 RD$ semanales.",
+            expectedAI: "Y que dia de la semana prefieres para hacer tus pagos?"
+          },
+          {
+            human: "Los miercoles",
             expectedAI:
               "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
           },
@@ -118,7 +123,8 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
                 name: "createMember",
                 expectedArgs: {
                   name: testCedulaData.name,
-                  idNumber: testCedulaData.cedula
+                  idNumber: testCedulaData.cedula,
+                  preferredPaymentDay: "WEDNESDAY"
                 },
                 matchMode: "judge",
                 mockResponse: {
@@ -183,6 +189,10 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           },
           {
             human: "Gano como 15,000 pesos al mes",
+            expectedAI: "Y que dia de la semana prefieres para hacer tus pagos?"
+          },
+          {
+            human: "Los miercoles",
             expectedAI:
               "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
           },
@@ -203,7 +213,8 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
                 name: "createMember",
                 expectedArgs: {
                   name: testCedulaData.name,
-                  idNumber: testCedulaData.cedula
+                  idNumber: testCedulaData.cedula,
+                  preferredPaymentDay: "WEDNESDAY"
                 },
                 matchMode: "judge",
                 mockResponse: {

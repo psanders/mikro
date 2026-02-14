@@ -39,7 +39,8 @@ import {
   generatePortfolioMetricsSchema,
   generatePerformanceReportSchema,
   // Collection schemas
-  runCollectionsSchema
+  runCollectionsSchema,
+  runSingleCollectionSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -81,7 +82,7 @@ import { createGeneratePerformanceReport } from "../../api/reports/createGenerat
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
 // Collections
-import { runDailyCollections } from "../../collections/index.js";
+import { runDailyCollections, runSingleCollection } from "../../collections/index.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 
 /**
@@ -423,5 +424,47 @@ export const protectedRouter = router({
       }
 
       return { success: true, dryRun: input.dryRun };
+    }),
+
+  /**
+   * Run a single collection action (reminder, overdue notice, or call) for one loan.
+   * Optionally force channel and/or type; otherwise auto-determined from missed payments.
+   */
+  runSingleCollection: protectedProcedure
+    .input(runSingleCollectionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const prevDryRun = process.env.MIKRO_COLLECTIONS_DRY_RUN;
+      if (input.dryRun) {
+        process.env.MIKRO_COLLECTIONS_DRY_RUN = "true";
+      }
+
+      try {
+        const whatsAppClient = createWhatsAppClient();
+        const result = await runSingleCollection(
+          {
+            loanId: input.loanId,
+            channel: input.channel ?? undefined,
+            type: input.type ?? undefined,
+            dryRun: input.dryRun
+          },
+          {
+            db: ctx.db as unknown as PrismaClient,
+            sendWhatsAppTemplate: (p) =>
+              whatsAppClient.sendTemplateMessage({
+                ...p,
+                bodyParameters: p.bodyParameters ?? []
+              })
+          }
+        );
+        return result;
+      } finally {
+        if (input.dryRun) {
+          if (prevDryRun === undefined) {
+            delete process.env.MIKRO_COLLECTIONS_DRY_RUN;
+          } else {
+            process.env.MIKRO_COLLECTIONS_DRY_RUN = prevDryRun;
+          }
+        }
+      }
     })
 });

@@ -18,6 +18,7 @@ export interface Member {
   isActive: boolean;
   idCardOnRecord: boolean;
   notes?: string | null;
+  preferredPaymentDay?: string | null;
   createdById?: string | null;
   referredById: string;
   assignedCollectorId: string;

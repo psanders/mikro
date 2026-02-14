@@ -23,6 +23,7 @@ import { handleExportCollectorMembers } from "./exportCollectorMembers.js";
 import { handleExportMembersByReferrer } from "./exportMembersByReferrer.js";
 import { handleExportAllMembers } from "./exportAllMembers.js";
 import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
+import { handleRunSingleCollection } from "./runSingleCollection.js";
 
 /**
  * Creates a tool executor that delegates to the provided API functions.
@@ -66,7 +67,8 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     exportCollectorMembers: handleExportCollectorMembers,
     exportMembersByReferrer: handleExportMembersByReferrer,
     exportAllMembers: handleExportAllMembers,
-    generatePerformanceReport: handleGeneratePerformanceReport
+    generatePerformanceReport: handleGeneratePerformanceReport,
+    runSingleCollection: handleRunSingleCollection
   };
 
   return async function executeTool(

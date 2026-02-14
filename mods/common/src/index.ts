@@ -167,7 +167,9 @@ export {
   type GeneratePortfolioMetricsInput,
   // Collection schemas
   runCollectionsSchema,
-  type RunCollectionsInput
+  runSingleCollectionSchema,
+  type RunCollectionsInput,
+  type RunSingleCollectionInput
 } from "./schemas/index.js";
 
 // Report types and helpers

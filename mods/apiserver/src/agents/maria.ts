@@ -31,6 +31,10 @@ export const maria: Agent = {
 - \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
 - \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
+- \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
+
+## Flujo cobro individual
+Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta (ej: "Listo. Enviado recordatorio de pago por WHATSAPP a [nombre] (préstamo #X).").
 
 ## Flujo registrar pago
 1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
@@ -62,7 +66,8 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
     "listMemberLoansByPhone",
     "exportAllMembers",
     "generatePerformanceReport",
-    "updateLoanStatus"
+    "updateLoanStatus",
+    "runSingleCollection"
   ],
   temperature: 0.4,
   evaluations: {
@@ -343,6 +348,66 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
                     filename: "reporte-todos-miembros-2026-01-30.xlsx",
                     loanCount: 15,
                     memberCount: 12
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "single-collection-reminder",
+        description: "Admin asks to send a payment reminder for a specific loan",
+        turns: [
+          {
+            human: "Envía un recordatorio de pago al préstamo 10019.",
+            expectedAI:
+              "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+            tools: [
+              {
+                name: "runSingleCollection",
+                expectedArgs: { loanId: "10019" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message:
+                    "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+                  data: {
+                    loanId: 10019,
+                    type: "PAYMENT_REMINDER",
+                    channel: "WHATSAPP",
+                    memberName: "Maria Garcia",
+                    dryRun: false
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "single-collection-with-overrides",
+        description: "Admin asks to send an overdue notice via WhatsApp for a specific loan",
+        turns: [
+          {
+            human: "Manda aviso de mora por WhatsApp al préstamo 10001.",
+            expectedAI:
+              "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+            tools: [
+              {
+                name: "runSingleCollection",
+                expectedArgs: { loanId: "10001", type: "OVERDUE_NOTICE", channel: "WHATSAPP" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message:
+                    "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+                  data: {
+                    loanId: 10001,
+                    type: "OVERDUE_NOTICE",
+                    channel: "WHATSAPP",
+                    memberName: "Juan Perez",
+                    dryRun: false
                   }
                 }
               }

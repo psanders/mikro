@@ -17,3 +17,16 @@ export const runCollectionsSchema = z.object({
 });
 
 export type RunCollectionsInput = z.infer<typeof runCollectionsSchema>;
+
+/**
+ * Input schema for the runSingleCollection mutation.
+ * Sends a reminder, overdue notice, or collection call to a single loan.
+ */
+export const runSingleCollectionSchema = z.object({
+  loanId: z.number().int().positive(),
+  channel: z.enum(["WHATSAPP", "PHONE_CALL"]).optional(),
+  type: z.enum(["PAYMENT_REMINDER", "OVERDUE_NOTICE", "COLLECTION_CALL"]).optional(),
+  dryRun: z.boolean().optional().default(false)
+});
+
+export type RunSingleCollectionInput = z.infer<typeof runSingleCollectionSchema>;

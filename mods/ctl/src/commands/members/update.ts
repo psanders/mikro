@@ -5,6 +5,10 @@ import { confirm, input, select } from "@inquirer/prompts";
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import {
+  PREFERRED_PAYMENT_DAY_CHOICES,
+  type PreferredPaymentDay
+} from "../../lib/preferredPaymentDay.js";
 
 export default class Update extends BaseCommand<typeof Update> {
   static override readonly description = "modify a member's information";
@@ -31,6 +35,11 @@ export default class Update extends BaseCommand<typeof Update> {
       this.log("This utility will help you update a Member.");
       this.log("Press ^C at any time to quit.");
 
+      const paymentDayChoices: Array<{ name: string; value: PreferredPaymentDay | null }> = [
+        { name: "None", value: null },
+        ...PREFERRED_PAYMENT_DAY_CHOICES
+      ];
+
       const answers = {
         name: await input({
           message: "Name",
@@ -54,6 +63,11 @@ export default class Update extends BaseCommand<typeof Update> {
             { name: "Inactive", value: false }
           ],
           default: memberFromDB.isActive
+        }),
+        preferredPaymentDay: await select({
+          message: "Preferred payment day",
+          choices: paymentDayChoices,
+          default: (memberFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
         })
       };
 
@@ -71,7 +85,8 @@ export default class Update extends BaseCommand<typeof Update> {
         name: answers.name,
         phone: answers.phone,
         notes: answers.notes || undefined,
-        isActive: answers.isActive
+        isActive: answers.isActive,
+        preferredPaymentDay: answers.preferredPaymentDay
       });
 
       this.log("Done!");

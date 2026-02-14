@@ -8,11 +8,11 @@
 import {
   getMissedPaymentsCount,
   COLLECTION_CALL_MIN_MISSED,
-  COLLECTION_OVERDUE_MIN_MISSED,
-  type LoanPaymentData
+  COLLECTION_OVERDUE_MIN_MISSED
 } from "@mikro/common";
 import { CollectionAttemptStatus } from "../generated/prisma/enums.js";
 import { isPaymentDayToday } from "./dayOfWeek.js";
+import { loanToData } from "./loanToData.js";
 import { processPaymentReminders, type MemberLoanPair } from "./processPaymentReminders.js";
 import { processOverdueNotices, type MemberLoanPairWithMissed } from "./processOverdueNotices.js";
 import {
@@ -32,21 +32,6 @@ function startOfToday(date: Date = new Date()): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
-}
-
-/**
- * Helper to compute missed payments for a loan row, avoiding repetition.
- */
-function loanToData(loan: {
-  paymentFrequency: string;
-  createdAt: Date;
-  payments: Array<{ paidAt: Date }>;
-}): LoanPaymentData {
-  return {
-    paymentFrequency: loan.paymentFrequency,
-    createdAt: loan.createdAt,
-    payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
-  };
 }
 
 /**

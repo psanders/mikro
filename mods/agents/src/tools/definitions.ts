@@ -57,6 +57,12 @@ export const createMemberTool: ToolFunction = {
         isBusinessOwner: {
           type: "string",
           description: "Indica si el miembro es propietario de un negocio (true/false)"
+        },
+        preferredPaymentDay: {
+          type: "string",
+          description:
+            "Dia preferido de pago semanal. Opciones: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY. Por defecto: MONDAY.",
+          enum: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
         }
       },
       required: ["name", "idNumber", "homeAddress", "referredById"]
@@ -483,6 +489,42 @@ export const generatePerformanceReportTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for running a single collection action (reminder, overdue notice, or call) for one loan.
+ * Admin only. Can force channel and/or type, or let the system auto-determine from missed payments.
+ */
+export const runSingleCollectionTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "runSingleCollection",
+    description:
+      "Enviar una accion de cobro a un solo prestamo: recordatorio de pago (PAYMENT_REMINDER), aviso de mora (OVERDUE_NOTICE) o llamada de cobro (COLLECTION_CALL). Usa el numero de prestamo (loanId). Opcional: forzar canal (WHATSAPP o PHONE_CALL) y/o tipo. Si no se especifica tipo, se determina por pagos atrasados.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description:
+            "ID numerico del prestamo (ej: 10019). Este es el numero de prestamo, no el UUID."
+        },
+        channel: {
+          type: "string",
+          enum: ["WHATSAPP", "PHONE_CALL"],
+          description:
+            "Canal a usar (opcional). Por defecto: WHATSAPP para recordatorio/aviso, PHONE_CALL para llamada."
+        },
+        type: {
+          type: "string",
+          enum: ["PAYMENT_REMINDER", "OVERDUE_NOTICE", "COLLECTION_CALL"],
+          description:
+            "Tipo de accion (opcional). Por defecto se calcula: 0 atrasos + dia de pago = recordatorio; 1-2 atrasos = aviso; 3+ = llamada."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -502,7 +544,8 @@ export const allTools: ToolFunction[] = [
   exportCollectorMembersTool,
   exportMembersByReferrerTool,
   exportAllMembersTool,
-  generatePerformanceReportTool
+  generatePerformanceReportTool,
+  runSingleCollectionTool
 ];
 
 /**
