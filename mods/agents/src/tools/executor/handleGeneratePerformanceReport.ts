@@ -46,8 +46,7 @@ export async function handleGeneratePerformanceReport(
       phone: adminPhone,
       mediaId,
       mediaType: "document",
-      documentFilename: `reporte-rendimiento-${dateSuffix}.png`,
-      caption: "Reporte de rendimiento — Mikro Créditos"
+      documentFilename: `reporte-rendimiento-${dateSuffix}.png`
     });
 
     const messageId = response.messages?.[0]?.id;
