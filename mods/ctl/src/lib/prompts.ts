@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { input, password, select, confirm, number } from "@inquirer/prompts";
+import { input, password, select, number } from "@inquirer/prompts";
 
 /**
  * Prompts for a value if it's missing, otherwise returns the provided value.
@@ -89,25 +89,4 @@ export async function promptSelectIfMissing<T>(
     () => select({ message, choices, default: options?.default }),
     flagName
   );
-}
-
-/**
- * Helper to prompt for confirmation if missing
- */
-export async function promptConfirmIfMissing(
-  value: boolean | undefined,
-  message: string,
-  flagName: string,
-  options?: { default?: boolean }
-): Promise<boolean> {
-  if (value !== undefined) {
-    return value;
-  }
-
-  if (!process.stdout.isTTY) {
-    // In non-interactive mode, default to false for safety
-    return false;
-  }
-
-  return confirm({ message, default: options?.default ?? false });
 }

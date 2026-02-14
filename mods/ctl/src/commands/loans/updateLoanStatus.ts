@@ -4,11 +4,7 @@
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import {
-  promptNumberIfMissing,
-  promptSelectIfMissing,
-  promptConfirmIfMissing
-} from "../../lib/prompts.js";
+import { promptNumberIfMissing, promptSelectIfMissing } from "../../lib/prompts.js";
 
 const STATUS_OPTIONS = ["COMPLETED", "DEFAULTED", "CANCELLED"] as const;
 type StatusOption = (typeof STATUS_OPTIONS)[number];
@@ -18,7 +14,7 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
     "set a loan's status to COMPLETED, DEFAULTED, or CANCELLED";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --loan-id 10001 --status COMPLETED --yes"
+    "<%= config.bin %> <%= command.id %> --loan-id 10001 --status COMPLETED"
   ];
   static override readonly flags = {
     "loan-id": Flags.integer({
@@ -36,10 +32,8 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
     const { flags } = await this.parse(UpdateLoanStatus);
     const client = this.createClient();
 
-    if (!flags.yes) {
-      this.log("This utility will update a loan's status.");
-      this.log("Press ^C at any time to quit.");
-    }
+    this.log("This utility will update a loan's status.");
+    this.log("Press ^C at any time to quit.");
 
     const loanId = await promptNumberIfMissing(
       flags["loan-id"],
@@ -56,17 +50,6 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
         { name: "Cancelled", value: "CANCELLED" as const }
       ]
     );
-
-    const ready = await promptConfirmIfMissing(
-      flags.yes ? true : undefined,
-      `Set loan #${loanId} to ${status}?`,
-      "yes"
-    );
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
 
     try {
       const result = await client.updateLoanStatus.mutate({ loanId, status });

@@ -10,13 +10,13 @@ import {
   PREFERRED_PAYMENT_DAY_OPTIONS,
   type PreferredPaymentDay
 } from "../../lib/preferredPaymentDay.js";
-import { promptTextIfMissing, promptConfirmIfMissing } from "../../lib/prompts.js";
+import { promptTextIfMissing } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new member";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+18091234567' --id-number '123-4567890-1' --home-address '123 Main St' --referrer-id abc-def --collector-id xyz-123 --yes"
+    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+18091234567' --id-number '123-4567890-1' --home-address '123 Main St' --referrer-id abc-def --collector-id xyz-123"
   ];
   static override readonly flags = {
     name: Flags.string({
@@ -74,10 +74,8 @@ export default class Create extends BaseCommand<typeof Create> {
     const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    if (!flags.yes) {
-      this.log("This utility will help you create a Member.");
-      this.log("Press ^C at any time to quit.");
-    }
+    this.log("This utility will help you create a Member.");
+    this.log("Press ^C at any time to quit.");
 
     // Get users for referrer and collector selection
     const users = await client.listUsers.query({ showDisabled: true });
@@ -149,17 +147,6 @@ export default class Create extends BaseCommand<typeof Create> {
         default: "MONDAY"
       }));
     const notes = flags.notes || undefined;
-
-    const ready = await promptConfirmIfMissing(
-      flags.yes ? true : undefined,
-      "Ready to create member?",
-      "yes"
-    );
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
 
     try {
       const member = await client.createMember.mutate({

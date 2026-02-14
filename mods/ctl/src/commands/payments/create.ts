@@ -7,15 +7,14 @@ import errorHandler from "../../errorHandler.js";
 import {
   promptTextIfMissing,
   promptNumberIfMissing,
-  promptSelectIfMissing,
-  promptConfirmIfMissing
+  promptSelectIfMissing
 } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new payment for a loan";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --loan-id 10000 --amount 500 --method CASH --collector-id abc-def --yes"
+    "<%= config.bin %> <%= command.id %> --loan-id 10000 --amount 500 --method CASH --collector-id abc-def"
   ];
   static override readonly flags = {
     "loan-id": Flags.integer({
@@ -45,10 +44,8 @@ export default class Create extends BaseCommand<typeof Create> {
     const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    if (!flags.yes) {
-      this.log("This utility will help you create a Payment.");
-      this.log("Press ^C at any time to quit.");
-    }
+    this.log("This utility will help you create a Payment.");
+    this.log("Press ^C at any time to quit.");
 
     const loanId = await promptNumberIfMissing(
       flags["loan-id"],
@@ -72,17 +69,6 @@ export default class Create extends BaseCommand<typeof Create> {
       "collector-id"
     );
     const notes = flags.notes || undefined;
-
-    const ready = await promptConfirmIfMissing(
-      flags.yes ? true : undefined,
-      "Ready to create payment?",
-      "yes"
-    );
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
 
     try {
       const payment = await client.createPayment.mutate({

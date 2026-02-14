@@ -4,18 +4,14 @@
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import {
-  promptTextIfMissing,
-  promptSelectIfMissing,
-  promptConfirmIfMissing
-} from "../../lib/prompts.js";
+import { promptTextIfMissing, promptSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR",
-    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR --yes"
+    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR"
   ];
   static override readonly flags = {
     name: Flags.string({
@@ -37,10 +33,8 @@ export default class Create extends BaseCommand<typeof Create> {
     const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    if (!flags.yes) {
-      this.log("This utility will help you create a User.");
-      this.log("Press ^C at any time to quit.");
-    }
+    this.log("This utility will help you create a User.");
+    this.log("Press ^C at any time to quit.");
 
     const name = await promptTextIfMissing(flags.name, "Name", "name");
     const phone = await promptTextIfMissing(flags.phone, "Phone", "phone");
@@ -54,17 +48,6 @@ export default class Create extends BaseCommand<typeof Create> {
         { name: "Referrer", value: "REFERRER" as const }
       ]
     );
-
-    const ready = await promptConfirmIfMissing(
-      flags.yes ? true : undefined,
-      "Ready to create user?",
-      "yes"
-    );
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
 
     try {
       const user = await client.createUser.mutate({

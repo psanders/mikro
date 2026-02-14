@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm, input, select } from "@inquirer/prompts";
+import { input, select } from "@inquirer/prompts";
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -62,15 +62,6 @@ export default class Update extends BaseCommand<typeof Update> {
           default: currentRole ?? "REFERRER"
         })
       };
-
-      const ready = await confirm({
-        message: "Ready to update user?"
-      });
-
-      if (!ready) {
-        this.log("Aborted!");
-        return;
-      }
 
       await client.updateUser.mutate({
         id: args.userId,

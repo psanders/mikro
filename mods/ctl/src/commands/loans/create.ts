@@ -7,15 +7,14 @@ import errorHandler from "../../errorHandler.js";
 import {
   promptTextIfMissing,
   promptNumberIfMissing,
-  promptSelectIfMissing,
-  promptConfirmIfMissing
+  promptSelectIfMissing
 } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new loan for a member";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --member-id abc-def --principal 10000 --term-length 30 --payment-amount 500 --payment-frequency WEEKLY --yes"
+    "<%= config.bin %> <%= command.id %> --member-id abc-def --principal 10000 --term-length 30 --payment-amount 500 --payment-frequency WEEKLY"
   ];
   static override readonly flags = {
     "member-id": Flags.string({
@@ -51,10 +50,8 @@ export default class Create extends BaseCommand<typeof Create> {
     const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    if (!flags.yes) {
-      this.log("This utility will help you create a Loan.");
-      this.log("Press ^C at any time to quit.");
-    }
+    this.log("This utility will help you create a Loan.");
+    this.log("Press ^C at any time to quit.");
 
     const memberId = await promptTextIfMissing(flags["member-id"], "Member ID", "member-id");
     const principal = await promptNumberIfMissing(flags.principal, "Principal Amount", "principal");
@@ -78,17 +75,6 @@ export default class Create extends BaseCommand<typeof Create> {
       ]
     );
     const type = (flags.type || "SAN") as "SAN";
-
-    const ready = await promptConfirmIfMissing(
-      flags.yes ? true : undefined,
-      "Ready to create loan?",
-      "yes"
-    );
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
 
     try {
       const loan = await client.createLoan.mutate({

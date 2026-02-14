@@ -33,7 +33,39 @@ import {
 import cron from "node-cron";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
-import { runDailyCollections, runSingleCollection, sendPaymentConfirmation } from "./collections/index.js";
+import { RecognizedUncaughtCode, isRecognizedUncaughtError } from "./recognizedErrors.js";
+
+// ---------------------------------------------------------------------------
+// Process-level error handlers
+// ---------------------------------------------------------------------------
+// The Fonoster SDK throws synchronously inside an EventEmitter callback
+// (call.on("error", () => { throw ... })) in its trackCall stream.  That
+// throw cannot be caught by try/catch around `for await…of` because it
+// originates in a different execution context.  Without this handler, the
+// uncaught exception kills the process.
+// ---------------------------------------------------------------------------
+process.on("uncaughtException", (err) => {
+  if (isRecognizedUncaughtError(err, RecognizedUncaughtCode.FONOSTER_CALL_TRACKING)) {
+    logger.warn("fonoster call-tracking stream error (caught at process level)", {
+      code: RecognizedUncaughtCode.FONOSTER_CALL_TRACKING,
+      message: err.message
+    });
+    return; // swallow – the call was already placed; tracking is optional
+  }
+  // Any other uncaught exception: log and exit (default Node.js behaviour)
+  logger.error("uncaught exception – shutting down", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  logger.error("unhandled promise rejection", { reason: message });
+});
+import {
+  runDailyCollections,
+  runSingleCollection,
+  sendPaymentConfirmation
+} from "./collections/index.js";
 import {
   createGetUserByPhone,
   createGetMemberByPhone,
@@ -527,6 +559,13 @@ async function initializeMessageProcessor() {
     } else {
       logger.verbose("collections cron disabled (MIKRO_COLLECTIONS_ENABLED=false)");
     }
+    const fonosterEnabled = process.env.MIKRO_FONOSTER_ENABLED === "true";
+    logger.info("Fonoster collection calls", {
+      enabled: fonosterEnabled,
+      hint: fonosterEnabled
+        ? "real calls will be placed"
+        : "set MIKRO_FONOSTER_ENABLED=true to place calls"
+    });
     // #endregion
 
     logger.verbose("message processor configured successfully");

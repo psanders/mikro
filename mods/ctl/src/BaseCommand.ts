@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { Command, Flags as OclifFlags, Interfaces } from "@oclif/core";
+import { Command, Interfaces } from "@oclif/core";
 import { createClient } from "./lib/trpc.js";
 import { loadConfig } from "./lib/config.js";
 
@@ -26,13 +26,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
   protected flags!: Flags<T>;
   protected args!: Args<T>;
 
-  static baseFlags = {
-    yes: OclifFlags.boolean({
-      char: "y",
-      description: "Skip confirmation prompts",
-      default: false
-    })
-  };
+  static baseFlags = {};
 
   /**
    * Merges baseFlags from the command's class hierarchy (BaseCommand, ListCommand, etc.)
