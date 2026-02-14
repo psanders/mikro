@@ -9,4 +9,10 @@ export {
   REPORT_WIDTH,
   REPORT_HEIGHT
 } from "./performanceReportLayout.js";
-export { renderPerformanceReportToPng } from "./reportGenerator.js";
+export { renderPerformanceReportToPng, loadLogoDataUrl } from "./reportGenerator.js";
+export {
+  createMembersReportLayout,
+  getMembersReportHeight,
+  MEMBERS_REPORT_WIDTH
+} from "./membersReportLayout.js";
+export { renderMembersReportToPng } from "./membersReportGenerator.js";

@@ -26,3 +26,10 @@ export {
   HIGHLIGHT_RED_MIN_MISSED,
   HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
 } from "./memberReportConstants.js";
+export {
+  buildGroupedMemberRows,
+  type MemberForGrouping,
+  type LoanForGrouping,
+  type GroupedMemberRow,
+  type GroupedMemberRows
+} from "./memberReportGrouping.js";

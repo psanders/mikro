@@ -1,61 +1,63 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Renders performance report (metrics + narrative) to PNG using satori.
+ * Renders members report (grouped by payment health) to PNG using Satori.
  */
-import { readFileSync, existsSync } from "fs";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import sharp from "sharp";
 import { loadFonts } from "../receipts/fonts.js";
+import { buildGroupedMemberRows } from "../utils/memberReportGrouping.js";
+import type { MemberForGrouping } from "../utils/memberReportGrouping.js";
 import {
-  createPerformanceReportLayout,
-  REPORT_WIDTH,
-  REPORT_HEIGHT
-} from "./performanceReportLayout.js";
-import type { PortfolioMetrics, ReportNarrative } from "./types.js";
+  createMembersReportLayout,
+  getMembersReportHeight,
+  MEMBERS_REPORT_WIDTH
+} from "./membersReportLayout.js";
 
-/**
- * Loads a PNG logo from disk and returns a base64 data URL, or null if the file does not exist.
- */
-export function loadLogoDataUrl(logoPath: string): string | null {
-  if (!existsSync(logoPath)) return null;
-  const content = readFileSync(logoPath);
-  return `data:image/png;base64,${content.toString("base64")}`;
-}
-
-/** Pixel-density multiplier: renders at 2x for crisp text on mobile / after WhatsApp compression. */
+/** Pixel-density multiplier for crisp text on mobile. */
 const RENDER_SCALE = 2;
 
 /** WhatsApp rejects media uploads larger than 5 MB. */
 const WHATSAPP_MAX_SIZE = 5 * 1024 * 1024;
 
 /**
- * Renders the performance report to a PNG buffer.
+ * Renders the members report to a PNG buffer.
+ * Groups members by payment health (Crítico / Requiere atención / Al día).
  */
-export async function renderPerformanceReportToPng(
-  metrics: PortfolioMetrics,
-  narrative: ReportNarrative,
+export async function renderMembersReportToPng(
+  members: MemberForGrouping[],
   generatedAt: string = new Date().toISOString(),
   logoDataUrl?: string
 ): Promise<Buffer> {
+  const grouped = buildGroupedMemberRows(members);
+  const memberCount = members.length;
+  const loanCount = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
+
+  const height = getMembersReportHeight(grouped);
+
   const fonts = await loadFonts();
-  const layout = createPerformanceReportLayout(metrics, narrative, generatedAt, logoDataUrl);
+  const layout = createMembersReportLayout(
+    grouped,
+    memberCount,
+    loanCount,
+    generatedAt,
+    logoDataUrl
+  );
 
   const svg = await satori(layout as Parameters<typeof satori>[0], {
-    width: REPORT_WIDTH,
-    height: REPORT_HEIGHT,
+    width: MEMBERS_REPORT_WIDTH,
+    height,
     fonts: fonts as Parameters<typeof satori>[1]["fonts"]
   });
 
-  const renderWidth = Math.round(REPORT_WIDTH * RENDER_SCALE);
+  const renderWidth = Math.round(MEMBERS_REPORT_WIDTH * RENDER_SCALE);
 
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: renderWidth }
   });
   const pngBuffer = resvg.render().asPng();
 
-  // First pass: high-quality PNG compression
   let compressed = await sharp(pngBuffer)
     .png({
       compressionLevel: 9,
@@ -63,7 +65,6 @@ export async function renderPerformanceReportToPng(
     })
     .toBuffer();
 
-  // If still over WhatsApp limit, use palette mode for aggressive compression
   if (compressed.length > WHATSAPP_MAX_SIZE) {
     compressed = await sharp(pngBuffer)
       .png({
@@ -74,10 +75,9 @@ export async function renderPerformanceReportToPng(
       .toBuffer();
   }
 
-  // Last resort: render at 1x resolution to stay under the limit
   if (compressed.length > WHATSAPP_MAX_SIZE) {
     const fallbackResvg = new Resvg(svg, {
-      fitTo: { mode: "width", value: REPORT_WIDTH }
+      fitTo: { mode: "width", value: MEMBERS_REPORT_WIDTH }
     });
     const fallbackPng = fallbackResvg.render().asPng();
     compressed = await sharp(fallbackPng)

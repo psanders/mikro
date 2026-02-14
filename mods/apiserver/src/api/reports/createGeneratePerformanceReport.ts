@@ -1,12 +1,15 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import {
   withErrorHandlingAndValidation,
   generatePerformanceReportSchema,
   buildReportNarrativePrompt,
   parseReportNarrativeResponse,
   renderPerformanceReportToPng,
+  loadLogoDataUrl,
   type GeneratePerformanceReportInput,
   type DbClient,
   type PortfolioMetrics
@@ -14,6 +17,9 @@ import {
 import { invokeTextPrompt } from "@mikro/agents";
 import { createGeneratePortfolioMetrics } from "./createGeneratePortfolioMetrics.js";
 import { logger } from "../../logger.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = join(__dirname, "../../../assets/logo.png");
 
 /**
  * Creates a function that generates the full performance report (metrics + LLM narrative + PNG).
@@ -45,7 +51,13 @@ export function createGeneratePerformanceReport(client: DbClient) {
       dateStyle: "medium",
       timeStyle: "short"
     });
-    const pngBuffer = await renderPerformanceReportToPng(metrics, narrative, generatedAt);
+    const logoDataUrl = loadLogoDataUrl(LOGO_PATH);
+    const pngBuffer = await renderPerformanceReportToPng(
+      metrics,
+      narrative,
+      generatedAt,
+      logoDataUrl ?? undefined
+    );
     const image = pngBuffer.toString("base64");
 
     logger.verbose("performance report generated", {

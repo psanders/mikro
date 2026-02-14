@@ -33,6 +33,13 @@ export {
   type LatenessTrend,
   type ReportRowHighlight
 } from "./utils/memberReportHelpers.js";
+export {
+  buildGroupedMemberRows,
+  type MemberForGrouping,
+  type LoanForGrouping,
+  type GroupedMemberRow,
+  type GroupedMemberRows
+} from "./utils/memberReportGrouping.js";
 
 // Schemas
 export {
@@ -166,9 +173,14 @@ export {
   buildReportNarrativePrompt,
   parseReportNarrativeResponse,
   renderPerformanceReportToPng,
+  loadLogoDataUrl,
   createPerformanceReportLayout,
   REPORT_WIDTH,
-  REPORT_HEIGHT
+  REPORT_HEIGHT,
+  createMembersReportLayout,
+  getMembersReportHeight,
+  MEMBERS_REPORT_WIDTH,
+  renderMembersReportToPng
 } from "./reports/index.js";
 
 // Types (entities and client)

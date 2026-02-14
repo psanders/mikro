@@ -229,7 +229,8 @@ function verticalBarChart(
 export function createPerformanceReportLayout(
   metrics: PortfolioMetrics,
   narrative: ReportNarrative,
-  generatedAt: string
+  generatedAt: string,
+  logoDataUrl?: string
 ): SatoriElement {
   const {
     period,
@@ -256,18 +257,10 @@ export function createPerformanceReportLayout(
   const largerPct = (loansBySize.larger.principalDop / totalPrincipal) * 100;
   const exceptionPct = (loansBySize.exception.principalDop / totalPrincipal) * 100;
 
-  const header = el(
+  const headerTextColumn = el(
     "div",
     {
-      style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
-        color: "white",
-        padding: "24px 28px",
-        marginBottom: "24px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px"
-      }
+      style: { display: "flex", flexDirection: "column", gap: "8px", flex: 1 }
     },
     [
       el(
@@ -285,6 +278,39 @@ export function createPerformanceReportLayout(
         `Periodo: ${period.startDate} a ${period.endDate}`
       )
     ]
+  );
+
+  const headerChildren: unknown[] = [headerTextColumn];
+  if (logoDataUrl) {
+    headerChildren.push(
+      el("img", {
+        src: logoDataUrl,
+        width: 80,
+        height: 80,
+        style: {
+          borderRadius: "12px",
+          border: "2px solid rgba(255,255,255,0.4)",
+          flexShrink: 0
+        }
+      })
+    );
+  }
+
+  const header = el(
+    "div",
+    {
+      style: {
+        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        color: "white",
+        padding: "24px 28px",
+        marginBottom: "24px",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: "16px"
+      }
+    },
+    headerChildren
   );
 
   // --- Loans Issued ---
