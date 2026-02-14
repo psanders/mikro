@@ -4,14 +4,15 @@
 import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { outputMembersAsCsv, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportByReferrer extends BaseCommand<typeof ExportByReferrer> {
   static override readonly description = "export members referred by a user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <referrerId>",
-    "<%= config.bin %> <%= command.id %> <referrerId> --csv",
-    "<%= config.bin %> <%= command.id %> <referrerId> --csv > report.csv"
+    "<%= config.bin %> <%= command.id %> <referrerId> --output report.xlsx",
+    "<%= config.bin %> <%= command.id %> <referrerId> --output report.png",
+    "<%= config.bin %> <%= command.id %> <referrerId> --output report.csv"
   ];
   static override readonly args = {
     referrerId: Args.string({
@@ -20,9 +21,10 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
     })
   };
   static override readonly flags = {
-    csv: Flags.boolean({
-      description: "Output as CSV format",
-      default: false
+    output: Flags.string({
+      description:
+        "Write report to file. Extension determines format: .xlsx (Excel), .png (simplified image), .csv (extended CSV).",
+      char: "o"
     })
   };
 
@@ -40,9 +42,13 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
         return;
       }
 
-      if (flags.csv) {
-        outputMembersAsCsv(members, this.log.bind(this));
-      } else {
+      const handled = await handleMembersOutput(
+        members,
+        flags.output,
+        this.log.bind(this),
+        this.error.bind(this)
+      );
+      if (!handled) {
         outputMembersAsTable(members, this.log.bind(this));
       }
     } catch (e) {

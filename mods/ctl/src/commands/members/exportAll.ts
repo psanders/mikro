@@ -4,19 +4,21 @@
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { outputMembersAsCsv, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportAll extends BaseCommand<typeof ExportAll> {
   static override readonly description = "export all active members (admin only)";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --csv",
-    "<%= config.bin %> <%= command.id %> --csv > report.csv"
+    "<%= config.bin %> <%= command.id %> --output report.xlsx",
+    "<%= config.bin %> <%= command.id %> --output report.png",
+    "<%= config.bin %> <%= command.id %> --output report.csv"
   ];
   static override readonly flags = {
-    csv: Flags.boolean({
-      description: "Output as CSV format",
-      default: false
+    output: Flags.string({
+      description:
+        "Write report to file. Extension determines format: .xlsx (Excel), .png (simplified image), .csv (extended CSV).",
+      char: "o"
     })
   };
 
@@ -32,9 +34,13 @@ export default class ExportAll extends BaseCommand<typeof ExportAll> {
         return;
       }
 
-      if (flags.csv) {
-        outputMembersAsCsv(members, this.log.bind(this));
-      } else {
+      const handled = await handleMembersOutput(
+        members,
+        flags.output,
+        this.log.bind(this),
+        this.error.bind(this)
+      );
+      if (!handled) {
         outputMembersAsTable(members, this.log.bind(this));
       }
     } catch (e) {

@@ -3,8 +3,24 @@
  *
  * Shared utilities for member export commands.
  */
+import { writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import cliui from "cliui";
-import { getPaymentRating, getMissedPaymentsCount, getLatenessTrend } from "@mikro/common";
+import ExcelJS from "exceljs";
+import {
+  getPaymentRating,
+  getMissedPaymentsCount,
+  getLatenessTrend,
+  getReportRowHighlight,
+  buildGroupedMemberRows,
+  renderMembersReportToPng,
+  loadLogoDataUrl,
+  type GroupedMemberRow
+} from "@mikro/common";
+
+const __ctlDir = dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = join(__ctlDir, "../../../apiserver/assets/logo.png");
 
 /**
  * Loan data as returned from tRPC (dates serialized as strings).
@@ -152,4 +168,321 @@ export function outputMembersAsTable(
 
   log(ui.toString());
   log(`\nTotal: ${rows.length} préstamos de ${members.length} miembros`);
+}
+
+/** Convert serialized members to the shape expected by buildGroupedMemberRows. */
+function toMembersForGrouping(
+  members: SerializedMember[]
+): Parameters<typeof buildGroupedMemberRows>[0] {
+  return members.map((m) => ({
+    name: m.name,
+    phone: m.phone,
+    loans: m.loans.map((loan) => ({
+      loanId: loan.loanId,
+      paymentFrequency: loan.paymentFrequency,
+      createdAt: new Date(loan.createdAt),
+      payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) }))
+    }))
+  }));
+}
+
+/**
+ * Output members grouped by payment health (Crítico / Requiere atención / Al día) as a table.
+ */
+export function outputMembersGroupedAsTable(
+  members: SerializedMember[],
+  log: (message: string) => void
+): void {
+  const forGrouping = toMembersForGrouping(members);
+  const grouped = buildGroupedMemberRows(forGrouping);
+
+  const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
+  log(`Total: ${totalRows} préstamos de ${members.length} miembros\n`);
+
+  outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, (r) => [
+    r.name,
+    r.phone,
+    String(r.loanId),
+    ratingToStars(r.rating),
+    String(r.missedCount)
+  ]);
+  outputGroupedSection(log, "Requiere atención", grouped.requiereAtencion, (r) => [
+    r.name,
+    r.phone,
+    String(r.loanId),
+    ratingToStars(r.rating),
+    String(r.missedCount)
+  ]);
+  outputGroupedSection(log, "Al día", grouped.alDia, (r) => [
+    r.name,
+    r.phone,
+    String(r.loanId),
+    ratingToStars(r.rating),
+    String(r.missedCount)
+  ]);
+}
+
+function outputGroupedSection(
+  log: (message: string) => void,
+  title: string,
+  rows: GroupedMemberRow[],
+  rowToCells: (r: GroupedMemberRow) => string[]
+): void {
+  if (rows.length === 0) return;
+  log(`--- ${title} (${rows.length}) ---`);
+  const ui = cliui({ width: 120 });
+  ui.div(
+    { text: "NOMBRE", padding: [0, 0, 0, 0], width: 28 },
+    { text: "TELEFONO", padding: [0, 0, 0, 0], width: 14 },
+    { text: "PRESTAMO", padding: [0, 0, 0, 0], width: 10 },
+    { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
+    { text: "ATRASOS", padding: [0, 0, 0, 0], width: 10 }
+  );
+  for (const r of rows) {
+    const cells = rowToCells(r);
+    ui.div(
+      { text: cells[0], padding: [0, 0, 0, 0], width: 28 },
+      { text: cells[1], padding: [0, 0, 0, 0], width: 14 },
+      { text: cells[2], padding: [0, 0, 0, 0], width: 10 },
+      { text: cells[3], padding: [0, 0, 0, 0], width: 8 },
+      { text: cells[4], padding: [0, 0, 0, 0], width: 10 }
+    );
+  }
+  log(ui.toString());
+  log("");
+}
+
+/**
+ * Output members grouped by payment health as CSV with a Group column.
+ */
+export function outputMembersGroupedAsCsv(
+  members: SerializedMember[],
+  log: (message: string) => void
+): void {
+  const forGrouping = toMembersForGrouping(members);
+  const grouped = buildGroupedMemberRows(forGrouping);
+
+  log("Grupo,Nombre,Telefono,Prestamo,Rating,Pagos atrasados");
+
+  const emit = (group: string, rows: GroupedMemberRow[]) => {
+    for (const r of rows) {
+      const row = [
+        `"${group}"`,
+        `"${r.name.replace(/"/g, '""')}"`,
+        r.phone,
+        r.loanId,
+        ratingToStars(r.rating),
+        r.missedCount
+      ].join(",");
+      log(row);
+    }
+  };
+
+  emit("Crítico", grouped.critico);
+  emit("Requiere atención", grouped.requiereAtencion);
+  emit("Al día", grouped.alDia);
+}
+
+// ---------------------------------------------------------------------------
+// File output helpers (--output flag)
+// ---------------------------------------------------------------------------
+
+function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } | null {
+  if (highlight === "yellow") return { argb: "FFFFF4E6" };
+  if (highlight === "red") return { argb: "FFFFEBEE" };
+  return null;
+}
+
+/**
+ * Write members report to an Excel file at `filepath`.
+ * Full 9-column report with highlights, same format as WhatsApp Excel.
+ */
+export async function writeMembersToExcel(
+  members: SerializedMember[],
+  filepath: string
+): Promise<{ loanCount: number; memberCount: number }> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Reporte de Miembros");
+
+  worksheet.columns = [
+    { header: "Nombre", key: "name", width: 25 },
+    { header: "Teléfono", key: "phone", width: 15 },
+    { header: "Préstamo", key: "loanId", width: 12 },
+    { header: "Rating", key: "rating", width: 8 },
+    { header: "Pagos atrasados", key: "missedCount", width: 16 },
+    { header: "Tendencia", key: "trend", width: 12 },
+    { header: "Afiliado por", key: "referredBy", width: 20 },
+    { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
+    { header: "Notas", key: "notes", width: 25 }
+  ];
+
+  worksheet.columns.forEach((column) => {
+    column.alignment = { horizontal: "left", vertical: "top" };
+  });
+  const notasColumn = worksheet.getColumn("notes");
+  if (notasColumn) {
+    notasColumn.alignment = { horizontal: "left", vertical: "top", wrapText: true };
+  }
+
+  const borderStyle = { style: "thin" as const, color: { argb: "FFD3D3D3" } };
+
+  type ExcelRowData = MemberReportRow & { highlight: "yellow" | "red" | null };
+
+  const rows: ExcelRowData[] = [];
+  for (const member of members) {
+    for (const loan of member.loans) {
+      const data = toLoanData(loan);
+      rows.push({
+        name: member.name,
+        phone: member.phone,
+        loanId: loan.loanId,
+        rating: ratingToStars(getPaymentRating(data)),
+        missedCount: getMissedPaymentsCount(data),
+        trend: getLatenessTrend(data),
+        referredBy: member.referredBy.name,
+        collectionPoint: member.collectionPoint ?? "",
+        notes: member.notes ?? "",
+        highlight: getReportRowHighlight(data)
+      });
+    }
+  }
+  rows.sort((a, b) => {
+    const ra = a.rating.length;
+    const rb = b.rating.length;
+    if (ra !== rb) return ra - rb;
+    return b.missedCount - a.missedCount;
+  });
+
+  for (const r of rows) {
+    const row = worksheet.addRow({
+      name: r.name,
+      phone: r.phone,
+      loanId: r.loanId,
+      rating: r.rating,
+      missedCount: r.missedCount,
+      trend: r.trend,
+      referredBy: r.referredBy,
+      collectionPoint: r.collectionPoint,
+      notes: r.notes
+    });
+
+    const fillColor = highlightToArgb(r.highlight);
+    row.eachCell((cell, colNumber) => {
+      const columnKey = worksheet.getColumn(colNumber).key;
+      const shouldWrap = columnKey === "notes";
+      cell.alignment = { horizontal: "left", vertical: "top", wrapText: shouldWrap };
+      cell.border = {
+        top: borderStyle,
+        left: borderStyle,
+        bottom: borderStyle,
+        right: borderStyle
+      };
+      if (fillColor) {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: fillColor };
+      }
+    });
+  }
+
+  // Style header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { horizontal: "left", vertical: "top" };
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFE0E0E0" }
+  };
+  headerRow.eachCell((cell) => {
+    cell.border = {
+      top: borderStyle,
+      left: borderStyle,
+      bottom: borderStyle,
+      right: borderStyle
+    };
+  });
+
+  await workbook.xlsx.writeFile(filepath);
+  return { loanCount: rows.length, memberCount: members.length };
+}
+
+/**
+ * Write members report to a PNG file at `filepath`.
+ * Simplified grouped layout (same as WhatsApp image).
+ */
+export async function writeMembersToPng(
+  members: SerializedMember[],
+  filepath: string
+): Promise<{ loanCount: number; memberCount: number }> {
+  const forGrouping = toMembersForGrouping(members);
+  const logoDataUrl = loadLogoDataUrl(LOGO_PATH);
+  const pngBuffer = await renderMembersReportToPng(
+    forGrouping,
+    undefined,
+    logoDataUrl ?? undefined
+  );
+  await writeFile(filepath, pngBuffer);
+  const loanCount = members.reduce((sum, m) => sum + m.loans.length, 0);
+  return { loanCount, memberCount: members.length };
+}
+
+/**
+ * Write extended members report to a CSV file at `filepath`.
+ * Same content as outputMembersAsCsv.
+ */
+export async function writeMembersToCsv(
+  members: SerializedMember[],
+  filepath: string
+): Promise<{ loanCount: number; memberCount: number }> {
+  const lines: string[] = [];
+  lines.push(
+    "Nombre,Teléfono,Préstamo,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+  );
+  const rows = buildMemberReportRows(members);
+  for (const r of rows) {
+    lines.push(
+      [
+        `"${r.name}"`,
+        r.phone,
+        r.loanId,
+        r.rating,
+        r.missedCount,
+        r.trend,
+        `"${r.referredBy}"`,
+        `"${r.collectionPoint.replace(/"/g, '""')}"`,
+        `"${(r.notes ?? "").replace(/"/g, '""')}"`
+      ].join(",")
+    );
+  }
+  await writeFile(filepath, lines.join("\n"));
+  return { loanCount: rows.length, memberCount: members.length };
+}
+
+/**
+ * Handle --output flag for member export commands. Writes to file when output is set;
+ * returns true. When output is not set, returns false so the command can print extended table to stdout.
+ */
+export async function handleMembersOutput(
+  members: SerializedMember[],
+  output: string | undefined,
+  log: (msg: string) => void,
+  error: (msg: string) => never
+): Promise<boolean> {
+  if (!output) return false;
+  const ext = output.split(".").pop()?.toLowerCase();
+  if (ext === "xlsx") {
+    const { loanCount, memberCount } = await writeMembersToExcel(members, output);
+    log(`Excel guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    return true;
+  }
+  if (ext === "png") {
+    const { loanCount, memberCount } = await writeMembersToPng(members, output);
+    log(`PNG guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    return true;
+  }
+  if (ext === "csv") {
+    const { loanCount, memberCount } = await writeMembersToCsv(members, output);
+    log(`CSV guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    return true;
+  }
+  error("--output must end in .xlsx, .png, or .csv");
 }

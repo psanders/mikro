@@ -4,14 +4,15 @@
 import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { outputMembersAsCsv, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportByCollector extends BaseCommand<typeof ExportByCollector> {
   static override readonly description = "export members assigned to a collector";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <collectorId>",
-    "<%= config.bin %> <%= command.id %> <collectorId> --csv",
-    "<%= config.bin %> <%= command.id %> <collectorId> --csv > report.csv"
+    "<%= config.bin %> <%= command.id %> <collectorId> --output report.xlsx",
+    "<%= config.bin %> <%= command.id %> <collectorId> --output report.png",
+    "<%= config.bin %> <%= command.id %> <collectorId> --output report.csv"
   ];
   static override readonly args = {
     collectorId: Args.string({
@@ -20,9 +21,10 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
     })
   };
   static override readonly flags = {
-    csv: Flags.boolean({
-      description: "Output as CSV format",
-      default: false
+    output: Flags.string({
+      description:
+        "Write report to file. Extension determines format: .xlsx (Excel), .png (simplified image), .csv (extended CSV).",
+      char: "o"
     })
   };
 
@@ -40,9 +42,13 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
         return;
       }
 
-      if (flags.csv) {
-        outputMembersAsCsv(members, this.log.bind(this));
-      } else {
+      const handled = await handleMembersOutput(
+        members,
+        flags.output,
+        this.log.bind(this),
+        this.error.bind(this)
+      );
+      if (!handled) {
         outputMembersAsTable(members, this.log.bind(this));
       }
     } catch (e) {

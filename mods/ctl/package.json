@@ -25,12 +25,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.1.0",
     "@mikro/common": "^1.0.0",
     "@oclif/core": "^4.8.0",
     "@trpc/client": "^11.8.1",
-    "@inquirer/prompts": "^7.1.0",
     "cliui": "^8.0.1",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "figlet": "^1.8.0",
     "moment": "^2.30.1"
   },
