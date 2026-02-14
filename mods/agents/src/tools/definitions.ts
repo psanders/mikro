@@ -439,10 +439,17 @@ export const exportAllMembersTool: ToolFunction = {
   function: {
     name: "exportAllMembers",
     description:
-      "Generar un reporte de todos los miembros activos (solo admin). Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
+      "Generar un reporte de todos los miembros activos (solo admin). Por defecto envia una imagen agrupada por estado de pago (simplified). Con format 'detailed' envia Excel con todos los datos: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
-      properties: {},
+      properties: {
+        format: {
+          type: "string",
+          enum: ["simplified", "detailed"],
+          description:
+            "Formato del reporte: 'simplified' (imagen para WhatsApp, por defecto) o 'detailed' (Excel con todos los datos)"
+        }
+      },
       required: []
     }
   }

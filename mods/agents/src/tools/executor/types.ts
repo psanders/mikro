@@ -156,6 +156,9 @@ export interface ToolExecutorDependencies {
     endDate?: string;
   }) => Promise<{ image: string }>;
 
+  /** Render members report (grouped by payment health) to PNG buffer. Used for simplified format. */
+  renderMembersReportToPng: (members: ExportedMember[]) => Promise<Buffer>;
+
   /** Upload media to WhatsApp and get media ID */
   uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;
 

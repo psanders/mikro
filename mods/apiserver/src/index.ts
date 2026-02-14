@@ -12,7 +12,7 @@ config({ path: resolve(__dirname, "../../../.env") });
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
-import { ValidationError } from "@mikro/common";
+import { ValidationError, renderMembersReportToPng, loadLogoDataUrl } from "@mikro/common";
 import {
   handleWhatsAppMessage,
   getWebhookVerifyToken,
@@ -372,6 +372,11 @@ async function initializeMessageProcessor() {
           endDate: params.endDate ? new Date(params.endDate) : undefined
         });
         return { image: result.image };
+      },
+      renderMembersReportToPng: async (members) => {
+        const logoPath = resolve(__dirname, "../assets/logo.png");
+        const logoDataUrl = loadLogoDataUrl(logoPath);
+        return renderMembersReportToPng(members, undefined, logoDataUrl ?? undefined);
       },
       uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
         return whatsAppClient.uploadMedia(fileBuffer, mimeType);
