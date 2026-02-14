@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -69,6 +70,13 @@ export default class Create extends BaseCommand<typeof Create> {
       "collector-id"
     );
     const notes = flags.notes || undefined;
+
+    const ready = await confirm({ message: "Ready to create payment?" });
+
+    if (!ready) {
+      this.log("Aborted!");
+      return;
+    }
 
     try {
       const payment = await client.createPayment.mutate({

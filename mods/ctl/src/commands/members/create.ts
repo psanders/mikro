@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Flags } from "@oclif/core";
-import { select } from "@inquirer/prompts";
+import { confirm, select } from "@inquirer/prompts";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
@@ -147,6 +147,13 @@ export default class Create extends BaseCommand<typeof Create> {
         default: "MONDAY"
       }));
     const notes = flags.notes || undefined;
+
+    const ready = await confirm({ message: "Ready to create member?" });
+
+    if (!ready) {
+      this.log("Aborted!");
+      return;
+    }
 
     try {
       const member = await client.createMember.mutate({

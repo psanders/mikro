@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { input } from "@inquirer/prompts";
+import { confirm, input } from "@inquirer/prompts";
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -27,6 +27,15 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
       message: "Notes (reason for reversal)",
       required: false
     });
+
+    const ready = await confirm({
+      message: "Are you sure you want to reverse this payment?"
+    });
+
+    if (!ready) {
+      this.log("Aborted!");
+      return;
+    }
 
     try {
       await client.reversePayment.mutate({

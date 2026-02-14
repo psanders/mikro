@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { input, select } from "@inquirer/prompts";
+import { confirm, input, select } from "@inquirer/prompts";
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -70,6 +70,13 @@ export default class Update extends BaseCommand<typeof Update> {
           default: (memberFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
         })
       };
+
+      const ready = await confirm({ message: "Ready to update member?" });
+
+      if (!ready) {
+        this.log("Aborted!");
+        return;
+      }
 
       await client.updateMember.mutate({
         id: args.memberId,

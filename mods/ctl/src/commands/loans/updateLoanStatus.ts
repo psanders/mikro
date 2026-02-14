@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -50,6 +51,13 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
         { name: "Cancelled", value: "CANCELLED" as const }
       ]
     );
+
+    const ready = await confirm({ message: `Set loan #${loanId} to ${status}?` });
+
+    if (!ready) {
+      this.log("Aborted!");
+      return;
+    }
 
     try {
       const result = await client.updateLoanStatus.mutate({ loanId, status });

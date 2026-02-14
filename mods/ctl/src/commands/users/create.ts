@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -10,7 +11,6 @@ export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR",
     "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR"
   ];
   static override readonly flags = {
@@ -48,6 +48,13 @@ export default class Create extends BaseCommand<typeof Create> {
         { name: "Referrer", value: "REFERRER" as const }
       ]
     );
+
+    const ready = await confirm({ message: "Ready to create user?" });
+
+    if (!ready) {
+      this.log("Aborted!");
+      return;
+    }
 
     try {
       const user = await client.createUser.mutate({
