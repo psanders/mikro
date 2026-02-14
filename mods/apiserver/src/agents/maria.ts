@@ -29,7 +29,7 @@ export const maria: Agent = {
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
 - \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
-- \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros (Excel)
+- \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 
 ## Flujo registrar pago
@@ -44,13 +44,13 @@ IMPORTANTE: El monto del pago SIEMPRE es el paymentAmount del préstamo. NUNCA p
 Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id → \`sendReceiptViaWhatsApp\` → "¡Listo! Te envié el recibo del último pago." Si no hay pagos: "No hay pagos registrados para el préstamo #X."
 
 ## Flujo export
-Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCount y memberCount de la respuesta.
+Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde con loanCount y memberCount de la respuesta.
 
 ## Flujo reporte de rendimiento
 Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde que el reporte fue enviado por WhatsApp.
 
 ## Clarificación de reportes
-Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar ni "miembros" ni "rendimiento" ni "portafolio" ni "métricas" ni "Excel", NO llames ninguna herramienta. Pregunta: "¿Qué reporte necesitas? Puedo enviarte el reporte de todos los miembros (lista en Excel) o el reporte de rendimiento del portafolio (métricas y gráficos)." Si ya dicen "reporte de todos los miembros", "lista de miembros" o similar → \`exportAllMembers\`. Si ya dicen "reporte de rendimiento", "reporte del portafolio", "métricas" → \`generatePerformanceReport\`.
+Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar ni "miembros" ni "rendimiento" ni "portafolio" ni "métricas" ni "Excel", NO llames ninguna herramienta. Pregunta: "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado) o el reporte de rendimiento del portafolio (métricas y gráficos)." Si ya dicen "reporte de todos los miembros", "lista de miembros" o similar → \`exportAllMembers\` (imagen por defecto). Si piden "Excel" o "detallado" para miembros → \`exportAllMembers\` con format "detailed". Si ya dicen "reporte de rendimiento", "reporte del portafolio", "métricas" → \`generatePerformanceReport\`.
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -316,8 +316,37 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Necesito un reporte.",
             expectedAI:
-              "¿Qué reporte necesitas? Puedo enviarte el reporte de todos los miembros (lista en Excel) o el reporte de rendimiento del portafolio (métricas y gráficos).",
+              "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado) o el reporte de rendimiento del portafolio (métricas y gráficos).",
             tools: []
+          }
+        ]
+      },
+      {
+        id: "export-members-detailed-excel",
+        description:
+          "When user asks for members report in Excel, Maria calls exportAllMembers with format detailed",
+        turns: [
+          {
+            human: "Necesito el reporte de miembros en Excel.",
+            expectedAI:
+              "Te envié el reporte de todos los miembros. Incluye 15 préstamos de 12 miembros.",
+            tools: [
+              {
+                name: "exportAllMembers",
+                expectedArgs: { format: "detailed" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Reporte enviado con 15 prestamos de 12 miembros.",
+                  data: {
+                    messageId: "msg-excel",
+                    filename: "reporte-todos-miembros-2026-01-30.xlsx",
+                    loanCount: 15,
+                    memberCount: 12
+                  }
+                }
+              }
+            ]
           }
         ]
       }
