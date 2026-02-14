@@ -50,7 +50,8 @@ import {
   createListUsers,
   createExportCollectorMembers,
   createExportMembersByReferrer,
-  createExportAllMembers
+  createExportAllMembers,
+  createGeneratePerformanceReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 
@@ -155,6 +156,7 @@ async function initializeMessageProcessor() {
     const exportCollectorMembers = createExportCollectorMembers(dbClient);
     const exportMembersByReferrer = createExportMembersByReferrer(dbClient);
     const exportAllMembers = createExportAllMembers(dbClient);
+    const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
 
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
@@ -363,6 +365,13 @@ async function initializeMessageProcessor() {
             payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
           }))
         }));
+      },
+      generatePerformanceReport: async (params: { startDate?: string; endDate?: string }) => {
+        const result = await generatePerformanceReport({
+          startDate: params.startDate ? new Date(params.startDate) : undefined,
+          endDate: params.endDate ? new Date(params.endDate) : undefined
+        });
+        return { image: result.image };
       },
       uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
         return whatsAppClient.uploadMedia(fileBuffer, mimeType);

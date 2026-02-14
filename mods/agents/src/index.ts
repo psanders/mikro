@@ -19,6 +19,7 @@ export {
 // LLM integration
 export {
   createInvokeLLM,
+  invokeTextPrompt,
   type ModelSettings,
   type Agent,
   type Message,

@@ -2,6 +2,8 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
+export { invokeTextPrompt } from "./invokeTextPrompt.js";
+
 // Types
 export type {
   ModelSettings,

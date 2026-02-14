@@ -150,6 +150,12 @@ export interface ToolExecutorDependencies {
   /** Export all members with loans and referrer for report generation (admin only) */
   exportAllMembers: () => Promise<ExportedMember[]>;
 
+  /** Generate performance report (metrics + LLM narrative + PNG). Returns base64 image. */
+  generatePerformanceReport: (params: {
+    startDate?: string;
+    endDate?: string;
+  }) => Promise<{ image: string }>;
+
   /** Upload media to WhatsApp and get media ID */
   uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;
 

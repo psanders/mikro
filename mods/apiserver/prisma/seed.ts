@@ -5,7 +5,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.MIKRO_DATABASE_URL || "file:./data/dev.db"
+  url: process.env.MIKRO_DATABASE_URL || "file:./data/mikro.db"
 });
 
 const prisma = new PrismaClient({ adapter });

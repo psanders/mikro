@@ -115,8 +115,10 @@ async function runTurn(
   const actualToolNames = getCalls().map((c) => c.name);
   const expectedToolNames = expectedTools.map((t) => t.name);
 
-  // Determine if turn passed
-  const toolsPassed = toolVerification.allExpectedCalled && toolVerification.allArgsMatched;
+  // Determine if turn passed (no unexpected tool calls; all expected called with matching args)
+  const noUnexpectedCalls = toolVerification.unexpected.length === 0;
+  const toolsPassed =
+    noUnexpectedCalls && toolVerification.allExpectedCalled && toolVerification.allArgsMatched;
   const responsePassed = similarity.similar;
   const passed = toolsPassed && responsePassed;
 

@@ -147,8 +147,29 @@ export {
   sendReceiptViaWhatsAppSchema,
   type GenerateReceiptInput,
   type ReceiptDataInput,
-  type SendReceiptViaWhatsAppInput
+  type SendReceiptViaWhatsAppInput,
+  // Report schemas
+  generatePerformanceReportSchema,
+  generatePortfolioMetricsSchema,
+  type GeneratePerformanceReportInput,
+  type GeneratePortfolioMetricsInput
 } from "./schemas/index.js";
+
+// Report types and helpers
+export type {
+  PortfolioMetrics,
+  LoansByStatus,
+  LoansBySize,
+  ReportNarrative
+} from "./reports/index.js";
+export {
+  buildReportNarrativePrompt,
+  parseReportNarrativeResponse,
+  renderPerformanceReportToPng,
+  createPerformanceReportLayout,
+  REPORT_WIDTH,
+  REPORT_HEIGHT
+} from "./reports/index.js";
 
 // Types (entities and client)
 export type { Member } from "./types/index.js";

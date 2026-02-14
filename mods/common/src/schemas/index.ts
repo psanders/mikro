@@ -126,3 +126,10 @@ export {
   type ReceiptDataInput,
   type SendReceiptViaWhatsAppInput
 } from "./receipt.js";
+
+export {
+  generatePerformanceReportSchema,
+  generatePortfolioMetricsSchema,
+  type GeneratePerformanceReportInput,
+  type GeneratePortfolioMetricsInput
+} from "./report.js";

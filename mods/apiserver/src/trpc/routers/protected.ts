@@ -34,7 +34,10 @@ import {
   listPaymentsByLoanIdSchema,
   // Receipt schemas
   generateReceiptSchema,
-  sendReceiptViaWhatsAppSchema
+  sendReceiptViaWhatsAppSchema,
+  // Report schemas
+  generatePortfolioMetricsSchema,
+  generatePerformanceReportSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -70,6 +73,9 @@ import { createListPaymentsByLoanId } from "../../api/payments/createListPayment
 // Receipt API functions
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
 import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendReceiptViaWhatsApp.js";
+// Report API functions
+import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
+import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
 
@@ -350,5 +356,29 @@ export const protectedRouter = router({
       });
 
       return fn(input);
+    }),
+
+  // ==================== Report procedures ====================
+
+  /**
+   * Get portfolio metrics for a date range (for reports).
+   */
+  generatePortfolioMetrics: protectedProcedure
+    .input(generatePortfolioMetricsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createGeneratePortfolioMetrics(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Generate full performance report (metrics + LLM narrative + PNG).
+   * Returns base64-encoded PNG image.
+   */
+  generatePerformanceReport: protectedProcedure
+    .input(generatePerformanceReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGeneratePerformanceReport(ctx.db);
+      const result = await fn(input);
+      return { image: result.image };
     })
 });

@@ -29,7 +29,8 @@ export const maria: Agent = {
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
 - \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
-- \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros
+- \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros (Excel)
+- \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 
 ## Flujo registrar pago
 1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
@@ -45,6 +46,12 @@ Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id �
 ## Flujo export
 Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCount y memberCount de la respuesta.
 
+## Flujo reporte de rendimiento
+Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde que el reporte fue enviado por WhatsApp.
+
+## Clarificación de reportes
+Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar ni "miembros" ni "rendimiento" ni "portafolio" ni "métricas" ni "Excel", NO llames ninguna herramienta. Pregunta: "¿Qué reporte necesitas? Puedo enviarte el reporte de todos los miembros (lista en Excel) o el reporte de rendimiento del portafolio (métricas y gráficos)." Si ya dicen "reporte de todos los miembros", "lista de miembros" o similar → \`exportAllMembers\`. Si ya dicen "reporte de rendimiento", "reporte del portafolio", "métricas" → \`generatePerformanceReport\`.
+
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
   allowedTools: [
@@ -54,6 +61,7 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
     "getLoanByLoanId",
     "listMemberLoansByPhone",
     "exportAllMembers",
+    "generatePerformanceReport",
     "updateLoanStatus"
   ],
   temperature: 0.4,
@@ -170,7 +178,8 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
           },
           {
             human: "Necesito el reporte de todos los miembros.",
-            expectedAI: "¡Listo! Te envié el reporte con 15 préstamos de 12 miembros.",
+            expectedAI:
+              "Te envié el reporte de todos los miembros. Incluye 15 préstamos de 12 miembros.",
             tools: [
               {
                 name: "exportAllMembers",
@@ -291,6 +300,24 @@ Piden reporte/lista de miembros → \`exportAllMembers\` → responde con loanCo
             human: "Oye, cuánto está el dólar hoy?",
             expectedAI:
               "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."
+          }
+        ]
+      },
+      {
+        id: "report-clarification",
+        description:
+          "When user asks for 'a report' without specifying which, Maria asks for clarification and does not call any tool",
+        turns: [
+          {
+            human: "Hola",
+            expectedAI:
+              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+          },
+          {
+            human: "Necesito un reporte.",
+            expectedAI:
+              "¿Qué reporte necesitas? Puedo enviarte el reporte de todos los miembros (lista en Excel) o el reporte de rendimiento del portafolio (métricas y gráficos).",
+            tools: []
           }
         ]
       }

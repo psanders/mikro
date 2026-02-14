@@ -59,3 +59,9 @@ export {
   type SendReceiptViaWhatsAppResponse,
   type SendReceiptViaWhatsAppDependencies
 } from "./receipts/index.js";
+
+// Report operations
+export {
+  createGeneratePortfolioMetrics,
+  createGeneratePerformanceReport
+} from "./reports/index.js";

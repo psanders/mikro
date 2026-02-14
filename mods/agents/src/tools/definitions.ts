@@ -449,6 +449,33 @@ export const exportAllMembersTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for generating a one-page performance report (portfolio metrics + narrative + PNG).
+ * Admin only. Sends the report image via WhatsApp.
+ */
+export const generatePerformanceReportTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "generatePerformanceReport",
+    description:
+      "Generar un reporte de rendimiento del portafolio (una pagina con metricas, resumen ejecutivo y graficos). Solo admin. Se envia por WhatsApp como imagen.",
+    parameters: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Fecha de inicio del periodo (YYYY-MM-DD). Opcional."
+        },
+        endDate: {
+          type: "string",
+          description: "Fecha de fin del periodo (YYYY-MM-DD). Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -467,7 +494,8 @@ export const allTools: ToolFunction[] = [
   getLoanByLoanIdTool,
   exportCollectorMembersTool,
   exportMembersByReferrerTool,
-  exportAllMembersTool
+  exportAllMembersTool,
+  generatePerformanceReportTool
 ];
 
 /**

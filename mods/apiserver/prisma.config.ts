@@ -11,6 +11,6 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.ts"
   },
   datasource: {
-    url: process.env.MIKRO_DATABASE_URL || "file:./data/dev.db"
+    url: process.env.MIKRO_DATABASE_URL || "file:./data/mikro.db"
   }
 });
