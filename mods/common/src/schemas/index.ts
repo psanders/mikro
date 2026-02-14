@@ -62,6 +62,7 @@ export {
   whatsappEntrySchema,
   whatsappWebhookSchema,
   sendWhatsAppMessageSchema,
+  sendWhatsAppTemplateSchema,
   type WhatsAppText,
   type WhatsAppImage,
   type WhatsAppMessageType,
@@ -70,7 +71,8 @@ export {
   type WhatsAppChange,
   type WhatsAppEntry,
   type WhatsAppWebhookBody,
-  type SendWhatsAppMessageInput
+  type SendWhatsAppMessageInput,
+  type SendWhatsAppTemplateInput
 } from "./whatsapp.js";
 
 export {
@@ -133,3 +135,5 @@ export {
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput
 } from "./report.js";
+
+export { runCollectionsSchema, type RunCollectionsInput } from "./collection.js";

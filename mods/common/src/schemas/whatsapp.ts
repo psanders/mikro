@@ -79,6 +79,18 @@ export const whatsappWebhookSchema = z.object({
 });
 
 /**
+ * Schema for sending a WhatsApp template message (approved templates only).
+ * Language code hardcoded to "es" in usage; optional here for flexibility.
+ */
+export const sendWhatsAppTemplateSchema = z.object({
+  phone: z.string().min(1, "Phone number is required"),
+  templateName: z.string().min(1, "Template name is required"),
+  languageCode: z.string().length(2).optional().default("es"),
+  /** Body component parameters (text only), in order. */
+  bodyParameters: z.array(z.string()).optional().default([])
+});
+
+/**
  * Media type enum for WhatsApp messages.
  */
 export const mediaTypeEnum = z.enum(["image", "document", "video", "audio"]);
@@ -198,6 +210,11 @@ export type WhatsAppWebhookBody = z.infer<typeof whatsappWebhookSchema>;
  * Input type for sending a WhatsApp message.
  */
 export type SendWhatsAppMessageInput = z.infer<typeof sendWhatsAppMessageSchema>;
+
+/**
+ * Input type for sending a WhatsApp template message.
+ */
+export type SendWhatsAppTemplateInput = z.infer<typeof sendWhatsAppTemplateSchema>;
 
 /**
  * Media type for WhatsApp messages.

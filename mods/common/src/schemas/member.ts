@@ -31,9 +31,19 @@ export const createMemberSchema = z.object({
   notes: z.string().optional()
 });
 
+const dayOfWeekEnum = z.enum([
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY"
+]);
+
 /**
  * Schema for updating an existing member.
- * Only name, phone, notes, and isActive can be updated.
+ * Only name, phone, notes, isActive, and preferredPaymentDay can be updated.
  */
 export const updateMemberSchema = z.object({
   id: z.uuid({ error: "Invalid member ID" }),
@@ -47,7 +57,8 @@ export const updateMemberSchema = z.object({
     })
     .optional(),
   notes: z.string().optional(),
-  isActive: z.boolean().optional()
+  isActive: z.boolean().optional(),
+  preferredPaymentDay: dayOfWeekEnum.optional().nullable()
 });
 
 /**

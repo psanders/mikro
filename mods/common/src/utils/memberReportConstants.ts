@@ -14,14 +14,23 @@ export const TREND_LOOKBACK_WEEKS = 3;
 /** A cycle's payment is "late" if paid more than this many days after the cycle due date. */
 export const LATE_DAYS_THRESHOLD = 7;
 
+/** Missed payments threshold for daily WhatsApp overdue notices (1 = remind as soon as behind). */
+export const COLLECTION_OVERDUE_MIN_MISSED = 1;
+
+/** Missed payments threshold for escalating to phone calls. */
+export const COLLECTION_CALL_MIN_MISSED = 3;
+
+/** Delay between WhatsApp messages to respect rate limits (ms). */
+export const COLLECTION_MESSAGE_DELAY_MS = 2000;
+
 /** Show yellow row when missed payments count is at least this. */
 export const HIGHLIGHT_YELLOW_MIN_MISSED = 2;
 
 /** Show yellow row when times late in lookback is at least this (chronically late). */
 export const HIGHLIGHT_YELLOW_TIMES_LATE_IN_LOOKBACK = 2;
 
-/** Show red row when missed payments count is at least this. */
-export const HIGHLIGHT_RED_MIN_MISSED = 3;
+/** Show red row when missed payments count is at least this (reuses collection threshold). */
+export const HIGHLIGHT_RED_MIN_MISSED = COLLECTION_CALL_MIN_MISSED;
 
 /** Show red when trend is deteriorating and missed count is at least this. */
 export const HIGHLIGHT_RED_DETERIORATING_MIN_MISSED = 2;

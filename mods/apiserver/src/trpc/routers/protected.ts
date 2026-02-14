@@ -37,7 +37,9 @@ import {
   sendReceiptViaWhatsAppSchema,
   // Report schemas
   generatePortfolioMetricsSchema,
-  generatePerformanceReportSchema
+  generatePerformanceReportSchema,
+  // Collection schemas
+  runCollectionsSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
 // Member API functions
@@ -78,6 +80,9 @@ import { createGeneratePortfolioMetrics } from "../../api/reports/createGenerate
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
+// Collections
+import { runDailyCollections } from "../../collections/index.js";
+import type { PrismaClient } from "../../generated/prisma/client.js";
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -380,5 +385,44 @@ export const protectedRouter = router({
       const fn = createGeneratePerformanceReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
+    }),
+
+  // ==================== Collection procedures ====================
+
+  /**
+   * Trigger the daily collections process on demand.
+   * Evaluates all active members and sends reminders, overdue notices, or collection calls
+   * based on their payment status. Supports dry-run mode.
+   */
+  runCollections: protectedProcedure
+    .input(runCollectionsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const prevDryRun = process.env.MIKRO_COLLECTIONS_DRY_RUN;
+      if (input.dryRun) {
+        process.env.MIKRO_COLLECTIONS_DRY_RUN = "true";
+      }
+
+      try {
+        const whatsAppClient = createWhatsAppClient();
+        await runDailyCollections(new Date(), {
+          db: ctx.db as unknown as PrismaClient,
+          sendWhatsAppTemplate: (p) =>
+            whatsAppClient.sendTemplateMessage({
+              ...p,
+              languageCode: p.languageCode ?? "es",
+              bodyParameters: p.bodyParameters ?? []
+            })
+        });
+      } finally {
+        if (input.dryRun) {
+          if (prevDryRun === undefined) {
+            delete process.env.MIKRO_COLLECTIONS_DRY_RUN;
+          } else {
+            process.env.MIKRO_COLLECTIONS_DRY_RUN = prevDryRun;
+          }
+        }
+      }
+
+      return { success: true, dryRun: input.dryRun };
     })
 });

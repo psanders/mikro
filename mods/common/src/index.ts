@@ -22,7 +22,10 @@ export {
   HIGHLIGHT_YELLOW_MIN_MISSED,
   HIGHLIGHT_YELLOW_TIMES_LATE_IN_LOOKBACK,
   HIGHLIGHT_RED_MIN_MISSED,
-  HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
+  HIGHLIGHT_RED_DETERIORATING_MIN_MISSED,
+  COLLECTION_OVERDUE_MIN_MISSED,
+  COLLECTION_CALL_MIN_MISSED,
+  COLLECTION_MESSAGE_DELAY_MS
 } from "./utils/memberReportConstants.js";
 export {
   getMissedPaymentsCount,
@@ -98,6 +101,7 @@ export {
   whatsappEntrySchema,
   whatsappWebhookSchema,
   sendWhatsAppMessageSchema,
+  sendWhatsAppTemplateSchema,
   type WhatsAppText,
   type WhatsAppImage,
   type WhatsAppMessageType,
@@ -107,6 +111,7 @@ export {
   type WhatsAppEntry,
   type WhatsAppWebhookBody,
   type SendWhatsAppMessageInput,
+  type SendWhatsAppTemplateInput,
   // Loan schemas
   loanTypeEnum,
   loanStatusEnum,
@@ -159,7 +164,10 @@ export {
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
   type GeneratePerformanceReportInput,
-  type GeneratePortfolioMetricsInput
+  type GeneratePortfolioMetricsInput,
+  // Collection schemas
+  runCollectionsSchema,
+  type RunCollectionsInput
 } from "./schemas/index.js";
 
 // Report types and helpers

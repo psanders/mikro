@@ -57,7 +57,8 @@ export const ModelName = {
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
-  Payment: 'Payment'
+  Payment: 'Payment',
+  CollectionAttempt: 'CollectionAttempt'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -107,6 +108,7 @@ export const MemberScalarFieldEnum = {
   isActive: 'isActive',
   idCardOnRecord: 'idCardOnRecord',
   notes: 'notes',
+  preferredPaymentDay: 'preferredPaymentDay',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   createdById: 'createdById',
@@ -176,6 +178,22 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const CollectionAttemptScalarFieldEnum = {
+  id: 'id',
+  channel: 'channel',
+  type: 'type',
+  status: 'status',
+  messageId: 'messageId',
+  templateName: 'templateName',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  memberId: 'memberId',
+  loanId: 'loanId'
+} as const
+
+export type CollectionAttemptScalarFieldEnum = (typeof CollectionAttemptScalarFieldEnum)[keyof typeof CollectionAttemptScalarFieldEnum]
 
 
 export const SortOrder = {

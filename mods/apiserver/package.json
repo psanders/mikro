@@ -29,6 +29,7 @@
     "@trpc/server": "^11.8.1",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "node-cron": "^3.0.3",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/express": "^5.0.6",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.10",
+    "@types/node-cron": "^3.0.11",
     "@types/sinon": "^21.0.0",
     "@types/sinon-chai": "^4.0.0",
     "chai": "^6.2.2",

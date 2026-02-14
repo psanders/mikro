@@ -47,6 +47,7 @@ export type MemberMinAggregateOutputType = {
   isActive: boolean | null
   idCardOnRecord: boolean | null
   notes: string | null
+  preferredPaymentDay: $Enums.DayOfWeek | null
   createdAt: Date | null
   updatedAt: Date | null
   createdById: string | null
@@ -67,6 +68,7 @@ export type MemberMaxAggregateOutputType = {
   isActive: boolean | null
   idCardOnRecord: boolean | null
   notes: string | null
+  preferredPaymentDay: $Enums.DayOfWeek | null
   createdAt: Date | null
   updatedAt: Date | null
   createdById: string | null
@@ -87,6 +89,7 @@ export type MemberCountAggregateOutputType = {
   isActive: number
   idCardOnRecord: number
   notes: number
+  preferredPaymentDay: number
   createdAt: number
   updatedAt: number
   createdById: number
@@ -117,6 +120,7 @@ export type MemberMinAggregateInputType = {
   isActive?: true
   idCardOnRecord?: true
   notes?: true
+  preferredPaymentDay?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -137,6 +141,7 @@ export type MemberMaxAggregateInputType = {
   isActive?: true
   idCardOnRecord?: true
   notes?: true
+  preferredPaymentDay?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -157,6 +162,7 @@ export type MemberCountAggregateInputType = {
   isActive?: true
   idCardOnRecord?: true
   notes?: true
+  preferredPaymentDay?: true
   createdAt?: true
   updatedAt?: true
   createdById?: true
@@ -264,6 +270,7 @@ export type MemberGroupByOutputType = {
   isActive: boolean
   idCardOnRecord: boolean
   notes: string | null
+  preferredPaymentDay: $Enums.DayOfWeek | null
   createdAt: Date
   updatedAt: Date
   createdById: string | null
@@ -307,6 +314,7 @@ export type MemberWhereInput = {
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
   notes?: Prisma.StringNullableFilter<"Member"> | string | null
+  preferredPaymentDay?: Prisma.EnumDayOfWeekNullableFilter<"Member"> | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
@@ -317,6 +325,7 @@ export type MemberWhereInput = {
   assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
+  collectionAttempts?: Prisma.CollectionAttemptListRelationFilter
 }
 
 export type MemberOrderByWithRelationInput = {
@@ -332,6 +341,7 @@ export type MemberOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  preferredPaymentDay?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -342,6 +352,7 @@ export type MemberOrderByWithRelationInput = {
   assignedCollector?: Prisma.UserOrderByWithRelationInput
   loans?: Prisma.LoanOrderByRelationAggregateInput
   messages?: Prisma.MessageOrderByRelationAggregateInput
+  collectionAttempts?: Prisma.CollectionAttemptOrderByRelationAggregateInput
 }
 
 export type MemberWhereUniqueInput = Prisma.AtLeast<{
@@ -360,6 +371,7 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
   notes?: Prisma.StringNullableFilter<"Member"> | string | null
+  preferredPaymentDay?: Prisma.EnumDayOfWeekNullableFilter<"Member"> | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
@@ -370,6 +382,7 @@ export type MemberWhereUniqueInput = Prisma.AtLeast<{
   assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
+  collectionAttempts?: Prisma.CollectionAttemptListRelationFilter
 }, "id">
 
 export type MemberOrderByWithAggregationInput = {
@@ -385,6 +398,7 @@ export type MemberOrderByWithAggregationInput = {
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  preferredPaymentDay?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -413,6 +427,7 @@ export type MemberScalarWhereWithAggregatesInput = {
   isActive?: Prisma.BoolWithAggregatesFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolWithAggregatesFilter<"Member"> | boolean
   notes?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
+  preferredPaymentDay?: Prisma.EnumDayOfWeekNullableWithAggregatesFilter<"Member"> | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableWithAggregatesFilter<"Member"> | string | null
@@ -433,6 +448,7 @@ export type MemberCreateInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
@@ -440,6 +456,7 @@ export type MemberCreateInput = {
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateInput = {
@@ -455,6 +472,7 @@ export type MemberUncheckedCreateInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
@@ -462,6 +480,7 @@ export type MemberUncheckedCreateInput = {
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUpdateInput = {
@@ -477,6 +496,7 @@ export type MemberUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
@@ -484,6 +504,7 @@ export type MemberUpdateInput = {
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateInput = {
@@ -499,6 +520,7 @@ export type MemberUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -506,6 +528,7 @@ export type MemberUncheckedUpdateInput = {
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateManyInput = {
@@ -521,6 +544,7 @@ export type MemberCreateManyInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
@@ -541,6 +565,7 @@ export type MemberUpdateManyMutationInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -558,6 +583,7 @@ export type MemberUncheckedUpdateManyInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -588,6 +614,7 @@ export type MemberCountOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  preferredPaymentDay?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -612,6 +639,7 @@ export type MemberMaxOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  preferredPaymentDay?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -632,6 +660,7 @@ export type MemberMinOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   idCardOnRecord?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  preferredPaymentDay?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
@@ -791,6 +820,10 @@ export type NullableDecimalFieldUpdateOperationsInput = {
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
+export type NullableEnumDayOfWeekFieldUpdateOperationsInput = {
+  set?: $Enums.DayOfWeek | null
+}
+
 export type MemberCreateNestedOneWithoutLoansInput = {
   create?: Prisma.XOR<Prisma.MemberCreateWithoutLoansInput, Prisma.MemberUncheckedCreateWithoutLoansInput>
   connectOrCreate?: Prisma.MemberCreateOrConnectWithoutLoansInput
@@ -821,6 +854,20 @@ export type MemberUpdateOneWithoutMessagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutMessagesInput, Prisma.MemberUpdateWithoutMessagesInput>, Prisma.MemberUncheckedUpdateWithoutMessagesInput>
 }
 
+export type MemberCreateNestedOneWithoutCollectionAttemptsInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedCreateWithoutCollectionAttemptsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutCollectionAttemptsInput
+  connect?: Prisma.MemberWhereUniqueInput
+}
+
+export type MemberUpdateOneRequiredWithoutCollectionAttemptsNestedInput = {
+  create?: Prisma.XOR<Prisma.MemberCreateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedCreateWithoutCollectionAttemptsInput>
+  connectOrCreate?: Prisma.MemberCreateOrConnectWithoutCollectionAttemptsInput
+  upsert?: Prisma.MemberUpsertWithoutCollectionAttemptsInput
+  connect?: Prisma.MemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MemberUpdateToOneWithWhereWithoutCollectionAttemptsInput, Prisma.MemberUpdateWithoutCollectionAttemptsInput>, Prisma.MemberUncheckedUpdateWithoutCollectionAttemptsInput>
+}
+
 export type MemberCreateWithoutCreatedByInput = {
   id?: string
   name: string
@@ -834,12 +881,14 @@ export type MemberCreateWithoutCreatedByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutCreatedByInput = {
@@ -855,12 +904,14 @@ export type MemberUncheckedCreateWithoutCreatedByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   referredById: string
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutCreatedByInput = {
@@ -885,12 +936,14 @@ export type MemberCreateWithoutReferredByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutReferredByInput = {
@@ -906,12 +959,14 @@ export type MemberUncheckedCreateWithoutReferredByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutReferredByInput = {
@@ -936,12 +991,14 @@ export type MemberCreateWithoutAssignedCollectorInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutAssignedCollectorInput = {
@@ -957,12 +1014,14 @@ export type MemberUncheckedCreateWithoutAssignedCollectorInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
   referredById: string
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutAssignedCollectorInput = {
@@ -1006,6 +1065,7 @@ export type MemberScalarWhereInput = {
   isActive?: Prisma.BoolFilter<"Member"> | boolean
   idCardOnRecord?: Prisma.BoolFilter<"Member"> | boolean
   notes?: Prisma.StringNullableFilter<"Member"> | string | null
+  preferredPaymentDay?: Prisma.EnumDayOfWeekNullableFilter<"Member"> | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Member"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Member"> | string | null
@@ -1058,12 +1118,14 @@ export type MemberCreateWithoutLoansInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutLoansInput = {
@@ -1079,12 +1141,14 @@ export type MemberUncheckedCreateWithoutLoansInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
   referredById: string
   assignedCollectorId?: string | null
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutLoansInput = {
@@ -1116,12 +1180,14 @@ export type MemberUpdateWithoutLoansInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutLoansInput = {
@@ -1137,12 +1203,14 @@ export type MemberUncheckedUpdateWithoutLoansInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredById?: Prisma.StringFieldUpdateOperationsInput | string
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateWithoutMessagesInput = {
@@ -1158,12 +1226,14 @@ export type MemberCreateWithoutMessagesInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
   referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
   loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutMemberInput
 }
 
 export type MemberUncheckedCreateWithoutMessagesInput = {
@@ -1179,12 +1249,14 @@ export type MemberUncheckedCreateWithoutMessagesInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
   referredById: string
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput
 }
 
 export type MemberCreateOrConnectWithoutMessagesInput = {
@@ -1216,12 +1288,14 @@ export type MemberUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutMessagesInput = {
@@ -1237,12 +1311,122 @@ export type MemberUncheckedUpdateWithoutMessagesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredById?: Prisma.StringFieldUpdateOperationsInput | string
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberCreateWithoutCollectionAttemptsInput = {
+  id?: string
+  name: string
+  phone: string
+  idNumber: string
+  collectionPoint?: string | null
+  homeAddress: string
+  jobPosition?: string | null
+  income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isBusinessOwner?: boolean
+  isActive?: boolean
+  idCardOnRecord?: boolean
+  notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  createdBy?: Prisma.UserCreateNestedOneWithoutCreatedMembersInput
+  referredBy: Prisma.UserCreateNestedOneWithoutReferredMembersInput
+  assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedMembersInput
+  loans?: Prisma.LoanCreateNestedManyWithoutMemberInput
+  messages?: Prisma.MessageCreateNestedManyWithoutMemberInput
+}
+
+export type MemberUncheckedCreateWithoutCollectionAttemptsInput = {
+  id?: string
+  name: string
+  phone: string
+  idNumber: string
+  collectionPoint?: string | null
+  homeAddress: string
+  jobPosition?: string | null
+  income?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isBusinessOwner?: boolean
+  isActive?: boolean
+  idCardOnRecord?: boolean
+  notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  createdById?: string | null
+  referredById: string
+  assignedCollectorId?: string | null
+  loans?: Prisma.LoanUncheckedCreateNestedManyWithoutMemberInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutMemberInput
+}
+
+export type MemberCreateOrConnectWithoutCollectionAttemptsInput = {
+  where: Prisma.MemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.MemberCreateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedCreateWithoutCollectionAttemptsInput>
+}
+
+export type MemberUpsertWithoutCollectionAttemptsInput = {
+  update: Prisma.XOR<Prisma.MemberUpdateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedUpdateWithoutCollectionAttemptsInput>
+  create: Prisma.XOR<Prisma.MemberCreateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedCreateWithoutCollectionAttemptsInput>
+  where?: Prisma.MemberWhereInput
+}
+
+export type MemberUpdateToOneWithWhereWithoutCollectionAttemptsInput = {
+  where?: Prisma.MemberWhereInput
+  data: Prisma.XOR<Prisma.MemberUpdateWithoutCollectionAttemptsInput, Prisma.MemberUncheckedUpdateWithoutCollectionAttemptsInput>
+}
+
+export type MemberUpdateWithoutCollectionAttemptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  idNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
+  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
+  assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
+  loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+}
+
+export type MemberUncheckedUpdateWithoutCollectionAttemptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  idNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionPoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  homeAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  jobPosition?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  income?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isBusinessOwner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberCreateManyCreatedByInput = {
@@ -1258,6 +1442,7 @@ export type MemberCreateManyCreatedByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   referredById: string
@@ -1277,6 +1462,7 @@ export type MemberCreateManyReferredByInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
@@ -1296,6 +1482,7 @@ export type MemberCreateManyAssignedCollectorInput = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: string | null
+  preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
@@ -1315,12 +1502,14 @@ export type MemberUpdateWithoutCreatedByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutCreatedByInput = {
@@ -1336,12 +1525,14 @@ export type MemberUncheckedUpdateWithoutCreatedByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredById?: Prisma.StringFieldUpdateOperationsInput | string
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutCreatedByInput = {
@@ -1357,6 +1548,7 @@ export type MemberUncheckedUpdateManyWithoutCreatedByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredById?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1376,12 +1568,14 @@ export type MemberUpdateWithoutReferredByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutReferredByInput = {
@@ -1397,12 +1591,14 @@ export type MemberUncheckedUpdateWithoutReferredByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutReferredByInput = {
@@ -1418,6 +1614,7 @@ export type MemberUncheckedUpdateManyWithoutReferredByInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1437,12 +1634,14 @@ export type MemberUpdateWithoutAssignedCollectorInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedMembersNestedInput
   referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredMembersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateWithoutAssignedCollectorInput = {
@@ -1458,12 +1657,14 @@ export type MemberUncheckedUpdateWithoutAssignedCollectorInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referredById?: Prisma.StringFieldUpdateOperationsInput | string
   loans?: Prisma.LoanUncheckedUpdateManyWithoutMemberNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutMemberNestedInput
+  collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput
 }
 
 export type MemberUncheckedUpdateManyWithoutAssignedCollectorInput = {
@@ -1479,6 +1680,7 @@ export type MemberUncheckedUpdateManyWithoutAssignedCollectorInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   idCardOnRecord?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1493,11 +1695,13 @@ export type MemberUncheckedUpdateManyWithoutAssignedCollectorInput = {
 export type MemberCountOutputType = {
   loans: number
   messages: number
+  collectionAttempts: number
 }
 
 export type MemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   loans?: boolean | MemberCountOutputTypeCountLoansArgs
   messages?: boolean | MemberCountOutputTypeCountMessagesArgs
+  collectionAttempts?: boolean | MemberCountOutputTypeCountCollectionAttemptsArgs
 }
 
 /**
@@ -1524,6 +1728,13 @@ export type MemberCountOutputTypeCountMessagesArgs<ExtArgs extends runtime.Types
   where?: Prisma.MessageWhereInput
 }
 
+/**
+ * MemberCountOutputType without action
+ */
+export type MemberCountOutputTypeCountCollectionAttemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CollectionAttemptWhereInput
+}
+
 
 export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1538,6 +1749,7 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: boolean
+  preferredPaymentDay?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
@@ -1548,6 +1760,7 @@ export type MemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
   loans?: boolean | Prisma.Member$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>
+  collectionAttempts?: boolean | Prisma.Member$collectionAttemptsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["member"]>
 
@@ -1564,6 +1777,7 @@ export type MemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: boolean
+  preferredPaymentDay?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
@@ -1587,6 +1801,7 @@ export type MemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: boolean
+  preferredPaymentDay?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
@@ -1610,6 +1825,7 @@ export type MemberSelectScalar = {
   isActive?: boolean
   idCardOnRecord?: boolean
   notes?: boolean
+  preferredPaymentDay?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdById?: boolean
@@ -1617,13 +1833,14 @@ export type MemberSelectScalar = {
   assignedCollectorId?: boolean
 }
 
-export type MemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "idNumber" | "collectionPoint" | "homeAddress" | "jobPosition" | "income" | "isBusinessOwner" | "isActive" | "idCardOnRecord" | "notes" | "createdAt" | "updatedAt" | "createdById" | "referredById" | "assignedCollectorId", ExtArgs["result"]["member"]>
+export type MemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "idNumber" | "collectionPoint" | "homeAddress" | "jobPosition" | "income" | "isBusinessOwner" | "isActive" | "idCardOnRecord" | "notes" | "preferredPaymentDay" | "createdAt" | "updatedAt" | "createdById" | "referredById" | "assignedCollectorId", ExtArgs["result"]["member"]>
 export type MemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Member$createdByArgs<ExtArgs>
   referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Member$assignedCollectorArgs<ExtArgs>
   loans?: boolean | Prisma.Member$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Member$messagesArgs<ExtArgs>
+  collectionAttempts?: boolean | Prisma.Member$collectionAttemptsArgs<ExtArgs>
   _count?: boolean | Prisma.MemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1645,6 +1862,7 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     assignedCollector: Prisma.$UserPayload<ExtArgs> | null
     loans: Prisma.$LoanPayload<ExtArgs>[]
     messages: Prisma.$MessagePayload<ExtArgs>[]
+    collectionAttempts: Prisma.$CollectionAttemptPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1659,6 +1877,7 @@ export type $MemberPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     isActive: boolean
     idCardOnRecord: boolean
     notes: string | null
+    preferredPaymentDay: $Enums.DayOfWeek | null
     createdAt: Date
     updatedAt: Date
     createdById: string | null
@@ -2063,6 +2282,7 @@ export interface Prisma__MemberClient<T, Null = never, ExtArgs extends runtime.T
   assignedCollector<T extends Prisma.Member$assignedCollectorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$assignedCollectorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   loans<T extends Prisma.Member$loansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$loansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.Member$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  collectionAttempts<T extends Prisma.Member$collectionAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Member$collectionAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CollectionAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2104,6 +2324,7 @@ export interface MemberFieldRefs {
   readonly isActive: Prisma.FieldRef<"Member", 'Boolean'>
   readonly idCardOnRecord: Prisma.FieldRef<"Member", 'Boolean'>
   readonly notes: Prisma.FieldRef<"Member", 'String'>
+  readonly preferredPaymentDay: Prisma.FieldRef<"Member", 'DayOfWeek'>
   readonly createdAt: Prisma.FieldRef<"Member", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Member", 'DateTime'>
   readonly createdById: Prisma.FieldRef<"Member", 'String'>
@@ -2586,6 +2807,30 @@ export type Member$messagesArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.MessageScalarFieldEnum | Prisma.MessageScalarFieldEnum[]
+}
+
+/**
+ * Member.collectionAttempts
+ */
+export type Member$collectionAttemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CollectionAttempt
+   */
+  select?: Prisma.CollectionAttemptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CollectionAttempt
+   */
+  omit?: Prisma.CollectionAttemptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CollectionAttemptInclude<ExtArgs> | null
+  where?: Prisma.CollectionAttemptWhereInput
+  orderBy?: Prisma.CollectionAttemptOrderByWithRelationInput | Prisma.CollectionAttemptOrderByWithRelationInput[]
+  cursor?: Prisma.CollectionAttemptWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CollectionAttemptScalarFieldEnum | Prisma.CollectionAttemptScalarFieldEnum[]
 }
 
 /**

@@ -11,14 +11,24 @@ import {
 import { logger } from "../../logger.js";
 
 /**
+ * Options for createCreatePayment (e.g. post-create hook for payment confirmation).
+ */
+export interface CreateCreatePaymentOptions {
+  /** Called asynchronously after a payment is created (fire-and-forget). */
+  onPaymentCreated?: (paymentId: string) => void;
+}
+
+/**
  * Creates a function to record a new payment for a loan.
  * Accepts numeric loanId (e.g., 10000, 10001) and converts it to UUID internally.
  * Default payment method is CASH.
  *
  * @param client - The database client
+ * @param options - Optional callback when a payment is created (e.g. send WhatsApp confirmation)
  * @returns A validated function that creates a payment
  */
-export function createCreatePayment(client: DbClient) {
+export function createCreatePayment(client: DbClient, options?: CreateCreatePaymentOptions) {
+  const { onPaymentCreated } = options ?? {};
   const fn = async (params: CreatePaymentInput): Promise<Payment> => {
     logger.verbose("creating payment", { loanId: params.loanId, amount: params.amount.toString() });
 
@@ -67,6 +77,9 @@ export function createCreatePayment(client: DbClient) {
       }
     })) as unknown as Payment;
     logger.verbose("payment created", { id: payment.id, loanId: params.loanId, loanUuid: loan.id });
+    if (onPaymentCreated) {
+      setImmediate(() => onPaymentCreated(payment.id));
+    }
     return payment;
   };
 

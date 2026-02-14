@@ -76,3 +76,42 @@ export const AttachmentType = {
 } as const
 
 export type AttachmentType = (typeof AttachmentType)[keyof typeof AttachmentType]
+
+
+export const DayOfWeek = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY'
+} as const
+
+export type DayOfWeek = (typeof DayOfWeek)[keyof typeof DayOfWeek]
+
+
+export const CollectionChannel = {
+  WHATSAPP: 'WHATSAPP',
+  PHONE_CALL: 'PHONE_CALL'
+} as const
+
+export type CollectionChannel = (typeof CollectionChannel)[keyof typeof CollectionChannel]
+
+
+export const CollectionAttemptType = {
+  PAYMENT_CONFIRMATION: 'PAYMENT_CONFIRMATION',
+  PAYMENT_REMINDER: 'PAYMENT_REMINDER',
+  OVERDUE_NOTICE: 'OVERDUE_NOTICE',
+  COLLECTION_CALL: 'COLLECTION_CALL'
+} as const
+
+export type CollectionAttemptType = (typeof CollectionAttemptType)[keyof typeof CollectionAttemptType]
+
+
+export const CollectionAttemptStatus = {
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+} as const
+
+export type CollectionAttemptStatus = (typeof CollectionAttemptStatus)[keyof typeof CollectionAttemptStatus]

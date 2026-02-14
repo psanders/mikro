@@ -1,7 +1,11 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { SendWhatsAppMessageInput, WhatsAppSendResponse } from "@mikro/common";
+import type {
+  SendWhatsAppMessageInput,
+  SendWhatsAppTemplateInput,
+  WhatsAppSendResponse
+} from "@mikro/common";
 import type { WhatsAppApiError } from "./types.js";
 import { logger } from "../../logger.js";
 
@@ -221,6 +225,95 @@ export async function sendMessage(
       type: "text"
     });
   }
+
+  return data;
+}
+
+/**
+ * Send a WhatsApp template message (approved templates only).
+ *
+ * @param phoneNumberId - WhatsApp phone number ID
+ * @param accessToken - WhatsApp API access token
+ * @param params - Template name, language code, and body parameters
+ * @returns The API response with message ID
+ */
+export async function sendTemplateMessage(
+  phoneNumberId: string,
+  accessToken: string,
+  params: SendWhatsAppTemplateInput
+): Promise<WhatsAppSendResponse> {
+  const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+  const bodyParameters = params.bodyParameters ?? [];
+  const requestBody = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: params.phone,
+    type: "template",
+    template: {
+      name: params.templateName,
+      language: { code: params.languageCode ?? "es" },
+      components:
+        bodyParameters.length > 0
+          ? [
+              {
+                type: "body",
+                parameters: bodyParameters.map((text) => ({ type: "text", text }))
+              }
+            ]
+          : []
+    }
+  };
+
+  logger.verbose("sending whatsapp template request", {
+    phone: params.phone,
+    templateName: params.templateName,
+    languageCode: params.languageCode ?? "es"
+  });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  const responseText = await response.text();
+  let data: WhatsAppSendResponse & WhatsAppApiError;
+
+  try {
+    data = JSON.parse(responseText) as WhatsAppSendResponse & WhatsAppApiError;
+  } catch {
+    logger.error("failed to parse whatsapp template response", {
+      phone: params.phone,
+      status: response.status,
+      responseText
+    });
+    throw new Error(`WhatsApp API returned invalid JSON: ${responseText}`);
+  }
+
+  if (!response.ok) {
+    const errorMessage = data.error?.message ?? JSON.stringify(data);
+    const errorCode = data.error?.code;
+    logger.error("whatsapp template api error", {
+      phone: params.phone,
+      templateName: params.templateName,
+      error: errorMessage,
+      errorCode,
+      status: response.status
+    });
+    throw new Error(
+      `WhatsApp API error: ${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ""}`
+    );
+  }
+
+  logger.verbose("whatsapp template message sent", {
+    phone: params.phone,
+    messageId: data.messages?.[0]?.id,
+    templateName: params.templateName
+  });
 
   return data;
 }

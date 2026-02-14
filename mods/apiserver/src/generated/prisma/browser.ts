@@ -52,3 +52,8 @@ export type Attachment = Prisma.AttachmentModel
  * 
  */
 export type Payment = Prisma.PaymentModel
+/**
+ * Model CollectionAttempt
+ * 
+ */
+export type CollectionAttempt = Prisma.CollectionAttemptModel

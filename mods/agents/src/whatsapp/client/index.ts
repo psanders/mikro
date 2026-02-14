@@ -3,7 +3,10 @@
  */
 import type { WhatsAppClient } from "@mikro/common";
 import { getWhatsAppPhoneNumberId, getWhatsAppAccessToken } from "../../config.js";
-import { sendMessage as sendMessageImpl } from "./sendMessage.js";
+import {
+  sendMessage as sendMessageImpl,
+  sendTemplateMessage as sendTemplateMessageImpl
+} from "./sendMessage.js";
 import { uploadMedia as uploadMediaImpl } from "./uploadMedia.js";
 import { downloadMedia as downloadMediaImpl } from "./downloadMedia.js";
 
@@ -35,6 +38,12 @@ export function createWhatsAppClient(): WhatsAppClient {
       const phoneNumberId = getWhatsAppPhoneNumberId();
       const accessToken = getWhatsAppAccessToken();
       return sendMessageImpl(phoneNumberId, accessToken, params);
+    },
+
+    sendTemplateMessage: async (params) => {
+      const phoneNumberId = getWhatsAppPhoneNumberId();
+      const accessToken = getWhatsAppAccessToken();
+      return sendTemplateMessageImpl(phoneNumberId, accessToken, params);
     },
 
     uploadMedia: async (fileBuffer, mimeType) => {

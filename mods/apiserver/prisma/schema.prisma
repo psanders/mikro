@@ -72,6 +72,41 @@ enum AttachmentType {
   @@map("attachment_types")
 }
 
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+
+  @@map("day_of_week")
+}
+
+enum CollectionChannel {
+  WHATSAPP
+  PHONE_CALL
+
+  @@map("collection_channels")
+}
+
+enum CollectionAttemptType {
+  PAYMENT_CONFIRMATION
+  PAYMENT_REMINDER
+  OVERDUE_NOTICE
+  COLLECTION_CALL
+
+  @@map("collection_attempt_types")
+}
+
+enum CollectionAttemptStatus {
+  SENT
+  FAILED
+
+  @@map("collection_attempt_statuses")
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -119,6 +154,7 @@ model Member {
   isActive            Boolean  @default(false) @map("is_active")
   idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
   notes               String?  @map("notes")
+  preferredPaymentDay DayOfWeek? @map("preferred_payment_day")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -130,8 +166,9 @@ model Member {
   assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
   assignedCollectorId String?  @map("assigned_collector_id")
 
-  loans    Loan[]
-  messages Message[]
+  loans               Loan[]
+  messages            Message[]
+  collectionAttempts  CollectionAttempt[]
 
   @@index([createdById])
   @@index([assignedCollectorId])
@@ -156,9 +193,10 @@ model Loan {
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId String    @map("member_id")
-  payments Payment[]
+  member              Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId            String    @map("member_id")
+  payments            Payment[]
+  collectionAttempts  CollectionAttempt[]
 
   @@index([memberId])
   @@index([status])
@@ -223,4 +261,25 @@ model Payment {
   @@index([collectedById])
   @@index([paidAt])
   @@map("payments")
+}
+
+model CollectionAttempt {
+  id           String                 @id @default(uuid())
+  channel      CollectionChannel
+  type         CollectionAttemptType
+  status       CollectionAttemptStatus @default(SENT)
+  messageId    String?                @map("message_id")
+  templateName String?                 @map("template_name")
+  notes        String?
+  createdAt    DateTime               @default(now()) @map("created_at")
+
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String @map("member_id")
+  loan     Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId   String @map("loan_id")
+
+  @@index([memberId])
+  @@index([loanId])
+  @@index([createdAt])
+  @@map("collection_attempts")
 }

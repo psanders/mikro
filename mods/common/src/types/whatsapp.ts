@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { SendWhatsAppMessageInput } from "../schemas/whatsapp.js";
+import type { SendWhatsAppMessageInput, SendWhatsAppTemplateInput } from "../schemas/whatsapp.js";
 
 /**
  * Response from WhatsApp API when sending a message.
@@ -36,6 +36,13 @@ export interface WhatsAppClient {
    * @returns The API response with message ID
    */
   sendMessage(params: SendWhatsAppMessageInput): Promise<WhatsAppSendResponse>;
+
+  /**
+   * Send a WhatsApp template message (approved templates only).
+   * @param params - Phone, template name, optional language code, and body parameters
+   * @returns The API response with message ID
+   */
+  sendTemplateMessage(params: SendWhatsAppTemplateInput): Promise<WhatsAppSendResponse>;
 
   /**
    * Upload media (image, document, video, or audio) to WhatsApp and get a media ID.

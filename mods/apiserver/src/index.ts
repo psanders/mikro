@@ -30,8 +30,10 @@ import {
   type Message,
   type AgentName
 } from "@mikro/agents";
+import cron from "node-cron";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
+import { runDailyCollections, sendPaymentConfirmation } from "./collections/index.js";
 import {
   createGetUserByPhone,
   createGetMemberByPhone,
@@ -143,7 +145,24 @@ async function initializeMessageProcessor() {
     const getMemberByPhone = createGetMemberByPhone(dbClient);
     const addMessageToChatHistory = createAddMessageToChatHistory(dbClient);
     const createMember = createCreateMember(dbClient);
-    const createPayment = createCreatePayment(dbClient);
+    const createPayment = createCreatePayment(dbClient, {
+      onPaymentCreated: (paymentId) => {
+        sendPaymentConfirmation(paymentId, {
+          db: prisma,
+          sendWhatsAppTemplate: (p) =>
+            whatsAppClient.sendTemplateMessage({
+              ...p,
+              languageCode: p.languageCode ?? "es",
+              bodyParameters: p.bodyParameters ?? []
+            })
+        }).catch((err: Error) =>
+          logger.error("payment confirmation send failed", {
+            paymentId,
+            error: err.message
+          })
+        );
+      }
+    });
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
     const listLoansByMember = createListLoansByMember(dbClient);
@@ -469,6 +488,28 @@ async function initializeMessageProcessor() {
     markInitializationComplete();
     const finalProcessorState = getMessageProcessorState();
     logger.info("initialization marked as complete", { finalProcessorState });
+
+    // Daily collections cron (reminders, overdue notices, collection calls)
+    const collectionsEnabled = process.env.MIKRO_COLLECTIONS_ENABLED !== "false";
+    const collectionsCron = process.env.MIKRO_COLLECTIONS_CRON ?? "0 8 * * *";
+    if (collectionsEnabled) {
+      cron.schedule(collectionsCron, () => {
+        runDailyCollections(new Date(), {
+          db: prisma,
+          sendWhatsAppTemplate: (p) =>
+            whatsAppClient.sendTemplateMessage({
+              ...p,
+              languageCode: p.languageCode ?? "es",
+              bodyParameters: p.bodyParameters ?? []
+            })
+        }).catch((err: Error) => {
+          logger.error("daily collections run failed", { error: err.message });
+        });
+      });
+      logger.info("collections cron scheduled", { cron: collectionsCron });
+    } else {
+      logger.verbose("collections cron disabled (MIKRO_COLLECTIONS_ENABLED=false)");
+    }
     // #endregion
 
     logger.verbose("message processor configured successfully");

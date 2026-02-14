@@ -43,6 +43,7 @@ export {
 // Payment operations
 export {
   createCreatePayment,
+  type CreateCreatePaymentOptions,
   createReversePayment,
   createListPayments,
   createListPaymentsByMember,
