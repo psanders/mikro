@@ -80,12 +80,12 @@ export const whatsappWebhookSchema = z.object({
 
 /**
  * Schema for sending a WhatsApp template message (approved templates only).
- * Language code hardcoded to "es" in usage; optional here for flexibility.
+ * Language code is required and must be provided by the caller (e.g. "es_DO").
  */
 export const sendWhatsAppTemplateSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   templateName: z.string().min(1, "Template name is required"),
-  languageCode: z.string().length(2).optional().default("es"),
+  languageCode: z.string().min(2, "Language code is required").max(5),
   /** Body component parameters (text only), in order. */
   bodyParameters: z.array(z.string()).optional().default([])
 });

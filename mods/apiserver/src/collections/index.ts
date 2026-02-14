@@ -12,3 +12,4 @@ export type { SendPaymentConfirmationDeps } from "./sendPaymentConfirmation.js";
 export type { RunDailyCollectionsDeps } from "./runDailyCollections.js";
 export type { CollectionDeps, CollectionTarget } from "./collectionAttemptHelper.js";
 export { isDryRun } from "./collectionAttemptHelper.js";
+export { getWhatsAppLanguageCode } from "./collectionConfig.js";

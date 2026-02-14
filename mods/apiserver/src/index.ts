@@ -152,7 +152,6 @@ async function initializeMessageProcessor() {
           sendWhatsAppTemplate: (p) =>
             whatsAppClient.sendTemplateMessage({
               ...p,
-              languageCode: p.languageCode ?? "es",
               bodyParameters: p.bodyParameters ?? []
             })
         }).catch((err: Error) =>
@@ -499,7 +498,6 @@ async function initializeMessageProcessor() {
           sendWhatsAppTemplate: (p) =>
             whatsAppClient.sendTemplateMessage({
               ...p,
-              languageCode: p.languageCode ?? "es",
               bodyParameters: p.bodyParameters ?? []
             })
         }).catch((err: Error) => {

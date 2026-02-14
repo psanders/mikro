@@ -27,7 +27,7 @@ export interface CollectionDeps {
   sendWhatsAppTemplate: (params: {
     phone: string;
     templateName: string;
-    languageCode?: string;
+    languageCode: string;
     bodyParameters?: string[];
   }) => Promise<{ messages?: Array<{ id: string }> }>;
 }

@@ -37,6 +37,7 @@ export async function processPaymentReminders(
 ): Promise<void> {
   const templateName = getPaymentReminderTemplateName();
   if (!templateName) return;
+  const languageCode = "es"; // TODO: Update at Facebook to use es_DO
   const dryRun = isDryRun();
 
   for (const { member, loan } of pairs) {
@@ -61,7 +62,7 @@ export async function processPaymentReminders(
           const res = await deps.sendWhatsAppTemplate({
             phone: member.phone,
             templateName,
-            languageCode: "es",
+            languageCode,
             bodyParameters
           });
           return res.messages?.[0]?.id ?? null;

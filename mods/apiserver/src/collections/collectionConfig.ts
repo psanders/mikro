@@ -2,8 +2,16 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Environment-based config for collection templates and behavior.
- * Template names read once at startup; blank = skip that collection type.
+ * Template names and language code read once at startup; blank template = skip that type.
  */
+
+/**
+ * WhatsApp template language code (e.g. "es_DO" for Dominican Spanish).
+ * Set via MIKRO_WA_LANGUAGE_CODE; defaults to "es_DO".
+ */
+export function getWhatsAppLanguageCode(): string {
+  return (process.env.MIKRO_WA_LANGUAGE_CODE ?? "es_DO").trim() || "es_DO";
+}
 
 export const COLLECTION_TEMPLATE_NAMES = {
   paymentConfirmation: process.env.MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION ?? "payment_receipt",

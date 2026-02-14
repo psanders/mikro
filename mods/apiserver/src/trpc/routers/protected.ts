@@ -409,7 +409,6 @@ export const protectedRouter = router({
           sendWhatsAppTemplate: (p) =>
             whatsAppClient.sendTemplateMessage({
               ...p,
-              languageCode: p.languageCode ?? "es",
               bodyParameters: p.bodyParameters ?? []
             })
         });

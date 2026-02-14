@@ -252,7 +252,7 @@ export async function sendTemplateMessage(
     type: "template",
     template: {
       name: params.templateName,
-      language: { code: params.languageCode ?? "es" },
+      language: { code: params.languageCode },
       components:
         bodyParameters.length > 0
           ? [
@@ -268,7 +268,7 @@ export async function sendTemplateMessage(
   logger.verbose("sending whatsapp template request", {
     phone: params.phone,
     templateName: params.templateName,
-    languageCode: params.languageCode ?? "es"
+    languageCode: params.languageCode
   });
 
   const response = await fetch(url, {

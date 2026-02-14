@@ -39,7 +39,7 @@ export interface WhatsAppClient {
 
   /**
    * Send a WhatsApp template message (approved templates only).
-   * @param params - Phone, template name, optional language code, and body parameters
+   * @param params - Phone, template name, language code, and body parameters
    * @returns The API response with message ID
    */
   sendTemplateMessage(params: SendWhatsAppTemplateInput): Promise<WhatsAppSendResponse>;

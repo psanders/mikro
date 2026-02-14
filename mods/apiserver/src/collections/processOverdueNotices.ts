@@ -4,7 +4,7 @@
  * Send OVERDUE_NOTICE template to members who are behind (yellow threshold).
  */
 
-import { getOverdueNoticeTemplateName } from "./collectionConfig.js";
+import { getOverdueNoticeTemplateName, getWhatsAppLanguageCode } from "./collectionConfig.js";
 import { delay } from "./rateLimiter.js";
 import { COLLECTION_MESSAGE_DELAY_MS } from "@mikro/common";
 import {
@@ -36,6 +36,7 @@ export async function processOverdueNotices(
 ): Promise<void> {
   const templateName = getOverdueNoticeTemplateName();
   if (!templateName) return;
+  const languageCode = getWhatsAppLanguageCode();
   const dryRun = isDryRun();
 
   for (const { member, loan, missedPayments } of pairs) {
@@ -55,7 +56,7 @@ export async function processOverdueNotices(
           const res = await deps.sendWhatsAppTemplate({
             phone: member.phone,
             templateName,
-            languageCode: "es",
+            languageCode,
             bodyParameters: []
           });
           return res.messages?.[0]?.id ?? null;

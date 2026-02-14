@@ -28,6 +28,23 @@ services:
       - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
       # Disabled agents
       - MIKRO_DISABLED_AGENTS=${MIKRO_DISABLED_AGENTS}
+      # Collections & Customer Engagement
+      - MIKRO_COLLECTIONS_ENABLED=${MIKRO_COLLECTIONS_ENABLED:-true}
+      - MIKRO_COLLECTIONS_CRON=${MIKRO_COLLECTIONS_CRON:-0 8 * * *}
+      - MIKRO_COLLECTIONS_DRY_RUN=${MIKRO_COLLECTIONS_DRY_RUN:-false}
+      # WhatsApp language code for templates (e.g. es_DO for Dominican Spanish)
+      - MIKRO_WA_LANGUAGE_CODE=${MIKRO_WA_LANGUAGE_CODE:-es_DO}
+      # WhatsApp template names (must match approved templates; leave blank to skip)
+      - MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION=${MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION:-payment_receipt}
+      - MIKRO_WA_TEMPLATE_PAYMENT_REMINDER=${MIKRO_WA_TEMPLATE_PAYMENT_REMINDER:-payment_reminder}
+      - MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE=${MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE:-payment_overdue}
+      # Fonoster (automated collection calls)
+      - MIKRO_FONOSTER_ENABLED=${MIKRO_FONOSTER_ENABLED:-false}
+      - MIKRO_FONOSTER_ACCESS_KEY_ID=${MIKRO_FONOSTER_ACCESS_KEY_ID}
+      - MIKRO_FONOSTER_API_KEY_ID=${MIKRO_FONOSTER_API_KEY_ID}
+      - MIKRO_FONOSTER_API_KEY_SECRET=${MIKRO_FONOSTER_API_KEY_SECRET}
+      - MIKRO_FONOSTER_FROM_NUMBER=${MIKRO_FONOSTER_FROM_NUMBER}
+      - MIKRO_FONOSTER_APP_REF=${MIKRO_FONOSTER_APP_REF}
     volumes:
       # Database persistence
       - ./data:/app/data

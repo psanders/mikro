@@ -5,7 +5,7 @@
  * Not called by the daily cron.
  */
 
-import { getPaymentConfirmationTemplateName } from "./collectionConfig.js";
+import { getPaymentConfirmationTemplateName, getWhatsAppLanguageCode } from "./collectionConfig.js";
 import { logger } from "../logger.js";
 import {
   executeCollectionAction,
@@ -68,7 +68,7 @@ export async function sendPaymentConfirmation(
       const res = await deps.sendWhatsAppTemplate({
         phone: member.phone,
         templateName,
-        languageCode: "es",
+        languageCode: getWhatsAppLanguageCode(),
         bodyParameters
       });
       return res.messages?.[0]?.id ?? null;
