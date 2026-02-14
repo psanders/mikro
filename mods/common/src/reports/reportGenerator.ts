@@ -14,6 +14,12 @@ import {
 } from "./performanceReportLayout.js";
 import type { PortfolioMetrics, ReportNarrative } from "./types.js";
 
+/** Pixel-density multiplier: renders at 2x for crisp text on mobile / after WhatsApp compression. */
+const RENDER_SCALE = 2;
+
+/** WhatsApp rejects media uploads larger than 5 MB. */
+const WHATSAPP_MAX_SIZE = 5 * 1024 * 1024;
+
 /**
  * Renders the performance report to a PNG buffer.
  */
@@ -31,17 +37,46 @@ export async function renderPerformanceReportToPng(
     fonts: fonts as Parameters<typeof satori>[1]["fonts"]
   });
 
+  const renderWidth = Math.round(REPORT_WIDTH * RENDER_SCALE);
+
   const resvg = new Resvg(svg, {
-    fitTo: { mode: "width", value: REPORT_WIDTH }
+    fitTo: { mode: "width", value: renderWidth }
   });
   const pngBuffer = resvg.render().asPng();
 
-  const compressed = await sharp(pngBuffer)
+  // First pass: high-quality PNG compression
+  let compressed = await sharp(pngBuffer)
     .png({
       compressionLevel: 9,
       adaptiveFiltering: true
     })
     .toBuffer();
+
+  // If still over WhatsApp limit, use palette mode for aggressive compression
+  if (compressed.length > WHATSAPP_MAX_SIZE) {
+    compressed = await sharp(pngBuffer)
+      .png({
+        compressionLevel: 9,
+        adaptiveFiltering: true,
+        palette: true
+      })
+      .toBuffer();
+  }
+
+  // Last resort: render at 1x resolution to stay under the limit
+  if (compressed.length > WHATSAPP_MAX_SIZE) {
+    const fallbackResvg = new Resvg(svg, {
+      fitTo: { mode: "width", value: REPORT_WIDTH }
+    });
+    const fallbackPng = fallbackResvg.render().asPng();
+    compressed = await sharp(fallbackPng)
+      .png({
+        compressionLevel: 9,
+        adaptiveFiltering: true,
+        palette: true
+      })
+      .toBuffer();
+  }
 
   return compressed;
 }

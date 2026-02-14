@@ -6,8 +6,8 @@
  */
 import type { PortfolioMetrics, ReportNarrative } from "./types.js";
 
-export const REPORT_WIDTH = 1200;
-export const REPORT_HEIGHT = 2600;
+export const REPORT_WIDTH = 800;
+export const REPORT_HEIGHT = 2800;
 
 type SatoriElement = {
   type: string;
@@ -42,7 +42,7 @@ function sectionTitle(title: string): SatoriElement {
     "div",
     {
       style: {
-        fontSize: "18px",
+        fontSize: "22px",
         fontWeight: 700,
         fontFamily: "Inter",
         color: "#1a5a96",
@@ -64,7 +64,7 @@ function tableRow(cells: string[], header = false): SatoriElement {
         padding: "10px 12px",
         backgroundColor: header ? "#f5f5f5" : "white",
         fontWeight: header ? 700 : 400,
-        fontSize: header ? "13px" : "14px",
+        fontSize: "16px",
         fontFamily: "Inter",
         color: header ? "#333" : "#444"
       }
@@ -94,7 +94,7 @@ function legendRow(items: Array<{ color: string; label: string }>): SatoriElemen
         flexDirection: "row",
         flexWrap: "wrap",
         marginTop: "10px",
-        fontSize: "12px",
+        fontSize: "14px",
         fontFamily: "Inter",
         color: "#555"
       }
@@ -114,8 +114,8 @@ function legendRow(items: Array<{ color: string; label: string }>): SatoriElemen
         [
           el("div", {
             style: {
-              width: "14px",
-              height: "14px",
+              width: "16px",
+              height: "16px",
               borderRadius: "4px",
               backgroundColor: color,
               marginRight: "6px"
@@ -172,7 +172,7 @@ function verticalBarChart(
             "div",
             {
               style: {
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: 600,
                 fontFamily: "Inter",
                 color: "#333",
@@ -185,7 +185,7 @@ function verticalBarChart(
             "div",
             {
               style: {
-                width: "60px",
+                width: "80px",
                 height: `${barMaxHeightPx}px`,
                 display: "flex",
                 flexDirection: "column",
@@ -196,19 +196,19 @@ function verticalBarChart(
             barHeightPx > 0
               ? el("div", {
                   style: {
-                    width: "48px",
+                    width: "64px",
                     height: `${barHeightPx}px`,
                     backgroundColor: color,
                     borderRadius: "6px"
                   }
                 })
-              : el("div", { style: { width: "48px", height: "4px", backgroundColor: "#eee" } })
+              : el("div", { style: { width: "64px", height: "4px", backgroundColor: "#eee" } })
           ),
           el(
             "div",
             {
               style: {
-                fontSize: "11px",
+                fontSize: "14px",
                 fontFamily: "Inter",
                 color: "#666",
                 marginTop: "6px",
@@ -262,8 +262,8 @@ export function createPerformanceReportLayout(
       style: {
         background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
         color: "white",
-        padding: "28px 40px",
-        marginBottom: "32px",
+        padding: "24px 28px",
+        marginBottom: "24px",
         display: "flex",
         flexDirection: "column",
         gap: "8px"
@@ -280,7 +280,7 @@ export function createPerformanceReportLayout(
       el(
         "div",
         {
-          style: { fontSize: "18px", fontWeight: 400, fontFamily: "Inter", opacity: 0.95 }
+          style: { fontSize: "20px", fontWeight: 400, fontFamily: "Inter", opacity: 0.95 }
         },
         `Periodo: ${period.startDate} a ${period.endDate}`
       )
@@ -292,12 +292,12 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "20px 40px 16px",
+        padding: "20px 24px 16px",
         display: "flex",
         flexDirection: "column",
         gap: "12px",
         background: "white",
-        margin: "32px 40px 16px",
+        margin: "0 20px 14px",
         borderRadius: "12px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
       }
@@ -325,7 +325,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 600,
             fontFamily: "Inter",
             color: "#333",
@@ -375,7 +375,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 600,
             fontFamily: "Inter",
             color: "#333",
@@ -400,12 +400,12 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "20px 40px 16px",
+        padding: "20px 24px 16px",
         display: "flex",
         flexDirection: "column",
         gap: "12px",
         background: "white",
-        margin: "0 40px 16px",
+        margin: "0 20px 14px",
         borderRadius: "12px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
       }
@@ -433,7 +433,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 600,
             fontFamily: "Inter",
             color: "#333",
@@ -483,7 +483,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 600,
             fontFamily: "Inter",
             color: "#333",
@@ -508,12 +508,12 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "20px 40px 16px",
+        padding: "20px 24px 16px",
         display: "flex",
         flexDirection: "column",
         gap: "0",
         background: "white",
-        margin: "0 40px 16px",
+        margin: "24px 20px 14px",
         borderRadius: "12px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
       }
@@ -541,7 +541,7 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "16px 40px 8px",
+        padding: "16px 28px 8px",
         display: "flex",
         flexDirection: "column",
         gap: "8px"
@@ -552,7 +552,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "16px",
+            fontSize: "20px",
             fontWeight: 700,
             fontFamily: "Inter",
             color: "#1a5a96"
@@ -564,7 +564,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "14px",
+            fontSize: "16px",
             lineHeight: 1.5,
             fontFamily: "Inter",
             color: "#333"
@@ -580,7 +580,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            padding: "8px 40px 8px",
+            padding: "8px 28px 8px",
             display: "flex",
             flexDirection: "column",
             gap: "6px"
@@ -591,7 +591,7 @@ export function createPerformanceReportLayout(
             "div",
             {
               style: {
-                fontSize: "15px",
+                fontSize: "18px",
                 fontWeight: 700,
                 fontFamily: "Inter",
                 color: "#333"
@@ -604,7 +604,7 @@ export function createPerformanceReportLayout(
               "div",
               {
                 style: {
-                  fontSize: "13px",
+                  fontSize: "16px",
                   lineHeight: 1.4,
                   fontFamily: "Inter",
                   color: "#444",
@@ -625,7 +625,7 @@ export function createPerformanceReportLayout(
           "div",
           {
             style: {
-              padding: "8px 40px 8px",
+              padding: "8px 28px 8px",
               display: "flex",
               flexDirection: "column",
               gap: "6px"
@@ -636,7 +636,7 @@ export function createPerformanceReportLayout(
               "div",
               {
                 style: {
-                  fontSize: "15px",
+                  fontSize: "18px",
                   fontWeight: 700,
                   fontFamily: "Inter",
                   color: "#c62828"
@@ -649,7 +649,7 @@ export function createPerformanceReportLayout(
                 "div",
                 {
                   style: {
-                    fontSize: "13px",
+                    fontSize: "16px",
                     lineHeight: 1.4,
                     fontFamily: "Inter",
                     color: "#555",
@@ -668,7 +668,7 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "12px 40px 20px",
+        padding: "12px 28px 20px",
         display: "flex",
         flexDirection: "column",
         gap: "6px"
@@ -679,7 +679,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "15px",
+            fontSize: "18px",
             fontWeight: 700,
             fontFamily: "Inter",
             color: "#2e7d32"
@@ -691,7 +691,7 @@ export function createPerformanceReportLayout(
         "div",
         {
           style: {
-            fontSize: "13px",
+            fontSize: "16px",
             lineHeight: 1.4,
             fontFamily: "Inter",
             color: "#333"
@@ -706,9 +706,9 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        padding: "12px 40px",
+        padding: "12px 28px",
         borderTop: "1px solid #e0e0e0",
-        fontSize: "12px",
+        fontSize: "14px",
         fontFamily: "Inter",
         color: "#888"
       }
@@ -730,9 +730,9 @@ export function createPerformanceReportLayout(
     },
     [
       header,
+      financialSummarySection,
       loansIssuedSection,
       collectionStatusSection,
-      financialSummarySection,
       summarySection,
       insightsSection,
       riskSection,

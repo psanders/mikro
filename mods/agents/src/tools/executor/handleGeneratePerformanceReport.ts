@@ -7,7 +7,8 @@ import { logger } from "../../logger.js";
 
 /**
  * Handle the generatePerformanceReport tool call.
- * Generates a one-page performance report (metrics + LLM narrative + PNG) and sends it via WhatsApp.
+ * Generates a one-page performance report (metrics + LLM narrative + PNG) and sends it
+ * as a document via WhatsApp to preserve image quality (WhatsApp compresses inline images).
  * Admin only.
  */
 export async function handleGeneratePerformanceReport(
@@ -38,10 +39,14 @@ export async function handleGeneratePerformanceReport(
 
     const mediaId = await deps.uploadMedia(pngBuffer, "image/png");
 
+    const dateSuffix = new Date().toISOString().slice(0, 10);
+
+    // Send as document to bypass WhatsApp image compression and preserve quality.
     const response = await deps.sendWhatsAppMessage({
       phone: adminPhone,
       mediaId,
-      mediaType: "image",
+      mediaType: "document",
+      documentFilename: `reporte-rendimiento-${dateSuffix}.png`,
       caption: "Reporte de rendimiento — Mikro Créditos"
     });
 
