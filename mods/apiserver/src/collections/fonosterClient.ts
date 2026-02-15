@@ -42,23 +42,20 @@ function validateFonosterEnv(): void {
   }
 }
 
-let fonosterClientPromise: Promise<SDK.Client> | null = null;
-
 /**
- * Lazy singleton: create and authenticate the Fonoster SDK client once.
- * The SDK auto-refreshes tokens when they expire.
+ * Create and authenticate a fresh Fonoster SDK client.
+ * A new login is performed on every call so tokens are always fresh and
+ * we never hit "16 UNAUTHENTICATED: Invalid or expired token" from a
+ * stale cached session.
  */
 async function getClient(): Promise<SDK.Client> {
-  if (fonosterClientPromise === null) {
-    validateFonosterEnv();
-    const accessKeyId = process.env.MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID!;
-    const apiKeyId = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID!;
-    const apiKeySecret = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET!;
-    const client = new SDK.Client({ accessKeyId });
-    await client.loginWithApiKey(apiKeyId, apiKeySecret);
-    fonosterClientPromise = Promise.resolve(client);
-  }
-  return fonosterClientPromise;
+  validateFonosterEnv();
+  const accessKeyId = process.env.MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID!;
+  const apiKeyId = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID!;
+  const apiKeySecret = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET!;
+  const client = new SDK.Client({ accessKeyId });
+  await client.loginWithApiKey(apiKeyId, apiKeySecret);
+  return client;
 }
 
 /**
