@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import type { RunCollectionsInput, RunSingleCollectionInput } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -68,13 +69,16 @@ export default class Run extends BaseCommand<typeof Run> {
         this.log(`Running single collection for loan ${loanId}...`);
       }
       try {
-        const result = await client.runSingleCollection.mutate({
+        const singleInput: RunSingleCollectionInput = {
           loanId,
           channel: (channel as (typeof CHANNEL_OPTIONS)[number]) ?? undefined,
           type: (type as (typeof TYPE_OPTIONS)[number]) ?? undefined,
           dryRun,
           includeDefaulted: true
-        });
+        };
+        const result = await client.runSingleCollection.mutate(
+          singleInput as Parameters<typeof client.runSingleCollection.mutate>[0]
+        );
         if (!result.success) {
           this.error(result.error ?? "Single collection failed");
         }
@@ -100,10 +104,13 @@ export default class Run extends BaseCommand<typeof Run> {
     }
 
     try {
-      const result = await client.runCollections.mutate({
+      const batchInput: RunCollectionsInput = {
         dryRun,
         includeDefaulted: flags["include-defaulted"]
-      });
+      };
+      const result = await client.runCollections.mutate(
+        batchInput as Parameters<typeof client.runCollections.mutate>[0]
+      );
 
       if (result.dryRun) {
         this.log("\nDry run complete. Check server logs for details on what would be sent.");
