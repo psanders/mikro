@@ -56,6 +56,8 @@ export interface MessageProcessorDependencies {
   }) => Promise<void>;
   /** Get agent by name */
   getAgent: (name: AgentName) => Agent;
+  /** Optional: transcribe voice note (audio data URL) to text. When set, voice notes are processed as text. */
+  transcribeVoiceNote?: (audioDataUrl: string) => Promise<string>;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -230,7 +232,7 @@ export const handleWhatsAppMessage = (() => {
  * @param message - The WhatsApp message to process
  */
 async function processMessage(message: WhatsAppMessage): Promise<void> {
-  const { from: phone, type, id, text, image, timestamp } = message;
+  const { from: phone, type, id, text, image, audio, timestamp } = message;
 
   const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
   const maxAgeSeconds = getMessageMaxAgeSeconds();
@@ -284,25 +286,85 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     downloadMedia,
     getChatHistoryForUser,
     addMessageForUser,
-    getAgent
+    getAgent,
+    transcribeVoiceNote
   } = messageProcessor;
 
-  // Early check for voice notes (audio messages) - we don't support them
+  // Voice notes (audio): require optional transcriber; otherwise tell user not available
+  const VOICE_NOT_AVAILABLE_MSG =
+    "No puedo escuchar notas de voz. Por favor, escríbeme un mensaje de texto.";
+  const VOICE_ERROR_MSG = "No pude entender el audio. Intenta de nuevo o escribe un mensaje.";
+
+  let userMessage: string = "";
+  let imageUrl: string | null = null;
+
   if (type === "audio") {
-    logger.verbose("voice note received, sending unsupported message", { phone, messageId: id });
-    try {
-      await sendWhatsAppMessage({
+    if (!transcribeVoiceNote) {
+      logger.verbose("voice note received, sending not available message", {
         phone,
-        message: "No puedo escuchar notas de voz. Por favor, escríbeme un mensaje de texto."
+        messageId: id
       });
+      try {
+        await sendWhatsAppMessage({ phone, message: VOICE_NOT_AVAILABLE_MSG });
+      } catch (error) {
+        const err = error as Error;
+        logger.error("failed to send voice note not available message", {
+          phone,
+          error: err.message
+        });
+      }
+      return;
+    }
+    if (!audio?.id) {
+      logger.warn("voice note missing audio id", { phone, messageId: id });
+      try {
+        await sendWhatsAppMessage({ phone, message: VOICE_ERROR_MSG });
+      } catch {
+        // ignore
+      }
+      return;
+    }
+    try {
+      const dataUrl = await downloadMedia(audio.id);
+      logger.verbose("voice note downloaded", { phone, mediaId: audio.id });
+      const transcribed = await transcribeVoiceNote(dataUrl);
+      userMessage = "[Voice]: " + transcribed;
     } catch (error) {
       const err = error as Error;
-      logger.error("failed to send voice note unsupported message", { phone, error: err.message });
+      logger.error("voice note download or transcription failed", {
+        phone,
+        messageId: id,
+        error: err.message
+      });
+      try {
+        await sendWhatsAppMessage({ phone, message: VOICE_ERROR_MSG });
+      } catch {
+        // ignore
+      }
+      return;
     }
-    return;
   }
 
   try {
+    if (type !== "audio") {
+      userMessage = text?.body ?? image?.caption ?? "";
+
+      // Download image if present
+      if (image?.id) {
+        try {
+          imageUrl = await downloadMedia(image.id);
+          logger.verbose("image downloaded", { phone, mediaId: image.id });
+        } catch (error) {
+          const err = error as Error;
+          logger.error("failed to download image", {
+            phone,
+            mediaId: image.id,
+            error: err.message
+          });
+        }
+      }
+    }
+
     // Step 1: Route the message
     const route = await routeMessage(phone);
 
@@ -316,21 +378,6 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     if (route.type === "ignored") {
       logger.verbose("message ignored", { phone, reason: route.reason });
       return;
-    }
-
-    // Get message content
-    const userMessage = text?.body ?? image?.caption ?? "";
-    let imageUrl: string | null = null;
-
-    // Download image if present
-    if (image?.id) {
-      try {
-        imageUrl = await downloadMedia(image.id);
-        logger.verbose("image downloaded", { phone, mediaId: image.id });
-      } catch (error) {
-        const err = error as Error;
-        logger.error("failed to download image", { phone, mediaId: image.id, error: err.message });
-      }
     }
 
     let agent: Agent;

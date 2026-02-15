@@ -26,6 +26,8 @@ import {
   createWhatsAppClient,
   allTools,
   getDisabledAgents,
+  getVoiceNotesEnabled,
+  getDeepgramApiKey,
   initializeLLM,
   type Message,
   type AgentName
@@ -88,6 +90,7 @@ import {
   createGeneratePerformanceReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
+import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
 
 // Re-export AppRouter type for clients
 export type { AppRouter } from "./trpc/index.js";
@@ -509,6 +512,16 @@ async function initializeMessageProcessor() {
       hasSendWhatsAppMessage: !!sendWhatsAppMessage
     });
 
+    const voiceNotesEnabled = getVoiceNotesEnabled();
+    const deepgramApiKey = getDeepgramApiKey();
+    const transcribeVoiceNote =
+      voiceNotesEnabled && deepgramApiKey ? createTranscribeVoiceNote(deepgramApiKey) : undefined;
+    if (voiceNotesEnabled && !deepgramApiKey) {
+      logger.warn(
+        "voice notes enabled but MIKRO_DEEPGRAM_API_KEY not set; voice notes will be unavailable"
+      );
+    }
+
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -516,7 +529,8 @@ async function initializeMessageProcessor() {
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,
-      getAgent: (name: AgentName) => getAgent(agents, name)
+      getAgent: (name: AgentName) => getAgent(agents, name),
+      ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 
     setMessageProcessor(processorConfig);

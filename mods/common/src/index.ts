@@ -94,6 +94,7 @@ export {
   // WhatsApp schemas
   whatsappTextSchema,
   whatsappImageSchema,
+  whatsappAudioSchema,
   whatsappMessageTypeEnum,
   whatsappMessageSchema,
   whatsappChangeValueSchema,
@@ -104,6 +105,7 @@ export {
   sendWhatsAppTemplateSchema,
   type WhatsAppText,
   type WhatsAppImage,
+  type WhatsAppAudio,
   type WhatsAppMessageType,
   type WhatsAppMessage,
   type WhatsAppChangeValue,

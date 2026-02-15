@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@fonoster/logger": "^0.9.23",
+    "@deepgram/sdk": "^4.0.0",
     "@fonoster/sdk": "^0.17.1",
     "@mikro/agents": "^1.0.0",
     "@mikro/common": "^1.0.0",

@@ -166,33 +166,32 @@ describe("handleWhatsAppMessage", () => {
   });
 
   describe("voice note handling", () => {
-    it("should respond with unsupported message for audio/voice notes", async () => {
-      const voiceNoteWebhook = {
-        object: "whatsapp_business_account",
-        entry: [
-          {
-            changes: [
-              {
-                value: {
-                  messages: [
-                    {
-                      from: "+1234567890",
-                      type: "audio",
-                      id: "voice-msg-123",
-                      timestamp: recentTs()
-                    }
-                  ]
-                }
+    const voiceNoteWebhook = (audioId = "voice-msg-123") => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: "+1234567890",
+                    type: "audio",
+                    id: "voice-msg-123",
+                    timestamp: recentTs(),
+                    audio: { id: audioId }
+                  }
+                ]
               }
-            ]
-          }
-        ]
-      };
+            }
+          ]
+        }
+      ]
+    });
 
-      // Act
-      const result = await handleWhatsAppMessage(voiceNoteWebhook);
+    it("should respond with not available when transcribeVoiceNote is undefined", async () => {
+      const result = await handleWhatsAppMessage(voiceNoteWebhook());
 
-      // Assert
       expect(result.messagesProcessed).to.equal(1);
       expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
       expect(
@@ -201,8 +200,51 @@ describe("handleWhatsAppMessage", () => {
           message: sinon.match(/notas de voz/)
         })
       ).to.be.true;
-      // LLM should NOT be invoked for voice notes
       expect(mockMessageProcessor.invokeLLM.called).to.be.false;
+    });
+
+    it("should transcribe and process voice note when transcribeVoiceNote is provided", async () => {
+      const dataUrl = "data:audio/ogg;base64,T2dnUw";
+      mockMessageProcessor.downloadMedia.withArgs("aid").resolves(dataUrl);
+      const transcribeStub = sinon.stub().resolves("transcribed text");
+      setMessageProcessor({
+        ...mockMessageProcessor,
+        transcribeVoiceNote: transcribeStub
+      });
+
+      const result = await handleWhatsAppMessage(voiceNoteWebhook("aid"));
+
+      expect(result.messagesProcessed).to.equal(1);
+      expect(mockMessageProcessor.downloadMedia.calledOnceWith("aid")).to.be.true;
+      expect(transcribeStub.calledOnceWith(dataUrl)).to.be.true;
+      expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
+      const invokeArgs = mockMessageProcessor.invokeLLM.firstCall.args;
+      expect(invokeArgs[2]).to.equal("[Voice]: transcribed text");
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.equal(
+        "AI response"
+      );
+    });
+
+    it("should send error message when voice note transcription fails", async () => {
+      mockMessageProcessor.downloadMedia.withArgs("aid").resolves("data:audio/ogg;base64,x");
+      const transcribeStub = sinon.stub().rejects(new Error("Deepgram error"));
+      setMessageProcessor({
+        ...mockMessageProcessor,
+        transcribeVoiceNote: transcribeStub
+      });
+
+      const result = await handleWhatsAppMessage(voiceNoteWebhook("aid"));
+
+      expect(result.messagesProcessed).to.equal(1);
+      expect(mockMessageProcessor.invokeLLM.called).to.be.false;
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(
+        mockMessageProcessor.sendWhatsAppMessage.calledWithMatch({
+          phone: "+1234567890",
+          message: sinon.match(/No pude entender el audio/)
+        })
+      ).to.be.true;
     });
   });
 

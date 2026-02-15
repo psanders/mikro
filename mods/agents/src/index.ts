@@ -75,6 +75,8 @@ export {
   getPublicPath,
   getPublicUrl,
   getPublicImageUrl,
+  getVoiceNotesEnabled,
+  getDeepgramApiKey,
   getDisabledAgents,
   getLLMConfig,
   validateAllLLMConfigs,

@@ -28,6 +28,9 @@ services:
       - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
       # Disabled agents
       - MIKRO_DISABLED_AGENTS=${MIKRO_DISABLED_AGENTS}
+      # Voice notes (WhatsApp audio → Deepgram transcription)
+      - MIKRO_VOICE_NOTES_ENABLED=${MIKRO_VOICE_NOTES_ENABLED:-true}
+      - MIKRO_DEEPGRAM_API_KEY=${MIKRO_DEEPGRAM_API_KEY}
       # Collections & Customer Engagement
       - MIKRO_COLLECTIONS_ENABLED=${MIKRO_COLLECTIONS_ENABLED:-true}
       - MIKRO_COLLECTIONS_CRON=${MIKRO_COLLECTIONS_CRON:-0 8 * * *}
