@@ -41,6 +41,11 @@ export default class Run extends BaseCommand<typeof Run> {
       description: "Force collection type for single collection (only with --loan-id)",
       required: false,
       options: [...TYPE_OPTIONS]
+    }),
+    "include-defaulted": Flags.boolean({
+      description:
+        "Include loans with status DEFAULTED (batch only; single collection always includes defaulted)",
+      default: false
     })
   };
 
@@ -67,7 +72,8 @@ export default class Run extends BaseCommand<typeof Run> {
           loanId,
           channel: (channel as (typeof CHANNEL_OPTIONS)[number]) ?? undefined,
           type: (type as (typeof TYPE_OPTIONS)[number]) ?? undefined,
-          dryRun
+          dryRun,
+          includeDefaulted: true
         });
         if (!result.success) {
           this.error(result.error ?? "Single collection failed");
@@ -94,7 +100,10 @@ export default class Run extends BaseCommand<typeof Run> {
     }
 
     try {
-      const result = await client.runCollections.mutate({ dryRun });
+      const result = await client.runCollections.mutate({
+        dryRun,
+        includeDefaulted: flags["include-defaulted"]
+      });
 
       if (result.dryRun) {
         this.log("\nDry run complete. Check server logs for details on what would be sent.");

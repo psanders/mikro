@@ -11,10 +11,17 @@ import {
   COLLECTION_OVERDUE_MIN_MISSED
 } from "@mikro/common";
 import type { CollectionChannel, CollectionAttemptType } from "../generated/prisma/enums.js";
-import { CollectionChannel as Channel, CollectionAttemptType as AttemptType } from "../generated/prisma/enums.js";
+import {
+  CollectionChannel as Channel,
+  CollectionAttemptType as AttemptType
+} from "../generated/prisma/enums.js";
 import { isPaymentDayToday, formatPaymentDayForTemplate } from "./dayOfWeek.js";
 import { loanToData } from "./loanToData.js";
-import { getPaymentReminderTemplateName, getOverdueNoticeTemplateName, getWhatsAppLanguageCode } from "./collectionConfig.js";
+import {
+  getPaymentReminderTemplateName,
+  getOverdueNoticeTemplateName,
+  getWhatsAppLanguageCode
+} from "./collectionConfig.js";
 import { initiateCollectionCall } from "./fonosterClient.js";
 import {
   executeCollectionAction,
@@ -31,6 +38,7 @@ export interface RunSingleCollectionInput {
   channel?: CollectionChannel;
   type?: CollectionAttemptType;
   dryRun?: boolean;
+  includeDefaulted?: boolean;
 }
 
 export interface RunSingleCollectionResult {
@@ -70,7 +78,8 @@ export async function runSingleCollection(
     }
   });
 
-  if (!loan || loan.status !== "ACTIVE" || !loan.member) {
+  const allowedStatuses = ["ACTIVE", ...(input.includeDefaulted ? ["DEFAULTED"] : [])];
+  if (!loan || !allowedStatuses.includes(loan.status) || !loan.member) {
     return {
       success: false,
       loanId: input.loanId,
@@ -89,11 +98,7 @@ export async function runSingleCollection(
 
   const loanData = loanToData(loan);
   const missed = getMissedPaymentsCount(loanData, asOfDate);
-  const paymentDay = isPaymentDayToday(
-    loan.paymentFrequency,
-    member.preferredPaymentDay,
-    asOfDate
-  );
+  const paymentDay = isPaymentDayToday(loan.paymentFrequency, member.preferredPaymentDay, asOfDate);
 
   let type: CollectionAttemptType | null = input.type ?? null;
   if (type === null) {
@@ -108,12 +113,13 @@ export async function runSingleCollection(
         channel: Channel.WHATSAPP,
         memberName: member.name,
         dryRun: false,
-        error: "No collection action applies for this loan today (0 missed, not payment day). Use type override to force one."
+        error:
+          "No collection action applies for this loan today (0 missed, not payment day). Use type override to force one."
       };
     }
   }
 
-  let channel: CollectionChannel = input.channel ?? defaultChannelForType(type);
+  const channel: CollectionChannel = input.channel ?? defaultChannelForType(type);
 
   if (dryRun) {
     const templateName =
@@ -154,7 +160,10 @@ export async function runSingleCollection(
         error: "Payment reminder template not configured"
       };
     }
-    const paymentDayStr = formatPaymentDayForTemplate(loan.paymentFrequency, member.preferredPaymentDay);
+    const paymentDayStr = formatPaymentDayForTemplate(
+      loan.paymentFrequency,
+      member.preferredPaymentDay
+    );
     ok = await executeCollectionAction(
       async () => {
         const res = await deps.sendWhatsAppTemplate({

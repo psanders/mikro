@@ -32,6 +32,7 @@ services:
       - MIKRO_COLLECTIONS_ENABLED=${MIKRO_COLLECTIONS_ENABLED:-true}
       - MIKRO_COLLECTIONS_CRON=${MIKRO_COLLECTIONS_CRON:-0 8 * * *}
       - MIKRO_COLLECTIONS_DRY_RUN=${MIKRO_COLLECTIONS_DRY_RUN:-false}
+      - MIKRO_COLLECTIONS_INCLUDE_DEFAULTED=${MIKRO_COLLECTIONS_INCLUDE_DEFAULTED:-true}
       # WhatsApp language code for templates (e.g. es_DO for Dominican Spanish)
       - MIKRO_WA_LANGUAGE_CODE=${MIKRO_WA_LANGUAGE_CODE:-es_DO}
       # WhatsApp template names (must match approved templates; leave blank to skip)

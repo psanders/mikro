@@ -40,7 +40,8 @@ function startOfToday(date: Date = new Date()): Date {
  */
 export async function runDailyCollections(
   asOfDate: Date,
-  deps: RunDailyCollectionsDeps
+  deps: RunDailyCollectionsDeps,
+  includeDefaulted = false
 ): Promise<void> {
   const start = startOfToday(asOfDate);
   const dryRun = isDryRun();
@@ -48,11 +49,12 @@ export async function runDailyCollections(
 
   logger.verbose("daily collections starting", {
     dryRun,
+    includeDefaulted,
     asOfDate: asOfDate.toISOString(),
     dayOfWeek: todayDow
   });
 
-  // Load all active members with their active loans. For each loan, include only COMPLETED
+  // Load all active members with their active (and optionally defaulted) loans. For each loan, include only COMPLETED
   // payments so that cycle metrics (getMissedPaymentsCount) count only actual payments made;
   // REVERSED or PENDING payments must not count as "payments made". Members with no
   // completed payments still appear (loans have payments: []).
@@ -60,7 +62,7 @@ export async function runDailyCollections(
     where: { isActive: true },
     include: {
       loans: {
-        where: { status: "ACTIVE" },
+        where: { status: { in: includeDefaulted ? ["ACTIVE", "DEFAULTED"] : ["ACTIVE"] } },
         include: {
           payments: {
             where: { status: "COMPLETED" },

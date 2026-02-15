@@ -542,16 +542,21 @@ async function initializeMessageProcessor() {
     // Daily collections cron (reminders, overdue notices, collection calls)
     const collectionsEnabled = process.env.MIKRO_COLLECTIONS_ENABLED !== "false";
     const collectionsCron = process.env.MIKRO_COLLECTIONS_CRON ?? "0 8 * * *";
+    const collectionsIncludeDefaulted = process.env.MIKRO_COLLECTIONS_INCLUDE_DEFAULTED !== "false";
     if (collectionsEnabled) {
       cron.schedule(collectionsCron, () => {
-        runDailyCollections(new Date(), {
-          db: prisma,
-          sendWhatsAppTemplate: (p) =>
-            whatsAppClient.sendTemplateMessage({
-              ...p,
-              bodyParameters: p.bodyParameters ?? []
-            })
-        }).catch((err: Error) => {
+        runDailyCollections(
+          new Date(),
+          {
+            db: prisma,
+            sendWhatsAppTemplate: (p) =>
+              whatsAppClient.sendTemplateMessage({
+                ...p,
+                bodyParameters: p.bodyParameters ?? []
+              })
+          },
+          collectionsIncludeDefaulted
+        ).catch((err: Error) => {
           logger.error("daily collections run failed", { error: err.message });
         });
       });
