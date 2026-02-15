@@ -164,7 +164,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'Juan Pérez'
-              loanId: 'LN-2025-00412'
+              loanId: '10010'
               principal: '25000'
               paymentAmount: '5000'
               paymentFrequency: 'mensual'
@@ -194,7 +194,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'María González'
-              loanId: 'LN-2025-00789'
+              loanId: '10011'
               paymentAmount: '3500'
               paymentFrequency: 'quincenal'
               missedPayments: '2'
@@ -223,7 +223,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'Carlos Rodríguez'
-              loanId: 'LN-2025-01055'
+              loanId: '10012'
               principal: '15000'
               paymentAmount: '2500'
               paymentFrequency: 'mensual'
@@ -253,7 +253,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'Ana Martínez'
-              loanId: 'LN-2025-00321'
+              loanId: '10013'
               paymentAmount: '4000'
               missedPayments: '2'
           conversation:
@@ -304,7 +304,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'Roberto Silva'
-              loanId: 'LN-2025-00567'
+              loanId: '10014'
               paymentAmount: '6000'
               paymentFrequency: 'mensual'
               missedPayments: '1'
@@ -333,7 +333,7 @@ intelligence:
             callerNumber: '+18091234567'
             metadata:
               memberName: 'Pedro Sánchez'
-              loanId: 'LN-2025-00999'
+              loanId: '10015'
               paymentAmount: '8000'
               missedPayments: '5'
           conversation:
