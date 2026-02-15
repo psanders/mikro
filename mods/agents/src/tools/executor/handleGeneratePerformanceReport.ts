@@ -55,7 +55,7 @@ export async function handleGeneratePerformanceReport(
 
     return {
       success: true,
-      message: "Reporte de rendimiento enviado por WhatsApp.",
+      message: "Reporte de rendimiento enviado.",
       data: { messageId }
     };
   } catch (error) {

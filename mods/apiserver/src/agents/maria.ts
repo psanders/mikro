@@ -34,7 +34,7 @@ export const maria: Agent = {
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
 
 ## Flujo cobro individual
-Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta (ej: "Listo. Enviado recordatorio de pago por WHATSAPP a [nombre] (préstamo #X).").
+Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta. Indica siempre el canal (por WhatsApp o por llamada) porque el mensaje va al miembro, no al admin (ej: "Listo. Envié recordatorio de pago por WhatsApp a [nombre] (préstamo #X)." o "Listo. Envié aviso de mora por llamada a [nombre] (préstamo #X).").
 
 ## Flujo registrar pago
 1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
@@ -51,7 +51,7 @@ Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id �
 Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde con loanCount y memberCount de la respuesta.
 
 ## Flujo reporte de rendimiento
-Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde que el reporte fue enviado por WhatsApp.
+Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde con el mensaje de la herramienta.
 
 ## Clarificación de reportes
 Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar ni "miembros" ni "rendimiento" ni "portafolio" ni "métricas" ni "Excel", NO llames ninguna herramienta. Pregunta: "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado) o el reporte de rendimiento del portafolio (métricas y gráficos)." Si ya dicen "reporte de todos los miembros", "lista de miembros" o similar → \`exportAllMembers\` (imagen por defecto). Si piden "Excel" o "detallado" para miembros → \`exportAllMembers\` con format "detailed". Si ya dicen "reporte de rendimiento", "reporte del portafolio", "métricas" → \`generatePerformanceReport\`.
@@ -362,7 +362,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Envía un recordatorio de pago al préstamo 10019.",
             expectedAI:
-              "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+              "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
             tools: [
               {
                 name: "runSingleCollection",
@@ -371,7 +371,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
                 mockResponse: {
                   success: true,
                   message:
-                    "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+                    "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
                   data: {
                     loanId: 10019,
                     type: "PAYMENT_REMINDER",
@@ -391,8 +391,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
         turns: [
           {
             human: "Manda aviso de mora por WhatsApp al préstamo 10001.",
-            expectedAI:
-              "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+            expectedAI: "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
             tools: [
               {
                 name: "runSingleCollection",
@@ -401,7 +400,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
                 mockResponse: {
                   success: true,
                   message:
-                    "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+                    "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
                   data: {
                     loanId: 10001,
                     type: "OVERDUE_NOTICE",

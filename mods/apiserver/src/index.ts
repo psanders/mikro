@@ -291,8 +291,8 @@ async function initializeMessageProcessor() {
         return {
           success: result.success,
           message: result.success
-            ? `Recibo enviado por WhatsApp correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
-            : `Error al enviar el recibo por WhatsApp: ${result.error || "Error desconocido"}`,
+            ? `Recibo enviado correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
+            : `Error al enviar el recibo: ${result.error || "Error desconocido"}`,
           messageId: result.messageId,
           imageUrl: result.imageUrl,
           error: result.error
