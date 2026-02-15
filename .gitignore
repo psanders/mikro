@@ -5,6 +5,9 @@ node_modules/
 dist/
 **/dist/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # OS files
 .DS_Store
 
