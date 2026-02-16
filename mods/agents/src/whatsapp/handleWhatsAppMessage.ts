@@ -290,6 +290,9 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     transcribeVoiceNote
   } = messageProcessor;
 
+  // Start routing early so it runs in parallel with media download/transcription
+  const routePromise = routeMessage(phone);
+
   // Voice notes (audio): require optional transcriber; otherwise tell user not available
   const VOICE_NOT_AVAILABLE_MSG =
     "No puedo escuchar notas de voz. Por favor, escríbeme un mensaje de texto.";
@@ -346,27 +349,36 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
   }
 
   try {
+    let route: RouteResult;
+
     if (type !== "audio") {
       userMessage = text?.body ?? image?.caption ?? "";
 
-      // Download image if present
+      // Download image and route in parallel when image is present
       if (image?.id) {
-        try {
-          imageUrl = await downloadMedia(image.id);
+        const [imgResult, routeResult] = await Promise.allSettled([
+          downloadMedia(image.id),
+          routePromise
+        ]);
+        if (imgResult.status === "fulfilled") {
+          imageUrl = imgResult.value;
           logger.verbose("image downloaded", { phone, mediaId: image.id });
-        } catch (error) {
-          const err = error as Error;
+        } else {
+          const err = (imgResult as PromiseRejectedResult).reason as Error;
           logger.error("failed to download image", {
             phone,
             mediaId: image.id,
             error: err.message
           });
         }
+        if (routeResult.status === "rejected") throw routeResult.reason;
+        route = routeResult.value;
+      } else {
+        route = await routePromise;
       }
+    } else {
+      route = await routePromise;
     }
-
-    // Step 1: Route the message
-    const route = await routeMessage(phone);
 
     // Step 2: Handle based on route type
     if (route.type === "member") {
