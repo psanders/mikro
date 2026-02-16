@@ -20,6 +20,7 @@ export {
 export {
   createInvokeLLM,
   invokeTextPrompt,
+  type InvokeLLMOptions,
   type ModelSettings,
   type Agent,
   type Message,

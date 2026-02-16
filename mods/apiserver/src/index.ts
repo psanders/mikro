@@ -460,6 +460,22 @@ async function initializeMessageProcessor() {
       }
     } as Parameters<typeof createToolExecutor>[0]);
 
+    // Generic ack messages sent before slow tool execution (no LLM involved)
+    const QUICK_ACK_MESSAGES = [
+      "Claro que sí, un momento.",
+      "¡Dale! Ya lo estoy procesando.",
+      "Un momentito, ya lo busco.",
+      "Permíteme un momento.",
+      "Enseguida te lo preparo.",
+      "¡Listo, ya lo estoy haciendo!",
+      "Dame un segundo.",
+      "Ya casi, un momento."
+    ];
+
+    function pickRandomAck(): string {
+      return QUICK_ACK_MESSAGES[Math.floor(Math.random() * QUICK_ACK_MESSAGES.length)];
+    }
+
     // Create LLM invoker wrapper that selects agent based on name
     const invokeLLM = async (
       agent: Parameters<typeof createInvokeLLM>[0],
@@ -469,7 +485,14 @@ async function initializeMessageProcessor() {
       context?: Record<string, unknown>,
       isNewSession?: boolean
     ): Promise<string> => {
-      const invokeFn = createInvokeLLM(agent, allTools, toolExecutor);
+      const invokeFn = createInvokeLLM(agent, allTools, toolExecutor, {
+        sendQuickAck: async (ctx) => {
+          const phone = ctx.phone as string | undefined;
+          if (phone) {
+            await sendWhatsAppMessage({ phone, message: pickRandomAck() });
+          }
+        }
+      });
       return invokeFn(messages, userMessage, imageUrl, context, isNewSession ?? true);
     };
 
