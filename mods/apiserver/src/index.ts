@@ -464,7 +464,7 @@ async function initializeMessageProcessor() {
     const QUICK_ACK_MESSAGES = [
       "Claro que sí, un momento.",
       "¡Dale! Ya lo estoy procesando.",
-      "Un momentito, ya lo busco.",
+      "Un momento por favor.",
       "Permíteme un momento.",
       "Enseguida te lo preparo.",
       "¡Listo, ya lo estoy haciendo!",
