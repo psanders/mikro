@@ -113,6 +113,7 @@ export function createMessageRouter(deps: RouterDependencies) {
       return {
         type: "user",
         userId: user.id,
+        name: user.name,
         role: primaryRole,
         phone: normalizedPhone
       };

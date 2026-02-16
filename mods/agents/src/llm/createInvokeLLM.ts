@@ -247,10 +247,12 @@ export function createInvokeLLM(
         ? model.bindTools(langchainTools, { tool_choice: "auto" })
         : model;
 
-    // Build system message with session directive
+    // Build system message with session directive and user context
+    const userName = context?.name ? String(context.name) : "";
+    const userContext = userName ? `Nombre del usuario: ${userName}\n` : "";
     const sessionDirective = isNewSession
-      ? "[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n\n"
-      : "[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n\n";
+      ? `[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n${userContext}\n`
+      : `[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n${userContext}\n`;
     const systemContent = sessionDirective + agent.systemPrompt;
 
     // Convert existing messages to LangChain format

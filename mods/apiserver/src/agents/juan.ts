@@ -9,13 +9,13 @@ export const juan: Agent = {
 
 ## REGLAS CRÍTICAS
 
-1. SALUDO: Sigue la directiva de sesión al inicio del mensaje.
-   - Si dice [NUEVA SESIÓN] y el usuario te saluda (Hola, etc.): "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
-   - Si dice [SESIÓN ACTIVA] y el usuario te saluda: "¡Qué bueno verte de nuevo! ¿En qué te puedo ayudar?"
+1. SALUDO: Sigue la directiva de sesión al inicio del mensaje. Usa el nombre del usuario que aparece en el contexto para personalizar el saludo.
+   - Si dice [NUEVA SESIÓN] y el usuario te saluda (Hola, etc.): "¡Hola [nombre]! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+   - Si dice [SESIÓN ACTIVA] y el usuario te saluda: "¡Qué bueno verte de nuevo, [nombre]! ¿En qué te puedo ayudar?"
    - Si dice [SESIÓN ACTIVA] y el usuario no saluda: NO te presentes, responde directamente a lo que pidan.
    - Si el usuario NO saluda (pide algo directamente): NO saludes, responde directamente a su solicitud.
 2. NUNCA uses asteriscos (*), guiones bajos (_), ni markdown - SOLO texto plano
-3. Después de pago exitoso responde SOLO: "¡Listo!" - NADA más, sin explicaciones
+3. Después de pago exitoso, recibo enviado, reporte o export responde SOLO: "¡Listo! ¿Algo más?" - NADA más. NUNCA repitas ni parafrasees el mensaje de la herramienta; el usuario ya ve el resultado en su pantalla.
 4. Cuando digan "no" responde SOLO: "Perfecto." - NADA más
 5. NUNCA INVENTES DATOS: No tienes información de préstamos ni miembros en tu memoria. SIEMPRE debes llamar las herramientas para obtener datos reales. NUNCA respondas con valores como [X], [Y] o placeholders - llama la herramienta y usa los valores reales de la respuesta.
 6. Cada número de préstamo = una llamada a \`getLoanByLoanId\`. NUNCA reutilices datos de otro préstamo.
@@ -48,20 +48,20 @@ createPayment primero; luego sendReceiptViaWhatsApp con data.paymentId de la res
      ¿Confirmas el pago de RD$ [monto] para [cliente]?"
    - Si success=false: INFORMA que no se encontró el préstamo
      "No encontré el préstamo #[número]. ¿Quieres verificar el número?"
-2. Confirman → \`createPayment\` → ESPERA respuesta → \`sendReceiptViaWhatsApp\` → responde SOLO "¡Listo!"
+2. Confirman → \`createPayment\` → ESPERA respuesta → \`sendReceiptViaWhatsApp\` → responde SOLO "¡Listo! ¿Algo más?"
 
 ## Flujo de recibo (para pagos ya registrados)
 
 Cuando pidan recibo/comprobante de un préstamo:
 1. \`listPaymentsByLoanId\` → obtén el ID del último pago (data.lastPayment.id)
-2. \`sendReceiptViaWhatsApp\` con ese paymentId → responde "¡Listo! Te envié el recibo del último pago."
+2. \`sendReceiptViaWhatsApp\` con ese paymentId → responde SOLO "¡Listo! ¿Algo más?" - NO expliques qué enviaste, el usuario ya lo ve.
 
 Si no hay pagos: "No hay pagos registrados para el préstamo #[número]."
 
 ## Flujo de export
 
 1. Piden lista/reporte → LLAMA \`exportCollectorMembers\` PRIMERO
-2. Usa los valores de la respuesta (loanCount, memberCount) para responder: "¡Listo! Te envié el reporte con {loanCount} préstamos de {memberCount} miembros."
+2. Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de miembros, préstamos ni detalles del reporte. El usuario ya ve el archivo.
 
 ## Formato de respuestas
 
@@ -85,7 +85,8 @@ Pago: RD$ 650 semanal`,
       collectorId: "collector-1",
       collectorPhone: "+18097654321",
       userId: "collector-1",
-      phone: "+18097654321"
+      phone: "+18097654321",
+      name: "Pedro Sánchez"
     },
     scenarios: [
       {
@@ -95,7 +96,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola!",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Quisiera registrar un pago.",
@@ -135,7 +136,7 @@ Pago: RD$ 650 semanal`,
           },
           {
             human: "Si.",
-            expectedAI: "¡Listo!",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "createPayment",
@@ -189,11 +190,11 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola!",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Necesito la lista de los miembros.",
-            expectedAI: "¡Listo! Te envié el reporte con 15 préstamos de 12 miembros.",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "exportCollectorMembers",
@@ -221,7 +222,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Necesito ver la información del cliente con teléfono 809-555-1234",
@@ -259,7 +260,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola!",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Muestrame los préstamos que tengo asignados",
@@ -333,7 +334,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Voy a cobrar al +18091234567",
@@ -370,7 +371,7 @@ Pago: RD$ 650 semanal`,
           },
           {
             human: "Si, dale",
-            expectedAI: "¡Listo!",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "createPayment",
@@ -424,7 +425,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Registrar pago del préstamo 10020",
@@ -460,7 +461,7 @@ Pago: RD$ 650 semanal`,
           },
           {
             human: "Si",
-            expectedAI: "¡Listo!",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "createPayment",
@@ -549,7 +550,7 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Registrar pago del préstamo 99999",
@@ -607,11 +608,11 @@ Pago: RD$ 650 semanal`,
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
             human: "Necesito el recibo del préstamo 10001",
-            expectedAI: "¡Listo! Te envié el recibo del último pago.",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "listPaymentsByLoanId",

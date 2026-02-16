@@ -463,13 +463,12 @@ async function initializeMessageProcessor() {
     // Generic ack messages sent before slow tool execution (no LLM involved)
     const QUICK_ACK_MESSAGES = [
       "Claro que sí, un momento.",
-      "¡Dale! Ya lo estoy procesando.",
       "Un momento por favor.",
       "Permíteme un momento.",
-      "Enseguida te lo preparo.",
-      "¡Listo, ya lo estoy haciendo!",
+      "Enseguida.",
+      "¡Ok, un momento por favor!",
       "Dame un segundo.",
-      "Ya casi, un momento."
+      "Si claro, un momento por favor."
     ];
 
     function pickRandomAck(): string {

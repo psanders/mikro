@@ -444,7 +444,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       const targetAgent = ROLE_TO_AGENT[route.role];
       agent = getAgent(targetAgent);
       chatHistory = await getChatHistoryForUser(route.userId);
-      context = { userId: route.userId, phone, role: route.role };
+      context = { userId: route.userId, name: route.name, phone, role: route.role };
 
       // Add user message to DB
       await addMessageForUser({
