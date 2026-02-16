@@ -430,26 +430,37 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
     touchSession(sessionIdentifier);
 
-    // Step 4: Save AI response to history
+    // Step 4 & 5: Save AI response and send via WhatsApp (parallel for user path)
     if (route.type === "guest") {
       addGuestMessage(phone, {
         role: "assistant",
         content: response
       });
+      if (response) {
+        await sendWhatsAppMessage({
+          phone,
+          message: response
+        });
+      }
     } else {
-      await addMessageForUser({
+      const savePromise = addMessageForUser({
         userId: route.userId,
         role: "AI",
         content: response
       });
+      if (response) {
+        await Promise.all([
+          savePromise,
+          sendWhatsAppMessage({
+            phone,
+            message: response
+          })
+        ]);
+      } else {
+        await savePromise;
+      }
     }
-
-    // Step 5: Send response via WhatsApp
     if (response) {
-      await sendWhatsAppMessage({
-        phone,
-        message: response
-      });
       logger.verbose("response sent", { phone, responseLength: response.length });
     }
   } catch (error) {
