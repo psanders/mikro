@@ -96,7 +96,7 @@ export async function runSingleCollection(
   const loanInfo = { id: loan.id, loanId: loan.loanId };
   const target: CollectionTarget = { member: memberInfo, loan: loanInfo };
 
-  const loanData = loanToData(loan);
+  const loanData = loanToData(loan, member.preferredPaymentDay);
   const missed = getMissedPaymentsCount(loanData, asOfDate);
   const paymentDay = isPaymentDayToday(loan.paymentFrequency, member.preferredPaymentDay, asOfDate);
 

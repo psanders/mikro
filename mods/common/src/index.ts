@@ -12,6 +12,9 @@ export {
   withErrorHandlingAndValidation,
   validatePhone,
   getCycleMetrics,
+  dayOfWeekToNumber,
+  daysToFirstPreferredDay,
+  MS_PER_DAY,
   type LoanPaymentData,
   type CycleMetrics
 } from "./utils/index.js";

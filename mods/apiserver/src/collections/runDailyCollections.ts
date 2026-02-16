@@ -125,7 +125,7 @@ export async function runDailyCollections(
     }> = [];
 
     for (const loan of member.loans) {
-      const loanData = loanToData(loan);
+      const loanData = loanToData(loan, member.preferredPaymentDay);
       const missed = getMissedPaymentsCount(loanData, asOfDate);
       const paymentDay = isPaymentDayToday(
         loan.paymentFrequency,
@@ -143,7 +143,9 @@ export async function runDailyCollections(
       }
 
       if (missed >= COLLECTION_CALL_MIN_MISSED) {
-        const callMissed = callLoan ? getMissedPaymentsCount(loanToData(callLoan), asOfDate) : 0;
+        const callMissed = callLoan
+          ? getMissedPaymentsCount(loanToData(callLoan, member.preferredPaymentDay), asOfDate)
+          : 0;
         if (!callLoan || missed > callMissed) callLoan = loan;
       } else if (missed >= COLLECTION_OVERDUE_MIN_MISSED) {
         if (!overdueLoan) overdueLoan = loan;
@@ -157,7 +159,10 @@ export async function runDailyCollections(
 
     if (callLoan) {
       action = "COLLECTION_CALL";
-      const missed = getMissedPaymentsCount(loanToData(callLoan), asOfDate);
+      const missed = getMissedPaymentsCount(
+        loanToData(callLoan, member.preferredPaymentDay),
+        asOfDate
+      );
       callList.push({
         member: memberInfo,
         loan: {
@@ -172,7 +177,10 @@ export async function runDailyCollections(
       });
     } else if (overdueLoan) {
       action = "OVERDUE_NOTICE";
-      const missed = getMissedPaymentsCount(loanToData(overdueLoan), asOfDate);
+      const missed = getMissedPaymentsCount(
+        loanToData(overdueLoan, member.preferredPaymentDay),
+        asOfDate
+      );
       overdueList.push({
         member: memberInfo,
         loan: {

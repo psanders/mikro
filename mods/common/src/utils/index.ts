@@ -5,6 +5,9 @@ export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation
 export { validatePhone } from "./validatePhone.js";
 export {
   getCycleMetrics,
+  dayOfWeekToNumber,
+  daysToFirstPreferredDay,
+  MS_PER_DAY,
   type LoanPaymentData,
   type CycleMetrics
 } from "./calculatePaymentStatus.js";

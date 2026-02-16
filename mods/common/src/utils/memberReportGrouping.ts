@@ -22,6 +22,7 @@ export interface LoanForGrouping {
 export interface MemberForGrouping {
   name: string;
   phone: string;
+  preferredPaymentDay?: string | null;
   loans: LoanForGrouping[];
 }
 
@@ -69,7 +70,10 @@ export function buildGroupedMemberRows(
 
   for (const member of members) {
     for (const loan of member.loans) {
-      const data = toLoanPaymentData(loan);
+      const data: LoanPaymentData = {
+        ...toLoanPaymentData(loan),
+        preferredPaymentDay: member.preferredPaymentDay
+      };
       const rating = getPaymentRating(data, asOfDate);
       const missedCount = getMissedPaymentsCount(data, asOfDate);
 

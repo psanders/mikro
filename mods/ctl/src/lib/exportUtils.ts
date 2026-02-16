@@ -41,15 +41,17 @@ export interface SerializedMember {
   phone: string;
   collectionPoint?: string | null;
   notes?: string | null;
+  preferredPaymentDay?: string | null;
   referredBy: { name: string };
   loans: SerializedLoan[];
 }
 
-function toLoanData(loan: SerializedLoan) {
+function toLoanData(loan: SerializedLoan, preferredPaymentDay?: string | null) {
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: new Date(loan.createdAt),
-    payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) }))
+    payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) })),
+    preferredPaymentDay
   };
 }
 
@@ -78,7 +80,7 @@ export function buildMemberReportRows(members: SerializedMember[]): MemberReport
   const rows: MemberReportRow[] = [];
   for (const member of members) {
     for (const loan of member.loans) {
-      const data = toLoanData(loan);
+      const data = toLoanData(loan, member.preferredPaymentDay);
       rows.push({
         name: member.name,
         phone: member.phone,
@@ -177,6 +179,7 @@ function toMembersForGrouping(
   return members.map((m) => ({
     name: m.name,
     phone: m.phone,
+    preferredPaymentDay: m.preferredPaymentDay,
     loans: m.loans.map((loan) => ({
       loanId: loan.loanId,
       paymentFrequency: loan.paymentFrequency,
@@ -331,7 +334,7 @@ export async function writeMembersToExcel(
   const rows: ExcelRowData[] = [];
   for (const member of members) {
     for (const loan of member.loans) {
-      const data = toLoanData(loan);
+      const data = toLoanData(loan, member.preferredPaymentDay);
       rows.push({
         name: member.name,
         phone: member.phone,

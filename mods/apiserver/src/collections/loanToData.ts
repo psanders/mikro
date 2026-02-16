@@ -5,14 +5,18 @@
  */
 import type { LoanPaymentData } from "@mikro/common";
 
-export function loanToData(loan: {
-  paymentFrequency: string;
-  createdAt: Date;
-  payments: Array<{ paidAt: Date }>;
-}): LoanPaymentData {
+export function loanToData(
+  loan: {
+    paymentFrequency: string;
+    createdAt: Date;
+    payments: Array<{ paidAt: Date }>;
+  },
+  preferredPaymentDay?: string | null
+): LoanPaymentData {
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
-    payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
+    payments: loan.payments.map((p) => ({ paidAt: p.paidAt })),
+    preferredPaymentDay: preferredPaymentDay ?? undefined
   };
 }

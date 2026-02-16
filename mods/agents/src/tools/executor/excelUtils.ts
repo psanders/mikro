@@ -92,10 +92,11 @@ export async function generateMembersExcel(
     color: { argb: "FFD3D3D3" }
   };
 
-  const loanData = (loan: ExportedLoan) => ({
+  const loanData = (loan: ExportedLoan, preferredPaymentDay?: string | null) => ({
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
-    payments: loan.payments
+    payments: loan.payments,
+    preferredPaymentDay
   });
 
   type RowData = {
@@ -114,7 +115,7 @@ export async function generateMembersExcel(
   const rows: RowData[] = [];
   for (const member of members) {
     for (const loan of member.loans) {
-      const data = loanData(loan);
+      const data = loanData(loan, member.preferredPaymentDay);
       const rating = getPaymentRating(data);
       const missedCount = getMissedPaymentsCount(data);
       const trend = getLatenessTrend(data);
