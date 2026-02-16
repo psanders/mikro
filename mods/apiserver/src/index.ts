@@ -138,24 +138,26 @@ app.get("/webhook", (req, res) => {
 });
 
 // WhatsApp webhook messages (POST)
-app.post("/webhook", async (req, res) => {
-  try {
-    const result = await handleWhatsAppMessage(req.body);
-    logger.verbose("whatsapp webhook processed", {
-      messagesProcessed: result.messagesProcessed,
-      senders: result.senders.length
-    });
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      logger.error("invalid webhook payload", { error: error.message });
-    } else {
-      const err = error as Error;
-      logger.error("error processing webhook", { error: err.message });
-    }
-  }
-
-  // Always return 200 to WhatsApp
+// Return 200 immediately so WhatsApp does not retry; process messages asynchronously.
+app.post("/webhook", (req, res) => {
+  const body = req.body;
   res.status(200).send("OK");
+
+  handleWhatsAppMessage(body)
+    .then((result) => {
+      logger.verbose("whatsapp webhook processed", {
+        messagesProcessed: result.messagesProcessed,
+        senders: result.senders.length
+      });
+    })
+    .catch((error: unknown) => {
+      if (error instanceof ValidationError) {
+        logger.error("invalid webhook payload", { error: error.message });
+      } else {
+        const err = error as Error;
+        logger.error("error processing webhook", { error: err.message });
+      }
+    });
 });
 
 // Initialize message processor before starting server
