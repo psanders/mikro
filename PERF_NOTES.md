@@ -21,6 +21,7 @@ These changes improve perceived latency of the WhatsApp agent. Each improvement 
 | 6   | Overlap media download with message routing             | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                       | `git revert 9ffe66d --no-edit` |
 | 7   | Message ID deduplication with TTL                       | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                       | `git revert 266bb93 --no-edit` |
 | 8   | Condense Maria and Juan system prompts                  | `mods/apiserver/src/agents/maria.ts`, `mods/apiserver/src/agents/juan.ts` | `git revert d278dde --no-edit` |
+| 9   | Quick generic ack before slow tool execution            | `mods/agents/src/llm/createInvokeLLM.ts`, `mods/apiserver/src/index.ts`   | `git revert a64a40b --no-edit` |
 
 ## Expected Impact
 
@@ -31,3 +32,4 @@ These changes improve perceived latency of the WhatsApp agent. Each improvement 
 - **6:** ~50–200ms saved for image/audio messages
 - **7:** Prevents duplicate LLM runs on duplicate webhooks
 - **8:** ~50–100ms per LLM call, lower token cost
+- **9:** Immediate perceived response for slow operations (receipts, reports, exports, collections)
