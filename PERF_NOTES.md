@@ -11,16 +11,16 @@ These changes improve perceived latency of the WhatsApp agent. Each improvement 
 
 ## Changes (in commit order)
 
-| #   | Description                                             | Files                                                                         | Revert                |
-| --- | ------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
-| 1   | Add PERF_NOTES.md (this file)                           | `PERF_NOTES.md`                                                               | N/A (metadata only)   |
-| 2   | Remove 500ms artificial delay in receipt sending        | `mods/apiserver/src/api/receipts/createSendReceiptViaWhatsApp.ts`             | `git revert <commit>` |
-| 3   | Parallelize getMemberByPhone + getUserByPhone in router | `mods/agents/src/router/createMessageRouter.ts`                               | `git revert <commit>` |
-| 4   | Parallelize addMessageForUser + sendWhatsAppMessage     | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                           | `git revert <commit>` |
-| 5   | Return 200 OK immediately from webhook, process async   | `mods/apiserver/src/index.ts`                                                 | `git revert <commit>` |
-| 6   | Overlap media download with message routing             | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                           | `git revert <commit>` |
-| 7   | Message ID deduplication with TTL                       | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts` (+ optional dedup module) | `git revert <commit>` |
-| 8   | Condense Maria and Juan system prompts                  | `mods/apiserver/src/agents/maria.ts`, `mods/apiserver/src/agents/juan.ts`     | `git revert <commit>` |
+| #   | Description                                             | Files                                                                     | Revert                         |
+| --- | ------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------ |
+| 1   | Add PERF_NOTES.md (this file)                           | `PERF_NOTES.md`                                                           | N/A (metadata only)            |
+| 2   | Remove 500ms artificial delay in receipt sending        | `mods/apiserver/src/api/receipts/createSendReceiptViaWhatsApp.ts`         | `git revert 99e2f03 --no-edit` |
+| 3   | Parallelize getMemberByPhone + getUserByPhone in router | `mods/agents/src/router/createMessageRouter.ts`                           | `git revert 0e858b8 --no-edit` |
+| 4   | Parallelize addMessageForUser + sendWhatsAppMessage     | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                       | `git revert e63ae1d --no-edit` |
+| 5   | Return 200 OK immediately from webhook, process async   | `mods/apiserver/src/index.ts`                                             | `git revert e8abcaf --no-edit` |
+| 6   | Overlap media download with message routing             | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                       | `git revert 9ffe66d --no-edit` |
+| 7   | Message ID deduplication with TTL                       | `mods/agents/src/whatsapp/handleWhatsAppMessage.ts`                       | `git revert 266bb93 --no-edit` |
+| 8   | Condense Maria and Juan system prompts                  | `mods/apiserver/src/agents/maria.ts`, `mods/apiserver/src/agents/juan.ts` | `git revert d278dde --no-edit` |
 
 ## Expected Impact
 
