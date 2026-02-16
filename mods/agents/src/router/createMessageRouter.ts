@@ -41,10 +41,14 @@ export function createMessageRouter(deps: RouterDependencies) {
     const normalizedPhone = validatePhone(phone);
     logger.verbose("routing message", { phone, normalizedPhone });
 
-    // Step 1: Check if phone belongs to a member
-    const member = await getMemberByPhone({ phone: normalizedPhone });
+    // Run member and user lookups in parallel (independent queries)
+    const [member, user] = await Promise.all([
+      getMemberByPhone({ phone: normalizedPhone }),
+      getUserByPhone({ phone: normalizedPhone })
+    ]);
+
+    // Step 1: Member takes precedence (members don't interact with agents)
     if (member) {
-      // Members don't interact with agents - log and ignore
       logger.verbose("phone belongs to member, ignoring", {
         phone: normalizedPhone,
         memberId: member.id
@@ -57,7 +61,6 @@ export function createMessageRouter(deps: RouterDependencies) {
     }
 
     // Step 2: Check if phone belongs to a user
-    const user = await getUserByPhone({ phone: normalizedPhone });
     if (user) {
       // Check if user is enabled
       if (!user.enabled) {
