@@ -125,10 +125,6 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
         throw new Error(`Invalid mediaId format (expected numeric string): ${mediaId}`);
       }
 
-      // Small delay to ensure media is fully processed by WhatsApp
-      // WhatsApp documentation says mediaId is ready immediately, but adding small buffer
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Get imageUrl for response only (not for sending)
       const imageUrl = getPublicImageUrl(filename);
 
