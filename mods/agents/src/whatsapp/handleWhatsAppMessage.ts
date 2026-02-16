@@ -67,6 +67,27 @@ let messageProcessor: MessageProcessorDependencies | null = null;
 let processorSetTimestamp: number | null = null;
 let initializationComplete = false;
 
+/** Deduplicate webhook delivery: message id -> timestamp (ms). Pruned by TTL. */
+const processedMessageIds = new Map<string, number>();
+const DEDUP_TTL_MS = 60_000;
+
+function pruneProcessedMessageIds(): void {
+  const now = Date.now();
+  for (const [msgId, ts] of processedMessageIds) {
+    if (now - ts > DEDUP_TTL_MS) processedMessageIds.delete(msgId);
+  }
+}
+
+function isDuplicateMessage(id: string): boolean {
+  pruneProcessedMessageIds();
+  return processedMessageIds.has(id);
+}
+
+function markMessageProcessed(id: string): void {
+  pruneProcessedMessageIds();
+  processedMessageIds.set(id, Date.now());
+}
+
 /**
  * Get the current message processor state (for debugging).
  * @returns The current processor state
@@ -246,6 +267,12 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     });
     return;
   }
+
+  if (isDuplicateMessage(id)) {
+    logger.verbose("skipping duplicate message", { messageId: id, phone });
+    return;
+  }
+  markMessageProcessed(id);
 
   logger.verbose("incoming whatsapp message", {
     messageId: id,
