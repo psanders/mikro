@@ -37,7 +37,8 @@ export {
   createListLoansByReferrer,
   createListLoansByCollector,
   createListLoansByMember,
-  createGetLoanByLoanId
+  createGetLoanByLoanId,
+  createCalculateLoan
 } from "./loans/index.js";
 
 // Payment operations

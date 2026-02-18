@@ -8,3 +8,4 @@ export { createListLoansByReferrer } from "./createListLoansByReferrer.js";
 export { createListLoansByCollector } from "./createListLoansByCollector.js";
 export { createListLoansByMember } from "./createListLoansByMember.js";
 export { createGetLoanByLoanId } from "./createGetLoanByLoanId.js";
+export { createCalculateLoan } from "./createCalculateLoan.js";

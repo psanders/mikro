@@ -216,6 +216,48 @@ export const createLoanTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for calculating loan payment options.
+ * Used by Maria (admin).
+ */
+export const calculateLoanTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "calculateLoan",
+    description:
+      "Calcular opciones de préstamo con diferentes duraciones usando una tasa base y ajuste por periodo. Recibe monto, tasa de interés total, frecuencia (DAILY o WEEKLY) y duración base.",
+    parameters: {
+      type: "object",
+      properties: {
+        principal: {
+          type: "string",
+          description: "Monto del préstamo en pesos dominicanos (ej: 5000, 10000)"
+        },
+        interestRate: {
+          type: "string",
+          description:
+            "Tasa total de interés como decimal (ej: 0.30 para 30%). Si el usuario dice 30%, convierte a 0.30."
+        },
+        paymentFrequency: {
+          type: "string",
+          description: "Frecuencia de pago: DAILY o WEEKLY",
+          enum: ["DAILY", "WEEKLY"]
+        },
+        baseDuration: {
+          type: "string",
+          description: "Duración base en número de periodos de pago (ej: 10)"
+        },
+        adjustmentPerPeriod: {
+          type: "string",
+          description:
+            "Ajuste opcional por periodo como decimal (ej: 0.015 para 1.5%). Si no se envía, se usa el valor por defecto del sistema."
+        }
+      },
+      required: ["principal", "interestRate", "paymentFrequency", "baseDuration"]
+    }
+  }
+};
+
+/**
  * Tool definition for updating a loan's status.
  * Used by Maria (admin) only.
  */
@@ -535,6 +577,7 @@ export const allTools: ToolFunction[] = [
   listLoansByCollectorTool,
   getMemberTool,
   createLoanTool,
+  calculateLoanTool,
   updateLoanStatusTool,
   getMemberByPhoneTool,
   listLoansByMemberTool,

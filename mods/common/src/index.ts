@@ -15,6 +15,11 @@ export {
   dayOfWeekToNumber,
   daysToFirstPreferredDay,
   MS_PER_DAY,
+  DEFAULT_ADJUSTMENT_PER_PERIOD,
+  DEFAULT_MIN_RATE,
+  DEFAULT_MAX_RATE,
+  DEFAULT_OPTIONS_RANGE,
+  DEFAULT_PAYMENT_ROUNDING_INCREMENT,
   type LoanPaymentData,
   type CycleMetrics
 } from "./utils/index.js";
@@ -123,6 +128,7 @@ export {
   updateLoanStatusStatusEnum,
   paymentFrequencyEnum,
   createLoanSchema,
+  calculateLoanSchema,
   getLoanSchema,
   getLoanByLoanIdSchema,
   updateLoanStatusSchema,
@@ -131,6 +137,7 @@ export {
   listLoansByCollectorSchema,
   listLoansByMemberSchema,
   type CreateLoanInput,
+  type CalculateLoanInput,
   type GetLoanInput,
   type GetLoanByLoanIdInput,
   type UpdateLoanStatusInput,
