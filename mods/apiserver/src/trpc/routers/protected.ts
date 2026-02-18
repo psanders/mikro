@@ -21,6 +21,7 @@ import {
   getChatHistorySchema,
   // Loan schemas
   createLoanSchema,
+  calculateLoanSchema,
   updateLoanStatusSchema,
   listLoansSchema,
   listLoansByReferrerSchema,
@@ -66,6 +67,7 @@ import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.j
 import { createListLoans } from "../../api/loans/createListLoans.js";
 import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
+import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
@@ -225,6 +227,14 @@ export const protectedRouter = router({
    */
   createLoan: protectedProcedure.input(createLoanSchema).mutation(async ({ ctx, input }) => {
     const fn = createCreateLoan(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * Calculate loan repayment options from principal, interest rate and duration.
+   */
+  calculateLoan: protectedProcedure.input(calculateLoanSchema).query(async ({ input }) => {
+    const fn = createCalculateLoan();
     return fn(input);
   }),
 

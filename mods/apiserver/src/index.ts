@@ -13,6 +13,7 @@ import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
 import { ValidationError, renderMembersReportToPng, loadLogoDataUrl } from "@mikro/common";
+import type { CalculateLoanInput } from "@mikro/common";
 import {
   handleWhatsAppMessage,
   getWebhookVerifyToken,
@@ -82,6 +83,7 @@ import {
   createGetLoanByLoanId,
   createGetMember,
   createCreateLoan,
+  createCalculateLoan,
   createUpdateLoanStatus,
   createListUsers,
   createExportCollectorMembers,
@@ -206,6 +208,7 @@ async function initializeMessageProcessor() {
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
     const getMember = createGetMember(dbClient);
     const createLoan = createCreateLoan(dbClient);
+    const calculateLoan = createCalculateLoan();
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
     const exportCollectorMembers = createExportCollectorMembers(dbClient);
@@ -342,6 +345,9 @@ async function initializeMessageProcessor() {
       createLoan: async (params) => {
         const loan = await createLoan(params);
         return { id: loan.id, loanId: loan.loanId };
+      },
+      calculateLoan: async (params: CalculateLoanInput) => {
+        return calculateLoan(params);
       },
       updateLoanStatus: async (params: { loanId: number; status: string }) => {
         return updateLoanStatus(params);

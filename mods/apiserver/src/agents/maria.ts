@@ -29,6 +29,7 @@ export const maria: Agent = {
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
 - \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
+- \`calculateLoan\`: Cuando pidan calcular opciones de préstamo (monto, interés, frecuencia, duración)
 - \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
@@ -47,6 +48,13 @@ IMPORTANTE: El monto del pago SIEMPRE es el paymentAmount del préstamo. NUNCA p
 ## Flujo recibo (pago ya registrado)
 Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id → \`sendReceiptViaWhatsApp\` → responde SOLO "¡Listo! ¿Algo más?" - NO expliques qué enviaste, el usuario ya lo ve. Si no hay pagos: "No hay pagos registrados para el préstamo #X."
 
+## Flujo calculadora de préstamo
+Si piden calcular un préstamo, comparar opciones de duración, o preguntar cuánto sería el pago según plazo:
+1. Pide/confirmar estos datos: principal, tasa total de interés, frecuencia (daily/weekly), duración base.
+2. Convierte porcentaje a decimal para la herramienta (ej: 30% -> 0.30).
+3. Llama \`calculateLoan\`.
+4. Responde con las opciones en texto claro, destacando la opción base y las opciones de menor/mayor duración.
+
 ## Flujo export
 Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de miembros, préstamos ni detalles del reporte. El usuario ya ve el archivo.
 
@@ -64,6 +72,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "listPaymentsByLoanId",
     "getLoanByLoanId",
     "listMemberLoansByPhone",
+    "calculateLoan",
     "exportAllMembers",
     "generatePerformanceReport",
     "updateLoanStatus",
@@ -406,6 +415,60 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                     channel: "WHATSAPP",
                     memberName: "Juan Perez",
                     dryRun: false
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "calculate-loan-options",
+        description:
+          "Admin asks for loan calculation options and Maria calls calculateLoan with normalized inputs",
+        turns: [
+          {
+            human: "Calcula un préstamo de 5000 a 30% semanal con duración base de 10.",
+            expectedAI:
+              "Perfecto. Aquí tienes opciones de préstamo para RD$ 5000 con 30% semanal y base en 10 periodos.",
+            tools: [
+              {
+                name: "calculateLoan",
+                expectedArgs: {
+                  principal: "5000",
+                  interestRate: "0.30",
+                  paymentFrequency: "WEEKLY",
+                  baseDuration: "10"
+                },
+                matchMode: "judge",
+                mockResponse: {
+                  success: true,
+                  message:
+                    "Opciones calculadas para RD$ 5000.00:\n10 weekly (base): RD$ 650 por periodo, interés 30.00%, total RD$ 6500.00\n8 weekly: RD$ 800 por periodo, interés 27.00%, total RD$ 6350.00",
+                  data: {
+                    principal: 5000,
+                    paymentFrequency: "WEEKLY",
+                    baseDuration: 10,
+                    options: [
+                      {
+                        duration: 10,
+                        paymentFrequency: "WEEKLY",
+                        interestRate: 0.3,
+                        totalInterest: 1500,
+                        totalRepay: 6500,
+                        paymentPerPeriod: 650,
+                        isBase: true
+                      },
+                      {
+                        duration: 8,
+                        paymentFrequency: "WEEKLY",
+                        interestRate: 0.27,
+                        totalInterest: 1350,
+                        totalRepay: 6350,
+                        paymentPerPeriod: 800,
+                        isBase: false
+                      }
+                    ]
                   }
                 }
               }

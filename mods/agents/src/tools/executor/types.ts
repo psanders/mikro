@@ -98,6 +98,32 @@ export interface ToolExecutorDependencies {
     paymentFrequency: "WEEKLY" | "DAILY";
   }) => Promise<{ id: string; loanId: number }>;
 
+  /** Calculate loan options from base duration and interest */
+  calculateLoan: (params: {
+    principal: number;
+    interestRate: number;
+    paymentFrequency: "WEEKLY" | "DAILY";
+    baseDuration: number;
+    adjustmentPerPeriod?: number;
+  }) => Promise<{
+    principal: number;
+    paymentFrequency: "WEEKLY" | "DAILY";
+    baseDuration: number;
+    baseInterestRate: number;
+    adjustmentPerPeriod: number;
+    minRate: number;
+    maxRate: number;
+    options: Array<{
+      duration: number;
+      paymentFrequency: "WEEKLY" | "DAILY";
+      interestRate: number;
+      totalInterest: number;
+      totalRepay: number;
+      paymentPerPeriod: number;
+      isBase: boolean;
+    }>;
+  }>;
+
   /** Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED */
   updateLoanStatus: (params: {
     loanId: number;

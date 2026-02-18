@@ -26,6 +26,23 @@ export const createLoanSchema = z.object({
 });
 
 /**
+ * Schema for calculating loan options using a base rate and per-period adjustment.
+ */
+export const calculateLoanSchema = z.object({
+  principal: z.number().positive("Principal must be positive"),
+  interestRate: z
+    .number()
+    .positive("Interest rate must be positive")
+    .max(1, "Interest rate must be less than or equal to 1 (e.g., 0.30 for 30%)"),
+  paymentFrequency: paymentFrequencyEnum,
+  baseDuration: z.number().int().positive("Base duration must be a positive integer"),
+  adjustmentPerPeriod: z.number().positive("Adjustment per period must be positive").optional(),
+  minRate: z.number().min(0, "Minimum rate cannot be negative").max(1).optional(),
+  maxRate: z.number().min(0).max(1, "Maximum rate must be less than or equal to 1").optional(),
+  optionsRange: z.number().int().positive("Options range must be a positive integer").optional()
+});
+
+/**
  * Schema for getting a loan by ID.
  */
 export const getLoanSchema = z.object({
@@ -100,6 +117,11 @@ export const listLoansByMemberSchema = z.object({
  * Input type for creating a loan.
  */
 export type CreateLoanInput = z.infer<typeof createLoanSchema>;
+
+/**
+ * Input type for calculating loan options.
+ */
+export type CalculateLoanInput = z.infer<typeof calculateLoanSchema>;
 
 /**
  * Input type for getting a loan.
