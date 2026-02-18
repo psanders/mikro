@@ -20,6 +20,7 @@ export {
 export {
   createInvokeLLM,
   invokeTextPrompt,
+  type InvokeLLMOptions,
   type ModelSettings,
   type Agent,
   type Message,
@@ -75,6 +76,8 @@ export {
   getPublicPath,
   getPublicUrl,
   getPublicImageUrl,
+  getVoiceNotesEnabled,
+  getDeepgramApiKey,
   getDisabledAgents,
   getLLMConfig,
   validateAllLLMConfigs,

@@ -9,13 +9,13 @@ export const maria: Agent = {
 
 ## REGLAS CRÍTICAS
 
-1. SALUDO: Sigue la directiva de sesión al inicio del mensaje.
-   - Si dice [NUEVA SESIÓN] y el admin te saluda: "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
-   - Si dice [SESIÓN ACTIVA] y el admin te saluda: "¡Qué bueno verte de nuevo! ¿En qué te puedo ayudar?"
+1. SALUDO: Sigue la directiva de sesión al inicio del mensaje. Usa el nombre del usuario que aparece en el contexto para personalizar el saludo.
+   - Si dice [NUEVA SESIÓN] y el admin te saluda: "¡Hola [nombre]! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+   - Si dice [SESIÓN ACTIVA] y el admin te saluda: "¡Qué bueno verte de nuevo, [nombre]! ¿En qué te puedo ayudar?"
    - Si dice [SESIÓN ACTIVA] y el admin no saluda: NO te presentes, responde directamente.
    - Si el admin NO saluda (pide algo directamente): NO saludes, responde directamente a su solicitud.
 2. NUNCA uses asteriscos (*), guiones bajos (_), ni markdown - SOLO texto plano
-3. Después de pago exitoso responde SOLO: "¡Listo!" - NADA más
+3. Después de pago exitoso, recibo enviado, reporte o export responde SOLO: "¡Listo! ¿Algo más?" - NADA más. NUNCA repitas ni parafrasees el mensaje de la herramienta; el usuario ya ve el resultado en su pantalla.
 4. NUNCA INVENTES DATOS: SIEMPRE llama las herramientas para obtener datos reales. Cada número de préstamo distinto = una llamada a \`getLoanByLoanId\`.
 
 ## Estilo
@@ -34,27 +34,27 @@ export const maria: Agent = {
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
 
 ## Flujo cobro individual
-Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta (ej: "Listo. Enviado recordatorio de pago por WHATSAPP a [nombre] (préstamo #X).").
+Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta. Indica siempre el canal (por WhatsApp o por llamada) porque el mensaje va al miembro, no al admin (ej: "Listo. Envié recordatorio de pago por WhatsApp a [nombre] (préstamo #X)." o "Listo. Envié aviso de mora por llamada a [nombre] (préstamo #X).").
 
 ## Flujo registrar pago
 1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
 2. Dan número de préstamo → \`getLoanByLoanId\`. Dan teléfono → \`listMemberLoansByPhone\`.
 3. Con la respuesta, muestra: "Préstamo #[loanId], Cliente: [nombre], Pago: RD$ [paymentAmount] [frecuencia]. ¿Confirmas el pago de RD$ [paymentAmount] para [nombre]?"
-4. Admin confirma ("sí", "dale", "confirmo", etc.) → Llama \`createPayment\` con loanId y amount=paymentAmount del préstamo → luego \`sendReceiptViaWhatsApp\` con data.paymentId → responde SOLO "¡Listo!"
+4. Admin confirma ("sí", "dale", "confirmo", etc.) → Llama \`createPayment\` con loanId y amount=paymentAmount del préstamo → luego \`sendReceiptViaWhatsApp\` con data.paymentId → responde SOLO "¡Listo! ¿Algo más?"
 
 IMPORTANTE: El monto del pago SIEMPRE es el paymentAmount del préstamo. NUNCA preguntes el monto al usuario. Cuando el usuario confirma, registra el pago inmediatamente con el paymentAmount.
 
 ## Flujo recibo (pago ya registrado)
-Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id → \`sendReceiptViaWhatsApp\` → "¡Listo! Te envié el recibo del último pago." Si no hay pagos: "No hay pagos registrados para el préstamo #X."
+Piden recibo del préstamo #X → \`listPaymentsByLoanId\` → lastPayment.id → \`sendReceiptViaWhatsApp\` → responde SOLO "¡Listo! ¿Algo más?" - NO expliques qué enviaste, el usuario ya lo ve. Si no hay pagos: "No hay pagos registrados para el préstamo #X."
 
 ## Flujo export
-Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde con loanCount y memberCount de la respuesta.
+Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de miembros, préstamos ni detalles del reporte. El usuario ya ve el archivo.
 
 ## Flujo reporte de rendimiento
-Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde que el reporte fue enviado por WhatsApp.
+Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
 
 ## Clarificación de reportes
-Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar ni "miembros" ni "rendimiento" ni "portafolio" ni "métricas" ni "Excel", NO llames ninguna herramienta. Pregunta: "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado) o el reporte de rendimiento del portafolio (métricas y gráficos)." Si ya dicen "reporte de todos los miembros", "lista de miembros" o similar → \`exportAllMembers\` (imagen por defecto). Si piden "Excel" o "detallado" para miembros → \`exportAllMembers\` con format "detailed". Si ya dicen "reporte de rendimiento", "reporte del portafolio", "métricas" → \`generatePerformanceReport\`.
+Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de miembros (imagen o Excel), o reporte de rendimiento del portafolio." Si dicen miembros/lista → \`exportAllMembers\`. Si piden Excel o detallado → \`exportAllMembers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`.
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -74,7 +74,8 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
     context: {
       userId: "admin-1",
       phone: "+18099999999",
-      role: "ADMIN"
+      role: "ADMIN",
+      name: "Laura Méndez"
     },
     scenarios: [
       {
@@ -84,7 +85,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Hola!",
             expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+              "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
             human: "Quisiera registrar un pago.",
@@ -125,7 +126,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           },
           {
             human: "Si.",
-            expectedAI: "¡Listo!",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "createPayment",
@@ -179,12 +180,11 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Hola!",
             expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+              "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
             human: "Necesito el reporte de todos los miembros.",
-            expectedAI:
-              "Te envié el reporte de todos los miembros. Incluye 15 préstamos de 12 miembros.",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "exportAllMembers",
@@ -212,11 +212,11 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+              "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
             human: "Necesito el recibo del préstamo 10001",
-            expectedAI: "¡Listo! Te envié el recibo del último pago.",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "listPaymentsByLoanId",
@@ -299,7 +299,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+              "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
             human: "Oye, cuánto está el dólar hoy?",
@@ -316,7 +316,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Hola",
             expectedAI:
-              "¡Hola! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
+              "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
             human: "Necesito un reporte.",
@@ -333,8 +333,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
         turns: [
           {
             human: "Necesito el reporte de miembros en Excel.",
-            expectedAI:
-              "Te envié el reporte de todos los miembros. Incluye 15 préstamos de 12 miembros.",
+            expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
                 name: "exportAllMembers",
@@ -362,7 +361,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
           {
             human: "Envía un recordatorio de pago al préstamo 10019.",
             expectedAI:
-              "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+              "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
             tools: [
               {
                 name: "runSingleCollection",
@@ -371,7 +370,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
                 mockResponse: {
                   success: true,
                   message:
-                    "Listo. Enviado recordatorio de pago por WHATSAPP a Maria Garcia (préstamo #10019).",
+                    "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
                   data: {
                     loanId: 10019,
                     type: "PAYMENT_REMINDER",
@@ -391,8 +390,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
         turns: [
           {
             human: "Manda aviso de mora por WhatsApp al préstamo 10001.",
-            expectedAI:
-              "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+            expectedAI: "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
             tools: [
               {
                 name: "runSingleCollection",
@@ -401,7 +399,7 @@ Si piden solo "un reporte", "el reporte" o "necesito un reporte" SIN mencionar n
                 mockResponse: {
                   success: true,
                   message:
-                    "Listo. Enviado aviso de mora por WHATSAPP a Juan Perez (préstamo #10001).",
+                    "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
                   data: {
                     loanId: 10001,
                     type: "OVERDUE_NOTICE",

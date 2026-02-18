@@ -26,6 +26,8 @@ import {
   createWhatsAppClient,
   allTools,
   getDisabledAgents,
+  getVoiceNotesEnabled,
+  getDeepgramApiKey,
   initializeLLM,
   type Message,
   type AgentName
@@ -88,6 +90,7 @@ import {
   createGeneratePerformanceReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
+import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
 
 // Re-export AppRouter type for clients
 export type { AppRouter } from "./trpc/index.js";
@@ -135,24 +138,26 @@ app.get("/webhook", (req, res) => {
 });
 
 // WhatsApp webhook messages (POST)
-app.post("/webhook", async (req, res) => {
-  try {
-    const result = await handleWhatsAppMessage(req.body);
-    logger.verbose("whatsapp webhook processed", {
-      messagesProcessed: result.messagesProcessed,
-      senders: result.senders.length
-    });
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      logger.error("invalid webhook payload", { error: error.message });
-    } else {
-      const err = error as Error;
-      logger.error("error processing webhook", { error: err.message });
-    }
-  }
-
-  // Always return 200 to WhatsApp
+// Return 200 immediately so WhatsApp does not retry; process messages asynchronously.
+app.post("/webhook", (req, res) => {
+  const body = req.body;
   res.status(200).send("OK");
+
+  handleWhatsAppMessage(body)
+    .then((result) => {
+      logger.verbose("whatsapp webhook processed", {
+        messagesProcessed: result.messagesProcessed,
+        senders: result.senders.length
+      });
+    })
+    .catch((error: unknown) => {
+      if (error instanceof ValidationError) {
+        logger.error("invalid webhook payload", { error: error.message });
+      } else {
+        const err = error as Error;
+        logger.error("error processing webhook", { error: err.message });
+      }
+    });
 });
 
 // Initialize message processor before starting server
@@ -291,8 +296,8 @@ async function initializeMessageProcessor() {
         return {
           success: result.success,
           message: result.success
-            ? `Recibo enviado por WhatsApp correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
-            : `Error al enviar el recibo por WhatsApp: ${result.error || "Error desconocido"}`,
+            ? `Recibo enviado correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
+            : `Error al enviar el recibo: ${result.error || "Error desconocido"}`,
           messageId: result.messageId,
           imageUrl: result.imageUrl,
           error: result.error
@@ -455,6 +460,21 @@ async function initializeMessageProcessor() {
       }
     } as Parameters<typeof createToolExecutor>[0]);
 
+    // Generic ack messages sent before slow tool execution (no LLM involved)
+    const QUICK_ACK_MESSAGES = [
+      "Claro que sí, un momento.",
+      "Un momento por favor.",
+      "Permíteme un momento.",
+      "Enseguida.",
+      "¡Ok, un momento por favor!",
+      "Dame un segundo.",
+      "Si claro, un momento por favor."
+    ];
+
+    function pickRandomAck(): string {
+      return QUICK_ACK_MESSAGES[Math.floor(Math.random() * QUICK_ACK_MESSAGES.length)];
+    }
+
     // Create LLM invoker wrapper that selects agent based on name
     const invokeLLM = async (
       agent: Parameters<typeof createInvokeLLM>[0],
@@ -464,7 +484,14 @@ async function initializeMessageProcessor() {
       context?: Record<string, unknown>,
       isNewSession?: boolean
     ): Promise<string> => {
-      const invokeFn = createInvokeLLM(agent, allTools, toolExecutor);
+      const invokeFn = createInvokeLLM(agent, allTools, toolExecutor, {
+        sendQuickAck: async (ctx) => {
+          const phone = ctx.phone as string | undefined;
+          if (phone) {
+            await sendWhatsAppMessage({ phone, message: pickRandomAck() });
+          }
+        }
+      });
       return invokeFn(messages, userMessage, imageUrl, context, isNewSession ?? true);
     };
 
@@ -509,6 +536,16 @@ async function initializeMessageProcessor() {
       hasSendWhatsAppMessage: !!sendWhatsAppMessage
     });
 
+    const voiceNotesEnabled = getVoiceNotesEnabled();
+    const deepgramApiKey = getDeepgramApiKey();
+    const transcribeVoiceNote =
+      voiceNotesEnabled && deepgramApiKey ? createTranscribeVoiceNote(deepgramApiKey) : undefined;
+    if (voiceNotesEnabled && !deepgramApiKey) {
+      logger.warn(
+        "voice notes enabled but MIKRO_DEEPGRAM_API_KEY not set; voice notes will be unavailable"
+      );
+    }
+
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -516,7 +553,8 @@ async function initializeMessageProcessor() {
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,
-      getAgent: (name: AgentName) => getAgent(agents, name)
+      getAgent: (name: AgentName) => getAgent(agents, name),
+      ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 
     setMessageProcessor(processorConfig);
@@ -542,16 +580,21 @@ async function initializeMessageProcessor() {
     // Daily collections cron (reminders, overdue notices, collection calls)
     const collectionsEnabled = process.env.MIKRO_COLLECTIONS_ENABLED !== "false";
     const collectionsCron = process.env.MIKRO_COLLECTIONS_CRON ?? "0 8 * * *";
+    const collectionsIncludeDefaulted = process.env.MIKRO_COLLECTIONS_INCLUDE_DEFAULTED !== "false";
     if (collectionsEnabled) {
       cron.schedule(collectionsCron, () => {
-        runDailyCollections(new Date(), {
-          db: prisma,
-          sendWhatsAppTemplate: (p) =>
-            whatsAppClient.sendTemplateMessage({
-              ...p,
-              bodyParameters: p.bodyParameters ?? []
-            })
-        }).catch((err: Error) => {
+        runDailyCollections(
+          new Date(),
+          {
+            db: prisma,
+            sendWhatsAppTemplate: (p) =>
+              whatsAppClient.sendTemplateMessage({
+                ...p,
+                bodyParameters: p.bodyParameters ?? []
+              })
+          },
+          collectionsIncludeDefaulted
+        ).catch((err: Error) => {
           logger.error("daily collections run failed", { error: err.message });
         });
       });

@@ -22,7 +22,7 @@ export type {
 } from "./types.js";
 
 // LLM invocation
-export { createInvokeLLM } from "./createInvokeLLM.js";
+export { createInvokeLLM, type InvokeLLMOptions } from "./createInvokeLLM.js";
 
 // LLM providers (LangChain)
 export {

@@ -12,6 +12,9 @@ export {
   withErrorHandlingAndValidation,
   validatePhone,
   getCycleMetrics,
+  dayOfWeekToNumber,
+  daysToFirstPreferredDay,
+  MS_PER_DAY,
   type LoanPaymentData,
   type CycleMetrics
 } from "./utils/index.js";
@@ -94,6 +97,7 @@ export {
   // WhatsApp schemas
   whatsappTextSchema,
   whatsappImageSchema,
+  whatsappAudioSchema,
   whatsappMessageTypeEnum,
   whatsappMessageSchema,
   whatsappChangeValueSchema,
@@ -104,6 +108,7 @@ export {
   sendWhatsAppTemplateSchema,
   type WhatsAppText,
   type WhatsAppImage,
+  type WhatsAppAudio,
   type WhatsAppMessageType,
   type WhatsAppMessage,
   type WhatsAppChangeValue,

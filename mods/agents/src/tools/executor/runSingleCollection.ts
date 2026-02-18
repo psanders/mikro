@@ -46,11 +46,13 @@ export async function handleRunSingleCollection(
       : result.type === "OVERDUE_NOTICE"
         ? "aviso de mora"
         : "llamada de cobro";
+  // Specify channel: the message goes to the member (someone else), so admin should know how they were reached.
+  const channelPhrase = result.channel === "PHONE_CALL" ? " por llamada" : " por WhatsApp";
   return {
     success: true,
     message: result.dryRun
-      ? `Dry run: se habría enviado ${actionLabel} por ${result.channel} a ${result.memberName} (préstamo #${result.loanId}).`
-      : `Listo. Enviado ${actionLabel} por ${result.channel} a ${result.memberName} (préstamo #${result.loanId}).`,
+      ? `Dry run: se habría enviado ${actionLabel}${channelPhrase} a ${result.memberName} (préstamo #${result.loanId}).`
+      : `Listo. Envié ${actionLabel}${channelPhrase} a ${result.memberName} (préstamo #${result.loanId}).`,
     data: {
       loanId: result.loanId,
       type: result.type,

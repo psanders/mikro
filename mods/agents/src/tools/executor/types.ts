@@ -24,6 +24,7 @@ export interface ExportedMember {
   phone: string;
   collectionPoint: string | null;
   notes: string | null;
+  preferredPaymentDay?: string | null;
   referredBy: { name: string };
   loans: ExportedLoan[];
 }

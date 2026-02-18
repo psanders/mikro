@@ -19,6 +19,13 @@ export const whatsappImageSchema = z.object({
 });
 
 /**
+ * Schema for WhatsApp message audio content (voice notes).
+ */
+export const whatsappAudioSchema = z.object({
+  id: z.string()
+});
+
+/**
  * Enum for WhatsApp incoming message types.
  * These are the message types that can be received from the WhatsApp webhook.
  */
@@ -46,7 +53,8 @@ export const whatsappMessageSchema = z.object({
   id: z.string(),
   timestamp: z.string(),
   text: whatsappTextSchema.optional(),
-  image: whatsappImageSchema.optional()
+  image: whatsappImageSchema.optional(),
+  audio: whatsappAudioSchema.optional()
 });
 
 /**
@@ -175,6 +183,11 @@ export type WhatsAppText = z.infer<typeof whatsappTextSchema>;
  * Type for WhatsApp message image content.
  */
 export type WhatsAppImage = z.infer<typeof whatsappImageSchema>;
+
+/**
+ * Type for WhatsApp message audio content (voice notes).
+ */
+export type WhatsAppAudio = z.infer<typeof whatsappAudioSchema>;
 
 /**
  * Type for WhatsApp incoming message types.

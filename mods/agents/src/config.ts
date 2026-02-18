@@ -190,6 +190,24 @@ export function getSessionTimeoutSeconds(): number {
 }
 
 /**
+ * Whether voice notes (audio messages) are enabled.
+ * When true and MIKRO_DEEPGRAM_API_KEY is set, voice notes are transcribed and processed as text.
+ * @returns true only when MIKRO_VOICE_NOTES_ENABLED === "true"
+ */
+export function getVoiceNotesEnabled(): boolean {
+  return process.env.MIKRO_VOICE_NOTES_ENABLED === "true";
+}
+
+/**
+ * Get the Deepgram API key for voice note transcription.
+ * @returns The API key, or undefined if not set
+ */
+export function getDeepgramApiKey(): string | undefined {
+  const key = process.env.MIKRO_DEEPGRAM_API_KEY;
+  return key && key.trim().length > 0 ? key.trim() : undefined;
+}
+
+/**
  * Get the similarity confidence threshold for eval judge (0-1).
  * Responses are considered similar when judge confidence >= this value.
  * @returns Threshold (default: 0.7)

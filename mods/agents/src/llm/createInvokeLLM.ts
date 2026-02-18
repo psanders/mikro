@@ -22,6 +22,32 @@ type ImageUrlContent = { type: "image_url"; image_url: { url: string } };
 type MessageContent = TextContent | ImageUrlContent;
 
 /**
+ * Tools that are known to be slow (I/O-heavy, external APIs, report generation).
+ * When any of these appear in a tool-call batch we send a quick ack first.
+ */
+const SLOW_TOOLS = new Set([
+  "createPayment",
+  "sendReceiptViaWhatsApp",
+  "exportAllMembers",
+  "generatePerformanceReport",
+  "runSingleCollection",
+  "exportCollectorMembers"
+]);
+
+/**
+ * Options for createInvokeLLM.
+ */
+export interface InvokeLLMOptions {
+  /**
+   * Optional callback fired once per invocation, right before the first
+   * batch of tool calls that contains at least one slow tool.
+   * Intended for sending a quick generic acknowledgment to the user
+   * (e.g. "Claro que sí, un momento.") without involving the LLM.
+   */
+  sendQuickAck?: (context: Record<string, unknown>) => Promise<void>;
+}
+
+/**
  * Filter tools based on agent's allowed tools.
  */
 function filterTools(allTools: ToolFunction[], allowedTools: string[]): ToolFunction[] {
@@ -140,6 +166,7 @@ function truncateToolResult(result: { success: boolean; message: string; data?: 
  * @param agent - The agent configuration (systemPrompt, model, temperature, allowedTools)
  * @param allTools - All available tool definitions
  * @param toolExecutor - Function to execute tools when called by the LLM
+ * @param options - Optional settings (e.g. sendQuickAck callback)
  * @returns A function that invokes the LLM with the given messages
  *
  * @example
@@ -156,7 +183,8 @@ function truncateToolResult(result: { success: boolean; message: string; data?: 
 export function createInvokeLLM(
   agent: Agent,
   allTools: ToolFunction[],
-  toolExecutor: ToolExecutor
+  toolExecutor: ToolExecutor,
+  options?: InvokeLLMOptions
 ) {
   const agentTools = filterTools(allTools, agent.allowedTools);
 
@@ -219,10 +247,12 @@ export function createInvokeLLM(
         ? model.bindTools(langchainTools, { tool_choice: "auto" })
         : model;
 
-    // Build system message with session directive
+    // Build system message with session directive and user context
+    const userName = context?.name ? String(context.name) : "";
+    const userContext = userName ? `Nombre del usuario: ${userName}\n` : "";
     const sessionDirective = isNewSession
-      ? "[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n\n"
-      : "[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n\n";
+      ? `[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n${userContext}\n`
+      : `[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n${userContext}\n`;
     const systemContent = sessionDirective + agent.systemPrompt;
 
     // Convert existing messages to LangChain format
@@ -271,6 +301,7 @@ export function createInvokeLLM(
       // Handle tool calls loop
       let toolCallIteration = 0;
       const MAX_TOOL_ITERATIONS = 20;
+      let quickAckSent = false;
 
       while (response.tool_calls && response.tool_calls.length > 0) {
         toolCallIteration++;
@@ -286,10 +317,34 @@ export function createInvokeLLM(
           );
         }
 
+        const toolNames = response.tool_calls.map((tc: { name: string }) => tc.name);
+
         logger.verbose("tool calls detected", {
           agent: agent.name,
-          tools: response.tool_calls.map((tc: { name: string }) => tc.name)
+          tools: toolNames
         });
+
+        // Send a quick ack before the first batch that contains a slow tool
+        if (
+          !quickAckSent &&
+          options?.sendQuickAck &&
+          toolNames.some((name: string) => SLOW_TOOLS.has(name))
+        ) {
+          try {
+            await options.sendQuickAck(context ?? {});
+            quickAckSent = true;
+            logger.verbose("quick ack sent before slow tool execution", {
+              agent: agent.name,
+              slowTools: toolNames.filter((n: string) => SLOW_TOOLS.has(n))
+            });
+          } catch (ackError) {
+            const err = ackError as Error;
+            logger.warn("failed to send quick ack, continuing with tool execution", {
+              agent: agent.name,
+              error: err.message
+            });
+          }
+        }
 
         // Add assistant message with tool calls
         langchainMessages.push(response);

@@ -40,7 +40,8 @@ function startOfToday(date: Date = new Date()): Date {
  */
 export async function runDailyCollections(
   asOfDate: Date,
-  deps: RunDailyCollectionsDeps
+  deps: RunDailyCollectionsDeps,
+  includeDefaulted = false
 ): Promise<void> {
   const start = startOfToday(asOfDate);
   const dryRun = isDryRun();
@@ -48,11 +49,12 @@ export async function runDailyCollections(
 
   logger.verbose("daily collections starting", {
     dryRun,
+    includeDefaulted,
     asOfDate: asOfDate.toISOString(),
     dayOfWeek: todayDow
   });
 
-  // Load all active members with their active loans. For each loan, include only COMPLETED
+  // Load all active members with their active (and optionally defaulted) loans. For each loan, include only COMPLETED
   // payments so that cycle metrics (getMissedPaymentsCount) count only actual payments made;
   // REVERSED or PENDING payments must not count as "payments made". Members with no
   // completed payments still appear (loans have payments: []).
@@ -60,7 +62,7 @@ export async function runDailyCollections(
     where: { isActive: true },
     include: {
       loans: {
-        where: { status: "ACTIVE" },
+        where: { status: { in: includeDefaulted ? ["ACTIVE", "DEFAULTED"] : ["ACTIVE"] } },
         include: {
           payments: {
             where: { status: "COMPLETED" },
@@ -123,7 +125,7 @@ export async function runDailyCollections(
     }> = [];
 
     for (const loan of member.loans) {
-      const loanData = loanToData(loan);
+      const loanData = loanToData(loan, member.preferredPaymentDay);
       const missed = getMissedPaymentsCount(loanData, asOfDate);
       const paymentDay = isPaymentDayToday(
         loan.paymentFrequency,
@@ -141,7 +143,9 @@ export async function runDailyCollections(
       }
 
       if (missed >= COLLECTION_CALL_MIN_MISSED) {
-        const callMissed = callLoan ? getMissedPaymentsCount(loanToData(callLoan), asOfDate) : 0;
+        const callMissed = callLoan
+          ? getMissedPaymentsCount(loanToData(callLoan, member.preferredPaymentDay), asOfDate)
+          : 0;
         if (!callLoan || missed > callMissed) callLoan = loan;
       } else if (missed >= COLLECTION_OVERDUE_MIN_MISSED) {
         if (!overdueLoan) overdueLoan = loan;
@@ -155,7 +159,10 @@ export async function runDailyCollections(
 
     if (callLoan) {
       action = "COLLECTION_CALL";
-      const missed = getMissedPaymentsCount(loanToData(callLoan), asOfDate);
+      const missed = getMissedPaymentsCount(
+        loanToData(callLoan, member.preferredPaymentDay),
+        asOfDate
+      );
       callList.push({
         member: memberInfo,
         loan: {
@@ -170,7 +177,10 @@ export async function runDailyCollections(
       });
     } else if (overdueLoan) {
       action = "OVERDUE_NOTICE";
-      const missed = getMissedPaymentsCount(loanToData(overdueLoan), asOfDate);
+      const missed = getMissedPaymentsCount(
+        loanToData(overdueLoan, member.preferredPaymentDay),
+        asOfDate
+      );
       overdueList.push({
         member: memberInfo,
         loan: {

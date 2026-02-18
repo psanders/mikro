@@ -4,7 +4,7 @@
  * Helpers for member report: missed count, times late, trend, rating, row highlight.
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
-import { getCycleMetrics } from "./calculatePaymentStatus.js";
+import { getCycleMetrics, daysToFirstPreferredDay, MS_PER_DAY } from "./calculatePaymentStatus.js";
 import {
   LOOKBACK_WEEKS_FOR_LATENESS,
   TREND_LOOKBACK_WEEKS,
@@ -14,8 +14,6 @@ import {
   HIGHLIGHT_RED_MIN_MISSED,
   HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
 } from "./memberReportConstants.js";
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /** Trend direction for lateness. */
 export type LatenessTrend = "mejorando" | "estable" | "empeorando";
@@ -51,6 +49,13 @@ export function getTimesLateInLastWeeks(
     .filter((p) => new Date(p.paidAt) <= asOf)
     .sort((a, b) => new Date(a.paidAt).getTime() - new Date(b.paidAt).getTime());
 
+  // When a preferred payment day is set, due dates are anchored to that day
+  // of the week instead of raw 7-day intervals from creation.
+  const gap = loan.preferredPaymentDay
+    ? daysToFirstPreferredDay(loanStart, loan.preferredPaymentDay)
+    : 0;
+  const usesPreferredDay = gap > 0;
+
   let lateCount = 0;
   const startCycle = Math.max(0, cyclesElapsed - weeks);
   for (
@@ -59,8 +64,9 @@ export function getTimesLateInLastWeeks(
     cycleIndex++
   ) {
     const payment = sortedPayments[cycleIndex];
-    // Cycle i is due at end of week i+1 (e.g. cycle 0 due at day 7)
-    const dueDate = new Date(loanStart.getTime() + (cycleIndex + 1) * 7 * MS_PER_DAY);
+    const dueDate = usesPreferredDay
+      ? new Date(loanStart.getTime() + (gap + cycleIndex * 7) * MS_PER_DAY)
+      : new Date(loanStart.getTime() + (cycleIndex + 1) * 7 * MS_PER_DAY);
     const paidAt = new Date(payment.paidAt);
     const daysAfterDue = Math.floor((paidAt.getTime() - dueDate.getTime()) / MS_PER_DAY);
     if (daysAfterDue > LATE_DAYS_THRESHOLD) lateCount++;

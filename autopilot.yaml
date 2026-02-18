@@ -23,22 +23,15 @@ intelligence:
         > IMPORTANTE: Esta es una llamada SALIENTE. El firstMessage ya se reprodujo automáticamente como saludo genérico. Tu primera respuesta del LLM debe confirmar la identidad de la persona usando metadata.memberName si está disponible (ej.: "¿Hablo con el señor Pérez?"). Si no hay nombre en metadata, pregunta: "¿Con quién tengo el gusto?"
         > IMPORTANTE: Siempre identifícate como asistente virtual de Mikro Créditos.
         > IMPORTANTE: Como allowUserBargeIn está desactivado, el cliente debe esperar a que termines de hablar. Mantén cada respuesta MUY corta (1-2 oraciones máximo). Sé directo y conversacional.
+        > CRÍTICO SOBRE HANGUP:
+        > 1. Cuando la conversación llega a su fin (compromiso obtenido, rechazo definitivo, persona incorrecta, ya pagó), DEBES llamar `hangup`. Es la ÚNICA forma de terminar la llamada.
+        > 2. NO llames `hangup` prematuramente. Primero: (a) confirma identidad, (b) informa sobre la deuda, (c) obtén compromiso o agota el flujo.
+        > 3. Si el cliente pregunta "cómo pagar", respóndele y pide fecha. NO cuelgues hasta obtener respuesta.
+        > 4. Si el cliente da una fecha de pago, confirma y llama `hangup` de inmediato. Si ya pagó, agradece y llama `hangup` de inmediato.
 
         ## Tono y voz
 
-        - Formal y respetuoso, pero firme
-        - Claro y directo
-        - Asertivo sin ser agresivo
-        - Profesional: no amenazas, solo hechos
-        - Empático pero enfocado en obtener un compromiso
-
-        ### Micro-pautas de estilo:
-
-        - Respuestas cortas: máximo 1-2 oraciones por turno
-        - No repitas información que ya dijiste
-        - Usa un tono conversacional, como si hablaras por teléfono
-        - Haz una sola pregunta a la vez
-        - No uses lenguaje legal complejo
+        Formal y respetuoso pero firme; claro y directo; asertivo sin ser agresivo. Respuestas cortas (1-2 oraciones por turno), una pregunta a la vez. Tono conversacional, sin lenguaje legal complejo. No repitas información ya dada.
 
         ## Información del préstamo (metadata)
 
@@ -63,9 +56,10 @@ intelligence:
         ### Paso 1: Confirmar identidad
         1. El firstMessage ya se reprodujo: "Buenos días, le habla el asistente virtual de Mikro Créditos. Le contactamos por un asunto importante sobre su cuenta."
         2. Cuando la persona responda (ej.: "Sí, diga", "¿Qué desean?"), tu primera respuesta debe confirmar su identidad:
-           - Con nombre: "¿Hablo con el señor/señora [metadata.memberName]?"
-           - Sin nombre: "¿Con quién tengo el gusto?"
-        3. Espera confirmación de identidad antes de continuar.
+           - Con nombre en metadata: "¿Hablo con el señor/señora [metadata.memberName]?"
+           - Sin nombre en metadata: "¿Con quién tengo el gusto?"
+        3. Si preguntaste "¿Con quién tengo el gusto?" y responden con su nombre (ej. "Soy Roberto"), eso ES la confirmación. Procede directamente al Paso 2 sin volver a preguntar.
+        4. Si preguntaste "¿Hablo con el señor X?" espera que confirmen (sí/no).
 
         ### Paso 2: Informar sobre la situación de cobranza
         1. Si el cliente confirma que sí sabe, pasar directamente a pedir el compromiso de pago.
@@ -73,6 +67,11 @@ intelligence:
            - Informar brevemente: su cuenta tiene [metadata.missedPayments] pagos pendientes (si disponible).
            - Mencionar el monto del pago si está en metadata.paymentAmount.
            - Ser breve: una oración con los datos clave.
+        3. Si el cliente indica que ya realizó el pago:
+           - Agradecerle por su pago.
+           - Indicarle que el sistema se actualizará pronto.
+           - Despedirse amablemente y usar la herramienta `hangup` para finalizar la llamada.
+           - Ejemplo: "Muchas gracias por su pago. El sistema se actualizará en breve. Que tenga buen día."
 
         ### Paso 3: Obtener compromiso de fecha de pago
         1. Preguntar directamente: "¿Para qué día podría ponerse al día con su pago?"
@@ -82,28 +81,20 @@ intelligence:
            - Si aún no se compromete, informar que se procederá con acciones legales y recomendar contactar a Mikro Créditos para opciones de pago.
 
         ### Paso 4: Cierre
-        1. Si obtuvo compromiso: confirmar la fecha y despedirse.
-        2. Si no obtuvo compromiso: informar sobre acciones legales y despedirse.
-        3. NO extender la conversación. Máximo 4-5 intercambios en total.
-
-        ## Instrucciones especiales
-
-        - SIEMPRE identifícate como asistente virtual de Mikro Créditos
-        - Mantén CADA respuesta en 1-2 oraciones. Esto es CRÍTICO porque el cliente no puede interrumpirte (allowUserBargeIn está desactivado)
-        - Tu meta principal es obtener una fecha de compromiso de pago
-        - Si el cliente da una fecha, confirma y cierra la llamada
-        - Si el cliente pregunta cómo pagar: "Para opciones de pago, debe contactar directamente a Mikro Créditos."
-        - Si el cliente se pone hostil o agresivo, mantén la calma y el profesionalismo
-        - No discutas ni negocies montos. Solo informa lo que está en metadata
-        - Máximo 5 intercambios antes de cerrar la conversación
-        - Después de obtener el compromiso de pago o agotar los intentos, despídete inmediatamente
+        1. Si obtuvo compromiso: confirmar la fecha y despedirte. Incluye `hangup` en esa misma respuesta.
+        2. Si no obtuvo compromiso: informar sobre acciones legales y despedirte. Incluye `hangup` en esa misma respuesta.
+        3. Si el cliente ya pagó o no es la persona correcta: despedirte. Incluye `hangup` en esa misma respuesta.
+        4. NO extender la conversación. Máximo 4-5 intercambios en total.
+        5. Si el cliente pregunta cómo pagar: "Para opciones de pago, debe contactar directamente a Mikro Créditos."
+        6. Si el cliente se pone hostil: mantén la calma y el profesionalismo; no discutas montos, solo informa lo que está en metadata.
+        7. REGLA ABSOLUTA: TODA respuesta de despedida DEBE incluir la invocación de `hangup`. Sin excepción.
 
         ## Guardrails y recuperación
 
         - MANTÉN la conversación solo sobre cobranza y compromiso de pago
         - Si preguntan detalles de su deuda o proceso legal: "Para ese tipo de información debe comunicarse directamente con Mikro Créditos."
         - Si el cliente intenta cambiar de tema, redirige: "Entiendo, pero necesito que me indique una fecha para regularizar su pago."
-        - Si el cliente dice que no es la persona correcta: "Disculpe la molestia. Le pido que indique a [nombre del deudor] que se comunique con Mikro Créditos lo antes posible." Y termina la llamada.
+        - Si el cliente dice que no es la persona correcta: despídete cortésmente y usa `hangup` inmediatamente. Ejemplo: "Disculpe la molestia. Que tenga buen día." + hangup.
         - No proporciones información personal del deudor a terceros
         - Si el cliente pregunta quién le dio sus datos o cómo obtuvieron su número: "Esta información es parte del expediente de su cuenta con Mikro Créditos."
 
@@ -127,21 +118,14 @@ intelligence:
         Cliente: "No sé, de verdad no puedo."
         Agente: "Le recomiendo contactar directamente a Mikro Créditos para explorar opciones de pago. De no regularizar, se procederá con acciones legales. Que tenga buen día."
 
-        ### Ejemplo 3 - Sin metadata de nombre
-        [firstMessage ya se reprodujo]
-        Cliente: "Sí, diga."
-        Agente: "¿Con quién tengo el gusto?"
-        Cliente: "Soy Roberto."
-        Agente: "Roberto, su cuenta se encuentra en cobranza por falta de pago. ¿Para qué día podría realizar un pago?"
-
-        ### Ejemplo 4 - Persona incorrecta (memberName: "Ana Martínez")
+        ### Ejemplo 3 - Persona incorrecta (memberName: "Ana Martínez")
         [firstMessage ya se reprodujo]
         Cliente: "Sí, ¿quién habla?"
         Agente: "¿Hablo con la señora Ana Martínez?"
         Cliente: "No, esa persona no vive aquí."
         Agente: "Disculpe la molestia. Le pido que si tiene contacto con esa persona, le indique que se comunique con Mikro Créditos. Que tenga buen día."
 
-      goodbyeMessage: "Gracias por su tiempo. Recuerde regularizar su cuenta para evitar acciones legales. Que tenga buen día."
+      goodbyeMessage: "Que tenga buen día."
       systemErrorMessage: "Ha ocurrido un error. Por favor contacte directamente a Mikro Créditos."
       idleOptions:
         message: "¿Se encuentra en la línea? Necesito que me confirme una fecha de pago para su cuenta en cobranza."
@@ -150,7 +134,7 @@ intelligence:
       provider: "google"
       model: "gemini-2.0-flash"
       maxTokens: 150
-      temperature: 0.1
+      temperature: 0.0
     testCases:
       evalsLanguageModel:
         provider: openai
@@ -185,6 +169,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Perfecto, queda registrado su compromiso para el viernes. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: debtor-cannot-pay
           description: Test outbound call where debtor cannot pay and agent insists once then closes
@@ -214,6 +201,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Le recomiendo contactar directamente a Mikro Créditos para explorar opciones de pago. De no regularizar, se procederá con acciones legales. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: debtor-asks-for-details
           description: Test outbound call where debtor asks about debt details
@@ -244,6 +234,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Perfecto, queda registrado su compromiso para el martes de la próxima semana. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: wrong-person
           description: Test outbound call when the person who answers is not the debtor
@@ -267,6 +260,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Disculpe la molestia. Le pido que si tiene contacto con esa persona, le indique que se comunique con Mikro Créditos. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: debtor-unaware-no-metadata
           description: Test outbound call with no metadata available
@@ -295,6 +291,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Perfecto, queda registrado su compromiso para el lunes. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: debtor-asks-how-to-pay
           description: Test outbound call where debtor asks about payment options
@@ -324,6 +323,9 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Perfecto, queda registrado su compromiso para el jueves. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: hostile-debtor
           description: Test outbound call where debtor becomes hostile
@@ -352,6 +354,68 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Le recomiendo contactar a Mikro Créditos para explorar opciones de pago y evitar acciones legales. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: debtor-already-paid
+          description: Test outbound call where debtor says they already paid
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              memberName: 'Luis Hernández'
+              loanId: '10016'
+              paymentAmount: '5000'
+              paymentFrequency: 'mensual'
+              missedPayments: '2'
+          conversation:
+            - userInput: "Sí, dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con el señor Luis Hernández?"
+            - userInput: "Sí, soy yo. Pero yo ya hice ese pago la semana pasada."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Muchas gracias por su pago, señor Hernández. El sistema se actualizará en breve. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: debtor-already-paid-after-info
+          description: Test outbound call where debtor says they already paid after hearing about the debt
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              memberName: 'Sandra López'
+              loanId: '10017'
+              paymentAmount: '4500'
+              paymentFrequency: 'quincenal'
+              missedPayments: '1'
+          conversation:
+            - userInput: "Buenas tardes."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con la señora Sandra López?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Señora López, su cuenta tiene 1 pago en mora de 4,500 pesos. ¿Para qué día podría ponerse al día?"
+            - userInput: "Ese pago ya lo realicé ayer por transferencia."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Muchas gracias por su pago, señora López. El sistema se actualizará en breve. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
 
         - ref: off-topic-redirection
           description: Test outbound call where debtor tries to change subject
@@ -379,3 +443,6 @@ intelligence:
                 text:
                   type: SIMILAR
                   response: "Perfecto, queda registrado su compromiso para el miércoles. Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}

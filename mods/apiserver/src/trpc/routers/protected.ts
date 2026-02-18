@@ -405,14 +405,18 @@ export const protectedRouter = router({
 
       try {
         const whatsAppClient = createWhatsAppClient();
-        await runDailyCollections(new Date(), {
-          db: ctx.db as unknown as PrismaClient,
-          sendWhatsAppTemplate: (p) =>
-            whatsAppClient.sendTemplateMessage({
-              ...p,
-              bodyParameters: p.bodyParameters ?? []
-            })
-        });
+        await runDailyCollections(
+          new Date(),
+          {
+            db: ctx.db as unknown as PrismaClient,
+            sendWhatsAppTemplate: (p) =>
+              whatsAppClient.sendTemplateMessage({
+                ...p,
+                bodyParameters: p.bodyParameters ?? []
+              })
+          },
+          input.includeDefaulted
+        );
       } finally {
         if (input.dryRun) {
           if (prevDryRun === undefined) {
@@ -445,7 +449,8 @@ export const protectedRouter = router({
             loanId: input.loanId,
             channel: input.channel ?? undefined,
             type: input.type ?? undefined,
-            dryRun: input.dryRun
+            dryRun: input.dryRun,
+            includeDefaulted: input.includeDefaulted
           },
           {
             db: ctx.db as unknown as PrismaClient,

@@ -13,7 +13,11 @@ export const runCollectionsSchema = z.object({
    * or writing CollectionAttempt records. Overrides the server-side
    * MIKRO_COLLECTIONS_DRY_RUN env var for this single run.
    */
-  dryRun: z.boolean().optional().default(false)
+  dryRun: z.boolean().optional().default(false),
+  /**
+   * When true, include loans with status DEFAULTED in addition to ACTIVE.
+   */
+  includeDefaulted: z.boolean().optional().default(false)
 });
 
 export type RunCollectionsInput = z.infer<typeof runCollectionsSchema>;
@@ -26,7 +30,11 @@ export const runSingleCollectionSchema = z.object({
   loanId: z.number().int().positive(),
   channel: z.enum(["WHATSAPP", "PHONE_CALL"]).optional(),
   type: z.enum(["PAYMENT_REMINDER", "OVERDUE_NOTICE", "COLLECTION_CALL"]).optional(),
-  dryRun: z.boolean().optional().default(false)
+  dryRun: z.boolean().optional().default(false),
+  /**
+   * When true, allow running collection for loans with status DEFAULTED (not only ACTIVE).
+   */
+  includeDefaulted: z.boolean().optional().default(false)
 });
 
 export type RunSingleCollectionInput = z.infer<typeof runSingleCollectionSchema>;

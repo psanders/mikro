@@ -9,7 +9,7 @@ import type { AgentName } from "../constants.js";
  */
 export type RouteResult =
   | { type: "guest"; phone: string }
-  | { type: "user"; userId: string; role: Role; phone: string }
+  | { type: "user"; userId: string; name: string; role: Role; phone: string }
   | { type: "member"; memberId: string; phone: string }
   | { type: "ignored"; reason: string; phone: string };
 
