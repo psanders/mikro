@@ -13,6 +13,7 @@ import {
   getMissedPaymentsCount,
   getLatenessTrend,
   getReportRowHighlight,
+  formatPaymentFrequency,
   buildGroupedMemberRows,
   renderMembersReportToPng,
   loadLogoDataUrl,
@@ -65,6 +66,7 @@ export interface MemberReportRow {
   name: string;
   phone: string;
   loanId: number;
+  paymentCycle: string;
   rating: string;
   missedCount: number;
   trend: string;
@@ -85,6 +87,7 @@ export function buildMemberReportRows(members: SerializedMember[]): MemberReport
         name: member.name,
         phone: member.phone,
         loanId: loan.loanId,
+        paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
@@ -112,7 +115,7 @@ export function outputMembersAsCsv(
   log: (message: string) => void
 ): void {
   log(
-    "Nombre,Teléfono,Préstamo,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+    "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
   const rows = buildMemberReportRows(members);
   for (const r of rows) {
@@ -120,6 +123,7 @@ export function outputMembersAsCsv(
       `"${r.name}"`,
       r.phone,
       r.loanId,
+      r.paymentCycle,
       r.rating,
       r.missedCount,
       r.trend,
@@ -139,12 +143,13 @@ export function outputMembersAsTable(
   members: SerializedMember[],
   log: (message: string) => void
 ): void {
-  const ui = cliui({ width: 220 });
+  const ui = cliui({ width: 232 });
 
   ui.div(
     { text: "NOMBRE", padding: [0, 0, 0, 0], width: 25 },
     { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 15 },
     { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
+    { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
     { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
     { text: "ATRASADOS", padding: [0, 0, 0, 0], width: 10 },
     { text: "TENDENCIA", padding: [0, 0, 0, 0], width: 12 },
@@ -159,6 +164,7 @@ export function outputMembersAsTable(
       { text: r.name, padding: [0, 0, 0, 0], width: 25 },
       { text: r.phone, padding: [0, 0, 0, 0], width: 15 },
       { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
+      { text: r.paymentCycle, padding: [0, 0, 0, 0], width: 10 },
       { text: r.rating, padding: [0, 0, 0, 0], width: 8 },
       { text: String(r.missedCount), padding: [0, 0, 0, 0], width: 10 },
       { text: r.trend, padding: [0, 0, 0, 0], width: 12 },
@@ -169,7 +175,7 @@ export function outputMembersAsTable(
   }
 
   log(ui.toString());
-  log(`\nTotal: ${rows.length} préstamos de ${members.length} miembros`);
+  log(`\nTotal: ${rows.length} préstamos de ${members.length} clientes`);
 }
 
 /** Convert serialized members to the shape expected by buildGroupedMemberRows. */
@@ -200,12 +206,13 @@ export function outputMembersGroupedAsTable(
   const grouped = buildGroupedMemberRows(forGrouping);
 
   const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
-  log(`Total: ${totalRows} préstamos de ${members.length} miembros\n`);
+  log(`Total: ${totalRows} préstamos de ${members.length} clientes\n`);
 
   outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, (r) => [
     r.name,
     r.phone,
     String(r.loanId),
+    formatPaymentFrequency(r.paymentFrequency),
     ratingToStars(r.rating),
     String(r.missedCount)
   ]);
@@ -213,6 +220,7 @@ export function outputMembersGroupedAsTable(
     r.name,
     r.phone,
     String(r.loanId),
+    formatPaymentFrequency(r.paymentFrequency),
     ratingToStars(r.rating),
     String(r.missedCount)
   ]);
@@ -220,6 +228,7 @@ export function outputMembersGroupedAsTable(
     r.name,
     r.phone,
     String(r.loanId),
+    formatPaymentFrequency(r.paymentFrequency),
     ratingToStars(r.rating),
     String(r.missedCount)
   ]);
@@ -233,11 +242,12 @@ function outputGroupedSection(
 ): void {
   if (rows.length === 0) return;
   log(`--- ${title} (${rows.length}) ---`);
-  const ui = cliui({ width: 120 });
+  const ui = cliui({ width: 132 });
   ui.div(
     { text: "NOMBRE", padding: [0, 0, 0, 0], width: 28 },
     { text: "TELEFONO", padding: [0, 0, 0, 0], width: 14 },
     { text: "PRESTAMO", padding: [0, 0, 0, 0], width: 10 },
+    { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
     { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
     { text: "ATRASOS", padding: [0, 0, 0, 0], width: 10 }
   );
@@ -247,8 +257,9 @@ function outputGroupedSection(
       { text: cells[0], padding: [0, 0, 0, 0], width: 28 },
       { text: cells[1], padding: [0, 0, 0, 0], width: 14 },
       { text: cells[2], padding: [0, 0, 0, 0], width: 10 },
-      { text: cells[3], padding: [0, 0, 0, 0], width: 8 },
-      { text: cells[4], padding: [0, 0, 0, 0], width: 10 }
+      { text: cells[3], padding: [0, 0, 0, 0], width: 10 },
+      { text: cells[4], padding: [0, 0, 0, 0], width: 8 },
+      { text: cells[5], padding: [0, 0, 0, 0], width: 10 }
     );
   }
   log(ui.toString());
@@ -265,7 +276,7 @@ export function outputMembersGroupedAsCsv(
   const forGrouping = toMembersForGrouping(members);
   const grouped = buildGroupedMemberRows(forGrouping);
 
-  log("Grupo,Nombre,Telefono,Prestamo,Rating,Pagos atrasados");
+  log("Grupo,Nombre,Telefono,Prestamo,Ciclo de Pago,Rating,Pagos atrasados");
 
   const emit = (group: string, rows: GroupedMemberRow[]) => {
     for (const r of rows) {
@@ -274,6 +285,7 @@ export function outputMembersGroupedAsCsv(
         `"${r.name.replace(/"/g, '""')}"`,
         r.phone,
         r.loanId,
+        formatPaymentFrequency(r.paymentFrequency),
         ratingToStars(r.rating),
         r.missedCount
       ].join(",");
@@ -298,19 +310,20 @@ function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } |
 
 /**
  * Write members report to an Excel file at `filepath`.
- * Full 9-column report with highlights, same format as WhatsApp Excel.
+ * Full 10-column report with highlights, same format as WhatsApp Excel.
  */
 export async function writeMembersToExcel(
   members: SerializedMember[],
   filepath: string
 ): Promise<{ loanCount: number; memberCount: number }> {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Reporte de Miembros");
+  const worksheet = workbook.addWorksheet("Reporte de Clientes");
 
   worksheet.columns = [
     { header: "Nombre", key: "name", width: 25 },
     { header: "Teléfono", key: "phone", width: 15 },
     { header: "Préstamo", key: "loanId", width: 12 },
+    { header: "Ciclo de Pago", key: "paymentCycle", width: 14 },
     { header: "Rating", key: "rating", width: 8 },
     { header: "Pagos atrasados", key: "missedCount", width: 16 },
     { header: "Tendencia", key: "trend", width: 12 },
@@ -339,6 +352,7 @@ export async function writeMembersToExcel(
         name: member.name,
         phone: member.phone,
         loanId: loan.loanId,
+        paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
@@ -361,6 +375,7 @@ export async function writeMembersToExcel(
       name: r.name,
       phone: r.phone,
       loanId: r.loanId,
+      paymentCycle: r.paymentCycle,
       rating: r.rating,
       missedCount: r.missedCount,
       trend: r.trend,
@@ -438,7 +453,7 @@ export async function writeMembersToCsv(
 ): Promise<{ loanCount: number; memberCount: number }> {
   const lines: string[] = [];
   lines.push(
-    "Nombre,Teléfono,Préstamo,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+    "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
   const rows = buildMemberReportRows(members);
   for (const r of rows) {
@@ -447,6 +462,7 @@ export async function writeMembersToCsv(
         `"${r.name}"`,
         r.phone,
         r.loanId,
+        r.paymentCycle,
         r.rating,
         r.missedCount,
         r.trend,
@@ -474,17 +490,17 @@ export async function handleMembersOutput(
   const ext = output.split(".").pop()?.toLowerCase();
   if (ext === "xlsx") {
     const { loanCount, memberCount } = await writeMembersToExcel(members, output);
-    log(`Excel guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    log(`Excel guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
     return true;
   }
   if (ext === "png") {
     const { loanCount, memberCount } = await writeMembersToPng(members, output);
-    log(`PNG guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    log(`PNG guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
     return true;
   }
   if (ext === "csv") {
     const { loanCount, memberCount } = await writeMembersToCsv(members, output);
-    log(`CSV guardado: ${output} (${loanCount} préstamos, ${memberCount} miembros)`);
+    log(`CSV guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
     return true;
   }
   error("--output must end in .xlsx, .png, or .csv");

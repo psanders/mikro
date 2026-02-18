@@ -35,6 +35,7 @@ export interface GroupedMemberRow {
   loanId: number;
   rating: 1 | 2 | 3 | 4 | 5;
   missedCount: number;
+  paymentFrequency: string;
 }
 
 /**
@@ -82,7 +83,8 @@ export function buildGroupedMemberRows(
         phone: member.phone,
         loanId: loan.loanId,
         rating,
-        missedCount
+        missedCount,
+        paymentFrequency: loan.paymentFrequency
       };
 
       if (rating >= 4) alDia.push(row);

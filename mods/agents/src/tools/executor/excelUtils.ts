@@ -8,7 +8,8 @@ import {
   getPaymentRating,
   getMissedPaymentsCount,
   getLatenessTrend,
-  getReportRowHighlight
+  getReportRowHighlight,
+  formatPaymentFrequency
 } from "@mikro/common";
 import type { ExportedMember, ExportedLoan } from "./types.js";
 
@@ -33,7 +34,7 @@ export interface ExcelGenerationResult {
 /**
  * Generate a filename for the Excel report with optional prefix.
  */
-export function generateFilename(prefix = "reporte-miembros"): string {
+export function generateFilename(prefix = "reporte-clientes"): string {
   const now = new Date();
   const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
   return `${prefix}-${date}.xlsx`;
@@ -56,20 +57,21 @@ function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } |
  * Rows are sorted by rating (1 star = worst first), then by missed count descending.
  *
  * @param members - Array of member data with loans
- * @param filenamePrefix - Optional prefix for the filename (default: "reporte-miembros")
+ * @param filenamePrefix - Optional prefix for the filename (default: "reporte-clientes")
  * @returns Excel buffer, filename, and counts
  */
 export async function generateMembersExcel(
   members: ExportedMember[],
-  filenamePrefix = "reporte-miembros"
+  filenamePrefix = "reporte-clientes"
 ): Promise<ExcelGenerationResult> {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Reporte de Miembros");
+  const worksheet = workbook.addWorksheet("Reporte de Clientes");
 
   worksheet.columns = [
     { header: "Nombre", key: "name", width: 25 },
     { header: "Teléfono", key: "phone", width: 15 },
     { header: "Préstamo", key: "loanId", width: 12 },
+    { header: "Ciclo de Pago", key: "paymentCycle", width: 14 },
     { header: "Rating", key: "rating", width: 8 },
     { header: "Pagos atrasados", key: "missedCount", width: 16 },
     { header: "Tendencia", key: "trend", width: 12 },
@@ -103,6 +105,7 @@ export async function generateMembersExcel(
     name: string;
     phone: string;
     loanId: number;
+    paymentCycle: string;
     rating: string;
     missedCount: number;
     trend: string;
@@ -124,6 +127,7 @@ export async function generateMembersExcel(
         name: member.name,
         phone: member.phone,
         loanId: loan.loanId,
+        paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(rating),
         missedCount,
         trend,
@@ -147,6 +151,7 @@ export async function generateMembersExcel(
       name: r.name,
       phone: r.phone,
       loanId: r.loanId,
+      paymentCycle: r.paymentCycle,
       rating: r.rating,
       missedCount: r.missedCount,
       trend: r.trend,

@@ -18,6 +18,15 @@ import {
 /** Trend direction for lateness. */
 export type LatenessTrend = "mejorando" | "estable" | "empeorando";
 
+/**
+ * Returns human-readable Spanish label for payment frequency.
+ */
+export function formatPaymentFrequency(freq: string): string {
+  if (freq === "DAILY") return "Diario";
+  if (freq === "WEEKLY") return "Semanal";
+  return freq;
+}
+
 /** Row highlight color for report. */
 export type ReportRowHighlight = null | "yellow" | "red";
 

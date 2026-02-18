@@ -41,6 +41,7 @@ export {
   getLatenessTrend,
   getPaymentRating,
   getReportRowHighlight,
+  formatPaymentFrequency,
   type LatenessTrend,
   type ReportRowHighlight
 } from "./utils/memberReportHelpers.js";

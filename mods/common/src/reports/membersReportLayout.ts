@@ -4,8 +4,9 @@
  * Members report layout for Satori: grouped by payment health (Crítico, Requiere atención, Al día).
  */
 import type { GroupedMemberRows, GroupedMemberRow } from "../utils/memberReportGrouping.js";
+import { formatPaymentFrequency } from "../utils/memberReportHelpers.js";
 
-export const MEMBERS_REPORT_WIDTH = 800;
+export const MEMBERS_REPORT_WIDTH = 900;
 
 /** Approximate height per row in the layout. */
 const ROW_HEIGHT_PX = 44;
@@ -108,6 +109,7 @@ function tableHeader(): SatoriElement {
       el("div", { style: { flex: 1.8, textAlign: "left" } }, "Nombre"),
       el("div", { style: { flex: 1.2, textAlign: "left" } }, "Teléfono"),
       el("div", { style: { flex: 0.8, textAlign: "right" } }, "Préstamo"),
+      el("div", { style: { flex: 0.7, textAlign: "center" } }, "Ciclo"),
       el("div", { style: { flex: 0.8, textAlign: "center" } }, "Rating"),
       el("div", { style: { flex: 0.8, textAlign: "right" } }, "Atrasos")
     ]
@@ -133,6 +135,11 @@ function memberRow(row: GroupedMemberRow): SatoriElement {
       el("div", { style: { flex: 1.8, textAlign: "left", overflow: "hidden" } }, row.name),
       el("div", { style: { flex: 1.2, textAlign: "left" } }, row.phone),
       el("div", { style: { flex: 0.8, textAlign: "right" } }, String(row.loanId)),
+      el(
+        "div",
+        { style: { flex: 0.7, textAlign: "center" } },
+        formatPaymentFrequency(row.paymentFrequency)
+      ),
       el("div", { style: { flex: 0.8, textAlign: "center" } }, ratingToStars(row.rating)),
       el("div", { style: { flex: 0.8, textAlign: "right" } }, String(row.missedCount))
     ]
@@ -193,14 +200,14 @@ export function createMembersReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Miembros"
+        "Mikro Créditos — Reporte de Clientes"
       ),
       el(
         "div",
         {
           style: { fontSize: "16px", fontWeight: 400, fontFamily: "Inter", opacity: 0.95 }
         },
-        `${memberCount} miembros · ${loanCount} préstamos`
+        `${memberCount} clientes · ${loanCount} préstamos`
       )
     ]
   );
