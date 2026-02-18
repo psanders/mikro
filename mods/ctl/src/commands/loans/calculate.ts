@@ -60,6 +60,7 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
 
       const paymentFrequency = await select<PaymentFrequency>({
         message: "Payment frequency",
+        default: "WEEKLY",
         choices: [
           { name: "Daily", value: "DAILY" },
           { name: "Weekly", value: "WEEKLY" }
