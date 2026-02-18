@@ -51,7 +51,8 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
 
       const interestInput = await input({
         message: "Total interest rate (use 30 or 0.30 for 30%)",
-        required: true
+        required: true,
+        default: "0.30"
       });
       const interestRate = normalizeInterestRate(
         parsePositiveNumber(interestInput, "Total interest rate")
