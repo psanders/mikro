@@ -64,9 +64,9 @@ export default class Create extends BaseCommand<typeof Create> {
       required: false
     }),
     "preferred-payment-day": Flags.string({
-      description: "Preferred payment day (MONDAY-SUNDAY)",
+      description: "Preferred payment day (MONDAY-SUNDAY or none)",
       required: false,
-      options: PREFERRED_PAYMENT_DAY_OPTIONS
+      options: [...PREFERRED_PAYMENT_DAY_OPTIONS, "none"]
     })
   };
 
@@ -117,13 +117,20 @@ export default class Create extends BaseCommand<typeof Create> {
             ],
             default: false
           });
-    const preferredPaymentDay: PreferredPaymentDay =
-      (flags["preferred-payment-day"] as PreferredPaymentDay | undefined) ??
-      (await select({
-        message: "Preferred payment day",
-        choices: PREFERRED_PAYMENT_DAY_CHOICES,
-        default: "MONDAY"
-      }));
+    const paymentDayChoices: Array<{ name: string; value: PreferredPaymentDay | null }> = [
+      { name: "None", value: null },
+      ...PREFERRED_PAYMENT_DAY_CHOICES
+    ];
+    const preferredPaymentDay: PreferredPaymentDay | null =
+      flags["preferred-payment-day"] !== undefined
+        ? flags["preferred-payment-day"] === "none"
+          ? null
+          : (flags["preferred-payment-day"] as PreferredPaymentDay)
+        : await select({
+            message: "Preferred payment day",
+            choices: paymentDayChoices,
+            default: null
+          });
     const notes = flags.notes || undefined;
 
     const ready = await confirm({ message: "Ready to create customer?" });

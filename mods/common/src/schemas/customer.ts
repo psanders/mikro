@@ -38,8 +38,9 @@ export const createCustomerSchema = z.object({
   createdById: z.uuid().optional(),
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
+  isActive: z.boolean().default(true),
   notes: z.string().optional(),
-  preferredPaymentDay: dayOfWeekEnum.default("MONDAY")
+  preferredPaymentDay: dayOfWeekEnum.nullable().default(null)
 });
 
 /**
