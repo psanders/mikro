@@ -386,6 +386,7 @@ async function initializeMessageProcessor() {
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,
+            nickname: loan.nickname,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
@@ -404,6 +405,7 @@ async function initializeMessageProcessor() {
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,
+            nickname: loan.nickname,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
@@ -422,6 +424,7 @@ async function initializeMessageProcessor() {
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,
+            nickname: loan.nickname,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
