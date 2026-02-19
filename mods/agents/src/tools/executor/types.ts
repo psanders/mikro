@@ -186,6 +186,9 @@ export interface ToolExecutorDependencies {
     endDate?: string;
   }) => Promise<{ image: string }>;
 
+  /** Generate defaulted loans report (PNG with AI note summaries). Returns base64 image. */
+  generateDefaultedReport: (params: Record<string, never>) => Promise<{ image: string }>;
+
   /** Run a single collection action (reminder, overdue notice, or call) for one loan. */
   runSingleCollection: (params: {
     loanId: number;

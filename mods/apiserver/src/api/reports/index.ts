@@ -4,3 +4,4 @@
 
 export { createGeneratePortfolioMetrics } from "./createGeneratePortfolioMetrics.js";
 export { createGeneratePerformanceReport } from "./createGeneratePerformanceReport.js";
+export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.js";

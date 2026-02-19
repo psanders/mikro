@@ -567,6 +567,24 @@ export const runSingleCollectionTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for generating a defaulted loans report (PNG sent via WhatsApp).
+ * Admin only. Shows all DEFAULTED loans with AI-generated note summaries.
+ */
+export const generateDefaultedReportTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "generateDefaultedReport",
+    description:
+      "Generar un reporte de prestamos en mora (defaulted). Muestra todos los prestamos con estado DEFAULTED, incluyendo resumen de notas generado por IA. Solo admin. Se envia por WhatsApp como imagen.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -588,6 +606,7 @@ export const allTools: ToolFunction[] = [
   exportCustomersByReferrerTool,
   exportAllCustomersTool,
   generatePerformanceReportTool,
+  generateDefaultedReportTool,
   runSingleCollectionTool
 ];
 

@@ -32,6 +32,7 @@ export const maria: Agent = {
 - \`calculateLoan\`: Cuando pidan calcular opciones de préstamo (monto, interés, frecuencia, duración)
 - \`exportAllCustomers\`: Cuando pidan reporte/lista de todos los clientes. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
+- \`generateDefaultedReport\`: Cuando pidan reporte de mora/defaulted (todos los préstamos en mora con resumen de notas)
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
 
 ## Flujo cobro individual
@@ -61,8 +62,11 @@ Piden reporte/lista de clientes → \`exportAllCustomers\` (sin argumentos = ima
 ## Flujo reporte de rendimiento
 Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
 
+## Flujo reporte de mora
+Piden reporte de mora, reporte de defaulted, o préstamos en mora → \`generateDefaultedReport\` (sin argumentos) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
+
 ## Clarificación de reportes
-Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), o reporte de rendimiento del portafolio." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`.
+Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), reporte de rendimiento del portafolio, o reporte de mora." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`. Si dicen mora/defaulted → \`generateDefaultedReport\`.
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -75,6 +79,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "calculateLoan",
     "exportAllCustomers",
     "generatePerformanceReport",
+    "generateDefaultedReport",
     "updateLoanStatus",
     "runSingleCollection"
   ],
@@ -330,7 +335,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
           {
             human: "Necesito un reporte.",
             expectedAI:
-              "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado) o el reporte de rendimiento del portafolio (métricas y gráficos).",
+              "¿Qué reporte necesitas? Puedo enviarte el reporte de miembros (imagen por estado de pago), el reporte de miembros en Excel (detallado), el reporte de rendimiento del portafolio (métricas y gráficos) o el reporte de mora.",
             tools: []
           }
         ]
