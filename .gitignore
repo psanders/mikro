@@ -18,6 +18,7 @@ dist/
 
 # Config (contains secrets)
 mikro.json
+mikro-prod.json
 
 # Keys
 .keys/*.pem
