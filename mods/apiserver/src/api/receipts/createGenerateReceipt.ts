@@ -1,9 +1,9 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
 import {
+  getConfig,
+  resolvePathFromConfigDir,
   withErrorHandlingAndValidation,
   generateReceiptSchema,
   renderReceiptToImage,
@@ -13,20 +13,12 @@ import {
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const APISERVER_ROOT = join(__dirname, "../../../");
-const PROJECT_ROOT = join(APISERVER_ROOT, "../../");
-
-/**
- * Get the keys directory path.
- * Uses MIKRO_KEYS_PATH env var if set, otherwise defaults to PROJECT_ROOT/.keys for development.
- */
 function getKeysDir(): string {
-  const keysPath = process.env.MIKRO_KEYS_PATH;
-  if (keysPath) {
-    return keysPath;
-  }
-  return join(PROJECT_ROOT, ".keys");
+  return resolvePathFromConfigDir(getConfig().keysPath);
+}
+
+function getAssetsDir(): string {
+  return resolvePathFromConfigDir(getConfig().assetsPath);
 }
 
 /**
@@ -51,7 +43,7 @@ export interface ReceiptDependencies {
  */
 export function createGenerateReceipt(deps: ReceiptDependencies) {
   const keysDir = deps.keysDir ?? getKeysDir();
-  const assetsDir = deps.assetsDir ?? join(APISERVER_ROOT, "assets");
+  const assetsDir = deps.assetsDir ?? getAssetsDir();
 
   const fn = async (params: GenerateReceiptInput) => {
     logger.verbose("generating receipt", { paymentId: params.paymentId });

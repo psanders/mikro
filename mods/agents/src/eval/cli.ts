@@ -1,16 +1,20 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Agent evaluation CLI. Reads config from mikro.json (project root or path in
+ * MIKRO_CONFIG_FILE). Run from repo root so the config file is found.
  */
-import { config } from "dotenv";
+import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import fs from "fs";
 import path from "path";
 
-// Load .env from project root
+// Optional: load root .env so MIKRO_CONFIG_FILE can override default mikro.json location
 const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../../.env") });
+loadDotenv({ path: resolve(__dirname, "../../../../.env") });
 
+import { getConfig, type LLMConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../../../apiserver/src/agents/loadAgents.js";
 import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
@@ -27,29 +31,27 @@ const EVALS_VENDORS = ["openai", "anthropic", "google"] as const;
 type EvalsVendor = (typeof EVALS_VENDORS)[number];
 
 /**
- * Get TEXT and VISION env values for a vendor. Used so scenario runs use that vendor's models.
- * Uses MIKRO_LLM_TEXT_<VENDOR> and MIKRO_LLM_VISION_<VENDOR> if set; for openai falls back to
- * MIKRO_LLM_TEXT and MIKRO_LLM_VISION.
+ * Per-vendor text/vision LLM config from mikro.json (evals.vendors.<vendor>).
+ * For openai, falls back to llm.text / llm.vision when no override is set.
  */
-function getTextVisionEnvForVendor(vendor: EvalsVendor): {
-  text: string | undefined;
-  vision: string | undefined;
+function getTextVisionForVendor(vendor: EvalsVendor): {
+  text: LLMConfig | null;
+  vision: LLMConfig | null;
 } {
-  const textKey = `MIKRO_LLM_TEXT_${vendor.toUpperCase()}`;
-  const visionKey = `MIKRO_LLM_VISION_${vendor.toUpperCase()}`;
-  let text = process.env[textKey]?.trim();
-  let vision = process.env[visionKey]?.trim();
+  const cfg = getConfig();
+  const vendorOverrides = cfg.evals.vendors?.[vendor];
+  let text = vendorOverrides?.text ?? null;
+  let vision = vendorOverrides?.vision ?? null;
   if (vendor === "openai") {
-    text = text ?? process.env.MIKRO_LLM_TEXT?.trim();
-    vision = vision ?? process.env.MIKRO_LLM_VISION?.trim();
+    text = text ?? cfg.llm.text;
+    vision = vision ?? cfg.llm.vision;
   }
   return { text, vision };
 }
 
 /**
- * Parse argv for optional --vendors flag and positional args.
- * Returns { vendors: EvalsVendor[] | null, agentName?: string, scenarioId?: string }.
- * If --vendors is not present, vendors is null (single run using MIKRO_LLM_TEXT / MIKRO_LLM_VISION).
+ * Parse argv for --vendors and positional [agent] [scenario].
+ * Without --vendors, a single run uses llm.text and llm.vision from mikro.json.
  */
 function parseArgs(): {
   vendors: EvalsVendor[] | null;
@@ -72,41 +74,38 @@ function parseArgs(): {
   };
 }
 
-/**
- * Print usage information.
- */
+/** Print usage (config is from mikro.json; run from project root). */
 function printUsage() {
   console.log(`
 Usage: npm run agents:eval [options] [agent] [scenario]
 
-Run scenarios one at a time to debug: pass agent then scenario id.
-Judge uses MIKRO_LLM_EVALS; try a different model if results are too strict.
+Config is read from mikro.json (default: project root). Use MIKRO_CONFIG_FILE in
+.env to point to a different path. Judge model: llm.evals.
 
 Options:
-  --vendors <list>  Run test scenarios for each vendor (comma-separated). Agent
-                    responses use MIKRO_LLM_TEXT_<VENDOR> and MIKRO_LLM_VISION_<VENDOR>
-                    (for openai, falls back to MIKRO_LLM_TEXT / MIKRO_LLM_VISION).
-                    Judge uses MIKRO_LLM_EVALS unchanged.
+  --vendors <list>  Run scenarios for each vendor. Agent models come from
+                    evals.vendors.<vendor>.text/vision (openai falls back to llm.text/vision).
+                    Judge always uses llm.evals.
 
 Arguments:
-  agent     - Optional. Name of the agent (e.g., joan, juan)
-  scenario  - Optional. Run only this scenario (use with agent). Check scenario ids in agent file.
+  agent     - Optional. Agent name (e.g. joan, juan)
+  scenario  - Optional. Single scenario id (use with agent)
 
-Environment:
-  MIKRO_LLM_EVALS              Judge model for similarity/response (default evals LLM)
-  MIKRO_EVAL_SIMILARITY_THRESHOLD  Min confidence 0-1 for "similar" (default: 0.7)
+Config (mikro.json):
+  llm.evals                 Judge model
+  evals.similarityThreshold  Min confidence for "similar" (default 0.7)
+  evals.vendors.<vendor>     Optional per-vendor text/vision overrides
 
 Examples:
-  npm run agents:eval joan happy-path-business     # Run one scenario (recommended for debugging)
-  npm run agents:eval joan                         # Run all scenarios for joan
-  npm run agents:eval                              # Run all agents
-  npm run agents:eval -- --vendors openai           # Run with current TEXT/VISION
+  npm run agents:eval joan happy-path-business
+  npm run agents:eval joan
+  npm run agents:eval
+  npm run agents:eval -- --vendors openai,anthropic
 `);
 }
 
 /**
- * Run evals for the current MIKRO_LLM_TEXT / MIKRO_LLM_VISION config (agent) and
- * MIKRO_LLM_EVALS (judge). Returns results and whether any failed.
+ * Run evals using current config: llm.text/vision for the agent, llm.evals for the judge.
  */
 async function runEvalsForCurrentConfig(
   agentsToEval: Agent[],
@@ -158,9 +157,7 @@ async function runEvalsForCurrentConfig(
   return { results: allResults, hasFailures };
 }
 
-/**
- * Main CLI entry point for agent evaluation.
- */
+/** CLI entry: load config from mikro.json, run evals, write results to eval-results/. */
 async function main() {
   const { vendors, agentName: agentNameArg, scenarioId: scenarioIdArg } = parseArgs();
 
@@ -170,7 +167,7 @@ async function main() {
   }
 
   try {
-    // Log judge config so user can try different MIKRO_LLM_EVALS model if needed
+    // Log judge config
     try {
       const evalsConfig = getLLMConfig("evals");
       const threshold = getEvalSimilarityThreshold();
@@ -224,18 +221,21 @@ async function main() {
     if (vendors && vendors.length > 0) {
       const vendorResults: Record<string, EvalResults[]> = {};
       for (const vendor of vendors) {
-        const { text, vision } = getTextVisionEnvForVendor(vendor);
+        const { text, vision } = getTextVisionForVendor(vendor);
         if (!text || !vision) {
           console.warn(
-            `Skipping vendor "${vendor}": MIKRO_LLM_TEXT_${vendor.toUpperCase()} and ` +
-              `MIKRO_LLM_VISION_${vendor.toUpperCase()} must be set` +
-              (vendor === "openai" ? " (or use MIKRO_LLM_TEXT / MIKRO_LLM_VISION)." : ".")
+            `Skipping vendor "${vendor}": evals.vendors.${vendor}.text and ` +
+              `.vision must be set in mikro.json` +
+              (vendor === "openai" ? " (or use llm.text / llm.vision)." : ".")
           );
           continue;
         }
-        process.env.MIKRO_LLM_TEXT = text;
-        process.env.MIKRO_LLM_VISION = vision;
-        clearLLMConfigCache();
+        // Temporarily override llm.text/vision in the cached config for this vendor's run
+        const cfg = getConfig();
+        const origText = cfg.llm.text;
+        const origVision = cfg.llm.vision;
+        cfg.llm.text = text;
+        cfg.llm.vision = vision;
         console.log(`\n${"═".repeat(60)}`);
         console.log(`  Text/Vision: ${vendor.toUpperCase()} (scenario runs use these models)`);
         console.log(`${"═".repeat(60)}`);
@@ -245,6 +245,9 @@ async function main() {
         );
         vendorResults[vendor] = results;
         if (hasFailures) exitFailures = true;
+        cfg.llm.text = origText;
+        cfg.llm.vision = origVision;
+        clearLLMConfigCache();
       }
       const outputFile = path.join(outputDir, `eval-${timestamp}-vendors.json`);
       fs.writeFileSync(outputFile, JSON.stringify(vendorResults, null, 2));
@@ -271,5 +274,4 @@ async function main() {
   }
 }
 
-// Run main function
 main();

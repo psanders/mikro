@@ -1,0 +1,68 @@
+{
+  "timezone": "America/Santo_Domingo",
+  "port": 4000,
+  "publicUrl": "http://localhost:4000",
+  "publicPath": "/app/public",
+  "databaseUrl": "file:/app/data/mikro.db",
+  "credentials": "admin:secret",
+  "keysPath": "/app/keys",
+  "assetsPath": "/app/mods/apiserver/assets",
+  "ngrokAuthtoken": "",
+  "messageMaxAgeSeconds": 60,
+  "sessionTimeoutSeconds": 1800,
+  "disabledAgents": [],
+  "llm": {
+    "text": {
+      "vendor": "openai",
+      "apiKey": "your-openai-api-key",
+      "model": "gpt-4o-mini"
+    },
+    "vision": {
+      "vendor": "openai",
+      "apiKey": "your-openai-api-key",
+      "model": "gpt-4o"
+    },
+    "evals": {
+      "vendor": "openai",
+      "apiKey": "your-openai-api-key",
+      "model": "gpt-4o-mini"
+    }
+  },
+  "whatsapp": {
+    "phoneNumberId": "your-phone-number-id",
+    "accessToken": "your-whatsapp-access-token",
+    "verifyToken": "mikro_webhook_token",
+    "languageCode": "es_DO",
+    "templates": {
+      "paymentConfirmation": "payment_receipt",
+      "paymentReminder": "payment_reminder",
+      "paymentOverdue": "payment_overdue"
+    }
+  },
+  "collections": {
+    "enabled": true,
+    "cron": "0 10 * * *",
+    "dryRun": false,
+    "includeDefaulted": true
+  },
+  "fonoster": {
+    "enabled": false,
+    "workspaceAccessKeyId": "",
+    "apikeyAccessKeyId": "",
+    "apikeyAccessKeySecret": "",
+    "fromNumber": "",
+    "appRef": ""
+  },
+  "voiceNotes": {
+    "enabled": false,
+    "deepgramApiKey": ""
+  },
+  "evals": {
+    "similarityThreshold": 0.7,
+    "vendors": {
+      "openai": { "text": null, "vision": null },
+      "anthropic": { "text": null, "vision": null },
+      "google": { "text": null, "vision": null }
+    }
+  }
+}

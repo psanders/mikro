@@ -4,53 +4,12 @@ services:
     container_name: mikro-apiserver
     restart: unless-stopped
     ports:
-      - "${MIKRO_PORT:-4000}:4000"
+      - 4000:4000
     environment:
-      # Database (use absolute path in container)
-      - MIKRO_DATABASE_URL=${MIKRO_DATABASE_URL:-file:/app/data/mikro.db}
-      # API Server
-      - MIKRO_PORT=${MIKRO_PORT:-4000}
-      # Basic auth credentials for system API access (format: username:password)
-      - MIKRO_CREDENTIALS=${MIKRO_CREDENTIALS:-admin:secret}
-      # Public URL for serving images (required for WhatsApp receipt sending)
-      # Must be a publicly accessible HTTPS URL
-      - MIKRO_PUBLIC_URL=${MIKRO_PUBLIC_URL:-https://app.mikro.com}
-      # Public path for static files (use absolute path in container)
-      - MIKRO_PUBLIC_PATH=${MIKRO_PUBLIC_PATH:-/app/public}
-      # WhatsApp Business API
-      - MIKRO_WHATSAPP_PHONE_NUMBER_ID=${MIKRO_WHATSAPP_PHONE_NUMBER_ID}
-      - MIKRO_WHATSAPP_ACCESS_TOKEN=${MIKRO_WHATSAPP_ACCESS_TOKEN}
-      - MIKRO_WHATSAPP_VERIFY_TOKEN=${MIKRO_WHATSAPP_VERIFY_TOKEN:-mikro_webhook_token}
-      # LLM Configuration (JSON format: {"vendor":"openai|anthropic|google","apiKey":"...","model":"..."})
-      - MIKRO_LLM_TEXT=${MIKRO_LLM_TEXT}
-      - MIKRO_LLM_VISION=${MIKRO_LLM_VISION}
-      # Path to signing keys (use absolute path in container)
-      - MIKRO_KEYS_PATH=${MIKRO_KEYS_PATH:-/app/keys}
-      # Disabled agents
-      - MIKRO_DISABLED_AGENTS=${MIKRO_DISABLED_AGENTS}
-      # Voice notes (WhatsApp audio → Deepgram transcription)
-      - MIKRO_VOICE_NOTES_ENABLED=${MIKRO_VOICE_NOTES_ENABLED:-true}
-      - MIKRO_DEEPGRAM_API_KEY=${MIKRO_DEEPGRAM_API_KEY}
-      # Collections & Customer Engagement
-      - MIKRO_COLLECTIONS_ENABLED=${MIKRO_COLLECTIONS_ENABLED:-true}
-      - MIKRO_COLLECTIONS_CRON=${MIKRO_COLLECTIONS_CRON:-0 8 * * *}
-      - MIKRO_COLLECTIONS_TIMEZONE=${MIKRO_COLLECTIONS_TIMEZONE:-America/Santo_Domingo}
-      - MIKRO_COLLECTIONS_DRY_RUN=${MIKRO_COLLECTIONS_DRY_RUN:-false}
-      - MIKRO_COLLECTIONS_INCLUDE_DEFAULTED=${MIKRO_COLLECTIONS_INCLUDE_DEFAULTED:-true}
-      # WhatsApp language code for templates (e.g. es_DO for Dominican Spanish)
-      - MIKRO_WA_LANGUAGE_CODE=${MIKRO_WA_LANGUAGE_CODE:-es_DO}
-      # WhatsApp template names (must match approved templates; leave blank to skip)
-      - MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION=${MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION:-payment_receipt}
-      - MIKRO_WA_TEMPLATE_PAYMENT_REMINDER=${MIKRO_WA_TEMPLATE_PAYMENT_REMINDER:-payment_reminder}
-      - MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE=${MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE:-payment_overdue}
-      # Fonoster (automated collection calls)
-      - MIKRO_FONOSTER_ENABLED=${MIKRO_FONOSTER_ENABLED:-true}
-      - MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID=${MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID}
-      - MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID=${MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID}
-      - MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET=${MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET}
-      - MIKRO_FONOSTER_FROM_NUMBER=${MIKRO_FONOSTER_FROM_NUMBER}
-      - MIKRO_FONOSTER_APP_REF=${MIKRO_FONOSTER_APP_REF}
+      - MIKRO_CONFIG_FILE=/app/mikro.json
     volumes:
+      # Mikro configuration
+      - ./mikro.json:/app/mikro.json:ro
       # Database persistence
       - ./data:/app/data
       # Public directory for serving static files (receipts, images, etc.)
@@ -69,20 +28,6 @@ services:
       timeout: 3s
       start_period: 40s
       retries: 3
-    networks:
-      - mikro-network
-
-  ngrok:
-    image: ngrok/ngrok:alpine
-    container_name: mikro-ngrok
-    restart: unless-stopped
-    ports:
-      - "4040:4040"
-    environment:
-      NGROK_AUTHTOKEN: ${MIKRO_NGROK_AUTHTOKEN}
-    command: ["http", "apiserver:${MIKRO_PORT:-4000}"]
-    depends_on:
-      - apiserver
     networks:
       - mikro-network
 

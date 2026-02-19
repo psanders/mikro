@@ -4,10 +4,24 @@
 import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, resolve } from "path";
-import { createGenerateReceiptFromData, type GenerateReceiptResponse } from "@mikro/common";
+import {
+  createGenerateReceiptFromData,
+  getConfig,
+  resolvePathFromConfigDir,
+  type GenerateReceiptResponse
+} from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptTextIfMissing, promptNumberIfMissing } from "../../lib/prompts.js";
+
+/** Resolve keys and assets dirs from config (mikro.json). Throws if config is missing. */
+function getReceiptDirs(): { keysDir: string; assetsDir: string } {
+  const cfg = getConfig();
+  return {
+    keysDir: resolvePathFromConfigDir(cfg.keysPath),
+    assetsDir: resolvePathFromConfigDir(cfg.assetsPath)
+  };
+}
 
 export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt> {
   static override readonly description = "generate a payment receipt as an image";
@@ -118,9 +132,7 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       { required: false, default: "" }
     );
 
-    const keysDir = process.env.MIKRO_KEYS_PATH || resolve(process.cwd(), ".keys");
-    const assetsDir =
-      process.env.MIKRO_ASSETS_PATH || resolve(process.cwd(), "mods", "apiserver", "assets");
+    const { keysDir, assetsDir } = getReceiptDirs();
 
     const generateReceipt = createGenerateReceiptFromData({ keysDir, assetsDir });
     const receiptData = {

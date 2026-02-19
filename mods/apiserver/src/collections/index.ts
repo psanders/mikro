@@ -17,5 +17,5 @@ export type {
   RunSingleCollectionResult
 } from "./runSingleCollection.js";
 export type { CollectionDeps, CollectionTarget } from "./collectionAttemptHelper.js";
-export { isDryRun } from "./collectionAttemptHelper.js";
+export { isDryRun, setDryRunOverride } from "./collectionAttemptHelper.js";
 export { getWhatsAppLanguageCode } from "./collectionConfig.js";

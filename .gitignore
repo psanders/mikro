@@ -11,10 +11,13 @@ dist/
 # OS files
 .DS_Store
 
-# Environment variables
+# Environment variables (deprecated; use mikro.json)
 .env
 .env.local
 .env.*.local
+
+# Config (contains secrets)
+mikro.json
 
 # Keys
 .keys/*.pem

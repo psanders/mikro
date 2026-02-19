@@ -1,8 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import {
   withErrorHandlingAndValidation,
   generateDefaultedReportSchema,
@@ -10,6 +8,7 @@ import {
   parseLoanNotesSummaryResponse,
   renderDefaultedReportToPng,
   loadLogoDataUrl,
+  getLogoPath,
   type GenerateDefaultedReportInput,
   type DbClient,
   type DefaultedReportRow
@@ -17,9 +16,6 @@ import {
 import { invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = join(__dirname, "../../../assets/logo.png");
 
 /**
  * Creates a function that generates the defaulted loans report (PNG).
@@ -90,7 +86,7 @@ export function createGenerateDefaultedReport(client: DbClient) {
       dateStyle: "medium",
       timeStyle: "short"
     });
-    const logoDataUrl = loadLogoDataUrl(LOGO_PATH);
+    const logoDataUrl = loadLogoDataUrl(getLogoPath());
     const pngBuffer = await renderDefaultedReportToPng(
       rows,
       totalPrincipal,

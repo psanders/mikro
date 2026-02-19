@@ -1,34 +1,20 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { z } from "zod";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { type LLMConfig, llmConfigSchema, LLM_VENDORS, type LLMVendor } from "@mikro/common";
 
-/**
- * Supported LLM vendors.
- */
-export const LLM_VENDORS = ["openai", "anthropic", "google"] as const;
-export type LLMVendor = (typeof LLM_VENDORS)[number];
+// Re-export for backward compatibility
+export { llmConfigSchema, LLM_VENDORS, type LLMConfig, type LLMVendor };
 
 /**
  * LLM purposes in the application.
  */
 export const LLM_PURPOSES = ["text", "vision", "evals"] as const;
 export type LLMPurpose = (typeof LLM_PURPOSES)[number];
-
-/**
- * Zod schema for LLM configuration JSON.
- */
-export const llmConfigSchema = z.object({
-  vendor: z.enum(LLM_VENDORS),
-  apiKey: z.string().min(1, "API key is required"),
-  model: z.string().min(1, "Model name is required")
-});
-
-export type LLMConfig = z.infer<typeof llmConfigSchema>;
 
 /**
  * Model registry per vendor.
@@ -57,16 +43,6 @@ const MODEL_REGISTRY: Record<LLMVendor, { models: string[]; visionModels: string
     models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
     visionModels: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
   }
-};
-
-/**
- * Default configurations per purpose.
- * Used when environment variable is not set.
- */
-export const DEFAULT_CONFIGS: Record<LLMPurpose, Omit<LLMConfig, "apiKey">> = {
-  text: { vendor: "openai", model: "gpt-4o-mini" },
-  vision: { vendor: "openai", model: "gpt-4o" },
-  evals: { vendor: "openai", model: "gpt-4o-mini" }
 };
 
 /**

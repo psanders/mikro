@@ -2,11 +2,11 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { Request } from "express";
-import type { DbClient } from "@mikro/common";
+import { getConfig, type DbClient } from "@mikro/common";
 import { prisma } from "../db.js";
 
 /**
- * Validates Basic Auth header against MIKRO_CREDENTIALS env var.
+ * Validates Basic Auth header against config credentials.
  * @param authHeader - The Authorization header value
  * @returns true if credentials match, false otherwise
  */
@@ -15,7 +15,7 @@ function validateBasicAuth(authHeader: string | undefined): boolean {
     return false;
   }
 
-  const expectedCredentials = process.env.MIKRO_CREDENTIALS;
+  const expectedCredentials = getConfig().credentials;
   if (!expectedCredentials) {
     return false;
   }

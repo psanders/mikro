@@ -2,7 +2,32 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { expect } from "chai";
+import { writeFileSync, unlinkSync, existsSync } from "fs";
+import { resolve } from "path";
+import { clearConfigCache, getConfig } from "@mikro/common";
 import { isNewSession, touchSession } from "../../src/sessions/sessionStore.js";
+
+/** Path to a temporary mikro.json used only by this test suite. */
+const TEST_CONFIG_PATH = resolve(process.cwd(), "mikro-test-session.json");
+
+/**
+ * Build a minimal mikro.json object with the given session timeout.
+ * All required fields are filled with dummy values.
+ */
+function makeTestConfig(sessionTimeoutSeconds: number): object {
+  return {
+    sessionTimeoutSeconds,
+    llm: {
+      text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+      vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
+      evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+    },
+    whatsapp: {
+      phoneNumberId: "test",
+      accessToken: "test"
+    }
+  };
+}
 
 describe("sessionStore", () => {
   const uniqueKey = () => `test-session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -21,18 +46,21 @@ describe("sessionStore", () => {
     it("returns true after session timeout has elapsed", async function () {
       this.timeout(3000);
       const id = uniqueKey();
-      const originalTimeout = process.env.MIKRO_SESSION_TIMEOUT_SECONDS;
-      process.env.MIKRO_SESSION_TIMEOUT_SECONDS = "1";
+
+      // Write a temporary config with a 1-second timeout and load it
+      writeFileSync(TEST_CONFIG_PATH, JSON.stringify(makeTestConfig(1)));
+      clearConfigCache();
+      getConfig(TEST_CONFIG_PATH);
+
       try {
         touchSession(id);
         expect(isNewSession(id)).to.be.false;
         await new Promise((resolve) => setTimeout(resolve, 1100));
         expect(isNewSession(id)).to.be.true;
       } finally {
-        if (originalTimeout !== undefined) {
-          process.env.MIKRO_SESSION_TIMEOUT_SECONDS = originalTimeout;
-        } else {
-          delete process.env.MIKRO_SESSION_TIMEOUT_SECONDS;
+        clearConfigCache();
+        if (existsSync(TEST_CONFIG_PATH)) {
+          unlinkSync(TEST_CONFIG_PATH);
         }
       }
     });

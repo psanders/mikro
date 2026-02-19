@@ -4,8 +4,6 @@
  * Shared utilities for customer export commands.
  */
 import { writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import cliui from "cliui";
 import ExcelJS from "exceljs";
 import {
@@ -17,11 +15,9 @@ import {
   buildGroupedCustomerRows,
   renderCustomersReportToPng,
   loadLogoDataUrl,
+  getLogoPath,
   type GroupedCustomerRow
 } from "@mikro/common";
-
-const __ctlDir = dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = join(__ctlDir, "../../../apiserver/assets/logo.png");
 
 /**
  * Loan data as returned from tRPC (dates serialized as strings).
@@ -441,7 +437,7 @@ export async function writeCustomersToPng(
   filepath: string
 ): Promise<{ loanCount: number; customerCount: number }> {
   const forGrouping = toCustomersForGrouping(customers);
-  const logoDataUrl = loadLogoDataUrl(LOGO_PATH);
+  const logoDataUrl = loadLogoDataUrl(getLogoPath());
   const pngBuffer = await renderCustomersReportToPng(
     forGrouping,
     undefined,

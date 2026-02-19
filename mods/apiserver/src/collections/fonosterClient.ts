@@ -4,6 +4,7 @@
  * Initiates collection calls via Fonoster SDK.
  */
 
+import { getConfig } from "@mikro/common";
 import * as SDK from "@fonoster/sdk";
 import { logger } from "../logger.js";
 
@@ -20,28 +21,6 @@ export interface InitiateCollectionCallParams {
   };
 }
 
-function isFonosterEnabled(): boolean {
-  return process.env.MIKRO_FONOSTER_ENABLED === "true";
-}
-
-const REQUIRED_FONOSTER_ENV_VARS = [
-  "MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID",
-  "MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID",
-  "MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET",
-  "MIKRO_FONOSTER_FROM_NUMBER",
-  "MIKRO_FONOSTER_APP_REF"
-] as const;
-
-function validateFonosterEnv(): void {
-  const missing = REQUIRED_FONOSTER_ENV_VARS.filter((key) => !process.env[key]?.trim());
-  if (missing.length > 0) {
-    throw new Error(
-      `Fonoster is enabled but required env vars are missing: ${missing.join(", ")}. ` +
-        "Set them or set MIKRO_FONOSTER_ENABLED=false."
-    );
-  }
-}
-
 /**
  * Create and authenticate a fresh Fonoster SDK client.
  * A new login is performed on every call so tokens are always fresh and
@@ -49,20 +28,15 @@ function validateFonosterEnv(): void {
  * stale cached session.
  */
 async function getClient(): Promise<SDK.Client> {
-  validateFonosterEnv();
-  const accessKeyId = process.env.MIKRO_FONOSTER_WORKSPACE_ACCESS_KEY_ID!;
-  const apiKeyId = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_ID!;
-  const apiKeySecret = process.env.MIKRO_FONOSTER_APIKEY_ACCESS_KEY_SECRET!;
-  const client = new SDK.Client({ accessKeyId });
-  await client.loginWithApiKey(apiKeyId, apiKeySecret);
+  const { fonoster } = getConfig();
+  const client = new SDK.Client({ accessKeyId: fonoster.workspaceAccessKeyId });
+  await client.loginWithApiKey(fonoster.apikeyAccessKeyId, fonoster.apikeyAccessKeySecret);
   return client;
 }
 
 /**
  * Initiate an outbound collection call.
- * When MIKRO_FONOSTER_ENABLED=false, logs and returns a placeholder ref.
- * When enabled, uses @fonoster/sdk with WORKSPACE_ACCESS_KEY_ID (constructor) and
- * APIKEY_ACCESS_KEY_ID + APIKEY_ACCESS_KEY_SECRET (login).
+ * When fonoster.enabled is false, logs and returns a placeholder ref.
  */
 export async function initiateCollectionCall(
   params: InitiateCollectionCallParams
@@ -77,7 +51,8 @@ export async function initiateCollectionCall(
     customerName: loan.customerName
   };
 
-  if (!isFonosterEnabled()) {
+  const { fonoster } = getConfig();
+  if (!fonoster.enabled) {
     logger.info("collection call placeholder (fonoster disabled)", {
       phone: params.phone,
       loanId: loan.loanId,
@@ -87,9 +62,9 @@ export async function initiateCollectionCall(
     return { ref: `placeholder-${Date.now()}-${loan.loanId}` };
   }
 
-  const from = process.env.MIKRO_FONOSTER_FROM_NUMBER!;
+  const from = fonoster.fromNumber;
   const to = params.phone;
-  const appRef = process.env.MIKRO_FONOSTER_APP_REF!;
+  const appRef = fonoster.appRef;
 
   try {
     const client = await getClient();
@@ -102,19 +77,15 @@ export async function initiateCollectionCall(
       metadata
     });
     // Consume statusStream in the background so the call lifecycle is tracked.
-    // NOTE: The Fonoster SDK has a bug – it throws synchronously inside an
+    // NOTE: The Fonoster SDK has a bug -- it throws synchronously inside an
     // EventEmitter callback when the gRPC stream errors.  That throw becomes
     // an uncaught exception (not catchable by try/catch here).  A process-level
     // uncaughtException handler in index.ts absorbs it so the server stays up.
-    // We still keep the try/catch below for errors that *do* propagate through
-    // the async-iterator protocol, and we add a timeout so a hung stream
-    // doesn't leak resources forever.
     const STREAM_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
     (async () => {
       const breakReasons = ["ANSWER", "NOANSWER", "BUSY", "FAILED", "CANCEL", "COMPLETED"];
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        // Race the stream against a timeout so we don't hold it open forever
         const timeout = new Promise<void>((resolve) => {
           timer = setTimeout(() => {
             logger.warn("fonoster statusStream timed out after 5 min, closing", { ref });
@@ -137,12 +108,10 @@ export async function initiateCollectionCall(
         logger.warn("fonoster statusStream error", { ref, err: e });
       } finally {
         if (timer) clearTimeout(timer);
-        // Explicitly close the async generator so the SDK's internal polling
-        // loop (50 ms setTimeout) stops and the gRPC call reference can be GC'd.
         try {
           await statusStream.return?.(undefined as never);
         } catch {
-          // ignore – generator may already be closed
+          // ignore -- generator may already be closed
         }
       }
     })();

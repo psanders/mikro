@@ -1,11 +1,22 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Loads repo-root .env so MIKRO_CONFIG_FILE is set, then reads databaseUrl via getDatabaseUrlFromFile (same as rest of app).
  */
+import { config as loadDotenv } from "dotenv";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client.js";
+import { getDatabaseUrlFromFile } from "@mikro/common";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(__dirname, "../..");
+
+loadDotenv({ path: resolve(repoRoot, ".env") });
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.MIKRO_DATABASE_URL || "file:./data/mikro.db"
+  url: getDatabaseUrlFromFile(undefined, repoRoot)
 });
 
 const prisma = new PrismaClient({ adapter });

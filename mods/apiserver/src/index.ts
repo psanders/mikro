@@ -1,14 +1,21 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { config } from "dotenv";
+import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 
-// Load .env from project root in development
+// Load .env so MIKRO_CONFIG_FILE can point to mikro.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../.env") });
+// From mods/apiserver/dist or mods/apiserver/src, go up to repo root for .env and default mikro.json
+const repoRoot = resolve(__dirname, "../../..");
+loadDotenv({ path: resolve(repoRoot, ".env") });
+// Default config file to repo root so it works when running from mods/apiserver (e.g. npm run start)
+if (!process.env.MIKRO_CONFIG_FILE) {
+  process.env.MIKRO_CONFIG_FILE = resolve(repoRoot, "mikro.json");
+}
 
+import { getConfig, getLogoPath } from "@mikro/common";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
@@ -99,10 +106,9 @@ import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js"
 export type { AppRouter } from "./trpc/index.js";
 
 const app = express();
-const PORT = process.env.MIKRO_PORT || 3000;
-
-// Public path for serving static files (receipts, images, etc.)
-const PUBLIC_PATH = process.env.MIKRO_PUBLIC_PATH || "./public";
+const cfg = getConfig();
+const PORT = cfg.port;
+const PUBLIC_PATH = cfg.publicPath;
 
 app.use(express.json());
 
@@ -230,7 +236,7 @@ async function initializeMessageProcessor() {
       uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
     });
 
-    // Get disabled agents from environment
+    // Get disabled agents from config
     const disabledAgents = getDisabledAgents();
     logger.verbose("disabled agents loaded", { disabledAgents: Array.from(disabledAgents) });
 
@@ -463,8 +469,7 @@ async function initializeMessageProcessor() {
         return result;
       },
       renderCustomersReportToPng: async (customers) => {
-        const logoPath = resolve(__dirname, "../assets/logo.png");
-        const logoDataUrl = loadLogoDataUrl(logoPath);
+        const logoDataUrl = loadLogoDataUrl(getLogoPath());
         return renderCustomersReportToPng(customers, undefined, logoDataUrl ?? undefined);
       },
       uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
@@ -606,13 +611,10 @@ async function initializeMessageProcessor() {
     logger.info("initialization marked as complete", { finalProcessorState });
 
     // Daily collections cron (reminders, overdue notices, collection calls)
-    const collectionsEnabled = process.env.MIKRO_COLLECTIONS_ENABLED !== "false";
-    const collectionsCron = process.env.MIKRO_COLLECTIONS_CRON ?? "0 8 * * *";
-    const collectionsTimezone = process.env.MIKRO_COLLECTIONS_TIMEZONE ?? "America/Santo_Domingo";
-    const collectionsIncludeDefaulted = process.env.MIKRO_COLLECTIONS_INCLUDE_DEFAULTED !== "false";
-    if (collectionsEnabled) {
+    const { collections } = getConfig();
+    if (collections.enabled) {
       cron.schedule(
-        collectionsCron,
+        collections.cron,
         () => {
           runDailyCollections(
             new Date(),
@@ -624,26 +626,26 @@ async function initializeMessageProcessor() {
                   bodyParameters: p.bodyParameters ?? []
                 })
             },
-            collectionsIncludeDefaulted
+            collections.includeDefaulted
           ).catch((err: Error) => {
             logger.error("daily collections run failed", { error: err.message });
           });
         },
-        { timezone: collectionsTimezone }
+        { timezone: getConfig().timezone }
       );
       logger.info("collections cron scheduled", {
-        cron: collectionsCron,
-        timezone: collectionsTimezone
+        cron: collections.cron,
+        timezone: getConfig().timezone
       });
     } else {
-      logger.verbose("collections cron disabled (MIKRO_COLLECTIONS_ENABLED=false)");
+      logger.verbose("collections cron disabled (config.collections.enabled=false)");
     }
-    const fonosterEnabled = process.env.MIKRO_FONOSTER_ENABLED === "true";
+    const fonosterEnabled = getConfig().fonoster.enabled;
     logger.info("Fonoster collection calls", {
       enabled: fonosterEnabled,
       hint: fonosterEnabled
         ? "real calls will be placed"
-        : "set MIKRO_FONOSTER_ENABLED=true to place calls"
+        : "set fonoster.enabled=true in mikro.json to place calls"
     });
     // #endregion
 

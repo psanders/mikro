@@ -5,6 +5,7 @@
  * Eliminates the repeated try/catch, DB-write, and log pattern across processors.
  */
 
+import { getConfig } from "@mikro/common";
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type {
   CollectionChannel,
@@ -124,12 +125,28 @@ export async function executeCollectionAction(
   }
 }
 
+let dryRunOverride: boolean | undefined;
+
+/**
+ * Temporarily override the dry-run flag (e.g. from a tRPC mutation).
+ * Pass `undefined` to clear the override.
+ */
+export function setDryRunOverride(value: boolean | undefined): void {
+  dryRunOverride = value;
+}
+
 /**
  * Check if collections dry run mode is active.
- * In dry run mode, actions are logged but no messages/calls are sent and no DB records are written.
+ * Priority: explicit opts > module override > mikro.json config.
  */
-export function isDryRun(): boolean {
-  return process.env.MIKRO_COLLECTIONS_DRY_RUN === "true";
+export function isDryRun(opts?: { dryRun?: boolean }): boolean {
+  if (opts?.dryRun !== undefined) {
+    return opts.dryRun;
+  }
+  if (dryRunOverride !== undefined) {
+    return dryRunOverride;
+  }
+  return getConfig().collections.dryRun;
 }
 
 /**

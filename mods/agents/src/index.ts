@@ -98,7 +98,6 @@ export {
   isVisionModel,
   LLM_VENDORS,
   LLM_PURPOSES,
-  DEFAULT_CONFIGS,
   type LLMVendor
 } from "./llm/providers.js";
 

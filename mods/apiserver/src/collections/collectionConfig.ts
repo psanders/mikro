@@ -1,35 +1,41 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Environment-based config for collection templates and behavior.
- * Template names and language code read once at startup; blank template = skip that type.
+ * Config for collection templates and behavior (from mikro.json).
  */
+
+import { getConfig } from "@mikro/common";
 
 /**
  * WhatsApp template language code (e.g. "es_DO" for Dominican Spanish).
- * Set via MIKRO_WA_LANGUAGE_CODE; defaults to "es_DO".
  */
 export function getWhatsAppLanguageCode(): string {
-  return (process.env.MIKRO_WA_LANGUAGE_CODE ?? "es_DO").trim() || "es_DO";
+  return getConfig().whatsapp.languageCode;
 }
 
 export const COLLECTION_TEMPLATE_NAMES = {
-  paymentConfirmation: process.env.MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION ?? "payment_receipt",
-  paymentReminder: process.env.MIKRO_WA_TEMPLATE_PAYMENT_REMINDER ?? "payment_reminder",
-  overdueNotice: process.env.MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE ?? "payment_overdue"
-} as const;
+  get paymentConfirmation(): string {
+    return getConfig().whatsapp.templates.paymentConfirmation;
+  },
+  get paymentReminder(): string {
+    return getConfig().whatsapp.templates.paymentReminder;
+  },
+  get overdueNotice(): string {
+    return getConfig().whatsapp.templates.paymentOverdue;
+  }
+};
 
 export function getPaymentConfirmationTemplateName(): string | null {
-  const name = (process.env.MIKRO_WA_TEMPLATE_PAYMENT_CONFIRMATION ?? "payment_receipt").trim();
+  const name = getConfig().whatsapp.templates.paymentConfirmation.trim();
   return name.length > 0 ? name : null;
 }
 
 export function getPaymentReminderTemplateName(): string | null {
-  const name = (process.env.MIKRO_WA_TEMPLATE_PAYMENT_REMINDER ?? "payment_reminder").trim();
+  const name = getConfig().whatsapp.templates.paymentReminder.trim();
   return name.length > 0 ? name : null;
 }
 
 export function getOverdueNoticeTemplateName(): string | null {
-  const name = (process.env.MIKRO_WA_TEMPLATE_PAYMENT_OVERDUE ?? "payment_overdue").trim();
+  const name = getConfig().whatsapp.templates.paymentOverdue.trim();
   return name.length > 0 ? name : null;
 }

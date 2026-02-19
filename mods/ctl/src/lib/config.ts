@@ -12,9 +12,9 @@ export interface Config {
 }
 
 /**
- * Default API URL, can be overridden via MIKRO_API_URL environment variable.
+ * Default API URL.
  */
-export const DEFAULT_API_URL = process.env.MIKRO_API_URL || "http://localhost:4000";
+export const DEFAULT_API_URL = "http://localhost:4000";
 
 /**
  * Returns the OS-agnostic path to the config file.

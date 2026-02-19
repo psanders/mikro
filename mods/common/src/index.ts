@@ -4,6 +4,25 @@
  * @mikro/common - Common utilities and shared code for Mikro
  */
 
+// Config (mikro.json schema and loader)
+export {
+  loadConfig,
+  getConfig,
+  getConfigFilePath,
+  getDatabaseUrlFromFile,
+  DEFAULT_DATABASE_URL,
+  resolvePathFromConfigDir,
+  getLogoPath,
+  clearConfigCache,
+  mikroConfigSchema,
+  llmConfigSchema,
+  LLM_VENDORS,
+  type MikroConfig,
+  type ResolvedMikroConfig,
+  type LLMConfig,
+  type LLMVendor
+} from "./config.js";
+
 // Errors
 export { ValidationError, type FieldError } from "./errors/index.js";
 

@@ -1,70 +1,22 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import {
-  type LLMConfig,
-  type LLMPurpose,
-  DEFAULT_CONFIGS,
-  parseLLMConfig,
-  validateModelForVendor
-} from "./llm/providers.js";
-
-/**
- * Validate that a string environment variable is set and non-empty.
- * @param value - The environment variable value
- * @param fieldName - The field name for error messages
- * @returns The validated string
- * @throws Error if the value is not set or empty
- */
-function validateRequired(value: string | undefined, fieldName: string): string {
-  if (!value || value.trim().length === 0) {
-    throw new Error(`${fieldName} environment variable is not set or invalid`);
-  }
-  return value;
-}
-
-// Cache for parsed LLM configs
-const llmConfigCache = new Map<LLMPurpose, LLMConfig>();
-
-/**
- * Get LLM configuration for a specific purpose.
- * Parses the JSON environment variable and validates vendor/model combination.
- *
- * @param purpose - The LLM purpose (general, vision, evals)
- * @returns The validated LLM configuration
- * @throws Error if env var is missing or config is invalid
- *
- * @example
- * // MIKRO_LLM_GENERAL='{"vendor":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
- * getLLMConfig("general") → { vendor: "openai", apiKey: "sk-...", model: "gpt-4o-mini" }
- */
-export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
-  // Return cached config if available
-  const cached = llmConfigCache.get(purpose);
-  if (cached) {
-    return cached;
-  }
-
-  const envVarName = `MIKRO_LLM_${purpose.toUpperCase()}`;
-  const envValue = process.env[envVarName];
-
-  if (!envValue || envValue.trim().length === 0) {
-    throw new Error(
-      `${envVarName} environment variable is not set. ` +
-        `Expected JSON: {"vendor":"openai|anthropic|google","apiKey":"...","model":"..."}`
-    );
-  }
-
-  const config = parseLLMConfig(purpose, envValue);
-
-  // Cache the config
-  llmConfigCache.set(purpose, config);
-
-  return config;
-}
+import { getConfig, clearConfigCache } from "@mikro/common";
+import { type LLMConfig, type LLMPurpose, validateModelForVendor } from "./llm/providers.js";
 
 /** LLM purposes required at apiserver/agents startup. Evals is only required when running evals. */
 const LLM_PURPOSES_REQUIRED_AT_STARTUP: readonly LLMPurpose[] = ["text", "vision"];
+
+/**
+ * Get LLM configuration for a specific purpose from mikro.json.
+ *
+ * @param purpose - The LLM purpose (text, vision, evals)
+ * @returns The validated LLM configuration
+ */
+export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
+  const config = getConfig().llm[purpose];
+  return config;
+}
 
 /**
  * Validate LLM configurations required at startup (text, vision).
@@ -95,74 +47,52 @@ export function validateAllLLMConfigs(): void {
 }
 
 /**
- * Clear the LLM config cache.
- * Useful for testing or when env vars change at runtime.
+ * Clear the config cache (including LLM config). Useful for testing.
  */
 export function clearLLMConfigCache(): void {
-  llmConfigCache.clear();
+  clearConfigCache();
 }
 
 // Re-export types and utilities for convenience
 export type { LLMConfig, LLMPurpose };
-export { DEFAULT_CONFIGS };
 
 /**
- * Get WhatsApp webhook verify token from environment.
- * @returns The verify token, defaults to 'mikro_webhook_token'
+ * Get WhatsApp webhook verify token from config.
  */
 export function getWebhookVerifyToken(): string {
-  const token = process.env.MIKRO_WHATSAPP_VERIFY_TOKEN;
-
-  if (!token || token.trim().length === 0) {
-    return "mikro_webhook_token"; // Default value
-  }
-
-  return token;
+  return getConfig().whatsapp.verifyToken;
 }
 
 /**
- * Get WhatsApp Phone Number ID from environment.
- * @returns The phone number ID
- * @throws Error if not set
+ * Get WhatsApp Phone Number ID from config.
  */
 export function getWhatsAppPhoneNumberId(): string {
-  return validateRequired(
-    process.env.MIKRO_WHATSAPP_PHONE_NUMBER_ID,
-    "MIKRO_WHATSAPP_PHONE_NUMBER_ID"
-  );
+  return getConfig().whatsapp.phoneNumberId;
 }
 
 /**
- * Get WhatsApp Access Token from environment.
- * @returns The access token
- * @throws Error if not set
+ * Get WhatsApp Access Token from config.
  */
 export function getWhatsAppAccessToken(): string {
-  return validateRequired(process.env.MIKRO_WHATSAPP_ACCESS_TOKEN, "MIKRO_WHATSAPP_ACCESS_TOKEN");
+  return getConfig().whatsapp.accessToken;
 }
 
 /**
  * Get the public path for storing/serving static files.
- * @returns The public path, defaults to './public'
  */
 export function getPublicPath(): string {
-  return process.env.MIKRO_PUBLIC_PATH || "./public";
+  return getConfig().publicPath;
 }
 
 /**
  * Get the public URL for the API server.
- * @returns The public URL, defaults to 'http://localhost:3000'
  */
 export function getPublicUrl(): string {
-  return process.env.MIKRO_PUBLIC_URL || `http://localhost:${process.env.MIKRO_PORT || 3000}`;
+  return getConfig().publicUrl;
 }
 
 /**
  * Build a public URL for an image file.
- * @param filename - The image filename
- * @returns The full public URL to the image
- * @example
- * getPublicImageUrl("10000.png") → "https://api.mikro.com/images/10000.png"
  */
 export function getPublicImageUrl(filename: string): string {
   const publicUrl = getPublicUrl();
@@ -171,88 +101,45 @@ export function getPublicImageUrl(filename: string): string {
 
 /**
  * Get the maximum message age in seconds.
- * Messages older than this will be discarded.
- * @returns Max age in seconds (default: 60)
  */
 export function getMessageMaxAgeSeconds(): number {
-  const value = process.env.MIKRO_MESSAGE_MAX_AGE_SECONDS;
-  return value ? parseInt(value, 10) : 60;
+  return getConfig().messageMaxAgeSeconds;
 }
 
 /**
  * Get session timeout in seconds.
- * If the last message was older than this, the next message starts a new session (full greeting).
- * @returns Timeout in seconds (default: 1800 = 30 minutes)
  */
 export function getSessionTimeoutSeconds(): number {
-  const value = process.env.MIKRO_SESSION_TIMEOUT_SECONDS;
-  return value ? parseInt(value, 10) : 1800;
+  return getConfig().sessionTimeoutSeconds;
 }
 
 /**
  * Whether voice notes (audio messages) are enabled.
- * When true and MIKRO_DEEPGRAM_API_KEY is set, voice notes are transcribed and processed as text.
- * @returns true only when MIKRO_VOICE_NOTES_ENABLED === "true"
  */
 export function getVoiceNotesEnabled(): boolean {
-  return process.env.MIKRO_VOICE_NOTES_ENABLED === "true";
+  return getConfig().voiceNotes.enabled;
 }
 
 /**
  * Get the Deepgram API key for voice note transcription.
- * @returns The API key, or undefined if not set
  */
 export function getDeepgramApiKey(): string | undefined {
-  const key = process.env.MIKRO_DEEPGRAM_API_KEY;
+  const key = getConfig().voiceNotes.deepgramApiKey;
   return key && key.trim().length > 0 ? key.trim() : undefined;
 }
 
 /**
  * Get the similarity confidence threshold for eval judge (0-1).
- * Responses are considered similar when judge confidence >= this value.
- * @returns Threshold (default: 0.7)
  */
 export function getEvalSimilarityThreshold(): number {
-  const value = process.env.MIKRO_EVAL_SIMILARITY_THRESHOLD;
-  if (value == null || value.trim() === "") return 0.7;
-  const n = parseFloat(value);
-  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.7;
+  return getConfig().evals.similarityThreshold;
 }
 
-import { VALID_AGENT_NAMES, AGENT_NAMES, type AgentName } from "./constants.js";
-
 /**
- * Get disabled agents from environment variable.
- * Reads MIKRO_DISABLED_AGENTS as a comma-separated list of agent names.
- * Validates that all agent names are valid.
+ * Get disabled agents from config.
  *
- * @returns A Set of disabled agent names, or empty Set if not set
- * @example
- * // MIKRO_DISABLED_AGENTS=joan,maria
- * getDisabledAgents() → Set(["joan", "maria"])
+ * @returns A Set of disabled agent names
  */
 export function getDisabledAgents(): Set<string> {
-  const disabledAgentsEnv = process.env.MIKRO_DISABLED_AGENTS;
-
-  if (!disabledAgentsEnv || disabledAgentsEnv.trim().length === 0) {
-    return new Set<string>();
-  }
-
-  // Parse comma-separated list and trim whitespace
-  const agentNames = disabledAgentsEnv
-    .split(",")
-    .map((name) => name.trim().toLowerCase())
-    .filter((name) => name.length > 0);
-
-  // Validate all agent names are valid
-  const invalidNames = agentNames.filter(
-    (name): name is string => !VALID_AGENT_NAMES.has(name as AgentName)
-  );
-  if (invalidNames.length > 0) {
-    throw new Error(
-      `Invalid agent names in MIKRO_DISABLED_AGENTS: ${invalidNames.join(", ")}. Valid names are: ${AGENT_NAMES.join(", ")}`
-    );
-  }
-
-  return new Set(agentNames);
+  return new Set(getConfig().disabledAgents);
 }

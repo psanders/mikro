@@ -36,7 +36,6 @@ export {
   llmConfigSchema,
   LLM_VENDORS,
   LLM_PURPOSES,
-  DEFAULT_CONFIGS,
   type LLMConfig,
   type LLMVendor,
   type LLMPurpose

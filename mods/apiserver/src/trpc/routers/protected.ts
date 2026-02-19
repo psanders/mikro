@@ -96,7 +96,11 @@ import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNot
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
 // Collections
-import { runDailyCollections, runSingleCollection } from "../../collections/index.js";
+import {
+  runDailyCollections,
+  runSingleCollection,
+  setDryRunOverride
+} from "../../collections/index.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 
 /**
@@ -477,9 +481,8 @@ export const protectedRouter = router({
   runCollections: protectedProcedure
     .input(runCollectionsSchema)
     .mutation(async ({ ctx, input }) => {
-      const prevDryRun = process.env.MIKRO_COLLECTIONS_DRY_RUN;
       if (input.dryRun) {
-        process.env.MIKRO_COLLECTIONS_DRY_RUN = "true";
+        setDryRunOverride(true);
       }
 
       try {
@@ -498,11 +501,7 @@ export const protectedRouter = router({
         );
       } finally {
         if (input.dryRun) {
-          if (prevDryRun === undefined) {
-            delete process.env.MIKRO_COLLECTIONS_DRY_RUN;
-          } else {
-            process.env.MIKRO_COLLECTIONS_DRY_RUN = prevDryRun;
-          }
+          setDryRunOverride(undefined);
         }
       }
 
@@ -516,9 +515,8 @@ export const protectedRouter = router({
   runSingleCollection: protectedProcedure
     .input(runSingleCollectionSchema)
     .mutation(async ({ ctx, input }) => {
-      const prevDryRun = process.env.MIKRO_COLLECTIONS_DRY_RUN;
       if (input.dryRun) {
-        process.env.MIKRO_COLLECTIONS_DRY_RUN = "true";
+        setDryRunOverride(true);
       }
 
       try {
@@ -543,11 +541,7 @@ export const protectedRouter = router({
         return result;
       } finally {
         if (input.dryRun) {
-          if (prevDryRun === undefined) {
-            delete process.env.MIKRO_COLLECTIONS_DRY_RUN;
-          } else {
-            process.env.MIKRO_COLLECTIONS_DRY_RUN = prevDryRun;
-          }
+          setDryRunOverride(undefined);
         }
       }
     })
