@@ -21,11 +21,13 @@ export {
   createInvokeLLM,
   invokeTextPrompt,
   type InvokeLLMOptions,
+  type InvokeLLMResult,
   type ModelSettings,
   type Agent,
   type Message,
   type MessageContentItem,
   type ToolCall,
+  type ToolExecuted,
   type ToolFunction,
   type ToolResult,
   type ToolExecutor

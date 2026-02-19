@@ -9,6 +9,7 @@ import {
   type SendWhatsAppMessageInput
 } from "@mikro/common";
 import type { Agent, Message } from "../llm/types.js";
+import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { getGuestConversation, addGuestMessage } from "../conversations/inMemoryStore.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
@@ -39,7 +40,7 @@ export interface MessageProcessorDependencies {
     imageUrl?: string | null,
     context?: Record<string, unknown>,
     isNewSession?: boolean
-  ) => Promise<string>;
+  ) => Promise<InvokeLLMResult>;
   /** Send a WhatsApp message (text or image) */
   sendWhatsAppMessage: (
     params: SendWhatsAppMessageInput
@@ -53,6 +54,7 @@ export interface MessageProcessorDependencies {
     userId: string;
     role: "AI" | "HUMAN";
     content: string;
+    tools?: string[];
   }) => Promise<void>;
   /** Get agent by name */
   getAgent: (name: AgentName) => Agent;
@@ -466,49 +468,51 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     const newSession = isNewSession(sessionIdentifier);
 
     // Step 3: Invoke the LLM
-    const response = await invokeLLM(
-      agent,
-      chatHistory,
-      userMessage,
-      imageUrl,
-      context,
-      newSession
-    );
+    const result = await invokeLLM(agent, chatHistory, userMessage, imageUrl, context, newSession);
 
     touchSession(sessionIdentifier);
+
+    const responseText = typeof result === "string" ? result : result.text;
+    const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
 
     // Step 4 & 5: Save AI response and send via WhatsApp (parallel for user path)
     if (route.type === "guest") {
       addGuestMessage(phone, {
         role: "assistant",
-        content: response
+        content: responseText,
+        tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
       });
-      if (response) {
+      if (responseText) {
         await sendWhatsAppMessage({
           phone,
-          message: response
+          message: responseText
         });
       }
     } else {
       const savePromise = addMessageForUser({
         userId: route.userId,
         role: "AI",
-        content: response
+        content: responseText,
+        tools: toolsExecuted.length > 0 ? toolsExecuted.map((t) => t.name) : undefined
       });
-      if (response) {
+      if (responseText) {
         await Promise.all([
           savePromise,
           sendWhatsAppMessage({
             phone,
-            message: response
+            message: responseText
           })
         ]);
       } else {
         await savePromise;
       }
     }
-    if (response) {
-      logger.verbose("response sent", { phone, responseLength: response.length });
+    if (responseText) {
+      logger.verbose("response sent", {
+        phone,
+        responseLength: responseText.length,
+        toolsExecutedCount: toolsExecuted.length
+      });
     }
   } catch (error) {
     const err = error as Error;

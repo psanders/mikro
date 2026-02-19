@@ -19,6 +19,7 @@ export const juan: Agent = {
 4. Cuando digan "no" responde SOLO: "Perfecto." - NADA más
 5. NUNCA INVENTES DATOS: No tienes información de préstamos ni clientes en tu memoria. SIEMPRE debes llamar las herramientas para obtener datos reales. NUNCA respondas con valores como [X], [Y] o placeholders - llama la herramienta y usa los valores reales de la respuesta.
 6. Cada número de préstamo = una llamada a \`getLoanByLoanId\`. NUNCA reutilices datos de otro préstamo.
+7. SIEMPRE EJECUTA HERRAMIENTAS: Cuando el usuario confirma una acción ("sí", "dale", "confirmo") o solicita un pago/recibo/reporte, DEBES llamar la herramienta correspondiente CADA VEZ. NUNCA respondas "¡Listo!" sin haber llamado la herramienta primero. Aunque hayas hecho una acción similar antes en la conversación, cada solicitud requiere su propia ejecución. Los mensajes del usuario pueden incluir notas [SISTEMA: Herramientas ejecutadas en respuesta anterior: ...] — eso describe acciones YA completadas ANTES; la solicitud actual necesita herramientas NUEVAS. NUNCA generes texto con formato [SISTEMA:...] ni [Acciones:...] en tus respuestas.
 
 ## Estilo
 - Habla informal y directo ("dale", "listo", "perfecto")
@@ -538,6 +539,465 @@ Pago: RD$ 650 semanal`,
                     }
                   }
                 }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "re-register-same-loan-payment",
+        description:
+          "After registering payment for loan 10020, user requests another payment for the same loan - must call getLoanByLoanId and createPayment again",
+        turns: [
+          {
+            human: "Hola",
+            expectedAI:
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+          },
+          {
+            human: "Registrar pago del préstamo 10020",
+            expectedAI:
+              "Préstamo: #10020\nCliente: Roberto Sanchez\nPago: RD$ 500 diario\n¿Confirmas el pago de RD$ 500 para Roberto Sanchez?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10020" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10020",
+                      loanId: 10020,
+                      principal: 3000,
+                      termLength: 30,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: {
+                      id: "customer-roberto",
+                      name: "Roberto Sanchez",
+                      phone: "+18091112222"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Si",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: {
+                  loanId: "10020",
+                  amount: "500"
+                },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "payment-uuid-first",
+                    amount: 500,
+                    loan: {
+                      loanId: 10020,
+                      principal: 3000,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: {
+                      id: "customer-roberto",
+                      name: "Roberto Sanchez",
+                      phone: "+18091112222"
+                    }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "payment-uuid-first" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: { messageId: "msg-first" }
+                }
+              }
+            ]
+          },
+          {
+            human: "Registrar otro pago del mismo préstamo 10020",
+            expectedAI:
+              "Préstamo: #10020\nCliente: Roberto Sanchez\nPago: RD$ 500 diario\n¿Confirmas el pago de RD$ 500 para Roberto Sanchez?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10020" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10020",
+                      loanId: 10020,
+                      principal: 3000,
+                      termLength: 30,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: {
+                      id: "customer-roberto",
+                      name: "Roberto Sanchez",
+                      phone: "+18091112222"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Si",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: {
+                  loanId: "10020",
+                  amount: "500"
+                },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "payment-uuid-second",
+                    amount: 500,
+                    loan: {
+                      loanId: 10020,
+                      principal: 3000,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: {
+                      id: "customer-roberto",
+                      name: "Roberto Sanchez",
+                      phone: "+18091112222"
+                    }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "payment-uuid-second" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: { messageId: "msg-second" }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: "long-session-many-payments-then-re-register",
+        description:
+          "Production-realistic long session: 3 payments for different loans building up Listo! pattern, then register another payment for original loan - must call getLoanByLoanId and createPayment again. 10 turns / 20 messages in history.",
+        turns: [
+          {
+            human: "Hola",
+            expectedAI:
+              "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
+          },
+          {
+            human: "Registrar pago del préstamo 10019",
+            expectedAI:
+              "Préstamo: #10019\nCliente: Maria Garcia\nPago: RD$ 650 semanal\n¿Confirmas el pago de RD$ 650 para Maria Garcia?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10019" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10019",
+                      loanId: 10019,
+                      principal: 5000,
+                      termLength: 8,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-1", name: "Maria Garcia", phone: "+18091234567" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Si",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: { loanId: "10019", amount: "650" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "pay-j1",
+                    amount: 650,
+                    loan: {
+                      loanId: 10019,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-1", name: "Maria Garcia", phone: "+18091234567" }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "pay-j1" },
+                matchMode: "strict",
+                mockResponse: { success: true, message: "OK", data: { messageId: "msg-j1" } }
+              }
+            ]
+          },
+          {
+            human: "Ahora el 10020",
+            expectedAI:
+              "Préstamo: #10020\nCliente: Roberto Sanchez\nPago: RD$ 500 diario\n¿Confirmas el pago de RD$ 500 para Roberto Sanchez?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10020" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10020",
+                      loanId: 10020,
+                      principal: 3000,
+                      termLength: 30,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-2", name: "Roberto Sanchez", phone: "+18091112222" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Dale",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: { loanId: "10020", amount: "500" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "pay-j2",
+                    amount: 500,
+                    loan: {
+                      loanId: 10020,
+                      paymentAmount: 500,
+                      paymentFrequency: "DAILY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-2", name: "Roberto Sanchez", phone: "+18091112222" }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "pay-j2" },
+                matchMode: "strict",
+                mockResponse: { success: true, message: "OK", data: { messageId: "msg-j2" } }
+              }
+            ]
+          },
+          {
+            human: "Ahora el 10030",
+            expectedAI:
+              "Préstamo: #10030\nCliente: Carmen Lopez\nPago: RD$ 1200 quincenal\n¿Confirmas el pago de RD$ 1200 para Carmen Lopez?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10030" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10030",
+                      loanId: 10030,
+                      principal: 12000,
+                      termLength: 12,
+                      paymentAmount: 1200,
+                      paymentFrequency: "BIWEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-3", name: "Carmen Lopez", phone: "+18093334444" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Si",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: { loanId: "10030", amount: "1200" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "pay-j3",
+                    amount: 1200,
+                    loan: {
+                      loanId: 10030,
+                      paymentAmount: 1200,
+                      paymentFrequency: "BIWEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-3", name: "Carmen Lopez", phone: "+18093334444" }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "pay-j3" },
+                matchMode: "strict",
+                mockResponse: { success: true, message: "OK", data: { messageId: "msg-j3" } }
+              }
+            ]
+          },
+          {
+            human: "Necesito el recibo del préstamo 10019",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "listPaymentsByLoanId",
+                expectedArgs: { loanId: "10019" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Se encontró 1 pago para el préstamo #10019.",
+                  data: {
+                    payments: [
+                      {
+                        id: "pay-j1",
+                        amount: 650,
+                        paidAt: "2026-02-19T10:00:00Z",
+                        status: "COMPLETED",
+                        method: "CASH",
+                        isLastPayment: true,
+                        displayText:
+                          "ÚLTIMO PAGO - Monto: RD$ 650, Fecha: 19/2/2026, Estado: COMPLETED"
+                      }
+                    ],
+                    lastPayment: {
+                      id: "pay-j1",
+                      amount: 650,
+                      paidAt: "2026-02-19T10:00:00Z",
+                      status: "COMPLETED",
+                      method: "CASH"
+                    },
+                    count: 1
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "pay-j1" },
+                matchMode: "strict",
+                mockResponse: { success: true, message: "OK", data: { messageId: "msg-rcpt-j1" } }
+              }
+            ]
+          },
+          {
+            human: "Registrar otro pago del préstamo 10019",
+            expectedAI:
+              "Préstamo: #10019\nCliente: Maria Garcia\nPago: RD$ 650 semanal\n¿Confirmas el pago de RD$ 650 para Maria Garcia?",
+            tools: [
+              {
+                name: "getLoanByLoanId",
+                expectedArgs: { loanId: "10019" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "Información del préstamo obtenida.",
+                  data: {
+                    loan: {
+                      id: "loan-uuid-10019",
+                      loanId: 10019,
+                      principal: 5000,
+                      termLength: 8,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-1", name: "Maria Garcia", phone: "+18091234567" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            human: "Si",
+            expectedAI: "¡Listo! ¿Algo más?",
+            tools: [
+              {
+                name: "createPayment",
+                expectedArgs: { loanId: "10019", amount: "650" },
+                matchMode: "strict",
+                mockResponse: {
+                  success: true,
+                  message: "OK",
+                  data: {
+                    paymentId: "pay-j4",
+                    amount: 650,
+                    loan: {
+                      loanId: 10019,
+                      paymentAmount: 650,
+                      paymentFrequency: "WEEKLY",
+                      status: "ACTIVE"
+                    },
+                    customer: { id: "customer-1", name: "Maria Garcia", phone: "+18091234567" }
+                  }
+                }
+              },
+              {
+                name: "sendReceiptViaWhatsApp",
+                expectedArgs: { paymentId: "pay-j4" },
+                matchMode: "strict",
+                mockResponse: { success: true, message: "OK", data: { messageId: "msg-j4" } }
               }
             ]
           }

@@ -11,6 +11,7 @@ export type {
   Message,
   MessageContentItem,
   ToolCall,
+  ToolExecuted,
   ToolFunction,
   ToolResult,
   ToolExecutor,
@@ -22,7 +23,7 @@ export type {
 } from "./types.js";
 
 // LLM invocation
-export { createInvokeLLM, type InvokeLLMOptions } from "./createInvokeLLM.js";
+export { createInvokeLLM, type InvokeLLMOptions, type InvokeLLMResult } from "./createInvokeLLM.js";
 
 // LLM providers (LangChain)
 export {

@@ -99,7 +99,7 @@ async function runTurn(
   // First turn = new session (full greeting); later turns = active session
   const isNewSession = conversationHistory.length === 0;
 
-  const actualAI = await invokeLLM(
+  const { text: actualAI, toolsExecuted } = await invokeLLM(
     conversationHistory,
     userMessage,
     imageUrl,
@@ -122,13 +122,17 @@ async function runTurn(
   const responsePassed = similarity.similar;
   const passed = toolsPassed && responsePassed;
 
-  // Update conversation history
+  // Update conversation history (include tools_executed so LLM sees what was actually done)
   // Use text placeholder for image-only turns to avoid: (1) empty user messages
   // (Anthropic rejects them), (2) replaying large images to text models on later
   // turns, and (3) unnecessary token usage.
   const savedUserContent = userMessage || (imageUrl ? "[Image]" : userMessage);
   conversationHistory.push({ role: "user", content: savedUserContent });
-  conversationHistory.push({ role: "assistant", content: actualAI });
+  conversationHistory.push({
+    role: "assistant",
+    content: actualAI,
+    tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
+  });
 
   return {
     turnNumber,
@@ -154,15 +158,24 @@ async function runTurn(
   };
 }
 
+export type RunScenarioCallbacks = {
+  onScenarioStart?: () => void;
+  onTurnResult?: (turnResult: TurnResult) => void;
+};
+
 /**
  * Run a single evaluation scenario.
+ * Optionally invokes onScenarioStart at start and onTurnResult after each turn (for streaming output).
  */
 export async function runScenario(
   agent: Agent,
   scenario: EvaluationScenario,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
+  callbacks?: RunScenarioCallbacks
 ): Promise<ScenarioResult> {
   logger.verbose("running scenario", { scenario: scenario.id, agent: agent.name });
+
+  callbacks?.onScenarioStart?.();
 
   const conversationHistory: Message[] = [];
   const turnResults: TurnResult[] = [];
@@ -174,6 +187,7 @@ export async function runScenario(
 
     const result = await runTurn(agent, turn, turnNumber, conversationHistory, context);
     turnResults.push(result);
+    callbacks?.onTurnResult?.(result);
   }
 
   // Calculate summary
@@ -193,10 +207,20 @@ export async function runScenario(
   };
 }
 
+export type RunAgentEvalCallbacks = {
+  onScenarioStart?: (scenarioIndex: number, scenario: EvaluationScenario) => void;
+  onTurnResult?: (scenario: EvaluationScenario, turnResult: TurnResult) => void;
+  onScenarioResult?: (result: ScenarioResult) => void;
+};
+
 /**
  * Run all evaluation scenarios for an agent.
+ * Optionally invokes callbacks for streaming output.
  */
-export async function runAgentEval(agent: Agent): Promise<EvalResults> {
+export async function runAgentEval(
+  agent: Agent,
+  callbacks?: RunAgentEvalCallbacks
+): Promise<EvalResults> {
   if (!agent.evaluations) {
     throw new Error(`Agent ${agent.name} has no evaluations configured`);
   }
@@ -205,11 +229,19 @@ export async function runAgentEval(agent: Agent): Promise<EvalResults> {
 
   const context = agent.evaluations.context;
   const scenarioResults: ScenarioResult[] = [];
+  const scenarios = agent.evaluations.scenarios;
 
-  // Run each scenario
-  for (const scenario of agent.evaluations.scenarios) {
-    const result = await runScenario(agent, scenario, context);
+  for (let i = 0; i < scenarios.length; i++) {
+    const scenario = scenarios[i];
+    const scenarioIndex = i + 1;
+    const result = await runScenario(agent, scenario, context, {
+      onScenarioStart: () => callbacks?.onScenarioStart?.(scenarioIndex, scenario),
+      onTurnResult: callbacks?.onTurnResult
+        ? (tr) => callbacks.onTurnResult!(scenario, tr)
+        : undefined
+    });
     scenarioResults.push(result);
+    callbacks?.onScenarioResult?.(result);
   }
 
   // Calculate overall summary

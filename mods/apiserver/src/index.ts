@@ -498,7 +498,7 @@ async function initializeMessageProcessor() {
       imageUrl?: string | null,
       context?: Record<string, unknown>,
       isNewSession?: boolean
-    ): Promise<string> => {
+    ) => {
       const invokeFn = createInvokeLLM(agent, allTools, toolExecutor, {
         sendQuickAck: async (ctx) => {
           const phone = ctx.phone as string | undefined;
@@ -524,10 +524,21 @@ async function initializeMessageProcessor() {
       // Reverse to get chronological order (oldest to newest) for LLM context
       const chronologicalMessages = [...dbMessages].reverse();
 
-      return chronologicalMessages.map((msg) => ({
-        role: msg.role === "AI" ? "assistant" : msg.role === "HUMAN" ? "user" : "system",
-        content: msg.content
-      }));
+      return chronologicalMessages.map((msg) => {
+        const role = msg.role === "AI" ? "assistant" : msg.role === "HUMAN" ? "user" : "system";
+        const tools_executed =
+          msg.role === "AI" && msg.tools
+            ? (JSON.parse(msg.tools) as string[]).map((name) => ({
+                name,
+                args: {} as Record<string, unknown>
+              }))
+            : undefined;
+        return {
+          role,
+          content: msg.content,
+          ...(tools_executed && { tools_executed })
+        };
+      });
     };
 
     // Helper to add message for a user
@@ -535,11 +546,13 @@ async function initializeMessageProcessor() {
       userId: string;
       role: "AI" | "HUMAN";
       content: string;
+      tools?: string[];
     }): Promise<void> => {
       await addMessageToChatHistory({
         userId: params.userId,
         role: params.role,
-        content: params.content
+        content: params.content,
+        tools: params.tools
       });
     };
 

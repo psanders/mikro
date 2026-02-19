@@ -15,7 +15,13 @@ import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../../../apiserver/src/agents/loadAgents.js";
 import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
 import { runAgentEval, runScenario, type EvalResults, type ScenarioResult } from "./runner.js";
-import { toJSON, printEval } from "./output.js";
+import {
+  toJSON,
+  printScenarioStart,
+  printTurnResult,
+  printScenarioResult,
+  printSummary
+} from "./output.js";
 
 const EVALS_VENDORS = ["openai", "anthropic", "google"] as const;
 type EvalsVendor = (typeof EVALS_VENDORS)[number];
@@ -117,7 +123,11 @@ async function runEvalsForCurrentConfig(
       const scenario = agent.evaluations.scenarios.find((s) => s.id === scenarioIdArg);
       if (!scenario) continue;
       const context = agent.evaluations.context;
-      const scenarioResult: ScenarioResult = await runScenario(agent, scenario, context);
+      printScenarioStart(agent.name, 1, scenario);
+      const scenarioResult: ScenarioResult = await runScenario(agent, scenario, context, {
+        onTurnResult: (turnResult) => printTurnResult(agent.name, scenario, turnResult)
+      });
+      printScenarioResult(scenarioResult);
       results = {
         agentName: agent.name,
         scenarios: [scenarioResult],
@@ -131,11 +141,15 @@ async function runEvalsForCurrentConfig(
         }
       };
     } else {
-      results = await runAgentEval(agent);
+      results = await runAgentEval(agent, {
+        onScenarioStart: (idx, scenario) => printScenarioStart(agent.name, idx, scenario),
+        onTurnResult: (scenario, turnResult) => printTurnResult(agent.name, scenario, turnResult),
+        onScenarioResult: printScenarioResult
+      });
     }
 
     allResults.push(results);
-    printEval(results);
+    printSummary(results);
     if (results.summary.failedScenarios > 0 || results.summary.failedTurns > 0) {
       hasFailures = true;
     }

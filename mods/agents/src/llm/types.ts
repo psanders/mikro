@@ -47,6 +47,12 @@ export interface MessageContentItem {
  * Message in conversation history.
  * Content can be a string or array for multimodal messages.
  */
+/** Record of a tool executed in a turn (for conversation history). */
+export interface ToolExecuted {
+  name: string;
+  args: Record<string, unknown>;
+}
+
 export interface Message {
   role: "system" | "user" | "assistant" | "tool";
   content: string | MessageContentItem[];
@@ -56,6 +62,8 @@ export interface Message {
   name?: string;
   /** Tool call ID (for tool response messages) */
   tool_call_id?: string;
+  /** Tools executed in this turn (persisted for history so LLM sees what was actually done) */
+  tools_executed?: ToolExecuted[];
 }
 
 /**

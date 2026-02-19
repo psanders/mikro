@@ -3,7 +3,7 @@
  */
 import Table from "cli-table3";
 import ansis from "ansis";
-import type { EvalResults, TurnResult } from "./runner.js";
+import type { EvalResults, ScenarioResult, TurnResult } from "./runner.js";
 
 /**
  * Format tool calls for display.
@@ -28,6 +28,87 @@ function formatHumanInput(turnResult: TurnResult): string {
     return `${turnResult.turn.human} [+Image]`;
   }
   return turnResult.turn.human || "";
+}
+
+/**
+ * One-line reason for a single turn failure.
+ */
+function turnFailureReason(turnResult: TurnResult): string {
+  if (turnResult.tools.verification.unexpected.length > 0) {
+    return `unexpected tools: ${turnResult.tools.verification.unexpected.join(", ")}`;
+  }
+  if (turnResult.tools.expected.length > 0 && !turnResult.tools.verification.allExpectedCalled) {
+    const missing = turnResult.tools.verification.details
+      .filter((d) => !d.called)
+      .map((d) => d.tool);
+    return `missing tools: ${missing.join(", ")}`;
+  }
+  const pct = Math.round(turnResult.similarity.confidence * 100);
+  return `AI response with ${pct}% similarity`;
+}
+
+/**
+ * Print scenario header at start of scenario (conversation-style, matches test.md).
+ */
+export function printScenarioStart(
+  agentName: string,
+  scenarioIndex: number,
+  scenario: { description: string }
+): void {
+  process.stdout.write(`\n✅ Escenario ${scenarioIndex}: ${scenario.description}\n\n`);
+  process.stdout.write(`Objetivo: ${scenario.description}\n\n`);
+  process.stdout.write(`💬 Conversación\n\n`);
+}
+
+/**
+ * Print a single turn (streaming): Human, AI (AgentName), Tools lines. Call after each turn.
+ */
+export function printTurnResult(
+  agentName: string,
+  scenario: { description: string },
+  turnResult: TurnResult
+): void {
+  const human = formatHumanInput(turnResult);
+  const aiName = agentName.charAt(0).toUpperCase() + agentName.slice(1);
+  const mark = turnResult.passed ? ansis.green("✔") : ansis.red("✘");
+
+  process.stdout.write(`Human: ${human}\n`);
+  process.stdout.write(`AI (${aiName}): ${turnResult.actualAI} ${mark}\n`);
+
+  if (turnResult.tools.actual.length > 0) {
+    for (const toolName of turnResult.tools.actual) {
+      process.stdout.write(`Tools: ${toolName}() ${mark}\n`);
+    }
+  }
+
+  if (!turnResult.passed) {
+    process.stdout.write(ansis.red(`✘ ${turnFailureReason(turnResult)}\n`));
+  }
+
+  process.stdout.write("\n");
+}
+
+/**
+ * Print scenario result and separator (conversation-style). Call after all turns in scenario.
+ */
+export function printScenarioResult(scenarioResult: ScenarioResult): void {
+  const passed = scenarioResult.passed;
+  const resultText = passed ? "PASSED" : "FAILED";
+  process.stdout.write(`Result: ${passed ? ansis.green(resultText) : ansis.red(resultText)}\n\n`);
+  process.stdout.write("---\n");
+}
+
+/**
+ * Print final summary (scenarios and turns passed/total).
+ */
+export function printSummary(results: EvalResults): void {
+  console.log(ansis.bold.blue("\n═══ Summary ═══"));
+  console.log(`Agent: ${results.agentName}`);
+  console.log(
+    `Scenarios: ${results.summary.passedScenarios}/${results.summary.totalScenarios} passed`
+  );
+  console.log(`Turns: ${results.summary.passedTurns}/${results.summary.totalTurns} passed`);
+  console.log("");
 }
 
 /**

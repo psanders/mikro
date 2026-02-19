@@ -35,6 +35,14 @@ const SLOW_TOOLS = new Set([
 ]);
 
 /**
+ * Result of invoking the LLM (text response and tools executed this turn).
+ */
+export interface InvokeLLMResult {
+  text: string;
+  toolsExecuted: Array<{ name: string; args: Record<string, unknown> }>;
+}
+
+/**
  * Options for createInvokeLLM.
  */
 export interface InvokeLLMOptions {
@@ -48,6 +56,23 @@ export interface InvokeLLMOptions {
 }
 
 /**
+ * Format executed tools as a compact summary string.
+ * Example: createPayment(loanId=10019, amount=650), sendReceiptViaWhatsApp(paymentId=pay-1)
+ */
+function formatToolList(
+  toolsExecuted: Array<{ name: string; args: Record<string, unknown> }>
+): string {
+  return toolsExecuted
+    .map((t) => {
+      const argStr = Object.entries(t.args)
+        .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+        .join(", ");
+      return argStr ? `${t.name}(${argStr})` : t.name;
+    })
+    .join(", ");
+}
+
+/**
  * Filter tools based on agent's allowed tools.
  */
 function filterTools(allTools: ToolFunction[], allowedTools: string[]): ToolFunction[] {
@@ -58,19 +83,19 @@ function filterTools(allTools: ToolFunction[], allowedTools: string[]): ToolFunc
 }
 
 /**
- * Convert internal Message format to LangChain BaseMessage format.
+ * Convert a single internal Message to a LangChain BaseMessage.
+ * Tool execution annotations are NOT embedded in AI messages here —
+ * they are injected into the following user message by convertAllToLangChainMessages.
  */
-function convertToLangChainMessage(msg: Message): BaseMessage {
+function convertSingleMessage(msg: Message): BaseMessage {
   if (msg.role === "system") {
     return new SystemMessage(typeof msg.content === "string" ? msg.content : "");
   }
 
   if (msg.role === "user") {
     if (typeof msg.content === "string") {
-      // Guard against empty user messages (Anthropic rejects them)
       return new HumanMessage(msg.content || "[Message]");
     }
-    // Multimodal message
     const content: MessageContent[] = msg.content.map((item) => {
       if (item.type === "text") {
         return { type: "text", text: item.text || "" };
@@ -84,8 +109,8 @@ function convertToLangChainMessage(msg: Message): BaseMessage {
   }
 
   if (msg.role === "assistant") {
-    const aiMsg = new AIMessage(typeof msg.content === "string" ? msg.content : "");
-    // Add tool calls if present
+    const textContent = typeof msg.content === "string" ? msg.content : "";
+    const aiMsg = new AIMessage(textContent);
     if (msg.tool_calls && msg.tool_calls.length > 0) {
       aiMsg.tool_calls = msg.tool_calls.map((tc) => ({
         id: tc.id,
@@ -106,6 +131,50 @@ function convertToLangChainMessage(msg: Message): BaseMessage {
   }
 
   throw new Error(`Unknown message role: ${msg.role}`);
+}
+
+/**
+ * Convert a list of internal Messages to LangChain BaseMessages.
+ *
+ * Tool execution annotations are prepended to the FOLLOWING user message
+ * (not appended to the AI message) so the model never sees the annotation
+ * as part of its own output and cannot learn to mimic it textually.
+ */
+function convertAllToLangChainMessages(messages: Message[]): BaseMessage[] {
+  const result: BaseMessage[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+
+    if (msg.role === "user") {
+      const prev = i > 0 ? messages[i - 1] : null;
+      const toolNote =
+        prev?.role === "assistant" && prev.tools_executed?.length
+          ? `[SISTEMA: Herramientas ejecutadas en respuesta anterior: ${formatToolList(prev.tools_executed)}]\n`
+          : "";
+
+      if (typeof msg.content === "string") {
+        result.push(new HumanMessage(toolNote + (msg.content || "[Message]")));
+      } else {
+        const textBlocks: MessageContent[] = toolNote ? [{ type: "text", text: toolNote }] : [];
+        const contentBlocks: MessageContent[] = msg.content.map((item) => {
+          if (item.type === "text") {
+            return { type: "text", text: item.text || "" };
+          }
+          return {
+            type: "image_url",
+            image_url: { url: item.image_url?.url || "" }
+          };
+        });
+        result.push(new HumanMessage({ content: [...textBlocks, ...contentBlocks] }));
+      }
+      continue;
+    }
+
+    result.push(convertSingleMessage(msg));
+  }
+
+  return result;
 }
 
 /**
@@ -206,7 +275,7 @@ export function createInvokeLLM(
    * @param imageUrl - Optional base64 data URL for image (for vision)
    * @param context - Optional context to pass to tool executor (e.g., phone number)
    * @param isNewSession - Optional. If true (default), inject directive for full greeting when user greets. If false, inject directive to continue without re-introducing.
-   * @returns The assistant's text response
+   * @returns The assistant's text response and list of tools executed this turn
    */
   return async function invokeLLM(
     messages: Message[],
@@ -214,7 +283,7 @@ export function createInvokeLLM(
     imageUrl?: string | null,
     context?: Record<string, unknown>,
     isNewSession: boolean = true
-  ): Promise<string> {
+  ): Promise<InvokeLLMResult> {
     logger.verbose("invoking llm", {
       agent: agent.name,
       historyLength: messages.length,
@@ -258,14 +327,23 @@ export function createInvokeLLM(
     // Convert existing messages to LangChain format
     const langchainMessages: BaseMessage[] = [
       new SystemMessage(systemContent),
-      ...messages.map(convertToLangChainMessage)
+      ...convertAllToLangChainMessages(messages)
     ];
+
+    // If the last history message is an assistant with tools_executed,
+    // prepend context note to the current user message so the model
+    // knows what was done previously without embedding it in AI output.
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+    const toolPrefix =
+      lastMsg?.role === "assistant" && lastMsg.tools_executed?.length
+        ? `[SISTEMA: Herramientas ejecutadas en respuesta anterior: ${formatToolList(lastMsg.tools_executed)}]\n`
+        : "";
 
     // Build current user message content
     const userContent: MessageContentItem[] = [];
 
     if (userMessage) {
-      userContent.push({ type: "text", text: userMessage });
+      userContent.push({ type: "text", text: toolPrefix + userMessage });
     }
 
     if (hasImage) {
@@ -276,7 +354,7 @@ export function createInvokeLLM(
     }
 
     if (userContent.length === 0) {
-      userContent.push({ type: "text", text: "Hello" });
+      userContent.push({ type: "text", text: toolPrefix + "Hello" });
     }
 
     // Add current user message
@@ -294,6 +372,8 @@ export function createInvokeLLM(
       });
       langchainMessages.push(new HumanMessage({ content }));
     }
+
+    const toolsExecuted: Array<{ name: string; args: Record<string, unknown> }> = [];
 
     try {
       let response = await modelWithTools.invoke(langchainMessages);
@@ -356,6 +436,8 @@ export function createInvokeLLM(
           const toolName = toolCall.name;
           const toolArgs = toolCall.args as Record<string, unknown>;
 
+          toolsExecuted.push({ name: toolName, args: toolArgs });
+
           logger.verbose("executing tool", { agent: agent.name, tool: toolName, args: toolArgs });
 
           const result = await toolExecutor(toolName, toolArgs, context);
@@ -398,10 +480,11 @@ export function createInvokeLLM(
 
       logger.verbose("llm response received", {
         agent: agent.name,
-        responseLength: finalResponse.length
+        responseLength: finalResponse.length,
+        toolsExecutedCount: toolsExecuted.length
       });
 
-      return finalResponse;
+      return { text: finalResponse, toolsExecuted };
     } catch (error) {
       const err = error as Error;
       logger.error("llm invocation failed", { agent: agent.name, error: err.message });
