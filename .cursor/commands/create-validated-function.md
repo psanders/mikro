@@ -22,7 +22,7 @@ This design enables **dependency injection**, making functions easy to test by s
 
 2. **Use existing client interfaces** from `@mikro/common`:
    - Client interfaces live in `mods/common/src/types/`
-   - Import them: `import type { MemberClient } from "@mikro/common"`
+   - Import them: `import type { CustomerClient } from "@mikro/common"`
    - If a new interface is needed, add it to the types folder
 
 3. **Create the function file** following the naming pattern `create<FunctionName>.ts`:
@@ -47,24 +47,24 @@ This design enables **dependency injection**, making functions easy to test by s
 
 4. **Export the function** from the appropriate barrel file or index
 
-## Example: Member Operations
+## Example: Customer Operations
 
 ### Using Shared Types
 
 ```typescript
 import {
   withErrorHandlingAndValidation,
-  createMemberSchema,
-  type CreateMemberInput,
-  type MemberClient
+  createCustomerSchema,
+  type CreateCustomerInput,
+  type CustomerClient
 } from "@mikro/common";
 
-export function createCreateMember(client: MemberClient) {
-  const fn = async (params: CreateMemberInput) => {
-    return client.member.create({ data: params });
+export function createCreateCustomer(client: CustomerClient) {
+  const fn = async (params: CreateCustomerInput) => {
+    return client.customer.create({ data: params });
   };
 
-  return withErrorHandlingAndValidation(fn, createMemberSchema);
+  return withErrorHandlingAndValidation(fn, createCustomerSchema);
 }
 ```
 
@@ -72,13 +72,13 @@ export function createCreateMember(client: MemberClient) {
 
 ```typescript
 import { db } from "./db.js";
-import { createCreateMember } from "./members/createCreateMember.js";
+import { createCreateCustomer } from "./customers/createCreateCustomer.js";
 
 // Inject the real database client
-const createMember = createCreateMember(db);
+const createCustomer = createCreateCustomer(db);
 
 // This will validate input and throw ValidationError if invalid
-const member = await createMember({
+const customer = await createCustomer({
   name: "John Doe",
   phone: "+1234567890",
   idNumber: "ABC123",
@@ -146,10 +146,10 @@ The builder pattern enables easy testing by injecting mock clients instead of re
 ```typescript
 import { expect } from "chai";
 import sinon from "sinon";
-import { createCreateMember } from "./createCreateMember.js";
+import { createCreateCustomer } from "./createCreateCustomer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createCreateMember", () => {
+describe("createCreateCustomer", () => {
   const validInput = {
     name: "John Doe",
     phone: "+1234567890",
@@ -159,23 +159,23 @@ describe("createCreateMember", () => {
   };
 
   describe("with valid input", () => {
-    it("should create a member", async () => {
+    it("should create a customer", async () => {
       // Arrange
-      const expectedMember = { id: "123", ...validInput };
+      const expectedCustomer = { id: "123", ...validInput };
       const mockClient = {
-        member: {
-          create: sinon.stub().resolves(expectedMember)
+        customer: {
+          create: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const createMember = createCreateMember(mockClient);
+      const createCustomer = createCreateCustomer(mockClient);
 
       // Act
-      const result = await createMember(validInput);
+      const result = await createCustomer(validInput);
 
       // Assert
       expect(result.id).to.equal("123");
-      expect(mockClient.member.create.calledOnce).to.be.true;
-      expect(mockClient.member.create.calledWith({ data: validInput })).to.be.true;
+      expect(mockClient.customer.create.calledOnce).to.be.true;
+      expect(mockClient.customer.create.calledWith({ data: validInput })).to.be.true;
     });
   });
 
@@ -183,19 +183,19 @@ describe("createCreateMember", () => {
     it("should throw ValidationError for missing required fields", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           create: sinon.stub()
         }
       };
-      const createMember = createCreateMember(mockClient);
+      const createCustomer = createCreateCustomer(mockClient);
 
       // Act & Assert
       try {
-        await createMember({ name: "" });
+        await createCustomer({ name: "" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.create.called).to.be.false;
+        expect(mockClient.customer.create.called).to.be.false;
       }
     });
   });
@@ -204,15 +204,15 @@ describe("createCreateMember", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           create: sinon.stub().rejects(new Error("Connection failed"))
         }
       };
-      const createMember = createCreateMember(mockClient);
+      const createCustomer = createCreateCustomer(mockClient);
 
       // Act & Assert
       try {
-        await createMember(validInput);
+        await createCustomer(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Connection failed");
