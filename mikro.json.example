@@ -7,7 +7,6 @@
   "credentials": "admin:secret",
   "keysPath": "/app/keys",
   "assetsPath": "/app/mods/apiserver/assets",
-  "ngrokAuthtoken": "",
   "messageMaxAgeSeconds": 60,
   "sessionTimeoutSeconds": 1800,
   "disabledAgents": [],

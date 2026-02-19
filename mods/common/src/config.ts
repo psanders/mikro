@@ -109,7 +109,6 @@ export const mikroConfigSchema = z
     credentials: z.string().default("admin:secret"),
     keysPath: z.string().default("/app/keys"),
     assetsPath: z.string().default("/app/mods/apiserver/assets"),
-    ngrokAuthtoken: z.string().default(""),
     messageMaxAgeSeconds: z.number().default(60),
     sessionTimeoutSeconds: z.number().default(1800),
     disabledAgents: z.array(agentNameSchema).default([]),
