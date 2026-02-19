@@ -12,19 +12,19 @@ export {
   type UserWithRoles
 } from "./users/index.js";
 
-// Member operations
+// Customer operations
 export {
-  createCreateMember,
-  createUpdateMember,
-  createGetMember,
-  createGetMemberByPhone,
-  createListMembers,
-  createListMembersByReferrer,
-  createListMembersByCollector,
-  createExportCollectorMembers,
-  createExportMembersByReferrer,
-  createExportAllMembers
-} from "./members/index.js";
+  createCreateCustomer,
+  createUpdateCustomer,
+  createGetCustomer,
+  createGetCustomerByPhone,
+  createListCustomers,
+  createListCustomersByReferrer,
+  createListCustomersByCollector,
+  createExportCollectorCustomers,
+  createExportCustomersByReferrer,
+  createExportAllCustomers
+} from "./customers/index.js";
 
 // Chat operations
 export { createGetChatHistory, createAddMessageToChatHistory } from "./chat/index.js";
@@ -36,7 +36,7 @@ export {
   createListLoans,
   createListLoansByReferrer,
   createListLoansByCollector,
-  createListLoansByMember,
+  createListLoansByCustomer,
   createGetLoanByLoanId,
   createCalculateLoan
 } from "./loans/index.js";
@@ -47,7 +47,7 @@ export {
   type CreateCreatePaymentOptions,
   createReversePayment,
   createListPayments,
-  createListPaymentsByMember,
+  createListPaymentsByCustomer,
   createListPaymentsByReferrer,
   createListPaymentsByLoanId
 } from "./payments/index.js";

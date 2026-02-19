@@ -3,36 +3,36 @@
  */
 import {
   withErrorHandlingAndValidation,
-  listPaymentsByMemberSchema,
-  type ListPaymentsByMemberInput,
+  listPaymentsByCustomerSchema,
+  type ListPaymentsByCustomerInput,
   type DbClient,
   type Payment
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to list payments for all loans belonging to a specific member.
+ * Creates a function to list payments for all loans belonging to a specific customer.
  * By default, only returns COMPLETED payments unless showReversed is true.
  *
  * @param client - The database client
- * @returns A validated function that lists payments by member
+ * @returns A validated function that lists payments by customer
  */
-export function createListPaymentsByMember(client: DbClient) {
+export function createListPaymentsByCustomer(client: DbClient) {
   const fn = async (
-    params: ListPaymentsByMemberInput
+    params: ListPaymentsByCustomerInput
   ): Promise<
     (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[]
   > => {
-    logger.verbose("listing payments by member", { memberId: params.memberId });
+    logger.verbose("listing payments by customer", { customerId: params.customerId });
     const payments = await client.payment.findMany({
       where: {
         loan: {
-          memberId: params.memberId
+          customerId: params.customerId
         },
         paidAt: {
           gte: params.startDate,
@@ -44,7 +44,7 @@ export function createListPaymentsByMember(client: DbClient) {
         loan: {
           select: {
             loanId: true,
-            member: {
+            customer: {
               select: {
                 name: true
               }
@@ -56,17 +56,17 @@ export function createListPaymentsByMember(client: DbClient) {
       take: params.limit,
       skip: params.offset
     });
-    logger.verbose("payments by member listed", {
-      memberId: params.memberId,
+    logger.verbose("payments by customer listed", {
+      customerId: params.customerId,
       count: payments.length
     });
     return payments as (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[];
   };
 
-  return withErrorHandlingAndValidation(fn, listPaymentsByMemberSchema);
+  return withErrorHandlingAndValidation(fn, listPaymentsByCustomerSchema);
 }

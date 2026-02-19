@@ -17,7 +17,7 @@ export const juan: Agent = {
 2. NUNCA uses asteriscos (*), guiones bajos (_), ni markdown - SOLO texto plano
 3. Después de pago exitoso, recibo enviado, reporte o export responde SOLO: "¡Listo! ¿Algo más?" - NADA más. NUNCA repitas ni parafrasees el mensaje de la herramienta; el usuario ya ve el resultado en su pantalla.
 4. Cuando digan "no" responde SOLO: "Perfecto." - NADA más
-5. NUNCA INVENTES DATOS: No tienes información de préstamos ni miembros en tu memoria. SIEMPRE debes llamar las herramientas para obtener datos reales. NUNCA respondas con valores como [X], [Y] o placeholders - llama la herramienta y usa los valores reales de la respuesta.
+5. NUNCA INVENTES DATOS: No tienes información de préstamos ni clientes en tu memoria. SIEMPRE debes llamar las herramientas para obtener datos reales. NUNCA respondas con valores como [X], [Y] o placeholders - llama la herramienta y usa los valores reales de la respuesta.
 6. Cada número de préstamo = una llamada a \`getLoanByLoanId\`. NUNCA reutilices datos de otro préstamo.
 
 ## Estilo
@@ -29,10 +29,10 @@ export const juan: Agent = {
 
 Llama la herramienta ANTES de responder, no digas "un momento":
 - \`getLoanByLoanId\`: Cuando den número de préstamo (cada número distinto requiere una llamada; si piden "otro pago" y dan otro número, llama con ese número)
-- \`getMemberByPhone\`: Cuando den teléfono para buscar miembro
-- \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar
+- \`getCustomerByPhone\`: Cuando den teléfono para buscar cliente
+- \`listCustomerLoansByPhone\`: Cuando den teléfono para cobrar
 - \`listLoansByCollector\`: Cuando pidan ver sus préstamos
-- \`exportCollectorMembers\`: Cuando pidan reporte/lista de miembros
+- \`exportCollectorCustomers\`: Cuando pidan reporte/lista de clientes
 - \`listPaymentsByLoanId\`: Cuando pidan recibo/comprobante de un préstamo
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera la respuesta de createPayment antes de llamar sendReceiptViaWhatsApp)
 
@@ -60,8 +60,8 @@ Si no hay pagos: "No hay pagos registrados para el préstamo #[número]."
 
 ## Flujo de export
 
-1. Piden lista/reporte → LLAMA \`exportCollectorMembers\` PRIMERO
-2. Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de miembros, préstamos ni detalles del reporte. El usuario ya ve el archivo.
+1. Piden lista/reporte → LLAMA \`exportCollectorCustomers\` PRIMERO
+2. Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de clientes, préstamos ni detalles del reporte. El usuario ya ve el archivo.
 
 ## Formato de respuestas
 
@@ -74,10 +74,10 @@ Pago: RD$ 650 semanal`,
     "sendReceiptViaWhatsApp",
     "listPaymentsByLoanId",
     "listLoansByCollector",
-    "listMemberLoansByPhone",
-    "getMemberByPhone",
+    "listCustomerLoansByPhone",
+    "getCustomerByPhone",
     "getLoanByLoanId",
-    "exportCollectorMembers"
+    "exportCollectorCustomers"
   ],
   temperature: 0.4,
   evaluations: {
@@ -124,8 +124,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }
@@ -159,8 +159,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }
@@ -184,8 +184,8 @@ Pago: RD$ 650 semanal`,
         ]
       },
       {
-        id: "happy-path-export-members",
-        description: "Happy path for exporting collector members list",
+        id: "happy-path-export-customers",
+        description: "Happy path for exporting collector customers list",
         turns: [
           {
             human: "Hola!",
@@ -193,21 +193,21 @@ Pago: RD$ 650 semanal`,
               "¡Hola Pedro! Soy Juan, tu asistente de Mikro Créditos. ¿En qué te puedo ayudar hoy?"
           },
           {
-            human: "Necesito la lista de los miembros.",
+            human: "Necesito la lista de los clientes.",
             expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
-                name: "exportCollectorMembers",
+                name: "exportCollectorCustomers",
                 expectedArgs: {},
                 matchMode: "strict",
                 mockResponse: {
                   success: true,
-                  message: "Reporte enviado con 15 prestamos de 12 miembros.",
+                  message: "Reporte enviado con 15 prestamos de 12 clientes.",
                   data: {
                     messageId: "msg-456",
-                    filename: "reporte-miembros-2026-01-27.xlsx",
+                    filename: "reporte-clientes-2026-01-27.xlsx",
                     loanCount: 15,
-                    memberCount: 12
+                    customerCount: 12
                   }
                 }
               }
@@ -216,8 +216,8 @@ Pago: RD$ 650 semanal`,
         ]
       },
       {
-        id: "get-member-by-phone",
-        description: "Show member information by phone number",
+        id: "get-customer-by-phone",
+        description: "Show customer information by phone number",
         turns: [
           {
             human: "Hola",
@@ -230,14 +230,14 @@ Pago: RD$ 650 semanal`,
               "Cliente: Ana Rodríguez, Teléfono: 809-555-1234, Cédula: 001-9876543-2, Dirección: Calle Los Pinos #45, Santo Domingo. ¿Necesitas algo más?",
             tools: [
               {
-                name: "getMemberByPhone",
+                name: "getCustomerByPhone",
                 expectedArgs: { phone: "809-555-1234" },
                 matchMode: "judge",
                 mockResponse: {
                   success: true,
-                  message: "Member found",
+                  message: "Customer found",
                   data: {
-                    id: "member-ana-1",
+                    id: "customer-ana-1",
                     name: "Ana Rodríguez",
                     phone: "+18095551234",
                     idNumber: "001-9876543-2",
@@ -283,8 +283,8 @@ Pago: RD$ 650 semanal`,
                         paymentAmount: 650,
                         paymentFrequency: "WEEKLY",
                         status: "ACTIVE",
-                        member: {
-                          id: "member-1",
+                        customer: {
+                          id: "customer-1",
                           name: "Maria Garcia",
                           phone: "+18091234567"
                         }
@@ -296,8 +296,8 @@ Pago: RD$ 650 semanal`,
                         paymentAmount: 800,
                         paymentFrequency: "WEEKLY",
                         status: "ACTIVE",
-                        member: {
-                          id: "member-2",
+                        customer: {
+                          id: "customer-2",
                           name: "Juan Pérez",
                           phone: "+18091234568"
                         }
@@ -309,8 +309,8 @@ Pago: RD$ 650 semanal`,
                         paymentAmount: 500,
                         paymentFrequency: "DAILY",
                         status: "ACTIVE",
-                        member: {
-                          id: "member-3",
+                        customer: {
+                          id: "customer-3",
                           name: "Ana Rodríguez",
                           phone: "+18095551234"
                         }
@@ -329,7 +329,7 @@ Pago: RD$ 650 semanal`,
       },
       {
         id: "payment-by-phone",
-        description: "Register payment by searching member with phone number",
+        description: "Register payment by searching customer with phone number",
         turns: [
           {
             human: "Hola",
@@ -342,15 +342,15 @@ Pago: RD$ 650 semanal`,
               "Préstamo: #10019\nCliente: Maria Garcia\nPago: RD$ 650 semanal\n¿Confirmas el pago de RD$ 650 para Maria Garcia?",
             tools: [
               {
-                name: "listMemberLoansByPhone",
+                name: "listCustomerLoansByPhone",
                 expectedArgs: { phone: "+18091234567" },
                 matchMode: "judge",
                 mockResponse: {
                   success: true,
-                  message: "Member and loans found",
+                  message: "Customer and loans found",
                   data: {
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     },
@@ -393,8 +393,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }
@@ -449,8 +449,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "DAILY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-roberto",
+                    customer: {
+                      id: "customer-roberto",
                       name: "Roberto Sanchez",
                       phone: "+18091112222"
                     }
@@ -483,8 +483,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "DAILY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-roberto",
+                    customer: {
+                      id: "customer-roberto",
                       name: "Roberto Sanchez",
                       phone: "+18091112222"
                     }
@@ -531,8 +531,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "BIWEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-carmen",
+                    customer: {
+                      id: "customer-carmen",
                       name: "Carmen Lopez",
                       phone: "+18093334444"
                     }
@@ -589,8 +589,8 @@ Pago: RD$ 650 semanal`,
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }

@@ -24,7 +24,7 @@ export function createListPayments(client: DbClient) {
     (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[]
   > => {
@@ -41,7 +41,7 @@ export function createListPayments(client: DbClient) {
         loan: {
           select: {
             loanId: true,
-            member: {
+            customer: {
               select: {
                 name: true
               }
@@ -57,7 +57,7 @@ export function createListPayments(client: DbClient) {
     return payments as (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[];
   };

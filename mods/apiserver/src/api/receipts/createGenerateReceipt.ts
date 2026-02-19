@@ -61,7 +61,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
       include: {
         loan: {
           include: {
-            member: true,
+            customer: true,
             payments: {
               where: { status: "COMPLETED" },
               orderBy: { paidAt: "asc" }
@@ -77,7 +77,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     }
 
     const { loan } = payment;
-    const { member, payments: allPayments } = loan;
+    const { customer, payments: allPayments } = loan;
 
     const paymentIndex = allPayments.findIndex((p) => p.id === payment.id);
     const paymentNumber = paymentIndex >= 0 ? paymentIndex + 1 : allPayments.length;
@@ -85,7 +85,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
 
     const receiptData: ReceiptData = {
       loanNumber: String(loan.loanId),
-      name: member.name,
+      name: customer.name,
       date: payment.paidAt.toLocaleDateString("es-DO", {
         day: "2-digit",
         month: "2-digit",

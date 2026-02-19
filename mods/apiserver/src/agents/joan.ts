@@ -28,22 +28,22 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
 5. SEGÚN RESPUESTA:
    - Si dice NEGOCIO: "Entiendo. Y que tiempo tiene tu negocio?" → espera respuesta → "Perfecto. Y mas o menos cuales son los ingresos mensuales?" → espera respuesta → pasa a DÍA DE PAGO
    - Si dice EMPLEADO: "Entiendo. Y cuanto ganas mas o menos al mes?" → espera respuesta → pasa a DÍA DE PAGO
-5.5. DÍA DE PAGO: "Y que dia de la semana prefieres para hacer tus pagos?" → espera respuesta (ej: lunes, martes, miércoles...) → pasa a CÉDULA. Al llamar \`createMember\` usa preferredPaymentDay: el día en inglés (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY). Si no dicen ninguno usa MONDAY.
+5.5. DÍA DE PAGO: "Y que dia de la semana prefieres para hacer tus pagos?" → espera respuesta (ej: lunes, martes, miércoles...) → pasa a CÉDULA. Al llamar \`createCustomer\` usa preferredPaymentDay: el día en inglés (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY). Si no dicen ninguno usa MONDAY.
 6. CÉDULA FRENTE: "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
 7. CÉDULA ATRÁS: "Muy bien. Ahora necesito la foto de la parte de atrás de la cédula."
 8. CONFIRMAR: "Ya revisé tu cédula. Tu nombre es [nombre] y tu número de cédula es [número]. ¿Está correcto?"
-9. CREAR: Cuando confirmen → llama \`createMember\` y responde: "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!"
+9. CREAR: Cuando confirmen → llama \`createCustomer\` y responde: "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!"
 
 ## Herramientas
 
 - \`listUsers\`: Llama INMEDIATAMENTE cuando digan quién los refirió
-- \`createMember\`: Llama INMEDIATAMENTE cuando confirmen que los datos están correctos. Incluye preferredPaymentDay (día que dijo el usuario, en inglés: MONDAY-SUNDAY; por defecto MONDAY).
+- \`createCustomer\`: Llama INMEDIATAMENTE cuando confirmen que los datos están correctos. Incluye preferredPaymentDay (día que dijo el usuario, en inglés: MONDAY-SUNDAY; por defecto MONDAY).
 
 ## Guardrails
 
 - Si el referidor no está en la lista: "Ese nombre no lo encontré. ¿Puedes decirme el nombre completo de quien te refirió?"
 - Preguntas fuera de tema: "Solo puedo ayudarte con el préstamo."`,
-  allowedTools: ["createMember", "listUsers"],
+  allowedTools: ["createCustomer", "listUsers"],
   temperature: 0.3,
   evaluations: {
     context: { phone: "+18091234567" },
@@ -120,7 +120,7 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
               "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!",
             tools: [
               {
-                name: "createMember",
+                name: "createCustomer",
                 expectedArgs: {
                   name: testCedulaData.name,
                   idNumber: testCedulaData.cedula,
@@ -129,9 +129,9 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
                 matchMode: "judge",
                 mockResponse: {
                   success: true,
-                  message: "Member created successfully",
+                  message: "Customer created successfully",
                   data: {
-                    id: "member-1",
+                    id: "customer-1",
                     name: testCedulaData.name,
                     cedula: testCedulaData.cedula,
                     phone: "+18091234567"
@@ -210,7 +210,7 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
               "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!",
             tools: [
               {
-                name: "createMember",
+                name: "createCustomer",
                 expectedArgs: {
                   name: testCedulaData.name,
                   idNumber: testCedulaData.cedula,
@@ -219,9 +219,9 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
                 matchMode: "judge",
                 mockResponse: {
                   success: true,
-                  message: "Member created successfully",
+                  message: "Customer created successfully",
                   data: {
-                    id: "member-2",
+                    id: "customer-2",
                     name: testCedulaData.name,
                     cedula: testCedulaData.cedula,
                     phone: "+18091234567"

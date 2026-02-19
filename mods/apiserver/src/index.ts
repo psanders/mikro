@@ -12,7 +12,7 @@ config({ path: resolve(__dirname, "../../../.env") });
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
-import { ValidationError, renderMembersReportToPng, loadLogoDataUrl } from "@mikro/common";
+import { ValidationError, renderCustomersReportToPng, loadLogoDataUrl } from "@mikro/common";
 import type { CalculateLoanInput } from "@mikro/common";
 import {
   handleWhatsAppMessage,
@@ -71,24 +71,24 @@ import {
 } from "./collections/index.js";
 import {
   createGetUserByPhone,
-  createGetMemberByPhone,
+  createGetCustomerByPhone,
   createAddMessageToChatHistory,
-  createCreateMember,
+  createCreateCustomer,
   createCreatePayment,
   createGenerateReceipt,
   createSendReceiptViaWhatsApp,
   createListLoansByCollector,
-  createListLoansByMember,
+  createListLoansByCustomer,
   createListPaymentsByLoanId,
   createGetLoanByLoanId,
-  createGetMember,
+  createGetCustomer,
   createCreateLoan,
   createCalculateLoan,
   createUpdateLoanStatus,
   createListUsers,
-  createExportCollectorMembers,
-  createExportMembersByReferrer,
-  createExportAllMembers,
+  createExportCollectorCustomers,
+  createExportCustomersByReferrer,
+  createExportAllCustomers,
   createGeneratePerformanceReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
@@ -181,9 +181,9 @@ async function initializeMessageProcessor() {
     // Create API functions
     const dbClient = prisma as unknown as Parameters<typeof createGetUserByPhone>[0];
     const getUserByPhone = createGetUserByPhone(dbClient);
-    const getMemberByPhone = createGetMemberByPhone(dbClient);
+    const getCustomerByPhone = createGetCustomerByPhone(dbClient);
     const addMessageToChatHistory = createAddMessageToChatHistory(dbClient);
-    const createMember = createCreateMember(dbClient);
+    const createCustomer = createCreateCustomer(dbClient);
     const createPayment = createCreatePayment(dbClient, {
       onPaymentCreated: (paymentId) => {
         sendPaymentConfirmation(paymentId, {
@@ -203,17 +203,17 @@ async function initializeMessageProcessor() {
     });
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
-    const listLoansByMember = createListLoansByMember(dbClient);
+    const listLoansByCustomer = createListLoansByCustomer(dbClient);
     const listPaymentsByLoanId = createListPaymentsByLoanId(dbClient);
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
-    const getMember = createGetMember(dbClient);
+    const getCustomer = createGetCustomer(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
-    const exportCollectorMembers = createExportCollectorMembers(dbClient);
-    const exportMembersByReferrer = createExportMembersByReferrer(dbClient);
-    const exportAllMembers = createExportAllMembers(dbClient);
+    const exportCollectorCustomers = createExportCollectorCustomers(dbClient);
+    const exportCustomersByReferrer = createExportCustomersByReferrer(dbClient);
+    const exportAllCustomers = createExportAllCustomers(dbClient);
     const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
 
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
@@ -250,14 +250,14 @@ async function initializeMessageProcessor() {
           roles: user.roles
         };
       },
-      getMemberByPhone: async (params: { phone: string }) => {
-        const member = await getMemberByPhone(params);
-        if (!member || !member.phone) return null;
+      getCustomerByPhone: async (params: { phone: string }) => {
+        const customer = await getCustomerByPhone(params);
+        if (!customer || !customer.phone) return null;
         return {
-          id: member.id,
-          name: member.name,
-          phone: member.phone,
-          isActive: member.isActive
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          isActive: customer.isActive
         };
       },
       isAgentDisabled
@@ -265,9 +265,9 @@ async function initializeMessageProcessor() {
 
     // Create tool executor
     const toolExecutor = createToolExecutor({
-      createMember: async (params) => {
-        const member = await createMember(params);
-        return { id: member.id, name: member.name, phone: member.phone };
+      createCustomer: async (params) => {
+        const customer = await createCustomer(params);
+        return { id: customer.id, name: customer.name, phone: customer.phone };
       },
       listUsers: async (params?: { role?: "ADMIN" | "COLLECTOR" | "REFERRER" }) => {
         const allUsers = await listUsers({});
@@ -315,16 +315,16 @@ async function initializeMessageProcessor() {
           status: loan.status
         }));
       },
-      getMember: async (params) => {
-        const member = await getMember(params);
-        return member ? { id: member.id, name: member.name, phone: member.phone } : null;
+      getCustomer: async (params) => {
+        const customer = await getCustomer(params);
+        return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
       },
-      getMemberByPhone: async (params) => {
-        const member = await getMemberByPhone(params);
-        return member ? { id: member.id, name: member.name, phone: member.phone } : null;
+      getCustomerByPhone: async (params) => {
+        const customer = await getCustomerByPhone(params);
+        return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
       },
-      listLoansByMember: async (params) => {
-        const loans = await listLoansByMember(params);
+      listLoansByCustomer: async (params) => {
+        const loans = await listLoansByCustomer(params);
         return loans.map((loan) => ({
           id: loan.id,
           loanId: loan.loanId,
@@ -365,23 +365,23 @@ async function initializeMessageProcessor() {
           paymentAmount: Number(loan.paymentAmount),
           paymentFrequency: loan.paymentFrequency,
           status: loan.status,
-          member: {
-            id: loan.member.id,
-            name: loan.member.name,
-            phone: loan.member.phone,
-            assignedCollectorId: loan.member.assignedCollectorId
+          customer: {
+            id: loan.customer.id,
+            name: loan.customer.name,
+            phone: loan.customer.phone,
+            assignedCollectorId: loan.customer.assignedCollectorId
           }
         };
       },
-      exportCollectorMembers: async (params: { assignedCollectorId: string }) => {
-        const members = await exportCollectorMembers(params);
-        return members.map((member) => ({
-          name: member.name,
-          phone: member.phone,
-          collectionPoint: member.collectionPoint,
-          notes: member.notes,
-          referredBy: { name: member.referredBy.name },
-          loans: member.loans.map((loan) => ({
+      exportCollectorCustomers: async (params: { assignedCollectorId: string }) => {
+        const customers = await exportCollectorCustomers(params);
+        return customers.map((customer) => ({
+          name: customer.name,
+          phone: customer.phone,
+          collectionPoint: customer.collectionPoint,
+          notes: customer.notes,
+          referredBy: { name: customer.referredBy.name },
+          loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
@@ -391,15 +391,15 @@ async function initializeMessageProcessor() {
           }))
         }));
       },
-      exportMembersByReferrer: async (params: { referredById: string }) => {
-        const members = await exportMembersByReferrer(params);
-        return members.map((member) => ({
-          name: member.name,
-          phone: member.phone,
-          collectionPoint: member.collectionPoint,
-          notes: member.notes,
-          referredBy: { name: member.referredBy.name },
-          loans: member.loans.map((loan) => ({
+      exportCustomersByReferrer: async (params: { referredById: string }) => {
+        const customers = await exportCustomersByReferrer(params);
+        return customers.map((customer) => ({
+          name: customer.name,
+          phone: customer.phone,
+          collectionPoint: customer.collectionPoint,
+          notes: customer.notes,
+          referredBy: { name: customer.referredBy.name },
+          loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
@@ -409,15 +409,15 @@ async function initializeMessageProcessor() {
           }))
         }));
       },
-      exportAllMembers: async () => {
-        const members = await exportAllMembers({});
-        return members.map((member) => ({
-          name: member.name,
-          phone: member.phone,
-          collectionPoint: member.collectionPoint,
-          notes: member.notes,
-          referredBy: { name: member.referredBy.name },
-          loans: member.loans.map((loan) => ({
+      exportAllCustomers: async () => {
+        const customers = await exportAllCustomers({});
+        return customers.map((customer) => ({
+          name: customer.name,
+          phone: customer.phone,
+          collectionPoint: customer.collectionPoint,
+          notes: customer.notes,
+          referredBy: { name: customer.referredBy.name },
+          loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
@@ -453,10 +453,10 @@ async function initializeMessageProcessor() {
         );
         return result;
       },
-      renderMembersReportToPng: async (members) => {
+      renderCustomersReportToPng: async (customers) => {
         const logoPath = resolve(__dirname, "../assets/logo.png");
         const logoDataUrl = loadLogoDataUrl(logoPath);
-        return renderMembersReportToPng(members, undefined, logoDataUrl ?? undefined);
+        return renderCustomersReportToPng(customers, undefined, logoDataUrl ?? undefined);
       },
       uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
         return whatsAppClient.uploadMedia(fileBuffer, mimeType);

@@ -26,7 +26,7 @@ export function getTodayDayOfWeek(
 }
 
 /**
- * True if today is the member's preferred payment day (WEEKLY), or always true for DAILY loans.
+ * True if today is the customer's preferred payment day (WEEKLY), or always true for DAILY loans.
  */
 export function isPaymentDayToday(
   paymentFrequency: string,

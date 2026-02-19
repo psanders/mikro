@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Send PAYMENT_REMINDER template to members whose payment day is today and are on track.
+ * Send PAYMENT_REMINDER template to customers whose payment day is today and are on track.
  */
 
 import { getPaymentReminderTemplateName } from "./collectionConfig.js";
@@ -18,8 +18,8 @@ import {
   type CollectionTarget
 } from "./collectionAttemptHelper.js";
 
-export interface MemberLoanPair {
-  member: { id: string; name: string; phone: string; preferredPaymentDay: string | null };
+export interface CustomerLoanPair {
+  customer: { id: string; name: string; phone: string; preferredPaymentDay: string | null };
   loan: {
     id: string;
     loanId: number;
@@ -29,10 +29,10 @@ export interface MemberLoanPair {
 }
 
 /**
- * Send reminder template for each (member, loan) pair. One send per pair with rate limit between.
+ * Send reminder template for each (customer, loan) pair. One send per pair with rate limit between.
  */
 export async function processPaymentReminders(
-  pairs: MemberLoanPair[],
+  pairs: CustomerLoanPair[],
   deps: CollectionDeps
 ): Promise<void> {
   const templateName = getPaymentReminderTemplateName();
@@ -40,12 +40,15 @@ export async function processPaymentReminders(
   const languageCode = "es"; // TODO: Update at Facebook to use es_DO
   const dryRun = isDryRun();
 
-  for (const { member, loan } of pairs) {
+  for (const { customer, loan } of pairs) {
     const paymentDay = formatPaymentDayForTemplate(
       loan.paymentFrequency,
-      member.preferredPaymentDay
+      customer.preferredPaymentDay
     );
-    const target: CollectionTarget = { member, loan };
+    const target: CollectionTarget = {
+      customer: { id: customer.id, name: customer.name, phone: customer.phone },
+      loan
+    };
     const bodyParameters = [paymentDay];
 
     if (dryRun) {
@@ -60,7 +63,7 @@ export async function processPaymentReminders(
       await executeCollectionAction(
         async () => {
           const res = await deps.sendWhatsAppTemplate({
-            phone: member.phone,
+            phone: customer.phone,
             templateName,
             languageCode,
             bodyParameters

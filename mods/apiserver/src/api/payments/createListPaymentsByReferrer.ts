@@ -11,7 +11,7 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to list payments for all loans belonging to members
+ * Creates a function to list payments for all loans belonging to customers
  * referred by a specific user.
  * By default, only returns COMPLETED payments unless showReversed is true.
  *
@@ -25,7 +25,7 @@ export function createListPaymentsByReferrer(client: DbClient) {
     (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[]
   > => {
@@ -33,7 +33,7 @@ export function createListPaymentsByReferrer(client: DbClient) {
     const payments = await client.payment.findMany({
       where: {
         loan: {
-          member: {
+          customer: {
             referredById: params.referredById
           }
         },
@@ -47,7 +47,7 @@ export function createListPaymentsByReferrer(client: DbClient) {
         loan: {
           select: {
             loanId: true,
-            member: {
+            customer: {
               select: {
                 name: true
               }
@@ -66,7 +66,7 @@ export function createListPaymentsByReferrer(client: DbClient) {
     return payments as (Payment & {
       loan: {
         loanId: number;
-        member: { name: string };
+        customer: { name: string };
       };
     })[];
   };

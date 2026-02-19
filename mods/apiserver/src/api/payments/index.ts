@@ -4,6 +4,6 @@
 export { createCreatePayment, type CreateCreatePaymentOptions } from "./createCreatePayment.js";
 export { createReversePayment } from "./createReversePayment.js";
 export { createListPayments } from "./createListPayments.js";
-export { createListPaymentsByMember } from "./createListPaymentsByMember.js";
+export { createListPaymentsByCustomer } from "./createListPaymentsByCustomer.js";
 export { createListPaymentsByReferrer } from "./createListPaymentsByReferrer.js";
 export { createListPaymentsByLoanId } from "./createListPaymentsByLoanId.js";

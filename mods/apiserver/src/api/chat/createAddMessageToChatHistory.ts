@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to add a message to chat history.
- * Supports messages for either a member or a user, with optional attachments.
+ * Supports messages for either a customer or a user, with optional attachments.
  *
  * @param client - The database client
  * @returns A validated function that adds a message to chat history
@@ -22,7 +22,7 @@ export function createAddMessageToChatHistory(client: DbClient) {
     const { attachments, ...messageData } = params;
     logger.verbose("adding message to chat history", {
       role: messageData.role,
-      memberId: messageData.memberId,
+      customerId: messageData.customerId,
       userId: messageData.userId
     });
 
@@ -32,7 +32,7 @@ export function createAddMessageToChatHistory(client: DbClient) {
         role: messageData.role,
         content: messageData.content,
         tools: messageData.tools ? JSON.stringify(messageData.tools) : undefined,
-        memberId: messageData.memberId,
+        customerId: messageData.customerId,
         userId: messageData.userId
       }
     });

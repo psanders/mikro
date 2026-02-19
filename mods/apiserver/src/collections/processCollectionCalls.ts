@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Initiate COLLECTION_CALL (Fonoster) for members who are too far behind (red threshold).
+ * Initiate COLLECTION_CALL (Fonoster) for customers who are too far behind (red threshold).
  */
 
 import type { PrismaClient } from "../generated/prisma/client.js";
@@ -19,8 +19,8 @@ export interface ProcessCollectionCallsDeps {
   db: PrismaClient;
 }
 
-export interface MemberLoanPairWithMissed {
-  member: { id: string; name: string; phone: string };
+export interface CustomerLoanPairWithMissed {
+  customer: { id: string; name: string; phone: string };
   loan: {
     id: string;
     loanId: number;
@@ -33,16 +33,16 @@ export interface MemberLoanPairWithMissed {
 }
 
 /**
- * Initiate a collection call for each (member, loan) pair. Logs attempt in DB.
+ * Initiate a collection call for each (customer, loan) pair. Logs attempt in DB.
  */
 export async function processCollectionCalls(
-  pairs: MemberLoanPairWithMissed[],
+  pairs: CustomerLoanPairWithMissed[],
   deps: ProcessCollectionCallsDeps
 ): Promise<void> {
   const dryRun = isDryRun();
 
-  for (const { member, loan, missedPayments } of pairs) {
-    const target: CollectionTarget = { member, loan };
+  for (const { customer, loan, missedPayments } of pairs) {
+    const target: CollectionTarget = { customer, loan };
 
     if (dryRun) {
       logDryRun({ channel: "PHONE_CALL", type: "COLLECTION_CALL", target, missedPayments });
@@ -50,7 +50,7 @@ export async function processCollectionCalls(
       await executeCollectionAction(
         async () => {
           const { ref } = await initiateCollectionCall({
-            phone: member.phone,
+            phone: customer.phone,
             loan: {
               loanId: loan.loanId,
               principal: loan.principal,
@@ -58,7 +58,7 @@ export async function processCollectionCalls(
               paymentAmount: loan.paymentAmount,
               paymentFrequency: loan.paymentFrequency,
               missedPayments,
-              memberName: member.name
+              customerName: customer.name
             }
           });
           return ref;

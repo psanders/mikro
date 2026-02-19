@@ -2,16 +2,16 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import {
-  // Member schemas
-  createMemberSchema,
-  updateMemberSchema,
-  getMemberSchema,
-  listMembersSchema,
-  listMembersByReferrerSchema,
-  listMembersByCollectorSchema,
-  exportCollectorMembersSchema,
-  exportMembersByReferrerSchema,
-  exportAllMembersSchema,
+  // Customer schemas
+  createCustomerSchema,
+  updateCustomerSchema,
+  getCustomerSchema,
+  listCustomersSchema,
+  listCustomersByReferrerSchema,
+  listCustomersByCollectorSchema,
+  exportCollectorCustomersSchema,
+  exportCustomersByReferrerSchema,
+  exportAllCustomersSchema,
   // User schemas
   createUserSchema,
   updateUserSchema,
@@ -26,11 +26,12 @@ import {
   listLoansSchema,
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
+  listLoansByCustomerSchema,
   // Payment schemas
   createPaymentSchema,
   reversePaymentSchema,
   listPaymentsSchema,
-  listPaymentsByMemberSchema,
+  listPaymentsByCustomerSchema,
   listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   // Receipt schemas
@@ -44,16 +45,16 @@ import {
   runSingleCollectionSchema
 } from "@mikro/common";
 import { router, protectedProcedure } from "../trpc.js";
-// Member API functions
-import { createCreateMember } from "../../api/members/createCreateMember.js";
-import { createUpdateMember } from "../../api/members/createUpdateMember.js";
-import { createGetMember } from "../../api/members/createGetMember.js";
-import { createListMembers } from "../../api/members/createListMembers.js";
-import { createListMembersByReferrer } from "../../api/members/createListMembersByReferrer.js";
-import { createListMembersByCollector } from "../../api/members/createListMembersByCollector.js";
-import { createExportCollectorMembers } from "../../api/members/createExportCollectorMembers.js";
-import { createExportMembersByReferrer } from "../../api/members/createExportMembersByReferrer.js";
-import { createExportAllMembers } from "../../api/members/createExportAllMembers.js";
+// Customer API functions
+import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
+import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
+import { createGetCustomer } from "../../api/customers/createGetCustomer.js";
+import { createListCustomers } from "../../api/customers/createListCustomers.js";
+import { createListCustomersByReferrer } from "../../api/customers/createListCustomersByReferrer.js";
+import { createListCustomersByCollector } from "../../api/customers/createListCustomersByCollector.js";
+import { createExportCollectorCustomers } from "../../api/customers/createExportCollectorCustomers.js";
+import { createExportCustomersByReferrer } from "../../api/customers/createExportCustomersByReferrer.js";
+import { createExportAllCustomers } from "../../api/customers/createExportAllCustomers.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -67,12 +68,13 @@ import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.j
 import { createListLoans } from "../../api/loans/createListLoans.js";
 import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
+import { createListLoansByCustomer } from "../../api/loans/createListLoansByCustomer.js";
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
 import { createListPayments } from "../../api/payments/createListPayments.js";
-import { createListPaymentsByMember } from "../../api/payments/createListPaymentsByMember.js";
+import { createListPaymentsByCustomer } from "../../api/payments/createListPaymentsByCustomer.js";
 import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
 import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
 // Receipt API functions
@@ -91,88 +93,92 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
  * Protected router - procedures that require Basic Auth.
  */
 export const protectedRouter = router({
-  // ==================== Member procedures ====================
+  // ==================== Customer procedures ====================
 
   /**
-   * Create a new member.
+   * Create a new customer.
    */
-  createMember: protectedProcedure.input(createMemberSchema).mutation(async ({ ctx, input }) => {
-    const fn = createCreateMember(ctx.db);
-    return fn(input);
-  }),
-
-  /**
-   * Update an existing member.
-   */
-  updateMember: protectedProcedure.input(updateMemberSchema).mutation(async ({ ctx, input }) => {
-    const fn = createUpdateMember(ctx.db);
-    return fn(input);
-  }),
-
-  /**
-   * Get a member by ID.
-   */
-  getMember: protectedProcedure.input(getMemberSchema).query(async ({ ctx, input }) => {
-    const fn = createGetMember(ctx.db);
-    return fn(input);
-  }),
-
-  /**
-   * List all members with optional pagination.
-   */
-  listMembers: protectedProcedure.input(listMembersSchema).query(async ({ ctx, input }) => {
-    const fn = createListMembers(ctx.db);
-    return fn(input);
-  }),
-
-  /**
-   * List members by referrer ID.
-   */
-  listMembersByReferrer: protectedProcedure
-    .input(listMembersByReferrerSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListMembersByReferrer(ctx.db);
+  createCustomer: protectedProcedure
+    .input(createCustomerSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreateCustomer(ctx.db);
       return fn(input);
     }),
 
   /**
-   * List members by collector ID.
+   * Update an existing customer.
    */
-  listMembersByCollector: protectedProcedure
-    .input(listMembersByCollectorSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListMembersByCollector(ctx.db);
+  updateCustomer: protectedProcedure
+    .input(updateCustomerSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createUpdateCustomer(ctx.db);
       return fn(input);
     }),
 
   /**
-   * Export members by collector ID with loans and referrer for report generation.
-   * Returns members with active loans, payment status, and referrer info.
+   * Get a customer by ID.
    */
-  exportCollectorMembers: protectedProcedure
-    .input(exportCollectorMembersSchema)
+  getCustomer: protectedProcedure.input(getCustomerSchema).query(async ({ ctx, input }) => {
+    const fn = createGetCustomer(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * List all customers with optional pagination.
+   */
+  listCustomers: protectedProcedure.input(listCustomersSchema).query(async ({ ctx, input }) => {
+    const fn = createListCustomers(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * List customers by referrer ID.
+   */
+  listCustomersByReferrer: protectedProcedure
+    .input(listCustomersByReferrerSchema)
     .query(async ({ ctx, input }) => {
-      const fn = createExportCollectorMembers(ctx.db);
+      const fn = createListCustomersByReferrer(ctx.db);
       return fn(input);
     }),
 
   /**
-   * Export members by referrer ID with loans and referrer for report generation.
-   * Returns members referred by a specific user with active loans and payment status.
+   * List customers by collector ID.
    */
-  exportMembersByReferrer: protectedProcedure
-    .input(exportMembersByReferrerSchema)
+  listCustomersByCollector: protectedProcedure
+    .input(listCustomersByCollectorSchema)
     .query(async ({ ctx, input }) => {
-      const fn = createExportMembersByReferrer(ctx.db);
+      const fn = createListCustomersByCollector(ctx.db);
       return fn(input);
     }),
 
   /**
-   * Export all active members with loans and referrer for report generation.
-   * Admin-only operation that returns all members with active loans and payment status.
+   * Export customers by collector ID with loans and referrer for report generation.
+   * Returns customers with active loans, payment status, and referrer info.
    */
-  exportAllMembers: protectedProcedure.input(exportAllMembersSchema).query(async ({ ctx }) => {
-    const fn = createExportAllMembers(ctx.db);
+  exportCollectorCustomers: protectedProcedure
+    .input(exportCollectorCustomersSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createExportCollectorCustomers(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Export customers by referrer ID with loans and referrer for report generation.
+   * Returns customers referred by a specific user with active loans and payment status.
+   */
+  exportCustomersByReferrer: protectedProcedure
+    .input(exportCustomersByReferrerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createExportCustomersByReferrer(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Export all active customers with loans and referrer for report generation.
+   * Admin-only operation that returns all customers with active loans and payment status.
+   */
+  exportAllCustomers: protectedProcedure.input(exportAllCustomersSchema).query(async ({ ctx }) => {
+    const fn = createExportAllCustomers(ctx.db);
     return fn({});
   }),
 
@@ -213,7 +219,7 @@ export const protectedRouter = router({
   // ==================== Chat procedures ====================
 
   /**
-   * Get chat history for a member or user.
+   * Get chat history for a customer or user.
    */
   getChatHistory: protectedProcedure.input(getChatHistorySchema).query(async ({ ctx, input }) => {
     const fn = createGetChatHistory(ctx.db);
@@ -223,7 +229,7 @@ export const protectedRouter = router({
   // ==================== Loan procedures ====================
 
   /**
-   * Create a new loan for a member.
+   * Create a new loan for a customer.
    */
   createLoan: protectedProcedure.input(createLoanSchema).mutation(async ({ ctx, input }) => {
     const fn = createCreateLoan(ctx.db);
@@ -248,7 +254,7 @@ export const protectedRouter = router({
   }),
 
   /**
-   * List loans for members referred by a specific user.
+   * List loans for customers referred by a specific user.
    */
   listLoansByReferrer: protectedProcedure
     .input(listLoansByReferrerSchema)
@@ -258,12 +264,22 @@ export const protectedRouter = router({
     }),
 
   /**
-   * List loans for members assigned to a specific collector.
+   * List loans for customers assigned to a specific collector.
    */
   listLoansByCollector: protectedProcedure
     .input(listLoansByCollectorSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListLoansByCollector(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List loans for a specific customer by ID.
+   */
+  listLoansByCustomer: protectedProcedure
+    .input(listLoansByCustomerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListLoansByCustomer(ctx.db);
       return fn(input);
     }),
 
@@ -306,17 +322,17 @@ export const protectedRouter = router({
   }),
 
   /**
-   * List payments for a specific member's loans within a date range.
+   * List payments for a specific customer's loans within a date range.
    */
-  listPaymentsByMember: protectedProcedure
-    .input(listPaymentsByMemberSchema)
+  listPaymentsByCustomer: protectedProcedure
+    .input(listPaymentsByCustomerSchema)
     .query(async ({ ctx, input }) => {
-      const fn = createListPaymentsByMember(ctx.db);
+      const fn = createListPaymentsByCustomer(ctx.db);
       return fn(input);
     }),
 
   /**
-   * List payments for all members referred by a specific user within a date range.
+   * List payments for all customers referred by a specific user within a date range.
    */
   listPaymentsByReferrer: protectedProcedure
     .input(listPaymentsByReferrerSchema)
@@ -402,7 +418,7 @@ export const protectedRouter = router({
 
   /**
    * Trigger the daily collections process on demand.
-   * Evaluates all active members and sends reminders, overdue notices, or collection calls
+   * Evaluates all active customers and sends reminders, overdue notices, or collection calls
    * based on their payment status. Supports dry-run mode.
    */
   runCollections: protectedProcedure

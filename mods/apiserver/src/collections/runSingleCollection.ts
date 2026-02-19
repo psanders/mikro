@@ -46,7 +46,7 @@ export interface RunSingleCollectionResult {
   loanId: number;
   type: CollectionAttemptType;
   channel: CollectionChannel;
-  memberName: string;
+  customerName: string;
   dryRun: boolean;
   error?: string;
 }
@@ -70,7 +70,7 @@ export async function runSingleCollection(
   const loan = await deps.db.loan.findUnique({
     where: { loanId: input.loanId },
     include: {
-      member: true,
+      customer: true,
       payments: {
         where: { status: "COMPLETED" },
         orderBy: { paidAt: "asc" }
@@ -79,26 +79,30 @@ export async function runSingleCollection(
   });
 
   const allowedStatuses = ["ACTIVE", ...(input.includeDefaulted ? ["DEFAULTED"] : [])];
-  if (!loan || !allowedStatuses.includes(loan.status) || !loan.member) {
+  if (!loan || !allowedStatuses.includes(loan.status) || !loan.customer) {
     return {
       success: false,
       loanId: input.loanId,
       type: AttemptType.PAYMENT_REMINDER,
       channel: Channel.WHATSAPP,
-      memberName: "",
+      customerName: "",
       dryRun,
       error: "Loan not found or not active"
     };
   }
 
-  const member = loan.member;
-  const memberInfo = { id: member.id, name: member.name, phone: member.phone };
+  const customer = loan.customer;
+  const customerInfo = { id: customer.id, name: customer.name, phone: customer.phone };
   const loanInfo = { id: loan.id, loanId: loan.loanId };
-  const target: CollectionTarget = { member: memberInfo, loan: loanInfo };
+  const target: CollectionTarget = { customer: customerInfo, loan: loanInfo };
 
-  const loanData = loanToData(loan, member.preferredPaymentDay);
+  const loanData = loanToData(loan, customer.preferredPaymentDay);
   const missed = getMissedPaymentsCount(loanData, asOfDate);
-  const paymentDay = isPaymentDayToday(loan.paymentFrequency, member.preferredPaymentDay, asOfDate);
+  const paymentDay = isPaymentDayToday(
+    loan.paymentFrequency,
+    customer.preferredPaymentDay,
+    asOfDate
+  );
 
   let type: CollectionAttemptType | null = input.type ?? null;
   if (type === null) {
@@ -111,7 +115,7 @@ export async function runSingleCollection(
         loanId: loan.loanId,
         type: AttemptType.PAYMENT_REMINDER,
         channel: Channel.WHATSAPP,
-        memberName: member.name,
+        customerName: customer.name,
         dryRun: false,
         error:
           "No collection action applies for this loan today (0 missed, not payment day). Use type override to force one."
@@ -140,7 +144,7 @@ export async function runSingleCollection(
       loanId: loan.loanId,
       type,
       channel,
-      memberName: member.name,
+      customerName: customer.name,
       dryRun: true
     };
   }
@@ -155,19 +159,19 @@ export async function runSingleCollection(
         loanId: loan.loanId,
         type,
         channel,
-        memberName: member.name,
+        customerName: customer.name,
         dryRun: false,
         error: "Payment reminder template not configured"
       };
     }
     const paymentDayStr = formatPaymentDayForTemplate(
       loan.paymentFrequency,
-      member.preferredPaymentDay
+      customer.preferredPaymentDay
     );
     ok = await executeCollectionAction(
       async () => {
         const res = await deps.sendWhatsAppTemplate({
-          phone: member.phone,
+          phone: customer.phone,
           templateName,
           languageCode: "es",
           bodyParameters: [paymentDayStr]
@@ -185,7 +189,7 @@ export async function runSingleCollection(
         loanId: loan.loanId,
         type,
         channel,
-        memberName: member.name,
+        customerName: customer.name,
         dryRun: false,
         error: "Overdue notice template not configured"
       };
@@ -193,7 +197,7 @@ export async function runSingleCollection(
     ok = await executeCollectionAction(
       async () => {
         const res = await deps.sendWhatsAppTemplate({
-          phone: member.phone,
+          phone: customer.phone,
           templateName,
           languageCode: getWhatsAppLanguageCode(),
           bodyParameters: []
@@ -207,7 +211,7 @@ export async function runSingleCollection(
     ok = await executeCollectionAction(
       async () => {
         const { ref } = await initiateCollectionCall({
-          phone: member.phone,
+          phone: customer.phone,
           loan: {
             loanId: loan.loanId,
             principal: Number(loan.principal),
@@ -215,7 +219,7 @@ export async function runSingleCollection(
             paymentAmount: Number(loan.paymentAmount),
             paymentFrequency: loan.paymentFrequency,
             missedPayments: missed,
-            memberName: member.name
+            customerName: customer.name
           }
         });
         return ref;
@@ -230,7 +234,7 @@ export async function runSingleCollection(
     loanId: loan.loanId,
     type,
     channel,
-    memberName: member.name,
+    customerName: customer.name,
     dryRun: false
   };
 }

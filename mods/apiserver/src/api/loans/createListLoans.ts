@@ -22,7 +22,7 @@ export function createListLoans(client: DbClient) {
     params: ListLoansInput
   ): Promise<
     (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[]
   > => {
     logger.verbose("listing loans", {
@@ -33,7 +33,7 @@ export function createListLoans(client: DbClient) {
     const loans = await client.loan.findMany({
       where: params.showAll ? undefined : { status: "ACTIVE" },
       include: {
-        member: {
+        customer: {
           select: {
             name: true,
             phone: true
@@ -45,7 +45,7 @@ export function createListLoans(client: DbClient) {
     });
     logger.verbose("loans listed", { count: loans.length });
     return loans as (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[];
   };
 

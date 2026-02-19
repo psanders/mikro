@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Send OVERDUE_NOTICE template to members who are behind (yellow threshold).
+ * Send OVERDUE_NOTICE template to customers who are behind (yellow threshold).
  */
 
 import { getOverdueNoticeTemplateName, getWhatsAppLanguageCode } from "./collectionConfig.js";
@@ -17,8 +17,8 @@ import {
   type CollectionTarget
 } from "./collectionAttemptHelper.js";
 
-export interface MemberLoanPairWithMissed {
-  member: { id: string; name: string; phone: string };
+export interface CustomerLoanPairWithMissed {
+  customer: { id: string; name: string; phone: string };
   loan: {
     id: string;
     loanId: number;
@@ -28,10 +28,10 @@ export interface MemberLoanPairWithMissed {
 }
 
 /**
- * Send overdue notice template for each (member, loan) pair.
+ * Send overdue notice template for each (customer, loan) pair.
  */
 export async function processOverdueNotices(
-  pairs: MemberLoanPairWithMissed[],
+  pairs: CustomerLoanPairWithMissed[],
   deps: CollectionDeps
 ): Promise<void> {
   const templateName = getOverdueNoticeTemplateName();
@@ -39,8 +39,8 @@ export async function processOverdueNotices(
   const languageCode = getWhatsAppLanguageCode();
   const dryRun = isDryRun();
 
-  for (const { member, loan, missedPayments } of pairs) {
-    const target: CollectionTarget = { member, loan };
+  for (const { customer, loan, missedPayments } of pairs) {
+    const target: CollectionTarget = { customer, loan };
 
     if (dryRun) {
       logDryRun({
@@ -54,7 +54,7 @@ export async function processOverdueNotices(
       await executeCollectionAction(
         async () => {
           const res = await deps.sendWhatsAppTemplate({
-            phone: member.phone,
+            phone: customer.phone,
             templateName,
             languageCode,
             bodyParameters: []

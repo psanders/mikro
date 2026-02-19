@@ -20,7 +20,7 @@ import { logger } from "../../logger.js";
 export function createCreateLoan(client: DbClient) {
   const fn = async (params: CreateLoanInput): Promise<Loan> => {
     logger.verbose("creating loan", {
-      memberId: params.memberId,
+      customerId: params.customerId,
       principal: params.principal.toString()
     });
 
@@ -34,7 +34,7 @@ export function createCreateLoan(client: DbClient) {
     const loan = (await client.loan.create({
       data: {
         loanId: nextLoanId,
-        memberId: params.memberId,
+        customerId: params.customerId,
         principal: params.principal,
         termLength: params.termLength,
         paymentAmount: params.paymentAmount,
@@ -43,7 +43,11 @@ export function createCreateLoan(client: DbClient) {
       }
     })) as unknown as Loan;
 
-    logger.verbose("loan created", { id: loan.id, loanId: nextLoanId, memberId: params.memberId });
+    logger.verbose("loan created", {
+      id: loan.id,
+      loanId: nextLoanId,
+      customerId: params.customerId
+    });
     return loan;
   };
 

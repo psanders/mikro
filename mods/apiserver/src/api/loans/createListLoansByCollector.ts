@@ -11,7 +11,7 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to list loans for members assigned to a specific collector.
+ * Creates a function to list loans for customers assigned to a specific collector.
  * By default, only returns ACTIVE loans unless showAll is true.
  *
  * @param client - The database client
@@ -22,19 +22,19 @@ export function createListLoansByCollector(client: DbClient) {
     params: ListLoansByCollectorInput
   ): Promise<
     (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[]
   > => {
     logger.verbose("listing loans by collector", { collectorId: params.assignedCollectorId });
     const loans = await client.loan.findMany({
       where: {
-        member: {
+        customer: {
           assignedCollectorId: params.assignedCollectorId
         },
         ...(params.showAll ? {} : { status: "ACTIVE" })
       },
       include: {
-        member: {
+        customer: {
           select: {
             name: true,
             phone: true
@@ -49,7 +49,7 @@ export function createListLoansByCollector(client: DbClient) {
       count: loans.length
     });
     return loans as (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[];
   };
 

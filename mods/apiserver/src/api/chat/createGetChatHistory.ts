@@ -11,18 +11,21 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to get chat history for a member or user.
+ * Creates a function to get chat history for a customer or user.
  *
  * @param client - The database client
  * @returns A validated function that retrieves chat history
  */
 export function createGetChatHistory(client: DbClient) {
   const fn = async (params: GetChatHistoryInput): Promise<Message[]> => {
-    logger.verbose("getting chat history", { memberId: params.memberId, userId: params.userId });
-    const where: { memberId?: string; userId?: string } = {};
+    logger.verbose("getting chat history", {
+      customerId: params.customerId,
+      userId: params.userId
+    });
+    const where: { customerId?: string; userId?: string } = {};
 
-    if (params.memberId) {
-      where.memberId = params.memberId;
+    if (params.customerId) {
+      where.customerId = params.customerId;
     } else if (params.userId) {
       where.userId = params.userId;
     }

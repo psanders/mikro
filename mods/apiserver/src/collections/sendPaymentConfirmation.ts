@@ -20,7 +20,7 @@ import {
 export type SendPaymentConfirmationDeps = CollectionDeps;
 
 /**
- * Sends a payment confirmation template to the member and records a CollectionAttempt.
+ * Sends a payment confirmation template to the customer and records a CollectionAttempt.
  * Call this asynchronously after creating a payment (fire-and-forget).
  */
 export async function sendPaymentConfirmation(
@@ -36,20 +36,20 @@ export async function sendPaymentConfirmation(
   const payment = await deps.db.payment.findUnique({
     where: { id: paymentId },
     include: {
-      loan: { include: { member: true } }
+      loan: { include: { customer: true } }
     }
   });
 
-  if (!payment || !payment.loan?.member) {
-    logger.warn("payment or loan/member not found for confirmation", { paymentId });
+  if (!payment || !payment.loan?.customer) {
+    logger.warn("payment or loan/customer not found for confirmation", { paymentId });
     return;
   }
 
-  const member = payment.loan.member as { id: string; phone: string; name: string };
+  const customer = payment.loan.customer as { id: string; phone: string; name: string };
   const loan = payment.loan as { id: string; loanId: number };
   const amount = String(payment.amount);
   const paymentNumber = `Préstamo #${loan.loanId} - ${amount}`;
-  const target: CollectionTarget = { member, loan };
+  const target: CollectionTarget = { customer, loan };
   const bodyParameters = [paymentNumber];
 
   if (isDryRun()) {
@@ -66,7 +66,7 @@ export async function sendPaymentConfirmation(
   await executeCollectionAction(
     async () => {
       const res = await deps.sendWhatsAppTemplate({
-        phone: member.phone,
+        phone: customer.phone,
         templateName,
         languageCode: getWhatsAppLanguageCode(),
         bodyParameters

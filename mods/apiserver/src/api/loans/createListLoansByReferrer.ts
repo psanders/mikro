@@ -11,7 +11,7 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to list loans for members referred by a specific user.
+ * Creates a function to list loans for customers referred by a specific user.
  * By default, only returns ACTIVE loans unless showAll is true.
  *
  * @param client - The database client
@@ -22,19 +22,19 @@ export function createListLoansByReferrer(client: DbClient) {
     params: ListLoansByReferrerInput
   ): Promise<
     (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[]
   > => {
     logger.verbose("listing loans by referrer", { referrerId: params.referredById });
     const loans = await client.loan.findMany({
       where: {
-        member: {
+        customer: {
           referredById: params.referredById
         },
         ...(params.showAll ? {} : { status: "ACTIVE" })
       },
       include: {
-        member: {
+        customer: {
           select: {
             name: true,
             phone: true
@@ -49,7 +49,7 @@ export function createListLoansByReferrer(client: DbClient) {
       count: loans.length
     });
     return loans as (Loan & {
-      member: { name: string; phone: string };
+      customer: { name: string; phone: string };
     })[];
   };
 

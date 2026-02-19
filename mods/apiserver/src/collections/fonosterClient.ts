@@ -16,7 +16,7 @@ export interface InitiateCollectionCallParams {
     paymentAmount: number;
     paymentFrequency: string;
     missedPayments: number;
-    memberName: string;
+    customerName: string;
   };
 }
 
@@ -74,7 +74,7 @@ export async function initiateCollectionCall(
     paymentAmount: String(loan.paymentAmount),
     paymentFrequency: loan.paymentFrequency,
     missedPayments: String(loan.missedPayments),
-    memberName: loan.memberName
+    customerName: loan.customerName
   };
 
   if (!isFonosterEnabled()) {

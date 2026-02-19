@@ -32,9 +32,9 @@ export interface CollectionDeps {
   }) => Promise<{ messages?: Array<{ id: string }> }>;
 }
 
-/** Identifies the member + loan for a collection attempt. */
+/** Identifies the customer + loan for a collection attempt. */
 export interface CollectionTarget {
-  member: { id: string; name: string; phone: string };
+  customer: { id: string; name: string; phone: string };
   loan: { id: string; loanId: number };
 }
 
@@ -67,15 +67,15 @@ export async function recordCollectionAttempt(
       messageId: messageId ?? undefined,
       templateName: templateName ?? undefined,
       notes: notes ?? undefined,
-      memberId: target.member.id,
+      customerId: target.customer.id,
       loanId: target.loan.id
     }
   });
 
   logger.info("collection event", {
     loanId: target.loan.loanId,
-    memberId: target.member.id,
-    memberPhone: target.member.phone,
+    customerId: target.customer.id,
+    customerPhone: target.customer.phone,
     channel,
     type,
     status,
@@ -145,8 +145,8 @@ export function logDryRun(params: {
 }): void {
   logger.info("collection dry run (no action taken)", {
     loanId: params.target.loan.loanId,
-    memberId: params.target.member.id,
-    memberPhone: params.target.member.phone,
+    customerId: params.target.customer.id,
+    customerPhone: params.target.customer.phone,
     channel: params.channel,
     type: params.type,
     templateName: params.templateName ?? null,

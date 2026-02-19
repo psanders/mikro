@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to get a loan by numeric loan ID (loanId field).
- * Includes member relation with assignedCollectorId for validation.
+ * Includes customer relation with assignedCollectorId for validation.
  *
  * @param client - The database client
  * @returns A validated function that retrieves a loan by numeric loan ID
@@ -22,7 +22,7 @@ export function createGetLoanByLoanId(client: DbClient) {
     params: GetLoanByLoanIdInput
   ): Promise<
     | (Loan & {
-        member: { id: string; name: string; phone: string; assignedCollectorId: string | null };
+        customer: { id: string; name: string; phone: string; assignedCollectorId: string | null };
       })
     | null
   > => {
@@ -30,7 +30,7 @@ export function createGetLoanByLoanId(client: DbClient) {
     const loan = await client.loan.findUnique({
       where: { loanId: params.loanId },
       include: {
-        member: {
+        customer: {
           select: {
             id: true,
             name: true,
@@ -43,7 +43,7 @@ export function createGetLoanByLoanId(client: DbClient) {
     logger.verbose("loan by loan ID retrieved", { loanId: params.loanId, found: !!loan });
     return loan as
       | (Loan & {
-          member: { id: string; name: string; phone: string; assignedCollectorId: string | null };
+          customer: { id: string; name: string; phone: string; assignedCollectorId: string | null };
         })
       | null;
   };

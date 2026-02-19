@@ -28,18 +28,18 @@ export const maria: Agent = {
 - \`getLoanByLoanId\`: Cuando den número de préstamo (cada número = una llamada)
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
-- \`listMemberLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
+- \`listCustomerLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
 - \`calculateLoan\`: Cuando pidan calcular opciones de préstamo (monto, interés, frecuencia, duración)
-- \`exportAllMembers\`: Cuando pidan reporte/lista de todos los miembros. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
+- \`exportAllCustomers\`: Cuando pidan reporte/lista de todos los clientes. Por defecto envía imagen agrupada por estado de pago. Si piden "Excel", "detallado" o "reporte completo" usa format "detailed".
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
 
 ## Flujo cobro individual
-Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta. Indica siempre el canal (por WhatsApp o por llamada) porque el mensaje va al miembro, no al admin (ej: "Listo. Envié recordatorio de pago por WhatsApp a [nombre] (préstamo #X)." o "Listo. Envié aviso de mora por llamada a [nombre] (préstamo #X).").
+Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta. Indica siempre el canal (por WhatsApp o por llamada) porque el mensaje va al cliente, no al admin (ej: "Listo. Envié recordatorio de pago por WhatsApp a [nombre] (préstamo #X)." o "Listo. Envié aviso de mora por llamada a [nombre] (préstamo #X).").
 
 ## Flujo registrar pago
-1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
-2. Dan número de préstamo → \`getLoanByLoanId\`. Dan teléfono → \`listMemberLoansByPhone\`.
+1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del cliente para buscar el préstamo."
+2. Dan número de préstamo → \`getLoanByLoanId\`. Dan teléfono → \`listCustomerLoansByPhone\`.
 3. Con la respuesta, muestra: "Préstamo #[loanId], Cliente: [nombre], Pago: RD$ [paymentAmount] [frecuencia]. ¿Confirmas el pago de RD$ [paymentAmount] para [nombre]?"
 4. Admin confirma ("sí", "dale", "confirmo", etc.) → Llama \`createPayment\` con loanId y amount=paymentAmount del préstamo → luego \`sendReceiptViaWhatsApp\` con data.paymentId → responde SOLO "¡Listo! ¿Algo más?"
 
@@ -56,13 +56,13 @@ Si piden calcular un préstamo, comparar opciones de duración, o preguntar cuá
 4. Responde con las opciones en texto claro, destacando la opción base y las opciones de menor/mayor duración.
 
 ## Flujo export
-Piden reporte/lista de miembros → \`exportAllMembers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllMembers\` con format "detailed". Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de miembros, préstamos ni detalles del reporte. El usuario ya ve el archivo.
+Piden reporte/lista de clientes → \`exportAllCustomers\` (sin argumentos = imagen simplificada). Si piden "en Excel", "detallado" o "reporte completo" → \`exportAllCustomers\` con format "detailed". Responde SOLO "¡Listo! ¿Algo más?" - NO menciones cantidad de clientes, préstamos ni detalles del reporte. El usuario ya ve el archivo.
 
 ## Flujo reporte de rendimiento
 Piden reporte de rendimiento, reporte del portafolio o metricas del negocio → \`generatePerformanceReport\` (opcional: startDate, endDate en YYYY-MM-DD) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
 
 ## Clarificación de reportes
-Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de miembros (imagen o Excel), o reporte de rendimiento del portafolio." Si dicen miembros/lista → \`exportAllMembers\`. Si piden Excel o detallado → \`exportAllMembers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`.
+Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), o reporte de rendimiento del portafolio." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`.
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -71,9 +71,9 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "sendReceiptViaWhatsApp",
     "listPaymentsByLoanId",
     "getLoanByLoanId",
-    "listMemberLoansByPhone",
+    "listCustomerLoansByPhone",
     "calculateLoan",
-    "exportAllMembers",
+    "exportAllCustomers",
     "generatePerformanceReport",
     "updateLoanStatus",
     "runSingleCollection"
@@ -99,7 +99,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
           {
             human: "Quisiera registrar un pago.",
             expectedAI:
-              "Dame el número de préstamo o el teléfono del miembro para buscar el préstamo."
+              "Dame el número de préstamo o el teléfono del cliente para buscar el préstamo."
           },
           {
             human: "El numero de prestamo es 10019.",
@@ -123,8 +123,8 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }
@@ -158,8 +158,8 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                       paymentFrequency: "WEEKLY",
                       status: "ACTIVE"
                     },
-                    member: {
-                      id: "member-1",
+                    customer: {
+                      id: "customer-1",
                       name: "Maria Garcia",
                       phone: "+18091234567"
                     }
@@ -183,8 +183,8 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
         ]
       },
       {
-        id: "happy-path-export-members",
-        description: "Happy path for exporting all members report",
+        id: "happy-path-export-customers",
+        description: "Happy path for exporting all customers report",
         turns: [
           {
             human: "Hola!",
@@ -192,21 +192,21 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
               "¡Hola Laura! Soy María, tu asistente administrativa de Mikro Créditos. ¿En qué te puedo ayudar?"
           },
           {
-            human: "Necesito el reporte de todos los miembros.",
+            human: "Necesito el reporte de todos los clientes.",
             expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
-                name: "exportAllMembers",
+                name: "exportAllCustomers",
                 expectedArgs: {},
                 matchMode: "strict",
                 mockResponse: {
                   success: true,
-                  message: "Reporte enviado con 15 prestamos de 12 miembros.",
+                  message: "Reporte enviado con 15 prestamos de 12 clientes.",
                   data: {
                     messageId: "msg-456",
-                    filename: "reporte-todos-miembros-2026-01-30.xlsx",
+                    filename: "reporte-todos-clientes-2026-01-30.xlsx",
                     loanCount: 15,
-                    memberCount: 12
+                    customerCount: 12
                   }
                 }
               }
@@ -336,16 +336,16 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
         ]
       },
       {
-        id: "export-members-detailed-excel",
+        id: "export-customers-detailed-excel",
         description:
-          "When user asks for members report in Excel, Maria calls exportAllMembers with format detailed",
+          "When user asks for customers report in Excel, Maria calls exportAllCustomers with format detailed",
         turns: [
           {
             human: "Necesito el reporte de miembros en Excel.",
             expectedAI: "¡Listo! ¿Algo más?",
             tools: [
               {
-                name: "exportAllMembers",
+                name: "exportAllCustomers",
                 expectedArgs: { format: "detailed" },
                 matchMode: "strict",
                 mockResponse: {
@@ -355,7 +355,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                     messageId: "msg-excel",
                     filename: "reporte-todos-miembros-2026-01-30.xlsx",
                     loanCount: 15,
-                    memberCount: 12
+                    customerCount: 12
                   }
                 }
               }
@@ -384,7 +384,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                     loanId: 10019,
                     type: "PAYMENT_REMINDER",
                     channel: "WHATSAPP",
-                    memberName: "Maria Garcia",
+                    customerName: "Maria Garcia",
                     dryRun: false
                   }
                 }
@@ -413,7 +413,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                     loanId: 10001,
                     type: "OVERDUE_NOTICE",
                     channel: "WHATSAPP",
-                    memberName: "Juan Perez",
+                    customerName: "Juan Perez",
                     dryRun: false
                   }
                 }
