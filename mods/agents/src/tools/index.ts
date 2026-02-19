@@ -2,12 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 export {
-  createMemberTool,
+  createCustomerTool,
   createPaymentTool,
   sendReceiptViaWhatsAppTool,
   listPaymentsByLoanIdTool,
   listLoansByCollectorTool,
-  getMemberTool,
+  getCustomerTool,
   createLoanTool,
   allTools,
   getToolByName

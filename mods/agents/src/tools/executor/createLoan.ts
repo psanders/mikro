@@ -10,7 +10,7 @@ export async function handleCreateLoan(
   args: Record<string, unknown>
 ): Promise<ToolResult> {
   const loan = await deps.createLoan({
-    memberId: args.memberId as string,
+    customerId: args.customerId as string,
     principal: Number(args.principal),
     termLength: Number(args.termLength),
     paymentAmount: Number(args.paymentAmount),

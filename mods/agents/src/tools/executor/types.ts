@@ -5,7 +5,7 @@
  */
 
 /**
- * Loan data for member export reports.
+ * Loan data for customer export reports.
  */
 export interface ExportedLoan {
   loanId: number;
@@ -17,9 +17,9 @@ export interface ExportedLoan {
 }
 
 /**
- * Member data for export reports. Used by all export functions.
+ * Customer data for export reports. Used by all export functions.
  */
-export interface ExportedMember {
+export interface ExportedCustomer {
   name: string;
   phone: string;
   collectionPoint: string | null;
@@ -33,8 +33,8 @@ export interface ExportedMember {
  * API functions required by the tool executor.
  */
 export interface ToolExecutorDependencies {
-  /** Create a new member */
-  createMember: (params: {
+  /** Create a new customer */
+  createCustomer: (params: {
     name: string;
     phone: string;
     idNumber: string;
@@ -84,14 +84,14 @@ export interface ToolExecutorDependencies {
     showAll?: boolean;
   }) => Promise<Array<{ id: string; loanId: number; principal: number; status: string }>>;
 
-  /** Get member by ID */
-  getMember: (params: {
+  /** Get customer by ID */
+  getCustomer: (params: {
     id: string;
   }) => Promise<{ id: string; name: string; phone: string } | null>;
 
   /** Create a loan */
   createLoan: (params: {
-    memberId: string;
+    customerId: string;
     principal: number;
     termLength: number;
     paymentAmount: number;
@@ -130,14 +130,14 @@ export interface ToolExecutorDependencies {
     status: "COMPLETED" | "DEFAULTED" | "CANCELLED";
   }) => Promise<{ id: string; loanId: number; status: string }>;
 
-  /** Get member by phone number */
-  getMemberByPhone: (params: {
+  /** Get customer by phone number */
+  getCustomerByPhone: (params: {
     phone: string;
   }) => Promise<{ id: string; name: string; phone: string } | null>;
 
-  /** List loans by member ID */
-  listLoansByMember: (params: {
-    memberId: string;
+  /** List loans by customer ID */
+  listLoansByCustomer: (params: {
+    customerId: string;
     showAll?: boolean;
   }) => Promise<Array<{ id: string; loanId: number; principal: number; status: string }>>;
 
@@ -150,7 +150,7 @@ export interface ToolExecutorDependencies {
     paymentAmount: number;
     paymentFrequency: string;
     status: string;
-    member: {
+    customer: {
       id: string;
       name: string;
       phone: string;
@@ -169,14 +169,16 @@ export interface ToolExecutorDependencies {
     }>
   >;
 
-  /** Export collector members with loans and referrer for report generation */
-  exportCollectorMembers: (params: { assignedCollectorId: string }) => Promise<ExportedMember[]>;
+  /** Export collector customers with loans and referrer for report generation */
+  exportCollectorCustomers: (params: {
+    assignedCollectorId: string;
+  }) => Promise<ExportedCustomer[]>;
 
-  /** Export members by referrer with loans and referrer for report generation */
-  exportMembersByReferrer: (params: { referredById: string }) => Promise<ExportedMember[]>;
+  /** Export customers by referrer with loans and referrer for report generation */
+  exportCustomersByReferrer: (params: { referredById: string }) => Promise<ExportedCustomer[]>;
 
-  /** Export all members with loans and referrer for report generation (admin only) */
-  exportAllMembers: () => Promise<ExportedMember[]>;
+  /** Export all customers with loans and referrer for report generation (admin only) */
+  exportAllCustomers: () => Promise<ExportedCustomer[]>;
 
   /** Generate performance report (metrics + LLM narrative + PNG). Returns base64 image. */
   generatePerformanceReport: (params: {
@@ -195,13 +197,13 @@ export interface ToolExecutorDependencies {
     loanId: number;
     type: string;
     channel: string;
-    memberName: string;
+    customerName: string;
     dryRun: boolean;
     error?: string;
   }>;
 
-  /** Render members report (grouped by payment health) to PNG buffer. Used for simplified format. */
-  renderMembersReportToPng: (members: ExportedMember[]) => Promise<Buffer>;
+  /** Render customers report (grouped by payment health) to PNG buffer. Used for simplified format. */
+  renderCustomersReportToPng: (customers: ExportedCustomer[]) => Promise<Buffer>;
 
   /** Upload media to WhatsApp and get media ID */
   uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;

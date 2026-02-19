@@ -1,9 +1,3 @@
-# Member data
-members.json
-
-# Conversation history
-conversations.json
-
 # Logs
 logs/
 *.log

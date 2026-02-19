@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Migrate guest conversation history to the database after member creation.
+ * Migrate guest conversation history to the database after customer creation.
  */
 import type { Message, MessageContentItem } from "../llm/types.js";
 import { getGuestConversation, clearGuestConversation } from "./inMemoryStore.js";
@@ -11,7 +11,7 @@ import { logger } from "../logger.js";
  * Function type for adding a message to the database.
  */
 export type AddMessageToDb = (params: {
-  memberId: string;
+  customerId: string;
   role: "AI" | "HUMAN";
   content: string;
   attachments?: Array<{
@@ -71,27 +71,27 @@ function extractImageAttachments(content: string | MessageContentItem[]): Array<
 
 /**
  * Migrate guest conversation history to the database.
- * Called after a guest becomes a member.
+ * Called after a guest becomes a customer.
  *
  * @param phone - The guest's phone number (used as lookup key)
- * @param memberId - The new member's ID in the database
+ * @param customerId - The new customer's ID in the database
  * @param addMessage - Function to add messages to the database
  */
 export async function migrateGuestToDatabase(
   phone: string,
-  memberId: string,
+  customerId: string,
   addMessage: AddMessageToDb
 ): Promise<void> {
   const messages = getGuestConversation(phone);
 
   if (messages.length === 0) {
-    logger.verbose("no guest messages to migrate", { phone, memberId });
+    logger.verbose("no guest messages to migrate", { phone, customerId });
     return;
   }
 
   logger.verbose("migrating guest conversation to database", {
     phone,
-    memberId,
+    customerId,
     messageCount: messages.length
   });
 
@@ -113,7 +113,7 @@ export async function migrateGuestToDatabase(
 
     try {
       await addMessage({
-        memberId,
+        customerId,
         role,
         content: content || "[Image]",
         attachments: attachments.length > 0 ? attachments : undefined
@@ -122,7 +122,7 @@ export async function migrateGuestToDatabase(
       const err = error as Error;
       logger.error("failed to migrate message", {
         phone,
-        memberId,
+        customerId,
         role,
         error: err.message
       });
@@ -133,5 +133,5 @@ export async function migrateGuestToDatabase(
   // Clear the in-memory conversation after migration
   clearGuestConversation(phone);
 
-  logger.verbose("guest conversation migrated", { phone, memberId });
+  logger.verbose("guest conversation migrated", { phone, customerId });
 }

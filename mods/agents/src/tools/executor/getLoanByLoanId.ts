@@ -32,7 +32,7 @@ export async function handleGetLoanByLoanId(
 
   logger.verbose("loan retrieved via tool by loan ID", {
     loanId: loan.loanId,
-    memberId: loan.member.id
+    customerId: loan.customer.id
   });
 
   return {
@@ -48,11 +48,11 @@ export async function handleGetLoanByLoanId(
         paymentFrequency: loan.paymentFrequency,
         status: loan.status
       },
-      member: {
-        id: loan.member.id,
-        name: loan.member.name,
-        phone: loan.member.phone,
-        assignedCollectorId: loan.member.assignedCollectorId
+      customer: {
+        id: loan.customer.id,
+        name: loan.customer.name,
+        phone: loan.customer.phone,
+        assignedCollectorId: loan.customer.assignedCollectorId
       }
     }
   };

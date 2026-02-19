@@ -4,14 +4,14 @@
 import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
-import { generateMembersExcel, generateFilename } from "./excelUtils.js";
+import { generateCustomersExcel, generateFilename } from "./excelUtils.js";
 
 /**
- * Handle the exportAllMembers tool call.
+ * Handle the exportAllCustomers tool call.
  * Default: simplified (PNG image grouped by payment health). With format "detailed": Excel with all columns.
  * Sends the report as a document via WhatsApp. Admin-only.
  */
-export async function handleExportAllMembers(
+export async function handleExportAllCustomers(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>,
   context?: Record<string, unknown>
@@ -33,12 +33,12 @@ export async function handleExportAllMembers(
     };
   }
 
-  const members = await deps.exportAllMembers();
+  const customers = await deps.exportAllCustomers();
 
-  if (members.length === 0) {
+  if (customers.length === 0) {
     return {
       success: true,
-      message: "No hay miembros activos en el sistema."
+      message: "No hay clientes activos en el sistema."
     };
   }
 
@@ -49,13 +49,13 @@ export async function handleExportAllMembers(
     const {
       buffer: excelBuffer,
       filename,
-      memberCount,
+      customerCount,
       loanCount
-    } = await generateMembersExcel(members, "reporte-todos-miembros");
+    } = await generateCustomersExcel(customers, "reporte-todos-clientes");
 
     logger.verbose("uploading report to WhatsApp", {
       adminId,
-      memberCount,
+      customerCount,
       loanCount,
       filename,
       size: excelBuffer.length
@@ -76,14 +76,14 @@ export async function handleExportAllMembers(
       const messageId = response.messages?.[0]?.id;
       logger.verbose("report sent via WhatsApp", {
         adminId,
-        memberCount,
+        customerCount,
         loanCount,
         messageId
       });
       return {
         success: true,
-        message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros.`,
-        data: { messageId, filename, loanCount, memberCount: members.length }
+        message: `Reporte enviado con ${loanCount} prestamos de ${customers.length} clientes.`,
+        data: { messageId, filename, loanCount, customerCount: customers.length }
       };
     } catch (error) {
       const err = error as Error;
@@ -100,12 +100,12 @@ export async function handleExportAllMembers(
 
   // Simplified: PNG report grouped by payment health
   try {
-    const pngBuffer = await deps.renderMembersReportToPng(members);
-    const filename = generateFilename("reporte-miembros").replace(".xlsx", ".png");
+    const pngBuffer = await deps.renderCustomersReportToPng(customers);
+    const filename = generateFilename("reporte-clientes").replace(".xlsx", ".png");
 
     logger.verbose("uploading simplified report to WhatsApp", {
       adminId,
-      memberCount: members.length,
+      customerCount: customers.length,
       filename,
       size: pngBuffer.length
     });
@@ -119,17 +119,17 @@ export async function handleExportAllMembers(
       documentFilename: filename
     });
     const messageId = response.messages?.[0]?.id;
-    const loanCount = members.reduce((sum, m) => sum + m.loans.length, 0);
+    const loanCount = customers.reduce((sum, m) => sum + m.loans.length, 0);
     logger.verbose("report sent via WhatsApp", {
       adminId,
-      memberCount: members.length,
+      customerCount: customers.length,
       loanCount,
       messageId
     });
     return {
       success: true,
-      message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros.`,
-      data: { messageId, filename, loanCount, memberCount: members.length }
+      message: `Reporte enviado con ${loanCount} prestamos de ${customers.length} clientes.`,
+      data: { messageId, filename, loanCount, customerCount: customers.length }
     };
   } catch (error) {
     const err = error as Error;

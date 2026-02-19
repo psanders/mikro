@@ -7,22 +7,22 @@
 import type { ToolFunction } from "../llm/types.js";
 
 /**
- * Tool definition for creating a new member.
+ * Tool definition for creating a new customer.
  * Used by Joan (guest onboarding) and Maria (admin).
  */
-export const createMemberTool: ToolFunction = {
+export const createCustomerTool: ToolFunction = {
   type: "function",
   function: {
-    name: "createMember",
+    name: "createCustomer",
     description:
-      "Crear una nueva cuenta de miembro después de recopilar toda la información requerida. El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula.",
+      "Crear una nueva cuenta de cliente después de recopilar toda la información requerida. El nombre y número de cédula DEBEN ser extraídos de las fotos de la cédula.",
     parameters: {
       type: "object",
       properties: {
         phone: {
           type: "string",
           description:
-            "Número de teléfono del miembro (se proporciona automáticamente del contexto)"
+            "Número de teléfono del cliente (se proporciona automáticamente del contexto)"
         },
         referredById: {
           type: "string",
@@ -31,7 +31,7 @@ export const createMemberTool: ToolFunction = {
         },
         name: {
           type: "string",
-          description: "Nombre completo del miembro extraído de la cédula de identidad"
+          description: "Nombre completo del cliente extraído de la cédula de identidad"
         },
         idNumber: {
           type: "string",
@@ -44,19 +44,19 @@ export const createMemberTool: ToolFunction = {
         },
         homeAddress: {
           type: "string",
-          description: "Dirección del hogar del miembro"
+          description: "Dirección del hogar del cliente"
         },
         jobPosition: {
           type: "string",
-          description: "Empleo actual del miembro"
+          description: "Empleo actual del cliente"
         },
         income: {
           type: "string",
-          description: "Ingresos aproximados del miembro"
+          description: "Ingresos aproximados del cliente"
         },
         isBusinessOwner: {
           type: "string",
-          description: "Indica si el miembro es propietario de un negocio (true/false)"
+          description: "Indica si el cliente es propietario de un negocio (true/false)"
         },
         preferredPaymentDay: {
           type: "string",
@@ -73,7 +73,7 @@ export const createMemberTool: ToolFunction = {
 /**
  * Tool definition for creating a payment (complete workflow).
  * Used by Juan (collector). This tool handles the complete payment registration:
- * gets loan by loan ID (numeric), retrieves member information, validates collector assignment,
+ * gets loan by loan ID (numeric), retrieves customer information, validates collector assignment,
  * creates payment, and generates receipt.
  */
 export const createPaymentTool: ToolFunction = {
@@ -81,7 +81,7 @@ export const createPaymentTool: ToolFunction = {
   function: {
     name: "createPayment",
     description:
-      "Registrar un nuevo pago para un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Esta herramienta obtiene el préstamo, recupera la información del miembro, valida que el cobrador esté asignado, crea el pago y genera el recibo automáticamente.",
+      "Registrar un nuevo pago para un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Esta herramienta obtiene el préstamo, recupera la información del cliente, valida que el cobrador esté asignado, crea el pago y genera el recibo automáticamente.",
     parameters: {
       type: "object",
       properties: {
@@ -155,23 +155,23 @@ export const listLoansByCollectorTool: ToolFunction = {
 };
 
 /**
- * Tool definition for getting member information.
+ * Tool definition for getting customer information.
  * Used by Juan (collector).
  */
-export const getMemberTool: ToolFunction = {
+export const getCustomerTool: ToolFunction = {
   type: "function",
   function: {
-    name: "getMember",
-    description: "Obtener información detallada de un miembro específico.",
+    name: "getCustomer",
+    description: "Obtener información detallada de un cliente específico.",
     parameters: {
       type: "object",
       properties: {
-        memberId: {
+        customerId: {
           type: "string",
-          description: "ID del miembro a buscar"
+          description: "ID del cliente a buscar"
         }
       },
-      required: ["memberId"]
+      required: ["customerId"]
     }
   }
 };
@@ -184,13 +184,13 @@ export const createLoanTool: ToolFunction = {
   type: "function",
   function: {
     name: "createLoan",
-    description: "Crear un nuevo préstamo para un miembro existente.",
+    description: "Crear un nuevo préstamo para un cliente existente.",
     parameters: {
       type: "object",
       properties: {
-        memberId: {
+        customerId: {
           type: "string",
-          description: "ID del miembro que recibe el préstamo"
+          description: "ID del cliente que recibe el préstamo"
         },
         principal: {
           type: "string",
@@ -210,7 +210,7 @@ export const createLoanTool: ToolFunction = {
           enum: ["WEEKLY", "DAILY"]
         }
       },
-      required: ["memberId", "principal", "termLength", "paymentAmount", "paymentFrequency"]
+      required: ["customerId", "principal", "termLength", "paymentAmount", "paymentFrequency"]
     }
   }
 };
@@ -287,21 +287,21 @@ export const updateLoanStatusTool: ToolFunction = {
 };
 
 /**
- * Tool definition for getting a member by phone number.
+ * Tool definition for getting a customer by phone number.
  * Used by Juan (collector).
  */
-export const getMemberByPhoneTool: ToolFunction = {
+export const getCustomerByPhoneTool: ToolFunction = {
   type: "function",
   function: {
-    name: "getMemberByPhone",
+    name: "getCustomerByPhone",
     description:
-      "Obtener información de un miembro por su número de teléfono. El número puede incluir o no el signo +.",
+      "Obtener información de un cliente por su número de teléfono. El número puede incluir o no el signo +.",
     parameters: {
       type: "object",
       properties: {
         phone: {
           type: "string",
-          description: "Número de teléfono del miembro (puede incluir o no el signo +)"
+          description: "Número de teléfono del cliente (puede incluir o no el signo +)"
         }
       },
       required: ["phone"]
@@ -310,20 +310,20 @@ export const getMemberByPhoneTool: ToolFunction = {
 };
 
 /**
- * Tool definition for listing loans by member ID.
+ * Tool definition for listing loans by customer ID.
  * Used by Juan (collector).
  */
-export const listLoansByMemberTool: ToolFunction = {
+export const listLoansByCustomerTool: ToolFunction = {
   type: "function",
   function: {
-    name: "listLoansByMember",
-    description: "Listar todos los préstamos de un miembro específico por su ID.",
+    name: "listLoansByCustomer",
+    description: "Listar todos los préstamos de un cliente específico por su ID.",
     parameters: {
       type: "object",
       properties: {
-        memberId: {
+        customerId: {
           type: "string",
-          description: "ID del miembro"
+          description: "ID del cliente"
         },
         showAll: {
           type: "string",
@@ -331,27 +331,27 @@ export const listLoansByMemberTool: ToolFunction = {
             "Si es 'true', muestra todos los préstamos incluyendo los completados. Por defecto solo muestra activos."
         }
       },
-      required: ["memberId"]
+      required: ["customerId"]
     }
   }
 };
 
 /**
- * Tool definition for listing loans by member phone number.
- * Used by Juan (collector). This is a convenience tool that combines getMemberByPhone and listLoansByMember.
+ * Tool definition for listing loans by customer phone number.
+ * Used by Juan (collector). This is a convenience tool that combines getCustomerByPhone and listLoansByCustomer.
  */
-export const listMemberLoansByPhoneTool: ToolFunction = {
+export const listCustomerLoansByPhoneTool: ToolFunction = {
   type: "function",
   function: {
-    name: "listMemberLoansByPhone",
+    name: "listCustomerLoansByPhone",
     description:
-      "Listar todos los préstamos de un miembro por su número de teléfono. El número puede incluir o no el signo +. Esta herramienta busca el miembro por teléfono y luego lista sus préstamos.",
+      "Listar todos los préstamos de un cliente por su número de teléfono. El número puede incluir o no el signo +. Esta herramienta busca el cliente por teléfono y luego lista sus préstamos.",
     parameters: {
       type: "object",
       properties: {
         phone: {
           type: "string",
-          description: "Número de teléfono del miembro (puede incluir o no el signo +)"
+          description: "Número de teléfono del cliente (puede incluir o no el signo +)"
         },
         showAll: {
           type: "string",
@@ -373,7 +373,7 @@ export const getLoanByLoanIdTool: ToolFunction = {
   function: {
     name: "getLoanByLoanId",
     description:
-      "Obtener información detallada de un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Incluye información del miembro, monto del préstamo, monto de pago esperado, frecuencia de pago, y estado.",
+      "Obtener información detallada de un préstamo usando el número de préstamo (loan ID numérico, ej: 10000, 10001). Incluye información del cliente, monto del préstamo, monto de pago esperado, frecuencia de pago, y estado.",
     parameters: {
       type: "object",
       properties: {
@@ -426,7 +426,7 @@ export const listUsersTool: ToolFunction = {
   function: {
     name: "listUsers",
     description:
-      "Listar todos los usuarios disponibles. Útil para encontrar referidores (REFERRER) y cobradores (COLLECTOR) al crear un nuevo miembro. Los usuarios incluyen sus roles.",
+      "Listar todos los usuarios disponibles. Útil para encontrar referidores (REFERRER) y cobradores (COLLECTOR) al crear un nuevo cliente. Los usuarios incluyen sus roles.",
     parameters: {
       type: "object",
       properties: {
@@ -443,15 +443,15 @@ export const listUsersTool: ToolFunction = {
 };
 
 /**
- * Tool definition for exporting collector members.
- * Used by Juan (collector) to generate a report of assigned members.
+ * Tool definition for exporting collector customers.
+ * Used by Juan (collector) to generate a report of assigned customers.
  */
-export const exportCollectorMembersTool: ToolFunction = {
+export const exportCollectorCustomersTool: ToolFunction = {
   type: "function",
   function: {
-    name: "exportCollectorMembers",
+    name: "exportCollectorCustomers",
     description:
-      "Generar un reporte de los miembros asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
+      "Generar un reporte de los clientes asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -461,15 +461,15 @@ export const exportCollectorMembersTool: ToolFunction = {
 };
 
 /**
- * Tool definition for exporting members by referrer.
- * Used by referrers to generate a report of members they referred.
+ * Tool definition for exporting customers by referrer.
+ * Used by referrers to generate a report of customers they referred.
  */
-export const exportMembersByReferrerTool: ToolFunction = {
+export const exportCustomersByReferrerTool: ToolFunction = {
   type: "function",
   function: {
-    name: "exportMembersByReferrer",
+    name: "exportCustomersByReferrer",
     description:
-      "Generar un reporte de los miembros referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
+      "Generar un reporte de los clientes referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -479,15 +479,15 @@ export const exportMembersByReferrerTool: ToolFunction = {
 };
 
 /**
- * Tool definition for exporting all members (admin only).
- * Used by admin to generate a report of all active members.
+ * Tool definition for exporting all customers (admin only).
+ * Used by admin to generate a report of all active customers.
  */
-export const exportAllMembersTool: ToolFunction = {
+export const exportAllCustomersTool: ToolFunction = {
   type: "function",
   function: {
-    name: "exportAllMembers",
+    name: "exportAllCustomers",
     description:
-      "Generar un reporte de todos los miembros activos (solo admin). Por defecto envia una imagen agrupada por estado de pago (simplified). Con format 'detailed' envia Excel con todos los datos: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
+      "Generar un reporte de todos los clientes activos (solo admin). Por defecto envia una imagen agrupada por estado de pago (simplified). Con format 'detailed' envia Excel con todos los datos: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {
@@ -570,23 +570,23 @@ export const runSingleCollectionTool: ToolFunction = {
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
-  createMemberTool,
+  createCustomerTool,
   createPaymentTool,
   sendReceiptViaWhatsAppTool,
   listPaymentsByLoanIdTool,
   listLoansByCollectorTool,
-  getMemberTool,
+  getCustomerTool,
   createLoanTool,
   calculateLoanTool,
   updateLoanStatusTool,
-  getMemberByPhoneTool,
-  listLoansByMemberTool,
-  listMemberLoansByPhoneTool,
+  getCustomerByPhoneTool,
+  listLoansByCustomerTool,
+  listCustomerLoansByPhoneTool,
   listUsersTool,
   getLoanByLoanIdTool,
-  exportCollectorMembersTool,
-  exportMembersByReferrerTool,
-  exportAllMembersTool,
+  exportCollectorCustomersTool,
+  exportCustomersByReferrerTool,
+  exportAllCustomersTool,
   generatePerformanceReportTool,
   runSingleCollectionTool
 ];

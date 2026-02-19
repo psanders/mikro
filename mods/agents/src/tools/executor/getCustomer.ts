@@ -5,25 +5,25 @@ import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 
-export async function handleGetMember(
+export async function handleGetCustomer(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const member = await deps.getMember({
-    id: args.memberId as string
+  const customer = await deps.getCustomer({
+    id: args.customerId as string
   });
 
-  if (!member) {
+  if (!customer) {
     return {
       success: false,
-      message: `Miembro no encontrado: ${args.memberId}`
+      message: `Cliente no encontrado: ${args.customerId}`
     };
   }
 
-  logger.verbose("member retrieved via tool", { memberId: member.id });
+  logger.verbose("customer retrieved via tool", { customerId: customer.id });
   return {
     success: true,
-    message: "Información del miembro obtenida.",
-    data: { member }
+    message: "Información del cliente obtenida.",
+    data: { customer }
   };
 }

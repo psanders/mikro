@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Shared utilities for generating Excel member reports.
+ * Shared utilities for generating Excel customer reports.
  */
 import ExcelJS from "exceljs";
 import {
@@ -11,15 +11,9 @@ import {
   getReportRowHighlight,
   formatPaymentFrequency
 } from "@mikro/common";
-import type { ExportedMember, ExportedLoan } from "./types.js";
+import type { ExportedCustomer, ExportedLoan } from "./types.js";
 
-export type { ExportedMember, ExportedLoan };
-
-// Deprecated aliases - use ExportedMember and ExportedLoan instead
-/** @deprecated Use ExportedLoan instead */
-export type LoanWithPayments = ExportedLoan;
-/** @deprecated Use ExportedMember instead */
-export type MemberExportData = ExportedMember;
+export type { ExportedCustomer, ExportedLoan };
 
 /**
  * Result of generating an Excel report.
@@ -27,7 +21,7 @@ export type MemberExportData = ExportedMember;
 export interface ExcelGenerationResult {
   buffer: Buffer;
   filename: string;
-  memberCount: number;
+  customerCount: number;
   loanCount: number;
 }
 
@@ -53,15 +47,15 @@ function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } |
 }
 
 /**
- * Generate an Excel report from member data.
+ * Generate an Excel report from customer data.
  * Rows are sorted by rating (1 star = worst first), then by missed count descending.
  *
- * @param members - Array of member data with loans
+ * @param customers - Array of customer data with loans
  * @param filenamePrefix - Optional prefix for the filename (default: "reporte-clientes")
  * @returns Excel buffer, filename, and counts
  */
-export async function generateMembersExcel(
-  members: ExportedMember[],
+export async function generateCustomersExcel(
+  customers: ExportedCustomer[],
   filenamePrefix = "reporte-clientes"
 ): Promise<ExcelGenerationResult> {
   const workbook = new ExcelJS.Workbook();
@@ -116,24 +110,24 @@ export async function generateMembersExcel(
   };
 
   const rows: RowData[] = [];
-  for (const member of members) {
-    for (const loan of member.loans) {
-      const data = loanData(loan, member.preferredPaymentDay);
+  for (const customer of customers) {
+    for (const loan of customer.loans) {
+      const data = loanData(loan, customer.preferredPaymentDay);
       const rating = getPaymentRating(data);
       const missedCount = getMissedPaymentsCount(data);
       const trend = getLatenessTrend(data);
       const highlight = getReportRowHighlight(data);
       rows.push({
-        name: member.name,
-        phone: member.phone,
+        name: customer.name,
+        phone: customer.phone,
         loanId: loan.loanId,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(rating),
         missedCount,
         trend,
-        referredBy: member.referredBy.name,
-        collectionPoint: member.collectionPoint ?? "",
-        notes: member.notes ?? "",
+        referredBy: customer.referredBy.name,
+        collectionPoint: customer.collectionPoint ?? "",
+        notes: customer.notes ?? "",
         highlight
       });
     }
@@ -208,7 +202,7 @@ export async function generateMembersExcel(
   return {
     buffer: excelBuffer,
     filename,
-    memberCount: members.length,
+    customerCount: customers.length,
     loanCount
   };
 }

@@ -5,7 +5,7 @@ import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 
-export async function handleCreateMember(
+export async function handleCreateCustomer(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>,
   context?: Record<string, unknown>
@@ -29,7 +29,7 @@ export async function handleCreateMember(
     };
   }
 
-  const member = await deps.createMember({
+  const customer = await deps.createCustomer({
     name: args.name as string,
     phone,
     idNumber: args.idNumber as string,
@@ -42,13 +42,13 @@ export async function handleCreateMember(
     preferredPaymentDay: (args.preferredPaymentDay as string) || undefined
   });
 
-  logger.verbose("member created via tool", { memberId: member.id });
+  logger.verbose("customer created via tool", { customerId: customer.id });
 
   // Extract first name for friendly message
-  const firstName = member.name.split(" ")[0];
+  const firstName = customer.name.split(" ")[0];
   return {
     success: true,
     message: `Estimado ${firstName}, registramos su información y el equipo se pondrá en contacto pronto.`,
-    data: { memberId: member.id, name: member.name }
+    data: { customerId: customer.id, name: customer.name }
   };
 }

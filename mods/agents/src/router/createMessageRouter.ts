@@ -13,7 +13,7 @@ import { ROLE_TO_AGENT, GUEST_AGENT } from "../constants.js";
  * Creates a message router that determines routing based on phone number lookup.
  *
  * Routing rules:
- * 1. Member → Log and ignore (members don't use agents)
+ * 1. Customer → Log and ignore (customers don't use agents)
  * 2. User (COLLECTOR role) → Route to Juan agent
  * 3. User (ADMIN role) → Route to Maria agent
  * 4. Unknown phone (Guest) → Route to Joan agent for onboarding
@@ -25,7 +25,7 @@ import { ROLE_TO_AGENT, GUEST_AGENT } from "../constants.js";
  * ```typescript
  * const router = createMessageRouter({
  *   getUserByPhone: createGetUserByPhone(db),
- *   getMemberByPhone: createGetMemberByPhone(db),
+ *   getCustomerByPhone: createGetCustomerByPhone(db),
  * });
  *
  * const result = await router("+1234567890");
@@ -34,28 +34,28 @@ import { ROLE_TO_AGENT, GUEST_AGENT } from "../constants.js";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getMemberByPhone, isAgentDisabled } = deps;
+  const { getUserByPhone, getCustomerByPhone, isAgentDisabled } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
     const normalizedPhone = validatePhone(phone);
     logger.verbose("routing message", { phone, normalizedPhone });
 
-    // Run member and user lookups in parallel (independent queries)
-    const [member, user] = await Promise.all([
-      getMemberByPhone({ phone: normalizedPhone }),
+    // Run customer and user lookups in parallel (independent queries)
+    const [customer, user] = await Promise.all([
+      getCustomerByPhone({ phone: normalizedPhone }),
       getUserByPhone({ phone: normalizedPhone })
     ]);
 
-    // Step 1: Member takes precedence (members don't interact with agents)
-    if (member) {
-      logger.verbose("phone belongs to member, ignoring", {
+    // Step 1: Customer takes precedence (customers don't interact with agents)
+    if (customer) {
+      logger.verbose("phone belongs to customer, ignoring", {
         phone: normalizedPhone,
-        memberId: member.id
+        customerId: customer.id
       });
       return {
-        type: "member",
-        memberId: member.id,
+        type: "customer",
+        customerId: customer.id,
         phone: normalizedPhone
       };
     }

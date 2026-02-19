@@ -6,7 +6,7 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 import { validatePhone } from "@mikro/common";
 
-export async function handleGetMemberByPhone(
+export async function handleGetCustomerByPhone(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
@@ -14,24 +14,24 @@ export async function handleGetMemberByPhone(
   const phoneInput = args.phone as string;
   const normalizedPhone = validatePhone(phoneInput);
 
-  const member = await deps.getMemberByPhone({
+  const customer = await deps.getCustomerByPhone({
     phone: normalizedPhone
   });
 
-  if (!member) {
+  if (!customer) {
     return {
       success: false,
-      message: `Miembro no encontrado con el teléfono: ${phoneInput}`
+      message: `Cliente no encontrado con el teléfono: ${phoneInput}`
     };
   }
 
-  logger.verbose("member retrieved via tool by phone", {
-    memberId: member.id,
+  logger.verbose("customer retrieved via tool by phone", {
+    customerId: customer.id,
     phone: normalizedPhone
   });
   return {
     success: true,
-    message: "Información del miembro obtenida.",
-    data: { member }
+    message: "Información del cliente obtenida.",
+    data: { customer }
   };
 }

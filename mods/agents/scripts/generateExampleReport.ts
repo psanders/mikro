@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Generates an example members report (Excel) with sample data for manual inspection.
+ * Generates an example customers report (Excel) with sample data for manual inspection.
  * Run from repo root: npm run report:example (from mods/agents) or:
  *   npx tsx mods/agents/scripts/generateExampleReport.ts
  *
@@ -9,15 +9,15 @@
  */
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { generateMembersExcel } from "../src/tools/executor/excelUtils.js";
-import type { ExportedMember } from "../src/tools/executor/types.js";
+import { generateCustomersExcel } from "../src/tools/executor/excelUtils.js";
+import type { ExportedCustomer } from "../src/tools/executor/types.js";
 
 const now = new Date();
 const msPerWeek = 7 * 24 * 60 * 60 * 1000;
 const start = new Date(now.getTime() - 6 * msPerWeek);
 const pay = (weeksFromStart: number) => new Date(start.getTime() + weeksFromStart * msPerWeek);
 
-const members: ExportedMember[] = [
+const customers: ExportedCustomer[] = [
   {
     name: "María Pérez (al día)",
     phone: "+18095551001",
@@ -89,11 +89,11 @@ const members: ExportedMember[] = [
 ];
 
 async function main() {
-  const result = await generateMembersExcel(members, "reporte-ejemplo");
+  const result = await generateCustomersExcel(customers, "reporte-ejemplo");
   const outPath = resolve(process.cwd(), result.filename);
   writeFileSync(outPath, result.buffer);
   console.log(`Report written: ${outPath}`);
-  console.log(`Members: ${result.memberCount}, Loans: ${result.loanCount}`);
+  console.log(`Customers: ${result.customerCount}, Loans: ${result.loanCount}`);
 }
 
 main().catch((err) => {

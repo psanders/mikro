@@ -35,12 +35,12 @@ export {
 export {
   allTools,
   getToolByName,
-  createMemberTool,
+  createCustomerTool,
   createPaymentTool,
   sendReceiptViaWhatsAppTool,
   listPaymentsByLoanIdTool,
   listLoansByCollectorTool,
-  getMemberTool,
+  getCustomerTool,
   createLoanTool,
   createToolExecutor
 } from "./tools/index.js";
@@ -51,7 +51,7 @@ export {
   type RouteResult,
   type RouterDependencies,
   type UserLookupResult,
-  type MemberLookupResult
+  type CustomerLookupResult
 } from "./router/index.js";
 
 // Conversations

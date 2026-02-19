@@ -6,7 +6,7 @@ import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 import { validatePhone } from "@mikro/common";
 
-export async function handleListMemberLoansByPhone(
+export async function handleListCustomerLoansByPhone(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
@@ -14,32 +14,32 @@ export async function handleListMemberLoansByPhone(
   const phoneInput = args.phone as string;
   const normalizedPhone = validatePhone(phoneInput);
 
-  // First get the member by phone
-  const member = await deps.getMemberByPhone({
+  // First get the customer by phone
+  const customer = await deps.getCustomerByPhone({
     phone: normalizedPhone
   });
 
-  if (!member) {
+  if (!customer) {
     return {
       success: false,
-      message: `Miembro no encontrado con el teléfono: ${phoneInput}`
+      message: `Cliente no encontrado con el teléfono: ${phoneInput}`
     };
   }
 
-  // Then list loans for that member
-  const loans = await deps.listLoansByMember({
-    memberId: member.id,
+  // Then list loans for that customer
+  const loans = await deps.listLoansByCustomer({
+    customerId: customer.id,
     showAll: args.showAll === "true" || args.showAll === true
   });
 
   logger.verbose("loans listed via tool by phone", {
     phone: normalizedPhone,
-    memberId: member.id,
+    customerId: customer.id,
     count: loans.length
   });
   return {
     success: true,
-    message: `Se encontraron ${loans.length} préstamos para ${member.name}.`,
-    data: { member, loans }
+    message: `Se encontraron ${loans.length} préstamos para ${customer.name}.`,
+    data: { customer, loans }
   };
 }

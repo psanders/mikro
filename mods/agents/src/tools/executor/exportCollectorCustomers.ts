@@ -4,15 +4,13 @@
 import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
-import { generateMembersExcel } from "./excelUtils.js";
-
-export { generateFilename, type ExportedMember, type ExportedLoan } from "./excelUtils.js";
+import { generateCustomersExcel } from "./excelUtils.js";
 
 /**
- * Handle the exportCollectorMembers tool call.
+ * Handle the exportCollectorCustomers tool call.
  * Generates a report and sends it as a document via WhatsApp.
  */
-export async function handleExportCollectorMembers(
+export async function handleExportCollectorCustomers(
   deps: ToolExecutorDependencies,
   _args: Record<string, unknown>,
   context?: Record<string, unknown>
@@ -35,12 +33,12 @@ export async function handleExportCollectorMembers(
     };
   }
 
-  const members = await deps.exportCollectorMembers({ assignedCollectorId: collectorId });
+  const customers = await deps.exportCollectorCustomers({ assignedCollectorId: collectorId });
 
-  if (members.length === 0) {
+  if (customers.length === 0) {
     return {
       success: true,
-      message: "No hay miembros asignados a este cobrador."
+      message: "No hay clientes asignados a este cobrador."
     };
   }
 
@@ -48,13 +46,13 @@ export async function handleExportCollectorMembers(
   const {
     buffer: excelBuffer,
     filename,
-    memberCount,
+    customerCount,
     loanCount
-  } = await generateMembersExcel(members, "reporte-cobrador");
+  } = await generateCustomersExcel(customers, "reporte-cobrador");
 
   logger.verbose("uploading report to WhatsApp", {
     collectorId,
-    memberCount,
+    customerCount,
     loanCount,
     filename,
     size: excelBuffer.length
@@ -81,15 +79,15 @@ export async function handleExportCollectorMembers(
 
     logger.verbose("report sent via WhatsApp", {
       collectorId,
-      memberCount,
+      customerCount,
       loanCount,
       messageId
     });
 
     return {
       success: true,
-      message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros.`,
-      data: { messageId, filename, loanCount, memberCount: members.length }
+      message: `Reporte enviado con ${loanCount} prestamos de ${customers.length} clientes.`,
+      data: { messageId, filename, loanCount, customerCount: customers.length }
     };
   } catch (error) {
     const err = error as Error;

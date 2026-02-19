@@ -6,23 +6,23 @@
 import type { ToolResult, ToolExecutor } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
-import { handleCreateMember } from "./createMember.js";
+import { handleCreateCustomer } from "./createCustomer.js";
 import { handleCreatePayment } from "./createPayment.js";
 import { handleSendReceiptViaWhatsApp } from "./sendReceiptViaWhatsApp.js";
 import { handleListPaymentsByLoanId } from "./listPaymentsByLoanId.js";
 import { handleListLoansByCollector } from "./listLoansByCollector.js";
-import { handleGetMember } from "./getMember.js";
+import { handleGetCustomer } from "./getCustomer.js";
 import { handleCreateLoan } from "./createLoan.js";
 import { handleUpdateLoanStatus } from "./updateLoanStatus.js";
 import { handleCalculateLoan } from "./calculateLoan.js";
-import { handleGetMemberByPhone } from "./getMemberByPhone.js";
-import { handleListLoansByMember } from "./listLoansByMember.js";
-import { handleListMemberLoansByPhone } from "./listMemberLoansByPhone.js";
+import { handleGetCustomerByPhone } from "./getCustomerByPhone.js";
+import { handleListLoansByCustomer } from "./listLoansByCustomer.js";
+import { handleListCustomerLoansByPhone } from "./listCustomerLoansByPhone.js";
 import { handleListUsers } from "./listUsers.js";
 import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
-import { handleExportCollectorMembers } from "./exportCollectorMembers.js";
-import { handleExportMembersByReferrer } from "./exportMembersByReferrer.js";
-import { handleExportAllMembers } from "./exportAllMembers.js";
+import { handleExportCollectorCustomers } from "./exportCollectorCustomers.js";
+import { handleExportCustomersByReferrer } from "./exportCustomersByReferrer.js";
+import { handleExportAllCustomers } from "./exportAllCustomers.js";
 import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
 import { handleRunSingleCollection } from "./runSingleCollection.js";
 
@@ -35,12 +35,12 @@ import { handleRunSingleCollection } from "./runSingleCollection.js";
  * @example
  * ```typescript
  * const toolExecutor = createToolExecutor({
- *   createMember: createCreateMember(db),
+ *   createCustomer: createCreateCustomer(db),
  *   createPayment: createCreatePayment(db),
  *   // ... other API functions
  * });
  *
- * const result = await toolExecutor("createMember", { name: "John" }, { phone: "+123" });
+ * const result = await toolExecutor("createCustomer", { name: "John" }, { phone: "+123" });
  * ```
  */
 export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor {
@@ -52,23 +52,23 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
       context?: Record<string, unknown>
     ) => Promise<ToolResult>
   > = {
-    createMember: handleCreateMember,
+    createCustomer: handleCreateCustomer,
     createPayment: handleCreatePayment,
     sendReceiptViaWhatsApp: handleSendReceiptViaWhatsApp,
     listPaymentsByLoanId: handleListPaymentsByLoanId,
     listLoansByCollector: handleListLoansByCollector,
-    getMember: handleGetMember,
+    getCustomer: handleGetCustomer,
     createLoan: handleCreateLoan,
     calculateLoan: handleCalculateLoan,
     updateLoanStatus: handleUpdateLoanStatus,
-    getMemberByPhone: handleGetMemberByPhone,
-    listLoansByMember: handleListLoansByMember,
-    listMemberLoansByPhone: handleListMemberLoansByPhone,
+    getCustomerByPhone: handleGetCustomerByPhone,
+    listLoansByCustomer: handleListLoansByCustomer,
+    listCustomerLoansByPhone: handleListCustomerLoansByPhone,
     listUsers: handleListUsers,
     getLoanByLoanId: handleGetLoanByLoanId,
-    exportCollectorMembers: handleExportCollectorMembers,
-    exportMembersByReferrer: handleExportMembersByReferrer,
-    exportAllMembers: handleExportAllMembers,
+    exportCollectorCustomers: handleExportCollectorCustomers,
+    exportCustomersByReferrer: handleExportCustomersByReferrer,
+    exportAllCustomers: handleExportAllCustomers,
     generatePerformanceReport: handleGeneratePerformanceReport,
     runSingleCollection: handleRunSingleCollection
   };

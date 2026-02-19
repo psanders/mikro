@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * In-memory conversation store for guest users (unknown phone numbers).
- * Guest conversations are stored in memory until the user becomes a member,
+ * Guest conversations are stored in memory until the user becomes a customer,
  * at which point they are migrated to the database.
  */
 import type { Message } from "../llm/types.js";
@@ -48,7 +48,7 @@ export function addGuestMessage(phone: string, message: Message): void {
 
 /**
  * Clear conversation history for a guest.
- * Called after the guest becomes a member and history is migrated.
+ * Called after the guest becomes a customer and history is migrated.
  *
  * @param phone - The guest's phone number
  */

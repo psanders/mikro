@@ -32,7 +32,7 @@ export async function handleCreatePayment(
     };
   }
 
-  // Get loan by numeric loanId (includes member with assignedCollectorId)
+  // Get loan by numeric loanId (includes customer with assignedCollectorId)
   const loan = await deps.getLoanByLoanId({
     loanId: numericLoanId
   });
@@ -54,14 +54,14 @@ export async function handleCreatePayment(
 
   // Skip collector validation for admins
   if (!isAdmin) {
-    if (!loan.member.assignedCollectorId) {
+    if (!loan.customer.assignedCollectorId) {
       return {
         success: false,
         message: "Este préstamo no tiene un cobrador asignado"
       };
     }
 
-    if (loan.member.assignedCollectorId !== collectorId) {
+    if (loan.customer.assignedCollectorId !== collectorId) {
       return {
         success: false,
         message:
@@ -123,10 +123,10 @@ export async function handleCreatePayment(
           paymentFrequency: loan.paymentFrequency,
           status: loan.status
         },
-        member: {
-          id: loan.member.id,
-          name: loan.member.name,
-          phone: loan.member.phone
+        customer: {
+          id: loan.customer.id,
+          name: loan.customer.name,
+          phone: loan.customer.phone
         }
       }
     };
@@ -153,10 +153,10 @@ export async function handleCreatePayment(
         paymentFrequency: loan.paymentFrequency,
         status: loan.status
       },
-      member: {
-        id: loan.member.id,
-        name: loan.member.name,
-        phone: loan.member.phone
+      customer: {
+        id: loan.customer.id,
+        name: loan.customer.name,
+        phone: loan.customer.phone
       }
     }
   };

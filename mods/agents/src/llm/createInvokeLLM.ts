@@ -28,10 +28,10 @@ type MessageContent = TextContent | ImageUrlContent;
 const SLOW_TOOLS = new Set([
   "createPayment",
   "sendReceiptViaWhatsApp",
-  "exportAllMembers",
+  "exportAllCustomers",
   "generatePerformanceReport",
   "runSingleCollection",
-  "exportCollectorMembers"
+  "exportCollectorCustomers"
 ]);
 
 /**

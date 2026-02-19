@@ -10,7 +10,7 @@ import type { AgentName } from "../constants.js";
 export type RouteResult =
   | { type: "guest"; phone: string }
   | { type: "user"; userId: string; name: string; role: Role; phone: string }
-  | { type: "member"; memberId: string; phone: string }
+  | { type: "customer"; customerId: string; phone: string }
   | { type: "ignored"; reason: string; phone: string };
 
 /**
@@ -25,9 +25,9 @@ export interface UserLookupResult {
 }
 
 /**
- * Member from database lookup.
+ * Customer from database lookup.
  */
-export interface MemberLookupResult {
+export interface CustomerLookupResult {
   id: string;
   name: string;
   phone: string;
@@ -40,8 +40,8 @@ export interface MemberLookupResult {
 export interface RouterDependencies {
   /** Get user by phone number */
   getUserByPhone: (params: { phone: string }) => Promise<UserLookupResult | null>;
-  /** Get member by phone number */
-  getMemberByPhone: (params: { phone: string }) => Promise<MemberLookupResult | null>;
+  /** Get customer by phone number */
+  getCustomerByPhone: (params: { phone: string }) => Promise<CustomerLookupResult | null>;
   /** Check if an agent is disabled */
   isAgentDisabled: (agentName: AgentName) => boolean;
 }

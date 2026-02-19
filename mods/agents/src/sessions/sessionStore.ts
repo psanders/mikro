@@ -42,3 +42,11 @@ export function touchSession(identifier: string): void {
   sessions.set(identifier, { lastMessageAt: new Date() });
   logger.verbose("session touched", { identifier });
 }
+
+/**
+ * Clear all sessions (for testing only).
+ * Ensures session state from previous tests doesn't affect the current test.
+ */
+export function clearSessionsForTesting(): void {
+  sessions.clear();
+}

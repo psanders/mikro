@@ -4,13 +4,13 @@
 import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
-import { generateMembersExcel } from "./excelUtils.js";
+import { generateCustomersExcel } from "./excelUtils.js";
 
 /**
- * Handle the exportMembersByReferrer tool call.
+ * Handle the exportCustomersByReferrer tool call.
  * Generates a report and sends it as a document via WhatsApp.
  */
-export async function handleExportMembersByReferrer(
+export async function handleExportCustomersByReferrer(
   deps: ToolExecutorDependencies,
   _args: Record<string, unknown>,
   context?: Record<string, unknown>
@@ -33,12 +33,12 @@ export async function handleExportMembersByReferrer(
     };
   }
 
-  const members = await deps.exportMembersByReferrer({ referredById: referrerId });
+  const customers = await deps.exportCustomersByReferrer({ referredById: referrerId });
 
-  if (members.length === 0) {
+  if (customers.length === 0) {
     return {
       success: true,
-      message: "No hay miembros referidos por este usuario."
+      message: "No hay clientes referidos por este usuario."
     };
   }
 
@@ -46,13 +46,13 @@ export async function handleExportMembersByReferrer(
   const {
     buffer: excelBuffer,
     filename,
-    memberCount,
+    customerCount,
     loanCount
-  } = await generateMembersExcel(members, "reporte-referidos");
+  } = await generateCustomersExcel(customers, "reporte-referidos");
 
   logger.verbose("uploading report to WhatsApp", {
     referrerId,
-    memberCount,
+    customerCount,
     loanCount,
     filename,
     size: excelBuffer.length
@@ -79,15 +79,15 @@ export async function handleExportMembersByReferrer(
 
     logger.verbose("report sent via WhatsApp", {
       referrerId,
-      memberCount,
+      customerCount,
       loanCount,
       messageId
     });
 
     return {
       success: true,
-      message: `Reporte enviado con ${loanCount} prestamos de ${members.length} miembros referidos.`,
-      data: { messageId, filename, loanCount, memberCount: members.length }
+      message: `Reporte enviado con ${loanCount} prestamos de ${customers.length} clientes referidos.`,
+      data: { messageId, filename, loanCount, customerCount: customers.length }
     };
   } catch (error) {
     const err = error as Error;

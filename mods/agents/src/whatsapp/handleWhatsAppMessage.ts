@@ -89,6 +89,14 @@ function markMessageProcessed(id: string): void {
 }
 
 /**
+ * Clear processed message IDs (for testing only).
+ * Ensures dedup state from previous tests doesn't affect the current test.
+ */
+export function resetProcessedMessageIdsForTesting(): void {
+  processedMessageIds.clear();
+}
+
+/**
  * Get the current message processor state (for debugging).
  * @returns The current processor state
  */
@@ -408,9 +416,9 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     // Step 2: Handle based on route type
-    if (route.type === "member") {
-      // Members don't interact with agents
-      logger.verbose("no handler available for members", { phone, memberId: route.memberId });
+    if (route.type === "customer") {
+      // Customers don't interact with agents
+      logger.verbose("no handler available for customers", { phone, customerId: route.customerId });
       return;
     }
 
