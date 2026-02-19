@@ -313,5 +313,5 @@ export interface CustomerWithLoansAndReferrer extends Customer {
       payments: Payment[];
     }
   >;
-  referredBy: { name: string };
+  referredBy: { name: string } | null;
 }

@@ -19,15 +19,9 @@ export async function handleCreateCustomer(
     };
   }
 
-  // Get referredById from args (LLM should have already obtained it using listUsers)
-  const referredById = args.referredById as string | undefined;
-  if (!referredById) {
-    return {
-      success: false,
-      message:
-        "Se requiere referredById. Pregunta al usuario '¿Quién te refirió?' y luego usa listUsers con role='REFERRER' para obtener la lista de referidores con sus IDs, haz coincidir el nombre, y usa el ID del referidor seleccionado."
-    };
-  }
+  const rawReferredById = args.referredById as string | null | undefined;
+  const referredById =
+    rawReferredById === "none" || rawReferredById === "null" ? null : (rawReferredById ?? null);
 
   const customer = await deps.createCustomer({
     name: args.name as string,

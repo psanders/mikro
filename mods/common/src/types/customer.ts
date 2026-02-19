@@ -20,7 +20,7 @@ export interface Customer {
   notes?: string | null;
   preferredPaymentDay?: string | null;
   createdById?: string | null;
-  referredById: string;
+  referredById: string | null;
   assignedCollectorId: string;
   createdAt: Date;
   updatedAt: Date;

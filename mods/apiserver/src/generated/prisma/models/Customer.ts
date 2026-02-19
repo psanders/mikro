@@ -274,7 +274,7 @@ export type CustomerGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   createdById: string | null
-  referredById: string
+  referredById: string | null
   assignedCollectorId: string | null
   _count: CustomerCountAggregateOutputType | null
   _avg: CustomerAvgAggregateOutputType | null
@@ -318,10 +318,10 @@ export type CustomerWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Customer"> | string | null
-  referredById?: Prisma.StringFilter<"Customer"> | string
+  referredById?: Prisma.StringNullableFilter<"Customer"> | string | null
   assignedCollectorId?: Prisma.StringNullableFilter<"Customer"> | string | null
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
@@ -345,7 +345,7 @@ export type CustomerOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
-  referredById?: Prisma.SortOrder
+  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.UserOrderByWithRelationInput
   referredBy?: Prisma.UserOrderByWithRelationInput
@@ -375,10 +375,10 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Customer"> | string | null
-  referredById?: Prisma.StringFilter<"Customer"> | string
+  referredById?: Prisma.StringNullableFilter<"Customer"> | string | null
   assignedCollectorId?: Prisma.StringNullableFilter<"Customer"> | string | null
   createdBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  referredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   assignedCollector?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   loans?: Prisma.LoanListRelationFilter
   messages?: Prisma.MessageListRelationFilter
@@ -402,7 +402,7 @@ export type CustomerOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
-  referredById?: Prisma.SortOrder
+  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedCollectorId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.CustomerCountOrderByAggregateInput
   _avg?: Prisma.CustomerAvgOrderByAggregateInput
@@ -431,7 +431,7 @@ export type CustomerScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
   createdById?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
-  referredById?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  referredById?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   assignedCollectorId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
 }
 
@@ -452,7 +452,7 @@ export type CustomerCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCustomersInput
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedCustomersInput
   loans?: Prisma.LoanCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageCreateNestedManyWithoutCustomerInput
@@ -476,7 +476,7 @@ export type CustomerUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutCustomerInput
@@ -500,7 +500,7 @@ export type CustomerUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedCustomersNestedInput
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedCustomersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUpdateManyWithoutCustomerNestedInput
@@ -524,7 +524,7 @@ export type CustomerUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutCustomerNestedInput
@@ -548,7 +548,7 @@ export type CustomerCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
 }
 
@@ -587,7 +587,7 @@ export type CustomerUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -884,7 +884,7 @@ export type CustomerCreateWithoutCreatedByInput = {
   preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedCustomersInput
   loans?: Prisma.LoanCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageCreateNestedManyWithoutCustomerInput
@@ -907,7 +907,7 @@ export type CustomerUncheckedCreateWithoutCreatedByInput = {
   preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutCustomerInput
@@ -995,7 +995,7 @@ export type CustomerCreateWithoutAssignedCollectorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCustomersInput
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   loans?: Prisma.LoanCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutCustomerInput
@@ -1018,7 +1018,7 @@ export type CustomerUncheckedCreateWithoutAssignedCollectorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1069,7 +1069,7 @@ export type CustomerScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   createdById?: Prisma.StringNullableFilter<"Customer"> | string | null
-  referredById?: Prisma.StringFilter<"Customer"> | string
+  referredById?: Prisma.StringNullableFilter<"Customer"> | string | null
   assignedCollectorId?: Prisma.StringNullableFilter<"Customer"> | string | null
 }
 
@@ -1122,7 +1122,7 @@ export type CustomerCreateWithoutLoansInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCustomersInput
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedCustomersInput
   messages?: Prisma.MessageCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutCustomerInput
@@ -1145,7 +1145,7 @@ export type CustomerUncheckedCreateWithoutLoansInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1184,7 +1184,7 @@ export type CustomerUpdateWithoutLoansInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedCustomersNestedInput
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedCustomersNestedInput
   messages?: Prisma.MessageUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutCustomerNestedInput
@@ -1207,7 +1207,7 @@ export type CustomerUncheckedUpdateWithoutLoansInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messages?: Prisma.MessageUncheckedUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1230,7 +1230,7 @@ export type CustomerCreateWithoutMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCustomersInput
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedCustomersInput
   loans?: Prisma.LoanCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptCreateNestedManyWithoutCustomerInput
@@ -1253,7 +1253,7 @@ export type CustomerUncheckedCreateWithoutMessagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutCustomerInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedCreateNestedManyWithoutCustomerInput
@@ -1292,7 +1292,7 @@ export type CustomerUpdateWithoutMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedCustomersNestedInput
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedCustomersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutCustomerNestedInput
@@ -1315,7 +1315,7 @@ export type CustomerUncheckedUpdateWithoutMessagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1338,7 +1338,7 @@ export type CustomerCreateWithoutCollectionAttemptsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdBy?: Prisma.UserCreateNestedOneWithoutCreatedCustomersInput
-  referredBy: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferredCustomersInput
   assignedCollector?: Prisma.UserCreateNestedOneWithoutAssignedCustomersInput
   loans?: Prisma.LoanCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageCreateNestedManyWithoutCustomerInput
@@ -1361,7 +1361,7 @@ export type CustomerUncheckedCreateWithoutCollectionAttemptsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
   loans?: Prisma.LoanUncheckedCreateNestedManyWithoutCustomerInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutCustomerInput
@@ -1400,7 +1400,7 @@ export type CustomerUpdateWithoutCollectionAttemptsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedCustomersNestedInput
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedCustomersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUpdateManyWithoutCustomerNestedInput
@@ -1423,7 +1423,7 @@ export type CustomerUncheckedUpdateWithoutCollectionAttemptsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1445,7 +1445,7 @@ export type CustomerCreateManyCreatedByInput = {
   preferredPaymentDay?: $Enums.DayOfWeek | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  referredById: string
+  referredById?: string | null
   assignedCollectorId?: string | null
 }
 
@@ -1486,7 +1486,7 @@ export type CustomerCreateManyAssignedCollectorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   createdById?: string | null
-  referredById: string
+  referredById?: string | null
 }
 
 export type CustomerUpdateWithoutCreatedByInput = {
@@ -1505,7 +1505,7 @@ export type CustomerUpdateWithoutCreatedByInput = {
   preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   assignedCollector?: Prisma.UserUpdateOneWithoutAssignedCustomersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUpdateManyWithoutCustomerNestedInput
@@ -1528,7 +1528,7 @@ export type CustomerUncheckedUpdateWithoutCreatedByInput = {
   preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1551,7 +1551,7 @@ export type CustomerUncheckedUpdateManyWithoutCreatedByInput = {
   preferredPaymentDay?: Prisma.NullableEnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedCollectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -1638,7 +1638,7 @@ export type CustomerUpdateWithoutAssignedCollectorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdBy?: Prisma.UserUpdateOneWithoutCreatedCustomersNestedInput
-  referredBy?: Prisma.UserUpdateOneRequiredWithoutReferredCustomersNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferredCustomersNestedInput
   loans?: Prisma.LoanUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUpdateManyWithoutCustomerNestedInput
@@ -1661,7 +1661,7 @@ export type CustomerUncheckedUpdateWithoutAssignedCollectorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loans?: Prisma.LoanUncheckedUpdateManyWithoutCustomerNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutCustomerNestedInput
   collectionAttempts?: Prisma.CollectionAttemptUncheckedUpdateManyWithoutCustomerNestedInput
@@ -1684,7 +1684,7 @@ export type CustomerUncheckedUpdateManyWithoutAssignedCollectorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  referredById?: Prisma.StringFieldUpdateOperationsInput | string
+  referredById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1756,7 +1756,7 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
   loans?: boolean | Prisma.Customer$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Customer$messagesArgs<ExtArgs>
@@ -1784,7 +1784,7 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -1808,7 +1808,7 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   referredById?: boolean
   assignedCollectorId?: boolean
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -1836,7 +1836,7 @@ export type CustomerSelectScalar = {
 export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "idNumber" | "collectionPoint" | "homeAddress" | "jobPosition" | "income" | "isBusinessOwner" | "isActive" | "idCardOnRecord" | "notes" | "preferredPaymentDay" | "createdAt" | "updatedAt" | "createdById" | "referredById" | "assignedCollectorId", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
   loans?: boolean | Prisma.Customer$loansArgs<ExtArgs>
   messages?: boolean | Prisma.Customer$messagesArgs<ExtArgs>
@@ -1845,12 +1845,12 @@ export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
 }
 export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
 }
 export type CustomerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdBy?: boolean | Prisma.Customer$createdByArgs<ExtArgs>
-  referredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   assignedCollector?: boolean | Prisma.Customer$assignedCollectorArgs<ExtArgs>
 }
 
@@ -1858,7 +1858,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Customer"
   objects: {
     createdBy: Prisma.$UserPayload<ExtArgs> | null
-    referredBy: Prisma.$UserPayload<ExtArgs>
+    referredBy: Prisma.$UserPayload<ExtArgs> | null
     assignedCollector: Prisma.$UserPayload<ExtArgs> | null
     loans: Prisma.$LoanPayload<ExtArgs>[]
     messages: Prisma.$MessagePayload<ExtArgs>[]
@@ -1881,7 +1881,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     createdAt: Date
     updatedAt: Date
     createdById: string | null
-    referredById: string
+    referredById: string | null
     assignedCollectorId: string | null
   }, ExtArgs["result"]["customer"]>
   composites: {}
@@ -2278,7 +2278,7 @@ readonly fields: CustomerFieldRefs;
 export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   createdBy<T extends Prisma.Customer$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$createdByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  referredBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  referredBy<T extends Prisma.Customer$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignedCollector<T extends Prisma.Customer$assignedCollectorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$assignedCollectorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   loans<T extends Prisma.Customer$loansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$loansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.Customer$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2727,6 +2727,25 @@ export type CustomerDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
  * Customer.createdBy
  */
 export type Customer$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * Customer.referredBy
+ */
+export type Customer$referredByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */

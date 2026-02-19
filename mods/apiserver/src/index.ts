@@ -388,7 +388,7 @@ async function initializeMessageProcessor() {
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
-          referredBy: { name: customer.referredBy.name },
+          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,
@@ -407,7 +407,7 @@ async function initializeMessageProcessor() {
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
-          referredBy: { name: customer.referredBy.name },
+          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,
@@ -426,7 +426,7 @@ async function initializeMessageProcessor() {
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
-          referredBy: { name: customer.referredBy.name },
+          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
             notes: null,

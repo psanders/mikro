@@ -61,6 +61,78 @@ describe("createCreateCustomer", () => {
       expect(callArgs.data.idNumber).to.equal(validInput.idNumber);
     });
 
+    it("should create a customer without a referrer", async () => {
+      // Arrange
+      const inputWithoutReferrer = {
+        name: validInput.name,
+        phone: validInput.phone,
+        idNumber: validInput.idNumber,
+        homeAddress: validInput.homeAddress
+      };
+      const expectedCustomer = {
+        id: "customer-no-ref",
+        ...inputWithoutReferrer,
+        phone: "18091234567",
+        referredById: null,
+        jobPosition: null,
+        income: null,
+        isBusinessOwner: false,
+        isActive: true,
+        idCardOnRecord: false,
+        note: null,
+        createdById: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        customer: {
+          create: sinon.stub().resolves(expectedCustomer)
+        }
+      };
+      const createCustomer = createCreateCustomer(mockClient as any);
+
+      // Act
+      const result = await createCustomer(inputWithoutReferrer);
+
+      // Assert
+      expect(result.id).to.equal("customer-no-ref");
+      expect(result.referredById).to.be.null;
+      expect(mockClient.customer.create.calledOnce).to.be.true;
+    });
+
+    it("should create a customer with null referrer", async () => {
+      // Arrange
+      const inputWithNullReferrer = { ...validInput, referredById: null };
+      const expectedCustomer = {
+        id: "customer-null-ref",
+        ...inputWithNullReferrer,
+        phone: "18091234567",
+        jobPosition: null,
+        income: null,
+        isBusinessOwner: false,
+        isActive: true,
+        idCardOnRecord: false,
+        note: null,
+        createdById: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        customer: {
+          create: sinon.stub().resolves(expectedCustomer)
+        }
+      };
+      const createCustomer = createCreateCustomer(mockClient as any);
+
+      // Act
+      const result = await createCustomer(inputWithNullReferrer);
+
+      // Assert
+      expect(result.id).to.equal("customer-null-ref");
+      expect(result.referredById).to.be.null;
+      expect(mockClient.customer.create.calledOnce).to.be.true;
+    });
+
     it("should create a customer with optional fields", async () => {
       // Arrange
       const inputWithOptional = {

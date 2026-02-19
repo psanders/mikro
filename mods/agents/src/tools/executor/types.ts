@@ -26,7 +26,7 @@ export interface ExportedCustomer {
   collectionPoint: string | null;
   notes: string | null;
   preferredPaymentDay?: string | null;
-  referredBy: { name: string };
+  referredBy: { name: string } | null;
   loans: ExportedLoan[];
 }
 
@@ -41,7 +41,7 @@ export interface ToolExecutorDependencies {
     idNumber: string;
     collectionPoint?: string;
     homeAddress: string;
-    referredById: string;
+    referredById?: string | null;
     assignedCollectorId?: string;
     jobPosition?: string;
     income?: number;

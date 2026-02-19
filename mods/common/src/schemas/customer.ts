@@ -36,7 +36,7 @@ export const createCustomerSchema = z.object({
   income: z.number().optional(),
   isBusinessOwner: z.boolean().optional(),
   createdById: z.uuid().optional(),
-  referredById: z.uuid({ error: "Invalid referrer ID" }),
+  referredById: z.uuid({ error: "Invalid referrer ID" }).nullable().optional(),
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),

@@ -126,7 +126,7 @@ export async function generateCustomersExcel(
         rating: ratingToStars(rating),
         missedCount,
         trend,
-        referredBy: customer.referredBy.name,
+        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? "",
         highlight

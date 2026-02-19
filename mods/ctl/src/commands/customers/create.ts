@@ -40,7 +40,7 @@ export default class Create extends BaseCommand<typeof Create> {
       required: false
     }),
     "referrer-id": Flags.string({
-      description: "Referrer User ID",
+      description: "Referrer User ID (or 'none' for no referrer)",
       required: false
     }),
     "collector-id": Flags.string({
@@ -90,13 +90,20 @@ export default class Create extends BaseCommand<typeof Create> {
       "Home Address",
       "home-address"
     );
-    const referredById = await promptUserSelectIfMissing(
-      client,
-      flags["referrer-id"],
-      "Referrer",
-      "referrer-id",
-      { role: "REFERRER" }
-    );
+    let referredById: string | null;
+    if (flags["referrer-id"] === "none") {
+      referredById = null;
+    } else if (flags["referrer-id"]) {
+      referredById = flags["referrer-id"];
+    } else {
+      const users = await client.listUsers.query({ showDisabled: true });
+      const referrers = users.filter((u) => u.roles?.some((r) => r.role === "REFERRER"));
+      const choices: Array<{ name: string; value: string | null }> = [
+        { name: "None", value: null },
+        ...referrers.map((u) => ({ name: `${u.name} (${u.id})`, value: u.id as string | null }))
+      ];
+      referredById = await select({ message: "Referrer", choices });
+    }
     const assignedCollectorId = await promptUserSelectIfMissing(
       client,
       flags["collector-id"],
@@ -147,7 +154,7 @@ export default class Create extends BaseCommand<typeof Create> {
         idNumber,
         collectionPoint,
         homeAddress,
-        referredById,
+        referredById: referredById ?? undefined,
         assignedCollectorId,
         jobPosition,
         income,

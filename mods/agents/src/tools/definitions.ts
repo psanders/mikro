@@ -27,7 +27,7 @@ export const createCustomerTool: ToolFunction = {
         referredById: {
           type: "string",
           description:
-            "ID del referidor (UUID). REQUERIDO. Proceso: 1) Pregunta al usuario '¿Quién te refirió?' o '¿Quién te habló de Mikro Créditos?', 2) Llama listUsers con role='REFERRER' para obtener la lista de referidores disponibles con sus IDs, 3) Haz coincidir el nombre proporcionado por el usuario con uno de la lista, 4) Si no estás seguro, muestra las opciones al usuario y confirma, 5) Usa el ID (campo 'id') del referidor seleccionado aquí."
+            "ID del referidor (UUID) o null si no tiene referidor. Proceso: 1) Pregunta al usuario '¿Quién te refirió?' o '¿Quién te habló de Mikro Créditos?', 2) Si responde 'nadie', 'ninguno', 'none', o similar, envía null, 3) De lo contrario, llama listUsers con role='REFERRER' para obtener la lista de referidores disponibles con sus IDs, 4) Haz coincidir el nombre proporcionado por el usuario con uno de la lista, 5) Si no estás seguro, muestra las opciones al usuario y confirma, 6) Usa el ID (campo 'id') del referidor seleccionado aquí."
         },
         name: {
           type: "string",
@@ -65,7 +65,7 @@ export const createCustomerTool: ToolFunction = {
           enum: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
         }
       },
-      required: ["name", "idNumber", "homeAddress", "referredById"]
+      required: ["name", "idNumber", "homeAddress"]
     }
   }
 };

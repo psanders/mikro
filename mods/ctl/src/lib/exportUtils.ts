@@ -40,7 +40,7 @@ export interface SerializedCustomer {
   collectionPoint?: string | null;
   notes?: string | null;
   preferredPaymentDay?: string | null;
-  referredBy: { name: string };
+  referredBy: { name: string } | null;
   loans: SerializedLoan[];
 }
 
@@ -90,7 +90,7 @@ export function buildCustomerReportRows(customers: SerializedCustomer[]): Custom
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
-        referredBy: customer.referredBy.name,
+        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? ""
       });
@@ -360,7 +360,7 @@ export async function writeCustomersToExcel(
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
-        referredBy: customer.referredBy.name,
+        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? "",
         highlight: getReportRowHighlight(data)

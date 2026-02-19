@@ -84,7 +84,7 @@ describe("createExportAllCustomers", () => {
       // Assert
       expect(result).to.have.length(3);
       expect(result[0].loans).to.have.length(1);
-      expect(result[0].referredBy.name).to.equal("John Referrer");
+      expect(result[0].referredBy!.name).to.equal("John Referrer");
       expect(mockClient.customer.findMany.calledOnce).to.be.true;
 
       const callArgs = mockClient.customer.findMany.firstCall.args[0];

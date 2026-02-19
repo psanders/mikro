@@ -1,0 +1,34 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_customers" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "id_number" TEXT NOT NULL,
+    "collection_point" TEXT,
+    "home_address" TEXT NOT NULL,
+    "job_position" TEXT,
+    "income" DECIMAL,
+    "is_business_owner" BOOLEAN NOT NULL DEFAULT false,
+    "is_active" BOOLEAN NOT NULL DEFAULT false,
+    "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
+    "notes" TEXT,
+    "preferred_payment_day" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL,
+    "created_by_id" TEXT,
+    "referred_by_id" TEXT,
+    "assigned_collector_id" TEXT,
+    CONSTRAINT "customers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "customers_referred_by_id_fkey" FOREIGN KEY ("referred_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "customers_assigned_collector_id_fkey" FOREIGN KEY ("assigned_collector_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+INSERT INTO "new_customers" ("assigned_collector_id", "collection_point", "created_at", "created_by_id", "home_address", "id", "id_card_on_record", "id_number", "income", "is_active", "is_business_owner", "job_position", "name", "notes", "phone", "preferred_payment_day", "referred_by_id", "updated_at") SELECT "assigned_collector_id", "collection_point", "created_at", "created_by_id", "home_address", "id", "id_card_on_record", "id_number", "income", "is_active", "is_business_owner", "job_position", "name", "notes", "phone", "preferred_payment_day", "referred_by_id", "updated_at" FROM "customers";
+DROP TABLE "customers";
+ALTER TABLE "new_customers" RENAME TO "customers";
+CREATE INDEX "customers_created_by_id_idx" ON "customers"("created_by_id");
+CREATE INDEX "customers_assigned_collector_id_idx" ON "customers"("assigned_collector_id");
+CREATE INDEX "customers_phone_idx" ON "customers"("phone");
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
