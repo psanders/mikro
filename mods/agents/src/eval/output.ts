@@ -5,6 +5,45 @@ import Table from "cli-table3";
 import ansis from "ansis";
 import type { EvalResults, ScenarioResult, TurnResult } from "./runner.js";
 
+const CONVERSATION_WIDTH = 100;
+
+/**
+ * Wrap text to a maximum line length, breaking at word boundaries.
+ * Returns an array of lines (no trailing newlines).
+ */
+function wrap(text: string, width: number): string[] {
+  if (width <= 0 || !text.trim()) return text.trim() ? [text] : [];
+  const lines: string[] = [];
+  const paragraphs = text.split(/\n/);
+  for (const para of paragraphs) {
+    const words = para.trim().split(/\s+/);
+    let current: string[] = [];
+    let currentLen = 0;
+    for (const word of words) {
+      const need = current.length === 0 ? word.length : 1 + word.length;
+      if (currentLen + need <= width && current.length > 0) {
+        current.push(word);
+        currentLen += need;
+      } else if (current.length === 0 && word.length <= width) {
+        current = [word];
+        currentLen = word.length;
+      } else if (current.length === 0 && word.length > width) {
+        for (let i = 0; i < word.length; i += width) {
+          lines.push(word.slice(i, i + width));
+        }
+        current = [];
+        currentLen = 0;
+      } else {
+        lines.push(current.join(" "));
+        current = [word];
+        currentLen = word.length;
+      }
+    }
+    if (current.length > 0) lines.push(current.join(" "));
+  }
+  return lines.length ? lines : text.trim() ? [text] : [];
+}
+
 /**
  * Format tool calls for display.
  */
@@ -48,20 +87,20 @@ function turnFailureReason(turnResult: TurnResult): string {
 }
 
 /**
- * Print scenario header at start of scenario (conversation-style, matches test.md).
+ * Print scenario header at start of scenario (conversation-style).
  */
 export function printScenarioStart(
   agentName: string,
   scenarioIndex: number,
   scenario: { description: string }
 ): void {
-  process.stdout.write(`\n✅ Escenario ${scenarioIndex}: ${scenario.description}\n\n`);
-  process.stdout.write(`Objetivo: ${scenario.description}\n\n`);
-  process.stdout.write(`💬 Conversación\n\n`);
+  process.stdout.write(`\n✅ Scenario ${scenarioIndex}: ${scenario.description}\n\n`);
+  process.stdout.write(`Conversation\n\n`);
 }
 
 /**
  * Print a single turn (streaming): Human, AI (AgentName), Tools lines. Call after each turn.
+ * Wraps Human and AI text to CONVERSATION_WIDTH.
  */
 export function printTurnResult(
   agentName: string,
@@ -72,17 +111,37 @@ export function printTurnResult(
   const aiName = agentName.charAt(0).toUpperCase() + agentName.slice(1);
   const mark = turnResult.passed ? ansis.green("✔") : ansis.red("✘");
 
-  process.stdout.write(`Human: ${human}\n`);
-  process.stdout.write(`AI (${aiName}): ${turnResult.actualAI} ${mark}\n`);
+  const humanPrefix = "Human: ";
+  const humanLines = wrap(human, CONVERSATION_WIDTH - humanPrefix.length);
+  process.stdout.write(`${humanPrefix}${humanLines[0] ?? ""}\n`);
+  for (let i = 1; i < humanLines.length; i++) {
+    process.stdout.write(`${humanLines[i]}\n`);
+  }
+
+  const aiPrefix = `AI (${aiName}): `;
+  const aiContentWidth = CONVERSATION_WIDTH - aiPrefix.length - 2; // -2 for " ✔"
+  const aiLines = wrap(turnResult.actualAI, aiContentWidth);
+  if (aiLines.length <= 1) {
+    process.stdout.write(`${aiPrefix}${aiLines[0] ?? ""} ${mark}\n`);
+  } else {
+    process.stdout.write(`${aiPrefix}${aiLines[0]}\n`);
+    for (let i = 1; i < aiLines.length - 1; i++) {
+      process.stdout.write(`${aiLines[i]}\n`);
+    }
+    process.stdout.write(`${aiLines[aiLines.length - 1]} ${mark}\n`);
+  }
 
   if (turnResult.tools.actual.length > 0) {
-    for (const toolName of turnResult.tools.actual) {
-      process.stdout.write(`Tools: ${toolName}() ${mark}\n`);
-    }
+    const toolsLine = turnResult.tools.actual.map((t) => `${t}()`).join(", ");
+    process.stdout.write(`Tools: ${toolsLine} ${mark}\n`);
   }
 
   if (!turnResult.passed) {
-    process.stdout.write(ansis.red(`✘ ${turnFailureReason(turnResult)}\n`));
+    const reason = turnFailureReason(turnResult);
+    const reasonLines = wrap(`✘ ${reason}`, CONVERSATION_WIDTH);
+    for (const line of reasonLines) {
+      process.stdout.write(ansis.red(line + "\n"));
+    }
   }
 
   process.stdout.write("\n");
