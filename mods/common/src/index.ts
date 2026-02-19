@@ -12,6 +12,8 @@ export {
   withErrorHandlingAndValidation,
   validatePhone,
   getCycleMetrics,
+  getDueDateForCycle,
+  getLateDaysThreshold,
   dayOfWeekToNumber,
   daysToFirstPreferredDay,
   MS_PER_DAY,
@@ -37,6 +39,7 @@ export {
 } from "./utils/customerReportConstants.js";
 export {
   getMissedPaymentsCount,
+  getTimesLateInLookback,
   getTimesLateInLastWeeks,
   getLatenessTrend,
   getPaymentRating,

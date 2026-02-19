@@ -129,6 +129,7 @@ export const LoanScalarFieldEnum = {
   termLength: 'termLength',
   paymentAmount: 'paymentAmount',
   paymentFrequency: 'paymentFrequency',
+  startingDate: 'startingDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   customerId: 'customerId'

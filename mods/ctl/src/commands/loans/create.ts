@@ -36,7 +36,12 @@ export default class Create extends BaseCommand<typeof Create> {
     }),
     "payment-frequency": Flags.string({
       description: "Payment Frequency",
-      options: ["DAILY", "WEEKLY"],
+      options: ["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"],
+      required: false
+    }),
+    "starting-date": Flags.string({
+      description:
+        "Starting date for payment cycles (ISO date, e.g. 2026-02-15). Defaults to loan creation date.",
       required: false
     }),
     type: Flags.string({
@@ -71,14 +76,24 @@ export default class Create extends BaseCommand<typeof Create> {
       "payment-amount"
     );
     const paymentFrequency = await promptSelectIfMissing(
-      flags["payment-frequency"] as "DAILY" | "WEEKLY" | undefined,
+      flags["payment-frequency"] as "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | undefined,
       "Payment Frequency",
       "payment-frequency",
       [
-        { name: "Daily", value: "DAILY" as const },
-        { name: "Weekly", value: "WEEKLY" as const }
+        { name: "Daily (Diario)", value: "DAILY" as const },
+        { name: "Weekly (Semanal)", value: "WEEKLY" as const },
+        { name: "Biweekly (Quincenal)", value: "BIWEEKLY" as const },
+        { name: "Monthly (Mensual)", value: "MONTHLY" as const }
       ]
     );
+    const today = new Date().toISOString().slice(0, 10);
+    const startingDateStr = await promptTextIfMissing(
+      flags["starting-date"],
+      "Starting date (YYYY-MM-DD)",
+      "starting-date",
+      { default: today }
+    );
+    const startingDate = new Date(startingDateStr);
     const type = (flags.type || "SAN") as "SAN";
 
     const ready = await confirm({ message: "Ready to create loan?" });
@@ -95,6 +110,7 @@ export default class Create extends BaseCommand<typeof Create> {
         termLength,
         paymentAmount,
         paymentFrequency,
+        startingDate,
         type
       });
 

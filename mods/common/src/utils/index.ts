@@ -5,6 +5,8 @@ export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation
 export { validatePhone } from "./validatePhone.js";
 export {
   getCycleMetrics,
+  getDueDateForCycle,
+  getLateDaysThreshold,
   dayOfWeekToNumber,
   daysToFirstPreferredDay,
   MS_PER_DAY,
@@ -13,6 +15,7 @@ export {
 } from "./calculatePaymentStatus.js";
 export {
   getMissedPaymentsCount,
+  getTimesLateInLookback,
   getTimesLateInLastWeeks,
   getLatenessTrend,
   getPaymentRating,

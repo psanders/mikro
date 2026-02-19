@@ -37,6 +37,8 @@ enum LoanStatus {
 enum PaymentFrequency {
   DAILY
   WEEKLY
+  BIWEEKLY
+  MONTHLY
 
   @@map("payment_frequencies")
 }
@@ -187,7 +189,8 @@ model Loan {
   principal        Decimal          // Amount borrowed (e.g., 5000 or 10000)
   termLength       Int              @map("term_length") // Number of periods (e.g., 10)
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
-  paymentFrequency PaymentFrequency @map("payment_frequency") // DAILY or WEEKLY
+  paymentFrequency PaymentFrequency @map("payment_frequency")
+  startingDate     DateTime?        @map("starting_date")
 
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")

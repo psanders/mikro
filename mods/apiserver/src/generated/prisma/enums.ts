@@ -37,7 +37,9 @@ export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus]
 
 export const PaymentFrequency = {
   DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY'
+  WEEKLY: 'WEEKLY',
+  BIWEEKLY: 'BIWEEKLY',
+  MONTHLY: 'MONTHLY'
 } as const
 
 export type PaymentFrequency = (typeof PaymentFrequency)[keyof typeof PaymentFrequency]

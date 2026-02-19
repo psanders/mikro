@@ -25,6 +25,8 @@ export interface CustomerLoanPair {
     loanId: number;
     paymentAmount: unknown;
     paymentFrequency: string;
+    startingDate: Date | null;
+    createdAt: Date;
   };
 }
 
@@ -43,7 +45,8 @@ export async function processPaymentReminders(
   for (const { customer, loan } of pairs) {
     const paymentDay = formatPaymentDayForTemplate(
       loan.paymentFrequency,
-      customer.preferredPaymentDay
+      customer.preferredPaymentDay,
+      loan.startingDate ?? loan.createdAt
     );
     const target: CollectionTarget = {
       customer: { id: customer.id, name: customer.name, phone: customer.phone },

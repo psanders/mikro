@@ -67,6 +67,7 @@ CREATE TABLE "loans" (
     "term_length" INTEGER NOT NULL,
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
+    "starting_date" DATETIME,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

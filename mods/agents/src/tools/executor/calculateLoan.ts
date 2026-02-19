@@ -15,7 +15,7 @@ export async function handleCalculateLoan(
   const result = await deps.calculateLoan({
     principal: Number(args.principal),
     interestRate: Number(args.interestRate),
-    paymentFrequency: args.paymentFrequency as "DAILY" | "WEEKLY",
+    paymentFrequency: args.paymentFrequency as "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
     baseDuration: Number(args.baseDuration),
     adjustmentPerPeriod: args.adjustmentPerPeriod ? Number(args.adjustmentPerPeriod) : undefined
   });

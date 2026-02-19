@@ -11,7 +11,7 @@ export const loanTypeEnum = z.enum(["SAN"]);
 /**
  * Enum for payment frequency.
  */
-export const paymentFrequencyEnum = z.enum(["DAILY", "WEEKLY"]);
+export const paymentFrequencyEnum = z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]);
 
 /**
  * Schema for creating a new loan.
@@ -22,6 +22,7 @@ export const createLoanSchema = z.object({
   termLength: z.number().int().positive("Term length must be a positive integer"),
   paymentAmount: z.number().positive("Payment amount must be positive"),
   paymentFrequency: paymentFrequencyEnum,
+  startingDate: z.coerce.date().optional(),
   type: loanTypeEnum.optional()
 });
 

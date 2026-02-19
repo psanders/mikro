@@ -130,6 +130,7 @@ export async function runDailyCollections(
       const paymentDay = isPaymentDayToday(
         loan.paymentFrequency,
         customer.preferredPaymentDay,
+        loan.startingDate ?? loan.createdAt,
         asOfDate
       );
 
@@ -198,7 +199,9 @@ export async function runDailyCollections(
           id: reminderLoan.id,
           loanId: reminderLoan.loanId,
           paymentAmount: reminderLoan.paymentAmount,
-          paymentFrequency: reminderLoan.paymentFrequency
+          paymentFrequency: reminderLoan.paymentFrequency,
+          startingDate: reminderLoan.startingDate,
+          createdAt: reminderLoan.createdAt
         }
       });
     } else {

@@ -206,8 +206,13 @@ export const createLoanTool: ToolFunction = {
         },
         paymentFrequency: {
           type: "string",
-          description: "Frecuencia de pago: WEEKLY o DAILY",
-          enum: ["WEEKLY", "DAILY"]
+          description: "Frecuencia de pago: DAILY, WEEKLY, BIWEEKLY o MONTHLY",
+          enum: ["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]
+        },
+        startingDate: {
+          type: "string",
+          description:
+            "Fecha de inicio de los ciclos de pago (YYYY-MM-DD). Opcional. Si no se proporciona, se usa la fecha de creación del préstamo."
         }
       },
       required: ["customerId", "principal", "termLength", "paymentAmount", "paymentFrequency"]
@@ -224,7 +229,7 @@ export const calculateLoanTool: ToolFunction = {
   function: {
     name: "calculateLoan",
     description:
-      "Calcular opciones de préstamo con diferentes duraciones usando una tasa base y ajuste por periodo. Recibe monto, tasa de interés total, frecuencia (DAILY o WEEKLY) y duración base.",
+      "Calcular opciones de préstamo con diferentes duraciones usando una tasa base y ajuste por periodo. Recibe monto, tasa de interés total, frecuencia (DAILY, WEEKLY, BIWEEKLY o MONTHLY) y duración base.",
     parameters: {
       type: "object",
       properties: {
@@ -239,8 +244,8 @@ export const calculateLoanTool: ToolFunction = {
         },
         paymentFrequency: {
           type: "string",
-          description: "Frecuencia de pago: DAILY o WEEKLY",
-          enum: ["DAILY", "WEEKLY"]
+          description: "Frecuencia de pago: DAILY, WEEKLY, BIWEEKLY o MONTHLY",
+          enum: ["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]
         },
         baseDuration: {
           type: "string",

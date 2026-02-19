@@ -57,6 +57,78 @@ describe("handleCalculateLoan", () => {
     ).to.be.true;
   });
 
+  it("should handle BIWEEKLY frequency argument", async () => {
+    const calculateLoanStub = sinon.stub().resolves({
+      principal: 5000,
+      paymentFrequency: "BIWEEKLY",
+      baseDuration: 10,
+      baseInterestRate: 0.3,
+      adjustmentPerPeriod: 0.015,
+      minRate: 0.1,
+      maxRate: 0.6,
+      options: [
+        {
+          duration: 10,
+          paymentFrequency: "BIWEEKLY",
+          interestRate: 0.3,
+          totalInterest: 1500,
+          totalRepay: 6500,
+          paymentPerPeriod: 650,
+          isBase: true
+        }
+      ]
+    });
+    const deps = {
+      calculateLoan: calculateLoanStub
+    } as unknown as ToolExecutorDependencies;
+
+    const result = await handleCalculateLoan(deps, {
+      principal: "5000",
+      interestRate: "0.30",
+      paymentFrequency: "BIWEEKLY",
+      baseDuration: "10"
+    });
+
+    expect(result.success).to.be.true;
+    expect(calculateLoanStub.calledWith(sinon.match({ paymentFrequency: "BIWEEKLY" }))).to.be.true;
+  });
+
+  it("should handle MONTHLY frequency argument", async () => {
+    const calculateLoanStub = sinon.stub().resolves({
+      principal: 10000,
+      paymentFrequency: "MONTHLY",
+      baseDuration: 6,
+      baseInterestRate: 0.3,
+      adjustmentPerPeriod: 0.015,
+      minRate: 0.1,
+      maxRate: 0.6,
+      options: [
+        {
+          duration: 6,
+          paymentFrequency: "MONTHLY",
+          interestRate: 0.3,
+          totalInterest: 3000,
+          totalRepay: 13000,
+          paymentPerPeriod: 2200,
+          isBase: true
+        }
+      ]
+    });
+    const deps = {
+      calculateLoan: calculateLoanStub
+    } as unknown as ToolExecutorDependencies;
+
+    const result = await handleCalculateLoan(deps, {
+      principal: "10000",
+      interestRate: "0.30",
+      paymentFrequency: "MONTHLY",
+      baseDuration: "6"
+    });
+
+    expect(result.success).to.be.true;
+    expect(calculateLoanStub.calledWith(sinon.match({ paymentFrequency: "MONTHLY" }))).to.be.true;
+  });
+
   it("should propagate error when calculateLoan rejects", async () => {
     const calculateLoanStub = sinon.stub().rejects(new Error("Invalid calculation input"));
     const deps = {

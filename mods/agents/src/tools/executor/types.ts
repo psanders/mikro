@@ -95,19 +95,20 @@ export interface ToolExecutorDependencies {
     principal: number;
     termLength: number;
     paymentAmount: number;
-    paymentFrequency: "WEEKLY" | "DAILY";
+    paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+    startingDate?: Date;
   }) => Promise<{ id: string; loanId: number }>;
 
   /** Calculate loan options from base duration and interest */
   calculateLoan: (params: {
     principal: number;
     interestRate: number;
-    paymentFrequency: "WEEKLY" | "DAILY";
+    paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
     baseDuration: number;
     adjustmentPerPeriod?: number;
   }) => Promise<{
     principal: number;
-    paymentFrequency: "WEEKLY" | "DAILY";
+    paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
     baseDuration: number;
     baseInterestRate: number;
     adjustmentPerPeriod: number;

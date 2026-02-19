@@ -137,6 +137,7 @@ export interface DbClient {
         termLength: number;
         paymentAmount: number;
         paymentFrequency: PaymentFrequency;
+        startingDate?: Date | null;
         type?: LoanType;
       };
     }): Promise<Loan>;

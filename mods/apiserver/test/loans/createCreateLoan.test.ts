@@ -153,7 +153,6 @@ describe("createCreateLoan", () => {
     });
 
     it("should throw ValidationError for invalid paymentFrequency", async () => {
-      // Arrange
       const mockClient = {
         loan: {
           findFirst: sinon.stub(),
@@ -162,14 +161,87 @@ describe("createCreateLoan", () => {
       };
       const createLoan = createCreateLoan(mockClient as any);
 
-      // Act & Assert
       try {
-        await createLoan({ ...validInput, paymentFrequency: "MONTHLY" as any });
+        await createLoan({ ...validInput, paymentFrequency: "YEARLY" as any });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
         expect(mockClient.loan.create.called).to.be.false;
       }
+    });
+
+    it("should accept BIWEEKLY paymentFrequency", async () => {
+      const expectedLoan = {
+        id: "loan-biweekly",
+        loanId: 10000,
+        type: "SAN",
+        status: "ACTIVE",
+        ...validInput,
+        paymentFrequency: "BIWEEKLY",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findFirst: sinon.stub().resolves(null),
+          create: sinon.stub().resolves(expectedLoan)
+        }
+      };
+      const createLoan = createCreateLoan(mockClient as any);
+      const result = await createLoan({ ...validInput, paymentFrequency: "BIWEEKLY" });
+      expect(result.id).to.equal("loan-biweekly");
+    });
+
+    it("should accept MONTHLY paymentFrequency", async () => {
+      const expectedLoan = {
+        id: "loan-monthly",
+        loanId: 10000,
+        type: "SAN",
+        status: "ACTIVE",
+        ...validInput,
+        paymentFrequency: "MONTHLY",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findFirst: sinon.stub().resolves(null),
+          create: sinon.stub().resolves(expectedLoan)
+        }
+      };
+      const createLoan = createCreateLoan(mockClient as any);
+      const result = await createLoan({ ...validInput, paymentFrequency: "MONTHLY" });
+      expect(result.id).to.equal("loan-monthly");
+    });
+
+    it("should pass startingDate to Prisma when provided", async () => {
+      const startingDate = new Date("2026-03-01");
+      const expectedLoan = {
+        id: "loan-sd",
+        loanId: 10000,
+        type: "SAN",
+        status: "ACTIVE",
+        ...validInput,
+        startingDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findFirst: sinon.stub().resolves(null),
+          create: sinon.stub().resolves(expectedLoan)
+        }
+      };
+      const createLoan = createCreateLoan(mockClient as any);
+      const result = await createLoan({ ...validInput, startingDate });
+      expect(result.id).to.equal("loan-sd");
+      expect(
+        mockClient.loan.create.calledWith(
+          sinon.match({
+            data: sinon.match({ startingDate })
+          })
+        )
+      ).to.be.true;
     });
   });
 

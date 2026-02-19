@@ -13,7 +13,8 @@ export interface Loan {
   principal: number;
   termLength: number;
   paymentAmount: number;
-  paymentFrequency: "DAILY" | "WEEKLY";
+  paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+  startingDate: Date | null;
   customerId: string;
   createdAt: Date;
   updatedAt: Date;

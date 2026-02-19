@@ -88,6 +88,34 @@ describe("createCalculateLoan", () => {
     });
   });
 
+  it("should calculate for BIWEEKLY frequency", async () => {
+    const result = await calculateLoan({
+      principal: 5000,
+      interestRate: 0.3,
+      paymentFrequency: "BIWEEKLY",
+      baseDuration: 10
+    });
+
+    const baseOption = result.options.find((option) => option.isBase);
+    expect(baseOption).to.exist;
+    expect(baseOption?.duration).to.equal(10);
+    expect(baseOption?.paymentFrequency).to.equal("BIWEEKLY");
+  });
+
+  it("should calculate for MONTHLY frequency", async () => {
+    const result = await calculateLoan({
+      principal: 10000,
+      interestRate: 0.3,
+      paymentFrequency: "MONTHLY",
+      baseDuration: 6
+    });
+
+    const baseOption = result.options.find((option) => option.isBase);
+    expect(baseOption).to.exist;
+    expect(baseOption?.duration).to.equal(6);
+    expect(baseOption?.paymentFrequency).to.equal("MONTHLY");
+  });
+
   it("should throw when minRate is greater than maxRate", async () => {
     try {
       await calculateLoan({

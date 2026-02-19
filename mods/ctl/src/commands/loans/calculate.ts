@@ -6,7 +6,7 @@ import cliui from "cliui";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-type PaymentFrequency = "DAILY" | "WEEKLY";
+type PaymentFrequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 type LoanOption = {
   duration: number;
   paymentFrequency: PaymentFrequency;
@@ -62,8 +62,10 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
         message: "Payment frequency",
         default: "WEEKLY",
         choices: [
-          { name: "Daily", value: "DAILY" },
-          { name: "Weekly", value: "WEEKLY" }
+          { name: "Daily (Diario)", value: "DAILY" },
+          { name: "Weekly (Semanal)", value: "WEEKLY" },
+          { name: "Biweekly (Quincenal)", value: "BIWEEKLY" },
+          { name: "Monthly (Mensual)", value: "MONTHLY" }
         ]
       });
 

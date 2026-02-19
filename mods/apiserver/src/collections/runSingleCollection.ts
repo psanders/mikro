@@ -101,6 +101,7 @@ export async function runSingleCollection(
   const paymentDay = isPaymentDayToday(
     loan.paymentFrequency,
     customer.preferredPaymentDay,
+    loan.startingDate ?? loan.createdAt,
     asOfDate
   );
 
@@ -166,7 +167,8 @@ export async function runSingleCollection(
     }
     const paymentDayStr = formatPaymentDayForTemplate(
       loan.paymentFrequency,
-      customer.preferredPaymentDay
+      customer.preferredPaymentDay,
+      loan.startingDate ?? loan.createdAt
     );
     ok = await executeCollectionAction(
       async () => {

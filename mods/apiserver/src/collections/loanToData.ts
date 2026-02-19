@@ -9,6 +9,7 @@ export function loanToData(
   loan: {
     paymentFrequency: string;
     createdAt: Date;
+    startingDate?: Date | null;
     payments: Array<{ paidAt: Date }>;
   },
   preferredPaymentDay?: string | null
@@ -16,6 +17,7 @@ export function loanToData(
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
+    startingDate: loan.startingDate ?? undefined,
     payments: loan.payments.map((p) => ({ paidAt: p.paidAt })),
     preferredPaymentDay: preferredPaymentDay ?? undefined
   };

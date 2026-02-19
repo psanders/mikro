@@ -9,12 +9,14 @@ export async function handleCreateLoan(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
+  const startingDate = args.startingDate ? new Date(args.startingDate as string) : undefined;
   const loan = await deps.createLoan({
     customerId: args.customerId as string,
     principal: Number(args.principal),
     termLength: Number(args.termLength),
     paymentAmount: Number(args.paymentAmount),
-    paymentFrequency: args.paymentFrequency as "WEEKLY" | "DAILY"
+    paymentFrequency: args.paymentFrequency as "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
+    startingDate
   });
 
   logger.verbose("loan created via tool", { loanId: loan.loanId });
