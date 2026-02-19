@@ -19,9 +19,7 @@ export async function handleCreateCustomer(
     };
   }
 
-  const rawReferredById = args.referredById as string | null | undefined;
-  const referredById =
-    rawReferredById === "none" || rawReferredById === "null" ? null : (rawReferredById ?? null);
+  const referredById = (args.referredById as string | null | undefined) ?? null;
 
   const customer = await deps.createCustomer({
     name: args.name as string,
