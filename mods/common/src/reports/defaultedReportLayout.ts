@@ -9,11 +9,15 @@ export const DEFAULTED_REPORT_WIDTH = 900;
 
 /** Base height per row when summary is short. */
 const ROW_HEIGHT_BASE_PX = 44;
-/** Extra height per line of wrapped summary (approx chars per line ~50). */
+/** Extra height per line of wrapped summary. */
 const SUMMARY_LINE_HEIGHT_PX = 20;
-const CHARS_PER_LINE = 50;
+/**
+ * The summary column is flex:2 of 6.8 total ≈ 29 % of ~860 px usable ≈ 253 px.
+ * At 14 px Inter that fits roughly 35 characters per line.
+ */
+const CHARS_PER_LINE = 35;
 /** Header + summary bar + content padding + footer. */
-const BASE_HEIGHT_PX = 260;
+const BASE_HEIGHT_PX = 280;
 const TABLE_HEADER_PX = 36;
 
 export interface DefaultedReportRow {
