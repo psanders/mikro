@@ -8,14 +8,14 @@ import { ListCommand } from "../../ListCommand.js";
 import { validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 
-export default class ListByMember extends ListCommand<typeof ListByMember> {
-  static override readonly description = "display payments for a specific member";
+export default class ListByCustomer extends ListCommand<typeof ListByCustomer> {
+  static override readonly description = "display payments for a specific customer";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> <memberId> --start-date 2026-01-01 --end-date 2026-01-31"
+    "<%= config.bin %> <%= command.id %> <customerId> --start-date 2026-01-01 --end-date 2026-01-31"
   ];
   static override readonly args = {
-    memberId: Args.string({
-      description: "The Member ID to filter by",
+    customerId: Args.string({
+      description: "The Customer ID to filter by",
       required: true
     })
   };
@@ -36,7 +36,7 @@ export default class ListByMember extends ListCommand<typeof ListByMember> {
   };
 
   public async run(): Promise<void> {
-    const { args, flags } = await this.parse(ListByMember);
+    const { args, flags } = await this.parse(ListByCustomer);
     const client = this.createClient();
 
     // Validate date formats
@@ -44,8 +44,8 @@ export default class ListByMember extends ListCommand<typeof ListByMember> {
     validateDate(flags["end-date"]!);
 
     try {
-      const payments = await client.listPaymentsByMember.query({
-        memberId: args.memberId,
+      const payments = await client.listPaymentsByCustomer.query({
+        customerId: args.customerId,
         startDate: new Date(flags["start-date"]!),
         endDate: new Date(flags["end-date"]!),
         showReversed: flags["include-reversed"],

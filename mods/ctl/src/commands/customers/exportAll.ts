@@ -4,10 +4,10 @@
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportAll extends BaseCommand<typeof ExportAll> {
-  static override readonly description = "export all active members (admin only)";
+  static override readonly description = "export all active customers (admin only)";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --output report.xlsx",
@@ -27,21 +27,21 @@ export default class ExportAll extends BaseCommand<typeof ExportAll> {
     const client = this.createClient();
 
     try {
-      const members = await client.exportAllMembers.query({});
+      const customers = await client.exportAllCustomers.query({});
 
-      if (members.length === 0) {
-        this.log("No hay miembros activos en el sistema.");
+      if (customers.length === 0) {
+        this.log("No hay clientes activos en el sistema.");
         return;
       }
 
-      const handled = await handleMembersOutput(
-        members,
+      const handled = await handleCustomersOutput(
+        customers,
         flags.output,
         this.log.bind(this),
         this.error.bind(this)
       );
       if (!handled) {
-        outputMembersAsTable(members, this.log.bind(this));
+        outputCustomersAsTable(customers, this.log.bind(this));
       }
     } catch (e) {
       errorHandler(e, this.error.bind(this));

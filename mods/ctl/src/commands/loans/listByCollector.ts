@@ -9,7 +9,7 @@ import errorHandler from "../../errorHandler.js";
 
 export default class ListByCollector extends ListCommand<typeof ListByCollector> {
   static override readonly description =
-    "display loans for members assigned to a specific collector";
+    "display loans for customers assigned to a specific collector";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <collectorId>"];
   static override readonly args = {
     collectorId: Args.string({
@@ -45,7 +45,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
         { text: "FREQ", padding: [0, 0, 0, 0], width: 8 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
         { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
-        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 35 }
+        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 35 }
       );
 
       loans.forEach((loan) => {
@@ -56,7 +56,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
           { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 8 },
           { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
           { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
-          { text: loan.member.name, padding: [0, 0, 0, 0], width: 35 }
+          { text: loan.customer.name, padding: [0, 0, 0, 0], width: 35 }
         );
       });
 

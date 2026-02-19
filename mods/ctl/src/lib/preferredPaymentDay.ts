@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Shared type and choices for member preferred payment day (used by members:create and members:update).
+ * Shared type and choices for customer preferred payment day (used by customers:create and customers:update).
  */
 
 export type PreferredPaymentDay =

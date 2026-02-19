@@ -8,7 +8,7 @@ import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
-  static override readonly description = "display loans for members referred by a specific user";
+  static override readonly description = "display loans for customers referred by a specific user";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <referrerId>"];
   static override readonly args = {
     referrerId: Args.string({
@@ -44,7 +44,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
         { text: "FREQ", padding: [0, 0, 0, 0], width: 8 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
         { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
-        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 35 }
+        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 35 }
       );
 
       loans.forEach((loan) => {
@@ -55,7 +55,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
           { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 8 },
           { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
           { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
-          { text: loan.member.name, padding: [0, 0, 0, 0], width: 35 }
+          { text: loan.customer.name, padding: [0, 0, 0, 0], width: 35 }
         );
       });
 

@@ -42,7 +42,7 @@ export default class ListByLoanId extends ListCommand<typeof ListByLoanId> {
 
       ui.div(
         { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "MEMBER NAME", padding: [0, 0, 0, 0], width: 30 },
+        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 30 },
         { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
         { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
@@ -52,7 +52,7 @@ export default class ListByLoanId extends ListCommand<typeof ListByLoanId> {
       payments.forEach((payment) => {
         ui.div(
           { text: payment.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: payment.loan.member.name, padding: [0, 0, 0, 0], width: 30 },
+          { text: payment.loan.customer.name, padding: [0, 0, 0, 0], width: 30 },
           { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
           { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
           { text: payment.status, padding: [0, 0, 0, 0], width: 12 },

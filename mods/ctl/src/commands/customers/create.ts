@@ -13,14 +13,14 @@ import {
 import { promptTextIfMissing } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
-  static override readonly description = "create a new member";
+  static override readonly description = "create a new customer";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+18091234567' --id-number '123-4567890-1' --home-address '123 Main St' --referrer-id abc-def --collector-id xyz-123"
   ];
   static override readonly flags = {
     name: Flags.string({
-      description: "Member name",
+      description: "Customer name",
       required: false
     }),
     phone: Flags.string({
@@ -74,7 +74,7 @@ export default class Create extends BaseCommand<typeof Create> {
     const { flags } = await this.parse(Create);
     const client = this.createClient();
 
-    this.log("This utility will help you create a Member.");
+    this.log("This utility will help you create a Customer.");
     this.log("Press ^C at any time to quit.");
 
     // Get users for referrer and collector selection
@@ -148,7 +148,7 @@ export default class Create extends BaseCommand<typeof Create> {
       }));
     const notes = flags.notes || undefined;
 
-    const ready = await confirm({ message: "Ready to create member?" });
+    const ready = await confirm({ message: "Ready to create customer?" });
 
     if (!ready) {
       this.log("Aborted!");
@@ -156,7 +156,7 @@ export default class Create extends BaseCommand<typeof Create> {
     }
 
     try {
-      const member = await client.createMember.mutate({
+      const customer = await client.createCustomer.mutate({
         name,
         phone,
         idNumber,
@@ -172,7 +172,7 @@ export default class Create extends BaseCommand<typeof Create> {
       });
 
       this.log("Done!");
-      this.log(`Member ID: ${member.id}`);
+      this.log(`Customer ID: ${customer.id}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

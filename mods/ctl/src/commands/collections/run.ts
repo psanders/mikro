@@ -84,11 +84,11 @@ export default class Run extends BaseCommand<typeof Run> {
         }
         if (result.dryRun) {
           this.log(
-            `\nDry run complete. Would send ${result.type} via ${result.channel} to ${result.memberName} (loan #${result.loanId}).`
+            `\nDry run complete. Would send ${result.type} via ${result.channel} to ${result.customerName} (loan #${result.loanId}).`
           );
         } else {
           this.log(
-            `\nDone. Sent ${result.type} via ${result.channel} to ${result.memberName} (loan #${result.loanId}).`
+            `\nDone. Sent ${result.type} via ${result.channel} to ${result.customerName} (loan #${result.loanId}).`
           );
         }
       } catch (e) {

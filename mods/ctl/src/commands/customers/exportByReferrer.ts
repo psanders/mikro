@@ -4,10 +4,10 @@
 import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportByReferrer extends BaseCommand<typeof ExportByReferrer> {
-  static override readonly description = "export members referred by a user";
+  static override readonly description = "export customers referred by a user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <referrerId>",
     "<%= config.bin %> <%= command.id %> <referrerId> --output report.xlsx",
@@ -16,7 +16,7 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
   ];
   static override readonly args = {
     referrerId: Args.string({
-      description: "The Referrer ID to export members for",
+      description: "The Referrer ID to export customers for",
       required: true
     })
   };
@@ -33,23 +33,23 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
     const client = this.createClient();
 
     try {
-      const members = await client.exportMembersByReferrer.query({
+      const customers = await client.exportCustomersByReferrer.query({
         referredById: args.referrerId
       });
 
-      if (members.length === 0) {
-        this.log("No hay miembros referidos por este usuario.");
+      if (customers.length === 0) {
+        this.log("No hay clientes referidos por este usuario.");
         return;
       }
 
-      const handled = await handleMembersOutput(
-        members,
+      const handled = await handleCustomersOutput(
+        customers,
         flags.output,
         this.log.bind(this),
         this.error.bind(this)
       );
       if (!handled) {
-        outputMembersAsTable(members, this.log.bind(this));
+        outputCustomersAsTable(customers, this.log.bind(this));
       }
     } catch (e) {
       errorHandler(e, this.error.bind(this));

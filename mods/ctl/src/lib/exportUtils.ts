@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Shared utilities for member export commands.
+ * Shared utilities for customer export commands.
  */
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -14,10 +14,10 @@ import {
   getLatenessTrend,
   getReportRowHighlight,
   formatPaymentFrequency,
-  buildGroupedMemberRows,
-  renderMembersReportToPng,
+  buildGroupedCustomerRows,
+  renderCustomersReportToPng,
   loadLogoDataUrl,
-  type GroupedMemberRow
+  type GroupedCustomerRow
 } from "@mikro/common";
 
 const __ctlDir = dirname(fileURLToPath(import.meta.url));
@@ -34,10 +34,10 @@ interface SerializedLoan {
 }
 
 /**
- * Member data as returned from tRPC export endpoints.
+ * Customer data as returned from tRPC export endpoints.
  * Uses optional types since tRPC may serialize nulls as undefined.
  */
-export interface SerializedMember {
+export interface SerializedCustomer {
   name: string;
   phone: string;
   collectionPoint?: string | null;
@@ -62,7 +62,7 @@ function ratingToStars(rating: 1 | 2 | 3 | 4 | 5): string {
   return STAR.repeat(rating);
 }
 
-export interface MemberReportRow {
+export interface CustomerReportRow {
   name: string;
   phone: string;
   loanId: number;
@@ -78,22 +78,22 @@ export interface MemberReportRow {
 /**
  * Build sorted report rows (rating ascending, then missed count descending).
  */
-export function buildMemberReportRows(members: SerializedMember[]): MemberReportRow[] {
-  const rows: MemberReportRow[] = [];
-  for (const member of members) {
-    for (const loan of member.loans) {
-      const data = toLoanData(loan, member.preferredPaymentDay);
+export function buildCustomerReportRows(customers: SerializedCustomer[]): CustomerReportRow[] {
+  const rows: CustomerReportRow[] = [];
+  for (const customer of customers) {
+    for (const loan of customer.loans) {
+      const data = toLoanData(loan, customer.preferredPaymentDay);
       rows.push({
-        name: member.name,
-        phone: member.phone,
+        name: customer.name,
+        phone: customer.phone,
         loanId: loan.loanId,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
-        referredBy: member.referredBy.name,
-        collectionPoint: member.collectionPoint ?? "",
-        notes: member.notes ?? ""
+        referredBy: customer.referredBy.name,
+        collectionPoint: customer.collectionPoint ?? "",
+        notes: customer.notes ?? ""
       });
     }
   }
@@ -107,17 +107,17 @@ export function buildMemberReportRows(members: SerializedMember[]): MemberReport
 }
 
 /**
- * Output members as CSV format to a log function.
+ * Output customers as CSV format to a log function.
  * Rows are sorted by rating (1 star first), then missed count descending.
  */
-export function outputMembersAsCsv(
-  members: SerializedMember[],
+export function outputCustomersAsCsv(
+  customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
   log(
     "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
-  const rows = buildMemberReportRows(members);
+  const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
     const row = [
       `"${r.name}"`,
@@ -136,11 +136,11 @@ export function outputMembersAsCsv(
 }
 
 /**
- * Output members as a formatted table to a log function.
+ * Output customers as a formatted table to a log function.
  * Rows are sorted by rating (1 star first), then missed count descending.
  */
-export function outputMembersAsTable(
-  members: SerializedMember[],
+export function outputCustomersAsTable(
+  customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
   const ui = cliui({ width: 232 });
@@ -158,7 +158,7 @@ export function outputMembersAsTable(
     { text: "NOTAS", padding: [0, 0, 0, 0], width: 30 }
   );
 
-  const rows = buildMemberReportRows(members);
+  const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
     ui.div(
       { text: r.name, padding: [0, 0, 0, 0], width: 25 },
@@ -175,14 +175,14 @@ export function outputMembersAsTable(
   }
 
   log(ui.toString());
-  log(`\nTotal: ${rows.length} préstamos de ${members.length} clientes`);
+  log(`\nTotal: ${rows.length} préstamos de ${customers.length} clientes`);
 }
 
-/** Convert serialized members to the shape expected by buildGroupedMemberRows. */
-function toMembersForGrouping(
-  members: SerializedMember[]
-): Parameters<typeof buildGroupedMemberRows>[0] {
-  return members.map((m) => ({
+/** Convert serialized customers to the shape expected by buildGroupedCustomerRows. */
+function toCustomersForGrouping(
+  customers: SerializedCustomer[]
+): Parameters<typeof buildGroupedCustomerRows>[0] {
+  return customers.map((m) => ({
     name: m.name,
     phone: m.phone,
     preferredPaymentDay: m.preferredPaymentDay,
@@ -196,17 +196,17 @@ function toMembersForGrouping(
 }
 
 /**
- * Output members grouped by payment health (Crítico / Requiere atención / Al día) as a table.
+ * Output customers grouped by payment health (Crítico / Requiere atención / Al día) as a table.
  */
-export function outputMembersGroupedAsTable(
-  members: SerializedMember[],
+export function outputCustomersGroupedAsTable(
+  customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
-  const forGrouping = toMembersForGrouping(members);
-  const grouped = buildGroupedMemberRows(forGrouping);
+  const forGrouping = toCustomersForGrouping(customers);
+  const grouped = buildGroupedCustomerRows(forGrouping);
 
   const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
-  log(`Total: ${totalRows} préstamos de ${members.length} clientes\n`);
+  log(`Total: ${totalRows} préstamos de ${customers.length} clientes\n`);
 
   outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, (r) => [
     r.name,
@@ -237,8 +237,8 @@ export function outputMembersGroupedAsTable(
 function outputGroupedSection(
   log: (message: string) => void,
   title: string,
-  rows: GroupedMemberRow[],
-  rowToCells: (r: GroupedMemberRow) => string[]
+  rows: GroupedCustomerRow[],
+  rowToCells: (r: GroupedCustomerRow) => string[]
 ): void {
   if (rows.length === 0) return;
   log(`--- ${title} (${rows.length}) ---`);
@@ -267,18 +267,18 @@ function outputGroupedSection(
 }
 
 /**
- * Output members grouped by payment health as CSV with a Group column.
+ * Output customers grouped by payment health as CSV with a Group column.
  */
-export function outputMembersGroupedAsCsv(
-  members: SerializedMember[],
+export function outputCustomersGroupedAsCsv(
+  customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
-  const forGrouping = toMembersForGrouping(members);
-  const grouped = buildGroupedMemberRows(forGrouping);
+  const forGrouping = toCustomersForGrouping(customers);
+  const grouped = buildGroupedCustomerRows(forGrouping);
 
   log("Grupo,Nombre,Telefono,Prestamo,Ciclo de Pago,Rating,Pagos atrasados");
 
-  const emit = (group: string, rows: GroupedMemberRow[]) => {
+  const emit = (group: string, rows: GroupedCustomerRow[]) => {
     for (const r of rows) {
       const row = [
         `"${group}"`,
@@ -309,13 +309,13 @@ function highlightToArgb(highlight: "yellow" | "red" | null): { argb: string } |
 }
 
 /**
- * Write members report to an Excel file at `filepath`.
+ * Write customers report to an Excel file at `filepath`.
  * Full 10-column report with highlights, same format as WhatsApp Excel.
  */
-export async function writeMembersToExcel(
-  members: SerializedMember[],
+export async function writeCustomersToExcel(
+  customers: SerializedCustomer[],
   filepath: string
-): Promise<{ loanCount: number; memberCount: number }> {
+): Promise<{ loanCount: number; customerCount: number }> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Reporte de Clientes");
 
@@ -342,23 +342,23 @@ export async function writeMembersToExcel(
 
   const borderStyle = { style: "thin" as const, color: { argb: "FFD3D3D3" } };
 
-  type ExcelRowData = MemberReportRow & { highlight: "yellow" | "red" | null };
+  type ExcelRowData = CustomerReportRow & { highlight: "yellow" | "red" | null };
 
   const rows: ExcelRowData[] = [];
-  for (const member of members) {
-    for (const loan of member.loans) {
-      const data = toLoanData(loan, member.preferredPaymentDay);
+  for (const customer of customers) {
+    for (const loan of customer.loans) {
+      const data = toLoanData(loan, customer.preferredPaymentDay);
       rows.push({
-        name: member.name,
-        phone: member.phone,
+        name: customer.name,
+        phone: customer.phone,
         loanId: loan.loanId,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
         trend: getLatenessTrend(data),
-        referredBy: member.referredBy.name,
-        collectionPoint: member.collectionPoint ?? "",
-        notes: member.notes ?? "",
+        referredBy: customer.referredBy.name,
+        collectionPoint: customer.collectionPoint ?? "",
+        notes: customer.notes ?? "",
         highlight: getReportRowHighlight(data)
       });
     }
@@ -420,42 +420,42 @@ export async function writeMembersToExcel(
   });
 
   await workbook.xlsx.writeFile(filepath);
-  return { loanCount: rows.length, memberCount: members.length };
+  return { loanCount: rows.length, customerCount: customers.length };
 }
 
 /**
- * Write members report to a PNG file at `filepath`.
+ * Write customers report to a PNG file at `filepath`.
  * Simplified grouped layout (same as WhatsApp image).
  */
-export async function writeMembersToPng(
-  members: SerializedMember[],
+export async function writeCustomersToPng(
+  customers: SerializedCustomer[],
   filepath: string
-): Promise<{ loanCount: number; memberCount: number }> {
-  const forGrouping = toMembersForGrouping(members);
+): Promise<{ loanCount: number; customerCount: number }> {
+  const forGrouping = toCustomersForGrouping(customers);
   const logoDataUrl = loadLogoDataUrl(LOGO_PATH);
-  const pngBuffer = await renderMembersReportToPng(
+  const pngBuffer = await renderCustomersReportToPng(
     forGrouping,
     undefined,
     logoDataUrl ?? undefined
   );
   await writeFile(filepath, pngBuffer);
-  const loanCount = members.reduce((sum, m) => sum + m.loans.length, 0);
-  return { loanCount, memberCount: members.length };
+  const loanCount = customers.reduce((sum, m) => sum + m.loans.length, 0);
+  return { loanCount, customerCount: customers.length };
 }
 
 /**
- * Write extended members report to a CSV file at `filepath`.
- * Same content as outputMembersAsCsv.
+ * Write extended customers report to a CSV file at `filepath`.
+ * Same content as outputCustomersAsCsv.
  */
-export async function writeMembersToCsv(
-  members: SerializedMember[],
+export async function writeCustomersToCsv(
+  customers: SerializedCustomer[],
   filepath: string
-): Promise<{ loanCount: number; memberCount: number }> {
+): Promise<{ loanCount: number; customerCount: number }> {
   const lines: string[] = [];
   lines.push(
     "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
-  const rows = buildMemberReportRows(members);
+  const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
     lines.push(
       [
@@ -473,15 +473,15 @@ export async function writeMembersToCsv(
     );
   }
   await writeFile(filepath, lines.join("\n"));
-  return { loanCount: rows.length, memberCount: members.length };
+  return { loanCount: rows.length, customerCount: customers.length };
 }
 
 /**
- * Handle --output flag for member export commands. Writes to file when output is set;
+ * Handle --output flag for customer export commands. Writes to file when output is set;
  * returns true. When output is not set, returns false so the command can print extended table to stdout.
  */
-export async function handleMembersOutput(
-  members: SerializedMember[],
+export async function handleCustomersOutput(
+  customers: SerializedCustomer[],
   output: string | undefined,
   log: (msg: string) => void,
   error: (msg: string) => never
@@ -489,18 +489,18 @@ export async function handleMembersOutput(
   if (!output) return false;
   const ext = output.split(".").pop()?.toLowerCase();
   if (ext === "xlsx") {
-    const { loanCount, memberCount } = await writeMembersToExcel(members, output);
-    log(`Excel guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
+    const { loanCount, customerCount } = await writeCustomersToExcel(customers, output);
+    log(`Excel guardado: ${output} (${loanCount} préstamos, ${customerCount} clientes)`);
     return true;
   }
   if (ext === "png") {
-    const { loanCount, memberCount } = await writeMembersToPng(members, output);
-    log(`PNG guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
+    const { loanCount, customerCount } = await writeCustomersToPng(customers, output);
+    log(`PNG guardado: ${output} (${loanCount} préstamos, ${customerCount} clientes)`);
     return true;
   }
   if (ext === "csv") {
-    const { loanCount, memberCount } = await writeMembersToCsv(members, output);
-    log(`CSV guardado: ${output} (${loanCount} préstamos, ${memberCount} clientes)`);
+    const { loanCount, customerCount } = await writeCustomersToCsv(customers, output);
+    log(`CSV guardado: ${output} (${loanCount} préstamos, ${customerCount} clientes)`);
     return true;
   }
   error("--output must end in .xlsx, .png, or .csv");

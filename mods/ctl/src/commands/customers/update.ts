@@ -11,11 +11,11 @@ import {
 } from "../../lib/preferredPaymentDay.js";
 
 export default class Update extends BaseCommand<typeof Update> {
-  static override readonly description = "modify a member's information";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <memberId>"];
+  static override readonly description = "modify a customer's information";
+  static override readonly examples = ["<%= config.bin %> <%= command.id %> <customerId>"];
   static override readonly args = {
-    memberId: Args.string({
-      description: "The Member ID to update",
+    customerId: Args.string({
+      description: "The Customer ID to update",
       required: true
     })
   };
@@ -25,14 +25,14 @@ export default class Update extends BaseCommand<typeof Update> {
     const client = this.createClient();
 
     try {
-      const memberFromDB = await client.getMember.query({ id: args.memberId });
+      const customerFromDB = await client.getCustomer.query({ id: args.customerId });
 
-      if (!memberFromDB) {
-        this.error("Member not found.");
+      if (!customerFromDB) {
+        this.error("Customer not found.");
         return;
       }
 
-      this.log("This utility will help you update a Member.");
+      this.log("This utility will help you update a Customer.");
       this.log("Press ^C at any time to quit.");
 
       const paymentDayChoices: Array<{ name: string; value: PreferredPaymentDay | null }> = [
@@ -43,17 +43,17 @@ export default class Update extends BaseCommand<typeof Update> {
       const answers = {
         name: await input({
           message: "Name",
-          default: memberFromDB.name,
+          default: customerFromDB.name,
           required: true
         }),
         phone: await input({
           message: "Phone (e.g., 18091234567)",
-          default: memberFromDB.phone,
+          default: customerFromDB.phone,
           required: true
         }),
         notes: await input({
           message: "Note (optional)",
-          default: memberFromDB.notes || "",
+          default: customerFromDB.notes || "",
           required: false
         }),
         isActive: await select({
@@ -62,24 +62,24 @@ export default class Update extends BaseCommand<typeof Update> {
             { name: "Active", value: true },
             { name: "Inactive", value: false }
           ],
-          default: memberFromDB.isActive
+          default: customerFromDB.isActive
         }),
         preferredPaymentDay: await select({
           message: "Preferred payment day",
           choices: paymentDayChoices,
-          default: (memberFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
+          default: (customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
         })
       };
 
-      const ready = await confirm({ message: "Ready to update member?" });
+      const ready = await confirm({ message: "Ready to update customer?" });
 
       if (!ready) {
         this.log("Aborted!");
         return;
       }
 
-      await client.updateMember.mutate({
-        id: args.memberId,
+      await client.updateCustomer.mutate({
+        id: args.customerId,
         name: answers.name,
         phone: answers.phone,
         notes: answers.notes || undefined,

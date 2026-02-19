@@ -7,7 +7,7 @@ import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class ListByCollector extends ListCommand<typeof ListByCollector> {
-  static override readonly description = "display members by assigned collector";
+  static override readonly description = "display customers by assigned collector";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <collectorId>"];
   static override readonly args = {
     collectorId: Args.string({
@@ -18,7 +18,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
   static override readonly flags = {
     "include-inactive": Flags.boolean({
       char: "a",
-      description: "include inactive members",
+      description: "include inactive customers",
       default: false
     })
   };
@@ -28,7 +28,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
     const client = this.createClient();
 
     try {
-      const members = await client.listMembersByCollector.query({
+      const customers = await client.listCustomersByCollector.query({
         assignedCollectorId: args.collectorId,
         showInactive: flags["include-inactive"],
         limit: flags["page-size"]
@@ -43,12 +43,12 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
       );
 
-      members.forEach((member) => {
+      customers.forEach((customer) => {
         ui.div(
-          { text: member.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: member.name, padding: [0, 0, 0, 0], width: 35 },
-          { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
-          { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
+          { text: customer.id, padding: [0, 0, 0, 0], width: 38 },
+          { text: customer.name, padding: [0, 0, 0, 0], width: 35 },
+          { text: customer.phone, padding: [0, 0, 0, 0], width: 18 },
+          { text: customer.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
         );
       });
 

@@ -8,19 +8,19 @@ import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class History extends ListCommand<typeof History> {
-  static override readonly description = "retrieve chat history for a member or user";
+  static override readonly description = "retrieve chat history for a customer or user";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> --member-id <member-id>",
+    "<%= config.bin %> <%= command.id %> --customer-id <customer-id>",
     "<%= config.bin %> <%= command.id %> --user-id <user-id>"
   ];
   static override readonly flags = {
-    "member-id": Flags.string({
-      description: "The Member ID to get chat history for",
+    "customer-id": Flags.string({
+      description: "The Customer ID to get chat history for",
       exclusive: ["user-id"]
     }),
     "user-id": Flags.string({
       description: "The User ID to get chat history for",
-      exclusive: ["member-id"]
+      exclusive: ["customer-id"]
     })
   };
 
@@ -28,14 +28,14 @@ export default class History extends ListCommand<typeof History> {
     const { flags } = await this.parse(History);
     const client = this.createClient();
 
-    if (!flags["member-id"] && !flags["user-id"]) {
-      this.error("Either --member-id or --user-id is required");
+    if (!flags["customer-id"] && !flags["user-id"]) {
+      this.error("Either --customer-id or --user-id is required");
       return;
     }
 
     try {
       const messages = await client.getChatHistory.query({
-        memberId: flags["member-id"],
+        customerId: flags["customer-id"],
         userId: flags["user-id"],
         limit: flags["page-size"]
       });

@@ -7,7 +7,7 @@ import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
-  static override readonly description = "display members by referrer";
+  static override readonly description = "display customers by referrer";
   static override readonly examples = ["<%= config.bin %> <%= command.id %> <referrerId>"];
   static override readonly args = {
     referrerId: Args.string({
@@ -18,7 +18,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly flags = {
     "include-inactive": Flags.boolean({
       char: "a",
-      description: "include inactive members",
+      description: "include inactive customers",
       default: false
     })
   };
@@ -28,7 +28,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
     const client = this.createClient();
 
     try {
-      const members = await client.listMembersByReferrer.query({
+      const customers = await client.listCustomersByReferrer.query({
         referredById: args.referrerId,
         showInactive: flags["include-inactive"],
         limit: flags["page-size"]
@@ -43,12 +43,12 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
         { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 }
       );
 
-      members.forEach((member) => {
+      customers.forEach((customer) => {
         ui.div(
-          { text: member.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: member.name, padding: [0, 0, 0, 0], width: 35 },
-          { text: member.phone, padding: [0, 0, 0, 0], width: 18 },
-          { text: member.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
+          { text: customer.id, padding: [0, 0, 0, 0], width: 38 },
+          { text: customer.name, padding: [0, 0, 0, 0], width: 35 },
+          { text: customer.phone, padding: [0, 0, 0, 0], width: 18 },
+          { text: customer.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
         );
       });
 

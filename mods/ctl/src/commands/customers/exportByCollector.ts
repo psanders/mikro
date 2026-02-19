@@ -4,10 +4,10 @@
 import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { handleMembersOutput, outputMembersAsTable } from "../../lib/exportUtils.js";
+import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
 
 export default class ExportByCollector extends BaseCommand<typeof ExportByCollector> {
-  static override readonly description = "export members assigned to a collector";
+  static override readonly description = "export customers assigned to a collector";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <collectorId>",
     "<%= config.bin %> <%= command.id %> <collectorId> --output report.xlsx",
@@ -16,7 +16,7 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
   ];
   static override readonly args = {
     collectorId: Args.string({
-      description: "The Collector ID to export members for",
+      description: "The Collector ID to export customers for",
       required: true
     })
   };
@@ -33,23 +33,23 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
     const client = this.createClient();
 
     try {
-      const members = await client.exportCollectorMembers.query({
+      const customers = await client.exportCollectorCustomers.query({
         assignedCollectorId: args.collectorId
       });
 
-      if (members.length === 0) {
-        this.log("No hay miembros asignados a este cobrador.");
+      if (customers.length === 0) {
+        this.log("No hay clientes asignados a este cobrador.");
         return;
       }
 
-      const handled = await handleMembersOutput(
-        members,
+      const handled = await handleCustomersOutput(
+        customers,
         flags.output,
         this.log.bind(this),
         this.error.bind(this)
       );
       if (!handled) {
-        outputMembersAsTable(members, this.log.bind(this));
+        outputCustomersAsTable(customers, this.log.bind(this));
       }
     } catch (e) {
       errorHandler(e, this.error.bind(this));

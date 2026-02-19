@@ -91,7 +91,7 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
     this.log("Enter receipt details (no database). Press ^C to cancel.\n");
 
     const loanNumber = await promptTextIfMissing(undefined, "Loan number", "loan-number");
-    const name = await promptTextIfMissing(undefined, "Member name", "name");
+    const name = await promptTextIfMissing(undefined, "Customer name", "name");
     const date = await promptTextIfMissing(undefined, "Date (DD/MM/YYYY)", "date", {
       default: new Date().toLocaleDateString("es-DO", {
         day: "2-digit",

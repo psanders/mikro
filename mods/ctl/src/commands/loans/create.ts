@@ -12,14 +12,14 @@ import {
 } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
-  static override readonly description = "create a new loan for a member";
+  static override readonly description = "create a new loan for a customer";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --member-id abc-def --principal 10000 --term-length 30 --payment-amount 500 --payment-frequency WEEKLY"
+    "<%= config.bin %> <%= command.id %> --customer-id abc-def --principal 10000 --term-length 30 --payment-amount 500 --payment-frequency WEEKLY"
   ];
   static override readonly flags = {
-    "member-id": Flags.string({
-      description: "Member ID",
+    "customer-id": Flags.string({
+      description: "Customer ID",
       required: false
     }),
     principal: Flags.integer({
@@ -54,7 +54,11 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("This utility will help you create a Loan.");
     this.log("Press ^C at any time to quit.");
 
-    const memberId = await promptTextIfMissing(flags["member-id"], "Member ID", "member-id");
+    const customerId = await promptTextIfMissing(
+      flags["customer-id"],
+      "Customer ID",
+      "customer-id"
+    );
     const principal = await promptNumberIfMissing(flags.principal, "Principal Amount", "principal");
     const termLength = await promptNumberIfMissing(
       flags["term-length"],
@@ -86,7 +90,7 @@ export default class Create extends BaseCommand<typeof Create> {
 
     try {
       const loan = await client.createLoan.mutate({
-        memberId,
+        customerId,
         principal,
         termLength,
         paymentAmount,
