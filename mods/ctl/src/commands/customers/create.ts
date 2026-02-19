@@ -152,7 +152,7 @@ export default class Create extends BaseCommand<typeof Create> {
         jobPosition,
         income,
         isBusinessOwner,
-        preferredPaymentDay,
+        preferredPaymentDay: preferredPaymentDay ?? undefined,
         notes
       });
 
