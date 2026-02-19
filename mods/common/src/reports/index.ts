@@ -16,3 +16,15 @@ export {
   CUSTOMERS_REPORT_WIDTH
 } from "./customersReportLayout.js";
 export { renderCustomersReportToPng } from "./customersReportGenerator.js";
+export {
+  buildLoanNotesSummaryPrompt,
+  parseLoanNotesSummaryResponse,
+  type NoteForSummary
+} from "./defaultedReportPrompt.js";
+export {
+  createDefaultedReportLayout,
+  getDefaultedReportHeight,
+  DEFAULTED_REPORT_WIDTH,
+  type DefaultedReportRow
+} from "./defaultedReportLayout.js";
+export { renderDefaultedReportToPng } from "./defaultedReportGenerator.js";

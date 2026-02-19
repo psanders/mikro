@@ -16,3 +16,4 @@ export type {
   WhatsAppMediaUploadResponse
 } from "./whatsapp.js";
 export type { Loan, Payment } from "./loan.js";
+export type { LoanNote } from "./loanNote.js";

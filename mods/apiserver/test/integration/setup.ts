@@ -67,7 +67,6 @@ CREATE TABLE "loans" (
     "term_length" INTEGER NOT NULL,
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
-    "notes" TEXT,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -134,7 +133,20 @@ CREATE TABLE "collection_attempts" (
     CONSTRAINT "collection_attempts_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- Loan notes table
+CREATE TABLE "loan_notes" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "content" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "loan_id" TEXT NOT NULL,
+    "created_by_id" TEXT NOT NULL,
+    CONSTRAINT "loan_notes_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "loan_notes_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- Indexes
+CREATE INDEX "loan_notes_loan_id_idx" ON "loan_notes"("loan_id");
+CREATE INDEX "loan_notes_created_at_idx" ON "loan_notes"("created_at");
 CREATE INDEX "user_roles_user_id_idx" ON "user_roles"("user_id");
 CREATE UNIQUE INDEX "user_roles_user_id_role_key" ON "user_roles"("user_id", "role");
 CREATE INDEX "customers_created_by_id_idx" ON "customers"("created_by_id");

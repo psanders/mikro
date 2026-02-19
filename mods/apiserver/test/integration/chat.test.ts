@@ -24,6 +24,7 @@ describe("Chat Integration", () => {
 
   beforeEach(async () => {
     // Clean tables between tests (order matters due to foreign keys)
+    await db.loanNote.deleteMany();
     await db.attachment.deleteMany();
     await db.message.deleteMany();
     await db.payment.deleteMany();

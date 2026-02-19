@@ -391,7 +391,8 @@ export const ModelName = {
   Message: 'Message',
   Attachment: 'Attachment',
   Payment: 'Payment',
-  CollectionAttempt: 'CollectionAttempt'
+  CollectionAttempt: 'CollectionAttempt',
+  LoanNote: 'LoanNote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "collectionAttempt"
+    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "collectionAttempt" | "loanNote"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1003,6 +1004,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LoanNote: {
+      payload: Prisma.$LoanNotePayload<ExtArgs>
+      fields: Prisma.LoanNoteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LoanNoteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LoanNoteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        findFirst: {
+          args: Prisma.LoanNoteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LoanNoteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        findMany: {
+          args: Prisma.LoanNoteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>[]
+        }
+        create: {
+          args: Prisma.LoanNoteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        createMany: {
+          args: Prisma.LoanNoteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LoanNoteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>[]
+        }
+        delete: {
+          args: Prisma.LoanNoteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        update: {
+          args: Prisma.LoanNoteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        deleteMany: {
+          args: Prisma.LoanNoteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LoanNoteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LoanNoteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>[]
+        }
+        upsert: {
+          args: Prisma.LoanNoteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanNotePayload>
+        }
+        aggregate: {
+          args: Prisma.LoanNoteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLoanNote>
+        }
+        groupBy: {
+          args: Prisma.LoanNoteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoanNoteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LoanNoteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoanNoteCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1093,7 +1168,6 @@ export const LoanScalarFieldEnum = {
   termLength: 'termLength',
   paymentAmount: 'paymentAmount',
   paymentFrequency: 'paymentFrequency',
-  notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   customerId: 'customerId'
@@ -1159,6 +1233,17 @@ export const CollectionAttemptScalarFieldEnum = {
 } as const
 
 export type CollectionAttemptScalarFieldEnum = (typeof CollectionAttemptScalarFieldEnum)[keyof typeof CollectionAttemptScalarFieldEnum]
+
+
+export const LoanNoteScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  createdAt: 'createdAt',
+  loanId: 'loanId',
+  createdById: 'createdById'
+} as const
+
+export type LoanNoteScalarFieldEnum = (typeof LoanNoteScalarFieldEnum)[keyof typeof LoanNoteScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1411,6 +1496,7 @@ export type GlobalOmitConfig = {
   attachment?: Prisma.AttachmentOmit
   payment?: Prisma.PaymentOmit
   collectionAttempt?: Prisma.CollectionAttemptOmit
+  loanNote?: Prisma.LoanNoteOmit
 }
 
 /* Types for Logging */

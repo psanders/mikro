@@ -106,6 +106,13 @@ export {
 } from "./loan.js";
 
 export {
+  createLoanNoteSchema,
+  listLoanNotesByLoanSchema,
+  type CreateLoanNoteInput,
+  type ListLoanNotesByLoanInput
+} from "./loanNote.js";
+
+export {
   paymentMethodEnum,
   paymentStatusEnum,
   createPaymentSchema,
@@ -136,8 +143,10 @@ export {
 export {
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
+  generateDefaultedReportSchema,
   type GeneratePerformanceReportInput,
-  type GeneratePortfolioMetricsInput
+  type GeneratePortfolioMetricsInput,
+  type GenerateDefaultedReportInput
 } from "./report.js";
 
 export {

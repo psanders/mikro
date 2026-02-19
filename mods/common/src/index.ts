@@ -149,6 +149,11 @@ export {
   type LoanType,
   type LoanStatus,
   type PaymentFrequency,
+  // Loan note schemas
+  createLoanNoteSchema,
+  listLoanNotesByLoanSchema,
+  type CreateLoanNoteInput,
+  type ListLoanNotesByLoanInput,
   // Payment schemas
   paymentMethodEnum,
   paymentStatusEnum,
@@ -176,8 +181,10 @@ export {
   // Report schemas
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
+  generateDefaultedReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
+  type GenerateDefaultedReportInput,
   // Collection schemas
   runCollectionsSchema,
   runSingleCollectionSchema,
@@ -203,8 +210,15 @@ export {
   createCustomersReportLayout,
   getCustomersReportHeight,
   CUSTOMERS_REPORT_WIDTH,
-  renderCustomersReportToPng
+  renderCustomersReportToPng,
+  buildLoanNotesSummaryPrompt,
+  parseLoanNotesSummaryResponse,
+  createDefaultedReportLayout,
+  getDefaultedReportHeight,
+  DEFAULTED_REPORT_WIDTH,
+  renderDefaultedReportToPng
 } from "./reports/index.js";
+export type { NoteForSummary, DefaultedReportRow } from "./reports/index.js";
 
 // Types (entities and client)
 export type { Customer } from "./types/index.js";
@@ -221,7 +235,7 @@ export type {
   WhatsAppSendResponse,
   WhatsAppMediaUploadResponse
 } from "./types/index.js";
-export type { Loan, Payment } from "./types/index.js";
+export type { Loan, Payment, LoanNote } from "./types/index.js";
 
 // Receipt utilities
 export { generateKeys, type GeneratedKeys } from "./receipt/index.js";

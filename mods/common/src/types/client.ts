@@ -259,6 +259,35 @@ export interface DbClient {
       skip?: number;
     }): Promise<Payment[]>;
   };
+
+  loanNote: {
+    create(args: {
+      data: {
+        content: string;
+        loanId: string;
+        createdById: string;
+      };
+    }): Promise<{
+      id: string;
+      content: string;
+      createdAt: Date;
+      loanId: string;
+      createdById: string;
+    }>;
+    findMany(args: {
+      where: { loanId: string };
+      orderBy: { createdAt: "desc" };
+      include?: { createdBy: { select: { name: true } } };
+    }): Promise<
+      Array<{
+        id: string;
+        content: string;
+        createdAt: Date;
+        loanId: string;
+        createdBy: { name: string };
+      }>
+    >;
+  };
 }
 
 /**

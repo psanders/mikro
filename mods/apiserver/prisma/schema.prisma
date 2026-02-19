@@ -126,6 +126,7 @@ model User {
   assignedCustomers   Customer[] @relation("AssignedCollector")
   messages            Message[]
   collectedPayments   Payment[]  @relation("CollectedPayments")
+  createdLoanNotes    LoanNote[] @relation("CreatedLoanNotes")
 
   @@map("users")
 }
@@ -187,7 +188,6 @@ model Loan {
   termLength       Int              @map("term_length") // Number of periods (e.g., 10)
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
   paymentFrequency PaymentFrequency @map("payment_frequency") // DAILY or WEEKLY
-  notes            String?
 
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
@@ -197,6 +197,7 @@ model Loan {
   customerId          String    @map("customer_id")
   payments            Payment[]
   collectionAttempts  CollectionAttempt[]
+  notes               LoanNote[]
 
   @@index([customerId])
   @@index([status])
@@ -282,4 +283,19 @@ model CollectionAttempt {
   @@index([loanId])
   @@index([createdAt])
   @@map("collection_attempts")
+}
+
+model LoanNote {
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId      String   @map("loan_id")
+  createdBy   User     @relation("CreatedLoanNotes", fields: [createdById], references: [id])
+  createdById String   @map("created_by_id")
+
+  @@index([loanId])
+  @@index([createdAt])
+  @@map("loan_notes")
 }

@@ -79,3 +79,8 @@ export type Payment = Prisma.PaymentModel
  * 
  */
 export type CollectionAttempt = Prisma.CollectionAttemptModel
+/**
+ * Model LoanNote
+ * 
+ */
+export type LoanNote = Prisma.LoanNoteModel

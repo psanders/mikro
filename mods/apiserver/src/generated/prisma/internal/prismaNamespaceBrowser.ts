@@ -58,7 +58,8 @@ export const ModelName = {
   Message: 'Message',
   Attachment: 'Attachment',
   Payment: 'Payment',
-  CollectionAttempt: 'CollectionAttempt'
+  CollectionAttempt: 'CollectionAttempt',
+  LoanNote: 'LoanNote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -128,7 +129,6 @@ export const LoanScalarFieldEnum = {
   termLength: 'termLength',
   paymentAmount: 'paymentAmount',
   paymentFrequency: 'paymentFrequency',
-  notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   customerId: 'customerId'
@@ -194,6 +194,17 @@ export const CollectionAttemptScalarFieldEnum = {
 } as const
 
 export type CollectionAttemptScalarFieldEnum = (typeof CollectionAttemptScalarFieldEnum)[keyof typeof CollectionAttemptScalarFieldEnum]
+
+
+export const LoanNoteScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  createdAt: 'createdAt',
+  loanId: 'loanId',
+  createdById: 'createdById'
+} as const
+
+export type LoanNoteScalarFieldEnum = (typeof LoanNoteScalarFieldEnum)[keyof typeof LoanNoteScalarFieldEnum]
 
 
 export const SortOrder = {

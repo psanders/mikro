@@ -40,6 +40,10 @@ import {
   // Report schemas
   generatePortfolioMetricsSchema,
   generatePerformanceReportSchema,
+  generateDefaultedReportSchema,
+  // Loan note schemas
+  createLoanNoteSchema,
+  listLoanNotesByLoanSchema,
   // Collection schemas
   runCollectionsSchema,
   runSingleCollectionSchema
@@ -83,6 +87,10 @@ import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendRecei
 // Report API functions
 import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
+import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
+// Loan note API functions
+import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
+import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
 // Collections
@@ -293,6 +301,28 @@ export const protectedRouter = router({
       return fn(input);
     }),
 
+  // ==================== Loan note procedures ====================
+
+  /**
+   * Add a note to a loan (by numeric loanId). Records who created it and when.
+   */
+  createLoanNote: protectedProcedure
+    .input(createLoanNoteSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreateLoanNote(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List all notes for a loan (by numeric loanId), newest first.
+   */
+  listLoanNotesByLoan: protectedProcedure
+    .input(listLoanNotesByLoanSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListLoanNotesByLoan(ctx.db);
+      return fn(input);
+    }),
+
   // ==================== Payment procedures ====================
 
   /**
@@ -411,6 +441,17 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const fn = createGeneratePerformanceReport(ctx.db);
       const result = await fn(input);
+      return { image: result.image };
+    }),
+
+  /**
+   * Generate defaulted loans report (PNG). Includes AI summary of loan notes per loan.
+   */
+  generateDefaultedReport: protectedProcedure
+    .input(generateDefaultedReportSchema)
+    .mutation(async ({ ctx }) => {
+      const fn = createGenerateDefaultedReport(ctx.db);
+      const result = await fn({});
       return { image: result.image };
     }),
 

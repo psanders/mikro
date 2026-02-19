@@ -383,7 +383,6 @@ async function initializeMessageProcessor() {
           referredBy: { name: customer.referredBy.name },
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
-            notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
@@ -401,7 +400,6 @@ async function initializeMessageProcessor() {
           referredBy: { name: customer.referredBy.name },
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
-            notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
@@ -419,7 +417,6 @@ async function initializeMessageProcessor() {
           referredBy: { name: customer.referredBy.name },
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
-            notes: loan.notes,
             paymentFrequency: loan.paymentFrequency,
             createdAt: loan.createdAt,
             termLength: loan.termLength,
