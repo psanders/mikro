@@ -74,9 +74,9 @@ function tableHeader(): SatoriElement {
     },
     [
       el("div", { style: { flex: 1.2, textAlign: "left" } }, "Nombre"),
-      el("div", { style: { flex: 0.7, textAlign: "left" } }, "Teléfono"),
+      el("div", { style: { flex: 1, textAlign: "left" } }, "Teléfono"),
       el("div", { style: { flex: 0.6, textAlign: "right" } }, "Préstamo"),
-      el("div", { style: { flex: 0.5, textAlign: "center" } }, "Ciclo"),
+      el("div", { style: { flex: 0.8, textAlign: "center" } }, "Ciclo"),
       el("div", { style: { flex: 0.7, textAlign: "right" } }, "Pagado"),
       el("div", { style: { flex: 0.7, textAlign: "center" } }, "Estado"),
       el("div", { style: { flex: 4, textAlign: "left" } }, "Resumen")
@@ -105,11 +105,11 @@ function defaultedRow(row: DefaultedReportRow): SatoriElement {
         { style: { flex: 1.2, textAlign: "left", overflow: "hidden" } },
         row.nickname || row.name
       ),
-      el("div", { style: { flex: 0.7, textAlign: "left" } }, row.phone),
+      el("div", { style: { flex: 1, textAlign: "left" } }, row.phone),
       el("div", { style: { flex: 0.6, textAlign: "right" } }, String(row.loanId)),
       el(
         "div",
-        { style: { flex: 0.5, textAlign: "center" } },
+        { style: { flex: 0.8, textAlign: "center" } },
         formatPaymentFrequency(row.paymentFrequency)
       ),
       el("div", { style: { flex: 0.7, textAlign: "right" } }, formatDop(row.totalPaid)),
