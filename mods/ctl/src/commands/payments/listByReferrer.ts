@@ -7,6 +7,7 @@ import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import { validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly description =
@@ -17,7 +18,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly args = {
     referrerId: Args.string({
       description: "The Referrer ID to filter by",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -40,13 +41,21 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
     const { args, flags } = await this.parse(ListByReferrer);
     const client = this.createClient();
 
+    const referrerId = await promptUserSelectIfMissing(
+      client,
+      args.referrerId,
+      "Referrer",
+      "referrerId",
+      { role: "REFERRER" }
+    );
+
     // Validate date formats
     validateDate(flags["start-date"]!);
     validateDate(flags["end-date"]!);
 
     try {
       const payments = await client.listPaymentsByReferrer.query({
-        referredById: args.referrerId,
+        referredById: referrerId,
         startDate: new Date(flags["start-date"]!),
         endDate: new Date(flags["end-date"]!),
         showReversed: flags["include-reversed"],

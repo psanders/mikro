@@ -5,6 +5,7 @@ import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ExportByReferrer extends BaseCommand<typeof ExportByReferrer> {
   static override readonly description = "export customers referred by a user";
@@ -17,7 +18,7 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
   static override readonly args = {
     referrerId: Args.string({
       description: "The Referrer ID to export customers for",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -32,9 +33,17 @@ export default class ExportByReferrer extends BaseCommand<typeof ExportByReferre
     const { args, flags } = await this.parse(ExportByReferrer);
     const client = this.createClient();
 
+    const referrerId = await promptUserSelectIfMissing(
+      client,
+      args.referrerId,
+      "Referrer",
+      "referrerId",
+      { role: "REFERRER" }
+    );
+
     try {
       const customers = await client.exportCustomersByReferrer.query({
-        referredById: args.referrerId
+        referredById: referrerId
       });
 
       if (customers.length === 0) {

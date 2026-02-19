@@ -4,7 +4,11 @@
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { promptNumberIfMissing, promptTextIfMissing } from "../../lib/prompts.js";
+import {
+  promptNumberIfMissing,
+  promptTextIfMissing,
+  promptUserSelectIfMissing
+} from "../../lib/prompts.js";
 
 export default class AddNote extends BaseCommand<typeof AddNote> {
   static override readonly description =
@@ -40,9 +44,10 @@ export default class AddNote extends BaseCommand<typeof AddNote> {
       "loan-id"
     );
     const content = await promptTextIfMissing(flags.content, "Note content", "content");
-    const createdById = await promptTextIfMissing(
+    const createdById = await promptUserSelectIfMissing(
+      client,
       flags["user-id"],
-      "Your user ID (UUID) — use 'mikro users:list' to find it",
+      "Your user (who is recording the note)",
       "user-id"
     );
 

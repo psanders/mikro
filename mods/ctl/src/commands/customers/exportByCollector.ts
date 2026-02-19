@@ -5,6 +5,7 @@ import { Args, Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ExportByCollector extends BaseCommand<typeof ExportByCollector> {
   static override readonly description = "export customers assigned to a collector";
@@ -17,7 +18,7 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
   static override readonly args = {
     collectorId: Args.string({
       description: "The Collector ID to export customers for",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -32,9 +33,17 @@ export default class ExportByCollector extends BaseCommand<typeof ExportByCollec
     const { args, flags } = await this.parse(ExportByCollector);
     const client = this.createClient();
 
+    const collectorId = await promptUserSelectIfMissing(
+      client,
+      args.collectorId,
+      "Collector",
+      "collectorId",
+      { role: "COLLECTOR" }
+    );
+
     try {
       const customers = await client.exportCollectorCustomers.query({
-        assignedCollectorId: args.collectorId
+        assignedCollectorId: collectorId
       });
 
       if (customers.length === 0) {

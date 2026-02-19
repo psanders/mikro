@@ -6,6 +6,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Get extends BaseCommand<typeof Get> {
   static override readonly description = "retrieve details of a user by ID";
@@ -13,7 +14,7 @@ export default class Get extends BaseCommand<typeof Get> {
   static override readonly args = {
     userId: Args.string({
       description: "The User ID to show details about",
-      required: true
+      required: false
     })
   };
 
@@ -21,8 +22,10 @@ export default class Get extends BaseCommand<typeof Get> {
     const { args } = await this.parse(Get);
     const client = this.createClient();
 
+    const userId = await promptUserSelectIfMissing(client, args.userId, "User", "userId");
+
     try {
-      const user = await client.getUser.query({ id: args.userId });
+      const user = await client.getUser.query({ id: userId });
 
       if (!user) {
         this.error("User not found.");

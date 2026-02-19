@@ -5,6 +5,7 @@ import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly description = "display customers by referrer";
@@ -12,7 +13,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly args = {
     referrerId: Args.string({
       description: "The Referrer ID to filter by",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -27,9 +28,17 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
     const { args, flags } = await this.parse(ListByReferrer);
     const client = this.createClient();
 
+    const referrerId = await promptUserSelectIfMissing(
+      client,
+      args.referrerId,
+      "Referrer",
+      "referrerId",
+      { role: "REFERRER" }
+    );
+
     try {
       const customers = await client.listCustomersByReferrer.query({
-        referredById: args.referrerId,
+        referredById: referrerId,
         showInactive: flags["include-inactive"],
         limit: flags["page-size"]
       });

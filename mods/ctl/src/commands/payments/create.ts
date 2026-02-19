@@ -6,9 +6,9 @@ import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
-  promptTextIfMissing,
   promptNumberIfMissing,
-  promptSelectIfMissing
+  promptSelectIfMissing,
+  promptUserSelectIfMissing
 } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
@@ -64,10 +64,12 @@ export default class Create extends BaseCommand<typeof Create> {
       ],
       { default: "CASH" as const }
     );
-    const collectedById = await promptTextIfMissing(
+    const collectedById = await promptUserSelectIfMissing(
+      client,
       flags["collector-id"],
-      "Collector ID (required)",
-      "collector-id"
+      "Collector",
+      "collector-id",
+      { role: "COLLECTOR" }
     );
     const notes = flags.notes || undefined;
 

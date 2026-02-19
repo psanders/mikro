@@ -6,6 +6,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly description = "display loans for customers referred by a specific user";
@@ -13,7 +14,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   static override readonly args = {
     referrerId: Args.string({
       description: "The Referrer ID to filter by",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -28,9 +29,17 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
     const { args, flags } = await this.parse(ListByReferrer);
     const client = this.createClient();
 
+    const referrerId = await promptUserSelectIfMissing(
+      client,
+      args.referrerId,
+      "Referrer",
+      "referrerId",
+      { role: "REFERRER" }
+    );
+
     try {
       const loans = await client.listLoansByReferrer.query({
-        referredById: args.referrerId,
+        referredById: referrerId,
         showAll: flags["include-closed"],
         limit: flags["page-size"]
       });

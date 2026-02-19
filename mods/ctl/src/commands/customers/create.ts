@@ -10,7 +10,7 @@ import {
   PREFERRED_PAYMENT_DAY_OPTIONS,
   type PreferredPaymentDay
 } from "../../lib/preferredPaymentDay.js";
-import { promptTextIfMissing } from "../../lib/prompts.js";
+import { promptTextIfMissing, promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new customer";
@@ -77,24 +77,6 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("This utility will help you create a Customer.");
     this.log("Press ^C at any time to quit.");
 
-    // Get users for referrer and collector selection
-    const users = await client.listUsers.query({ showDisabled: true });
-    const referrers = users.filter((u: { roles?: Array<{ role: string }> }) =>
-      u.roles?.some((r: { role: string }) => r.role === "REFERRER")
-    );
-    const collectors = users.filter((u: { roles?: Array<{ role: string }> }) =>
-      u.roles?.some((r: { role: string }) => r.role === "COLLECTOR")
-    );
-
-    if (referrers.length === 0) {
-      this.error("No referrers found. Please create a user with REFERRER role first.");
-      return;
-    }
-    if (collectors.length === 0) {
-      this.error("No collectors found. Please create a user with COLLECTOR role first.");
-      return;
-    }
-
     const name = await promptTextIfMissing(flags.name, "Name", "name");
     const phone = await promptTextIfMissing(flags.phone, "Phone (e.g., +18091234567)", "phone");
     const idNumber = await promptTextIfMissing(
@@ -108,24 +90,20 @@ export default class Create extends BaseCommand<typeof Create> {
       "Home Address",
       "home-address"
     );
-    const referredById = flags["referrer-id"]
-      ? flags["referrer-id"]
-      : await select({
-          message: "Referrer",
-          choices: referrers.map((u: { name: string; id: string }) => ({
-            name: `${u.name} (${u.id})`,
-            value: u.id
-          }))
-        });
-    const assignedCollectorId = flags["collector-id"]
-      ? flags["collector-id"]
-      : await select({
-          message: "Collector",
-          choices: collectors.map((u: { name: string; id: string }) => ({
-            name: `${u.name} (${u.id})`,
-            value: u.id
-          }))
-        });
+    const referredById = await promptUserSelectIfMissing(
+      client,
+      flags["referrer-id"],
+      "Referrer",
+      "referrer-id",
+      { role: "REFERRER" }
+    );
+    const assignedCollectorId = await promptUserSelectIfMissing(
+      client,
+      flags["collector-id"],
+      "Collector",
+      "collector-id",
+      { role: "COLLECTOR" }
+    );
     const jobPosition = flags["job-position"] || undefined;
     const income = flags.income || undefined;
     const isBusinessOwner =

@@ -90,3 +90,54 @@ export async function promptSelectIfMissing<T>(
     flagName
   );
 }
+
+export type UserRole = "ADMIN" | "COLLECTOR" | "REFERRER";
+
+type ListUsersClient = {
+  listUsers: {
+    query: (input: {
+      showDisabled?: boolean;
+    }) => Promise<Array<{ id: string; name: string; roles?: Array<{ role: string }> }>>;
+  };
+};
+
+/**
+ * Helper to prompt for user selection (dropdown) if value is missing.
+ * Fetches users from the API and optionally filters by role.
+ */
+export async function promptUserSelectIfMissing(
+  client: ListUsersClient,
+  value: string | undefined,
+  message: string,
+  flagName: string,
+  options?: { role?: UserRole }
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required flag or argument: --${flagName}`);
+  }
+
+  const users = await client.listUsers.query({ showDisabled: true });
+  let filtered = users;
+  if (options?.role) {
+    filtered = users.filter((u) => u.roles?.some((r) => r.role === options!.role));
+  }
+
+  if (filtered.length === 0) {
+    const roleHint = options?.role ? ` with role ${options.role}` : "";
+    throw new Error(`No users found${roleHint}. Cannot prompt for selection.`);
+  }
+
+  const choice = await select({
+    message,
+    choices: filtered.map((u) => ({
+      name: `${u.name} (${u.id})`,
+      value: u.id
+    }))
+  });
+
+  return choice;
+}

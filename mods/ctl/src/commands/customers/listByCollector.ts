@@ -5,6 +5,7 @@ import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByCollector extends ListCommand<typeof ListByCollector> {
   static override readonly description = "display customers by assigned collector";
@@ -12,7 +13,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
   static override readonly args = {
     collectorId: Args.string({
       description: "The Collector ID to filter by",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -27,9 +28,17 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
     const { args, flags } = await this.parse(ListByCollector);
     const client = this.createClient();
 
+    const collectorId = await promptUserSelectIfMissing(
+      client,
+      args.collectorId,
+      "Collector",
+      "collectorId",
+      { role: "COLLECTOR" }
+    );
+
     try {
       const customers = await client.listCustomersByCollector.query({
-        assignedCollectorId: args.collectorId,
+        assignedCollectorId: collectorId,
         showInactive: flags["include-inactive"],
         limit: flags["page-size"]
       });

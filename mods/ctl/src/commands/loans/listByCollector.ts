@@ -6,6 +6,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByCollector extends ListCommand<typeof ListByCollector> {
   static override readonly description =
@@ -14,7 +15,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
   static override readonly args = {
     collectorId: Args.string({
       description: "The Collector ID to filter by",
-      required: true
+      required: false
     })
   };
   static override readonly flags = {
@@ -29,9 +30,17 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
     const { args, flags } = await this.parse(ListByCollector);
     const client = this.createClient();
 
+    const collectorId = await promptUserSelectIfMissing(
+      client,
+      args.collectorId,
+      "Collector",
+      "collectorId",
+      { role: "COLLECTOR" }
+    );
+
     try {
       const loans = await client.listLoansByCollector.query({
-        assignedCollectorId: args.collectorId,
+        assignedCollectorId: collectorId,
         showAll: flags["include-closed"],
         limit: flags["page-size"]
       });

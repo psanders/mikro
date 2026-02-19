@@ -5,6 +5,7 @@ import { confirm, input, select } from "@inquirer/prompts";
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Update extends BaseCommand<typeof Update> {
   static override readonly description = "modify a user's information";
@@ -12,7 +13,7 @@ export default class Update extends BaseCommand<typeof Update> {
   static override readonly args = {
     userId: Args.string({
       description: "The User ID to update",
-      required: true
+      required: false
     })
   };
 
@@ -20,8 +21,10 @@ export default class Update extends BaseCommand<typeof Update> {
     const { args } = await this.parse(Update);
     const client = this.createClient();
 
+    const userId = await promptUserSelectIfMissing(client, args.userId, "User", "userId");
+
     try {
-      const userFromDB = await client.getUser.query({ id: args.userId });
+      const userFromDB = await client.getUser.query({ id: userId });
 
       if (!userFromDB) {
         this.error("User not found.");
@@ -71,7 +74,7 @@ export default class Update extends BaseCommand<typeof Update> {
       }
 
       await client.updateUser.mutate({
-        id: args.userId,
+        id: userId,
         name: answers.name,
         phone: answers.phone,
         enabled: answers.enabled,
