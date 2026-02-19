@@ -9,33 +9,40 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Defaulted extends BaseCommand<typeof Defaulted> {
   static override readonly description =
-    "generate the defaulted loans report (name, phone, loanId, cycle, paid, AI summary of notes) as PNG";
+    "generate the at-risk loans report (defaulted + late with 3+ missed; name, phone, loanId, cycle, paid, estado, AI summary) as PNG";
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --output mikro-defaulted-report.png"
+    "<%= config.bin %> <%= command.id %> --output mikro-risk-report.png",
+    "<%= config.bin %> <%= command.id %> --filter defaulted"
   ];
 
   static override readonly flags = {
     output: Flags.string({
       char: "o",
-      description: "Output file path (default: mikro-defaulted-report.png)",
+      description: "Output file path (default: mikro-risk-report.png)",
       default: ""
+    }),
+    filter: Flags.string({
+      char: "f",
+      description: "Filter: all (default), defaulted, or late",
+      options: ["all", "defaulted", "late"],
+      default: "all"
     })
   };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(Defaulted);
 
-    const outputPath = flags.output
-      ? resolve(flags.output)
-      : resolve("./mikro-defaulted-report.png");
+    const outputPath = flags.output ? resolve(flags.output) : resolve("./mikro-risk-report.png");
 
     try {
       const client = this.createClient();
-      this.log("Generating defaulted report...");
+      this.log("Generating at-risk report...");
 
-      const result = await client.generateDefaultedReport.mutate({});
+      const result = await client.generateDefaultedReport.mutate({
+        filter: flags.filter as "all" | "defaulted" | "late"
+      });
 
       const dir = resolve(outputPath, "..");
       if (!existsSync(dir)) {

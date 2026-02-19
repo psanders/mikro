@@ -9,6 +9,7 @@ import {
   renderDefaultedReportToPng,
   loadLogoDataUrl,
   getLogoPath,
+  getReportRowHighlight,
   type GenerateDefaultedReportInput,
   type DbClient,
   type DefaultedReportRow
@@ -16,10 +17,21 @@ import {
 import { invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
+import { loanToData } from "../../collections/loanToData.js";
+
+const loanInclude = {
+  customer: { select: { name: true, phone: true, preferredPaymentDay: true } },
+  payments: { where: { status: "COMPLETED" as const } },
+  notes: {
+    orderBy: { createdAt: "asc" as const },
+    include: { createdBy: { select: { name: true } } }
+  }
+};
 
 /**
- * Creates a function that generates the defaulted loans report (PNG).
- * Queries DEFAULTED loans, sums payments, generates AI summary per loan from notes, then renders.
+ * Creates a function that generates the at-risk loans report (PNG).
+ * Includes DEFAULTED loans and/or ACTIVE loans with red highlight (3+ missed or deteriorating with 2+).
+ * Optional filter: "all" (default), "defaulted", or "late".
  *
  * @param client - The database client (Prisma)
  * @returns A validated function that returns { image: base64 PNG }
@@ -28,21 +40,41 @@ export function createGenerateDefaultedReport(client: DbClient) {
   const db = client as unknown as PrismaClient;
 
   const fn = async (params: GenerateDefaultedReportInput): Promise<{ image: string }> => {
-    logger.verbose("generating defaulted report", params);
+    const filter = params.filter ?? "all";
+    logger.verbose("generating at-risk report", { filter });
 
-    const loans = await db.loan.findMany({
-      where: { status: "DEFAULTED" },
-      include: {
-        customer: { select: { name: true, phone: true } },
-        payments: { where: { status: "COMPLETED" } },
-        notes: {
-          orderBy: { createdAt: "asc" },
-          include: { createdBy: { select: { name: true } } }
-        }
-      }
-    });
+    type LoanWithInclude = Awaited<
+      ReturnType<
+        typeof db.loan.findMany<{
+          where: { status: "DEFAULTED" };
+          include: typeof loanInclude;
+        }>
+      >
+    >[number];
 
-    const summaryPromises = loans.map(async (loan) => {
+    const defaultedLoans: LoanWithInclude[] =
+      filter !== "late"
+        ? await db.loan.findMany({
+            where: { status: "DEFAULTED" },
+            include: loanInclude
+          })
+        : [];
+
+    let activeRedLoans: LoanWithInclude[] = [];
+    if (filter !== "defaulted") {
+      const activeLoans = await db.loan.findMany({
+        where: { status: "ACTIVE" },
+        include: loanInclude
+      });
+      activeRedLoans = activeLoans.filter((loan) => {
+        const data = loanToData(loan, loan.customer.preferredPaymentDay);
+        return getReportRowHighlight(data) === "red";
+      });
+    }
+
+    const allLoans: LoanWithInclude[] = [...defaultedLoans, ...activeRedLoans];
+
+    const summaryPromises = allLoans.map(async (loan) => {
       if (loan.notes.length === 0) {
         return "Sin notas";
       }
@@ -61,11 +93,12 @@ export function createGenerateDefaultedReport(client: DbClient) {
     const principalDecimalToNumber = (v: { toNumber?: () => number } | number): number =>
       typeof v === "number" ? v : ((v as { toNumber: () => number }).toNumber?.() ?? Number(v));
 
-    const rows: DefaultedReportRow[] = loans.map((loan, i) => {
+    const rows: DefaultedReportRow[] = allLoans.map((loan, i) => {
       const totalPaid = loan.payments.reduce(
         (sum, p) => sum + principalDecimalToNumber(p.amount),
         0
       );
+      const isDefaulted = loan.status === "DEFAULTED";
       return {
         name: loan.customer.name,
         phone: loan.customer.phone,
@@ -73,11 +106,12 @@ export function createGenerateDefaultedReport(client: DbClient) {
         nickname: loan.nickname ?? "",
         paymentFrequency: loan.paymentFrequency,
         totalPaid,
-        summary: summaries[i] ?? "Sin notas"
+        summary: summaries[i] ?? "Sin notas",
+        isDefaulted
       };
     });
 
-    const totalPrincipal = loans.reduce(
+    const totalPrincipal = allLoans.reduce(
       (sum, loan) => sum + principalDecimalToNumber(loan.principal),
       0
     );
@@ -95,8 +129,10 @@ export function createGenerateDefaultedReport(client: DbClient) {
     );
     const image = pngBuffer.toString("base64");
 
-    logger.verbose("defaulted report generated", {
+    logger.verbose("at-risk report generated", {
       loanCount: rows.length,
+      defaultedCount: defaultedLoans.length,
+      lateCount: activeRedLoans.length,
       imageSizeKb: Math.round(pngBuffer.length / 1024)
     });
 

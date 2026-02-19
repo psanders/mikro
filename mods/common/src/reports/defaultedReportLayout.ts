@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Defaulted loans report layout for Satori: one table with name, phone, loanId, cycle, paid, AI summary.
+ * At-risk loans report layout for Satori: defaulted + late (red-highlighted), with name, phone, loanId, cycle, paid, estado, AI summary.
  */
 import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
 
@@ -12,10 +12,10 @@ const ROW_HEIGHT_BASE_PX = 44;
 /** Extra height per line of wrapped summary. */
 const SUMMARY_LINE_HEIGHT_PX = 20;
 /**
- * The summary column is flex:2 of 6.8 total ≈ 29 % of ~860 px usable ≈ 253 px.
- * At 14 px Inter that fits roughly 35 characters per line.
+ * Summary column is flex:4 of ~8.4 total ≈ 48% of ~860 px ≈ 413 px.
+ * At 14 px Inter that fits roughly 55 characters per line.
  */
-const CHARS_PER_LINE = 35;
+const CHARS_PER_LINE = 55;
 /** Header + summary bar + content padding + footer. */
 const BASE_HEIGHT_PX = 280;
 const TABLE_HEADER_PX = 36;
@@ -28,6 +28,8 @@ export interface DefaultedReportRow {
   paymentFrequency: string;
   totalPaid: number;
   summary: string;
+  /** true = DEFAULTED status, false = ACTIVE but red-highlighted (late). */
+  isDefaulted: boolean;
 }
 
 type SatoriElement = {
@@ -71,12 +73,13 @@ function tableHeader(): SatoriElement {
       }
     },
     [
-      el("div", { style: { flex: 1.5, textAlign: "left" } }, "Nombre"),
-      el("div", { style: { flex: 1.2, textAlign: "left" } }, "Teléfono"),
-      el("div", { style: { flex: 0.7, textAlign: "right" } }, "Préstamo"),
-      el("div", { style: { flex: 0.6, textAlign: "center" } }, "Ciclo"),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, "Pagado"),
-      el("div", { style: { flex: 2, textAlign: "left" } }, "Resumen")
+      el("div", { style: { flex: 1.2, textAlign: "left" } }, "Nombre"),
+      el("div", { style: { flex: 0.7, textAlign: "left" } }, "Teléfono"),
+      el("div", { style: { flex: 0.6, textAlign: "right" } }, "Préstamo"),
+      el("div", { style: { flex: 0.5, textAlign: "center" } }, "Ciclo"),
+      el("div", { style: { flex: 0.7, textAlign: "right" } }, "Pagado"),
+      el("div", { style: { flex: 0.7, textAlign: "center" } }, "Estado"),
+      el("div", { style: { flex: 4, textAlign: "left" } }, "Resumen")
     ]
   );
 }
@@ -99,22 +102,34 @@ function defaultedRow(row: DefaultedReportRow): SatoriElement {
     [
       el(
         "div",
-        { style: { flex: 1.5, textAlign: "left", overflow: "hidden" } },
+        { style: { flex: 1.2, textAlign: "left", overflow: "hidden" } },
         row.nickname || row.name
       ),
-      el("div", { style: { flex: 1.2, textAlign: "left" } }, row.phone),
-      el("div", { style: { flex: 0.7, textAlign: "right" } }, String(row.loanId)),
+      el("div", { style: { flex: 0.7, textAlign: "left" } }, row.phone),
+      el("div", { style: { flex: 0.6, textAlign: "right" } }, String(row.loanId)),
       el(
         "div",
-        { style: { flex: 0.6, textAlign: "center" } },
+        { style: { flex: 0.5, textAlign: "center" } },
         formatPaymentFrequency(row.paymentFrequency)
       ),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, formatDop(row.totalPaid)),
+      el("div", { style: { flex: 0.7, textAlign: "right" } }, formatDop(row.totalPaid)),
       el(
         "div",
         {
           style: {
-            flex: 2,
+            flex: 0.7,
+            textAlign: "center",
+            fontWeight: row.isDefaulted ? 600 : 400,
+            color: row.isDefaulted ? "#e74c3c" : "#f39c12"
+          }
+        },
+        row.isDefaulted ? "Default" : "Atrasado"
+      ),
+      el(
+        "div",
+        {
+          style: {
+            flex: 4,
             textAlign: "left",
             flexWrap: "wrap",
             wordBreak: "break-word",
@@ -149,6 +164,9 @@ export function createDefaultedReportLayout(
   generatedAt: string,
   logoDataUrl?: string
 ): SatoriElement {
+  const defaultedCount = rows.filter((r) => r.isDefaulted).length;
+  const lateCount = rows.filter((r) => !r.isDefaulted).length;
+
   const headerTextColumn = el(
     "div",
     {
@@ -160,14 +178,14 @@ export function createDefaultedReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Cartera en Default"
+        "Mikro Créditos — Reporte de Cartera en Riesgo"
       ),
       el(
         "div",
         {
           style: { fontSize: "16px", fontWeight: 400, fontFamily: "Inter", opacity: 0.95 }
         },
-        `${rows.length} préstamo${rows.length !== 1 ? "s" : ""} en default`
+        `${rows.length} préstamo${rows.length !== 1 ? "s" : ""} en riesgo (${defaultedCount} default, ${lateCount} atrasados)`
       )
     ]
   );
@@ -236,9 +254,30 @@ export function createDefaultedReportLayout(
           el(
             "div",
             { style: { fontWeight: 700, fontSize: "20px", color: "#e74c3c" } },
-            String(rows.length)
+            String(defaultedCount)
           ),
-          el("div", {}, "Préstamos en default")
+          el("div", {}, "Default")
+        ]
+      ),
+      el(
+        "div",
+        {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            fontSize: "14px",
+            fontFamily: "Inter",
+            color: "#666"
+          }
+        },
+        [
+          el(
+            "div",
+            { style: { fontWeight: 700, fontSize: "20px", color: "#f39c12" } },
+            String(lateCount)
+          ),
+          el("div", {}, "Atrasados")
         ]
       ),
       el(
@@ -259,7 +298,7 @@ export function createDefaultedReportLayout(
             { style: { fontWeight: 700, fontSize: "20px", color: "#333" } },
             formatDop(totalPrincipal)
           ),
-          el("div", {}, "Principal en mora")
+          el("div", {}, "Principal en riesgo")
         ]
       )
     ]
@@ -292,7 +331,7 @@ export function createDefaultedReportLayout(
               textAlign: "center"
             }
           },
-          "No hay préstamos en default."
+          "No hay préstamos en riesgo."
         )
       : [tableHeader(), ...rows.map(defaultedRow)];
 

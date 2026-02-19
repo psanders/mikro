@@ -461,13 +461,13 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Generate defaulted loans report (PNG). Includes AI summary of loan notes per loan.
+   * Generate at-risk loans report (PNG). Defaulted + red-highlighted late; optional filter.
    */
   generateDefaultedReport: protectedProcedure
     .input(generateDefaultedReportSchema)
-    .mutation(async ({ ctx }) => {
+    .mutation(async ({ ctx, input }) => {
       const fn = createGenerateDefaultedReport(ctx.db);
-      const result = await fn({});
+      const result = await fn(input);
       return { image: result.image };
     }),
 

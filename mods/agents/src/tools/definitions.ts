@@ -572,18 +572,25 @@ export const runSingleCollectionTool: ToolFunction = {
 };
 
 /**
- * Tool definition for generating a defaulted loans report (PNG sent via WhatsApp).
- * Admin only. Shows all DEFAULTED loans with AI-generated note summaries.
+ * Tool definition for generating the at-risk loans report (PNG sent via WhatsApp).
+ * Admin only. Includes DEFAULTED loans and/or ACTIVE loans with 3+ missed payments (red). Optional filter.
  */
 export const generateDefaultedReportTool: ToolFunction = {
   type: "function",
   function: {
     name: "generateDefaultedReport",
     description:
-      "Generar un reporte de prestamos en mora (defaulted). Muestra todos los prestamos con estado DEFAULTED, incluyendo resumen de notas generado por IA. Solo admin. Se envia por WhatsApp como imagen.",
+      "Generar el reporte de cartera en riesgo. Incluye prestamos en default (DEFAULTED) y prestamos activos con 3+ pagos atrasados (en rojo). Opcional: filtrar por 'all' (ambos), 'defaulted' (solo default) o 'late' (solo atrasados). Solo admin. Se envia por WhatsApp como imagen.",
     parameters: {
       type: "object",
-      properties: {},
+      properties: {
+        filter: {
+          type: "string",
+          enum: ["all", "defaulted", "late"],
+          description:
+            "Filtro: 'all' (ambos, por defecto), 'defaulted' (solo en default) o 'late' (solo atrasados)"
+        }
+      },
       required: []
     }
   }

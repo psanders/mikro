@@ -25,9 +25,11 @@ export const generatePortfolioMetricsSchema = z.object({
 export type GeneratePortfolioMetricsInput = z.infer<typeof generatePortfolioMetricsSchema>;
 
 /**
- * Schema for generating the defaulted loans report.
- * No input required; report includes all current defaulted loans.
+ * Schema for generating the at-risk loans report (defaulted + red-highlighted late).
+ * Optional filter: "all" (default), "defaulted", or "late".
  */
-export const generateDefaultedReportSchema = z.object({});
+export const generateDefaultedReportSchema = z.object({
+  filter: z.enum(["all", "defaulted", "late"]).default("all").optional()
+});
 
 export type GenerateDefaultedReportInput = z.infer<typeof generateDefaultedReportSchema>;
