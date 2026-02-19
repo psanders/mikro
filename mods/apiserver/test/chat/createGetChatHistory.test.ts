@@ -7,7 +7,7 @@ import { createGetChatHistory } from "../../src/api/chat/createGetChatHistory.js
 import { ValidationError } from "@mikro/common";
 
 describe("createGetChatHistory", () => {
-  const validMemberId = "550e8400-e29b-41d4-a716-446655440000";
+  const validCustomerId = "550e8400-e29b-41d4-a716-446655440000";
   const validUserId = "660e8400-e29b-41d4-a716-446655440001";
 
   const createMockMessage = (id: string, content: string, role: "AI" | "HUMAN") => ({
@@ -15,7 +15,7 @@ describe("createGetChatHistory", () => {
     role,
     content,
     tools: null,
-    memberId: validMemberId,
+    customerId: validCustomerId,
     userId: null,
     createdAt: new Date(),
     attachments: []
@@ -26,7 +26,7 @@ describe("createGetChatHistory", () => {
   });
 
   describe("with valid input", () => {
-    it("should return chat history for a member", async () => {
+    it("should return chat history for a customer", async () => {
       // Arrange
       const expectedMessages = [
         createMockMessage("msg-1", "Hello", "HUMAN"),
@@ -40,7 +40,7 @@ describe("createGetChatHistory", () => {
       const getChatHistory = createGetChatHistory(mockClient as any);
 
       // Act
-      const result = await getChatHistory({ memberId: validMemberId });
+      const result = await getChatHistory({ customerId: validCustomerId });
 
       // Assert
       expect(result).to.have.length(2);
@@ -53,7 +53,7 @@ describe("createGetChatHistory", () => {
       const expectedMessages = [
         {
           ...createMockMessage("msg-1", "User message", "HUMAN"),
-          memberId: null,
+          customerId: null,
           userId: validUserId
         }
       ];
@@ -86,7 +86,7 @@ describe("createGetChatHistory", () => {
 
       // Act
       const result = await getChatHistory({
-        memberId: validMemberId,
+        customerId: validCustomerId,
         limit: 10,
         offset: 5
       });
@@ -108,7 +108,7 @@ describe("createGetChatHistory", () => {
       const getChatHistory = createGetChatHistory(mockClient as any);
 
       // Act
-      const result = await getChatHistory({ memberId: validMemberId });
+      const result = await getChatHistory({ customerId: validCustomerId });
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
@@ -116,7 +116,7 @@ describe("createGetChatHistory", () => {
   });
 
   describe("with invalid input", () => {
-    it("should throw ValidationError when neither memberId nor userId provided", async () => {
+    it("should throw ValidationError when neither customerId nor userId provided", async () => {
       // Arrange
       const mockClient = {
         message: { findMany: sinon.stub() }
@@ -133,7 +133,7 @@ describe("createGetChatHistory", () => {
       }
     });
 
-    it("should throw ValidationError when both memberId and userId provided", async () => {
+    it("should throw ValidationError when both customerId and userId provided", async () => {
       // Arrange
       const mockClient = {
         message: { findMany: sinon.stub() }
@@ -142,7 +142,7 @@ describe("createGetChatHistory", () => {
 
       // Act & Assert
       try {
-        await getChatHistory({ memberId: validMemberId, userId: validUserId });
+        await getChatHistory({ customerId: validCustomerId, userId: validUserId });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
@@ -150,7 +150,7 @@ describe("createGetChatHistory", () => {
       }
     });
 
-    it("should throw ValidationError for invalid memberId UUID", async () => {
+    it("should throw ValidationError for invalid customerId UUID", async () => {
       // Arrange
       const mockClient = {
         message: { findMany: sinon.stub() }
@@ -159,7 +159,7 @@ describe("createGetChatHistory", () => {
 
       // Act & Assert
       try {
-        await getChatHistory({ memberId: "invalid-uuid" });
+        await getChatHistory({ customerId: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
@@ -180,7 +180,7 @@ describe("createGetChatHistory", () => {
 
       // Act & Assert
       try {
-        await getChatHistory({ memberId: validMemberId });
+        await getChatHistory({ customerId: validCustomerId });
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

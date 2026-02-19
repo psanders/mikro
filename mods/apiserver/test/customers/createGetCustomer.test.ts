@@ -3,10 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createGetMember } from "../../src/api/members/createGetMember.js";
+import { createGetCustomer } from "../../src/api/customers/createGetCustomer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createGetMember", () => {
+describe("createGetCustomer", () => {
   const validInput = {
     id: "550e8400-e29b-41d4-a716-446655440000"
   };
@@ -16,9 +16,9 @@ describe("createGetMember", () => {
   });
 
   describe("with valid input", () => {
-    it("should return a member when found", async () => {
+    it("should return a customer when found", async () => {
       // Arrange
-      const expectedMember = {
+      const expectedCustomer = {
         id: validInput.id,
         name: "John Doe",
         phone: "+1234567890",
@@ -37,40 +37,40 @@ describe("createGetMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          findUnique: sinon.stub().resolves(expectedMember)
+        customer: {
+          findUnique: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const getMember = createGetMember(mockClient as any);
+      const getCustomer = createGetCustomer(mockClient as any);
 
       // Act
-      const result = await getMember(validInput);
+      const result = await getCustomer(validInput);
 
       // Assert
-      expect(result).to.deep.equal(expectedMember);
-      expect(mockClient.member.findUnique.calledOnce).to.be.true;
+      expect(result).to.deep.equal(expectedCustomer);
+      expect(mockClient.customer.findUnique.calledOnce).to.be.true;
       expect(
-        mockClient.member.findUnique.calledWith({
+        mockClient.customer.findUnique.calledWith({
           where: { id: validInput.id }
         })
       ).to.be.true;
     });
 
-    it("should return null when member not found", async () => {
+    it("should return null when customer not found", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findUnique: sinon.stub().resolves(null)
         }
       };
-      const getMember = createGetMember(mockClient as any);
+      const getCustomer = createGetCustomer(mockClient as any);
 
       // Act
-      const result = await getMember(validInput);
+      const result = await getCustomer(validInput);
 
       // Assert
       expect(result).to.be.null;
-      expect(mockClient.member.findUnique.calledOnce).to.be.true;
+      expect(mockClient.customer.findUnique.calledOnce).to.be.true;
     });
   });
 
@@ -78,17 +78,17 @@ describe("createGetMember", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findUnique: sinon.stub() }
+        customer: { findUnique: sinon.stub() }
       };
-      const getMember = createGetMember(mockClient as any);
+      const getCustomer = createGetCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await getMember({ id: "not-a-valid-uuid" });
+        await getCustomer({ id: "not-a-valid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findUnique.called).to.be.false;
+        expect(mockClient.customer.findUnique.called).to.be.false;
       }
     });
   });
@@ -97,15 +97,15 @@ describe("createGetMember", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findUnique: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const getMember = createGetMember(mockClient as any);
+      const getCustomer = createGetCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await getMember(validInput);
+        await getCustomer(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

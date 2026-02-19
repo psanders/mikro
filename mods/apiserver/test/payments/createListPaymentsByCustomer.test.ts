@@ -3,13 +3,13 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createListPaymentsByMember } from "../../src/api/payments/createListPaymentsByMember.js";
+import { createListPaymentsByCustomer } from "../../src/api/payments/createListPaymentsByCustomer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createListPaymentsByMember", () => {
-  const validMemberId = "550e8400-e29b-41d4-a716-446655440000";
+describe("createListPaymentsByCustomer", () => {
+  const validCustomerId = "550e8400-e29b-41d4-a716-446655440000";
   const validInput = {
-    memberId: validMemberId,
+    customerId: validCustomerId,
     startDate: new Date("2026-01-01"),
     endDate: new Date("2026-01-31")
   };
@@ -19,7 +19,7 @@ describe("createListPaymentsByMember", () => {
   });
 
   describe("with valid input", () => {
-    it("should return payments for the specified member", async () => {
+    it("should return payments for the specified customer", async () => {
       // Arrange
       const expectedPayments = [
         {
@@ -40,10 +40,10 @@ describe("createListPaymentsByMember", () => {
           findMany: sinon.stub().resolves(expectedPayments)
         }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act
-      const result = await listPaymentsByMember(validInput);
+      const result = await listPaymentsByCustomer(validInput);
 
       // Assert
       expect(result).to.have.lengthOf(1);
@@ -52,7 +52,7 @@ describe("createListPaymentsByMember", () => {
         mockClient.payment.findMany.calledWith(
           sinon.match({
             where: sinon.match({
-              loan: { memberId: validMemberId }
+              loan: { customerId: validCustomerId }
             })
           })
         )
@@ -67,10 +67,10 @@ describe("createListPaymentsByMember", () => {
           findMany: sinon.stub().resolves([])
         }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act
-      await listPaymentsByMember(inputWithPagination);
+      await listPaymentsByCustomer(inputWithPagination);
 
       // Assert
       expect(
@@ -90,10 +90,10 @@ describe("createListPaymentsByMember", () => {
           findMany: sinon.stub().resolves([])
         }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act
-      const result = await listPaymentsByMember(validInput);
+      const result = await listPaymentsByCustomer(validInput);
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
@@ -101,16 +101,16 @@ describe("createListPaymentsByMember", () => {
   });
 
   describe("with invalid input", () => {
-    it("should throw ValidationError for invalid member UUID", async () => {
+    it("should throw ValidationError for invalid customer UUID", async () => {
       // Arrange
       const mockClient = {
         payment: { findMany: sinon.stub() }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await listPaymentsByMember({ ...validInput, memberId: "invalid-uuid" });
+        await listPaymentsByCustomer({ ...validInput, customerId: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
@@ -118,16 +118,16 @@ describe("createListPaymentsByMember", () => {
       }
     });
 
-    it("should throw ValidationError for missing memberId", async () => {
+    it("should throw ValidationError for missing customerId", async () => {
       // Arrange
       const mockClient = {
         payment: { findMany: sinon.stub() }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await listPaymentsByMember({
+        await listPaymentsByCustomer({
           startDate: new Date(),
           endDate: new Date()
         } as any);
@@ -143,11 +143,11 @@ describe("createListPaymentsByMember", () => {
       const mockClient = {
         payment: { findMany: sinon.stub() }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await listPaymentsByMember({ memberId: validMemberId } as any);
+        await listPaymentsByCustomer({ customerId: validCustomerId } as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
@@ -164,11 +164,11 @@ describe("createListPaymentsByMember", () => {
           findMany: sinon.stub().rejects(new Error("Connection failed"))
         }
       };
-      const listPaymentsByMember = createListPaymentsByMember(mockClient as any);
+      const listPaymentsByCustomer = createListPaymentsByCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await listPaymentsByMember(validInput);
+        await listPaymentsByCustomer(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Connection failed");

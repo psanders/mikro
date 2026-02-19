@@ -3,10 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createGetMemberByPhone } from "../../src/api/members/createGetMemberByPhone.js";
+import { createGetCustomerByPhone } from "../../src/api/customers/createGetCustomerByPhone.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createGetMemberByPhone", () => {
+describe("createGetCustomerByPhone", () => {
   const validInput = {
     phone: "+18091234567"
   };
@@ -16,9 +16,9 @@ describe("createGetMemberByPhone", () => {
   });
 
   describe("with valid input", () => {
-    it("should return a member when found", async () => {
+    it("should return a customer when found", async () => {
       // Arrange
-      const expectedMember = {
+      const expectedCustomer = {
         id: "550e8400-e29b-41d4-a716-446655440000",
         name: "John Doe",
         phone: "+18091234567",
@@ -37,40 +37,40 @@ describe("createGetMemberByPhone", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          findFirst: sinon.stub().resolves(expectedMember)
+        customer: {
+          findFirst: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const getMemberByPhone = createGetMemberByPhone(mockClient as any);
+      const getCustomerByPhone = createGetCustomerByPhone(mockClient as any);
 
       // Act
-      const result = await getMemberByPhone(validInput);
+      const result = await getCustomerByPhone(validInput);
 
       // Assert
-      expect(result).to.deep.equal(expectedMember);
-      expect(mockClient.member.findFirst.calledOnce).to.be.true;
+      expect(result).to.deep.equal(expectedCustomer);
+      expect(mockClient.customer.findFirst.calledOnce).to.be.true;
       expect(
-        mockClient.member.findFirst.calledWith({
+        mockClient.customer.findFirst.calledWith({
           where: { phone: validInput.phone }
         })
       ).to.be.true;
     });
 
-    it("should return null when member not found", async () => {
+    it("should return null when customer not found", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findFirst: sinon.stub().resolves(null)
         }
       };
-      const getMemberByPhone = createGetMemberByPhone(mockClient as any);
+      const getCustomerByPhone = createGetCustomerByPhone(mockClient as any);
 
       // Act
-      const result = await getMemberByPhone(validInput);
+      const result = await getCustomerByPhone(validInput);
 
       // Assert
       expect(result).to.be.null;
-      expect(mockClient.member.findFirst.calledOnce).to.be.true;
+      expect(mockClient.customer.findFirst.calledOnce).to.be.true;
     });
   });
 
@@ -78,34 +78,34 @@ describe("createGetMemberByPhone", () => {
     it("should throw ValidationError for empty phone", async () => {
       // Arrange
       const mockClient = {
-        member: { findFirst: sinon.stub() }
+        customer: { findFirst: sinon.stub() }
       };
-      const getMemberByPhone = createGetMemberByPhone(mockClient as any);
+      const getCustomerByPhone = createGetCustomerByPhone(mockClient as any);
 
       // Act & Assert
       try {
-        await getMemberByPhone({ phone: "" });
+        await getCustomerByPhone({ phone: "" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findFirst.called).to.be.false;
+        expect(mockClient.customer.findFirst.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for missing phone", async () => {
       // Arrange
       const mockClient = {
-        member: { findFirst: sinon.stub() }
+        customer: { findFirst: sinon.stub() }
       };
-      const getMemberByPhone = createGetMemberByPhone(mockClient as any);
+      const getCustomerByPhone = createGetCustomerByPhone(mockClient as any);
 
       // Act & Assert
       try {
-        await getMemberByPhone({} as any);
+        await getCustomerByPhone({} as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findFirst.called).to.be.false;
+        expect(mockClient.customer.findFirst.called).to.be.false;
       }
     });
   });
@@ -114,15 +114,15 @@ describe("createGetMemberByPhone", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findFirst: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const getMemberByPhone = createGetMemberByPhone(mockClient as any);
+      const getCustomerByPhone = createGetCustomerByPhone(mockClient as any);
 
       // Act & Assert
       try {
-        await getMemberByPhone(validInput);
+        await getCustomerByPhone(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

@@ -3,13 +3,13 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createListMembersByCollector } from "../../src/api/members/createListMembersByCollector.js";
+import { createListCustomersByCollector } from "../../src/api/customers/createListCustomersByCollector.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createListMembersByCollector", () => {
+describe("createListCustomersByCollector", () => {
   const validCollectorId = "550e8400-e29b-41d4-a716-446655440000";
 
-  const createMockMember = (id: string, name: string) => ({
+  const createMockCustomer = (id: string, name: string) => ({
     id,
     name,
     phone: "+1234567890",
@@ -33,27 +33,27 @@ describe("createListMembersByCollector", () => {
   });
 
   describe("with valid input", () => {
-    it("should return members assigned to the specified collector", async () => {
+    it("should return customers assigned to the specified collector", async () => {
       // Arrange
-      const expectedMembers = [
-        createMockMember("member-1", "John Doe"),
-        createMockMember("member-2", "Jane Smith")
+      const expectedCustomers = [
+        createMockCustomer("customer-1", "John Doe"),
+        createMockCustomer("customer-2", "Jane Smith")
       ];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act
-      const result = await listMembersByCollector({ assignedCollectorId: validCollectorId });
+      const result = await listCustomersByCollector({ assignedCollectorId: validCollectorId });
 
       // Assert
       expect(result).to.have.length(2);
-      expect(mockClient.member.findMany.calledOnce).to.be.true;
+      expect(mockClient.customer.findMany.calledOnce).to.be.true;
       expect(
-        mockClient.member.findMany.calledWith({
+        mockClient.customer.findMany.calledWith({
           where: { assignedCollectorId: validCollectorId, isActive: true },
           take: undefined,
           skip: undefined
@@ -61,18 +61,18 @@ describe("createListMembersByCollector", () => {
       ).to.be.true;
     });
 
-    it("should return members with pagination", async () => {
+    it("should return customers with pagination", async () => {
       // Arrange
-      const expectedMembers = [createMockMember("member-1", "John Doe")];
+      const expectedCustomers = [createMockCustomer("customer-1", "John Doe")];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act
-      const result = await listMembersByCollector({
+      const result = await listCustomersByCollector({
         assignedCollectorId: validCollectorId,
         limit: 10,
         offset: 5
@@ -81,7 +81,7 @@ describe("createListMembersByCollector", () => {
       // Assert
       expect(result).to.have.length(1);
       expect(
-        mockClient.member.findMany.calledWith({
+        mockClient.customer.findMany.calledWith({
           where: { assignedCollectorId: validCollectorId, isActive: true },
           take: 10,
           skip: 5
@@ -89,17 +89,17 @@ describe("createListMembersByCollector", () => {
       ).to.be.true;
     });
 
-    it("should return empty array when no members found", async () => {
+    it("should return empty array when no customers found", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act
-      const result = await listMembersByCollector({ assignedCollectorId: validCollectorId });
+      const result = await listCustomersByCollector({ assignedCollectorId: validCollectorId });
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
@@ -110,34 +110,34 @@ describe("createListMembersByCollector", () => {
     it("should throw ValidationError for invalid collector UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembersByCollector({ assignedCollectorId: "invalid-uuid" });
+        await listCustomersByCollector({ assignedCollectorId: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for missing assignedCollectorId", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembersByCollector({} as any);
+        await listCustomersByCollector({} as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
   });
@@ -146,15 +146,15 @@ describe("createListMembersByCollector", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const listMembersByCollector = createListMembersByCollector(mockClient as any);
+      const listCustomersByCollector = createListCustomersByCollector(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembersByCollector({ assignedCollectorId: validCollectorId });
+        await listCustomersByCollector({ assignedCollectorId: validCollectorId });
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

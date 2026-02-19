@@ -3,12 +3,12 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createExportAllMembers } from "../../src/api/members/createExportAllMembers.js";
+import { createExportAllCustomers } from "../../src/api/customers/createExportAllCustomers.js";
 
-describe("createExportAllMembers", () => {
+describe("createExportAllCustomers", () => {
   const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
 
-  const createMockMemberWithLoans = (id: string, name: string) => ({
+  const createMockCustomerWithLoans = (id: string, name: string) => ({
     id,
     name,
     phone: "+1234567890",
@@ -37,7 +37,7 @@ describe("createExportAllMembers", () => {
         paymentAmount: 550,
         paymentFrequency: "WEEKLY",
         notes: null,
-        memberId: id,
+        customerId: id,
         createdAt: new Date(),
         updatedAt: new Date(),
         payments: [
@@ -64,99 +64,99 @@ describe("createExportAllMembers", () => {
   });
 
   describe("with valid input", () => {
-    it("should return all active members with loans", async () => {
+    it("should return all active customers with loans", async () => {
       // Arrange
-      const expectedMembers = [
-        createMockMemberWithLoans("member-1", "John Doe"),
-        createMockMemberWithLoans("member-2", "Jane Smith"),
-        createMockMemberWithLoans("member-3", "Bob Wilson")
+      const expectedCustomers = [
+        createMockCustomerWithLoans("customer-1", "John Doe"),
+        createMockCustomerWithLoans("customer-2", "Jane Smith"),
+        createMockCustomerWithLoans("customer-3", "Bob Wilson")
       ];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act
-      const result = await exportAllMembers({});
+      const result = await exportAllCustomers({});
 
       // Assert
       expect(result).to.have.length(3);
       expect(result[0].loans).to.have.length(1);
       expect(result[0].referredBy.name).to.equal("John Referrer");
-      expect(mockClient.member.findMany.calledOnce).to.be.true;
+      expect(mockClient.customer.findMany.calledOnce).to.be.true;
 
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.where.isActive).to.equal(true);
       expect(callArgs.include.loans).to.exist;
       expect(callArgs.include.referredBy).to.exist;
     });
 
-    it("should return empty array when no members found", async () => {
+    it("should return empty array when no customers found", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act
-      const result = await exportAllMembers({});
+      const result = await exportAllCustomers({});
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
     });
 
-    it("should only query for active members", async () => {
+    it("should only query for active customers", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act
-      await exportAllMembers({});
+      await exportAllCustomers({});
 
       // Assert
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.where.isActive).to.equal(true);
     });
 
     it("should only include active loans", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act
-      await exportAllMembers({});
+      await exportAllCustomers({});
 
       // Assert
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.include.loans.where.status).to.equal("ACTIVE");
     });
 
     it("should only include completed payments", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act
-      await exportAllMembers({});
+      await exportAllCustomers({});
 
       // Assert
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.include.loans.include.payments.where.status).to.equal("COMPLETED");
     });
   });
@@ -165,15 +165,15 @@ describe("createExportAllMembers", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const exportAllMembers = createExportAllMembers(mockClient as any);
+      const exportAllCustomers = createExportAllCustomers(mockClient as any);
 
       // Act & Assert
       try {
-        await exportAllMembers({});
+        await exportAllCustomers({});
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

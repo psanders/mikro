@@ -19,7 +19,7 @@ describe("createListPaymentsByReferrer", () => {
   });
 
   describe("with valid input", () => {
-    it("should return payments for members referred by the specified user", async () => {
+    it("should return payments for customers referred by the specified user", async () => {
       // Arrange
       const expectedPayments = [
         {
@@ -65,7 +65,7 @@ describe("createListPaymentsByReferrer", () => {
           sinon.match({
             where: sinon.match({
               loan: {
-                member: { referredById: validReferrerId }
+                customer: { referredById: validReferrerId }
               }
             })
           })

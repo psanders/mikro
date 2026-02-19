@@ -7,7 +7,7 @@ import { createAddMessageToChatHistory } from "../../src/api/chat/createAddMessa
 import { ValidationError } from "@mikro/common";
 
 describe("createAddMessageToChatHistory", () => {
-  const validMemberId = "550e8400-e29b-41d4-a716-446655440000";
+  const validCustomerId = "550e8400-e29b-41d4-a716-446655440000";
   const validUserId = "660e8400-e29b-41d4-a716-446655440001";
 
   afterEach(() => {
@@ -15,10 +15,10 @@ describe("createAddMessageToChatHistory", () => {
   });
 
   describe("with valid input", () => {
-    it("should add a message for a member", async () => {
+    it("should add a message for a customer", async () => {
       // Arrange
       const input = {
-        memberId: validMemberId,
+        customerId: validCustomerId,
         role: "HUMAN" as const,
         content: "Hello, I need help"
       };
@@ -27,7 +27,7 @@ describe("createAddMessageToChatHistory", () => {
         role: "HUMAN",
         content: input.content,
         tools: null,
-        memberId: validMemberId,
+        customerId: validCustomerId,
         userId: null,
         createdAt: new Date()
       };
@@ -64,7 +64,7 @@ describe("createAddMessageToChatHistory", () => {
         role: "AI",
         content: input.content,
         tools: JSON.stringify(input.tools),
-        memberId: null,
+        customerId: null,
         userId: validUserId,
         createdAt: new Date()
       };
@@ -89,7 +89,7 @@ describe("createAddMessageToChatHistory", () => {
     it("should add a message with attachments", async () => {
       // Arrange
       const input = {
-        memberId: validMemberId,
+        customerId: validCustomerId,
         role: "HUMAN" as const,
         content: "Here is a document",
         attachments: [
@@ -107,7 +107,7 @@ describe("createAddMessageToChatHistory", () => {
         role: "HUMAN",
         content: input.content,
         tools: null,
-        memberId: validMemberId,
+        customerId: validCustomerId,
         userId: null,
         createdAt: new Date()
       };
@@ -135,7 +135,7 @@ describe("createAddMessageToChatHistory", () => {
   });
 
   describe("with invalid input", () => {
-    it("should throw ValidationError when neither memberId nor userId provided", async () => {
+    it("should throw ValidationError when neither customerId nor userId provided", async () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
@@ -153,7 +153,7 @@ describe("createAddMessageToChatHistory", () => {
       }
     });
 
-    it("should throw ValidationError when both memberId and userId provided", async () => {
+    it("should throw ValidationError when both customerId and userId provided", async () => {
       // Arrange
       const mockClient = {
         message: { create: sinon.stub() },
@@ -164,7 +164,7 @@ describe("createAddMessageToChatHistory", () => {
       // Act & Assert
       try {
         await addMessage({
-          memberId: validMemberId,
+          customerId: validCustomerId,
           userId: validUserId,
           role: "HUMAN",
           content: "Hello"
@@ -187,7 +187,7 @@ describe("createAddMessageToChatHistory", () => {
       // Act & Assert
       try {
         await addMessage({
-          memberId: validMemberId,
+          customerId: validCustomerId,
           role: "HUMAN",
           content: ""
         });
@@ -209,7 +209,7 @@ describe("createAddMessageToChatHistory", () => {
       // Act & Assert
       try {
         await addMessage({
-          memberId: validMemberId,
+          customerId: validCustomerId,
           role: "INVALID" as any,
           content: "Hello"
         });
@@ -231,7 +231,7 @@ describe("createAddMessageToChatHistory", () => {
       // Act & Assert
       try {
         await addMessage({
-          memberId: validMemberId,
+          customerId: validCustomerId,
           role: "HUMAN",
           content: "Hello",
           attachments: [
@@ -263,7 +263,7 @@ describe("createAddMessageToChatHistory", () => {
       // Act & Assert
       try {
         await addMessage({
-          memberId: validMemberId,
+          customerId: validCustomerId,
           role: "HUMAN",
           content: "Hello"
         });

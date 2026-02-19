@@ -9,8 +9,8 @@ import { CollectionChannel, CollectionAttemptType } from "../../src/generated/pr
 describe("runSingleCollection", () => {
   const loanId = 10019;
   const loanUuid = "loan-uuid-10019";
-  const memberId = "member-uuid-1";
-  const activeLoanWithMember = {
+  const customerId = "customer-uuid-1";
+  const activeLoanWithCustomer = {
     id: loanUuid,
     loanId,
     status: "ACTIVE",
@@ -19,16 +19,13 @@ describe("runSingleCollection", () => {
     termLength: 8,
     paymentAmount: 650,
     createdAt: new Date("2025-01-01"),
-    member: {
-      id: memberId,
+    customer: {
+      id: customerId,
       name: "Maria Garcia",
       phone: "+18091234567",
       preferredPaymentDay: "MONDAY"
     },
-    payments: [
-      { paidAt: new Date("2026-01-06") },
-      { paidAt: new Date("2026-01-13") }
-    ]
+    payments: [{ paidAt: new Date("2026-01-06") }, { paidAt: new Date("2026-01-13") }]
   };
 
   let mockDb: {
@@ -39,7 +36,7 @@ describe("runSingleCollection", () => {
 
   beforeEach(() => {
     mockDb = {
-      loan: { findUnique: sinon.stub().resolves(activeLoanWithMember) },
+      loan: { findUnique: sinon.stub().resolves(activeLoanWithCustomer) },
       collectionAttempt: { create: sinon.stub().resolves({ id: "attempt-1" }) }
     };
     sendWhatsAppTemplate = sinon.stub().resolves({ messages: [{ id: "msg-1" }] });
@@ -62,7 +59,7 @@ describe("runSingleCollection", () => {
   });
 
   it("returns error when loan is not ACTIVE", async () => {
-    mockDb.loan.findUnique.resolves({ ...activeLoanWithMember, status: "COMPLETED" });
+    mockDb.loan.findUnique.resolves({ ...activeLoanWithCustomer, status: "COMPLETED" });
     const result = await runSingleCollection(
       { loanId, type: CollectionAttemptType.PAYMENT_REMINDER },
       { db: mockDb as any, sendWhatsAppTemplate }
@@ -78,7 +75,7 @@ describe("runSingleCollection", () => {
     );
     expect(result.success).to.be.true;
     expect(result.dryRun).to.be.true;
-    expect(result.memberName).to.equal("Maria Garcia");
+    expect(result.customerName).to.equal("Maria Garcia");
     expect(sendWhatsAppTemplate.called).to.be.false;
     expect(mockDb.collectionAttempt.create.called).to.be.false;
   });
@@ -91,13 +88,13 @@ describe("runSingleCollection", () => {
     expect(result.success).to.be.true;
     expect(result.type).to.equal(CollectionAttemptType.PAYMENT_REMINDER);
     expect(result.channel).to.equal(CollectionChannel.WHATSAPP);
-    expect(result.memberName).to.equal("Maria Garcia");
+    expect(result.customerName).to.equal("Maria Garcia");
     expect(sendWhatsAppTemplate.calledOnce).to.be.true;
     expect(mockDb.collectionAttempt.create.calledOnce).to.be.true;
     const createCall = mockDb.collectionAttempt.create.getCall(0);
     expect(createCall.args[0].data.type).to.equal(CollectionAttemptType.PAYMENT_REMINDER);
     expect(createCall.args[0].data.channel).to.equal(CollectionChannel.WHATSAPP);
-    expect(createCall.args[0].data.memberId).to.equal(memberId);
+    expect(createCall.args[0].data.customerId).to.equal(customerId);
     expect(createCall.args[0].data.loanId).to.equal(loanUuid);
   });
 

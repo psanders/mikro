@@ -3,10 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createUpdateMember } from "../../src/api/members/createUpdateMember.js";
+import { createUpdateCustomer } from "../../src/api/customers/createUpdateCustomer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createUpdateMember", () => {
+describe("createUpdateCustomer", () => {
   const validInput = {
     id: "550e8400-e29b-41d4-a716-446655440000",
     name: "Updated Name",
@@ -19,9 +19,9 @@ describe("createUpdateMember", () => {
   });
 
   describe("with valid input", () => {
-    it("should update a member with all allowed fields", async () => {
+    it("should update a customer with all allowed fields", async () => {
       // Arrange
-      const expectedMember = {
+      const expectedCustomer = {
         id: validInput.id,
         name: validInput.name,
         phone: "18091234567", // Normalized (stripped +)
@@ -40,29 +40,29 @@ describe("createUpdateMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          update: sinon.stub().resolves(expectedMember)
+        customer: {
+          update: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act
-      const result = await updateMember(validInput);
+      const result = await updateCustomer(validInput);
 
       // Assert
       expect(result.id).to.equal(validInput.id);
       expect(result.name).to.equal(validInput.name);
       expect(result.isActive).to.be.false;
-      expect(mockClient.member.update.calledOnce).to.be.true;
+      expect(mockClient.customer.update.calledOnce).to.be.true;
     });
 
-    it("should update a member with partial fields", async () => {
+    it("should update a customer with partial fields", async () => {
       // Arrange
       const partialInput = {
         id: "550e8400-e29b-41d4-a716-446655440000",
         isActive: true
       };
-      const expectedMember = {
+      const expectedCustomer = {
         id: partialInput.id,
         name: "Existing Name",
         phone: "18091234567",
@@ -81,27 +81,27 @@ describe("createUpdateMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          update: sinon.stub().resolves(expectedMember)
+        customer: {
+          update: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act
-      const result = await updateMember(partialInput);
+      const result = await updateCustomer(partialInput);
 
       // Assert
       expect(result.isActive).to.be.true;
-      expect(mockClient.member.update.calledOnce).to.be.true;
+      expect(mockClient.customer.update.calledOnce).to.be.true;
     });
 
-    it("should update a member with note field", async () => {
+    it("should update a customer with note field", async () => {
       // Arrange
       const inputWithNote = {
         id: "550e8400-e29b-41d4-a716-446655440000",
         note: "Updated note"
       };
-      const expectedMember = {
+      const expectedCustomer = {
         id: inputWithNote.id,
         name: "Existing Name",
         phone: "18091234567",
@@ -120,18 +120,18 @@ describe("createUpdateMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          update: sinon.stub().resolves(expectedMember)
+        customer: {
+          update: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act
-      const result = await updateMember(inputWithNote);
+      const result = await updateCustomer(inputWithNote);
 
       // Assert
       expect(result.note).to.equal("Updated note");
-      expect(mockClient.member.update.calledOnce).to.be.true;
+      expect(mockClient.customer.update.calledOnce).to.be.true;
     });
   });
 
@@ -139,37 +139,37 @@ describe("createUpdateMember", () => {
     it("should throw ValidationError for invalid UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { update: sinon.stub() }
+        customer: { update: sinon.stub() }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await updateMember({ id: "invalid-uuid", name: "Test" });
+        await updateCustomer({ id: "invalid-uuid", name: "Test" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.update.called).to.be.false;
+        expect(mockClient.customer.update.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for empty name when provided", async () => {
       // Arrange
       const mockClient = {
-        member: { update: sinon.stub() }
+        customer: { update: sinon.stub() }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await updateMember({
+        await updateCustomer({
           id: "550e8400-e29b-41d4-a716-446655440000",
           name: ""
         });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.update.called).to.be.false;
+        expect(mockClient.customer.update.called).to.be.false;
       }
     });
   });
@@ -178,18 +178,18 @@ describe("createUpdateMember", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
-          update: sinon.stub().rejects(new Error("Member not found"))
+        customer: {
+          update: sinon.stub().rejects(new Error("Customer not found"))
         }
       };
-      const updateMember = createUpdateMember(mockClient as any);
+      const updateCustomer = createUpdateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await updateMember(validInput);
+        await updateCustomer(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
-        expect((error as Error).message).to.equal("Member not found");
+        expect((error as Error).message).to.equal("Customer not found");
       }
     });
   });

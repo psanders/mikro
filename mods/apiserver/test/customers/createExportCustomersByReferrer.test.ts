@@ -3,13 +3,13 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createExportMembersByReferrer } from "../../src/api/members/createExportMembersByReferrer.js";
+import { createExportCustomersByReferrer } from "../../src/api/customers/createExportCustomersByReferrer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createExportMembersByReferrer", () => {
+describe("createExportCustomersByReferrer", () => {
   const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
 
-  const createMockMemberWithLoans = (id: string, name: string) => ({
+  const createMockCustomerWithLoans = (id: string, name: string) => ({
     id,
     name,
     phone: "+1234567890",
@@ -38,7 +38,7 @@ describe("createExportMembersByReferrer", () => {
         paymentAmount: 550,
         paymentFrequency: "WEEKLY",
         notes: null,
-        memberId: id,
+        customerId: id,
         createdAt: new Date(),
         updatedAt: new Date(),
         payments: [
@@ -65,46 +65,46 @@ describe("createExportMembersByReferrer", () => {
   });
 
   describe("with valid input", () => {
-    it("should return members referred by the specified user with loans", async () => {
+    it("should return customers referred by the specified user with loans", async () => {
       // Arrange
-      const expectedMembers = [
-        createMockMemberWithLoans("member-1", "John Doe"),
-        createMockMemberWithLoans("member-2", "Jane Smith")
+      const expectedCustomers = [
+        createMockCustomerWithLoans("customer-1", "John Doe"),
+        createMockCustomerWithLoans("customer-2", "Jane Smith")
       ];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act
-      const result = await exportMembersByReferrer({ referredById: validReferrerId });
+      const result = await exportCustomersByReferrer({ referredById: validReferrerId });
 
       // Assert
       expect(result).to.have.length(2);
       expect(result[0].loans).to.have.length(1);
       expect(result[0].referredBy.name).to.equal("John Referrer");
-      expect(mockClient.member.findMany.calledOnce).to.be.true;
+      expect(mockClient.customer.findMany.calledOnce).to.be.true;
 
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.where.referredById).to.equal(validReferrerId);
       expect(callArgs.where.isActive).to.equal(true);
       expect(callArgs.include.loans).to.exist;
       expect(callArgs.include.referredBy).to.exist;
     });
 
-    it("should return empty array when no members found", async () => {
+    it("should return empty array when no customers found", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act
-      const result = await exportMembersByReferrer({ referredById: validReferrerId });
+      const result = await exportCustomersByReferrer({ referredById: validReferrerId });
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
@@ -113,34 +113,34 @@ describe("createExportMembersByReferrer", () => {
     it("should only include active loans", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act
-      await exportMembersByReferrer({ referredById: validReferrerId });
+      await exportCustomersByReferrer({ referredById: validReferrerId });
 
       // Assert
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.include.loans.where.status).to.equal("ACTIVE");
     });
 
     it("should only include completed payments", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act
-      await exportMembersByReferrer({ referredById: validReferrerId });
+      await exportCustomersByReferrer({ referredById: validReferrerId });
 
       // Assert
-      const callArgs = mockClient.member.findMany.firstCall.args[0];
+      const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.include.loans.include.payments.where.status).to.equal("COMPLETED");
     });
   });
@@ -149,34 +149,34 @@ describe("createExportMembersByReferrer", () => {
     it("should throw ValidationError for invalid referrer UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act & Assert
       try {
-        await exportMembersByReferrer({ referredById: "invalid-uuid" });
+        await exportCustomersByReferrer({ referredById: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for missing referredById", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act & Assert
       try {
-        await exportMembersByReferrer({} as any);
+        await exportCustomersByReferrer({} as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
   });
@@ -185,15 +185,15 @@ describe("createExportMembersByReferrer", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const exportMembersByReferrer = createExportMembersByReferrer(mockClient as any);
+      const exportCustomersByReferrer = createExportCustomersByReferrer(mockClient as any);
 
       // Act & Assert
       try {
-        await exportMembersByReferrer({ referredById: validReferrerId });
+        await exportCustomersByReferrer({ referredById: validReferrerId });
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

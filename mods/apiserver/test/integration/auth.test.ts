@@ -37,10 +37,10 @@ describe("Authentication Integration", () => {
     });
   });
 
-  describe("protected procedures - Members", () => {
-    it("should reject unauthenticated createMember", async () => {
+  describe("protected procedures - Customers", () => {
+    it("should reject unauthenticated createCustomer", async () => {
       try {
-        await unauthenticatedCaller.createMember({
+        await unauthenticatedCaller.createCustomer({
           name: "Test User",
           phone: "+18091234590",
           idNumber: "001-1234567-8",
@@ -54,9 +54,9 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated getMember", async () => {
+    it("should reject unauthenticated getCustomer", async () => {
       try {
-        await unauthenticatedCaller.getMember({
+        await unauthenticatedCaller.getCustomer({
           id: "550e8400-e29b-41d4-a716-446655440000"
         });
         expect.fail("Expected UNAUTHORIZED error");
@@ -66,9 +66,9 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated updateMember", async () => {
+    it("should reject unauthenticated updateCustomer", async () => {
       try {
-        await unauthenticatedCaller.updateMember({
+        await unauthenticatedCaller.updateCustomer({
           id: "550e8400-e29b-41d4-a716-446655440000",
           name: "Updated Name"
         });
@@ -79,9 +79,9 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated listMembers", async () => {
+    it("should reject unauthenticated listCustomers", async () => {
       try {
-        await unauthenticatedCaller.listMembers({});
+        await unauthenticatedCaller.listCustomers({});
         expect.fail("Expected UNAUTHORIZED error");
       } catch (error) {
         expect(error).to.be.instanceOf(TRPCError);
@@ -89,9 +89,9 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated listMembersByReferrer", async () => {
+    it("should reject unauthenticated listCustomersByReferrer", async () => {
       try {
-        await unauthenticatedCaller.listMembersByReferrer({
+        await unauthenticatedCaller.listCustomersByReferrer({
           referredById: "550e8400-e29b-41d4-a716-446655440000"
         });
         expect.fail("Expected UNAUTHORIZED error");
@@ -101,9 +101,9 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated listMembersByCollector", async () => {
+    it("should reject unauthenticated listCustomersByCollector", async () => {
       try {
-        await unauthenticatedCaller.listMembersByCollector({
+        await unauthenticatedCaller.listCustomersByCollector({
           assignedCollectorId: "550e8400-e29b-41d4-a716-446655440000"
         });
         expect.fail("Expected UNAUTHORIZED error");
@@ -157,7 +157,7 @@ describe("Authentication Integration", () => {
     it("should reject unauthenticated createLoan", async () => {
       try {
         await unauthenticatedCaller.createLoan({
-          memberId: "550e8400-e29b-41d4-a716-446655440000",
+          customerId: "550e8400-e29b-41d4-a716-446655440000",
           principal: 5000,
           termLength: 10,
           paymentAmount: 650,
@@ -198,10 +198,10 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated listPaymentsByMember", async () => {
+    it("should reject unauthenticated listPaymentsByCustomer", async () => {
       try {
-        await unauthenticatedCaller.listPaymentsByMember({
-          memberId: "550e8400-e29b-41d4-a716-446655440000",
+        await unauthenticatedCaller.listPaymentsByCustomer({
+          customerId: "550e8400-e29b-41d4-a716-446655440000",
           startDate: new Date("2026-01-01"),
           endDate: new Date("2026-12-31")
         });
@@ -231,7 +231,7 @@ describe("Authentication Integration", () => {
     it("should reject unauthenticated getChatHistory", async () => {
       try {
         await unauthenticatedCaller.getChatHistory({
-          memberId: "550e8400-e29b-41d4-a716-446655440000"
+          customerId: "550e8400-e29b-41d4-a716-446655440000"
         });
         expect.fail("Expected UNAUTHORIZED error");
       } catch (error) {

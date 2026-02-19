@@ -18,7 +18,7 @@ describe("createListLoans", () => {
     termLength: 10,
     paymentAmount: 650,
     paymentFrequency: "WEEKLY" as const,
-    memberId: "member-123",
+    customerId: "customer-123",
     startedAt: new Date(),
     closedAt: null,
     createdAt: new Date(),
@@ -50,7 +50,7 @@ describe("createListLoans", () => {
         mockClient.loan.findMany.calledWith({
           where: { status: "ACTIVE" },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -82,7 +82,7 @@ describe("createListLoans", () => {
         mockClient.loan.findMany.calledWith({
           where: undefined,
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -117,7 +117,7 @@ describe("createListLoans", () => {
         mockClient.loan.findMany.calledWith({
           where: { status: "ACTIVE" },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true

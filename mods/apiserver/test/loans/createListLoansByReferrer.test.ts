@@ -21,7 +21,7 @@ describe("createListLoansByReferrer", () => {
     termLength: 10,
     paymentAmount: 650,
     paymentFrequency: "WEEKLY" as const,
-    memberId: "member-123",
+    customerId: "customer-123",
     startedAt: new Date(),
     closedAt: null,
     createdAt: new Date(),
@@ -52,13 +52,13 @@ describe("createListLoansByReferrer", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               referredById: validReferrerId
             },
             status: "ACTIVE"
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -89,12 +89,12 @@ describe("createListLoansByReferrer", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               referredById: validReferrerId
             }
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -129,13 +129,13 @@ describe("createListLoansByReferrer", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               referredById: validReferrerId
             },
             status: "ACTIVE"
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true

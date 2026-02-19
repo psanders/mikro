@@ -3,10 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createCreateMember } from "../../src/api/members/createCreateMember.js";
+import { createCreateCustomer } from "../../src/api/customers/createCreateCustomer.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createCreateMember", () => {
+describe("createCreateCustomer", () => {
   const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
   const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
@@ -24,10 +24,10 @@ describe("createCreateMember", () => {
   });
 
   describe("with valid input", () => {
-    it("should create a member with required fields", async () => {
+    it("should create a customer with required fields", async () => {
       // Arrange
-      const expectedMember = {
-        id: "member-123",
+      const expectedCustomer = {
+        id: "customer-123",
         ...validInput,
         phone: "18091234567", // Normalized (stripped +)
         jobPosition: null,
@@ -41,27 +41,27 @@ describe("createCreateMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          create: sinon.stub().resolves(expectedMember)
+        customer: {
+          create: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act
-      const result = await createMember(validInput);
+      const result = await createCustomer(validInput);
 
       // Assert
-      expect(result.id).to.equal("member-123");
+      expect(result.id).to.equal("customer-123");
       expect(result.name).to.equal(validInput.name);
-      expect(mockClient.member.create.calledOnce).to.be.true;
+      expect(mockClient.customer.create.calledOnce).to.be.true;
       // Phone gets normalized to E.164 format in the schema transform
-      const callArgs = mockClient.member.create.getCall(0).args[0];
+      const callArgs = mockClient.customer.create.getCall(0).args[0];
       expect(callArgs.data.name).to.equal(validInput.name);
       expect(callArgs.data.phone).to.equal("+18091234567"); // Normalized to E.164 format
       expect(callArgs.data.idNumber).to.equal(validInput.idNumber);
     });
 
-    it("should create a member with optional fields", async () => {
+    it("should create a customer with optional fields", async () => {
       // Arrange
       const inputWithOptional = {
         ...validInput,
@@ -70,8 +70,8 @@ describe("createCreateMember", () => {
         isBusinessOwner: true,
         note: "Test note"
       };
-      const expectedMember = {
-        id: "member-456",
+      const expectedCustomer = {
+        id: "customer-456",
         ...inputWithOptional,
         phone: "18091234567", // Normalized (stripped +)
         isActive: true,
@@ -81,19 +81,19 @@ describe("createCreateMember", () => {
         updatedAt: new Date()
       };
       const mockClient = {
-        member: {
-          create: sinon.stub().resolves(expectedMember)
+        customer: {
+          create: sinon.stub().resolves(expectedCustomer)
         }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act
-      const result = await createMember(inputWithOptional);
+      const result = await createCustomer(inputWithOptional);
 
       // Assert
-      expect(result.id).to.equal("member-456");
+      expect(result.id).to.equal("customer-456");
       expect(result.jobPosition).to.equal("Engineer");
-      expect(mockClient.member.create.calledOnce).to.be.true;
+      expect(mockClient.customer.create.calledOnce).to.be.true;
     });
   });
 
@@ -101,51 +101,51 @@ describe("createCreateMember", () => {
     it("should throw ValidationError for missing required fields", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() }
+        customer: { create: sinon.stub() }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await createMember({ name: "John" } as any);
+        await createCustomer({ name: "John" } as any);
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.create.called).to.be.false;
+        expect(mockClient.customer.create.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for empty name", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() }
+        customer: { create: sinon.stub() }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await createMember({ ...validInput, name: "" });
+        await createCustomer({ ...validInput, name: "" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.create.called).to.be.false;
+        expect(mockClient.customer.create.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for invalid referredById UUID", async () => {
       // Arrange
       const mockClient = {
-        member: { create: sinon.stub() }
+        customer: { create: sinon.stub() }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await createMember({ ...validInput, referredById: "invalid-uuid" });
+        await createCustomer({ ...validInput, referredById: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.create.called).to.be.false;
+        expect(mockClient.customer.create.called).to.be.false;
       }
     });
   });
@@ -154,15 +154,15 @@ describe("createCreateMember", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           create: sinon.stub().rejects(new Error("Connection failed"))
         }
       };
-      const createMember = createCreateMember(mockClient as any);
+      const createCustomer = createCreateCustomer(mockClient as any);
 
       // Act & Assert
       try {
-        await createMember(validInput);
+        await createCustomer(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Connection failed");

@@ -21,7 +21,7 @@ describe("createListLoansByCollector", () => {
     termLength: 10,
     paymentAmount: 650,
     paymentFrequency: "WEEKLY" as const,
-    memberId: "member-123",
+    customerId: "customer-123",
     startedAt: new Date(),
     closedAt: null,
     createdAt: new Date(),
@@ -52,13 +52,13 @@ describe("createListLoansByCollector", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               assignedCollectorId: validCollectorId
             },
             status: "ACTIVE"
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -89,12 +89,12 @@ describe("createListLoansByCollector", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               assignedCollectorId: validCollectorId
             }
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true
@@ -129,13 +129,13 @@ describe("createListLoansByCollector", () => {
       expect(
         mockClient.loan.findMany.calledWith({
           where: {
-            member: {
+            customer: {
               assignedCollectorId: validCollectorId
             },
             status: "ACTIVE"
           },
           include: {
-            member: {
+            customer: {
               select: {
                 name: true,
                 phone: true

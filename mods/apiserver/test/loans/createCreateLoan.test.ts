@@ -7,9 +7,9 @@ import { createCreateLoan } from "../../src/api/loans/createCreateLoan.js";
 import { ValidationError } from "@mikro/common";
 
 describe("createCreateLoan", () => {
-  const validMemberId = "550e8400-e29b-41d4-a716-446655440000";
+  const validCustomerId = "550e8400-e29b-41d4-a716-446655440000";
   const validInput = {
-    memberId: validMemberId,
+    customerId: validCustomerId,
     principal: 5000,
     termLength: 10,
     paymentAmount: 650,
@@ -112,7 +112,7 @@ describe("createCreateLoan", () => {
   });
 
   describe("with invalid input", () => {
-    it("should throw ValidationError for invalid memberId UUID", async () => {
+    it("should throw ValidationError for invalid customerId UUID", async () => {
       // Arrange
       const mockClient = {
         loan: {
@@ -124,7 +124,7 @@ describe("createCreateLoan", () => {
 
       // Act & Assert
       try {
-        await createLoan({ ...validInput, memberId: "invalid-uuid" });
+        await createLoan({ ...validInput, customerId: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);

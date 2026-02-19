@@ -27,7 +27,7 @@ describe("Loans Integration", () => {
     await db.payment.deleteMany();
     await db.loan.deleteMany();
     await db.message.deleteMany();
-    await db.member.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);
@@ -38,11 +38,11 @@ describe("Loans Integration", () => {
   });
 
   /**
-   * Helper to create a member for loan tests.
+   * Helper to create a customer for loan tests.
    */
-  async function createTestMember() {
-    return caller.createMember({
-      name: "Loan Test Member",
+  async function createTestCustomer() {
+    return caller.createCustomer({
+      name: "Loan Test Customer",
       phone: "+18091234596",
       idNumber: "001-1234567-8",
       collectionPoint: "https://example.com/test-point",
@@ -62,10 +62,10 @@ describe("Loans Integration", () => {
 
   describe("createLoan", () => {
     it("should create a loan with required fields", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
 
       const input = {
-        memberId: member.id,
+        customerId: customer.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -75,7 +75,7 @@ describe("Loans Integration", () => {
       const loan = await caller.createLoan(input);
 
       expect(loan.id).to.be.a("string");
-      expect(loan.memberId).to.equal(member.id);
+      expect(loan.customerId).to.equal(customer.id);
       expect(Number(loan.principal)).to.equal(input.principal);
       expect(loan.termLength).to.equal(input.termLength);
       expect(Number(loan.paymentAmount)).to.equal(input.paymentAmount);
@@ -85,10 +85,10 @@ describe("Loans Integration", () => {
     });
 
     it("should create a loan with DAILY payment frequency", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
 
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 3000,
         termLength: 30,
         paymentAmount: 120,
@@ -99,10 +99,10 @@ describe("Loans Integration", () => {
     });
 
     it("should create a loan with explicit SAN type", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
 
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 10000,
         termLength: 20,
         paymentAmount: 600,
@@ -114,10 +114,10 @@ describe("Loans Integration", () => {
     });
 
     it("should start loanId at 10000 for first loan", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
 
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -128,11 +128,11 @@ describe("Loans Integration", () => {
     });
 
     it("should auto-increment loanId for subsequent loans", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
 
       // Create first loan
       const loan1 = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -141,7 +141,7 @@ describe("Loans Integration", () => {
 
       // Create second loan
       const loan2 = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 3000,
         termLength: 5,
         paymentAmount: 700,
@@ -150,7 +150,7 @@ describe("Loans Integration", () => {
 
       // Create third loan
       const loan3 = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 10000,
         termLength: 20,
         paymentAmount: 600,
@@ -162,8 +162,8 @@ describe("Loans Integration", () => {
       expect(loan3.loanId).to.equal(10002);
     });
 
-    it("should create loans for different members with unique loanIds", async () => {
-      // Create multiple members
+    it("should create loans for different customers with unique loanIds", async () => {
+      // Create multiple customers
       const referrer = await caller.createUser({
         name: "Test Referrer",
         phone: "+18091234585",
@@ -175,8 +175,8 @@ describe("Loans Integration", () => {
         role: "COLLECTOR"
       });
 
-      const member1 = await caller.createMember({
-        name: "Member One",
+      const customer1 = await caller.createCustomer({
+        name: "Customer One",
         phone: "+18091234597",
         idNumber: "001-1234567-1",
         collectionPoint: "https://example.com/point-1",
@@ -185,8 +185,8 @@ describe("Loans Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      const member2 = await caller.createMember({
-        name: "Member Two",
+      const customer2 = await caller.createCustomer({
+        name: "Customer Two",
         phone: "+18091234598",
         idNumber: "001-1234567-2",
         collectionPoint: "https://example.com/point-2",
@@ -195,9 +195,9 @@ describe("Loans Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      // Create loans for different members
+      // Create loans for different customers
       const loan1 = await caller.createLoan({
-        memberId: member1.id,
+        customerId: customer1.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -205,25 +205,25 @@ describe("Loans Integration", () => {
       });
 
       const loan2 = await caller.createLoan({
-        memberId: member2.id,
+        customerId: customer2.id,
         principal: 3000,
         termLength: 5,
         paymentAmount: 700,
         paymentFrequency: "DAILY"
       });
 
-      expect(loan1.memberId).to.equal(member1.id);
-      expect(loan2.memberId).to.equal(member2.id);
+      expect(loan1.customerId).to.equal(customer1.id);
+      expect(loan2.customerId).to.equal(customer2.id);
       expect(loan1.loanId).to.equal(10000);
       expect(loan2.loanId).to.equal(10001);
     });
 
     it("should set createdAt to current time", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
       const beforeCreate = new Date();
 
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -240,9 +240,9 @@ describe("Loans Integration", () => {
 
   describe("updateLoanStatus", () => {
     it("should update loan status to COMPLETED", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
@@ -261,9 +261,9 @@ describe("Loans Integration", () => {
     });
 
     it("should update loan status to DEFAULTED and CANCELLED", async () => {
-      const member = await createTestMember();
+      const customer = await createTestCustomer();
       const loan = await caller.createLoan({
-        memberId: member.id,
+        customerId: customer.id,
         principal: 3000,
         termLength: 5,
         paymentAmount: 600,

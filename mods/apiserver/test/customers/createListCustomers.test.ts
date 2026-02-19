@@ -3,11 +3,11 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createListMembers } from "../../src/api/members/createListMembers.js";
+import { createListCustomers } from "../../src/api/customers/createListCustomers.js";
 import { ValidationError } from "@mikro/common";
 
-describe("createListMembers", () => {
-  const createMockMember = (id: string, name: string) => ({
+describe("createListCustomers", () => {
+  const createMockCustomer = (id: string, name: string) => ({
     id,
     name,
     phone: "+1234567890",
@@ -31,46 +31,46 @@ describe("createListMembers", () => {
   });
 
   describe("with valid input", () => {
-    it("should return all members without pagination", async () => {
+    it("should return all customers without pagination", async () => {
       // Arrange
-      const expectedMembers = [
-        createMockMember("member-1", "John Doe"),
-        createMockMember("member-2", "Jane Smith")
+      const expectedCustomers = [
+        createMockCustomer("customer-1", "John Doe"),
+        createMockCustomer("customer-2", "Jane Smith")
       ];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act
-      const result = await listMembers({});
+      const result = await listCustomers({});
 
       // Assert
       expect(result).to.have.length(2);
       expect(result[0].name).to.equal("John Doe");
-      expect(mockClient.member.findMany.calledOnce).to.be.true;
+      expect(mockClient.customer.findMany.calledOnce).to.be.true;
     });
 
-    it("should return members with pagination", async () => {
+    it("should return customers with pagination", async () => {
       // Arrange
-      const expectedMembers = [createMockMember("member-2", "Jane Smith")];
+      const expectedCustomers = [createMockCustomer("customer-2", "Jane Smith")];
       const mockClient = {
-        member: {
-          findMany: sinon.stub().resolves(expectedMembers)
+        customer: {
+          findMany: sinon.stub().resolves(expectedCustomers)
         }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act
-      const result = await listMembers({ limit: 10, offset: 1 });
+      const result = await listCustomers({ limit: 10, offset: 1 });
 
       // Assert
       expect(result).to.have.length(1);
-      expect(mockClient.member.findMany.calledOnce).to.be.true;
+      expect(mockClient.customer.findMany.calledOnce).to.be.true;
       expect(
-        mockClient.member.findMany.calledWith({
+        mockClient.customer.findMany.calledWith({
           where: { isActive: true },
           take: 10,
           skip: 1
@@ -78,17 +78,17 @@ describe("createListMembers", () => {
       ).to.be.true;
     });
 
-    it("should return empty array when no members exist", async () => {
+    it("should return empty array when no customers exist", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().resolves([])
         }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act
-      const result = await listMembers({});
+      const result = await listCustomers({});
 
       // Assert
       expect(result).to.be.an("array").that.is.empty;
@@ -99,34 +99,34 @@ describe("createListMembers", () => {
     it("should throw ValidationError for negative offset", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembers({ offset: -1 });
+        await listCustomers({ offset: -1 });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for limit exceeding max", async () => {
       // Arrange
       const mockClient = {
-        member: { findMany: sinon.stub() }
+        customer: { findMany: sinon.stub() }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembers({ limit: 101 });
+        await listCustomers({ limit: 101 });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.member.findMany.called).to.be.false;
+        expect(mockClient.customer.findMany.called).to.be.false;
       }
     });
   });
@@ -135,15 +135,15 @@ describe("createListMembers", () => {
     it("should propagate the error", async () => {
       // Arrange
       const mockClient = {
-        member: {
+        customer: {
           findMany: sinon.stub().rejects(new Error("Database error"))
         }
       };
-      const listMembers = createListMembers(mockClient as any);
+      const listCustomers = createListCustomers(mockClient as any);
 
       // Act & Assert
       try {
-        await listMembers({});
+        await listCustomers({});
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Database error");

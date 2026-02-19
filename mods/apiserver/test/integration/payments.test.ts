@@ -27,7 +27,7 @@ describe("Payments Integration", () => {
     await db.payment.deleteMany();
     await db.loan.deleteMany();
     await db.message.deleteMany();
-    await db.member.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);
@@ -38,17 +38,20 @@ describe("Payments Integration", () => {
   });
 
   /**
-   * Helper to create a member with a loan for payment tests.
+   * Helper to create a customer with a loan for payment tests.
    */
-  async function createMemberWithLoan(options?: { referredById?: string; memberName?: string }) {
+  async function createCustomerWithLoan(options?: {
+    referredById?: string;
+    customerName?: string;
+  }) {
     const collector = await caller.createUser({
       name: "Test Collector",
       phone: `+1809123458${String(Date.now()).slice(-2)}`,
       role: "COLLECTOR"
     });
 
-    const member = await caller.createMember({
-      name: options?.memberName ?? "Payment Test Member",
+    const customer = await caller.createCustomer({
+      name: options?.customerName ?? "Payment Test Customer",
       phone: "+18091234591",
       idNumber: `001-${String(Date.now()).slice(-7)}-9`,
       collectionPoint: "https://example.com/test-point",
@@ -66,19 +69,19 @@ describe("Payments Integration", () => {
     });
 
     const loan = await caller.createLoan({
-      memberId: member.id,
+      customerId: customer.id,
       principal: 5000,
       termLength: 10,
       paymentAmount: 650,
       paymentFrequency: "WEEKLY"
     });
 
-    return { member, loan, collector };
+    return { customer, loan, collector };
   }
 
   describe("createPayment", () => {
     it("should create a payment with required fields", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -94,7 +97,7 @@ describe("Payments Integration", () => {
     });
 
     it("should create a payment with CASH method", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -107,7 +110,7 @@ describe("Payments Integration", () => {
     });
 
     it("should create a payment with TRANSFER method", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -120,7 +123,7 @@ describe("Payments Integration", () => {
     });
 
     it("should create a payment with custom paidAt date", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
       const customDate = new Date("2026-01-15T10:00:00Z");
 
       const payment = await caller.createPayment({
@@ -140,7 +143,7 @@ describe("Payments Integration", () => {
         phone: "+18091234591",
         role: "COLLECTOR"
       });
-      const { loan } = await createMemberWithLoan();
+      const { loan } = await createCustomerWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -152,7 +155,7 @@ describe("Payments Integration", () => {
     });
 
     it("should create a payment with notes", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       const payment = await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -165,7 +168,7 @@ describe("Payments Integration", () => {
     });
 
     it("should block duplicate payments within 10 minutes", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -187,7 +190,7 @@ describe("Payments Integration", () => {
     });
 
     it("should allow multiple payments for same loan when spaced 10+ minutes apart", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       // Create first payment with backdated paidAt
       const payment1 = await caller.createPayment({
@@ -220,7 +223,7 @@ describe("Payments Integration", () => {
 
   describe("listPayments", () => {
     it("should list payments within date range", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       // Create payments on different dates
       await caller.createPayment({
@@ -252,7 +255,7 @@ describe("Payments Integration", () => {
     });
 
     it("should filter payments by date range", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       // Create payments on different dates
       await caller.createPayment({
@@ -283,7 +286,7 @@ describe("Payments Integration", () => {
     });
 
     it("should return payments in descending order by paidAt", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -316,7 +319,7 @@ describe("Payments Integration", () => {
     });
 
     it("should respect limit parameter", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       for (let i = 0; i < 5; i++) {
         await caller.createPayment({
@@ -337,7 +340,7 @@ describe("Payments Integration", () => {
     });
 
     it("should return empty array when no payments in range", async () => {
-      const { loan, collector } = await createMemberWithLoan();
+      const { loan, collector } = await createCustomerWithLoan();
 
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -356,14 +359,16 @@ describe("Payments Integration", () => {
     });
   });
 
-  describe("listPaymentsByMember", () => {
-    it("should list payments for a specific member", async () => {
-      const { member, loan, collector } = await createMemberWithLoan({ memberName: "Member A" });
-      const { loan: otherLoan, collector: otherCollector } = await createMemberWithLoan({
-        memberName: "Member B"
+  describe("listPaymentsByCustomer", () => {
+    it("should list payments for a specific customer", async () => {
+      const { customer, loan, collector } = await createCustomerWithLoan({
+        customerName: "Customer A"
+      });
+      const { loan: otherLoan, collector: otherCollector } = await createCustomerWithLoan({
+        customerName: "Customer B"
       });
 
-      // Create payments for both members
+      // Create payments for both customers
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
         amount: 650,
@@ -383,8 +388,8 @@ describe("Payments Integration", () => {
         collectedById: otherCollector.id
       });
 
-      const payments = await caller.listPaymentsByMember({
-        memberId: member.id,
+      const payments = await caller.listPaymentsByCustomer({
+        customerId: customer.id,
         startDate: new Date("2026-01-01"),
         endDate: new Date("2026-01-31")
       });
@@ -392,8 +397,8 @@ describe("Payments Integration", () => {
       expect(payments).to.have.lengthOf(2);
     });
 
-    it("should filter by date range for member", async () => {
-      const { member, loan, collector } = await createMemberWithLoan();
+    it("should filter by date range for customer", async () => {
+      const { customer, loan, collector } = await createCustomerWithLoan();
 
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -414,8 +419,8 @@ describe("Payments Integration", () => {
         collectedById: collector.id
       });
 
-      const payments = await caller.listPaymentsByMember({
-        memberId: member.id,
+      const payments = await caller.listPaymentsByCustomer({
+        customerId: customer.id,
         startDate: new Date("2026-01-10"),
         endDate: new Date("2026-01-31")
       });
@@ -423,11 +428,11 @@ describe("Payments Integration", () => {
       expect(payments).to.have.lengthOf(1);
     });
 
-    it("should return empty array for member with no payments", async () => {
-      const { member } = await createMemberWithLoan();
+    it("should return empty array for customer with no payments", async () => {
+      const { customer } = await createCustomerWithLoan();
 
-      const payments = await caller.listPaymentsByMember({
-        memberId: member.id,
+      const payments = await caller.listPaymentsByCustomer({
+        customerId: customer.id,
         startDate: new Date("2026-01-01"),
         endDate: new Date("2026-01-31")
       });
@@ -438,7 +443,7 @@ describe("Payments Integration", () => {
   });
 
   describe("listPaymentsByReferrer", () => {
-    it("should list payments for members referred by a specific user", async () => {
+    it("should list payments for customers referred by a specific user", async () => {
       // Create referrers
       const referrer1 = await caller.createUser({
         name: "Referrer 1",
@@ -451,17 +456,17 @@ describe("Payments Integration", () => {
         role: "REFERRER"
       });
 
-      // Create members with different referrers
-      const { loan: loan1, collector: collector1 } = await createMemberWithLoan({
-        memberName: "Referred by 1 - A",
+      // Create customers with different referrers
+      const { loan: loan1, collector: collector1 } = await createCustomerWithLoan({
+        customerName: "Referred by 1 - A",
         referredById: referrer1.id
       });
-      const { loan: loan2, collector: collector2 } = await createMemberWithLoan({
-        memberName: "Referred by 1 - B",
+      const { loan: loan2, collector: collector2 } = await createCustomerWithLoan({
+        customerName: "Referred by 1 - B",
         referredById: referrer1.id
       });
-      const { loan: loan3, collector: collector3 } = await createMemberWithLoan({
-        memberName: "Referred by 2",
+      const { loan: loan3, collector: collector3 } = await createCustomerWithLoan({
+        customerName: "Referred by 2",
         referredById: referrer2.id
       });
 
@@ -500,7 +505,7 @@ describe("Payments Integration", () => {
         phone: "+18091234594",
         role: "REFERRER"
       });
-      const { loan, collector } = await createMemberWithLoan({ referredById: referrer.id });
+      const { loan, collector } = await createCustomerWithLoan({ referredById: referrer.id });
 
       await caller.createPayment({
         loanId: loan.loanId, // Use numeric loanId
@@ -530,7 +535,7 @@ describe("Payments Integration", () => {
       expect(payments).to.have.lengthOf(1);
     });
 
-    it("should return empty array for referrer with no referred members", async () => {
+    it("should return empty array for referrer with no referred customers", async () => {
       const referrer = await caller.createUser({
         name: "Empty Referrer",
         phone: "+18091234595",

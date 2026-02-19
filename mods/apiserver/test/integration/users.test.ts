@@ -27,7 +27,7 @@ describe("Users Integration", () => {
     await db.message.deleteMany();
     await db.payment.deleteMany();
     await db.loan.deleteMany();
-    await db.member.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);

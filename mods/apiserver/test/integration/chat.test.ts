@@ -28,7 +28,7 @@ describe("Chat Integration", () => {
     await db.message.deleteMany();
     await db.payment.deleteMany();
     await db.loan.deleteMany();
-    await db.member.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);
@@ -39,9 +39,9 @@ describe("Chat Integration", () => {
   });
 
   /**
-   * Helper to create a test member.
+   * Helper to create a test customer.
    */
-  async function createTestMember(name = "Chat Test Member") {
+  async function createTestCustomer(name = "Chat Test Customer") {
     const referrer = await caller.createUser({
       name: "Test Referrer",
       phone: "+18091234583",
@@ -52,7 +52,7 @@ describe("Chat Integration", () => {
       phone: "+18091234584",
       role: "COLLECTOR"
     });
-    return caller.createMember({
+    return caller.createCustomer({
       name,
       phone: "+18091234599",
       idNumber: `001-${String(Date.now()).slice(-7)}-8`,
@@ -79,7 +79,7 @@ describe("Chat Integration", () => {
    * Since there's no addMessage tRPC procedure, we use Prisma directly.
    */
   async function createMessage(options: {
-    memberId?: string;
+    customerId?: string;
     userId?: string;
     role: "AI" | "HUMAN";
     content: string;
@@ -88,7 +88,7 @@ describe("Chat Integration", () => {
   }) {
     return db.message.create({
       data: {
-        memberId: options.memberId,
+        customerId: options.customerId,
         userId: options.userId,
         role: options.role,
         content: options.content,
@@ -115,23 +115,23 @@ describe("Chat Integration", () => {
   }
 
   describe("getChatHistory", () => {
-    describe("for members", () => {
-      it("should retrieve chat history for a member", async () => {
-        const member = await createTestMember();
+    describe("for customers", () => {
+      it("should retrieve chat history for a customer", async () => {
+        const customer = await createTestCustomer();
 
         // Create messages
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "HUMAN",
           content: "Hello, I need help with my loan."
         });
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "AI",
           content: "Hi! I can help you with that. What would you like to know?"
         });
 
-        const history = await caller.getChatHistory({ memberId: member.id });
+        const history = await caller.getChatHistory({ customerId: customer.id });
 
         expect(history).to.be.an("array");
         expect(history).to.have.lengthOf(2);
@@ -140,29 +140,29 @@ describe("Chat Integration", () => {
       });
 
       it("should return messages in ascending order by createdAt", async () => {
-        const member = await createTestMember();
+        const customer = await createTestCustomer();
 
         // Create messages with specific timestamps
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "HUMAN",
           content: "First message",
           createdAt: new Date("2026-01-15T10:00:00Z")
         });
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "AI",
           content: "Second message",
           createdAt: new Date("2026-01-15T10:01:00Z")
         });
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "HUMAN",
           content: "Third message",
           createdAt: new Date("2026-01-15T10:02:00Z")
         });
 
-        const history = await caller.getChatHistory({ memberId: member.id });
+        const history = await caller.getChatHistory({ customerId: customer.id });
 
         expect(history[0].content).to.equal("First message");
         expect(history[1].content).to.equal("Second message");
@@ -170,10 +170,10 @@ describe("Chat Integration", () => {
       });
 
       it("should include attachments with messages", async () => {
-        const member = await createTestMember();
+        const customer = await createTestCustomer();
 
         const message = await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "HUMAN",
           content: "Here is my ID photo"
         });
@@ -187,7 +187,7 @@ describe("Chat Integration", () => {
           size: 102400
         });
 
-        const history = await caller.getChatHistory({ memberId: member.id });
+        const history = await caller.getChatHistory({ customerId: customer.id });
 
         expect(history).to.have.lengthOf(1);
         expect(history[0].attachments).to.be.an("array");
@@ -197,28 +197,30 @@ describe("Chat Integration", () => {
       });
 
       it("should include tools for AI messages", async () => {
-        const member = await createTestMember();
+        const customer = await createTestCustomer();
 
         await createMessage({
-          memberId: member.id,
+          customerId: customer.id,
           role: "AI",
           content: "I checked your loan status. Here are the details...",
-          tools: ["check_loan_status", "get_member_info"]
+          tools: ["check_loan_status", "get_customer_info"]
         });
 
-        const history = await caller.getChatHistory({ memberId: member.id });
+        const history = await caller.getChatHistory({ customerId: customer.id });
 
         expect(history).to.have.lengthOf(1);
-        expect(history[0].tools).to.equal(JSON.stringify(["check_loan_status", "get_member_info"]));
+        expect(history[0].tools).to.equal(
+          JSON.stringify(["check_loan_status", "get_customer_info"])
+        );
       });
 
       it("should respect limit parameter", async () => {
-        const member = await createTestMember();
+        const customer = await createTestCustomer();
 
         // Create 5 messages
         for (let i = 1; i <= 5; i++) {
           await createMessage({
-            memberId: member.id,
+            customerId: customer.id,
             role: i % 2 === 0 ? "AI" : "HUMAN",
             content: `Message ${i}`,
             createdAt: new Date(`2026-01-15T10:0${i}:00Z`)
@@ -226,7 +228,7 @@ describe("Chat Integration", () => {
         }
 
         const history = await caller.getChatHistory({
-          memberId: member.id,
+          customerId: customer.id,
           limit: 3
         });
 
@@ -234,12 +236,12 @@ describe("Chat Integration", () => {
       });
 
       it("should respect offset parameter", async () => {
-        const member = await createTestMember();
+        const customer = await createTestCustomer();
 
         // Create 5 messages
         for (let i = 1; i <= 5; i++) {
           await createMessage({
-            memberId: member.id,
+            customerId: customer.id,
             role: "HUMAN",
             content: `Message ${i}`,
             createdAt: new Date(`2026-01-15T10:0${i}:00Z`)
@@ -247,7 +249,7 @@ describe("Chat Integration", () => {
         }
 
         const history = await caller.getChatHistory({
-          memberId: member.id,
+          customerId: customer.id,
           offset: 2
         });
 
@@ -255,34 +257,34 @@ describe("Chat Integration", () => {
         expect(history[0].content).to.equal("Message 3");
       });
 
-      it("should return empty array for member with no messages", async () => {
-        const member = await createTestMember();
+      it("should return empty array for customer with no messages", async () => {
+        const customer = await createTestCustomer();
 
-        const history = await caller.getChatHistory({ memberId: member.id });
+        const history = await caller.getChatHistory({ customerId: customer.id });
 
         expect(history).to.be.an("array");
         expect(history).to.have.lengthOf(0);
       });
 
-      it("should only return messages for specified member", async () => {
-        const member1 = await createTestMember("Member 1");
-        const member2 = await createTestMember("Member 2");
+      it("should only return messages for specified customer", async () => {
+        const customer1 = await createTestCustomer("Customer 1");
+        const customer2 = await createTestCustomer("Customer 2");
 
         await createMessage({
-          memberId: member1.id,
+          customerId: customer1.id,
           role: "HUMAN",
-          content: "Message from member 1"
+          content: "Message from customer 1"
         });
         await createMessage({
-          memberId: member2.id,
+          customerId: customer2.id,
           role: "HUMAN",
-          content: "Message from member 2"
+          content: "Message from customer 2"
         });
 
-        const history = await caller.getChatHistory({ memberId: member1.id });
+        const history = await caller.getChatHistory({ customerId: customer1.id });
 
         expect(history).to.have.lengthOf(1);
-        expect(history[0].content).to.equal("Message from member 1");
+        expect(history[0].content).to.equal("Message from customer 1");
       });
     });
 

@@ -8,7 +8,7 @@
   "scripts": {
     "build": "prisma generate && tsc",
     "typecheck": "tsc --noEmit",
-    "test": "mocha",
+    "test": "mocha --ignore 'test/integration/**'",
     "test:integration": "mocha 'test/integration/**/*.test.ts'",
     "start": "nodemon --watch src --watch ../common/src --watch ../agents/src --ignore src/generated --ext ts --exec 'npm run build && node dist/index.js'",
     "clean": "rm -rf dist",

@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Integration tests for member procedures.
- * Tests happy paths for all member CRUD operations.
+ * Integration tests for customer procedures.
+ * Tests happy paths for all customer CRUD operations.
  */
 import { expect } from "chai";
 import {
@@ -13,7 +13,7 @@ import {
   type AuthenticatedCaller
 } from "./setup.js";
 
-describe("Members Integration", () => {
+describe("Customers Integration", () => {
   let db: TestDb;
   let caller: AuthenticatedCaller;
 
@@ -27,7 +27,7 @@ describe("Members Integration", () => {
     await db.message.deleteMany();
     await db.payment.deleteMany();
     await db.loan.deleteMany();
-    await db.member.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);
@@ -54,8 +54,8 @@ describe("Members Integration", () => {
     return { referrer, collector };
   }
 
-  describe("createMember", () => {
-    it("should create a member with required fields", async () => {
+  describe("createCustomer", () => {
+    it("should create a customer with required fields", async () => {
       const { referrer, collector } = await createTestUsers();
       const input = {
         name: "John Doe",
@@ -67,22 +67,22 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       };
 
-      const member = await caller.createMember(input);
+      const customer = await caller.createCustomer(input);
 
-      expect(member.id).to.be.a("string");
-      expect(member.name).to.equal(input.name);
+      expect(customer.id).to.be.a("string");
+      expect(customer.name).to.equal(input.name);
       // Phone should be normalized to E.164 format
-      expect(member.phone).to.equal("+18091234569");
-      expect(member.idNumber).to.equal(input.idNumber);
-      expect(member.collectionPoint).to.equal(input.collectionPoint);
-      expect(member.homeAddress).to.equal(input.homeAddress);
-      expect(member.isActive).to.equal(false); // Default is false in database
-      expect(member.isBusinessOwner).to.equal(false);
-      expect(member.referredById).to.equal(referrer.id);
-      expect(member.assignedCollectorId).to.equal(collector.id);
+      expect(customer.phone).to.equal("+18091234569");
+      expect(customer.idNumber).to.equal(input.idNumber);
+      expect(customer.collectionPoint).to.equal(input.collectionPoint);
+      expect(customer.homeAddress).to.equal(input.homeAddress);
+      expect(customer.isActive).to.equal(false); // Default is false in database
+      expect(customer.isBusinessOwner).to.equal(false);
+      expect(customer.referredById).to.equal(referrer.id);
+      expect(customer.assignedCollectorId).to.equal(collector.id);
     });
 
-    it("should create a member with optional fields", async () => {
+    it("should create a customer with optional fields", async () => {
       const { referrer, collector } = await createTestUsers();
       const input = {
         name: "Jane Smith",
@@ -98,15 +98,15 @@ describe("Members Integration", () => {
         notes: "Test note"
       };
 
-      const member = await caller.createMember(input);
+      const customer = await caller.createCustomer(input);
 
-      expect(member.jobPosition).to.equal(input.jobPosition);
-      expect(Number(member.income)).to.equal(input.income);
-      expect(member.isBusinessOwner).to.equal(true);
-      expect(member.notes).to.equal(input.notes);
+      expect(customer.jobPosition).to.equal(input.jobPosition);
+      expect(Number(customer.income)).to.equal(input.income);
+      expect(customer.isBusinessOwner).to.equal(true);
+      expect(customer.notes).to.equal(input.notes);
     });
 
-    it("should create a member with referrer and collector", async () => {
+    it("should create a customer with referrer and collector", async () => {
       const { referrer, collector } = await createTestUsers();
 
       const input = {
@@ -119,19 +119,19 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       };
 
-      const member = await caller.createMember(input);
+      const customer = await caller.createCustomer(input);
 
-      expect(member.referredById).to.equal(referrer.id);
-      expect(member.assignedCollectorId).to.equal(collector.id);
+      expect(customer.referredById).to.equal(referrer.id);
+      expect(customer.assignedCollectorId).to.equal(collector.id);
     });
   });
 
-  describe("getMember", () => {
-    it("should retrieve a member by ID", async () => {
+  describe("getCustomer", () => {
+    it("should retrieve a customer by ID", async () => {
       const { referrer, collector } = await createTestUsers();
-      // Create a member first
-      const created = await caller.createMember({
-        name: "Test Member",
+      // Create a customer first
+      const created = await caller.createCustomer({
+        name: "Test Customer",
         phone: "+18091234572",
         idNumber: "004-4567890-1",
         collectionPoint: "https://example.com/test-point",
@@ -140,15 +140,15 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      const fetched = await caller.getMember({ id: created.id });
+      const fetched = await caller.getCustomer({ id: created.id });
 
       expect(fetched.id).to.equal(created.id);
       expect(fetched.name).to.equal(created.name);
       expect(fetched.phone).to.equal(created.phone);
     });
 
-    it("should return null for non-existent member", async () => {
-      const result = await caller.getMember({
+    it("should return null for non-existent customer", async () => {
+      const result = await caller.getCustomer({
         id: "550e8400-e29b-41d4-a716-446655440000"
       });
 
@@ -156,10 +156,10 @@ describe("Members Integration", () => {
     });
   });
 
-  describe("updateMember", () => {
-    it("should update member name", async () => {
+  describe("updateCustomer", () => {
+    it("should update customer name", async () => {
       const { referrer, collector } = await createTestUsers();
-      const created = await caller.createMember({
+      const created = await caller.createCustomer({
         name: "Original Name",
         phone: "+18091234573",
         idNumber: "005-5678901-2",
@@ -169,7 +169,7 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      const updated = await caller.updateMember({
+      const updated = await caller.updateCustomer({
         id: created.id,
         name: "Updated Name"
       });
@@ -178,9 +178,9 @@ describe("Members Integration", () => {
       expect(updated.phone).to.equal(created.phone); // Unchanged
     });
 
-    it("should update member phone", async () => {
+    it("should update customer phone", async () => {
       const { referrer, collector } = await createTestUsers();
-      const created = await caller.createMember({
+      const created = await caller.createCustomer({
         name: "Phone Test",
         phone: "+18091234574",
         idNumber: "006-6789012-3",
@@ -190,7 +190,7 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      const updated = await caller.updateMember({
+      const updated = await caller.updateCustomer({
         id: created.id,
         phone: "+18091234575"
       });
@@ -199,9 +199,9 @@ describe("Members Integration", () => {
       expect(updated.phone).to.equal("+18091234575");
     });
 
-    it("should update member note", async () => {
+    it("should update customer note", async () => {
       const { referrer, collector } = await createTestUsers();
-      const created = await caller.createMember({
+      const created = await caller.createCustomer({
         name: "Note Test",
         phone: "+18091234576",
         idNumber: "007-7890123-4",
@@ -211,7 +211,7 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      const updated = await caller.updateMember({
+      const updated = await caller.updateCustomer({
         id: created.id,
         notes: "Updated note"
       });
@@ -219,10 +219,10 @@ describe("Members Integration", () => {
       expect(updated.notes).to.equal("Updated note");
     });
 
-    it("should deactivate a member", async () => {
+    it("should deactivate a customer", async () => {
       const { referrer, collector } = await createTestUsers();
-      const created = await caller.createMember({
-        name: "Active Member",
+      const created = await caller.createCustomer({
+        name: "Active Customer",
         phone: "+18091234577",
         idNumber: "008-8901234-5",
         collectionPoint: "https://example.com/active-point",
@@ -233,7 +233,7 @@ describe("Members Integration", () => {
 
       expect(created.isActive).to.equal(false); // Default is false
 
-      const updated = await caller.updateMember({
+      const updated = await caller.updateCustomer({
         id: created.id,
         isActive: true
       });
@@ -241,7 +241,7 @@ describe("Members Integration", () => {
       expect(updated.isActive).to.equal(true);
 
       // Then deactivate
-      const deactivated = await caller.updateMember({
+      const deactivated = await caller.updateCustomer({
         id: created.id,
         isActive: false
       });
@@ -250,12 +250,12 @@ describe("Members Integration", () => {
     });
   });
 
-  describe("listMembers", () => {
-    it("should list all members", async () => {
+  describe("listCustomers", () => {
+    it("should list all customers", async () => {
       const { referrer, collector } = await createTestUsers();
-      // Create multiple members
-      await caller.createMember({
-        name: "Member 1",
+      // Create multiple customers
+      await caller.createCustomer({
+        name: "Customer 1",
         phone: "+18091234580",
         idNumber: "010-0123456-7",
         collectionPoint: "https://example.com/point-1",
@@ -263,8 +263,8 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
-        name: "Member 2",
+      await caller.createCustomer({
+        name: "Customer 2",
         phone: "+18091234581",
         idNumber: "011-1234567-8",
         collectionPoint: "https://example.com/point-2",
@@ -272,8 +272,8 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
-        name: "Member 3",
+      await caller.createCustomer({
+        name: "Customer 3",
         phone: "+18091234582",
         idNumber: "012-2345678-9",
         collectionPoint: "https://example.com/point-3",
@@ -282,20 +282,20 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      // listMembers filters by isActive: true by default, but members are created with isActive: false
-      // So we need to use showInactive: true to see all members
-      const members = await caller.listMembers({ showInactive: true });
+      // listCustomers filters by isActive: true by default, but customers are created with isActive: false
+      // So we need to use showInactive: true to see all customers
+      const customers = await caller.listCustomers({ showInactive: true });
 
-      expect(members).to.be.an("array");
-      expect(members).to.have.lengthOf(3);
+      expect(customers).to.be.an("array");
+      expect(customers).to.have.lengthOf(3);
     });
 
     it("should respect limit parameter", async () => {
       const { referrer, collector } = await createTestUsers();
-      // Create 5 members
+      // Create 5 customers
       for (let i = 1; i <= 5; i++) {
-        await caller.createMember({
-          name: `Member ${i}`,
+        await caller.createCustomer({
+          name: `Customer ${i}`,
           phone: `+1809123459${i}`,
           idNumber: `020-${String(i).padStart(7, "0")}-${i}`,
           collectionPoint: `https://example.com/point-${i}`,
@@ -305,18 +305,18 @@ describe("Members Integration", () => {
         });
       }
 
-      // listMembers filters by isActive: true by default
-      const members = await caller.listMembers({ limit: 3, showInactive: true });
+      // listCustomers filters by isActive: true by default
+      const customers = await caller.listCustomers({ limit: 3, showInactive: true });
 
-      expect(members).to.have.lengthOf(3);
+      expect(customers).to.have.lengthOf(3);
     });
 
     it("should respect offset parameter", async () => {
       const { referrer, collector } = await createTestUsers();
-      // Create 5 members
+      // Create 5 customers
       for (let i = 1; i <= 5; i++) {
-        await caller.createMember({
-          name: `Member ${i}`,
+        await caller.createCustomer({
+          name: `Customer ${i}`,
           phone: `+1809123460${i}`,
           idNumber: `030-${String(i).padStart(7, "0")}-${i}`,
           collectionPoint: `https://example.com/point-${i}`,
@@ -326,24 +326,24 @@ describe("Members Integration", () => {
         });
       }
 
-      // listMembers filters by isActive: true by default
-      const allMembers = await caller.listMembers({ showInactive: true });
-      const offsetMembers = await caller.listMembers({ offset: 2, showInactive: true });
+      // listCustomers filters by isActive: true by default
+      const allCustomers = await caller.listCustomers({ showInactive: true });
+      const offsetCustomers = await caller.listCustomers({ offset: 2, showInactive: true });
 
       // Verify offset reduces the count by 2
-      expect(allMembers).to.have.lengthOf(5);
-      expect(offsetMembers).to.have.lengthOf(3);
+      expect(allCustomers).to.have.lengthOf(5);
+      expect(offsetCustomers).to.have.lengthOf(3);
 
-      // Verify offset members are a subset of all members
-      const allIds = new Set(allMembers.map((m) => m.id));
-      offsetMembers.forEach((m) => {
-        expect(allIds.has(m.id)).to.be.true;
+      // Verify offset customers are a subset of all customers
+      const allIds = new Set(allCustomers.map((c) => c.id));
+      offsetCustomers.forEach((c) => {
+        expect(allIds.has(c.id)).to.be.true;
       });
     });
   });
 
-  describe("listMembersByReferrer", () => {
-    it("should list members by referrer", async () => {
+  describe("listCustomersByReferrer", () => {
+    it("should list customers by referrer", async () => {
       // Create referrer
       const referrer = await caller.createUser({
         name: "Test Referrer",
@@ -357,9 +357,9 @@ describe("Members Integration", () => {
       });
 
       const { collector } = await createTestUsers();
-      // Create members with different referrers
-      await caller.createMember({
-        name: "Referred Member 1",
+      // Create customers with different referrers
+      await caller.createCustomer({
+        name: "Referred Customer 1",
         phone: "+18091234610",
         idNumber: "040-0123456-7",
         collectionPoint: "https://example.com/point",
@@ -367,8 +367,8 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
-        name: "Referred Member 2",
+      await caller.createCustomer({
+        name: "Referred Customer 2",
         phone: "+18091234611",
         idNumber: "041-1234567-8",
         collectionPoint: "https://example.com/point",
@@ -376,7 +376,7 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
+      await caller.createCustomer({
         name: "Other Referred",
         phone: "+18091234612",
         idNumber: "042-2345678-9",
@@ -386,36 +386,36 @@ describe("Members Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      // listMembersByReferrer filters by isActive: true by default
-      const members = await caller.listMembersByReferrer({
+      // listCustomersByReferrer filters by isActive: true by default
+      const customers = await caller.listCustomersByReferrer({
         referredById: referrer.id,
         showInactive: true
       });
 
-      expect(members).to.have.lengthOf(2);
-      members.forEach((m) => {
+      expect(customers).to.have.lengthOf(2);
+      customers.forEach((m) => {
         expect(m.referredById).to.equal(referrer.id);
       });
     });
 
-    it("should return empty array for referrer with no members", async () => {
+    it("should return empty array for referrer with no customers", async () => {
       const referrer = await caller.createUser({
         name: "Empty Referrer",
         phone: "+18091234632",
         role: "REFERRER"
       });
 
-      const members = await caller.listMembersByReferrer({
+      const customers = await caller.listCustomersByReferrer({
         referredById: referrer.id
       });
 
-      expect(members).to.be.an("array");
-      expect(members).to.have.lengthOf(0);
+      expect(customers).to.be.an("array");
+      expect(customers).to.have.lengthOf(0);
     });
   });
 
-  describe("listMembersByCollector", () => {
-    it("should list members by collector", async () => {
+  describe("listCustomersByCollector", () => {
+    it("should list customers by collector", async () => {
       // Create collector
       const collector = await caller.createUser({
         name: "Test Collector",
@@ -429,9 +429,9 @@ describe("Members Integration", () => {
       });
 
       const { referrer } = await createTestUsers();
-      // Create members with different collectors
-      await caller.createMember({
-        name: "Assigned Member 1",
+      // Create customers with different collectors
+      await caller.createCustomer({
+        name: "Assigned Customer 1",
         phone: "+18091234620",
         idNumber: "050-0123456-7",
         collectionPoint: "https://example.com/point",
@@ -439,8 +439,8 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
-        name: "Assigned Member 2",
+      await caller.createCustomer({
+        name: "Assigned Customer 2",
         phone: "+18091234621",
         idNumber: "051-1234567-8",
         collectionPoint: "https://example.com/point",
@@ -448,7 +448,7 @@ describe("Members Integration", () => {
         referredById: referrer.id,
         assignedCollectorId: collector.id
       });
-      await caller.createMember({
+      await caller.createCustomer({
         name: "Other Assigned",
         phone: "+18091234622",
         idNumber: "052-2345678-9",
@@ -458,31 +458,31 @@ describe("Members Integration", () => {
         assignedCollectorId: otherCollector.id
       });
 
-      // listMembersByCollector filters by isActive: true by default
-      const members = await caller.listMembersByCollector({
+      // listCustomersByCollector filters by isActive: true by default
+      const customers = await caller.listCustomersByCollector({
         assignedCollectorId: collector.id,
         showInactive: true
       });
 
-      expect(members).to.have.lengthOf(2);
-      members.forEach((m) => {
+      expect(customers).to.have.lengthOf(2);
+      customers.forEach((m) => {
         expect(m.assignedCollectorId).to.equal(collector.id);
       });
     });
 
-    it("should return empty array for collector with no assigned members", async () => {
+    it("should return empty array for collector with no assigned customers", async () => {
       const collector = await caller.createUser({
         name: "Empty Collector",
         phone: "+18091234635",
         role: "COLLECTOR"
       });
 
-      const members = await caller.listMembersByCollector({
+      const customers = await caller.listCustomersByCollector({
         assignedCollectorId: collector.id
       });
 
-      expect(members).to.be.an("array");
-      expect(members).to.have.lengthOf(0);
+      expect(customers).to.be.an("array");
+      expect(customers).to.have.lengthOf(0);
     });
   });
 });
