@@ -5,17 +5,17 @@
  */
 import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
 
-export const DEFAULTED_REPORT_WIDTH = 900;
+export const DEFAULTED_REPORT_WIDTH = 1200;
 
 /** Base height per row when summary is short. */
 const ROW_HEIGHT_BASE_PX = 44;
 /** Extra height per line of wrapped summary. */
 const SUMMARY_LINE_HEIGHT_PX = 20;
 /**
- * Summary column is flex:4 of ~8.4 total ≈ 48% of ~860 px ≈ 413 px.
- * At 14 px Inter that fits roughly 55 characters per line.
+ * Summary column is flex:4 of ~8.4 total ≈ 48% of ~1160 px ≈ 552 px.
+ * At 14 px Inter that fits roughly 75 characters per line.
  */
-const CHARS_PER_LINE = 55;
+const CHARS_PER_LINE = 75;
 /** Header + summary bar + content padding + footer. */
 const BASE_HEIGHT_PX = 280;
 const TABLE_HEADER_PX = 36;
