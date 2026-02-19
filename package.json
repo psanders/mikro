@@ -11,6 +11,7 @@
     "clean": "lerna clean",
     "build": "lerna run build",
     "test": "lerna run test",
+    "test:integration": "npm run test:integration -w @mikro/apiserver",
     "typecheck": "lerna run typecheck",
     "start": "LOGS_LEVEL=verbose npm start -w @mikro/apiserver",
     "lint": "eslint .",
