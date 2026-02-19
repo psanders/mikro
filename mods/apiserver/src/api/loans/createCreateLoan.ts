@@ -40,6 +40,7 @@ export function createCreateLoan(client: DbClient) {
         paymentAmount: params.paymentAmount,
         paymentFrequency: params.paymentFrequency,
         startingDate: params.startingDate ?? null,
+        nickname: params.nickname ?? null,
         type: params.type ?? "SAN"
       }
     })) as unknown as Loan;

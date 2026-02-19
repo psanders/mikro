@@ -3,6 +3,7 @@
  */
 export { createCreateLoan } from "./createCreateLoan.js";
 export { createUpdateLoanStatus } from "./createUpdateLoanStatus.js";
+export { createUpdateLoanNickname } from "./createUpdateLoanNickname.js";
 export { createListLoans } from "./createListLoans.js";
 export { createListLoansByReferrer } from "./createListLoansByReferrer.js";
 export { createListLoansByCollector } from "./createListLoansByCollector.js";

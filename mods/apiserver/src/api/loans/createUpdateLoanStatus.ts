@@ -50,7 +50,7 @@ export function createUpdateLoanStatus(client: DbClient) {
     return {
       id: updated.id,
       loanId: updated.loanId,
-      status: updated.status
+      status: updated.status!
     };
   };
 

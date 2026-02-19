@@ -46,7 +46,8 @@ export async function handleGetLoanByLoanId(
         termLength: loan.termLength,
         paymentAmount: loan.paymentAmount,
         paymentFrequency: loan.paymentFrequency,
-        status: loan.status
+        status: loan.status,
+        nickname: loan.nickname
       },
       customer: {
         id: loan.customer.id,

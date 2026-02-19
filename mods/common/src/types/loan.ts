@@ -15,6 +15,7 @@ export interface Loan {
   paymentAmount: number;
   paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
   startingDate: Date | null;
+  nickname: string | null;
   customerId: string;
   createdAt: Date;
   updatedAt: Date;

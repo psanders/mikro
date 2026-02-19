@@ -31,6 +31,7 @@ interface SerializedLoan {
   paymentFrequency: string;
   createdAt: string | Date;
   payments: Array<{ paidAt: string | Date }>;
+  nickname?: string | null;
 }
 
 /**
@@ -66,6 +67,7 @@ export interface CustomerReportRow {
   name: string;
   phone: string;
   loanId: number;
+  nickname: string;
   paymentCycle: string;
   rating: string;
   missedCount: number;
@@ -87,6 +89,7 @@ export function buildCustomerReportRows(customers: SerializedCustomer[]): Custom
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
+        nickname: loan.nickname ?? "",
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
@@ -119,8 +122,9 @@ export function outputCustomersAsCsv(
   );
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
+    const displayName = r.nickname || r.name;
     const row = [
-      `"${r.name}"`,
+      `"${displayName}"`,
       r.phone,
       r.loanId,
       r.paymentCycle,
@@ -160,8 +164,9 @@ export function outputCustomersAsTable(
 
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
+    const displayName = r.nickname || r.name;
     ui.div(
-      { text: r.name, padding: [0, 0, 0, 0], width: 25 },
+      { text: displayName, padding: [0, 0, 0, 0], width: 25 },
       { text: r.phone, padding: [0, 0, 0, 0], width: 15 },
       { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
       { text: r.paymentCycle, padding: [0, 0, 0, 0], width: 10 },
@@ -190,7 +195,8 @@ function toCustomersForGrouping(
       loanId: loan.loanId,
       paymentFrequency: loan.paymentFrequency,
       createdAt: new Date(loan.createdAt),
-      payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) }))
+      payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) })),
+      nickname: loan.nickname
     }))
   }));
 }
@@ -208,8 +214,9 @@ export function outputCustomersGroupedAsTable(
   const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
   log(`Total: ${totalRows} préstamos de ${customers.length} clientes\n`);
 
+  const displayName = (r: GroupedCustomerRow) => r.nickname || r.name;
   outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, (r) => [
-    r.name,
+    displayName(r),
     r.phone,
     String(r.loanId),
     formatPaymentFrequency(r.paymentFrequency),
@@ -217,7 +224,7 @@ export function outputCustomersGroupedAsTable(
     String(r.missedCount)
   ]);
   outputGroupedSection(log, "Requiere atención", grouped.requiereAtencion, (r) => [
-    r.name,
+    displayName(r),
     r.phone,
     String(r.loanId),
     formatPaymentFrequency(r.paymentFrequency),
@@ -225,7 +232,7 @@ export function outputCustomersGroupedAsTable(
     String(r.missedCount)
   ]);
   outputGroupedSection(log, "Al día", grouped.alDia, (r) => [
-    r.name,
+    displayName(r),
     r.phone,
     String(r.loanId),
     formatPaymentFrequency(r.paymentFrequency),
@@ -352,6 +359,7 @@ export async function writeCustomersToExcel(
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
+        nickname: loan.nickname ?? "",
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
@@ -371,8 +379,9 @@ export async function writeCustomersToExcel(
   });
 
   for (const r of rows) {
+    const displayName = r.nickname || r.name;
     const row = worksheet.addRow({
-      name: r.name,
+      name: displayName,
       phone: r.phone,
       loanId: r.loanId,
       paymentCycle: r.paymentCycle,

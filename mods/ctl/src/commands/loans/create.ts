@@ -44,6 +44,10 @@ export default class Create extends BaseCommand<typeof Create> {
         "Starting date for payment cycles (ISO date, e.g. 2026-02-15). Defaults to loan creation date.",
       required: false
     }),
+    nickname: Flags.string({
+      description: "Optional nickname for the loan (e.g. business name for reports)",
+      required: false
+    }),
     type: Flags.string({
       description: "Loan Type",
       options: ["SAN"],
@@ -94,6 +98,13 @@ export default class Create extends BaseCommand<typeof Create> {
       { default: today }
     );
     const startingDate = new Date(startingDateStr);
+    const nicknameStr = await promptTextIfMissing(
+      flags.nickname,
+      "Nickname (optional, press Enter to skip)",
+      "nickname",
+      { default: "" }
+    );
+    const nickname = nicknameStr?.trim() || undefined;
     const type = (flags.type || "SAN") as "SAN";
 
     const ready = await confirm({ message: "Ready to create loan?" });
@@ -111,6 +122,7 @@ export default class Create extends BaseCommand<typeof Create> {
         paymentAmount,
         paymentFrequency,
         startingDate,
+        ...(nickname !== undefined && { nickname }),
         type
       });
 

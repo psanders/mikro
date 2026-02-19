@@ -74,6 +74,7 @@ export function createGenerateDefaultedReport(client: DbClient) {
         name: loan.customer.name,
         phone: loan.customer.phone,
         loanId: loan.loanId,
+        nickname: loan.nickname ?? "",
         paymentFrequency: loan.paymentFrequency,
         totalPaid,
         summary: summaries[i] ?? "Sin notas"

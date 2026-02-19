@@ -24,6 +24,7 @@ export interface DefaultedReportRow {
   name: string;
   phone: string;
   loanId: number;
+  nickname: string;
   paymentFrequency: string;
   totalPaid: number;
   summary: string;
@@ -96,7 +97,11 @@ function defaultedRow(row: DefaultedReportRow): SatoriElement {
       }
     },
     [
-      el("div", { style: { flex: 1.5, textAlign: "left", overflow: "hidden" } }, row.name),
+      el(
+        "div",
+        { style: { flex: 1.5, textAlign: "left", overflow: "hidden" } },
+        row.nickname || row.name
+      ),
       el("div", { style: { flex: 1.2, textAlign: "left" } }, row.phone),
       el("div", { style: { flex: 0.7, textAlign: "right" } }, String(row.loanId)),
       el(

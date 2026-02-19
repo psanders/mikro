@@ -132,7 +132,11 @@ function customerRow(row: GroupedCustomerRow): SatoriElement {
       }
     },
     [
-      el("div", { style: { flex: 1.8, textAlign: "left", overflow: "hidden" } }, row.name),
+      el(
+        "div",
+        { style: { flex: 1.8, textAlign: "left", overflow: "hidden" } },
+        row.nickname || row.name
+      ),
       el("div", { style: { flex: 1.2, textAlign: "left" } }, row.phone),
       el("div", { style: { flex: 0.8, textAlign: "right" } }, String(row.loanId)),
       el(

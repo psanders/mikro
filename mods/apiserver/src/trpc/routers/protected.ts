@@ -23,6 +23,7 @@ import {
   createLoanSchema,
   calculateLoanSchema,
   updateLoanStatusSchema,
+  updateLoanNicknameSchema,
   listLoansSchema,
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
@@ -69,6 +70,7 @@ import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
 // Loan API functions
 import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
 import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
+import { createUpdateLoanNickname } from "../../api/loans/createUpdateLoanNickname.js";
 import { createListLoans } from "../../api/loans/createListLoans.js";
 import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
@@ -298,6 +300,16 @@ export const protectedRouter = router({
     .input(updateLoanStatusSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createUpdateLoanStatus(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Update a loan's nickname (set or clear).
+   */
+  updateLoanNickname: protectedProcedure
+    .input(updateLoanNicknameSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createUpdateLoanNickname(ctx.db);
       return fn(input);
     }),
 

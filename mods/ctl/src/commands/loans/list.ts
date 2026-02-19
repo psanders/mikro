@@ -28,7 +28,7 @@ export default class List extends ListCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 140 });
+      const ui = cliui({ width: 160 });
 
       ui.div(
         { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
@@ -37,7 +37,8 @@ export default class List extends ListCommand<typeof List> {
         { text: "FREQ", padding: [0, 0, 0, 0], width: 8 },
         { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
         { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
-        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 35 }
+        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 35 },
+        { text: "NICKNAME", padding: [0, 0, 0, 0], width: 35 }
       );
 
       loans.forEach((loan) => {
@@ -48,7 +49,12 @@ export default class List extends ListCommand<typeof List> {
           { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 8 },
           { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
           { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
-          { text: loan.customer.name, padding: [0, 0, 0, 0], width: 35 }
+          { text: loan.customer.name, padding: [0, 0, 0, 0], width: 35 },
+          {
+            text: (loan as { nickname?: string | null }).nickname ?? "",
+            padding: [0, 0, 0, 0],
+            width: 35
+          }
         );
       });
 

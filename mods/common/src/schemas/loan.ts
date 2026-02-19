@@ -23,6 +23,7 @@ export const createLoanSchema = z.object({
   paymentAmount: z.number().positive("Payment amount must be positive"),
   paymentFrequency: paymentFrequencyEnum,
   startingDate: z.coerce.date().optional(),
+  nickname: z.string().max(100).optional(),
   type: loanTypeEnum.optional()
 });
 
@@ -73,6 +74,14 @@ export const updateLoanStatusStatusEnum = z.enum(["COMPLETED", "DEFAULTED", "CAN
 export const updateLoanStatusSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
   status: updateLoanStatusStatusEnum
+});
+
+/**
+ * Schema for updating a loan's nickname (set or clear).
+ */
+export const updateLoanNicknameSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
+  nickname: z.string().max(100).nullable()
 });
 
 /**
@@ -158,6 +167,11 @@ export type GetLoanByLoanIdInput = z.infer<typeof getLoanByLoanIdSchema>;
  * Input type for updating a loan's status.
  */
 export type UpdateLoanStatusInput = z.infer<typeof updateLoanStatusSchema>;
+
+/**
+ * Input type for updating a loan's nickname.
+ */
+export type UpdateLoanNicknameInput = z.infer<typeof updateLoanNicknameSchema>;
 
 /**
  * Loan type enum type.

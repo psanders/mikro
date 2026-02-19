@@ -14,6 +14,7 @@ export interface LoanForGrouping {
   paymentFrequency: string;
   createdAt: Date;
   payments: Array<{ paidAt: Date }>;
+  nickname?: string | null;
 }
 
 /**
@@ -33,6 +34,7 @@ export interface GroupedCustomerRow {
   name: string;
   phone: string;
   loanId: number;
+  nickname: string;
   rating: 1 | 2 | 3 | 4 | 5;
   missedCount: number;
   paymentFrequency: string;
@@ -82,6 +84,7 @@ export function buildGroupedCustomerRows(
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
+        nickname: loan.nickname ?? "",
         rating,
         missedCount,
         paymentFrequency: loan.paymentFrequency

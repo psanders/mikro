@@ -117,8 +117,9 @@ export async function generateCustomersExcel(
       const missedCount = getMissedPaymentsCount(data);
       const trend = getLatenessTrend(data);
       const highlight = getReportRowHighlight(data);
+      const displayName = loan.nickname || customer.name;
       rows.push({
-        name: customer.name,
+        name: displayName,
         phone: customer.phone,
         loanId: loan.loanId,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),

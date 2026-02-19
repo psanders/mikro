@@ -138,6 +138,7 @@ export interface DbClient {
         paymentAmount: number;
         paymentFrequency: PaymentFrequency;
         startingDate?: Date | null;
+        nickname?: string | null;
         type?: LoanType;
       };
     }): Promise<Loan>;
@@ -162,6 +163,7 @@ export interface DbClient {
       select?: {
         id?: boolean;
         loanId?: boolean;
+        nickname?: boolean;
         [key: string]: boolean | undefined;
       };
     }): Promise<Loan | null>;
@@ -189,9 +191,9 @@ export interface DbClient {
     }): Promise<Loan[]>;
     update(args: {
       where: { id: string };
-      data: { status: string };
-      select?: { id: boolean; loanId: boolean; status: boolean };
-    }): Promise<{ id: string; loanId: number; status: string }>;
+      data: { status?: string; nickname?: string | null };
+      select?: { id: boolean; loanId: boolean; status?: boolean; nickname?: boolean };
+    }): Promise<{ id: string; loanId: number; status?: string; nickname?: string | null }>;
   };
 
   payment: {

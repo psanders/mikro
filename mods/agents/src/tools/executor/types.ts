@@ -14,6 +14,7 @@ export interface ExportedLoan {
   createdAt: Date;
   termLength: number;
   payments: Array<{ paidAt: Date }>;
+  nickname?: string | null;
 }
 
 /**
@@ -151,6 +152,7 @@ export interface ToolExecutorDependencies {
     paymentAmount: number;
     paymentFrequency: string;
     status: string;
+    nickname: string | null;
     customer: {
       id: string;
       name: string;

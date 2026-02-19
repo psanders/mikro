@@ -191,6 +191,7 @@ model Loan {
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
   paymentFrequency PaymentFrequency @map("payment_frequency")
   startingDate     DateTime?        @map("starting_date")
+  nickname         String?
 
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
