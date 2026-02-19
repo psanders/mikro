@@ -15,15 +15,15 @@ import { ValidationError } from "../errors/ValidationError.js";
  *
  * @example
  * ```typescript
- * const createMember = withErrorHandlingAndValidation(
- *   async (params: CreateMemberInput) => {
- *     return db.member.create({ data: params });
+ * const createCustomer = withErrorHandlingAndValidation(
+ *   async (params: CreateCustomerInput) => {
+ *     return db.customer.create({ data: params });
  *   },
- *   createMemberSchema
+ *   createCustomerSchema
  * );
  *
  * // Usage - throws ValidationError if input is invalid
- * const member = await createMember({ name: "John", ... });
+ * const customer = await createCustomer({ name: "John", ... });
  * ```
  */
 export function withErrorHandlingAndValidation<TSchema extends z.ZodType, TResult>(

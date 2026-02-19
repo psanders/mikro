@@ -26,40 +26,40 @@ export const attachmentInputSchema = z.object({
 
 /**
  * Schema for getting chat history.
- * Must provide either memberId OR userId, but not both.
+ * Must provide either customerId OR userId, but not both.
  */
 export const getChatHistorySchema = z
   .object({
-    memberId: z.uuid({ error: "Invalid member ID" }).optional(),
+    customerId: z.uuid({ error: "Invalid customer ID" }).optional(),
     userId: z.uuid({ error: "Invalid user ID" }).optional(),
     limit: z.number().int().positive().max(100).optional(),
     offset: z.number().int().nonnegative().optional()
   })
-  .refine((data) => data.memberId || data.userId, {
-    message: "Either memberId or userId is required"
+  .refine((data) => data.customerId || data.userId, {
+    message: "Either customerId or userId is required"
   })
-  .refine((data) => !(data.memberId && data.userId), {
-    message: "Cannot specify both memberId and userId"
+  .refine((data) => !(data.customerId && data.userId), {
+    message: "Cannot specify both customerId and userId"
   });
 
 /**
  * Schema for adding a message to chat history.
- * Must provide either memberId OR userId, but not both.
+ * Must provide either customerId OR userId, but not both.
  */
 export const addMessageSchema = z
   .object({
-    memberId: z.uuid({ error: "Invalid member ID" }).optional(),
+    customerId: z.uuid({ error: "Invalid customer ID" }).optional(),
     userId: z.uuid({ error: "Invalid user ID" }).optional(),
     role: messageRoleEnum,
     content: z.string().min(1, "Content is required"),
     tools: z.array(z.string()).optional(),
     attachments: z.array(attachmentInputSchema).optional()
   })
-  .refine((data) => data.memberId || data.userId, {
-    message: "Either memberId or userId is required"
+  .refine((data) => data.customerId || data.userId, {
+    message: "Either customerId or userId is required"
   })
-  .refine((data) => !(data.memberId && data.userId), {
-    message: "Cannot specify both memberId and userId"
+  .refine((data) => !(data.customerId && data.userId), {
+    message: "Cannot specify both customerId and userId"
   });
 
 /**

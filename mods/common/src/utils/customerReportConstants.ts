@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Tunable constants for member report rating, trend, and row highlighting.
+ * Tunable constants for customer report rating, trend, and row highlighting.
  * Tweak these to change behavior without touching helper logic.
  */
 

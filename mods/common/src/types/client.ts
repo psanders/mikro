@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { CreateMemberInput, UpdateMemberInput } from "../schemas/member.js";
+import type { CreateCustomerInput, UpdateCustomerInput } from "../schemas/customer.js";
 import type { UpdateUserInput, Role } from "../schemas/user.js";
 import type { MessageRole, AttachmentInput } from "../schemas/message.js";
 import type { PaymentFrequency, LoanType } from "../schemas/loan.js";
 import type { PaymentMethod, PaymentStatus } from "../schemas/payment.js";
-import type { Member } from "./member.js";
+import type { Customer } from "./customer.js";
 import type { User } from "./user.js";
 import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
@@ -54,12 +54,15 @@ export interface DbClient {
     deleteMany(args: { where: { userId: string } }): Promise<{ count: number }>;
   };
 
-  member: {
-    create(args: { data: CreateMemberInput }): Promise<Member>;
-    update(args: { where: { id: string }; data: Omit<UpdateMemberInput, "id"> }): Promise<Member>;
-    delete(args: { where: { id: string } }): Promise<Member>;
-    findUnique(args: { where: { id: string } }): Promise<Member | null>;
-    findFirst(args: { where: { phone: string } }): Promise<Member | null>;
+  customer: {
+    create(args: { data: CreateCustomerInput }): Promise<Customer>;
+    update(args: {
+      where: { id: string };
+      data: Omit<UpdateCustomerInput, "id">;
+    }): Promise<Customer>;
+    delete(args: { where: { id: string } }): Promise<Customer>;
+    findUnique(args: { where: { id: string } }): Promise<Customer | null>;
+    findFirst(args: { where: { phone: string } }): Promise<Customer | null>;
     findMany(args?: {
       where?: {
         isActive?: boolean;
@@ -68,7 +71,7 @@ export interface DbClient {
       };
       take?: number;
       skip?: number;
-    }): Promise<Member[]>;
+    }): Promise<Customer[]>;
     findMany(args: {
       where?: {
         isActive?: boolean;
@@ -90,7 +93,7 @@ export interface DbClient {
       };
       take?: number;
       skip?: number;
-    }): Promise<MemberWithLoansAndReferrer[]>;
+    }): Promise<CustomerWithLoansAndReferrer[]>;
   };
 
   message: {
@@ -99,13 +102,13 @@ export interface DbClient {
         role: MessageRole;
         content: string;
         tools?: string;
-        memberId?: string;
+        customerId?: string;
         userId?: string;
       };
     }): Promise<Message>;
     findMany(args: {
       where: {
-        memberId?: string;
+        customerId?: string;
         userId?: string;
       };
       include?: {
@@ -129,7 +132,7 @@ export interface DbClient {
     create(args: {
       data: {
         loanId: number;
-        memberId: string;
+        customerId: string;
         principal: number;
         termLength: number;
         paymentAmount: number;
@@ -144,7 +147,7 @@ export interface DbClient {
     findUnique(args: {
       where: { id: string } | { loanId: number };
       include?: {
-        member?:
+        customer?:
           | boolean
           | {
               select?: {
@@ -163,15 +166,15 @@ export interface DbClient {
     }): Promise<Loan | null>;
     findMany(args?: {
       where?: {
-        memberId?: string;
+        customerId?: string;
         status?: string | { not: string };
-        member?: {
+        customer?: {
           referredById?: string;
           assignedCollectorId?: string;
         };
       };
       include?: {
-        member?:
+        customer?:
           | boolean
           | {
               select?: {
@@ -214,7 +217,7 @@ export interface DbClient {
       include: {
         loan?: {
           include?: {
-            member?: boolean;
+            customer?: boolean;
             payments?: {
               where?: { status?: PaymentStatus };
               orderBy?: { paidAt: "asc" | "desc" };
@@ -233,8 +236,8 @@ export interface DbClient {
           lte?: Date;
         };
         loan?: {
-          memberId?: string;
-          member?: {
+          customerId?: string;
+          customer?: {
             referredById?: string;
           };
         };
@@ -243,7 +246,7 @@ export interface DbClient {
         loan?: {
           select?: {
             loanId?: boolean;
-            member?: {
+            customer?: {
               select?: {
                 name?: boolean;
               };
@@ -263,16 +266,16 @@ export interface DbClient {
  */
 export interface PaymentWithRelations extends Payment {
   loan: Loan & {
-    member: Member;
+    customer: Customer;
     payments: Payment[];
   };
   collectedBy?: User | null;
 }
 
 /**
- * Member with loans and referrer for report export.
+ * Customer with loans and referrer for report export.
  */
-export interface MemberWithLoansAndReferrer extends Member {
+export interface CustomerWithLoansAndReferrer extends Customer {
   loans: Array<
     Loan & {
       payments: Payment[];

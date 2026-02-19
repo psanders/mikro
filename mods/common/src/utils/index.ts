@@ -20,7 +20,7 @@ export {
   formatPaymentFrequency,
   type LatenessTrend,
   type ReportRowHighlight
-} from "./memberReportHelpers.js";
+} from "./customerReportHelpers.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,
   TREND_LOOKBACK_WEEKS,
@@ -29,14 +29,14 @@ export {
   HIGHLIGHT_YELLOW_TIMES_LATE_IN_LOOKBACK,
   HIGHLIGHT_RED_MIN_MISSED,
   HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
-} from "./memberReportConstants.js";
+} from "./customerReportConstants.js";
 export {
-  buildGroupedMemberRows,
-  type MemberForGrouping,
+  buildGroupedCustomerRows,
+  type CustomerForGrouping,
   type LoanForGrouping,
-  type GroupedMemberRow,
-  type GroupedMemberRows
-} from "./memberReportGrouping.js";
+  type GroupedCustomerRow,
+  type GroupedCustomerRows
+} from "./customerReportGrouping.js";
 export {
   DEFAULT_ADJUSTMENT_PER_PERIOD,
   DEFAULT_MIN_RATE,

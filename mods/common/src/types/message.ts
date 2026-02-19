@@ -25,7 +25,7 @@ export interface Message {
   role: MessageRole;
   content: string;
   tools?: string | null;
-  memberId?: string | null;
+  customerId?: string | null;
   userId?: string | null;
   createdAt: Date;
   attachments?: Attachment[];

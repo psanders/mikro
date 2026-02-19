@@ -11,8 +11,8 @@ export {
 } from "./performanceReportLayout.js";
 export { renderPerformanceReportToPng, loadLogoDataUrl } from "./reportGenerator.js";
 export {
-  createMembersReportLayout,
-  getMembersReportHeight,
-  MEMBERS_REPORT_WIDTH
-} from "./membersReportLayout.js";
-export { renderMembersReportToPng } from "./membersReportGenerator.js";
+  createCustomersReportLayout,
+  getCustomersReportHeight,
+  CUSTOMERS_REPORT_WIDTH
+} from "./customersReportLayout.js";
+export { renderCustomersReportToPng } from "./customersReportGenerator.js";

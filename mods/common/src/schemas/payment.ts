@@ -47,11 +47,11 @@ export const listPaymentsSchema = z.object({
 });
 
 /**
- * Schema for listing payments by member with date range.
+ * Schema for listing payments by customer with date range.
  * By default only shows COMPLETED payments unless showReversed is true.
  */
-export const listPaymentsByMemberSchema = z.object({
-  memberId: z.uuid({ error: "Invalid member ID" }),
+export const listPaymentsByCustomerSchema = z.object({
+  customerId: z.uuid({ error: "Invalid customer ID" }),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
   showReversed: z.boolean().optional(),
@@ -99,9 +99,9 @@ export type ReversePaymentInput = z.infer<typeof reversePaymentSchema>;
 export type ListPaymentsInput = z.infer<typeof listPaymentsSchema>;
 
 /**
- * Input type for listing payments by member.
+ * Input type for listing payments by customer.
  */
-export type ListPaymentsByMemberInput = z.infer<typeof listPaymentsByMemberSchema>;
+export type ListPaymentsByCustomerInput = z.infer<typeof listPaymentsByCustomerSchema>;
 
 /**
  * Input type for listing payments by referrer.

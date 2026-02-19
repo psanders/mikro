@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Members report layout for Satori: grouped by payment health (Crítico, Requiere atención, Al día).
+ * Customers report layout for Satori: grouped by payment health (Crítico, Requiere atención, Al día).
  */
-import type { GroupedMemberRows, GroupedMemberRow } from "../utils/memberReportGrouping.js";
-import { formatPaymentFrequency } from "../utils/memberReportHelpers.js";
+import type { GroupedCustomerRows, GroupedCustomerRow } from "../utils/customerReportGrouping.js";
+import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
 
-export const MEMBERS_REPORT_WIDTH = 900;
+export const CUSTOMERS_REPORT_WIDTH = 900;
 
 /** Approximate height per row in the layout. */
 const ROW_HEIGHT_PX = 44;
@@ -116,7 +116,7 @@ function tableHeader(): SatoriElement {
   );
 }
 
-function memberRow(row: GroupedMemberRow): SatoriElement {
+function customerRow(row: GroupedCustomerRow): SatoriElement {
   return el(
     "div",
     {
@@ -148,7 +148,7 @@ function memberRow(row: GroupedMemberRow): SatoriElement {
 
 function buildSection(
   title: string,
-  rows: GroupedMemberRow[],
+  rows: GroupedCustomerRow[],
   bgColor: string
 ): SatoriElement | null {
   if (rows.length === 0) return null;
@@ -161,14 +161,14 @@ function buildSection(
         flexDirection: "column"
       }
     },
-    [sectionHeader(title, rows.length, bgColor), tableHeader(), ...rows.map(memberRow)]
+    [sectionHeader(title, rows.length, bgColor), tableHeader(), ...rows.map(customerRow)]
   );
 }
 
 /**
  * Compute layout height in pixels from grouped rows (for Satori viewport).
  */
-export function getMembersReportHeight(grouped: GroupedMemberRows): number {
+export function getCustomersReportHeight(grouped: GroupedCustomerRows): number {
   const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
   const sectionsWithRows =
     (grouped.critico.length ? 1 : 0) +
@@ -180,11 +180,11 @@ export function getMembersReportHeight(grouped: GroupedMemberRows): number {
 }
 
 /**
- * Creates the members report layout for Satori.
+ * Creates the customers report layout for Satori.
  */
-export function createMembersReportLayout(
-  grouped: GroupedMemberRows,
-  memberCount: number,
+export function createCustomersReportLayout(
+  grouped: GroupedCustomerRows,
+  customerCount: number,
   loanCount: number,
   generatedAt: string,
   logoDataUrl?: string
@@ -207,7 +207,7 @@ export function createMembersReportLayout(
         {
           style: { fontSize: "16px", fontWeight: 400, fontFamily: "Inter", opacity: 0.95 }
         },
-        `${memberCount} clientes · ${loanCount} préstamos`
+        `${customerCount} clientes · ${loanCount} préstamos`
       )
     ]
   );

@@ -34,7 +34,7 @@ export {
   COLLECTION_OVERDUE_MIN_MISSED,
   COLLECTION_CALL_MIN_MISSED,
   COLLECTION_MESSAGE_DELAY_MS
-} from "./utils/memberReportConstants.js";
+} from "./utils/customerReportConstants.js";
 export {
   getMissedPaymentsCount,
   getTimesLateInLastWeeks,
@@ -44,38 +44,38 @@ export {
   formatPaymentFrequency,
   type LatenessTrend,
   type ReportRowHighlight
-} from "./utils/memberReportHelpers.js";
+} from "./utils/customerReportHelpers.js";
 export {
-  buildGroupedMemberRows,
-  type MemberForGrouping,
+  buildGroupedCustomerRows,
+  type CustomerForGrouping,
   type LoanForGrouping,
-  type GroupedMemberRow,
-  type GroupedMemberRows
-} from "./utils/memberReportGrouping.js";
+  type GroupedCustomerRow,
+  type GroupedCustomerRows
+} from "./utils/customerReportGrouping.js";
 
 // Schemas
 export {
-  // Member schemas
-  createMemberSchema,
-  updateMemberSchema,
-  getMemberSchema,
-  getMemberByPhoneSchema,
-  listMembersSchema,
-  listMembersByReferrerSchema,
-  listMembersByCollectorSchema,
-  exportCollectorMembersSchema,
-  exportMembersByReferrerSchema,
-  exportAllMembersSchema,
-  type CreateMemberInput,
-  type UpdateMemberInput,
-  type GetMemberInput,
-  type GetMemberByPhoneInput,
-  type ListMembersInput,
-  type ListMembersByReferrerInput,
-  type ListMembersByCollectorInput,
-  type ExportCollectorMembersInput,
-  type ExportMembersByReferrerInput,
-  type ExportAllMembersInput,
+  // Customer schemas
+  createCustomerSchema,
+  updateCustomerSchema,
+  getCustomerSchema,
+  getCustomerByPhoneSchema,
+  listCustomersSchema,
+  listCustomersByReferrerSchema,
+  listCustomersByCollectorSchema,
+  exportCollectorCustomersSchema,
+  exportCustomersByReferrerSchema,
+  exportAllCustomersSchema,
+  type CreateCustomerInput,
+  type UpdateCustomerInput,
+  type GetCustomerInput,
+  type GetCustomerByPhoneInput,
+  type ListCustomersInput,
+  type ListCustomersByReferrerInput,
+  type ListCustomersByCollectorInput,
+  type ExportCollectorCustomersInput,
+  type ExportCustomersByReferrerInput,
+  type ExportAllCustomersInput,
   // User schemas
   roleEnum,
   createUserSchema,
@@ -136,7 +136,7 @@ export {
   listLoansSchema,
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
-  listLoansByMemberSchema,
+  listLoansByCustomerSchema,
   type CreateLoanInput,
   type CalculateLoanInput,
   type GetLoanInput,
@@ -145,7 +145,7 @@ export {
   type ListLoansInput,
   type ListLoansByReferrerInput,
   type ListLoansByCollectorInput,
-  type ListLoansByMemberInput,
+  type ListLoansByCustomerInput,
   type LoanType,
   type LoanStatus,
   type PaymentFrequency,
@@ -155,13 +155,13 @@ export {
   createPaymentSchema,
   reversePaymentSchema,
   listPaymentsSchema,
-  listPaymentsByMemberSchema,
+  listPaymentsByCustomerSchema,
   listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   type CreatePaymentInput,
   type ReversePaymentInput,
   type ListPaymentsInput,
-  type ListPaymentsByMemberInput,
+  type ListPaymentsByCustomerInput,
   type ListPaymentsByReferrerInput,
   type ListPaymentsByLoanIdInput,
   type PaymentMethod,
@@ -200,21 +200,21 @@ export {
   createPerformanceReportLayout,
   REPORT_WIDTH,
   REPORT_HEIGHT,
-  createMembersReportLayout,
-  getMembersReportHeight,
-  MEMBERS_REPORT_WIDTH,
-  renderMembersReportToPng
+  createCustomersReportLayout,
+  getCustomersReportHeight,
+  CUSTOMERS_REPORT_WIDTH,
+  renderCustomersReportToPng
 } from "./reports/index.js";
 
 // Types (entities and client)
-export type { Member } from "./types/index.js";
+export type { Customer } from "./types/index.js";
 export type { User, UserWithRole } from "./types/index.js";
 export type { Attachment, Message } from "./types/index.js";
 export type {
   DbClient,
   UserRole,
   PaymentWithRelations,
-  MemberWithLoansAndReferrer
+  CustomerWithLoansAndReferrer
 } from "./types/index.js";
 export type {
   WhatsAppClient,

@@ -17,7 +17,7 @@ export const paymentFrequencyEnum = z.enum(["DAILY", "WEEKLY"]);
  * Schema for creating a new loan.
  */
 export const createLoanSchema = z.object({
-  memberId: z.uuid({ error: "Invalid member ID" }),
+  customerId: z.uuid({ error: "Invalid customer ID" }),
   principal: z.number().positive("Principal must be positive"),
   termLength: z.number().int().positive("Term length must be a positive integer"),
   paymentAmount: z.number().positive("Payment amount must be positive"),
@@ -84,7 +84,7 @@ export const listLoansSchema = z.object({
 });
 
 /**
- * Schema for listing loans by referrer (members referred by a user).
+ * Schema for listing loans by referrer (customers referred by a user).
  */
 export const listLoansByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
@@ -94,7 +94,7 @@ export const listLoansByReferrerSchema = z.object({
 });
 
 /**
- * Schema for listing loans by collector (members assigned to a collector).
+ * Schema for listing loans by collector (customers assigned to a collector).
  */
 export const listLoansByCollectorSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
@@ -104,10 +104,10 @@ export const listLoansByCollectorSchema = z.object({
 });
 
 /**
- * Schema for listing loans by member ID.
+ * Schema for listing loans by customer ID.
  */
-export const listLoansByMemberSchema = z.object({
-  memberId: z.uuid({ error: "Invalid member ID" }),
+export const listLoansByCustomerSchema = z.object({
+  customerId: z.uuid({ error: "Invalid customer ID" }),
   showAll: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
@@ -144,9 +144,9 @@ export type ListLoansByReferrerInput = z.infer<typeof listLoansByReferrerSchema>
 export type ListLoansByCollectorInput = z.infer<typeof listLoansByCollectorSchema>;
 
 /**
- * Input type for listing loans by member.
+ * Input type for listing loans by customer.
  */
-export type ListLoansByMemberInput = z.infer<typeof listLoansByMemberSchema>;
+export type ListLoansByCustomerInput = z.infer<typeof listLoansByCustomerSchema>;
 
 /**
  * Input type for getting a loan by numeric loan ID.

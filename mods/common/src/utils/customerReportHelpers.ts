@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Helpers for member report: missed count, times late, trend, rating, row highlight.
+ * Helpers for customer report: missed count, times late, trend, rating, row highlight.
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
 import { getCycleMetrics, daysToFirstPreferredDay, MS_PER_DAY } from "./calculatePaymentStatus.js";
@@ -13,7 +13,7 @@ import {
   HIGHLIGHT_YELLOW_TIMES_LATE_IN_LOOKBACK,
   HIGHLIGHT_RED_MIN_MISSED,
   HIGHLIGHT_RED_DETERIORATING_MIN_MISSED
-} from "./memberReportConstants.js";
+} from "./customerReportConstants.js";
 
 /** Trend direction for lateness. */
 export type LatenessTrend = "mejorando" | "estable" | "empeorando";

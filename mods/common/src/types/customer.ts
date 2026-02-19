@@ -3,9 +3,9 @@
  */
 
 /**
- * Member entity type.
+ * Customer entity type.
  */
-export interface Member {
+export interface Customer {
   id: string;
   name: string;
   phone: string;

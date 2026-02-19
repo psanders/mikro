@@ -1,10 +1,10 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Grouping logic for member reports: Al día (4-5), Requiere atención (2-3), Crítico (1).
+ * Grouping logic for customer reports: Al día (4-5), Requiere atención (2-3), Crítico (1).
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
-import { getPaymentRating, getMissedPaymentsCount } from "./memberReportHelpers.js";
+import { getPaymentRating, getMissedPaymentsCount } from "./customerReportHelpers.js";
 
 /**
  * Minimal loan shape for grouping (compatible with ExportedLoan and serialized API responses).
@@ -17,9 +17,9 @@ export interface LoanForGrouping {
 }
 
 /**
- * Minimal member shape for grouping (compatible with ExportedMember and serialized API responses).
+ * Minimal customer shape for grouping (compatible with ExportedCustomer and serialized API responses).
  */
-export interface MemberForGrouping {
+export interface CustomerForGrouping {
   name: string;
   phone: string;
   preferredPaymentDay?: string | null;
@@ -29,7 +29,7 @@ export interface MemberForGrouping {
 /**
  * One row in the simplified report (per loan).
  */
-export interface GroupedMemberRow {
+export interface GroupedCustomerRow {
   name: string;
   phone: string;
   loanId: number;
@@ -41,10 +41,10 @@ export interface GroupedMemberRow {
 /**
  * Rows grouped by payment health for the simplified report.
  */
-export interface GroupedMemberRows {
-  alDia: GroupedMemberRow[];
-  requiereAtencion: GroupedMemberRow[];
-  critico: GroupedMemberRow[];
+export interface GroupedCustomerRows {
+  alDia: GroupedCustomerRow[];
+  requiereAtencion: GroupedCustomerRow[];
+  critico: GroupedCustomerRow[];
 }
 
 function toLoanPaymentData(loan: LoanForGrouping): LoanPaymentData {
@@ -61,26 +61,26 @@ function toLoanPaymentData(loan: LoanForGrouping): LoanPaymentData {
  * - Requiere atención: rating 2 or 3
  * - Crítico: rating 1
  */
-export function buildGroupedMemberRows(
-  members: MemberForGrouping[],
+export function buildGroupedCustomerRows(
+  customers: CustomerForGrouping[],
   asOfDate: Date = new Date()
-): GroupedMemberRows {
-  const alDia: GroupedMemberRow[] = [];
-  const requiereAtencion: GroupedMemberRow[] = [];
-  const critico: GroupedMemberRow[] = [];
+): GroupedCustomerRows {
+  const alDia: GroupedCustomerRow[] = [];
+  const requiereAtencion: GroupedCustomerRow[] = [];
+  const critico: GroupedCustomerRow[] = [];
 
-  for (const member of members) {
-    for (const loan of member.loans) {
+  for (const customer of customers) {
+    for (const loan of customer.loans) {
       const data: LoanPaymentData = {
         ...toLoanPaymentData(loan),
-        preferredPaymentDay: member.preferredPaymentDay
+        preferredPaymentDay: customer.preferredPaymentDay
       };
       const rating = getPaymentRating(data, asOfDate);
       const missedCount = getMissedPaymentsCount(data, asOfDate);
 
-      const row: GroupedMemberRow = {
-        name: member.name,
-        phone: member.phone,
+      const row: GroupedCustomerRow = {
+        name: customer.name,
+        phone: customer.phone,
         loanId: loan.loanId,
         rating,
         missedCount,
@@ -94,7 +94,7 @@ export function buildGroupedMemberRows(
   }
 
   // Sort: within each group, worst first (by rating asc, then missed desc)
-  const sortRows = (rows: GroupedMemberRow[]) =>
+  const sortRows = (rows: GroupedCustomerRow[]) =>
     rows.sort((a, b) => {
       if (a.rating !== b.rating) return a.rating - b.rating;
       return b.missedCount - a.missedCount;

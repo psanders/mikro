@@ -11,9 +11,9 @@ export interface LoanPaymentData {
   paymentFrequency: string;
   createdAt: Date;
   payments: Array<{ paidAt: Date }>;
-  /** Member's preferred payment day (e.g. "FRIDAY"). When set for WEEKLY loans,
+  /** Customer's preferred payment day (e.g. "FRIDAY"). When set for WEEKLY loans,
    *  cycles are anchored to this day of the week so due dates fall on the
-   *  member's preferred day rather than raw 7-day intervals from creation. */
+   *  customer's preferred day rather than raw 7-day intervals from creation. */
   preferredPaymentDay?: string | null;
 }
 
@@ -69,7 +69,7 @@ export function daysToFirstPreferredDay(loanStart: Date, preferredDay: string): 
  *
  * For WEEKLY loans with a preferredPaymentDay the first due date is the
  * first occurrence of that day after loan creation (a grace period so the
- * member gets until their preferred day).  All subsequent due dates follow
+ * customer gets until their preferred day).  All subsequent due dates follow
  * every 7 days from there, keeping cycles permanently synced to the
  * preferred day.
  *
