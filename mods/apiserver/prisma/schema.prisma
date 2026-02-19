@@ -120,12 +120,12 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  roles             UserRole[]
-  createdMembers    Member[]   @relation("CreatedBy")
-  referredMembers   Member[]   @relation("ReferredBy")
-  assignedMembers   Member[]   @relation("AssignedCollector")
-  messages          Message[]
-  collectedPayments Payment[]  @relation("CollectedPayments")
+  roles               UserRole[]
+  createdCustomers    Customer[] @relation("CreatedBy")
+  referredCustomers   Customer[] @relation("ReferredBy")
+  assignedCustomers   Customer[] @relation("AssignedCollector")
+  messages            Message[]
+  collectedPayments   Payment[]  @relation("CollectedPayments")
 
   @@map("users")
 }
@@ -141,7 +141,7 @@ model UserRole {
   @@map("user_roles")
 }
 
-model Member {
+model Customer {
   id                  String   @id @default(uuid())
   name                String
   phone               String
@@ -162,7 +162,7 @@ model Member {
   createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
   createdById         String?  @map("created_by_id")
   referredBy          User     @relation("ReferredBy", fields: [referredById], references: [id])
-  referredById         String   @map("referred_by_id")
+  referredById        String   @map("referred_by_id")
   assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
   assignedCollectorId String?  @map("assigned_collector_id")
 
@@ -173,7 +173,7 @@ model Member {
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
-  @@map("members")
+  @@map("customers")
 }
 
 model Loan {
@@ -193,12 +193,12 @@ model Loan {
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  member              Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId            String    @map("member_id")
+  customer            Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId          String    @map("customer_id")
   payments            Payment[]
   collectionAttempts  CollectionAttempt[]
 
-  @@index([memberId])
+  @@index([customerId])
   @@index([status])
   @@map("loans")
 }
@@ -210,14 +210,14 @@ model Message {
   tools     String? // JSON array of tool names, e.g. ["search", "calculate"] - only for AI
   createdAt DateTime    @default(now()) @map("created_at")
 
-  // Relations - message belongs to either a Member OR a User
-  member      Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId    String?      @map("member_id")
+  // Relations - message belongs to either a Customer OR a User
+  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  String?      @map("customer_id")
   user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String?      @map("user_id")
   attachments Attachment[]
 
-  @@index([memberId])
+  @@index([customerId])
   @@index([userId])
   @@index([createdAt])
   @@map("messages")
@@ -273,12 +273,12 @@ model CollectionAttempt {
   notes        String?
   createdAt    DateTime               @default(now()) @map("created_at")
 
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId String @map("member_id")
-  loan     Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  loanId   String @map("loan_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+  loan       Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId     String   @map("loan_id")
 
-  @@index([memberId])
+  @@index([customerId])
   @@index([loanId])
   @@index([createdAt])
   @@map("collection_attempts")

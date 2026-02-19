@@ -50,10 +50,10 @@ export type User = Prisma.UserModel
  */
 export type UserRole = Prisma.UserRoleModel
 /**
- * Model Member
+ * Model Customer
  * 
  */
-export type Member = Prisma.MemberModel
+export type Customer = Prisma.CustomerModel
 /**
  * Model Loan
  * 

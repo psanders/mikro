@@ -63,12 +63,12 @@ async function main() {
 
   console.log("Created users:", { admin, collector, referrer });
 
-  // Create sample members
-  const member1 = await prisma.member.upsert({
-    where: { id: "member-001" },
+  // Create sample customers
+  const customer1 = await prisma.customer.upsert({
+    where: { id: "customer-001" },
     update: {},
     create: {
-      id: "member-001",
+      id: "customer-001",
       name: "Alice Smith",
       phone: "+1234567890",
       idNumber: "ID-12345",
@@ -84,11 +84,11 @@ async function main() {
     }
   });
 
-  const member2 = await prisma.member.upsert({
-    where: { id: "member-002" },
+  const customer2 = await prisma.customer.upsert({
+    where: { id: "customer-002" },
     update: {},
     create: {
-      id: "member-002",
+      id: "customer-002",
       name: "Bob Johnson",
       phone: "+0987654321",
       idNumber: "ID-67890",
@@ -99,9 +99,9 @@ async function main() {
     }
   });
 
-  console.log("Created members:", { member1, member2 });
+  console.log("Created customers:", { customer1, customer2 });
 
-  // Create a sample loan for member1
+  // Create a sample loan for customer1
   const loanId = await getNextLoanId();
   const loan = await prisma.loan.upsert({
     where: { id: "loan-001" },
@@ -113,13 +113,13 @@ async function main() {
       status: "ACTIVE",
       principal: 5000,
       termLength: 10,
-      memberId: member1.id
+      customerId: customer1.id
     }
   });
 
   console.log("Created loan:", loan);
 
-  // Create sample chat messages for member1
+  // Create sample chat messages for customer1
   const message1 = await prisma.message.upsert({
     where: { id: "msg-001" },
     update: {},
@@ -127,7 +127,7 @@ async function main() {
       id: "msg-001",
       role: "HUMAN",
       content: "Hello, I would like to apply for a loan.",
-      memberId: member1.id
+      customerId: customer1.id
     }
   });
 
@@ -139,8 +139,8 @@ async function main() {
       role: "AI",
       content:
         "Hello Alice! I can help you with that. I see you already have an active loan. Would you like to check its status?",
-      tools: JSON.stringify(["check_loan_status", "get_member_info"]),
-      memberId: member1.id
+      tools: JSON.stringify(["check_loan_status", "get_customer_info"]),
+      customerId: customer1.id
     }
   });
 

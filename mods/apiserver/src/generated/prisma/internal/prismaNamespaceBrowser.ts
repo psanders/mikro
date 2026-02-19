@@ -53,7 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   UserRole: 'UserRole',
-  Member: 'Member',
+  Customer: 'Customer',
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
@@ -95,7 +95,7 @@ export const UserRoleScalarFieldEnum = {
 export type UserRoleScalarFieldEnum = (typeof UserRoleScalarFieldEnum)[keyof typeof UserRoleScalarFieldEnum]
 
 
-export const MemberScalarFieldEnum = {
+export const CustomerScalarFieldEnum = {
   id: 'id',
   name: 'name',
   phone: 'phone',
@@ -116,7 +116,7 @@ export const MemberScalarFieldEnum = {
   assignedCollectorId: 'assignedCollectorId'
 } as const
 
-export type MemberScalarFieldEnum = (typeof MemberScalarFieldEnum)[keyof typeof MemberScalarFieldEnum]
+export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
 
 
 export const LoanScalarFieldEnum = {
@@ -131,7 +131,7 @@ export const LoanScalarFieldEnum = {
   notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  memberId: 'memberId'
+  customerId: 'customerId'
 } as const
 
 export type LoanScalarFieldEnum = (typeof LoanScalarFieldEnum)[keyof typeof LoanScalarFieldEnum]
@@ -143,7 +143,7 @@ export const MessageScalarFieldEnum = {
   content: 'content',
   tools: 'tools',
   createdAt: 'createdAt',
-  memberId: 'memberId',
+  customerId: 'customerId',
   userId: 'userId'
 } as const
 
@@ -189,7 +189,7 @@ export const CollectionAttemptScalarFieldEnum = {
   templateName: 'templateName',
   notes: 'notes',
   createdAt: 'createdAt',
-  memberId: 'memberId',
+  customerId: 'customerId',
   loanId: 'loanId'
 } as const
 

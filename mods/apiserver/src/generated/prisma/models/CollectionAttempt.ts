@@ -33,7 +33,7 @@ export type CollectionAttemptMinAggregateOutputType = {
   templateName: string | null
   notes: string | null
   createdAt: Date | null
-  memberId: string | null
+  customerId: string | null
   loanId: string | null
 }
 
@@ -46,7 +46,7 @@ export type CollectionAttemptMaxAggregateOutputType = {
   templateName: string | null
   notes: string | null
   createdAt: Date | null
-  memberId: string | null
+  customerId: string | null
   loanId: string | null
 }
 
@@ -59,7 +59,7 @@ export type CollectionAttemptCountAggregateOutputType = {
   templateName: number
   notes: number
   createdAt: number
-  memberId: number
+  customerId: number
   loanId: number
   _all: number
 }
@@ -74,7 +74,7 @@ export type CollectionAttemptMinAggregateInputType = {
   templateName?: true
   notes?: true
   createdAt?: true
-  memberId?: true
+  customerId?: true
   loanId?: true
 }
 
@@ -87,7 +87,7 @@ export type CollectionAttemptMaxAggregateInputType = {
   templateName?: true
   notes?: true
   createdAt?: true
-  memberId?: true
+  customerId?: true
   loanId?: true
 }
 
@@ -100,7 +100,7 @@ export type CollectionAttemptCountAggregateInputType = {
   templateName?: true
   notes?: true
   createdAt?: true
-  memberId?: true
+  customerId?: true
   loanId?: true
   _all?: true
 }
@@ -186,7 +186,7 @@ export type CollectionAttemptGroupByOutputType = {
   templateName: string | null
   notes: string | null
   createdAt: Date
-  memberId: string
+  customerId: string
   loanId: string
   _count: CollectionAttemptCountAggregateOutputType | null
   _min: CollectionAttemptMinAggregateOutputType | null
@@ -220,9 +220,9 @@ export type CollectionAttemptWhereInput = {
   templateName?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   notes?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CollectionAttempt"> | Date | string
-  memberId?: Prisma.StringFilter<"CollectionAttempt"> | string
+  customerId?: Prisma.StringFilter<"CollectionAttempt"> | string
   loanId?: Prisma.StringFilter<"CollectionAttempt"> | string
-  member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
+  customer?: Prisma.XOR<Prisma.CustomerScalarRelationFilter, Prisma.CustomerWhereInput>
   loan?: Prisma.XOR<Prisma.LoanScalarRelationFilter, Prisma.LoanWhereInput>
 }
 
@@ -235,9 +235,9 @@ export type CollectionAttemptOrderByWithRelationInput = {
   templateName?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  memberId?: Prisma.SortOrder
+  customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
-  member?: Prisma.MemberOrderByWithRelationInput
+  customer?: Prisma.CustomerOrderByWithRelationInput
   loan?: Prisma.LoanOrderByWithRelationInput
 }
 
@@ -253,9 +253,9 @@ export type CollectionAttemptWhereUniqueInput = Prisma.AtLeast<{
   templateName?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   notes?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CollectionAttempt"> | Date | string
-  memberId?: Prisma.StringFilter<"CollectionAttempt"> | string
+  customerId?: Prisma.StringFilter<"CollectionAttempt"> | string
   loanId?: Prisma.StringFilter<"CollectionAttempt"> | string
-  member?: Prisma.XOR<Prisma.MemberScalarRelationFilter, Prisma.MemberWhereInput>
+  customer?: Prisma.XOR<Prisma.CustomerScalarRelationFilter, Prisma.CustomerWhereInput>
   loan?: Prisma.XOR<Prisma.LoanScalarRelationFilter, Prisma.LoanWhereInput>
 }, "id">
 
@@ -268,7 +268,7 @@ export type CollectionAttemptOrderByWithAggregationInput = {
   templateName?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  memberId?: Prisma.SortOrder
+  customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   _count?: Prisma.CollectionAttemptCountOrderByAggregateInput
   _max?: Prisma.CollectionAttemptMaxOrderByAggregateInput
@@ -287,7 +287,7 @@ export type CollectionAttemptScalarWhereWithAggregatesInput = {
   templateName?: Prisma.StringNullableWithAggregatesFilter<"CollectionAttempt"> | string | null
   notes?: Prisma.StringNullableWithAggregatesFilter<"CollectionAttempt"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CollectionAttempt"> | Date | string
-  memberId?: Prisma.StringWithAggregatesFilter<"CollectionAttempt"> | string
+  customerId?: Prisma.StringWithAggregatesFilter<"CollectionAttempt"> | string
   loanId?: Prisma.StringWithAggregatesFilter<"CollectionAttempt"> | string
 }
 
@@ -300,7 +300,7 @@ export type CollectionAttemptCreateInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  member: Prisma.MemberCreateNestedOneWithoutCollectionAttemptsInput
+  customer: Prisma.CustomerCreateNestedOneWithoutCollectionAttemptsInput
   loan: Prisma.LoanCreateNestedOneWithoutCollectionAttemptsInput
 }
 
@@ -313,7 +313,7 @@ export type CollectionAttemptUncheckedCreateInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  memberId: string
+  customerId: string
   loanId: string
 }
 
@@ -326,7 +326,7 @@ export type CollectionAttemptUpdateInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  member?: Prisma.MemberUpdateOneRequiredWithoutCollectionAttemptsNestedInput
+  customer?: Prisma.CustomerUpdateOneRequiredWithoutCollectionAttemptsNestedInput
   loan?: Prisma.LoanUpdateOneRequiredWithoutCollectionAttemptsNestedInput
 }
 
@@ -339,7 +339,7 @@ export type CollectionAttemptUncheckedUpdateInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  memberId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
@@ -352,7 +352,7 @@ export type CollectionAttemptCreateManyInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  memberId: string
+  customerId: string
   loanId: string
 }
 
@@ -376,7 +376,7 @@ export type CollectionAttemptUncheckedUpdateManyInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  memberId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
@@ -399,7 +399,7 @@ export type CollectionAttemptCountOrderByAggregateInput = {
   templateName?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  memberId?: Prisma.SortOrder
+  customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
 }
 
@@ -412,7 +412,7 @@ export type CollectionAttemptMaxOrderByAggregateInput = {
   templateName?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  memberId?: Prisma.SortOrder
+  customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
 }
 
@@ -425,49 +425,49 @@ export type CollectionAttemptMinOrderByAggregateInput = {
   templateName?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  memberId?: Prisma.SortOrder
+  customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
 }
 
-export type CollectionAttemptCreateNestedManyWithoutMemberInput = {
-  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput> | Prisma.CollectionAttemptCreateWithoutMemberInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput[]
-  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput | Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput[]
-  createMany?: Prisma.CollectionAttemptCreateManyMemberInputEnvelope
+export type CollectionAttemptCreateNestedManyWithoutCustomerInput = {
+  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput> | Prisma.CollectionAttemptCreateWithoutCustomerInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput[]
+  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput | Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput[]
+  createMany?: Prisma.CollectionAttemptCreateManyCustomerInputEnvelope
   connect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
 }
 
-export type CollectionAttemptUncheckedCreateNestedManyWithoutMemberInput = {
-  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput> | Prisma.CollectionAttemptCreateWithoutMemberInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput[]
-  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput | Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput[]
-  createMany?: Prisma.CollectionAttemptCreateManyMemberInputEnvelope
+export type CollectionAttemptUncheckedCreateNestedManyWithoutCustomerInput = {
+  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput> | Prisma.CollectionAttemptCreateWithoutCustomerInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput[]
+  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput | Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput[]
+  createMany?: Prisma.CollectionAttemptCreateManyCustomerInputEnvelope
   connect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
 }
 
-export type CollectionAttemptUpdateManyWithoutMemberNestedInput = {
-  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput> | Prisma.CollectionAttemptCreateWithoutMemberInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput[]
-  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput | Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput[]
-  upsert?: Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutMemberInput | Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutMemberInput[]
-  createMany?: Prisma.CollectionAttemptCreateManyMemberInputEnvelope
+export type CollectionAttemptUpdateManyWithoutCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput> | Prisma.CollectionAttemptCreateWithoutCustomerInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput[]
+  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput | Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput[]
+  upsert?: Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutCustomerInput | Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutCustomerInput[]
+  createMany?: Prisma.CollectionAttemptCreateManyCustomerInputEnvelope
   set?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   disconnect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   delete?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   connect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
-  update?: Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutMemberInput | Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutMemberInput[]
-  updateMany?: Prisma.CollectionAttemptUpdateManyWithWhereWithoutMemberInput | Prisma.CollectionAttemptUpdateManyWithWhereWithoutMemberInput[]
+  update?: Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutCustomerInput | Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutCustomerInput[]
+  updateMany?: Prisma.CollectionAttemptUpdateManyWithWhereWithoutCustomerInput | Prisma.CollectionAttemptUpdateManyWithWhereWithoutCustomerInput[]
   deleteMany?: Prisma.CollectionAttemptScalarWhereInput | Prisma.CollectionAttemptScalarWhereInput[]
 }
 
-export type CollectionAttemptUncheckedUpdateManyWithoutMemberNestedInput = {
-  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput> | Prisma.CollectionAttemptCreateWithoutMemberInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput[]
-  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput | Prisma.CollectionAttemptCreateOrConnectWithoutMemberInput[]
-  upsert?: Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutMemberInput | Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutMemberInput[]
-  createMany?: Prisma.CollectionAttemptCreateManyMemberInputEnvelope
+export type CollectionAttemptUncheckedUpdateManyWithoutCustomerNestedInput = {
+  create?: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput> | Prisma.CollectionAttemptCreateWithoutCustomerInput[] | Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput[]
+  connectOrCreate?: Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput | Prisma.CollectionAttemptCreateOrConnectWithoutCustomerInput[]
+  upsert?: Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutCustomerInput | Prisma.CollectionAttemptUpsertWithWhereUniqueWithoutCustomerInput[]
+  createMany?: Prisma.CollectionAttemptCreateManyCustomerInputEnvelope
   set?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   disconnect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   delete?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
   connect?: Prisma.CollectionAttemptWhereUniqueInput | Prisma.CollectionAttemptWhereUniqueInput[]
-  update?: Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutMemberInput | Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutMemberInput[]
-  updateMany?: Prisma.CollectionAttemptUpdateManyWithWhereWithoutMemberInput | Prisma.CollectionAttemptUpdateManyWithWhereWithoutMemberInput[]
+  update?: Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutCustomerInput | Prisma.CollectionAttemptUpdateWithWhereUniqueWithoutCustomerInput[]
+  updateMany?: Prisma.CollectionAttemptUpdateManyWithWhereWithoutCustomerInput | Prisma.CollectionAttemptUpdateManyWithWhereWithoutCustomerInput[]
   deleteMany?: Prisma.CollectionAttemptScalarWhereInput | Prisma.CollectionAttemptScalarWhereInput[]
 }
 
@@ -525,7 +525,7 @@ export type EnumCollectionAttemptStatusFieldUpdateOperationsInput = {
   set?: $Enums.CollectionAttemptStatus
 }
 
-export type CollectionAttemptCreateWithoutMemberInput = {
+export type CollectionAttemptCreateWithoutCustomerInput = {
   id?: string
   channel: $Enums.CollectionChannel
   type: $Enums.CollectionAttemptType
@@ -537,7 +537,7 @@ export type CollectionAttemptCreateWithoutMemberInput = {
   loan: Prisma.LoanCreateNestedOneWithoutCollectionAttemptsInput
 }
 
-export type CollectionAttemptUncheckedCreateWithoutMemberInput = {
+export type CollectionAttemptUncheckedCreateWithoutCustomerInput = {
   id?: string
   channel: $Enums.CollectionChannel
   type: $Enums.CollectionAttemptType
@@ -549,29 +549,29 @@ export type CollectionAttemptUncheckedCreateWithoutMemberInput = {
   loanId: string
 }
 
-export type CollectionAttemptCreateOrConnectWithoutMemberInput = {
+export type CollectionAttemptCreateOrConnectWithoutCustomerInput = {
   where: Prisma.CollectionAttemptWhereUniqueInput
-  create: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput>
+  create: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput>
 }
 
-export type CollectionAttemptCreateManyMemberInputEnvelope = {
-  data: Prisma.CollectionAttemptCreateManyMemberInput | Prisma.CollectionAttemptCreateManyMemberInput[]
+export type CollectionAttemptCreateManyCustomerInputEnvelope = {
+  data: Prisma.CollectionAttemptCreateManyCustomerInput | Prisma.CollectionAttemptCreateManyCustomerInput[]
 }
 
-export type CollectionAttemptUpsertWithWhereUniqueWithoutMemberInput = {
+export type CollectionAttemptUpsertWithWhereUniqueWithoutCustomerInput = {
   where: Prisma.CollectionAttemptWhereUniqueInput
-  update: Prisma.XOR<Prisma.CollectionAttemptUpdateWithoutMemberInput, Prisma.CollectionAttemptUncheckedUpdateWithoutMemberInput>
-  create: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutMemberInput, Prisma.CollectionAttemptUncheckedCreateWithoutMemberInput>
+  update: Prisma.XOR<Prisma.CollectionAttemptUpdateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedUpdateWithoutCustomerInput>
+  create: Prisma.XOR<Prisma.CollectionAttemptCreateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedCreateWithoutCustomerInput>
 }
 
-export type CollectionAttemptUpdateWithWhereUniqueWithoutMemberInput = {
+export type CollectionAttemptUpdateWithWhereUniqueWithoutCustomerInput = {
   where: Prisma.CollectionAttemptWhereUniqueInput
-  data: Prisma.XOR<Prisma.CollectionAttemptUpdateWithoutMemberInput, Prisma.CollectionAttemptUncheckedUpdateWithoutMemberInput>
+  data: Prisma.XOR<Prisma.CollectionAttemptUpdateWithoutCustomerInput, Prisma.CollectionAttemptUncheckedUpdateWithoutCustomerInput>
 }
 
-export type CollectionAttemptUpdateManyWithWhereWithoutMemberInput = {
+export type CollectionAttemptUpdateManyWithWhereWithoutCustomerInput = {
   where: Prisma.CollectionAttemptScalarWhereInput
-  data: Prisma.XOR<Prisma.CollectionAttemptUpdateManyMutationInput, Prisma.CollectionAttemptUncheckedUpdateManyWithoutMemberInput>
+  data: Prisma.XOR<Prisma.CollectionAttemptUpdateManyMutationInput, Prisma.CollectionAttemptUncheckedUpdateManyWithoutCustomerInput>
 }
 
 export type CollectionAttemptScalarWhereInput = {
@@ -586,7 +586,7 @@ export type CollectionAttemptScalarWhereInput = {
   templateName?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   notes?: Prisma.StringNullableFilter<"CollectionAttempt"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CollectionAttempt"> | Date | string
-  memberId?: Prisma.StringFilter<"CollectionAttempt"> | string
+  customerId?: Prisma.StringFilter<"CollectionAttempt"> | string
   loanId?: Prisma.StringFilter<"CollectionAttempt"> | string
 }
 
@@ -599,7 +599,7 @@ export type CollectionAttemptCreateWithoutLoanInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  member: Prisma.MemberCreateNestedOneWithoutCollectionAttemptsInput
+  customer: Prisma.CustomerCreateNestedOneWithoutCollectionAttemptsInput
 }
 
 export type CollectionAttemptUncheckedCreateWithoutLoanInput = {
@@ -611,7 +611,7 @@ export type CollectionAttemptUncheckedCreateWithoutLoanInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  memberId: string
+  customerId: string
 }
 
 export type CollectionAttemptCreateOrConnectWithoutLoanInput = {
@@ -639,7 +639,7 @@ export type CollectionAttemptUpdateManyWithWhereWithoutLoanInput = {
   data: Prisma.XOR<Prisma.CollectionAttemptUpdateManyMutationInput, Prisma.CollectionAttemptUncheckedUpdateManyWithoutLoanInput>
 }
 
-export type CollectionAttemptCreateManyMemberInput = {
+export type CollectionAttemptCreateManyCustomerInput = {
   id?: string
   channel: $Enums.CollectionChannel
   type: $Enums.CollectionAttemptType
@@ -651,7 +651,7 @@ export type CollectionAttemptCreateManyMemberInput = {
   loanId: string
 }
 
-export type CollectionAttemptUpdateWithoutMemberInput = {
+export type CollectionAttemptUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.EnumCollectionChannelFieldUpdateOperationsInput | $Enums.CollectionChannel
   type?: Prisma.EnumCollectionAttemptTypeFieldUpdateOperationsInput | $Enums.CollectionAttemptType
@@ -663,7 +663,7 @@ export type CollectionAttemptUpdateWithoutMemberInput = {
   loan?: Prisma.LoanUpdateOneRequiredWithoutCollectionAttemptsNestedInput
 }
 
-export type CollectionAttemptUncheckedUpdateWithoutMemberInput = {
+export type CollectionAttemptUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.EnumCollectionChannelFieldUpdateOperationsInput | $Enums.CollectionChannel
   type?: Prisma.EnumCollectionAttemptTypeFieldUpdateOperationsInput | $Enums.CollectionAttemptType
@@ -675,7 +675,7 @@ export type CollectionAttemptUncheckedUpdateWithoutMemberInput = {
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
-export type CollectionAttemptUncheckedUpdateManyWithoutMemberInput = {
+export type CollectionAttemptUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.EnumCollectionChannelFieldUpdateOperationsInput | $Enums.CollectionChannel
   type?: Prisma.EnumCollectionAttemptTypeFieldUpdateOperationsInput | $Enums.CollectionAttemptType
@@ -696,7 +696,7 @@ export type CollectionAttemptCreateManyLoanInput = {
   templateName?: string | null
   notes?: string | null
   createdAt?: Date | string
-  memberId: string
+  customerId: string
 }
 
 export type CollectionAttemptUpdateWithoutLoanInput = {
@@ -708,7 +708,7 @@ export type CollectionAttemptUpdateWithoutLoanInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  member?: Prisma.MemberUpdateOneRequiredWithoutCollectionAttemptsNestedInput
+  customer?: Prisma.CustomerUpdateOneRequiredWithoutCollectionAttemptsNestedInput
 }
 
 export type CollectionAttemptUncheckedUpdateWithoutLoanInput = {
@@ -720,7 +720,7 @@ export type CollectionAttemptUncheckedUpdateWithoutLoanInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  memberId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type CollectionAttemptUncheckedUpdateManyWithoutLoanInput = {
@@ -732,7 +732,7 @@ export type CollectionAttemptUncheckedUpdateManyWithoutLoanInput = {
   templateName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  memberId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -746,9 +746,9 @@ export type CollectionAttemptSelect<ExtArgs extends runtime.Types.Extensions.Int
   templateName?: boolean
   notes?: boolean
   createdAt?: boolean
-  memberId?: boolean
+  customerId?: boolean
   loanId?: boolean
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["collectionAttempt"]>
 
@@ -761,9 +761,9 @@ export type CollectionAttemptSelectCreateManyAndReturn<ExtArgs extends runtime.T
   templateName?: boolean
   notes?: boolean
   createdAt?: boolean
-  memberId?: boolean
+  customerId?: boolean
   loanId?: boolean
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["collectionAttempt"]>
 
@@ -776,9 +776,9 @@ export type CollectionAttemptSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   templateName?: boolean
   notes?: boolean
   createdAt?: boolean
-  memberId?: boolean
+  customerId?: boolean
   loanId?: boolean
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["collectionAttempt"]>
 
@@ -791,28 +791,28 @@ export type CollectionAttemptSelectScalar = {
   templateName?: boolean
   notes?: boolean
   createdAt?: boolean
-  memberId?: boolean
+  customerId?: boolean
   loanId?: boolean
 }
 
-export type CollectionAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "channel" | "type" | "status" | "messageId" | "templateName" | "notes" | "createdAt" | "memberId" | "loanId", ExtArgs["result"]["collectionAttempt"]>
+export type CollectionAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "channel" | "type" | "status" | "messageId" | "templateName" | "notes" | "createdAt" | "customerId" | "loanId", ExtArgs["result"]["collectionAttempt"]>
 export type CollectionAttemptInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }
 export type CollectionAttemptIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }
 export type CollectionAttemptIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  member?: boolean | Prisma.MemberDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
 }
 
 export type $CollectionAttemptPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CollectionAttempt"
   objects: {
-    member: Prisma.$MemberPayload<ExtArgs>
+    customer: Prisma.$CustomerPayload<ExtArgs>
     loan: Prisma.$LoanPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -824,7 +824,7 @@ export type $CollectionAttemptPayload<ExtArgs extends runtime.Types.Extensions.I
     templateName: string | null
     notes: string | null
     createdAt: Date
-    memberId: string
+    customerId: string
     loanId: string
   }, ExtArgs["result"]["collectionAttempt"]>
   composites: {}
@@ -1220,7 +1220,7 @@ readonly fields: CollectionAttemptFieldRefs;
  */
 export interface Prisma__CollectionAttemptClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  member<T extends Prisma.MemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberDefaultArgs<ExtArgs>>): Prisma.Prisma__MemberClient<runtime.Types.Result.GetResult<Prisma.$MemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  customer<T extends Prisma.CustomerDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerDefaultArgs<ExtArgs>>): Prisma.Prisma__CustomerClient<runtime.Types.Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   loan<T extends Prisma.LoanDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LoanDefaultArgs<ExtArgs>>): Prisma.Prisma__LoanClient<runtime.Types.Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1259,7 +1259,7 @@ export interface CollectionAttemptFieldRefs {
   readonly templateName: Prisma.FieldRef<"CollectionAttempt", 'String'>
   readonly notes: Prisma.FieldRef<"CollectionAttempt", 'String'>
   readonly createdAt: Prisma.FieldRef<"CollectionAttempt", 'DateTime'>
-  readonly memberId: Prisma.FieldRef<"CollectionAttempt", 'String'>
+  readonly customerId: Prisma.FieldRef<"CollectionAttempt", 'String'>
   readonly loanId: Prisma.FieldRef<"CollectionAttempt", 'String'>
 }
     
