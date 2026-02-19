@@ -6,8 +6,10 @@ import sinon from "sinon";
 import {
   handleWhatsAppMessage,
   setMessageProcessor,
-  markInitializationComplete
+  markInitializationComplete,
+  resetProcessedMessageIdsForTesting
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
+import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
 import { ValidationError } from "@mikro/common";
 
 describe("handleWhatsAppMessage", () => {
@@ -50,15 +52,24 @@ describe("handleWhatsAppMessage", () => {
   };
 
   beforeEach(() => {
-    // Reset all stub call histories
-    mockMessageProcessor.routeMessage.resetHistory();
-    mockMessageProcessor.invokeLLM.resetHistory();
-    mockMessageProcessor.sendWhatsAppMessage.resetHistory();
-    mockMessageProcessor.downloadMedia.resetHistory();
-    mockMessageProcessor.getChatHistoryForUser.resetHistory();
-    mockMessageProcessor.addMessageForUser.resetHistory();
-    mockMessageProcessor.getAgent.resetHistory();
+    // Recreate stubs each run so afterEach's sinon.restore() doesn't leave
+    // mockMessageProcessor with restored (non-stub) methods for the next test.
+    mockMessageProcessor.routeMessage = sinon.stub().resolves({ type: "guest" as const });
+    mockMessageProcessor.invokeLLM = sinon.stub().resolves("AI response");
+    mockMessageProcessor.sendWhatsAppMessage = sinon
+      .stub()
+      .resolves({ messages: [{ id: "response-123" }] });
+    mockMessageProcessor.downloadMedia = sinon.stub().resolves("data:image/png;base64,mock");
+    mockMessageProcessor.getChatHistoryForUser = sinon.stub().resolves([]);
+    mockMessageProcessor.addMessageForUser = sinon.stub().resolves();
+    mockMessageProcessor.getAgent = sinon.stub().returns({
+      name: "joan",
+      systemPrompt: "You are Joan",
+      tools: []
+    });
 
+    resetProcessedMessageIdsForTesting();
+    clearSessionsForTesting();
     setMessageProcessor(mockMessageProcessor);
     markInitializationComplete();
   });
@@ -216,7 +227,11 @@ describe("handleWhatsAppMessage", () => {
 
       expect(result.messagesProcessed).to.equal(1);
       expect(mockMessageProcessor.downloadMedia.calledOnceWith("aid")).to.be.true;
-      expect(transcribeStub.calledOnceWith(dataUrl)).to.be.true;
+      expect(transcribeStub.calledOnce, "transcribeVoiceNote should be called once").to.be.true;
+      expect(
+        transcribeStub.firstCall.args[0],
+        "transcribeVoiceNote should be called with dataUrl"
+      ).to.equal(dataUrl);
       expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
       const invokeArgs = mockMessageProcessor.invokeLLM.firstCall.args;
       expect(invokeArgs[2]).to.equal("[Voice]: transcribed text");
@@ -239,12 +254,9 @@ describe("handleWhatsAppMessage", () => {
       expect(result.messagesProcessed).to.equal(1);
       expect(mockMessageProcessor.invokeLLM.called).to.be.false;
       expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
-      expect(
-        mockMessageProcessor.sendWhatsAppMessage.calledWithMatch({
-          phone: "+1234567890",
-          message: sinon.match(/No pude entender el audio/)
-        })
-      ).to.be.true;
+      const sendArgs = mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0];
+      expect(sendArgs.phone).to.equal("+1234567890");
+      expect(sendArgs.message).to.match(/No pude entender el audio/);
     });
   });
 
@@ -313,10 +325,17 @@ describe("handleWhatsAppMessage", () => {
       });
 
       await handleWhatsAppMessage(webhook(guestPhone, "msg-1", "Hola"));
+      expect(
+        mockMessageProcessor.invokeLLM.callCount,
+        "first webhook should invoke LLM once"
+      ).to.equal(1);
       expect(mockMessageProcessor.invokeLLM.getCall(0).args[5]).to.equal(true);
 
       await handleWhatsAppMessage(webhook(guestPhone, "msg-2", "Necesito ayuda"));
-      expect(mockMessageProcessor.invokeLLM.calledTwice).to.be.true;
+      expect(
+        mockMessageProcessor.invokeLLM.callCount,
+        "second webhook should invoke LLM (total 2)"
+      ).to.equal(2);
       expect(mockMessageProcessor.invokeLLM.getCall(1).args[5]).to.equal(false);
     });
 

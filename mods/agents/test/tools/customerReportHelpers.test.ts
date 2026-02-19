@@ -12,7 +12,7 @@ import {
   type LoanPaymentData
 } from "@mikro/common";
 
-describe("memberReportHelpers", () => {
+describe("customerReportHelpers", () => {
   let clock: sinon.SinonFakeTimers;
 
   function createLoan(params: {
@@ -116,7 +116,7 @@ describe("memberReportHelpers", () => {
     });
 
     it("should stay synced to the preferred day for subsequent cycles", () => {
-      // Member pays every Friday: Jan 9, Jan 16, Jan 23.
+      // Customer pays every Friday: Jan 9, Jan 16, Jan 23.
       // On Thu Jan 22 (day 17): (17-4)/7=1 +1 = 2 cycles, 2 payments → 0 missed.
       // On Fri Jan 23 (day 18): (18-4)/7=2 +1 = 3 cycles, 3 payments → 0 missed.
       const loan = createLoan({
@@ -134,7 +134,7 @@ describe("memberReportHelpers", () => {
     });
 
     it("should detect behind only after the preferred day each week", () => {
-      // Member paid once (Jan 9). By Thu Jan 15 (day 10): only 1 cycle elapsed → 0 missed.
+      // Customer paid once (Jan 9). By Thu Jan 15 (day 10): only 1 cycle elapsed → 0 missed.
       // By Fri Jan 16 (day 11): 2 cycles elapsed, 1 payment → 1 missed.
       const loan = createLoan({
         createdAt: new Date("2026-01-05"),

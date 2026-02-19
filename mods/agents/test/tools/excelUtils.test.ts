@@ -5,9 +5,9 @@ import { expect } from "chai";
 import sinon from "sinon";
 import ExcelJS from "exceljs";
 import {
-  generateMembersExcel,
+  generateCustomersExcel,
   generateFilename,
-  type MemberExportData
+  type ExportedCustomer
 } from "../../src/tools/executor/excelUtils.js";
 
 describe("excelUtils", () => {
@@ -21,7 +21,7 @@ describe("excelUtils", () => {
     it("should generate filename with default prefix and current date", () => {
       clock = sinon.useFakeTimers(new Date("2026-03-15"));
       const filename = generateFilename();
-      expect(filename).to.equal("reporte-miembros-2026-03-15.xlsx");
+      expect(filename).to.equal("reporte-clientes-2026-03-15.xlsx");
     });
 
     it("should generate filename with custom prefix", () => {
@@ -37,11 +37,11 @@ describe("excelUtils", () => {
     });
   });
 
-  describe("generateMembersExcel", function () {
+  describe("generateCustomersExcel", function () {
     // Excel generation can be slow, increase timeout
     this.timeout(10000);
 
-    const createMockMember = (name: string, loanCount = 1): MemberExportData => ({
+    const createMockCustomer = (name: string, loanCount = 1): ExportedCustomer => ({
       name,
       phone: "+18091234567",
       collectionPoint: "https://maps.google.com/place",
@@ -60,53 +60,53 @@ describe("excelUtils", () => {
     });
 
     it("should generate a valid Excel buffer", async () => {
-      const members = [createMockMember("John Doe")];
-      const result = await generateMembersExcel(members);
+      const customers = [createMockCustomer("John Doe")];
+      const result = await generateCustomersExcel(customers);
 
       expect(result.buffer).to.be.instanceOf(Buffer);
       expect(result.buffer.length).to.be.greaterThan(0);
     });
 
     it("should include correct filename format with prefix", async () => {
-      const members = [createMockMember("John Doe")];
-      const result = await generateMembersExcel(members, "reporte-cobrador");
+      const customers = [createMockCustomer("John Doe")];
+      const result = await generateCustomersExcel(customers, "reporte-cobrador");
 
       // Check filename format without date dependency
       expect(result.filename).to.match(/^reporte-cobrador-\d{4}-\d{2}-\d{2}\.xlsx$/);
     });
 
-    it("should return correct member count", async () => {
-      const members = [
-        createMockMember("John Doe"),
-        createMockMember("Jane Smith"),
-        createMockMember("Bob Wilson")
+    it("should return correct customer count", async () => {
+      const customers = [
+        createMockCustomer("John Doe"),
+        createMockCustomer("Jane Smith"),
+        createMockCustomer("Bob Wilson")
       ];
-      const result = await generateMembersExcel(members);
+      const result = await generateCustomersExcel(customers);
 
-      expect(result.memberCount).to.equal(3);
+      expect(result.customerCount).to.equal(3);
     });
 
     it("should return correct loan count", async () => {
-      const members = [
-        createMockMember("John Doe", 2), // 2 loans
-        createMockMember("Jane Smith", 1), // 1 loan
-        createMockMember("Bob Wilson", 3) // 3 loans
+      const customers = [
+        createMockCustomer("John Doe", 2), // 2 loans
+        createMockCustomer("Jane Smith", 1), // 1 loan
+        createMockCustomer("Bob Wilson", 3) // 3 loans
       ];
-      const result = await generateMembersExcel(members);
+      const result = await generateCustomersExcel(customers);
 
       expect(result.loanCount).to.equal(6);
     });
 
-    it("should handle empty members array", async () => {
-      const result = await generateMembersExcel([]);
+    it("should handle empty customers array", async () => {
+      const result = await generateCustomersExcel([]);
 
-      expect(result.memberCount).to.equal(0);
+      expect(result.customerCount).to.equal(0);
       expect(result.loanCount).to.equal(0);
       expect(result.buffer).to.be.instanceOf(Buffer);
     });
 
-    it("should handle members with no loans", async () => {
-      const memberNoLoans: MemberExportData = {
+    it("should handle customers with no loans", async () => {
+      const customerNoLoans: ExportedCustomer = {
         name: "John Doe",
         phone: "+18091234567",
         collectionPoint: null,
@@ -114,14 +114,14 @@ describe("excelUtils", () => {
         referredBy: { name: "Referrer" },
         loans: []
       };
-      const result = await generateMembersExcel([memberNoLoans]);
+      const result = await generateCustomersExcel([customerNoLoans]);
 
-      expect(result.memberCount).to.equal(1);
+      expect(result.customerCount).to.equal(1);
       expect(result.loanCount).to.equal(0);
     });
 
     it("should handle null collectionPoint and notes", async () => {
-      const member: MemberExportData = {
+      const customer: ExportedCustomer = {
         name: "John Doe",
         phone: "+18091234567",
         collectionPoint: null,
@@ -138,7 +138,7 @@ describe("excelUtils", () => {
           }
         ]
       };
-      const result = await generateMembersExcel([member]);
+      const result = await generateCustomersExcel([customer]);
 
       // Should not throw and should generate valid buffer
       expect(result.buffer).to.be.instanceOf(Buffer);
@@ -146,43 +146,45 @@ describe("excelUtils", () => {
     });
 
     it("should create valid Excel structure with headers", async () => {
-      const members = [createMockMember("John Doe")];
-      const result = await generateMembersExcel(members);
+      const customers = [createMockCustomer("John Doe")];
+      const result = await generateCustomersExcel(customers);
 
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(result.buffer);
 
-      const worksheet = workbook.getWorksheet("Reporte de Miembros");
+      const worksheet = workbook.getWorksheet("Reporte de Clientes");
       expect(worksheet).to.exist;
 
       const headerRow = worksheet!.getRow(1);
       expect(headerRow.getCell(1).value).to.equal("Nombre");
       expect(headerRow.getCell(2).value).to.equal("Teléfono");
       expect(headerRow.getCell(3).value).to.equal("Préstamo");
-      expect(headerRow.getCell(4).value).to.equal("Rating");
-      expect(headerRow.getCell(5).value).to.equal("Pagos atrasados");
-      expect(headerRow.getCell(6).value).to.equal("Tendencia");
-      expect(headerRow.getCell(7).value).to.equal("Afiliado por");
-      expect(headerRow.getCell(8).value).to.equal("Lugar de Cobro");
-      expect(headerRow.getCell(9).value).to.equal("Notas");
+      expect(headerRow.getCell(4).value).to.equal("Ciclo de Pago");
+      expect(headerRow.getCell(5).value).to.equal("Rating");
+      expect(headerRow.getCell(6).value).to.equal("Pagos atrasados");
+      expect(headerRow.getCell(7).value).to.equal("Tendencia");
+      expect(headerRow.getCell(8).value).to.equal("Afiliado por");
+      expect(headerRow.getCell(9).value).to.equal("Lugar de Cobro");
+      expect(headerRow.getCell(10).value).to.equal("Notas");
     });
 
-    it("should include member data in rows", async () => {
-      const members = [createMockMember("John Doe")];
-      const result = await generateMembersExcel(members);
+    it("should include customer data in rows", async () => {
+      const customers = [createMockCustomer("John Doe")];
+      const result = await generateCustomersExcel(customers);
 
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(result.buffer);
 
-      const worksheet = workbook.getWorksheet("Reporte de Miembros");
+      const worksheet = workbook.getWorksheet("Reporte de Clientes");
       expect(worksheet).to.exist;
 
       const dataRow = worksheet!.getRow(2);
       expect(dataRow.getCell(1).value).to.equal("John Doe");
       expect(dataRow.getCell(2).value).to.equal("+18091234567");
       expect(dataRow.getCell(3).value).to.equal(10001);
-      expect(dataRow.getCell(4).value).to.match(/^★+$/);
-      expect(dataRow.getCell(7).value).to.equal("John Referrer");
+      expect(dataRow.getCell(4).value).to.equal("Semanal");
+      expect(dataRow.getCell(5).value).to.match(/^★+$/);
+      expect(dataRow.getCell(8).value).to.equal("John Referrer");
     });
 
     it("should sort rows by rating ascending then missed count descending", async () => {
@@ -192,7 +194,7 @@ describe("excelUtils", () => {
       const pay = (weeksFromStart: number) =>
         new Date(start.getTime() + weeksFromStart * msPerWeek);
 
-      const members: MemberExportData[] = [
+      const customers: ExportedCustomer[] = [
         {
           name: "On time",
           phone: "+1",
@@ -228,10 +230,10 @@ describe("excelUtils", () => {
           ]
         }
       ];
-      const result = await generateMembersExcel(members);
+      const result = await generateCustomersExcel(customers);
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(result.buffer);
-      const worksheet = workbook.getWorksheet("Reporte de Miembros")!;
+      const worksheet = workbook.getWorksheet("Reporte de Clientes")!;
       const row2 = worksheet.getRow(2);
       const row3 = worksheet.getRow(3);
       expect(row2.getCell(1).value).to.equal("Two behind");

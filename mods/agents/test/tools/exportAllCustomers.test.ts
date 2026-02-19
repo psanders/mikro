@@ -3,10 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { handleExportAllMembers } from "../../src/tools/executor/exportAllMembers.js";
-import type { ToolExecutorDependencies, ExportedMember } from "../../src/tools/executor/types.js";
+import { handleExportAllCustomers } from "../../src/tools/executor/exportAllCustomers.js";
+import type { ToolExecutorDependencies, ExportedCustomer } from "../../src/tools/executor/types.js";
 
-function minimalMember(overrides: Partial<ExportedMember> = {}): ExportedMember {
+function minimalCustomer(overrides: Partial<ExportedCustomer> = {}): ExportedCustomer {
   return {
     name: "Test",
     phone: "+123",
@@ -27,48 +27,48 @@ function minimalMember(overrides: Partial<ExportedMember> = {}): ExportedMember 
   };
 }
 
-describe("handleExportAllMembers", () => {
+describe("handleExportAllCustomers", () => {
   afterEach(() => {
     sinon.restore();
   });
 
-  it("default format calls renderMembersReportToPng, uploads as image/png, sends document with .png filename", async () => {
-    const members = [minimalMember()];
+  it("default format calls renderCustomersReportToPng, uploads as image/png, sends document with .png filename", async () => {
+    const customers = [minimalCustomer()];
     const pngBuffer = Buffer.from("png");
     const renderStub = sinon.stub().resolves(pngBuffer);
     const uploadStub = sinon.stub().resolves("media-id");
     const sendStub = sinon.stub().resolves({ messages: [{ id: "msg-1" }] });
 
     const deps = {
-      exportAllMembers: sinon.stub().resolves(members),
-      renderMembersReportToPng: renderStub,
+      exportAllCustomers: sinon.stub().resolves(customers),
+      renderCustomersReportToPng: renderStub,
       uploadMedia: uploadStub,
       sendWhatsAppMessage: sendStub
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { userId: "admin-1", phone: "+999" });
+    const result = await handleExportAllCustomers(deps, {}, { userId: "admin-1", phone: "+999" });
 
     expect(result.success).to.be.true;
-    expect(renderStub.calledOnceWith(members)).to.be.true;
+    expect(renderStub.calledOnceWith(customers)).to.be.true;
     expect(uploadStub.calledOnceWith(pngBuffer, "image/png")).to.be.true;
     expect(sendStub.calledOnce).to.be.true;
     expect(sendStub.firstCall.args[0].mediaType).to.equal("document");
     expect(sendStub.firstCall.args[0].documentFilename).to.match(/\.png$/);
   });
 
-  it('format "detailed" calls generateMembersExcel, uploads xlsx, sends document with .xlsx filename', async () => {
-    const members = [minimalMember()];
+  it('format "detailed" calls generateCustomersExcel, uploads xlsx, sends document with .xlsx filename', async () => {
+    const customers = [minimalCustomer()];
     const uploadStub = sinon.stub().resolves("media-id");
     const sendStub = sinon.stub().resolves({ messages: [{ id: "msg-1" }] });
 
     const deps = {
-      exportAllMembers: sinon.stub().resolves(members),
-      renderMembersReportToPng: sinon.stub(),
+      exportAllCustomers: sinon.stub().resolves(customers),
+      renderCustomersReportToPng: sinon.stub(),
       uploadMedia: uploadStub,
       sendWhatsAppMessage: sendStub
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(
+    const result = await handleExportAllCustomers(
       deps,
       { format: "detailed" },
       { userId: "admin-1", phone: "+999" }
@@ -84,13 +84,13 @@ describe("handleExportAllMembers", () => {
 
   it("missing adminId returns error", async () => {
     const deps = {
-      exportAllMembers: sinon.stub().resolves([minimalMember()]),
-      renderMembersReportToPng: sinon.stub(),
+      exportAllCustomers: sinon.stub().resolves([minimalCustomer()]),
+      renderCustomersReportToPng: sinon.stub(),
       uploadMedia: sinon.stub(),
       sendWhatsAppMessage: sinon.stub()
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { phone: "+999" });
+    const result = await handleExportAllCustomers(deps, {}, { phone: "+999" });
 
     expect(result.success).to.be.false;
     expect(result.message).to.include("admin");
@@ -98,53 +98,53 @@ describe("handleExportAllMembers", () => {
 
   it("missing adminPhone returns error", async () => {
     const deps = {
-      exportAllMembers: sinon.stub().resolves([minimalMember()]),
-      renderMembersReportToPng: sinon.stub(),
+      exportAllCustomers: sinon.stub().resolves([minimalCustomer()]),
+      renderCustomersReportToPng: sinon.stub(),
       uploadMedia: sinon.stub(),
       sendWhatsAppMessage: sinon.stub()
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { userId: "admin-1" });
+    const result = await handleExportAllCustomers(deps, {}, { userId: "admin-1" });
 
     expect(result.success).to.be.false;
     expect(result.message).to.include("telefono");
   });
 
-  it("empty members returns success with no report sent", async () => {
+  it("empty customers returns success with no report sent", async () => {
     const exportStub = sinon.stub().resolves([]);
     const renderStub = sinon.stub();
     const uploadStub = sinon.stub();
     const sendStub = sinon.stub();
 
     const deps = {
-      exportAllMembers: exportStub,
-      renderMembersReportToPng: renderStub,
+      exportAllCustomers: exportStub,
+      renderCustomersReportToPng: renderStub,
       uploadMedia: uploadStub,
       sendWhatsAppMessage: sendStub
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { userId: "admin-1", phone: "+999" });
+    const result = await handleExportAllCustomers(deps, {}, { userId: "admin-1", phone: "+999" });
 
     expect(result.success).to.be.true;
-    expect(result.message).to.include("No hay miembros activos");
+    expect(result.message).to.include("No hay clientes activos");
     expect(renderStub.called).to.be.false;
     expect(uploadStub.called).to.be.false;
     expect(sendStub.called).to.be.false;
   });
 
   it("upload failure returns error", async () => {
-    const members = [minimalMember()];
+    const customers = [minimalCustomer()];
     const renderStub = sinon.stub().resolves(Buffer.from("png"));
     const uploadStub = sinon.stub().rejects(new Error("Upload failed"));
 
     const deps = {
-      exportAllMembers: sinon.stub().resolves(members),
-      renderMembersReportToPng: renderStub,
+      exportAllCustomers: sinon.stub().resolves(customers),
+      renderCustomersReportToPng: renderStub,
       uploadMedia: uploadStub,
       sendWhatsAppMessage: sinon.stub()
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { userId: "admin-1", phone: "+999" });
+    const result = await handleExportAllCustomers(deps, {}, { userId: "admin-1", phone: "+999" });
 
     expect(result.success).to.be.false;
     expect(result.message).to.include("Error al enviar");
@@ -152,19 +152,19 @@ describe("handleExportAllMembers", () => {
   });
 
   it("send failure returns error", async () => {
-    const members = [minimalMember()];
+    const customers = [minimalCustomer()];
     const renderStub = sinon.stub().resolves(Buffer.from("png"));
     const uploadStub = sinon.stub().resolves("media-id");
     const sendStub = sinon.stub().rejects(new Error("Send failed"));
 
     const deps = {
-      exportAllMembers: sinon.stub().resolves(members),
-      renderMembersReportToPng: renderStub,
+      exportAllCustomers: sinon.stub().resolves(customers),
+      renderCustomersReportToPng: renderStub,
       uploadMedia: uploadStub,
       sendWhatsAppMessage: sendStub
     } as unknown as ToolExecutorDependencies;
 
-    const result = await handleExportAllMembers(deps, {}, { userId: "admin-1", phone: "+999" });
+    const result = await handleExportAllCustomers(deps, {}, { userId: "admin-1", phone: "+999" });
 
     expect(result.success).to.be.false;
     expect(result.message).to.include("Error al enviar");
