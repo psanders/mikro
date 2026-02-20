@@ -51,7 +51,6 @@ export async function handleSendReceiptViaWhatsApp(
         message: "OK",
         data: {
           messageId: result.messageId
-          // Note: imageUrl is not included - the image is already sent via WhatsApp
         }
       };
     } else {

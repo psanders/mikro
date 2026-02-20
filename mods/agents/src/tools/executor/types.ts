@@ -75,7 +75,6 @@ export interface ToolExecutorDependencies {
     success: boolean;
     message: string;
     messageId?: string;
-    imageUrl?: string;
     error?: string;
   }>;
 

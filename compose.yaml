@@ -12,8 +12,6 @@ services:
       - ./mikro.json:/app/mikro.json:ro
       # Database persistence
       - ./data:/app/data
-      # Public directory for serving static files (receipts, images, etc.)
-      - ./public:/app/public
       # Signing keys for receipts
       - ./keys:/app/keys
     healthcheck:

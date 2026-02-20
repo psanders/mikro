@@ -104,7 +104,7 @@ export const mikroConfigSchema = z
     timezone: z.string().default("America/Santo_Domingo"),
     port: z.number().default(4000),
     publicUrl: z.string().default("http://localhost:4000"),
-    publicPath: z.string().default("/app/public"),
+    receiptsPath: z.string().default("/app/receipts"),
     databaseUrl: z.string().default("file:/app/data/mikro.db"),
     credentials: z.string().default("admin:secret"),
     keysPath: z.string().default("/app/keys"),

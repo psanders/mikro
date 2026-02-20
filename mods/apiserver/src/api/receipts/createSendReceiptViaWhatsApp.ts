@@ -10,7 +10,7 @@ import {
 } from "@mikro/common";
 import { type GenerateReceiptResponse } from "@mikro/common";
 import { saveReceiptImage } from "../../receipts/storage.js";
-import { getPublicPath, getPublicImageUrl } from "@mikro/agents";
+import { getReceiptsPath } from "@mikro/agents";
 import { logger } from "../../logger.js";
 
 /**
@@ -21,8 +21,6 @@ export interface SendReceiptViaWhatsAppResponse {
   success: boolean;
   /** Message ID from WhatsApp API */
   messageId?: string;
-  /** Public URL of the saved receipt image */
-  imageUrl?: string;
   /** Media ID from WhatsApp upload */
   mediaId?: string;
   /** Error message if sending failed */
@@ -42,7 +40,7 @@ export interface SendReceiptViaWhatsAppDependencies {
     caption?: string;
   }) => Promise<WhatsAppSendResponse>;
   uploadMedia: (imageBuffer: Buffer, mimeType: string) => Promise<string>;
-  publicPath?: string;
+  receiptsPath?: string;
 }
 
 /**
@@ -58,7 +56,12 @@ export interface SendReceiptViaWhatsAppDependencies {
  * @returns A validated function that sends receipts via WhatsApp
  */
 export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDependencies) {
-  const { generateReceipt, sendWhatsAppMessage, uploadMedia, publicPath = getPublicPath() } = deps;
+  const {
+    generateReceipt,
+    sendWhatsAppMessage,
+    uploadMedia,
+    receiptsPath = getReceiptsPath()
+  } = deps;
 
   const fn = async (
     params: SendReceiptViaWhatsAppInput
@@ -82,8 +85,7 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       const receipt = await generateReceipt({ paymentId: params.paymentId });
       const loanNumber = receipt.receiptData.loanNumber;
 
-      // 3. Save image to disk (for backup/archival purposes)
-      const filename = saveReceiptImage(loanNumber, receipt.image, publicPath);
+      saveReceiptImage(loanNumber, receipt.image, receiptsPath);
 
       // 4. Convert base64 image to buffer and upload to WhatsApp
       const imageBuffer = Buffer.from(receipt.image, "base64");
@@ -125,9 +127,6 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
         throw new Error(`Invalid mediaId format (expected numeric string): ${mediaId}`);
       }
 
-      // Get imageUrl for response only (not for sending)
-      const imageUrl = getPublicImageUrl(filename);
-
       logger.verbose("sending whatsapp message with mediaId", {
         paymentId: params.paymentId,
         mediaId,
@@ -158,7 +157,6 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       return {
         success: true,
         messageId,
-        imageUrl,
         mediaId
       };
     } catch (error) {

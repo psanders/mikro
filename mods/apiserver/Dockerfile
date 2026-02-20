@@ -42,8 +42,8 @@ RUN npm ci --omit=dev --ignore-scripts && \
 RUN npm install -g prisma@^7.3.0 && \
     npm cache clean --force
 
-# Create directories for data and images
-RUN mkdir -p /app/data /app/images && \
+# Create directories for data and receipt images
+RUN mkdir -p /app/data /app/receipts && \
     chown -R nodejs:nodejs /app
 
 # Switch to non-root user

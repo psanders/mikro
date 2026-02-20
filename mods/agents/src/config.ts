@@ -78,10 +78,10 @@ export function getWhatsAppAccessToken(): string {
 }
 
 /**
- * Get the public path for storing/serving static files.
+ * Get the path for storing receipt images.
  */
-export function getPublicPath(): string {
-  return getConfig().publicPath;
+export function getReceiptsPath(): string {
+  return getConfig().receiptsPath;
 }
 
 /**
@@ -89,14 +89,6 @@ export function getPublicPath(): string {
  */
 export function getPublicUrl(): string {
   return getConfig().publicUrl;
-}
-
-/**
- * Build a public URL for an image file.
- */
-export function getPublicImageUrl(filename: string): string {
-  const publicUrl = getPublicUrl();
-  return `${publicUrl}/images/${filename}`;
 }
 
 /**

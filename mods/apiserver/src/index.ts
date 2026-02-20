@@ -108,12 +108,7 @@ export type { AppRouter } from "./trpc/index.js";
 const app = express();
 const cfg = getConfig();
 const PORT = cfg.port;
-const PUBLIC_PATH = cfg.publicPath;
-
 app.use(express.json());
-
-// Serve static files publicly at /images/:filename
-app.use("/images", express.static(PUBLIC_PATH));
 
 // Health check endpoint
 app.get("/health", (_req, res) => {
@@ -310,7 +305,6 @@ async function initializeMessageProcessor() {
             ? `Recibo enviado correctamente.${result.messageId ? ` ID del mensaje: ${result.messageId}` : ""}`
             : `Error al enviar el recibo: ${result.error || "Error desconocido"}`,
           messageId: result.messageId,
-          imageUrl: result.imageUrl,
           error: result.error
         };
       },
@@ -688,7 +682,6 @@ initializeMessageProcessor()
     app.listen(PORT, () => {
       logger.info("api server started", {
         port: PORT,
-        publicPath: PUBLIC_PATH,
         processorConfigured: finalState.exists
       });
 
