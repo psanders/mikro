@@ -1,6 +1,6 @@
 {
   "name": "mikro",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Mikro monorepo - Receipt generation and CLI tools",
   "type": "module",
   "private": true,

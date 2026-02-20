@@ -37,6 +37,7 @@ import {
   listPaymentsByLoanIdSchema,
   // Receipt schemas
   generateReceiptSchema,
+  receiptDataSchema,
   sendReceiptViaWhatsAppSchema,
   // Report schemas
   generatePortfolioMetricsSchema,
@@ -85,6 +86,7 @@ import { createListPaymentsByReferrer } from "../../api/payments/createListPayme
 import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
 // Receipt API functions
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
+import { createGenerateReceiptFromDataApi } from "../../api/receipts/createGenerateReceiptFromData.js";
 import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendReceiptViaWhatsApp.js";
 // Report API functions
 import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
@@ -408,6 +410,17 @@ export const protectedRouter = router({
     .input(generateReceiptSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateReceipt({ db: ctx.db });
+      return fn(input);
+    }),
+
+  /**
+   * Generate a receipt from raw data (no database lookup).
+   * Used by the CLI interactive mode so it doesn't need local assets/keys.
+   */
+  generateReceiptFromData: protectedProcedure
+    .input(receiptDataSchema)
+    .mutation(async ({ input }) => {
+      const fn = createGenerateReceiptFromDataApi();
       return fn(input);
     }),
 

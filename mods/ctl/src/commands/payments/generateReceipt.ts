@@ -4,24 +4,10 @@
 import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, resolve } from "path";
-import {
-  createGenerateReceiptFromData,
-  getConfig,
-  resolvePathFromConfigDir,
-  type GenerateReceiptResponse
-} from "@mikro/common";
+import { type GenerateReceiptResponse } from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptTextIfMissing, promptNumberIfMissing } from "../../lib/prompts.js";
-
-/** Resolve keys and assets dirs from config (mikro.json). Throws if config is missing. */
-function getReceiptDirs(): { keysDir: string; assetsDir: string } {
-  const cfg = getConfig();
-  return {
-    keysDir: resolvePathFromConfigDir(cfg.keysPath),
-    assetsDir: resolvePathFromConfigDir(cfg.assetsPath)
-  };
-}
 
 export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt> {
   static override readonly description = "generate a payment receipt as an image";
@@ -38,7 +24,7 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
     }),
     interactive: Flags.boolean({
       char: "i",
-      description: "Manually enter receipt data (no API, no database)",
+      description: "Manually enter receipt data (no database lookup)",
       default: false
     }),
     output: Flags.string({
@@ -132,10 +118,10 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       { required: false, default: "" }
     );
 
-    const { keysDir, assetsDir } = getReceiptDirs();
+    const client = this.createClient();
 
-    const generateReceipt = createGenerateReceiptFromData({ keysDir, assetsDir });
-    const receiptData = {
+    this.log("\nGenerating receipt via API...");
+    return client.generateReceiptFromData.mutate({
       loanNumber,
       name,
       date,
@@ -143,10 +129,7 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       paymentNumber,
       pendingPayments,
       ...(agentName ? { agentName } : {})
-    };
-
-    this.log("\nGenerating receipt...");
-    return generateReceipt(receiptData);
+    });
   }
 
   private async runFromPaymentId(outputDir: string): Promise<GenerateReceiptResponse> {
