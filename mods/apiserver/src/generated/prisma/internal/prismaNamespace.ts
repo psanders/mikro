@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   UserRole: 'UserRole',
   Customer: 'Customer',
+  NotificationPolicy: 'NotificationPolicy',
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "collectionAttempt" | "loanNote"
+    modelProps: "user" | "userRole" | "customer" | "notificationPolicy" | "loan" | "message" | "attachment" | "payment" | "collectionAttempt" | "loanNote"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -631,6 +632,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.CustomerCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.CustomerCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationPolicy: {
+      payload: Prisma.$NotificationPolicyPayload<ExtArgs>
+      fields: Prisma.NotificationPolicyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationPolicyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationPolicyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationPolicyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationPolicyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationPolicyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationPolicyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationPolicyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationPolicyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationPolicyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        update: {
+          args: Prisma.NotificationPolicyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationPolicyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationPolicyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationPolicyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationPolicyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationPolicyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationPolicy>
+        }
+        groupBy: {
+          args: Prisma.NotificationPolicyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationPolicyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationPolicyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationPolicyCountAggregateOutputType> | number
         }
       }
     }
@@ -1159,6 +1234,18 @@ export const CustomerScalarFieldEnum = {
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
 
 
+export const NotificationPolicyScalarFieldEnum = {
+  id: 'id',
+  collections: 'collections',
+  paymentConfirmations: 'paymentConfirmations',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  customerId: 'customerId'
+} as const
+
+export type NotificationPolicyScalarFieldEnum = (typeof NotificationPolicyScalarFieldEnum)[keyof typeof NotificationPolicyScalarFieldEnum]
+
+
 export const LoanScalarFieldEnum = {
   id: 'id',
   loanId: 'loanId',
@@ -1493,6 +1580,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   userRole?: Prisma.UserRoleOmit
   customer?: Prisma.CustomerOmit
+  notificationPolicy?: Prisma.NotificationPolicyOmit
   loan?: Prisma.LoanOmit
   message?: Prisma.MessageOmit
   attachment?: Prisma.AttachmentOmit

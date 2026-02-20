@@ -70,7 +70,7 @@ export async function runSingleCollection(
   const loan = await deps.db.loan.findUnique({
     where: { loanId: input.loanId },
     include: {
-      customer: true,
+      customer: { include: { notificationPolicy: true } },
       payments: {
         where: { status: "COMPLETED" },
         orderBy: { paidAt: "asc" }
@@ -92,6 +92,17 @@ export async function runSingleCollection(
   }
 
   const customer = loan.customer;
+  if (customer.notificationPolicy?.collections === false) {
+    return {
+      success: false,
+      loanId: input.loanId,
+      type: AttemptType.PAYMENT_REMINDER,
+      channel: Channel.WHATSAPP,
+      customerName: customer.name,
+      dryRun,
+      error: "Customer has collection notifications disabled"
+    };
+  }
   const customerInfo = { id: customer.id, name: customer.name, phone: customer.phone };
   const loanInfo = { id: loan.id, loanId: loan.loanId };
   const target: CollectionTarget = { customer: customerInfo, loan: loanInfo };

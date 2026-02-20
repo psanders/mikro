@@ -36,12 +36,17 @@ export async function sendPaymentConfirmation(
   const payment = await deps.db.payment.findUnique({
     where: { id: paymentId },
     include: {
-      loan: { include: { customer: true } }
+      loan: { include: { customer: { include: { notificationPolicy: true } } } }
     }
   });
 
   if (!payment || !payment.loan?.customer) {
     logger.warn("payment or loan/customer not found for confirmation", { paymentId });
+    return;
+  }
+
+  if (payment.loan.customer.notificationPolicy?.paymentConfirmations === false) {
+    logger.verbose("payment confirmation skipped (disabled by policy)", { paymentId });
     return;
   }
 

@@ -57,6 +57,17 @@ CREATE TABLE "customers" (
     CONSTRAINT "customers_assigned_collector_id_fkey" FOREIGN KEY ("assigned_collector_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
+-- Notification policies table
+CREATE TABLE "notification_policies" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "collections" BOOLEAN NOT NULL DEFAULT true,
+    "payment_confirmations" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    CONSTRAINT "notification_policies_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 -- Loans table
 CREATE TABLE "loans" (
     "id" TEXT NOT NULL PRIMARY KEY,
@@ -153,6 +164,7 @@ CREATE UNIQUE INDEX "user_roles_user_id_role_key" ON "user_roles"("user_id", "ro
 CREATE INDEX "customers_created_by_id_idx" ON "customers"("created_by_id");
 CREATE INDEX "customers_assigned_collector_id_idx" ON "customers"("assigned_collector_id");
 CREATE INDEX "customers_phone_idx" ON "customers"("phone");
+CREATE UNIQUE INDEX "notification_policies_customer_id_key" ON "notification_policies"("customer_id");
 CREATE UNIQUE INDEX "loans_loan_id_key" ON "loans"("loan_id");
 CREATE INDEX "loans_customer_id_idx" ON "loans"("customer_id");
 CREATE INDEX "loans_status_idx" ON "loans"("status");

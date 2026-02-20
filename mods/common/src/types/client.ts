@@ -61,7 +61,10 @@ export interface DbClient {
       data: Omit<UpdateCustomerInput, "id">;
     }): Promise<Customer>;
     delete(args: { where: { id: string } }): Promise<Customer>;
-    findUnique(args: { where: { id: string } }): Promise<Customer | null>;
+    findUnique(args: {
+      where: { id: string };
+      include?: { notificationPolicy?: true };
+    }): Promise<Customer | null>;
     findFirst(args: { where: { phone: string } }): Promise<Customer | null>;
     findMany(args?: {
       where?: {

@@ -59,7 +59,10 @@ export async function runDailyCollections(
   // REVERSED or PENDING payments must not count as "payments made". Customers with no
   // completed payments still appear (loans have payments: []).
   const customers = await deps.db.customer.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      NOT: { notificationPolicy: { collections: false } }
+    },
     include: {
       loans: {
         where: { status: { in: includeDefaulted ? ["ACTIVE", "DEFAULTED"] : ["ACTIVE"] } },

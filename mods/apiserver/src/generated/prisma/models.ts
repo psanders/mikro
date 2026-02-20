@@ -11,6 +11,7 @@
 export type * from './models/User.js'
 export type * from './models/UserRole.js'
 export type * from './models/Customer.js'
+export type * from './models/NotificationPolicy.js'
 export type * from './models/Loan.js'
 export type * from './models/Message.js'
 export type * from './models/Attachment.js'

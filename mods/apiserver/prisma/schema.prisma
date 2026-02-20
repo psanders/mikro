@@ -172,11 +172,25 @@ model Customer {
   loans               Loan[]
   messages            Message[]
   collectionAttempts  CollectionAttempt[]
+  notificationPolicy  NotificationPolicy?
 
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
   @@map("customers")
+}
+
+model NotificationPolicy {
+  id                   String   @id @default(uuid())
+  collections          Boolean  @default(true)
+  paymentConfirmations Boolean  @default(true) @map("payment_confirmations")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @unique @map("customer_id")
+
+  @@map("notification_policies")
 }
 
 model Loan {

@@ -20,11 +20,28 @@ import { logger } from "../../logger.js";
  */
 export function createUpdateCustomer(client: DbClient) {
   const fn = async (params: UpdateCustomerInput): Promise<Customer> => {
-    const { id, ...updateData } = params;
+    const { id, notificationPolicy, ...updateData } = params;
     logger.verbose("updating customer", { id, fields: Object.keys(updateData) });
-    const customer = await client.customer.update({
+    const data = {
+      ...updateData,
+      ...(notificationPolicy && {
+        notificationPolicy: {
+          upsert: {
+            create: { collections: true, paymentConfirmations: true, ...notificationPolicy },
+            update: notificationPolicy
+          }
+        }
+      })
+    };
+    const customer = await (
+      client as {
+        customer: {
+          update: (args: { where: { id: string }; data: typeof data }) => Promise<Customer>;
+        };
+      }
+    ).customer.update({
       where: { id },
-      data: updateData
+      data
     });
     logger.verbose("customer updated", { id: customer.id });
     return customer;

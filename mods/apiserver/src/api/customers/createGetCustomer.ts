@@ -20,7 +20,8 @@ export function createGetCustomer(client: DbClient) {
   const fn = async (params: GetCustomerInput): Promise<Customer | null> => {
     logger.verbose("getting customer", { id: params.id });
     const customer = await client.customer.findUnique({
-      where: { id: params.id }
+      where: { id: params.id },
+      include: { notificationPolicy: true }
     });
     logger.verbose("customer retrieved", { id: params.id, found: !!customer });
     return customer;

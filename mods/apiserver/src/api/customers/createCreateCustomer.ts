@@ -21,8 +21,17 @@ import { logger } from "../../logger.js";
 export function createCreateCustomer(client: DbClient) {
   const fn = async (params: CreateCustomerInput): Promise<Customer> => {
     logger.verbose("creating customer", { phone: params.phone, name: params.name });
-    const customer = await client.customer.create({
-      data: params
+    const { notificationPolicy, ...customerData } = params;
+    const data = {
+      ...customerData,
+      ...(notificationPolicy && {
+        notificationPolicy: { create: notificationPolicy }
+      })
+    };
+    const customer = await (
+      client as { customer: { create: (args: { data: typeof data }) => Promise<Customer> } }
+    ).customer.create({
+      data
     });
     logger.verbose("customer created", { id: customer.id, phone: customer.phone });
     return customer;

@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   UserRole: 'UserRole',
   Customer: 'Customer',
+  NotificationPolicy: 'NotificationPolicy',
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
@@ -118,6 +119,18 @@ export const CustomerScalarFieldEnum = {
 } as const
 
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const NotificationPolicyScalarFieldEnum = {
+  id: 'id',
+  collections: 'collections',
+  paymentConfirmations: 'paymentConfirmations',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  customerId: 'customerId'
+} as const
+
+export type NotificationPolicyScalarFieldEnum = (typeof NotificationPolicyScalarFieldEnum)[keyof typeof NotificationPolicyScalarFieldEnum]
 
 
 export const LoanScalarFieldEnum = {

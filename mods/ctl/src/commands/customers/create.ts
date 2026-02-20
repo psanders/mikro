@@ -67,6 +67,17 @@ export default class Create extends BaseCommand<typeof Create> {
       description: "Preferred payment day (MONDAY-SUNDAY or none)",
       required: false,
       options: [...PREFERRED_PAYMENT_DAY_OPTIONS, "none"]
+    }),
+    collections: Flags.boolean({
+      description: "Enable collection notifications (use --no-collections to disable)",
+      default: true,
+      allowNo: true
+    }),
+    "payment-confirmations": Flags.boolean({
+      description:
+        "Enable payment confirmation notifications (use --no-payment-confirmations to disable)",
+      default: true,
+      allowNo: true
     })
   };
 
@@ -139,6 +150,10 @@ export default class Create extends BaseCommand<typeof Create> {
             default: null
           });
     const notes = flags.notes || undefined;
+    const notificationPolicy =
+      flags.collections === false || flags["payment-confirmations"] === false
+        ? { collections: flags.collections, paymentConfirmations: flags["payment-confirmations"] }
+        : undefined;
 
     const ready = await confirm({ message: "Ready to create customer?" });
 
@@ -160,7 +175,8 @@ export default class Create extends BaseCommand<typeof Create> {
         income,
         isBusinessOwner,
         preferredPaymentDay: preferredPaymentDay ?? undefined,
-        notes
+        notes,
+        ...(notificationPolicy && { notificationPolicy })
       });
 
       this.log("Done!");

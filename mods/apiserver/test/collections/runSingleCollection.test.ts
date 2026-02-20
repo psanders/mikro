@@ -68,6 +68,24 @@ describe("runSingleCollection", () => {
     expect(result.error).to.include("Loan not found");
   });
 
+  it("returns error when customer has collection notifications disabled", async () => {
+    mockDb.loan.findUnique.resolves({
+      ...activeLoanWithCustomer,
+      customer: {
+        ...activeLoanWithCustomer.customer,
+        notificationPolicy: { collections: false, paymentConfirmations: true }
+      }
+    });
+    const result = await runSingleCollection(
+      { loanId, type: CollectionAttemptType.PAYMENT_REMINDER },
+      { db: mockDb as any, sendWhatsAppTemplate }
+    );
+    expect(result.success).to.be.false;
+    expect(result.error).to.include("collection notifications disabled");
+    expect(sendWhatsAppTemplate.called).to.be.false;
+    expect(mockDb.collectionAttempt.create.called).to.be.false;
+  });
+
   it("dry-run returns success without sending or writing DB", async () => {
     const result = await runSingleCollection(
       { loanId, type: CollectionAttemptType.PAYMENT_REMINDER, dryRun: true },

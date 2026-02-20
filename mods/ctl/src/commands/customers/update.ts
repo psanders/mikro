@@ -68,6 +68,22 @@ export default class Update extends BaseCommand<typeof Update> {
           message: "Preferred payment day",
           choices: paymentDayChoices,
           default: (customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
+        }),
+        collectionsEnabled: await select({
+          message: "Collection Notifications",
+          choices: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+          ],
+          default: customerFromDB.notificationPolicy?.collections ?? true
+        }),
+        paymentConfirmationsEnabled: await select({
+          message: "Payment Confirmation Notifications",
+          choices: [
+            { name: "Enabled", value: true },
+            { name: "Disabled", value: false }
+          ],
+          default: customerFromDB.notificationPolicy?.paymentConfirmations ?? true
         })
       };
 
@@ -84,7 +100,11 @@ export default class Update extends BaseCommand<typeof Update> {
         phone: answers.phone,
         notes: answers.notes || undefined,
         isActive: answers.isActive,
-        preferredPaymentDay: answers.preferredPaymentDay
+        preferredPaymentDay: answers.preferredPaymentDay,
+        notificationPolicy: {
+          collections: answers.collectionsEnabled,
+          paymentConfirmations: answers.paymentConfirmationsEnabled
+        }
       });
 
       this.log("Done!");
