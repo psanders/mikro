@@ -77,7 +77,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
 
     const receiptData: ReceiptData = {
       loanNumber: String(loan.loanId),
-      name: customer.name,
+      name: loan.nickname ?? customer.name,
       date: payment.paidAt.toLocaleDateString("es-DO", {
         day: "2-digit",
         month: "2-digit",
