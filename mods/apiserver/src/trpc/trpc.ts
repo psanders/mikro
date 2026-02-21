@@ -15,6 +15,11 @@ const t = initTRPC.context<Context>().create();
 export const router = t.router;
 
 /**
+ * Merge multiple routers into a single flat router.
+ */
+export const mergeRouters = t.mergeRouters;
+
+/**
  * Public procedure - no authentication required.
  */
 export const publicProcedure = t.procedure;

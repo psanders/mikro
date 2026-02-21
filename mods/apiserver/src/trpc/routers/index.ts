@@ -1,17 +1,15 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { router } from "../trpc.js";
+import { mergeRouters } from "../trpc.js";
 import { publicRouter } from "./public.js";
 import { protectedRouter } from "./protected.js";
 
 /**
- * Main application router combining all sub-routers.
+ * Main application router — merges public and protected procedures
+ * into a single flat namespace.
  */
-export const appRouter = router({
-  ...publicRouter._def.procedures,
-  ...protectedRouter._def.procedures
-});
+export const appRouter = mergeRouters(publicRouter, protectedRouter);
 
 /**
  * Type definition for the app router.
