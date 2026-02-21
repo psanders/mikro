@@ -107,6 +107,11 @@ export const mikroConfigSchema = z
     receiptsPath: z.string().default("/app/receipts"),
     databaseUrl: z.string().default("file:/app/data/mikro.db"),
     credentials: z.string().default("admin:secret"),
+    jwtSecret: z
+      .string()
+      .min(1, "jwtSecret is required for JWT auth")
+      .default("dev-jwt-secret-change-in-production"),
+    jwtExpiresIn: z.string().default("7d"),
     keysPath: z.string().default("/app/keys"),
     assetsPath: z.string().default("/app/mods/apiserver/assets"),
     messageMaxAgeSeconds: z.number().default(60),

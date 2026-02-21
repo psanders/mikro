@@ -2,6 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
+// Auth operations
+export { createLogin, type LoginResult } from "./auth/index.js";
+
 // User operations
 export {
   createCreateUser,

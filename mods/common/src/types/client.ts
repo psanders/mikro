@@ -26,7 +26,7 @@ export interface UserRole {
  */
 export interface DbClient {
   user: {
-    create(args: { data: { name: string; phone: string } }): Promise<User>;
+    create(args: { data: { name: string; phone: string; password?: string } }): Promise<User>;
     update(args: { where: { id: string }; data: Omit<UpdateUserInput, "id"> }): Promise<User>;
     findUnique(args: {
       where: { id: string };

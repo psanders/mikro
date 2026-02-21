@@ -100,11 +100,13 @@ export {
   type ExportAllCustomersInput,
   // User schemas
   roleEnum,
+  loginSchema,
   createUserSchema,
   updateUserSchema,
   getUserSchema,
   getUserByPhoneSchema,
   listUsersSchema,
+  type LoginInput,
   type CreateUserInput,
   type UpdateUserInput,
   type GetUserInput,

@@ -19,10 +19,14 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
+    "password" TEXT,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL
 );
+
+-- Unique phone index for login
+CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
 -- User roles table
 CREATE TABLE "user_roles" (

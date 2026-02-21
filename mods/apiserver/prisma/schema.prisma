@@ -116,7 +116,8 @@ enum CollectionAttemptStatus {
 model User {
   id        String   @id @default(uuid())
   name      String
-  phone     String
+  phone     String   @unique
+  password  String?
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

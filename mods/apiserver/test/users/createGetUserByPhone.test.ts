@@ -54,6 +54,34 @@ describe("createGetUserByPhone", () => {
       ).to.be.true;
     });
 
+    it("should strip password from the response", async () => {
+      // Arrange
+      const userWithPassword = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        name: "John Doe",
+        phone: "+18091234567",
+        password: "$2a$10$hashedpassword",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        roles: [{ role: "ADMIN" as const }]
+      };
+      const mockClient = {
+        user: {
+          findFirst: sinon.stub().resolves(userWithPassword)
+        }
+      };
+      const getUserByPhone = createGetUserByPhone(mockClient as any);
+
+      // Act
+      const result = await getUserByPhone(validInput);
+
+      // Assert
+      expect(result).to.not.have.property("password");
+      expect(result).to.have.property("name", "John Doe");
+      expect(result?.roles).to.have.length(1);
+    });
+
     it("should return null when user not found", async () => {
       // Arrange
       const mockClient = {

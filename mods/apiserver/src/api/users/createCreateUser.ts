@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import bcrypt from "bcryptjs";
 import {
   withErrorHandlingAndValidation,
   createUserSchema,
@@ -18,15 +19,20 @@ import { logger } from "../../logger.js";
  */
 export function createCreateUser(client: DbClient) {
   const fn = async (params: CreateUserInput): Promise<User> => {
-    const { role, ...userData } = params;
+    const { role, password, ...userData } = params as CreateUserInput & { password?: string };
     logger.verbose("creating user", { name: userData.name, role });
+
+    const data: { name: string; phone: string; password?: string } = {
+      name: userData.name,
+      phone: userData.phone
+    };
+    if (password !== undefined && password !== "") {
+      data.password = await bcrypt.hash(password, 10);
+    }
 
     // Create the user
     const user = await client.user.create({
-      data: {
-        name: userData.name,
-        phone: userData.phone
-      }
+      data
     });
 
     // If a role is provided, create the user role
@@ -41,7 +47,9 @@ export function createCreateUser(client: DbClient) {
     }
 
     logger.verbose("user created", { id: user.id, name: user.name });
-    return user;
+    const safe = { ...user } as User & { password?: string | null };
+    delete safe.password;
+    return safe as User;
   };
 
   return withErrorHandlingAndValidation(fn, createUserSchema);

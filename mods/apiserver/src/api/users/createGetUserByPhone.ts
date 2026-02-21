@@ -37,7 +37,10 @@ export function createGetUserByPhone(client: DbClient) {
       }
     });
     logger.verbose("user by phone retrieved", { phone: params.phone, found: !!user });
-    return user as UserWithRoles | null;
+    if (!user) return null;
+    const safe = { ...user } as UserWithRoles & { password?: unknown };
+    delete safe.password;
+    return safe as UserWithRoles;
   };
 
   return withErrorHandlingAndValidation(fn, getUserByPhoneSchema);

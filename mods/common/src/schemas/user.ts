@@ -10,11 +10,23 @@ import { validatePhone } from "../utils/validatePhone.js";
 export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REFERRER"]);
 
 /**
+ * Schema for login (phone + password).
+ */
+export const loginSchema = z.object({
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .transform((val) => validatePhone(val)),
+  password: z.string().min(1, "Password is required")
+});
+
+/**
  * Schema for creating a new user.
  */
 export const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().min(1, "Phone is required"),
+  password: z.string().min(1).optional(),
   role: roleEnum.optional()
 });
 
@@ -35,6 +47,7 @@ export const updateUserSchema = z.object({
     })
     .optional(),
   enabled: z.boolean().optional(),
+  password: z.string().min(1).optional(),
   role: roleEnum.optional()
 });
 
@@ -67,6 +80,11 @@ export const listUsersSchema = z.object({
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });
+
+/**
+ * Input type for login.
+ */
+export type LoginInput = z.infer<typeof loginSchema>;
 
 /**
  * Input type for creating a user.

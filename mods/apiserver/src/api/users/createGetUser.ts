@@ -27,7 +27,10 @@ export function createGetUser(client: DbClient) {
       include: { roles: { select: { role: true } } }
     });
     logger.verbose("user retrieved", { id: params.id, found: !!user });
-    return user;
+    if (!user) return null;
+    const safe = { ...user } as User & { password?: unknown; roles?: Array<{ role: Role }> };
+    delete safe.password;
+    return safe as User & { roles?: Array<{ role: Role }> };
   };
 
   return withErrorHandlingAndValidation(fn, getUserSchema);

@@ -65,6 +65,29 @@ describe("createListUsers", () => {
       expect(callArgs.skip).to.equal(1);
     });
 
+    it("should strip password from each user in the response", async () => {
+      // Arrange
+      const usersWithPassword = [
+        { ...createMockUser("user-1", "John Doe"), password: "$2a$10$hash1" },
+        { ...createMockUser("user-2", "Jane Smith"), password: "$2a$10$hash2" }
+      ];
+      const mockClient = {
+        user: {
+          findMany: sinon.stub().resolves(usersWithPassword)
+        }
+      };
+      const listUsers = createListUsers(mockClient as any);
+
+      // Act
+      const result = await listUsers({});
+
+      // Assert
+      expect(result).to.have.length(2);
+      for (const user of result) {
+        expect(user).to.not.have.property("password");
+      }
+    });
+
     it("should return empty array when no users exist", async () => {
       // Arrange
       const mockClient = {

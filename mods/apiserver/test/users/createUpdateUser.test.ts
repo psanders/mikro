@@ -3,6 +3,7 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
+import bcrypt from "bcryptjs";
 import { createUpdateUser } from "../../src/api/users/createUpdateUser.js";
 import { ValidationError } from "@mikro/common";
 
@@ -50,6 +51,39 @@ describe("createUpdateUser", () => {
       expect(callArgs.data.enabled).to.equal(validInput.enabled);
       // Phone gets normalized (stripped +), so check it's in the data
       expect(callArgs.data.phone).to.exist;
+    });
+
+    it("should hash password when provided and strip it from response", async () => {
+      // Arrange
+      const inputWithPassword = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        password: "new-password"
+      };
+      const expectedUser = {
+        id: inputWithPassword.id,
+        name: "Existing Name",
+        phone: "18091234567",
+        password: "will-be-overwritten",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        user: {
+          update: sinon.stub().resolves(expectedUser)
+        }
+      };
+      const updateUser = createUpdateUser(mockClient as any);
+
+      // Act
+      const result = await updateUser(inputWithPassword);
+
+      // Assert
+      const updateArgs = mockClient.user.update.getCall(0).args[0];
+      expect(updateArgs.data.password).to.be.a("string");
+      expect(updateArgs.data.password).to.not.equal("new-password");
+      expect(bcrypt.compareSync("new-password", updateArgs.data.password)).to.be.true;
+      expect(result).to.not.have.property("password");
     });
 
     it("should update a user with partial fields", async () => {

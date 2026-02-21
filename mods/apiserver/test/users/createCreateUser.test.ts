@@ -3,6 +3,7 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
+import bcrypt from "bcryptjs";
 import { createCreateUser } from "../../src/api/users/createCreateUser.js";
 import { ValidationError } from "@mikro/common";
 
@@ -51,6 +52,43 @@ describe("createCreateUser", () => {
       expect(result.name).to.equal(validInput.name);
       expect(mockClient.user.create.calledOnce).to.be.true;
       expect(mockClient.userRole.create.called).to.be.false;
+    });
+
+    it("should hash password when provided and strip it from response", async () => {
+      // Arrange
+      const inputWithPassword = {
+        name: "Secure User",
+        phone: "+1111111111",
+        password: "my-secret-password"
+      };
+      const expectedUser = {
+        id: "user-789",
+        name: inputWithPassword.name,
+        phone: inputWithPassword.phone,
+        password: "will-be-overwritten",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        user: {
+          create: sinon.stub().resolves(expectedUser)
+        },
+        userRole: {
+          create: sinon.stub().resolves({})
+        }
+      };
+      const createUser = createCreateUser(mockClient as any);
+
+      // Act
+      const result = await createUser(inputWithPassword);
+
+      // Assert
+      const createArgs = mockClient.user.create.getCall(0).args[0];
+      expect(createArgs.data.password).to.be.a("string");
+      expect(createArgs.data.password).to.not.equal("my-secret-password");
+      expect(bcrypt.compareSync("my-secret-password", createArgs.data.password)).to.be.true;
+      expect(result).to.not.have.property("password");
     });
 
     it("should create a user with role", async () => {

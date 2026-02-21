@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import bcrypt from "bcryptjs";
 import {
   withErrorHandlingAndValidation,
   updateUserSchema,
@@ -12,7 +13,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to update an existing user.
- * Name, phone, enabled, and role can be updated.
+ * Name, phone, enabled, password, and role can be updated.
  * Phone is validated and normalized to E.164 format via Zod schema transform if provided.
  * When role is provided, it replaces all existing roles for the user.
  *
@@ -21,12 +22,24 @@ import { logger } from "../../logger.js";
  */
 export function createUpdateUser(client: DbClient) {
   const fn = async (params: UpdateUserInput): Promise<User> => {
-    const { id, role, ...updateData } = params;
-    logger.verbose("updating user", { id, fields: Object.keys(updateData) });
+    const {
+      id,
+      role,
+      password: rawPassword,
+      ...rest
+    } = params as UpdateUserInput & { password?: string };
+    logger.verbose("updating user", { id, fields: Object.keys(rest) });
+
+    const data: { name?: string; phone?: string; enabled?: boolean; password?: string } = {
+      ...rest
+    };
+    if (rawPassword !== undefined) {
+      data.password = await bcrypt.hash(rawPassword, 10);
+    }
 
     const user = await client.user.update({
       where: { id },
-      data: updateData
+      data
     });
 
     if (role) {
@@ -36,7 +49,9 @@ export function createUpdateUser(client: DbClient) {
     }
 
     logger.verbose("user updated", { id: user.id });
-    return user;
+    const safe = { ...user } as User & { password?: string | null };
+    delete safe.password;
+    return safe as User;
   };
 
   return withErrorHandlingAndValidation(fn, updateUserSchema);

@@ -36,7 +36,11 @@ export function createListUsers(client: DbClient) {
       skip: params.offset
     });
     logger.verbose("users listed", { count: users.length });
-    return users;
+    return users.map((u) => {
+      const safe = { ...u } as User & { password?: unknown; roles?: Array<{ role: Role }> };
+      delete safe.password;
+      return safe as User & { roles?: Array<{ role: Role }> };
+    });
   };
 
   return withErrorHandlingAndValidation(fn, listUsersSchema);

@@ -6,6 +6,7 @@
 import { config as loadDotenv } from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import { getDatabaseUrlFromFile } from "@mikro/common";
@@ -121,60 +122,67 @@ function addDays(d: Date, days: number): Date {
 async function main() {
   console.log("Seeding database...");
 
+  const devPasswordHash = await bcrypt.hash("password123", 10);
+
   // ---------------------------------------------------------------------------
-  // Users (5): 1 admin, 2 collectors, 2 referrers
+  // Users (5): 1 admin, 2 collectors, 2 referrers (dev password: password123)
   // ---------------------------------------------------------------------------
   const admin = await prisma.user.upsert({
     where: { id: ID.users.admin },
-    update: {},
+    update: { password: devPasswordHash },
     create: {
       id: ID.users.admin,
       name: "Admin User",
       phone: "+1000000001",
+      password: devPasswordHash,
       roles: { create: [{ role: "ADMIN" }] }
     }
   });
 
   const collector1 = await prisma.user.upsert({
     where: { id: ID.users.collector1 },
-    update: {},
+    update: { password: devPasswordHash },
     create: {
       id: ID.users.collector1,
       name: "Juan Collector",
       phone: "+1000000002",
+      password: devPasswordHash,
       roles: { create: [{ role: "COLLECTOR" }] }
     }
   });
 
   const collector2 = await prisma.user.upsert({
     where: { id: ID.users.collector2 },
-    update: {},
+    update: { password: devPasswordHash },
     create: {
       id: ID.users.collector2,
       name: "Ana Collector",
       phone: "+1000000003",
+      password: devPasswordHash,
       roles: { create: [{ role: "COLLECTOR" }] }
     }
   });
 
   const referrer1 = await prisma.user.upsert({
     where: { id: ID.users.referrer1 },
-    update: {},
+    update: { password: devPasswordHash },
     create: {
       id: ID.users.referrer1,
       name: "Maria Referrer",
       phone: "+1000000004",
+      password: devPasswordHash,
       roles: { create: [{ role: "REFERRER" }] }
     }
   });
 
   const referrer2 = await prisma.user.upsert({
     where: { id: ID.users.referrer2 },
-    update: {},
+    update: { password: devPasswordHash },
     create: {
       id: ID.users.referrer2,
       name: "Pedro Referrer",
       phone: "+1000000005",
+      password: devPasswordHash,
       roles: { create: [{ role: "REFERRER" }] }
     }
   });
