@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
+import { confirm, password } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -11,7 +11,8 @@ export default class Create extends BaseCommand<typeof Create> {
   static override readonly description = "create a new user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR"
+    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --role COLLECTOR",
+    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+1234567890' --password 'secret'"
   ];
   static override readonly flags = {
     name: Flags.string({
@@ -25,6 +26,10 @@ export default class Create extends BaseCommand<typeof Create> {
     role: Flags.string({
       description: "User role",
       options: ["ADMIN", "COLLECTOR", "REFERRER"],
+      required: false
+    }),
+    password: Flags.string({
+      description: "Password (omit to be prompted or leave blank)",
       required: false
     })
   };
@@ -49,6 +54,17 @@ export default class Create extends BaseCommand<typeof Create> {
       ]
     );
 
+    let passwordValue: string | undefined = flags.password ?? undefined;
+    if (passwordValue === undefined && process.stdout.isTTY) {
+      const entered = await password({
+        message: "Password (leave blank for none)",
+        mask: true
+      });
+      if (entered.length > 0) {
+        passwordValue = entered;
+      }
+    }
+
     const ready = await confirm({ message: "Ready to create user?" });
 
     if (!ready) {
@@ -57,10 +73,11 @@ export default class Create extends BaseCommand<typeof Create> {
     }
 
     try {
-      const user = await client.createUser.mutate({
+      const user = await client.protected.createUser.mutate({
         name,
         phone,
-        role
+        role,
+        ...(passwordValue !== undefined && passwordValue.length > 0 && { password: passwordValue })
       });
 
       this.log("Done!");
