@@ -73,7 +73,7 @@ export default class Create extends BaseCommand<typeof Create> {
     }
 
     try {
-      const user = await client.protected.createUser.mutate({
+      const user = await client.createUser.mutate({
         name,
         phone,
         role,

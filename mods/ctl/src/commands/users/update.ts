@@ -33,7 +33,7 @@ export default class Update extends BaseCommand<typeof Update> {
     const userId = await promptUserSelectIfMissing(client, args.userId, "User", "userId");
 
     try {
-      const userFromDB = await client.protected.getUser.query({ id: userId });
+      const userFromDB = await client.getUser.query({ id: userId });
 
       if (!userFromDB) {
         this.error("User not found.");
@@ -93,7 +93,7 @@ export default class Update extends BaseCommand<typeof Update> {
         return;
       }
 
-      await client.protected.updateUser.mutate({
+      await client.updateUser.mutate({
         id: userId,
         name: answers.name,
         phone: answers.phone,
