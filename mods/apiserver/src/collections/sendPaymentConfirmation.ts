@@ -55,7 +55,7 @@ export async function sendPaymentConfirmation(
   const amount = String(payment.amount);
   const paymentNumber = `Préstamo #${loan.loanId} - ${amount}`;
   const target: CollectionTarget = { customer, loan };
-  const bodyParameters = [paymentNumber];
+  const bodyParameters = [{ parameter_name: "payment_number", text: paymentNumber }];
 
   if (isDryRun()) {
     logDryRun({

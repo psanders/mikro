@@ -193,6 +193,7 @@ async function initializeMessageProcessor() {
           sendWhatsAppTemplate: (p) =>
             whatsAppClient.sendTemplateMessage({
               ...p,
+              headerParameters: p.headerParameters ?? [],
               bodyParameters: p.bodyParameters ?? []
             })
         }).catch((err: Error) =>
@@ -456,6 +457,7 @@ async function initializeMessageProcessor() {
             sendWhatsAppTemplate: (p) =>
               whatsAppClient.sendTemplateMessage({
                 ...p,
+                headerParameters: p.headerParameters ?? [],
                 bodyParameters: p.bodyParameters ?? []
               })
           }
@@ -617,6 +619,7 @@ async function initializeMessageProcessor() {
               sendWhatsAppTemplate: (p) =>
                 whatsAppClient.sendTemplateMessage({
                   ...p,
+                  headerParameters: p.headerParameters ?? [],
                   bodyParameters: p.bodyParameters ?? []
                 })
             },

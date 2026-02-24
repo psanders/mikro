@@ -52,7 +52,7 @@ export async function processPaymentReminders(
       customer: { id: customer.id, name: customer.name, phone: customer.phone },
       loan
     };
-    const bodyParameters = [paymentDay];
+    const bodyParameters = [{ parameter_name: "payment_day", text: paymentDay }];
 
     if (dryRun) {
       logDryRun({

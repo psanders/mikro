@@ -29,7 +29,8 @@ export interface CollectionDeps {
     phone: string;
     templateName: string;
     languageCode: string;
-    bodyParameters?: string[];
+    headerParameters?: Array<string | { parameter_name: string; text: string }>;
+    bodyParameters?: Array<string | { parameter_name: string; text: string }>;
   }) => Promise<{ messages?: Array<{ id: string }> }>;
 }
 
@@ -157,7 +158,7 @@ export function logDryRun(params: {
   type: string;
   target: CollectionTarget;
   templateName?: string | null;
-  bodyParameters?: string[];
+  bodyParameters?: Array<string | { parameter_name: string; text: string }>;
   missedPayments?: number;
 }): void {
   logger.info("collection dry run (no action taken)", {

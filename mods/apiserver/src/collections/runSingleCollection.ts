@@ -187,7 +187,7 @@ export async function runSingleCollection(
           phone: customer.phone,
           templateName,
           languageCode: "es",
-          bodyParameters: [paymentDayStr]
+          bodyParameters: [{ parameter_name: "payment_day", text: paymentDayStr }]
         });
         return res.messages?.[0]?.id ?? null;
       },

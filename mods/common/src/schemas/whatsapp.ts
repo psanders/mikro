@@ -86,16 +86,25 @@ export const whatsappWebhookSchema = z.object({
   entry: z.array(whatsappEntrySchema).optional()
 });
 
+/** One body/header parameter: positional (string) or named (parameter_name + text). */
+const templateParameterSchema = z.union([
+  z.string(),
+  z.object({ parameter_name: z.string().min(1), text: z.string() })
+]);
+
 /**
  * Schema for sending a WhatsApp template message (approved templates only).
  * Language code is required and must be provided by the caller (e.g. "es_DO").
+ * Use named parameters when the template was created with named placeholders (e.g. {{payment_number}}).
  */
 export const sendWhatsAppTemplateSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   templateName: z.string().min(1, "Template name is required"),
   languageCode: z.string().min(2, "Language code is required").max(5),
-  /** Body component parameters (text only), in order. */
-  bodyParameters: z.array(z.string()).optional().default([])
+  /** Header component parameters: positional (string) or named ({ parameter_name, text }). */
+  headerParameters: z.array(templateParameterSchema).optional().default([]),
+  /** Body component parameters: positional (string) or named ({ parameter_name, text }). */
+  bodyParameters: z.array(templateParameterSchema).optional().default([])
 });
 
 /**

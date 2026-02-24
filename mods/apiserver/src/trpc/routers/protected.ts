@@ -507,6 +507,7 @@ export const protectedRouter = router({
             sendWhatsAppTemplate: (p) =>
               whatsAppClient.sendTemplateMessage({
                 ...p,
+                headerParameters: p.headerParameters ?? [],
                 bodyParameters: p.bodyParameters ?? []
               })
           },
@@ -547,6 +548,7 @@ export const protectedRouter = router({
             sendWhatsAppTemplate: (p) =>
               whatsAppClient.sendTemplateMessage({
                 ...p,
+                headerParameters: p.headerParameters ?? [],
                 bodyParameters: p.bodyParameters ?? []
               })
           }

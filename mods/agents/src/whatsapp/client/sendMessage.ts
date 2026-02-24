@@ -244,7 +244,34 @@ export async function sendTemplateMessage(
 ): Promise<WhatsAppSendResponse> {
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
 
+  const headerParameters = params.headerParameters ?? [];
   const bodyParameters = params.bodyParameters ?? [];
+
+  const toParamObject = (
+    p: string | { parameter_name: string; text: string }
+  ): { type: "text"; text: string; parameter_name?: string } => {
+    if (typeof p === "string") {
+      return { type: "text", text: p };
+    }
+    return { type: "text", parameter_name: p.parameter_name, text: p.text };
+  };
+
+  const components: Array<{
+    type: string;
+    parameters: Array<{ type: "text"; text: string; parameter_name?: string }>;
+  }> = [];
+  if (headerParameters.length > 0) {
+    components.push({
+      type: "header",
+      parameters: headerParameters.map(toParamObject)
+    });
+  }
+  if (bodyParameters.length > 0) {
+    components.push({
+      type: "body",
+      parameters: bodyParameters.map(toParamObject)
+    });
+  }
   const requestBody = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -253,15 +280,7 @@ export async function sendTemplateMessage(
     template: {
       name: params.templateName,
       language: { code: params.languageCode },
-      components:
-        bodyParameters.length > 0
-          ? [
-              {
-                type: "body",
-                parameters: bodyParameters.map((text) => ({ type: "text", text }))
-              }
-            ]
-          : []
+      components
     }
   };
 
