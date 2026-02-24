@@ -69,16 +69,6 @@ export default class Create extends BaseCommand<typeof Create> {
       "customer-id"
     );
     const principal = await promptNumberIfMissing(flags.principal, "Principal Amount", "principal");
-    const termLength = await promptNumberIfMissing(
-      flags["term-length"],
-      "Term Length (number of periods)",
-      "term-length"
-    );
-    const paymentAmount = await promptNumberIfMissing(
-      flags["payment-amount"],
-      "Payment Amount (per period)",
-      "payment-amount"
-    );
     const paymentFrequency = await promptSelectIfMissing(
       flags["payment-frequency"] as "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | undefined,
       "Payment Frequency",
@@ -89,6 +79,16 @@ export default class Create extends BaseCommand<typeof Create> {
         { name: "Biweekly (Quincenal)", value: "BIWEEKLY" as const },
         { name: "Monthly (Mensual)", value: "MONTHLY" as const }
       ]
+    );
+    const termLength = await promptNumberIfMissing(
+      flags["term-length"],
+      "Term Length (number of periods)",
+      "term-length"
+    );
+    const paymentAmount = await promptNumberIfMissing(
+      flags["payment-amount"],
+      "Payment Amount (per period)",
+      "payment-amount"
     );
     const today = new Date().toISOString().slice(0, 10);
     const startingDateStr = await promptTextIfMissing(
