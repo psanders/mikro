@@ -511,7 +511,8 @@ export const protectedRouter = router({
                 bodyParameters: p.bodyParameters ?? []
               })
           },
-          input.includeDefaulted
+          input.includeDefaulted,
+          input.appRef
         );
       } finally {
         if (input.dryRun) {
@@ -541,7 +542,8 @@ export const protectedRouter = router({
             channel: input.channel ?? undefined,
             type: input.type ?? undefined,
             dryRun: input.dryRun,
-            includeDefaulted: input.includeDefaulted
+            includeDefaulted: input.includeDefaulted,
+            appRef: input.appRef
           },
           {
             db: ctx.db as unknown as PrismaClient,

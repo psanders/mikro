@@ -10,6 +10,7 @@ import { logger } from "../logger.js";
 
 export interface InitiateCollectionCallParams {
   phone: string;
+  appRef?: string;
   loan: {
     loanId: number;
     principal: number;
@@ -64,7 +65,7 @@ export async function initiateCollectionCall(
 
   const from = fonoster.fromNumber;
   const to = params.phone;
-  const appRef = fonoster.appRef;
+  const appRef = params.appRef ?? fonoster.appRef;
 
   try {
     const client = await getClient();

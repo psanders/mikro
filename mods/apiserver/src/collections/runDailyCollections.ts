@@ -41,7 +41,8 @@ function startOfToday(date: Date = new Date()): Date {
 export async function runDailyCollections(
   asOfDate: Date,
   deps: RunDailyCollectionsDeps,
-  includeDefaulted = false
+  includeDefaulted = false,
+  appRef?: string
 ): Promise<void> {
   const start = startOfToday(asOfDate);
   const dryRun = isDryRun();
@@ -236,7 +237,7 @@ export async function runDailyCollections(
     reminderCount: reminderList.length
   });
 
-  await processCollectionCalls(callList, { db: deps.db });
+  await processCollectionCalls(callList, { db: deps.db, appRef });
   await processOverdueNotices(overdueList, deps);
   await processPaymentReminders(reminderList, deps);
 }

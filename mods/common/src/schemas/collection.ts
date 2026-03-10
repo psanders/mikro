@@ -17,7 +17,11 @@ export const runCollectionsSchema = z.object({
   /**
    * When true, include loans with status DEFAULTED in addition to ACTIVE.
    */
-  includeDefaulted: z.boolean().optional().default(false)
+  includeDefaulted: z.boolean().optional().default(false),
+  /**
+   * Optional Fonoster app ref override for collection calls in this run.
+   */
+  appRef: z.string().trim().min(1).optional()
 });
 
 export type RunCollectionsInput = z.infer<typeof runCollectionsSchema>;
@@ -34,7 +38,11 @@ export const runSingleCollectionSchema = z.object({
   /**
    * When true, allow running collection for loans with status DEFAULTED (not only ACTIVE).
    */
-  includeDefaulted: z.boolean().optional().default(false)
+  includeDefaulted: z.boolean().optional().default(false),
+  /**
+   * Optional Fonoster app ref override for this collection call.
+   */
+  appRef: z.string().trim().min(1).optional()
 });
 
 export type RunSingleCollectionInput = z.infer<typeof runSingleCollectionSchema>;

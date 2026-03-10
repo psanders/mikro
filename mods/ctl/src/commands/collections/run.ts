@@ -18,9 +18,11 @@ export default class Run extends BaseCommand<typeof Run> {
     "<%= config.bin %> <%= command.id %> --dry-run",
     "<%= config.bin %> <%= command.id %> --dry-run --yes",
     "<%= config.bin %> <%= command.id %> --loan-id 10019",
+    "<%= config.bin %> <%= command.id %> --loan-id 10019 --app-ref f1777c6e-e825-45f7-91e2-af1b497f064b",
     "<%= config.bin %> <%= command.id %> --loan-id 10019 --type OVERDUE_NOTICE",
     "<%= config.bin %> <%= command.id %> --loan-id 10019 --channel WHATSAPP --type PAYMENT_REMINDER",
-    "<%= config.bin %> <%= command.id %> --loan-id 10019 --dry-run"
+    "<%= config.bin %> <%= command.id %> --loan-id 10019 --dry-run",
+    "<%= config.bin %> <%= command.id %> --app-ref f1777c6e-e825-45f7-91e2-af1b497f064b"
   ];
 
   static override readonly flags = {
@@ -47,6 +49,10 @@ export default class Run extends BaseCommand<typeof Run> {
       description:
         "Include loans with status DEFAULTED (batch only; single collection always includes defaulted)",
       default: false
+    }),
+    "app-ref": Flags.string({
+      description: "Override the Fonoster appRef used for collection calls in this run",
+      required: false
     })
   };
 
@@ -57,6 +63,7 @@ export default class Run extends BaseCommand<typeof Run> {
     const loanId = flags["loan-id"];
     const channel = flags.channel;
     const type = flags.type;
+    const appRef = flags["app-ref"];
 
     if ((channel !== undefined || type !== undefined) && loanId === undefined) {
       this.error("--channel and --type can only be used with --loan-id");
@@ -74,7 +81,8 @@ export default class Run extends BaseCommand<typeof Run> {
           channel: (channel as (typeof CHANNEL_OPTIONS)[number]) ?? undefined,
           type: (type as (typeof TYPE_OPTIONS)[number]) ?? undefined,
           dryRun,
-          includeDefaulted: true
+          includeDefaulted: true,
+          appRef
         };
         const result = await client.runSingleCollection.mutate(
           singleInput as Parameters<typeof client.runSingleCollection.mutate>[0]
@@ -106,7 +114,8 @@ export default class Run extends BaseCommand<typeof Run> {
     try {
       const batchInput: RunCollectionsInput = {
         dryRun,
-        includeDefaulted: flags["include-defaulted"]
+        includeDefaulted: flags["include-defaulted"],
+        appRef
       };
       const result = await client.runCollections.mutate(
         batchInput as Parameters<typeof client.runCollections.mutate>[0]

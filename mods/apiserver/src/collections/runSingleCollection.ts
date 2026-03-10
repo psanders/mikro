@@ -39,6 +39,7 @@ export interface RunSingleCollectionInput {
   type?: CollectionAttemptType;
   dryRun?: boolean;
   includeDefaulted?: boolean;
+  appRef?: string;
 }
 
 export interface RunSingleCollectionResult {
@@ -225,6 +226,7 @@ export async function runSingleCollection(
       async () => {
         const { ref } = await initiateCollectionCall({
           phone: customer.phone,
+          appRef: input.appRef,
           loan: {
             loanId: loan.loanId,
             principal: Number(loan.principal),

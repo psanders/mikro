@@ -17,6 +17,7 @@ import {
 
 export interface ProcessCollectionCallsDeps {
   db: PrismaClient;
+  appRef?: string;
 }
 
 export interface CustomerLoanPairWithMissed {
@@ -51,6 +52,7 @@ export async function processCollectionCalls(
         async () => {
           const { ref } = await initiateCollectionCall({
             phone: customer.phone,
+            appRef: deps.appRef,
             loan: {
               loanId: loan.loanId,
               principal: loan.principal,
