@@ -9,7 +9,7 @@ speechToText:
 textToSpeech:
   productRef: "tts.elevenlabs"
   config:
-    voice: "IoWn77TsmQnza94sYlfg"
+    voice: "86V9x9hrQds83qf7zaGn"
 intelligence:
   productRef: "llm.google"
   config:
