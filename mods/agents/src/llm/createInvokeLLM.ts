@@ -375,8 +375,24 @@ export function createInvokeLLM(
 
     const toolsExecuted: Array<{ name: string; args: Record<string, unknown> }> = [];
 
+    function getTextFromContent(content: unknown): string {
+      if (typeof content === "string") return content;
+      if (Array.isArray(content)) {
+        return (content as Array<{ type: string; text?: string }>)
+          .filter((c): c is { type: "text"; text: string } => c.type === "text")
+          .map((c) => c.text)
+          .join("");
+      }
+      return "";
+    }
+
     try {
       let response = await modelWithTools.invoke(langchainMessages);
+
+      // When the model returns text + tool_calls in the same turn, we keep that text as the
+      // user-facing response. The follow-up turn after tool execution often only says goodbye
+      // or is empty; using it would drop the intended closing phrase (e.g. "Queda anotada...").
+      let textFromTurnWithToolCall = "";
 
       // Handle tool calls loop
       let toolCallIteration = 0;
@@ -385,6 +401,9 @@ export function createInvokeLLM(
 
       while (response.tool_calls && response.tool_calls.length > 0) {
         toolCallIteration++;
+
+        const contentFromThisTurn = getTextFromContent(response.content);
+        if (contentFromThisTurn.trim()) textFromTurnWithToolCall = contentFromThisTurn;
 
         if (toolCallIteration > MAX_TOOL_ITERATIONS) {
           logger.error("tool call loop exceeded maximum iterations", {
@@ -467,16 +486,9 @@ export function createInvokeLLM(
         response = await modelWithTools.invoke(langchainMessages);
       }
 
-      // Get final text response
-      const finalResponse =
-        typeof response.content === "string"
-          ? response.content
-          : Array.isArray(response.content)
-            ? (response.content as Array<{ type: string; text?: string }>)
-                .filter((c): c is { type: "text"; text: string } => c.type === "text")
-                .map((c) => c.text)
-                .join("")
-            : "";
+      // Prefer text from the turn that had tool calls (e.g. full closing phrase + hangup);
+      // the follow-up turn after tool execution is often just goodbye or empty.
+      const finalResponse = textFromTurnWithToolCall.trim() || getTextFromContent(response.content);
 
       logger.verbose("llm response received", {
         agent: agent.name,
