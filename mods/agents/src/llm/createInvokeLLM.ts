@@ -320,7 +320,7 @@ export function createInvokeLLM(
     const userName = context?.name ? String(context.name) : "";
     const userContext = userName ? `Nombre del usuario: ${userName}\n` : "";
     const sessionDirective = isNewSession
-      ? `[NUEVA SESIÓN - Preséntate al usuario cuando te salude]\n${userContext}\n`
+      ? `[NUEVA SESIÓN - Si el usuario te saluda, preséntate brevemente. En todos los casos procesa su solicitud y usa las herramientas cuando corresponda; nunca respondas solo "¡Listo!" sin haber ejecutado la herramienta.]\n${userContext}\n`
       : `[SESIÓN ACTIVA - NO te presentes, continúa la conversación directamente]\n${userContext}\n`;
     const systemContent = sessionDirective + agent.systemPrompt;
 
