@@ -148,9 +148,11 @@ export {
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
   generateDefaultedReportSchema,
+  generateRenewalCandidatesReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
-  type GenerateDefaultedReportInput
+  type GenerateDefaultedReportInput,
+  type GenerateRenewalCandidatesReportInput
 } from "./report.js";
 
 export {

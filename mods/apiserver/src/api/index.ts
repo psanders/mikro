@@ -69,5 +69,6 @@ export {
 export {
   createGeneratePortfolioMetrics,
   createGeneratePerformanceReport,
-  createGenerateDefaultedReport
+  createGenerateDefaultedReport,
+  createGenerateRenewalCandidatesReport
 } from "./reports/index.js";

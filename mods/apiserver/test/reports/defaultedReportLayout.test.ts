@@ -114,7 +114,7 @@ describe("defaultedReportLayout", () => {
     });
 
     it("should have expected width constant", () => {
-      expect(DEFAULTED_REPORT_WIDTH).to.equal(900);
+      expect(DEFAULTED_REPORT_WIDTH).to.equal(1200);
     });
   });
 });

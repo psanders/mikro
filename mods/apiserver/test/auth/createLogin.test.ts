@@ -25,13 +25,20 @@ describe("createLogin", () => {
     roles: [{ role: "ADMIN" as const }]
   };
 
+  let savedConfigFile: string | undefined;
+
   before(() => {
+    savedConfigFile = process.env.MIKRO_CONFIG_FILE;
     process.env.MIKRO_CONFIG_FILE = resolve(__dirname, "../../../../mikro.json");
     clearConfigCache();
   });
 
   after(() => {
-    delete process.env.MIKRO_CONFIG_FILE;
+    if (savedConfigFile !== undefined) {
+      process.env.MIKRO_CONFIG_FILE = savedConfigFile;
+    } else {
+      delete process.env.MIKRO_CONFIG_FILE;
+    }
     clearConfigCache();
   });
 

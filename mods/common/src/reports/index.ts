@@ -28,3 +28,15 @@ export {
   type DefaultedReportRow
 } from "./defaultedReportLayout.js";
 export { renderDefaultedReportToPng } from "./defaultedReportGenerator.js";
+export {
+  buildRenewalCandidateNotePrompt,
+  parseRenewalCandidateNoteResponse,
+  type RenewalCandidateContext
+} from "./renewalReportPrompt.js";
+export {
+  createRenewalReportLayout,
+  getRenewalReportHeight,
+  RENEWAL_REPORT_WIDTH,
+  type RenewalReportRow
+} from "./renewalReportLayout.js";
+export { renderRenewalReportToPng } from "./renewalReportGenerator.js";

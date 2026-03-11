@@ -33,3 +33,12 @@ export const generateDefaultedReportSchema = z.object({
 });
 
 export type GenerateDefaultedReportInput = z.infer<typeof generateDefaultedReportSchema>;
+
+/**
+ * Schema for generating the renewal candidates report (near completion + completed loans, rating, AI candidacy note).
+ */
+export const generateRenewalCandidatesReportSchema = z.object({});
+
+export type GenerateRenewalCandidatesReportInput = z.infer<
+  typeof generateRenewalCandidatesReportSchema
+>;

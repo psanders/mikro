@@ -25,6 +25,7 @@ import { handleExportCustomersByReferrer } from "./exportCustomersByReferrer.js"
 import { handleExportAllCustomers } from "./exportAllCustomers.js";
 import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
 import { handleGenerateDefaultedReport } from "./handleGenerateDefaultedReport.js";
+import { handleGenerateRenewalCandidatesReport } from "./handleGenerateRenewalCandidatesReport.js";
 import { handleRunSingleCollection } from "./runSingleCollection.js";
 
 /**
@@ -72,6 +73,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     exportAllCustomers: handleExportAllCustomers,
     generatePerformanceReport: handleGeneratePerformanceReport,
     generateDefaultedReport: handleGenerateDefaultedReport,
+    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport,
     runSingleCollection: handleRunSingleCollection
   };
 

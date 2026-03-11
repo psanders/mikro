@@ -43,6 +43,7 @@ import {
   generatePortfolioMetricsSchema,
   generatePerformanceReportSchema,
   generateDefaultedReportSchema,
+  generateRenewalCandidatesReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
   listLoanNotesByLoanSchema,
@@ -92,6 +93,7 @@ import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendRecei
 import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
+import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -480,6 +482,17 @@ export const protectedRouter = router({
     .input(generateDefaultedReportSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateDefaultedReport(ctx.db);
+      const result = await fn(input);
+      return { image: result.image };
+    }),
+
+  /**
+   * Generate renewal candidates report (PNG). Near-completion and completed loans with rating and AI candidacy note.
+   */
+  generateRenewalCandidatesReport: protectedProcedure
+    .input(generateRenewalCandidatesReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateRenewalCandidatesReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
     }),

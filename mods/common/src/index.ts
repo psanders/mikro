@@ -17,6 +17,7 @@ export {
   mikroConfigSchema,
   llmConfigSchema,
   LLM_VENDORS,
+  DEFAULT_NEAR_COMPLETION_THRESHOLDS,
   type MikroConfig,
   type ResolvedMikroConfig,
   type LLMConfig,
@@ -67,6 +68,14 @@ export {
   type LatenessTrend,
   type ReportRowHighlight
 } from "./utils/customerReportHelpers.js";
+export {
+  getRemainingInstallments,
+  getNearCompletionThreshold,
+  isNearCompletion,
+  getRenewalCandidateMetrics,
+  type LoanPaymentDataWithTerm,
+  type RenewalCandidateMetrics
+} from "./utils/renewalReportHelpers.js";
 export {
   buildGroupedCustomerRows,
   type CustomerForGrouping,
@@ -208,9 +217,11 @@ export {
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
   generateDefaultedReportSchema,
+  generateRenewalCandidatesReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
+  type GenerateRenewalCandidatesReportInput,
   // Collection schemas
   runCollectionsSchema,
   runSingleCollectionSchema,
@@ -242,9 +253,20 @@ export {
   createDefaultedReportLayout,
   getDefaultedReportHeight,
   DEFAULTED_REPORT_WIDTH,
-  renderDefaultedReportToPng
+  renderDefaultedReportToPng,
+  buildRenewalCandidateNotePrompt,
+  parseRenewalCandidateNoteResponse,
+  createRenewalReportLayout,
+  getRenewalReportHeight,
+  RENEWAL_REPORT_WIDTH,
+  renderRenewalReportToPng
 } from "./reports/index.js";
-export type { NoteForSummary, DefaultedReportRow } from "./reports/index.js";
+export type {
+  NoteForSummary,
+  DefaultedReportRow,
+  RenewalCandidateContext,
+  RenewalReportRow
+} from "./reports/index.js";
 
 // Types (entities and client)
 export type { Customer } from "./types/index.js";

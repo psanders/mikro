@@ -41,6 +41,14 @@ export {
   type GroupedCustomerRows
 } from "./customerReportGrouping.js";
 export {
+  getRemainingInstallments,
+  getNearCompletionThreshold,
+  isNearCompletion,
+  getRenewalCandidateMetrics,
+  type LoanPaymentDataWithTerm,
+  type RenewalCandidateMetrics
+} from "./renewalReportHelpers.js";
+export {
   DEFAULT_ADJUSTMENT_PER_PERIOD,
   DEFAULT_MIN_RATE,
   DEFAULT_MAX_RATE,

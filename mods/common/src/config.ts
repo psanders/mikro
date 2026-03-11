@@ -99,6 +99,21 @@ const voiceNotesSchema = z.object({
   deepgramApiKey: z.string().default("")
 });
 
+/** Default max remaining installments by frequency to consider a loan "near completion" for renewal report. */
+export const DEFAULT_NEAR_COMPLETION_THRESHOLDS: Record<string, number> = {
+  DAILY: 7,
+  WEEKLY: 2,
+  BIWEEKLY: 1,
+  MONTHLY: 1
+};
+
+const reportsSchema = z
+  .object({
+    /** Max remaining installments by payment frequency to include in renewal candidates report. */
+    nearCompletionThresholds: z.record(z.string(), z.number().int().min(0)).optional()
+  })
+  .default(() => ({}));
+
 export const mikroConfigSchema = z
   .object({
     timezone: z.string().default("America/Santo_Domingo"),
@@ -140,7 +155,8 @@ export const mikroConfigSchema = z
     evals: evalsSchema.default(() => ({
       similarityThreshold: 0.7,
       vendors: {}
-    }))
+    })),
+    reports: reportsSchema.default(() => ({}))
   })
   .strict();
 
@@ -149,7 +165,7 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "collections" | "fonoster" | "voiceNotes" | "evals"
+  "whatsapp" | "collections" | "fonoster" | "voiceNotes" | "evals" | "reports"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -160,6 +176,7 @@ export type ResolvedMikroConfig = Omit<
   evals: NonNullable<MikroConfig["evals"]> & {
     vendors: NonNullable<NonNullable<MikroConfig["evals"]>["vendors"]>;
   };
+  reports: NonNullable<MikroConfig["reports"]>;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";

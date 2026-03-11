@@ -597,6 +597,24 @@ export const generateDefaultedReportTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for generating the renewal candidates report (near-completion and completed loans with rating and AI note).
+ * Admin only. Sent via WhatsApp as image.
+ */
+export const generateRenewalCandidatesReportTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "generateRenewalCandidatesReport",
+    description:
+      "Generar el reporte de candidatos a renovacion. Incluye prestamos por terminar (cerca de completar) y prestamos ya completados, con calificacion de pago y una nota breve de si son buen candidato para otro prestamo. Solo admin. Se envia por WhatsApp como imagen.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -619,6 +637,7 @@ export const allTools: ToolFunction[] = [
   exportAllCustomersTool,
   generatePerformanceReportTool,
   generateDefaultedReportTool,
+  generateRenewalCandidatesReportTool,
   runSingleCollectionTool
 ];
 

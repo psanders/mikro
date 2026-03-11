@@ -193,6 +193,9 @@ export interface ToolExecutorDependencies {
     image: string;
   }>;
 
+  /** Generate renewal candidates report (near-completion + completed loans, rating, AI candidacy note). Returns base64 image. */
+  generateRenewalCandidatesReport: (params: Record<string, never>) => Promise<{ image: string }>;
+
   /** Run a single collection action (reminder, overdue notice, or call) for one loan. */
   runSingleCollection: (params: {
     loanId: number;
