@@ -45,7 +45,7 @@ export function createGetCollectionsAuditReport(client: DbClient) {
     const start = startOfDay(auditDate);
     const end = endOfDay(auditDate);
 
-    const where: Parameters<PrismaClient["collectionAttempt"]["findMany"]>[0]["where"] = {
+    const where: Record<string, unknown> = {
       createdAt: { gte: start, lt: end }
     };
     if (params.attemptTypes && params.attemptTypes.length > 0) {
