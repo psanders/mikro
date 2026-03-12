@@ -42,3 +42,31 @@ export const generateRenewalCandidatesReportSchema = z.object({});
 export type GenerateRenewalCandidatesReportInput = z.infer<
   typeof generateRenewalCandidatesReportSchema
 >;
+
+/** Collection attempt types stored in DB (for audit filter). */
+export const collectionAttemptTypeEnum = z.enum([
+  "PAYMENT_CONFIRMATION",
+  "PAYMENT_REMINDER",
+  "OVERDUE_NOTICE",
+  "COLLECTION_CALL"
+]);
+
+/** Collection attempt status (for audit filter). */
+export const collectionAttemptStatusEnum = z.enum(["SENT", "FAILED"]);
+
+/**
+ * Schema for the daily collections audit report.
+ * Lists which notifications were sent for a given day (default: today).
+ */
+export const generateCollectionsAuditReportSchema = z.object({
+  /** Audit date; defaults to today on the server if omitted. */
+  date: z.coerce.date().optional(),
+  /** Optional filter by attempt type(s). Omit to include all types. */
+  attemptTypes: z.array(collectionAttemptTypeEnum).optional(),
+  /** Optional filter by status(es). Omit to include SENT and FAILED. */
+  statuses: z.array(collectionAttemptStatusEnum).optional()
+});
+
+export type GenerateCollectionsAuditReportInput = z.infer<
+  typeof generateCollectionsAuditReportSchema
+>;

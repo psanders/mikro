@@ -36,6 +36,7 @@ export const maria: Agent = {
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 - \`generateDefaultedReport\`: Cuando pidan reporte de mora/defaulted (todos los préstamos en mora con resumen de notas)
 - \`generateRenewalCandidatesReport\`: Cuando pidan reporte de candidatos a renovación, préstamos por terminar, quiénes son buenos para otro préstamo
+- \`generateCollectionsAuditReport\`: Cuando pidan reporte de auditoría de cobranza, quién fue notificado hoy (o una fecha), qué mensajes se enviaron y si hubo errores
 - \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
 
 ## Flujo cobro individual
@@ -71,8 +72,11 @@ Piden reporte de mora, reporte de defaulted, o préstamos en mora → \`generate
 ## Flujo reporte de renovación
 Piden reporte de candidatos a renovación, préstamos por terminar, quiénes pueden renovar o quiénes son buenos para otro préstamo → \`generateRenewalCandidatesReport\` (sin argumentos) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
 
+## Flujo reporte de auditoría de cobranza
+Piden reporte de auditoría de cobranza, quién fue notificado hoy, notificaciones del día o si los mensajes se están enviando → \`generateCollectionsAuditReport\` (sin argumentos = hoy; opcional: date en YYYY-MM-DD para otra fecha) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido. El usuario ya lo ve.
+
 ## Clarificación de reportes
-Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), reporte de rendimiento del portafolio, reporte de mora, o reporte de candidatos a renovación." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`. Si dicen mora/defaulted → \`generateDefaultedReport\`. Si dicen renovación/candidatos a renovar/préstamos por terminar → \`generateRenewalCandidatesReport\`.
+Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), reporte de rendimiento del portafolio, reporte de mora, reporte de candidatos a renovación, o reporte de auditoría de cobranza." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`. Si dicen mora/defaulted → \`generateDefaultedReport\`. Si dicen renovación/candidatos a renovar/préstamos por terminar → \`generateRenewalCandidatesReport\`. Si dicen auditoría de cobranza/quién fue notificado/notificaciones del día → \`generateCollectionsAuditReport\` (opcional: date en YYYY-MM-DD).
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -87,6 +91,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "generatePerformanceReport",
     "generateDefaultedReport",
     "generateRenewalCandidatesReport",
+    "generateCollectionsAuditReport",
     "updateLoanStatus",
     "runSingleCollection"
   ],
@@ -512,7 +517,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
           {
             human: "¿Qué reportes puedes generar?",
             expectedAI:
-              "Puedo generar estos reportes: 1) Reporte de clientes (imagen agrupada por estado de pago o Excel detallado con todos los datos). 2) Reporte de rendimiento del portafolio (métricas, resumen ejecutivo y gráficos). 3) Reporte de mora (préstamos en DEFAULTED con resumen de notas). ¿Cuál te gustaría ver?",
+              "Puedo generar estos reportes: 1) Reporte de clientes (imagen agrupada por estado de pago o Excel detallado). 2) Reporte de rendimiento del portafolio (métricas y gráficos). 3) Reporte de mora (préstamos en DEFAULTED con resumen de notas). 4) Reporte de candidatos a renovación (préstamos por terminar o completados con calificación). 5) Reporte de auditoría de cobranza (quién fue notificado y si hubo errores). ¿Cuál te gustaría ver?",
             tools: []
           },
           {
@@ -546,7 +551,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
           {
             human: "¿Cuántos reportes tienes disponibles?",
             expectedAI:
-              "Tengo 4 reportes disponibles: reporte de clientes (imagen agrupada por estado de pago o Excel detallado), reporte de rendimiento del portafolio (métricas y gráficos), reporte de mora (préstamos en DEFAULTED con resumen de notas), y reporte de candidatos a renovación (préstamos por terminar o completados con calificación). ¿Cuál te gustaría ver?",
+              "Tengo 5 reportes disponibles: reporte de clientes (imagen agrupada por estado de pago o Excel detallado), reporte de rendimiento del portafolio (métricas y gráficos), reporte de mora (préstamos en DEFAULTED con resumen de notas), reporte de candidatos a renovación (préstamos por terminar o completados con calificación), y reporte de auditoría de cobranza (quién fue notificado y si hubo errores). ¿Cuál te gustaría ver?",
             tools: []
           },
           {

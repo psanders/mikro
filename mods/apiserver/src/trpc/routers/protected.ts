@@ -44,6 +44,7 @@ import {
   generatePerformanceReportSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
+  generateCollectionsAuditReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
   listLoanNotesByLoanSchema,
@@ -94,6 +95,8 @@ import { createGeneratePortfolioMetrics } from "../../api/reports/createGenerate
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
+import { createGetCollectionsAuditReport } from "../../api/reports/createGetCollectionsAuditReport.js";
+import { createGenerateCollectionsAuditReport } from "../../api/reports/createGenerateCollectionsAuditReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -495,6 +498,26 @@ export const protectedRouter = router({
       const fn = createGenerateRenewalCandidatesReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
+    }),
+
+  /**
+   * Get collections audit rows only (for a given day, default today). No PNG.
+   */
+  getCollectionsAuditReport: protectedProcedure
+    .input(generateCollectionsAuditReportSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createGetCollectionsAuditReport(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Generate collections audit report (rows + PNG). Daily audit of who was notified, message type, status, errors.
+   */
+  generateCollectionsAuditReport: protectedProcedure
+    .input(generateCollectionsAuditReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateCollectionsAuditReport(ctx.db);
+      return fn(input);
     }),
 
   // ==================== Collection procedures ====================

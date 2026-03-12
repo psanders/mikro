@@ -6,3 +6,5 @@ export { createGeneratePortfolioMetrics } from "./createGeneratePortfolioMetrics
 export { createGeneratePerformanceReport } from "./createGeneratePerformanceReport.js";
 export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.js";
 export { createGenerateRenewalCandidatesReport } from "./createGenerateRenewalCandidatesReport.js";
+export { createGetCollectionsAuditReport } from "./createGetCollectionsAuditReport.js";
+export { createGenerateCollectionsAuditReport } from "./createGenerateCollectionsAuditReport.js";

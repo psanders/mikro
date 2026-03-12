@@ -615,6 +615,29 @@ export const generateRenewalCandidatesReportTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for the daily collections audit report (who was notified, message type, status, errors).
+ * Admin only. Sent via WhatsApp as image. Default: today.
+ */
+export const generateCollectionsAuditReportTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "generateCollectionsAuditReport",
+    description:
+      "Generar el reporte de auditoria de cobranza del dia: quien fue notificado, tipo de mensaje (recordatorio, aviso de mora, llamada), estado (enviado/fallido) y errores si los hay. Sirve para auditar que los mensajes se estan enviando. Por defecto usa la fecha de hoy. Solo admin. Se envia por WhatsApp como imagen.",
+    parameters: {
+      type: "object",
+      properties: {
+        date: {
+          type: "string",
+          description: "Fecha del dia a auditar en YYYY-MM-DD. Si no se pasa, se usa hoy."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -638,6 +661,7 @@ export const allTools: ToolFunction[] = [
   generatePerformanceReportTool,
   generateDefaultedReportTool,
   generateRenewalCandidatesReportTool,
+  generateCollectionsAuditReportTool,
   runSingleCollectionTool
 ];
 

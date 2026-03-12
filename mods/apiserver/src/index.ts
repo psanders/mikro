@@ -98,7 +98,8 @@ import {
   createExportAllCustomers,
   createGeneratePerformanceReport,
   createGenerateDefaultedReport,
-  createGenerateRenewalCandidatesReport
+  createGenerateRenewalCandidatesReport,
+  createGenerateCollectionsAuditReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
@@ -221,6 +222,7 @@ async function initializeMessageProcessor() {
     const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
     const generateDefaultedReport = createGenerateDefaultedReport(dbClient);
     const generateRenewalCandidatesReport = createGenerateRenewalCandidatesReport(dbClient);
+    const generateCollectionsAuditReport = createGenerateCollectionsAuditReport(dbClient);
 
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
@@ -449,6 +451,12 @@ async function initializeMessageProcessor() {
       generateRenewalCandidatesReport: async () => {
         const result = await generateRenewalCandidatesReport({});
         return { image: result.image };
+      },
+      generateCollectionsAuditReport: async (params?: { date?: string }) => {
+        const result = await generateCollectionsAuditReport({
+          date: params?.date ? new Date(params.date) : undefined
+        });
+        return { rows: result.rows, image: result.image };
       },
       runSingleCollection: async (params) => {
         const result = await runSingleCollection(
