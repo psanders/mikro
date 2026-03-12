@@ -65,13 +65,17 @@ export interface DbClient {
       where: { id: string };
       include?: { notificationPolicy?: true };
     }): Promise<Customer | null>;
-    findFirst(args: { where: { phone: string } }): Promise<Customer | null>;
+    findFirst(args: {
+      where: { phone: string };
+      include?: { notificationPolicy?: true };
+    }): Promise<Customer | null>;
     findMany(args?: {
       where?: {
         isActive?: boolean;
         referredById?: string;
         assignedCollectorId?: string;
       };
+      include?: { notificationPolicy?: true };
       take?: number;
       skip?: number;
     }): Promise<Customer[]>;

@@ -25,6 +25,7 @@ export function createListCustomersByReferrer(client: DbClient) {
         referredById: params.referredById,
         ...(params.showInactive ? {} : { isActive: true })
       },
+      include: { notificationPolicy: true },
       take: params.limit,
       skip: params.offset
     });

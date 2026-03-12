@@ -20,7 +20,8 @@ export function createGetCustomerByPhone(client: DbClient) {
   const fn = async (params: GetCustomerByPhoneInput): Promise<Customer | null> => {
     logger.verbose("getting customer by phone", { phone: params.phone });
     const customer = await client.customer.findFirst({
-      where: { phone: params.phone }
+      where: { phone: params.phone },
+      include: { notificationPolicy: true }
     });
     logger.verbose("customer by phone retrieved", { phone: params.phone, found: !!customer });
     return customer;

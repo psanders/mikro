@@ -22,6 +22,7 @@ export function createListCustomers(client: DbClient) {
     logger.verbose("listing customers", { limit: params.limit, offset: params.offset });
     const customers = await client.customer.findMany({
       where: params.showInactive ? undefined : { isActive: true },
+      include: { notificationPolicy: true },
       take: params.limit,
       skip: params.offset
     });

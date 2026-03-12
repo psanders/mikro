@@ -25,6 +25,7 @@ export function createListCustomersByCollector(client: DbClient) {
         assignedCollectorId: params.assignedCollectorId,
         ...(params.showInactive ? {} : { isActive: true })
       },
+      include: { notificationPolicy: true },
       take: params.limit,
       skip: params.offset
     });
