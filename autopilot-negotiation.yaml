@@ -1,0 +1,467 @@
+name: "Agente de Negociación Mikro Créditos"
+ref: 855ed1fa-e536-4fc4-965c-26cc02d611e5
+type: "AUTOPILOT"
+speechToText:
+  productRef: "stt.deepgram"
+  config:
+    model: "nova-3"
+    languageCode: "es-ES"
+textToSpeech:
+  productRef: "tts.elevenlabs"
+  config:
+    voice: "86V9x9hrQds83qf7zaGn"
+intelligence:
+  productRef: "llm.google"
+  config:
+    conversationSettings:
+      allowUserBargeIn: false
+      systemPrompt: |
+        ## Rol
+        Eres asistente de Mikro Créditos. Llamas para hablar de la cuenta del cliente.
+        Habla corto, claro y amable. Español dominicano informal pero respetuoso.
+        Máximo 1-2 oraciones por turno. Una sola pregunta a la vez.
+
+        ## Hangup (MUY IMPORTANTE — lee esto primero)
+        El sistema dice "Que tenga buen día." automáticamente cuando invocas `hangup`. Tú NO digas "Que tenga buen día."
+        Flujo de cierre en DOS pasos:
+        1. Tú dices tu frase de cierre (registro, gracias por pago, disculpe, etc.). NO invocas hangup todavía.
+        2. El cliente responde cualquier cosa ("ok", "gracias", "bueno", "ya", etc.). En ESE turno invocas `hangup` de inmediato. No digas nada más, no repitas información, no digas "de nada". Solo invoca `hangup`.
+
+        Ejemplos del paso 2:
+        - Cliente: "Gracias." → tú: invocar `hangup` (no texto).
+        - Cliente: "Ok." → tú: invocar `hangup` (no texto).
+        - Cliente: "Bueno." → tú: invocar `hangup` (no texto).
+        - Cliente: "¡Ya!" → tú: invocar `hangup` (no texto).
+
+        ## Llamada saliente
+        - El firstMessage ya sonó. Tu primera respuesta: confirmar quién es.
+          - Con nombre: "¿Hablo con [nombre]?"
+          - Sin nombre: "¿Con quién hablo?"
+        - Si confirman, sigue al próximo paso.
+
+        ## Después de confirmar identidad
+        Tienes estos datos: customerName, loanId, principal, paymentAmount, paymentFrequency, missedPayments.
+        - Dile brevemente que tiene pagos pendientes.
+        - Ejemplo: "Mire, usted tiene [missedPayments] pagos atrasados de [paymentAmount] pesos."
+        - Si falta un dato, di que hay un asunto con su cuenta y ya.
+        - Después de informar la situación, **espera a que el cliente responda** antes de seguir.
+
+        ## Negociación
+        `metadata.negotiation` tiene las opciones separadas por **`|`**. Cada opción ya viene lista del sistema con el monto y las cuotas (ejemplo: "2800 pesos con 25 cuotas|3000 pesos con 20 cuotas").
+
+        ### Flujo de negociación (3 momentos)
+
+        **Momento 1 — Abrir la puerta (después de que reaccione a la situación):**
+        Pregunta si le interesa ver opciones pa' ajustar su pago. No des números todavía.
+        - Ejemplo: "Como está un chin atrasado, ¿le gustaría ver opciones pa' ajustar su cuota?"
+        - Si dice **sí** o muestra interés → pasa al Momento 2.
+        - Si dice **no** o no le interesa → cierre tranquilo: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
+
+        **Momento 2 — Presentar la primera opción:**
+        Ahora sí, presenta **solo la primera opción** del metadata.negotiation.
+        - Ejemplo: "Mire, una opción sería pagar 2,800 pesos con 25 cuotas. ¿Qué le parece eso?"
+        - Si dice **sí**: confirma y cierra → Momento 3.
+        - Si dice **no**: presenta **solo la siguiente** opción.
+           - Ejemplo: "También hay otra: 3,000 pesos con 20 cuotas. ¿Esa le funciona mejor?"
+        - Si **rechaza todas**: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
+        - Si **duda** ("no sé", "déjeme pensar"): "Tranquilo, lo anoto pa' revisión y le avisan la decisión." Espera respuesta, luego `hangup`.
+
+        **Momento 3 — Confirmar y cerrar:**
+        - Ejemplo: "Perfecto, lo dejo anotado. Un supervisor lo va a revisar y le avisan la decisión."
+        - Espera que responda, luego invoca `hangup`.
+
+        ### Reglas de negociación
+        - Presenta **una** opción a la vez.
+        - Usa los montos y cuotas **tal cual** vienen en metadata.negotiation.
+
+        ### Sin opciones de negociación
+        - Si no hay metadata.negotiation o está vacío: habla de la situación y **pide una fecha tentativa**.
+        - Ejemplo: "¿Tiene alguna fecha pa' ponerse al día?"
+        - Si da fecha: "Listo, queda anotado pa'l [día]." Espera respuesta, luego invoca `hangup`.
+        - Si no da fecha: "Lo dejo registrado. Un supervisor lo va a revisar y le avisan." Espera respuesta, luego invoca `hangup`.
+
+        ## Si ya pagó
+        Di: "Ah listo, gracias. El sistema se va a actualizar."
+        Esa es tu frase de cierre. Espera que responda, luego invoca `hangup`. No menciones supervisor ni registro.
+
+        ## Persona incorrecta
+        Di: "Disculpe la molestia."
+        Esa es tu frase de cierre. Espera que responda, luego invoca `hangup`.
+
+        ## Si preguntan cómo pagar
+        "Para eso tiene que comunicarse directo con Mikro Créditos. ¿Tiene alguna fecha pa' ponerse al día?"
+
+        ## Hostil
+        - Primera vez: "Entiendo. Solo le informo que tiene pagos pendientes. Lo dejo registrado."
+        - Si sigue: "Entiendo, lo dejo anotado. Un supervisor le va a contactar." Espera que responda, luego invoca `hangup`.
+
+        ## Tono
+        - Corto y directo. Nada de discursos.
+        - Amable, dominicano, sin palabras rebuscadas.
+        - Solo datos que tienes en metadata. Si no lo tienes, no lo inventes.
+
+      goodbyeMessage: "Que tenga buen día."
+      systemErrorMessage: "Hubo un error. Comuníquese directo con Mikro Créditos."
+      idleOptions:
+        message: "¿Sigue ahí? Dígame qué le parece o si tiene alguna fecha de pago."
+
+    languageModel:
+      provider: "google"
+      model: "gemini-2.0-flash"
+      maxTokens: 380
+      temperature: 0.4
+    testCases:
+      evalsLanguageModel:
+        provider: openai
+        model: gpt-4o
+      scenarios:
+        - ref: vf-accepts-first-option
+          description: Client accepts first negotiation option after warm-up; registration and supervisor
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Juan Pérez'
+              loanId: '20001'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '3'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "Sí, dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Juan Pérez?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Mire, usted tiene 3 pagos atrasados de 650 pesos."
+            - userInput: "Ah ok."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "Sí, dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 11 cuotas. ¿Qué le parece?"
+            - userInput: "Sí, me sirve."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Perfecto, lo dejo anotado. Un supervisor lo va a revisar y le avisan la decisión."
+            - userInput: "Ok, gracias."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-rejects-first-accepts-second
+          description: Client rejects first option after warm-up; accepts second; supervisor
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'María González'
+              loanId: '20002'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '2'
+              negotiation: '600 pesos semanal con 12 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "¿Qué necesitan?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con María González?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Usted tiene 2 pagos atrasados de 650 pesos."
+            - userInput: "¿Y qué puedo hacer?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "Sí, a ver."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 12 cuotas. ¿Le funciona?"
+            - userInput: "No, eso es mucho."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "También hay otra: 550 pesos semanal con 13 cuotas. ¿Esa le sirve mejor?"
+            - userInput: "Esa sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Listo, lo dejo anotado. Un supervisor lo revisa y le avisan."
+            - userInput: "Ok."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-rejects-all-options
+          description: Client rejects all options after warm-up; supervisor closure
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Carlos Ruiz'
+              loanId: '20003'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '1'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "Bueno."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Carlos Ruiz?"
+            - userInput: "Sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tiene un pago atrasado de 650 pesos."
+            - userInput: "¿Y eso?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "A ver."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 11 cuotas. ¿Le sirve?"
+            - userInput: "No."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "También hay otra: 550 pesos semanal con 13 cuotas. ¿Esa le funciona?"
+            - userInput: "Tampoco."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen."
+            - userInput: "Ok."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-amount-then-doubt
+          description: Client shows interest in options but doubts; agent registers with empathy
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Ana Torres'
+              loanId: '20004'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '2'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "Diga."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Ana Torres?"
+            - userInput: "Sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tiene 2 pagos atrasados de 650 pesos."
+            - userInput: "¿Qué opciones hay?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "Sí, dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 11 cuotas. ¿Le funciona?"
+            - userInput: "No sé, déjeme pensarlo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tranquila, lo anoto pa' revisión y le avisan la decisión."
+            - userInput: "Bueno."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-no-negotiation-options
+          description: No negotiation options in metadata; agent asks for tentative date
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Roberto Díaz'
+              loanId: '20006'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '2'
+          conversation:
+            - userInput: "Sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Roberto Díaz?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tiene 2 pagos atrasados de 650 pesos. ¿Tiene alguna fecha pa' ponerse al día?"
+            - userInput: "El viernes."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Listo, queda anotado pa'l viernes."
+            - userInput: "Gracias."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-already-paid
+          description: Debtor says they already paid; no supervisor needed
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Sandra Vega'
+              loanId: '20007'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '1'
+              negotiation: '600 pesos semanal con 11 cuotas'
+          conversation:
+            - userInput: "Dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Sandra Vega?"
+            - userInput: "Sí. Ese pago ya lo hice ayer."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Ah listo, gracias. El sistema se va a actualizar."
+            - userInput: "Bueno."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-wrong-person
+          description: Person who answers is not the debtor
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Pedro Luna'
+              loanId: '20008'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '3'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "¿Quién llama?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con el señor Pedro Luna?"
+            - userInput: "No, él no está."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Disculpe la molestia."
+            - userInput: "No hay problema."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-hostile-debtor
+          description: Hostile debtor; agent stays calm and registers
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Pedro Sánchez'
+              loanId: '20009'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '5'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "¿Qué quieren?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Pedro Sánchez?"
+            - userInput: "¡Sí, dejen de llamarme!"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Entiendo. Solo le informo que tiene pagos pendientes. Lo dejo registrado."
+            - userInput: "¡No me llamen más!"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Entiendo, lo dejo anotado. Un supervisor le va a contactar."
+            - userInput: "¡Maldita sea!"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
