@@ -56,7 +56,6 @@ opening and current balance) and eleven **categories** (no sample transactions).
 | Comisiones de Referidos        | EXPENSE |
 | Honorarios Contables y Legales | EXPENSE |
 | Comisiones Bancarias           | EXPENSE |
-| Cargos Administrativos         | INCOME  |
 
 Config (`mikro.json`):
 
