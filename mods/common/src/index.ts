@@ -228,7 +228,43 @@ export {
   runCollectionsSchema,
   runSingleCollectionSchema,
   type RunCollectionsInput,
-  type RunSingleCollectionInput
+  type RunSingleCollectionInput,
+  // Accounting schemas
+  accountKindEnum,
+  transactionTypeEnum,
+  transactionStatusEnum,
+  categoryKindEnum,
+  attachmentMimeTypeEnum,
+  allowedAttachmentMimeTypes,
+  MAX_ATTACHMENT_SIZE_BYTES,
+  createAccountSchema,
+  updateAccountSchema,
+  listAccountsSchema,
+  getAccountSchema,
+  createCategorySchema,
+  listCategoriesSchema,
+  transactionAttachmentInputSchema,
+  createTransactionSchema,
+  reverseTransactionSchema,
+  listTransactionsSchema,
+  getTransactionSchema,
+  getTransactionAttachmentSchema,
+  type AccountKind,
+  type TransactionType,
+  type TransactionStatus,
+  type CategoryKind,
+  type CreateAccountInput,
+  type UpdateAccountInput,
+  type ListAccountsInput,
+  type GetAccountInput,
+  type CreateCategoryInput,
+  type ListCategoriesInput,
+  type TransactionAttachmentInput,
+  type CreateTransactionInput,
+  type ReverseTransactionInput,
+  type ListTransactionsInput,
+  type GetTransactionInput,
+  type GetTransactionAttachmentInput
 } from "./schemas/index.js";
 
 // Report types and helpers
@@ -291,6 +327,14 @@ export type {
   WhatsAppMediaUploadResponse
 } from "./types/index.js";
 export type { Loan, Payment, LoanNote } from "./types/index.js";
+export type {
+  AccountingAccount,
+  AccountingCategory,
+  AccountingTransaction,
+  AccountingTransactionAttachment,
+  AccountingTransactionWithRelations,
+  AccountingTransactionAttachmentPayload
+} from "./types/index.js";
 
 // Receipt utilities
 export { generateKeys, type GeneratedKeys } from "./receipt/index.js";

@@ -110,6 +110,39 @@ enum CollectionAttemptStatus {
   @@map("collection_attempt_statuses")
 }
 
+enum AccountKind {
+  BANK
+  CASH
+  CREDIT_CARD
+  OTHER
+
+  @@map("accounting_account_kinds")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  EXPENSE
+  INCOME
+  TRANSFER
+
+  @@map("accounting_transaction_types")
+}
+
+enum TransactionStatus {
+  POSTED
+  REVERSED
+
+  @@map("accounting_transaction_statuses")
+}
+
+enum CategoryKind {
+  EXPENSE
+  INCOME
+
+  @@map("accounting_category_kinds")
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -131,6 +164,7 @@ model User {
   messages            Message[]
   collectedPayments   Payment[]  @relation("CollectedPayments")
   createdLoanNotes    LoanNote[] @relation("CreatedLoanNotes")
+  createdTransactions AccountingTransaction[] @relation("CreatedTransactions")
 
   @@map("users")
 }
@@ -319,4 +353,88 @@ model LoanNote {
   @@index([loanId])
   @@index([createdAt])
   @@map("loan_notes")
+}
+
+// =============================================================================
+// Accounting module
+// =============================================================================
+
+model AccountingAccount {
+  id             String      @id @default(uuid())
+  name           String      @unique
+  kind           AccountKind @default(BANK)
+  currency       String      @default("DOP")
+  openingBalance Decimal     @default(0) @map("opening_balance")
+  currentBalance Decimal     @default(0) @map("current_balance")
+  isActive       Boolean     @default(true) @map("is_active")
+  notes          String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt      @map("updated_at")
+
+  transactions      AccountingTransaction[] @relation("AccountTransactions")
+  transfersToThis   AccountingTransaction[] @relation("TransferToAccount")
+
+  @@map("accounting_accounts")
+}
+
+model AccountingCategory {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  kind      CategoryKind
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  transactions AccountingTransaction[]
+
+  @@map("accounting_categories")
+}
+
+model AccountingTransaction {
+  id           String            @id @default(uuid())
+  type         TransactionType
+  status       TransactionStatus @default(POSTED)
+  amount       Decimal
+  occurredAt   DateTime          @map("occurred_at")
+  description  String?
+  vendor       String?
+  reference    String?
+  reversalOfId String?           @unique @map("reversal_of_id")
+
+  account     AccountingAccount  @relation("AccountTransactions", fields: [accountId], references: [id])
+  accountId   String             @map("account_id")
+  toAccount   AccountingAccount? @relation("TransferToAccount", fields: [toAccountId], references: [id])
+  toAccountId String?            @map("to_account_id")
+  category    AccountingCategory? @relation(fields: [categoryId], references: [id])
+  categoryId  String?            @map("category_id")
+  createdBy   User               @relation("CreatedTransactions", fields: [createdById], references: [id])
+  createdById String             @map("created_by_id")
+
+  reversalOf AccountingTransaction?  @relation("ReversalLink", fields: [reversalOfId], references: [id])
+  reversedBy AccountingTransaction? @relation("ReversalLink")
+
+  attachments AccountingTransactionAttachment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  @@index([accountId, occurredAt])
+  @@index([categoryId])
+  @@index([type])
+  @@index([occurredAt])
+  @@map("accounting_transactions")
+}
+
+model AccountingTransactionAttachment {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String?  @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int
+  sha256       String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  transaction   AccountingTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String                @map("transaction_id")
+
+  @@index([transactionId])
+  @@map("accounting_transaction_attachments")
 }

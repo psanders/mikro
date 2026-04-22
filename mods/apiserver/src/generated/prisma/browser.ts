@@ -67,3 +67,23 @@ export type CollectionAttempt = Prisma.CollectionAttemptModel
  * 
  */
 export type LoanNote = Prisma.LoanNoteModel
+/**
+ * Model AccountingAccount
+ * 
+ */
+export type AccountingAccount = Prisma.AccountingAccountModel
+/**
+ * Model AccountingCategory
+ * 
+ */
+export type AccountingCategory = Prisma.AccountingCategoryModel
+/**
+ * Model AccountingTransaction
+ * 
+ */
+export type AccountingTransaction = Prisma.AccountingTransactionModel
+/**
+ * Model AccountingTransactionAttachment
+ * 
+ */
+export type AccountingTransactionAttachment = Prisma.AccountingTransactionAttachmentModel

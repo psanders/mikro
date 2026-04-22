@@ -114,6 +114,13 @@ const reportsSchema = z
   })
   .default(() => ({}));
 
+const accountingSchema = z
+  .object({
+    /** Where transaction attachments (receipts) are saved. Resolved relative to the config dir. */
+    attachmentsPath: z.string().default("./data/attachments/accounting")
+  })
+  .default(() => ({ attachmentsPath: "./data/attachments/accounting" }));
+
 export const mikroConfigSchema = z
   .object({
     timezone: z.string().default("America/Santo_Domingo"),
@@ -156,7 +163,10 @@ export const mikroConfigSchema = z
       similarityThreshold: 0.7,
       vendors: {}
     })),
-    reports: reportsSchema.default(() => ({}))
+    reports: reportsSchema.default(() => ({})),
+    accounting: accountingSchema.default(() => ({
+      attachmentsPath: "./data/attachments/accounting"
+    }))
   })
   .strict();
 
@@ -165,7 +175,7 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "collections" | "fonoster" | "voiceNotes" | "evals" | "reports"
+  "whatsapp" | "collections" | "fonoster" | "voiceNotes" | "evals" | "reports" | "accounting"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -177,6 +187,7 @@ export type ResolvedMikroConfig = Omit<
     vendors: NonNullable<NonNullable<MikroConfig["evals"]>["vendors"]>;
   };
   reports: NonNullable<MikroConfig["reports"]>;
+  accounting: NonNullable<MikroConfig["accounting"]>;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";

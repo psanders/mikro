@@ -17,3 +17,11 @@ export type {
 } from "./whatsapp.js";
 export type { Loan, Payment } from "./loan.js";
 export type { LoanNote } from "./loanNote.js";
+export type {
+  AccountingAccount,
+  AccountingCategory,
+  AccountingTransaction,
+  AccountingTransactionAttachment,
+  AccountingTransactionWithRelations,
+  AccountingTransactionAttachmentPayload
+} from "./accounting.js";

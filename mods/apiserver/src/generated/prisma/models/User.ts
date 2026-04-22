@@ -205,6 +205,7 @@ export type UserWhereInput = {
   messages?: Prisma.MessageListRelationFilter
   collectedPayments?: Prisma.PaymentListRelationFilter
   createdLoanNotes?: Prisma.LoanNoteListRelationFilter
+  createdTransactions?: Prisma.AccountingTransactionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -222,6 +223,7 @@ export type UserOrderByWithRelationInput = {
   messages?: Prisma.MessageOrderByRelationAggregateInput
   collectedPayments?: Prisma.PaymentOrderByRelationAggregateInput
   createdLoanNotes?: Prisma.LoanNoteOrderByRelationAggregateInput
+  createdTransactions?: Prisma.AccountingTransactionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -242,6 +244,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   messages?: Prisma.MessageListRelationFilter
   collectedPayments?: Prisma.PaymentListRelationFilter
   createdLoanNotes?: Prisma.LoanNoteListRelationFilter
+  createdTransactions?: Prisma.AccountingTransactionListRelationFilter
 }, "id" | "phone">
 
 export type UserOrderByWithAggregationInput = {
@@ -285,6 +288,7 @@ export type UserCreateInput = {
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -302,6 +306,7 @@ export type UserUncheckedCreateInput = {
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUpdateInput = {
@@ -319,6 +324,7 @@ export type UserUpdateInput = {
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -336,6 +342,7 @@ export type UserUncheckedUpdateInput = {
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -530,6 +537,20 @@ export type UserUpdateOneRequiredWithoutCreatedLoanNotesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedLoanNotesInput, Prisma.UserUpdateWithoutCreatedLoanNotesInput>, Prisma.UserUncheckedUpdateWithoutCreatedLoanNotesInput>
 }
 
+export type UserCreateNestedOneWithoutCreatedTransactionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedTransactionsInput, Prisma.UserUncheckedCreateWithoutCreatedTransactionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedTransactionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCreatedTransactionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedTransactionsInput, Prisma.UserUncheckedCreateWithoutCreatedTransactionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedTransactionsInput
+  upsert?: Prisma.UserUpsertWithoutCreatedTransactionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedTransactionsInput, Prisma.UserUpdateWithoutCreatedTransactionsInput>, Prisma.UserUncheckedUpdateWithoutCreatedTransactionsInput>
+}
+
 export type UserCreateWithoutRolesInput = {
   id?: string
   name: string
@@ -544,6 +565,7 @@ export type UserCreateWithoutRolesInput = {
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutRolesInput = {
@@ -560,6 +582,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutRolesInput = {
@@ -592,6 +615,7 @@ export type UserUpdateWithoutRolesInput = {
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRolesInput = {
@@ -608,6 +632,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutCreatedCustomersInput = {
@@ -624,6 +649,7 @@ export type UserCreateWithoutCreatedCustomersInput = {
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutCreatedCustomersInput = {
@@ -640,6 +666,7 @@ export type UserUncheckedCreateWithoutCreatedCustomersInput = {
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutCreatedCustomersInput = {
@@ -661,6 +688,7 @@ export type UserCreateWithoutReferredCustomersInput = {
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutReferredCustomersInput = {
@@ -677,6 +705,7 @@ export type UserUncheckedCreateWithoutReferredCustomersInput = {
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutReferredCustomersInput = {
@@ -698,6 +727,7 @@ export type UserCreateWithoutAssignedCustomersInput = {
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutAssignedCustomersInput = {
@@ -714,6 +744,7 @@ export type UserUncheckedCreateWithoutAssignedCustomersInput = {
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutAssignedCustomersInput = {
@@ -746,6 +777,7 @@ export type UserUpdateWithoutCreatedCustomersInput = {
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedCustomersInput = {
@@ -762,6 +794,7 @@ export type UserUncheckedUpdateWithoutCreatedCustomersInput = {
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUpsertWithoutReferredCustomersInput = {
@@ -789,6 +822,7 @@ export type UserUpdateWithoutReferredCustomersInput = {
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReferredCustomersInput = {
@@ -805,6 +839,7 @@ export type UserUncheckedUpdateWithoutReferredCustomersInput = {
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUpsertWithoutAssignedCustomersInput = {
@@ -832,6 +867,7 @@ export type UserUpdateWithoutAssignedCustomersInput = {
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedCustomersInput = {
@@ -848,6 +884,7 @@ export type UserUncheckedUpdateWithoutAssignedCustomersInput = {
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutMessagesInput = {
@@ -864,6 +901,7 @@ export type UserCreateWithoutMessagesInput = {
   assignedCustomers?: Prisma.CustomerCreateNestedManyWithoutAssignedCollectorInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutMessagesInput = {
@@ -880,6 +918,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   assignedCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutAssignedCollectorInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutMessagesInput = {
@@ -912,6 +951,7 @@ export type UserUpdateWithoutMessagesInput = {
   assignedCustomers?: Prisma.CustomerUpdateManyWithoutAssignedCollectorNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMessagesInput = {
@@ -928,6 +968,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   assignedCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutCollectedPaymentsInput = {
@@ -944,6 +985,7 @@ export type UserCreateWithoutCollectedPaymentsInput = {
   assignedCustomers?: Prisma.CustomerCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutCollectedPaymentsInput = {
@@ -960,6 +1002,7 @@ export type UserUncheckedCreateWithoutCollectedPaymentsInput = {
   assignedCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutCollectedPaymentsInput = {
@@ -992,6 +1035,7 @@ export type UserUpdateWithoutCollectedPaymentsInput = {
   assignedCustomers?: Prisma.CustomerUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCollectedPaymentsInput = {
@@ -1008,6 +1052,7 @@ export type UserUncheckedUpdateWithoutCollectedPaymentsInput = {
   assignedCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutCreatedLoanNotesInput = {
@@ -1024,6 +1069,7 @@ export type UserCreateWithoutCreatedLoanNotesInput = {
   assignedCustomers?: Prisma.CustomerCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdTransactions?: Prisma.AccountingTransactionCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutCreatedLoanNotesInput = {
@@ -1040,6 +1086,7 @@ export type UserUncheckedCreateWithoutCreatedLoanNotesInput = {
   assignedCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutAssignedCollectorInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
   collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutCreatedLoanNotesInput = {
@@ -1072,6 +1119,7 @@ export type UserUpdateWithoutCreatedLoanNotesInput = {
   assignedCustomers?: Prisma.CustomerUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedLoanNotesInput = {
@@ -1088,6 +1136,91 @@ export type UserUncheckedUpdateWithoutCreatedLoanNotesInput = {
   assignedCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutAssignedCollectorNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
   collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdTransactions?: Prisma.AccountingTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserCreateWithoutCreatedTransactionsInput = {
+  id?: string
+  name: string
+  phone: string
+  password?: string | null
+  enabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  createdCustomers?: Prisma.CustomerCreateNestedManyWithoutCreatedByInput
+  referredCustomers?: Prisma.CustomerCreateNestedManyWithoutReferredByInput
+  assignedCustomers?: Prisma.CustomerCreateNestedManyWithoutAssignedCollectorInput
+  messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentCreateNestedManyWithoutCollectedByInput
+  createdLoanNotes?: Prisma.LoanNoteCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserUncheckedCreateWithoutCreatedTransactionsInput = {
+  id?: string
+  name: string
+  phone: string
+  password?: string | null
+  enabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  createdCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutCreatedByInput
+  referredCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutReferredByInput
+  assignedCustomers?: Prisma.CustomerUncheckedCreateNestedManyWithoutAssignedCollectorInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  collectedPayments?: Prisma.PaymentUncheckedCreateNestedManyWithoutCollectedByInput
+  createdLoanNotes?: Prisma.LoanNoteUncheckedCreateNestedManyWithoutCreatedByInput
+}
+
+export type UserCreateOrConnectWithoutCreatedTransactionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedTransactionsInput, Prisma.UserUncheckedCreateWithoutCreatedTransactionsInput>
+}
+
+export type UserUpsertWithoutCreatedTransactionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCreatedTransactionsInput, Prisma.UserUncheckedUpdateWithoutCreatedTransactionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedTransactionsInput, Prisma.UserUncheckedCreateWithoutCreatedTransactionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCreatedTransactionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCreatedTransactionsInput, Prisma.UserUncheckedUpdateWithoutCreatedTransactionsInput>
+}
+
+export type UserUpdateWithoutCreatedTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  createdCustomers?: Prisma.CustomerUpdateManyWithoutCreatedByNestedInput
+  referredCustomers?: Prisma.CustomerUpdateManyWithoutReferredByNestedInput
+  assignedCustomers?: Prisma.CustomerUpdateManyWithoutAssignedCollectorNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUpdateManyWithoutCollectedByNestedInput
+  createdLoanNotes?: Prisma.LoanNoteUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCreatedTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  createdCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutCreatedByNestedInput
+  referredCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutReferredByNestedInput
+  assignedCustomers?: Prisma.CustomerUncheckedUpdateManyWithoutAssignedCollectorNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  collectedPayments?: Prisma.PaymentUncheckedUpdateManyWithoutCollectedByNestedInput
+  createdLoanNotes?: Prisma.LoanNoteUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 
@@ -1103,6 +1236,7 @@ export type UserCountOutputType = {
   messages: number
   collectedPayments: number
   createdLoanNotes: number
+  createdTransactions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1113,6 +1247,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   messages?: boolean | UserCountOutputTypeCountMessagesArgs
   collectedPayments?: boolean | UserCountOutputTypeCountCollectedPaymentsArgs
   createdLoanNotes?: boolean | UserCountOutputTypeCountCreatedLoanNotesArgs
+  createdTransactions?: boolean | UserCountOutputTypeCountCreatedTransactionsArgs
 }
 
 /**
@@ -1174,6 +1309,13 @@ export type UserCountOutputTypeCountCreatedLoanNotesArgs<ExtArgs extends runtime
   where?: Prisma.LoanNoteWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCreatedTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AccountingTransactionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1190,6 +1332,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
   collectedPayments?: boolean | Prisma.User$collectedPaymentsArgs<ExtArgs>
   createdLoanNotes?: boolean | Prisma.User$createdLoanNotesArgs<ExtArgs>
+  createdTransactions?: boolean | Prisma.User$createdTransactionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1232,6 +1375,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
   collectedPayments?: boolean | Prisma.User$collectedPaymentsArgs<ExtArgs>
   createdLoanNotes?: boolean | Prisma.User$createdLoanNotesArgs<ExtArgs>
+  createdTransactions?: boolean | Prisma.User$createdTransactionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1247,6 +1391,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     messages: Prisma.$MessagePayload<ExtArgs>[]
     collectedPayments: Prisma.$PaymentPayload<ExtArgs>[]
     createdLoanNotes: Prisma.$LoanNotePayload<ExtArgs>[]
+    createdTransactions: Prisma.$AccountingTransactionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1657,6 +1802,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   messages<T extends Prisma.User$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   collectedPayments<T extends Prisma.User$collectedPaymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$collectedPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdLoanNotes<T extends Prisma.User$createdLoanNotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdLoanNotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoanNotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdTransactions<T extends Prisma.User$createdTransactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountingTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2244,6 +2390,30 @@ export type User$createdLoanNotesArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.LoanNoteScalarFieldEnum | Prisma.LoanNoteScalarFieldEnum[]
+}
+
+/**
+ * User.createdTransactions
+ */
+export type User$createdTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AccountingTransaction
+   */
+  select?: Prisma.AccountingTransactionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AccountingTransaction
+   */
+  omit?: Prisma.AccountingTransactionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccountingTransactionInclude<ExtArgs> | null
+  where?: Prisma.AccountingTransactionWhereInput
+  orderBy?: Prisma.AccountingTransactionOrderByWithRelationInput | Prisma.AccountingTransactionOrderByWithRelationInput[]
+  cursor?: Prisma.AccountingTransactionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AccountingTransactionScalarFieldEnum | Prisma.AccountingTransactionScalarFieldEnum[]
 }
 
 /**

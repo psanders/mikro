@@ -111,6 +111,34 @@ import {
   setDryRunOverride
 } from "../../collections/index.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
+// Accounting schemas
+import {
+  createAccountSchema,
+  updateAccountSchema,
+  listAccountsSchema,
+  getAccountSchema,
+  createCategorySchema,
+  listCategoriesSchema,
+  createTransactionSchema,
+  reverseTransactionSchema,
+  listTransactionsSchema,
+  getTransactionSchema,
+  getTransactionAttachmentSchema
+} from "@mikro/common";
+// Accounting API functions
+import {
+  createCreateAccount,
+  createUpdateAccount,
+  createListAccounts,
+  createGetAccount,
+  createCreateCategory,
+  createListCategories,
+  createCreateTransaction,
+  createReverseTransaction,
+  createListTransactions,
+  createGetTransaction,
+  createGetTransactionAttachment
+} from "../../api/accounting/index.js";
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -607,5 +635,80 @@ export const protectedRouter = router({
           setDryRunOverride(undefined);
         }
       }
-    })
+    }),
+
+  // ==================== Accounting procedures ====================
+  //
+  // Self-contained, isolated from the rest of the system (only shares Basic/JWT auth).
+  // Nested under `accounting.*` so clients call e.g. `client.accounting.createAccount.mutate()`.
+  accounting: router({
+    createAccount: protectedProcedure
+      .input(createAccountSchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createCreateAccount(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    updateAccount: protectedProcedure
+      .input(updateAccountSchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createUpdateAccount(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    listAccounts: protectedProcedure.input(listAccountsSchema).query(async ({ ctx, input }) => {
+      const fn = createListAccounts(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
+
+    getAccount: protectedProcedure.input(getAccountSchema).query(async ({ ctx, input }) => {
+      const fn = createGetAccount(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
+
+    createCategory: protectedProcedure
+      .input(createCategorySchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createCreateCategory(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    listCategories: protectedProcedure.input(listCategoriesSchema).query(async ({ ctx, input }) => {
+      const fn = createListCategories(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
+
+    createTransaction: protectedProcedure
+      .input(createTransactionSchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createCreateTransaction(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    reverseTransaction: protectedProcedure
+      .input(reverseTransactionSchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createReverseTransaction(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    listTransactions: protectedProcedure
+      .input(listTransactionsSchema)
+      .query(async ({ ctx, input }) => {
+        const fn = createListTransactions(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    getTransaction: protectedProcedure.input(getTransactionSchema).query(async ({ ctx, input }) => {
+      const fn = createGetTransaction(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
+
+    getTransactionAttachment: protectedProcedure
+      .input(getTransactionAttachmentSchema)
+      .query(async ({ ctx, input }) => {
+        const fn = createGetTransactionAttachment(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      })
+  })
 });

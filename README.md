@@ -25,6 +25,43 @@ sudo chown -R 1001:1001 data
 
 The container runs as UID 1001 (`nodejs` user), so mounted volumes need matching ownership to allow writes (e.g., SQLite database).
 
+## Accounting module
+
+A small, self-contained accounting module lives alongside the loan system. It is
+API-first (tRPC) with a prompt-driven CLI. It shares only authentication with
+the rest of the app.
+
+Config (`mikro.json`):
+
+```json
+"accounting": {
+  "attachmentsPath": "./mods/apiserver/data/attachments/accounting"
+}
+```
+
+CLI commands (each prompts interactively when a flag is omitted):
+
+```bash
+# Accounts (bank, cash, credit card, other)
+mikro accounting:accounts:create
+mikro accounting:accounts:list
+mikro accounting:accounts:update
+
+# Categories (EXPENSE or INCOME)
+mikro accounting:categories:create
+mikro accounting:categories:list
+
+# Transactions (DEPOSIT, WITHDRAWAL, EXPENSE, INCOME, TRANSFER)
+mikro accounting:transactions:create              # walks through prompts
+mikro accounting:transactions:create --attach ./scans/edesur.pdf
+mikro accounting:transactions:list --start-date 2026-04-01 --end-date 2026-04-30
+mikro accounting:transactions:show                # with --save-attachments ./out
+mikro accounting:transactions:reverse             # creates mirror + flags original
+```
+
+Receipt attachments (PNG, JPG, PDF, max 10 MB) are stored server-side under
+`accounting.attachmentsPath`.
+
 TODO:
 
 - Create a guardrail to prevent more payments than the loan amount

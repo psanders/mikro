@@ -118,3 +118,40 @@ export const CollectionAttemptStatus = {
 } as const
 
 export type CollectionAttemptStatus = (typeof CollectionAttemptStatus)[keyof typeof CollectionAttemptStatus]
+
+
+export const AccountKind = {
+  BANK: 'BANK',
+  CASH: 'CASH',
+  CREDIT_CARD: 'CREDIT_CARD',
+  OTHER: 'OTHER'
+} as const
+
+export type AccountKind = (typeof AccountKind)[keyof typeof AccountKind]
+
+
+export const TransactionType = {
+  DEPOSIT: 'DEPOSIT',
+  WITHDRAWAL: 'WITHDRAWAL',
+  EXPENSE: 'EXPENSE',
+  INCOME: 'INCOME',
+  TRANSFER: 'TRANSFER'
+} as const
+
+export type TransactionType = (typeof TransactionType)[keyof typeof TransactionType]
+
+
+export const TransactionStatus = {
+  POSTED: 'POSTED',
+  REVERSED: 'REVERSED'
+} as const
+
+export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]
+
+
+export const CategoryKind = {
+  EXPENSE: 'EXPENSE',
+  INCOME: 'INCOME'
+} as const
+
+export type CategoryKind = (typeof CategoryKind)[keyof typeof CategoryKind]

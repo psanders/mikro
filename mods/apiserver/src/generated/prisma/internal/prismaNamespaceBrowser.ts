@@ -60,7 +60,11 @@ export const ModelName = {
   Attachment: 'Attachment',
   Payment: 'Payment',
   CollectionAttempt: 'CollectionAttempt',
-  LoanNote: 'LoanNote'
+  LoanNote: 'LoanNote',
+  AccountingAccount: 'AccountingAccount',
+  AccountingCategory: 'AccountingCategory',
+  AccountingTransaction: 'AccountingTransaction',
+  AccountingTransactionAttachment: 'AccountingTransactionAttachment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -222,6 +226,67 @@ export const LoanNoteScalarFieldEnum = {
 } as const
 
 export type LoanNoteScalarFieldEnum = (typeof LoanNoteScalarFieldEnum)[keyof typeof LoanNoteScalarFieldEnum]
+
+
+export const AccountingAccountScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  kind: 'kind',
+  currency: 'currency',
+  openingBalance: 'openingBalance',
+  currentBalance: 'currentBalance',
+  isActive: 'isActive',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AccountingAccountScalarFieldEnum = (typeof AccountingAccountScalarFieldEnum)[keyof typeof AccountingAccountScalarFieldEnum]
+
+
+export const AccountingCategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type AccountingCategoryScalarFieldEnum = (typeof AccountingCategoryScalarFieldEnum)[keyof typeof AccountingCategoryScalarFieldEnum]
+
+
+export const AccountingTransactionScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  status: 'status',
+  amount: 'amount',
+  occurredAt: 'occurredAt',
+  description: 'description',
+  vendor: 'vendor',
+  reference: 'reference',
+  reversalOfId: 'reversalOfId',
+  accountId: 'accountId',
+  toAccountId: 'toAccountId',
+  categoryId: 'categoryId',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AccountingTransactionScalarFieldEnum = (typeof AccountingTransactionScalarFieldEnum)[keyof typeof AccountingTransactionScalarFieldEnum]
+
+
+export const AccountingTransactionAttachmentScalarFieldEnum = {
+  id: 'id',
+  filename: 'filename',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  sha256: 'sha256',
+  createdAt: 'createdAt',
+  transactionId: 'transactionId'
+} as const
+
+export type AccountingTransactionAttachmentScalarFieldEnum = (typeof AccountingTransactionAttachmentScalarFieldEnum)[keyof typeof AccountingTransactionAttachmentScalarFieldEnum]
 
 
 export const SortOrder = {

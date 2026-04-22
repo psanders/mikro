@@ -96,6 +96,25 @@ const ID = {
     "99999999-9999-4999-a999-999999999906",
     "99999999-9999-4999-a999-999999999907",
     "99999999-9999-4999-a999-999999999908"
+  ],
+  accountingAccounts: [
+    "cccccccc-cccc-4ccc-accc-cccccccccc01",
+    "cccccccc-cccc-4ccc-accc-cccccccccc02",
+    "cccccccc-cccc-4ccc-accc-cccccccccc03",
+    "cccccccc-cccc-4ccc-accc-cccccccccc04"
+  ],
+  accountingCategories: [
+    "dddddddd-dddd-4ddd-addd-000000000001",
+    "dddddddd-dddd-4ddd-addd-000000000002",
+    "dddddddd-dddd-4ddd-addd-000000000003",
+    "dddddddd-dddd-4ddd-addd-000000000004",
+    "dddddddd-dddd-4ddd-addd-000000000005",
+    "dddddddd-dddd-4ddd-addd-000000000006",
+    "dddddddd-dddd-4ddd-addd-000000000007",
+    "dddddddd-dddd-4ddd-addd-000000000008",
+    "dddddddd-dddd-4ddd-addd-000000000009",
+    "dddddddd-dddd-4ddd-addd-00000000000a",
+    "dddddddd-dddd-4ddd-addd-00000000000b"
   ]
 };
 
@@ -714,6 +733,57 @@ async function main() {
     });
   }
   console.log("Created 8 collection attempts");
+
+  // ---------------------------------------------------------------------------
+  // Accounting: 4 accounts (zero balance), 11 categories (no transactions)
+  // ---------------------------------------------------------------------------
+  const accountSpecs = [
+    { id: ID.accountingAccounts[0], name: "Cuenta de Recaudación", kind: "BANK" as const },
+    { id: ID.accountingAccounts[1], name: "Cuenta Operativa", kind: "BANK" as const },
+    { id: ID.accountingAccounts[2], name: "Caja General", kind: "CASH" as const },
+    { id: ID.accountingAccounts[3], name: "Caja Chica", kind: "CASH" as const }
+  ];
+
+  for (const a of accountSpecs) {
+    await prisma.accountingAccount.upsert({
+      where: { id: a.id },
+      update: {},
+      create: {
+        id: a.id,
+        name: a.name,
+        kind: a.kind,
+        currency: "DOP",
+        openingBalance: 0,
+        currentBalance: 0,
+        isActive: true
+      }
+    });
+  }
+  console.log("Created 4 accounting accounts");
+
+  const categorySpecs = [
+    { name: "Alquiler", kind: "EXPENSE" as const },
+    { name: "Energía Eléctrica", kind: "EXPENSE" as const },
+    { name: "Agua", kind: "EXPENSE" as const },
+    { name: "Combustible", kind: "EXPENSE" as const },
+    { name: "Mantenimiento de Vehículos", kind: "EXPENSE" as const },
+    { name: "Suministros de Oficina", kind: "EXPENSE" as const },
+    { name: "Salarios", kind: "EXPENSE" as const },
+    { name: "Comisiones de Referidos", kind: "EXPENSE" as const },
+    { name: "Honorarios Contables y Legales", kind: "EXPENSE" as const },
+    { name: "Comisiones Bancarias", kind: "EXPENSE" as const },
+    { name: "Cargos Administrativos", kind: "INCOME" as const }
+  ];
+
+  for (let i = 0; i < categorySpecs.length; i++) {
+    const c = categorySpecs[i];
+    await prisma.accountingCategory.upsert({
+      where: { id: ID.accountingCategories[i] },
+      update: {},
+      create: { id: ID.accountingCategories[i], name: c.name, kind: c.kind }
+    });
+  }
+  console.log("Created 11 accounting categories");
 
   console.log("Database seeding completed!");
 }

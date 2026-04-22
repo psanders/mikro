@@ -91,6 +91,116 @@ export async function promptSelectIfMissing<T>(
   );
 }
 
+/**
+ * Helper to prompt for a date string (YYYY-MM-DD) if missing. Returns the raw string.
+ */
+export async function promptDateIfMissing(
+  value: string | undefined,
+  message: string,
+  flagName: string,
+  options?: { default?: string }
+): Promise<string> {
+  const today = new Date().toISOString().slice(0, 10);
+  return promptIfMissing(
+    value,
+    () =>
+      input({
+        message,
+        default: options?.default ?? today,
+        validate: (v) => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "Expected format YYYY-MM-DD";
+          if (isNaN(new Date(v).getTime())) return `Invalid date: ${v}`;
+          return true;
+        }
+      }),
+    flagName
+  );
+}
+
+type ListAccountsClient = {
+  accounting: {
+    listAccounts: {
+      query: (input: {
+        includeInactive?: boolean;
+      }) => Promise<
+        Array<{ id: string; name: string; kind: string; currency: string; currentBalance: number }>
+      >;
+    };
+  };
+};
+
+/**
+ * Helper to prompt for an accounting account if missing.
+ */
+export async function promptAccountSelectIfMissing(
+  client: ListAccountsClient,
+  value: string | undefined,
+  message: string,
+  flagName: string,
+  options?: { includeInactive?: boolean }
+): Promise<string> {
+  if (value !== undefined && value !== "") return value;
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required flag or argument: --${flagName}`);
+  }
+  const accounts = await client.accounting.listAccounts.query({
+    includeInactive: options?.includeInactive ?? false
+  });
+  if (accounts.length === 0) {
+    throw new Error(
+      "No accounting accounts found. Create one first with `mikro accounting:accounts:create`."
+    );
+  }
+  return select({
+    message,
+    choices: accounts.map((a) => ({
+      name: `${a.name} (${a.kind}, ${a.currency} ${a.currentBalance.toFixed(2)})`,
+      value: a.id
+    }))
+  });
+}
+
+type ListCategoriesClient = {
+  accounting: {
+    listCategories: {
+      query: (input: {
+        kind?: "EXPENSE" | "INCOME";
+      }) => Promise<Array<{ id: string; name: string; kind: string }>>;
+    };
+  };
+};
+
+/**
+ * Helper to prompt for an accounting category if missing. Returns null if user picks "(none)".
+ */
+export async function promptCategorySelectIfMissing(
+  client: ListCategoriesClient,
+  value: string | undefined,
+  message: string,
+  flagName: string,
+  options?: { kind?: "EXPENSE" | "INCOME"; allowNone?: boolean }
+): Promise<string | undefined> {
+  if (value !== undefined && value !== "") return value;
+  if (!process.stdout.isTTY) {
+    return undefined;
+  }
+  const categories = await client.accounting.listCategories.query({
+    kind: options?.kind
+  });
+  if (categories.length === 0) {
+    if (options?.allowNone) return undefined;
+    throw new Error(
+      "No categories found. Create one first with `mikro accounting:categories:create`."
+    );
+  }
+  const noneChoice = [{ name: "(none)", value: "__none__" }];
+  const choices = options?.allowNone
+    ? [...noneChoice, ...categories.map((c) => ({ name: `${c.name} (${c.kind})`, value: c.id }))]
+    : categories.map((c) => ({ name: `${c.name} (${c.kind})`, value: c.id }));
+  const chosen = await select({ message, choices });
+  return chosen === "__none__" ? undefined : chosen;
+}
+
 export type UserRole = "ADMIN" | "COLLECTOR" | "REFERRER";
 
 type ListUsersClient = {
