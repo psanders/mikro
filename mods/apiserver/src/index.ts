@@ -19,7 +19,12 @@ import { getConfig, getLogoPath } from "@mikro/common";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
-import { ValidationError, renderCustomersReportToPng, loadLogoDataUrl } from "@mikro/common";
+import {
+  ValidationError,
+  renderCustomersReportToPng,
+  loadLogoDataUrl,
+  MAX_TRPC_REQUEST_BYTES
+} from "@mikro/common";
 import type { CalculateLoanInput } from "@mikro/common";
 import {
   handleWhatsAppMessage,
@@ -110,6 +115,12 @@ export type { AppRouter } from "./trpc/index.js";
 const app = express();
 const cfg = getConfig();
 const PORT = cfg.port;
+
+// The /trpc endpoint accepts transaction attachments inline as base64, so its
+// JSON body can be much larger than Express's 100kb default. Apply a dedicated
+// parser for /trpc before the global one (body-parser is a no-op once req.body
+// is populated, so the global parser below still handles everything else).
+app.use("/trpc", express.json({ limit: MAX_TRPC_REQUEST_BYTES }));
 app.use(express.json());
 
 // Health check endpoint

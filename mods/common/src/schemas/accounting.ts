@@ -30,6 +30,19 @@ export const attachmentMimeTypeEnum = z.enum(allowedAttachmentMimeTypes);
 /** Max attachment size in bytes (10 MB). */
 export const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
 
+/** Max number of attachments per transaction. */
+export const MAX_ATTACHMENTS_PER_TRANSACTION = 10;
+
+/**
+ * Upper bound on the JSON body size for the tRPC endpoint, derived from the
+ * accounting attachment limits so that server and schema stay consistent.
+ *
+ * Formula: up to MAX_ATTACHMENTS_PER_TRANSACTION × MAX_ATTACHMENT_SIZE_BYTES
+ * raw bytes, expanded ~4/3 by base64, plus 64 KB of JSON envelope headroom.
+ */
+export const MAX_TRPC_REQUEST_BYTES =
+  Math.ceil((MAX_ATTACHMENT_SIZE_BYTES * MAX_ATTACHMENTS_PER_TRANSACTION * 4) / 3) + 64 * 1024;
+
 // ---------------------------------------------------------------------------
 // Accounts
 // ---------------------------------------------------------------------------
@@ -104,7 +117,10 @@ export const createTransactionSchema = z
     reference: z.string().max(200).optional(),
     categoryId: z.uuid({ error: "Invalid category ID" }).optional(),
     createdById: z.uuid({ error: "Creator user ID is required and must be a valid UUID" }),
-    attachments: z.array(transactionAttachmentInputSchema).max(10).optional()
+    attachments: z
+      .array(transactionAttachmentInputSchema)
+      .max(MAX_ATTACHMENTS_PER_TRANSACTION)
+      .optional()
   })
   .refine((v) => (v.type === "TRANSFER" ? !!v.toAccountId : true), {
     message: "toAccountId is required when type is TRANSFER",

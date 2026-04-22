@@ -29,7 +29,34 @@ The container runs as UID 1001 (`nodejs` user), so mounted volumes need matching
 
 A small, self-contained accounting module lives alongside the loan system. It is
 API-first (tRPC) with a prompt-driven CLI. It shares only authentication with
-the rest of the app.
+the rest of the app. For how this relates to loans, interest, and collections at
+a conceptual level, see [ACCOUNTING.md](./ACCOUNTING.md).
+
+### Seed data (accounts and categories)
+
+After `prisma db seed`, the database includes four **accounts** (all in DOP, zero
+opening and current balance) and eleven **categories** (no sample transactions).
+
+| Name                  | Kind |
+| --------------------- | ---- |
+| Cuenta de Recaudación | BANK |
+| Cuenta Operativa      | BANK |
+| Caja General          | CASH |
+| Caja Chica            | CASH |
+
+| Name                           | Kind    |
+| ------------------------------ | ------- |
+| Alquiler                       | EXPENSE |
+| Energía Eléctrica              | EXPENSE |
+| Agua                           | EXPENSE |
+| Combustible                    | EXPENSE |
+| Mantenimiento de Vehículos     | EXPENSE |
+| Suministros de Oficina         | EXPENSE |
+| Salarios                       | EXPENSE |
+| Comisiones de Referidos        | EXPENSE |
+| Honorarios Contables y Legales | EXPENSE |
+| Comisiones Bancarias           | EXPENSE |
+| Cargos Administrativos         | INCOME  |
 
 Config (`mikro.json`):
 
@@ -67,3 +94,4 @@ TODO:
 - Create a guardrail to prevent more payments than the loan amount
 - Create a guardrail to enforce payment amount for the loan frequency
 - Add a feature to allow partial payments for some loans
+- Improve authentication to avoid single credentials and instead using user-specific tokens

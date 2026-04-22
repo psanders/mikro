@@ -237,6 +237,8 @@ export {
   attachmentMimeTypeEnum,
   allowedAttachmentMimeTypes,
   MAX_ATTACHMENT_SIZE_BYTES,
+  MAX_ATTACHMENTS_PER_TRANSACTION,
+  MAX_TRPC_REQUEST_BYTES,
   createAccountSchema,
   updateAccountSchema,
   listAccountsSchema,
