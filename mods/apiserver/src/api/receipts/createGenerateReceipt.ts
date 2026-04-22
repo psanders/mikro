@@ -71,10 +71,11 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     const { loan } = payment;
     const { customer, payments: allPayments } = loan;
 
-    const paymentIndex = allPayments.findIndex((p) => p.id === payment.id);
-    const paymentNumber = paymentIndex >= 0 ? paymentIndex + 1 : allPayments.length;
-    const completedInstallmentCount = allPayments.filter((p) => p.status === "COMPLETED").length;
-    const pendingPayments = Math.max(0, loan.termLength - completedInstallmentCount);
+    const completedPayments = allPayments.filter((p) => p.status === "COMPLETED");
+    const completedIndex = completedPayments.findIndex((p) => p.id === payment.id);
+    const completedPaymentNumber =
+      completedIndex >= 0 ? completedIndex + 1 : completedPayments.length;
+    const pendingPayments = Math.max(0, loan.termLength - completedPayments.length);
 
     const receiptData: ReceiptData = {
       loanNumber: String(loan.loanId),
@@ -86,7 +87,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
       }),
       amountPaid: `RD$ ${Number(payment.amount).toLocaleString("es-DO")}`,
       pendingPayments: Math.max(0, pendingPayments),
-      paymentNumber: `P${paymentNumber}`,
+      paymentNumber: payment.status === "PARTIAL" ? "Parcial" : `P${completedPaymentNumber}`,
       agentName: payment.collectedBy?.name
     };
 
