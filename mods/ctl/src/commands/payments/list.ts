@@ -12,7 +12,8 @@ import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliT
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all payments within a date range";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-01-31"
+    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-01-31",
+    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-04-30 -s 100 --offset 100"
   ];
   static override readonly flags = {
     "start-date": Flags.string({
@@ -27,6 +28,12 @@ export default class List extends ListCommand<typeof List> {
       char: "a",
       description: "include reversed payments",
       default: false
+    }),
+    offset: Flags.integer({
+      description:
+        "skip this many rows (newest first); use with -s 100 when you have more than 100 payments in the range",
+      default: 0,
+      min: 0
     })
   };
 
@@ -43,7 +50,8 @@ export default class List extends ListCommand<typeof List> {
         startDate: new Date(flags["start-date"]!),
         endDate: new Date(flags["end-date"]!),
         showReversed: flags["include-reversed"],
-        limit: flags["page-size"]
+        limit: flags["page-size"],
+        offset: flags.offset
       });
 
       const headers = ["ID", "LOAN #", "CUSTOMER NAME", "AMOUNT", "METHOD", "STATUS", "PAID AT"];
@@ -64,6 +72,16 @@ export default class List extends ListCommand<typeof List> {
       }
 
       this.log(ui.toString());
+      const n = payments.length;
+      const cap = flags["page-size"];
+      this.log(`\n${n} payment(s) shown (page size ${cap}, offset ${flags.offset}).`);
+      if (n === cap) {
+        this.log(
+          "If this equals the page size, more payments may exist in this date range. " +
+            "The API returns at most 100 rows per request — run again with e.g. `--offset 100` (then 200, …) " +
+            "or narrow `--start-date` / `--end-date`."
+        );
+      }
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }
