@@ -6,6 +6,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all loans";
@@ -28,35 +29,32 @@ export default class List extends ListCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 160 });
-
-      ui.div(
-        { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
-        { text: "PRINCIPAL", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAYMENT", padding: [0, 0, 0, 0], width: 10 },
-        { text: "FREQ", padding: [0, 0, 0, 0], width: 10 },
-        { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "CREATED", padding: [0, 0, 0, 0], width: 12 },
-        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 35 },
-        { text: "NICKNAME", padding: [0, 0, 0, 0], width: 35 }
-      );
-
-      loans.forEach((loan) => {
-        ui.div(
-          { text: String(loan.loanId), padding: [0, 0, 0, 0], width: 10 },
-          { text: String(loan.principal), padding: [0, 0, 0, 0], width: 12 },
-          { text: String(loan.paymentAmount), padding: [0, 0, 0, 0], width: 10 },
-          { text: loan.paymentFrequency, padding: [0, 0, 0, 0], width: 10 },
-          { text: loan.status, padding: [0, 0, 0, 0], width: 12 },
-          { text: moment(loan.createdAt).format("YYYY-MM-DD"), padding: [0, 0, 0, 0], width: 12 },
-          { text: loan.customer.name, padding: [0, 0, 0, 0], width: 35 },
-          {
-            text: (loan as { nickname?: string | null }).nickname ?? "",
-            padding: [0, 0, 0, 0],
-            width: 35
-          }
-        );
-      });
+      const headers = [
+        "LOAN #",
+        "PRINCIPAL",
+        "PAYMENT",
+        "FREQ",
+        "STATUS",
+        "CREATED",
+        "CUSTOMER NAME",
+        "NICKNAME"
+      ];
+      const rows = loans.map((loan) => [
+        String(loan.loanId),
+        String(loan.principal),
+        String(loan.paymentAmount),
+        loan.paymentFrequency,
+        loan.status,
+        moment(loan.createdAt).format("YYYY-MM-DD"),
+        loan.customer.name,
+        (loan as { nickname?: string | null }).nickname ?? ""
+      ]);
+      const widths = computeColumnWidths({ headers, rows });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
     } catch (e) {

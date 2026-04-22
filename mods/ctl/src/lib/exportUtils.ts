@@ -6,6 +6,7 @@
 import { writeFile } from "node:fs/promises";
 import cliui from "cliui";
 import ExcelJS from "exceljs";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "./cliTableLayout.js";
 import {
   getPaymentRating,
   getMissedPaymentsCount,
@@ -168,37 +169,52 @@ export function outputCustomersAsTable(
   customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
-  const ui = cliui({ width: 232 });
-
-  ui.div(
-    { text: "NOMBRE", padding: [0, 0, 0, 0], width: 25 },
-    { text: "APODO", padding: [0, 0, 0, 0], width: 25 },
-    { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 15 },
-    { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
-    { text: "PAGOS", padding: [0, 0, 0, 0], width: 10 },
-    { text: "TENDENCIA", padding: [0, 0, 0, 0], width: 12 },
-    { text: "NOTAS", padding: [0, 0, 0, 0], width: 30 }
-  );
-
-  const rows = buildCustomerReportRows(customers);
-  for (const r of rows) {
-    ui.div(
-      { text: r.name, padding: [0, 0, 0, 0], width: 25 },
-      { text: r.nickname ?? "", padding: [0, 0, 0, 0], width: 25 },
-      { text: r.phone, padding: [0, 0, 0, 0], width: 15 },
-      { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
-      { text: r.paymentCycle, padding: [0, 0, 0, 0], width: 10 },
-      { text: r.rating, padding: [0, 0, 0, 0], width: 8 },
-      { text: formatPagosCell(r.paymentsMade, r.termLength), padding: [0, 0, 0, 0], width: 10 },
-      { text: r.trend, padding: [0, 0, 0, 0], width: 12 },
-      { text: r.notes ?? "", padding: [0, 0, 0, 0], width: 30 }
-    );
+  const headers = [
+    "NOMBRE",
+    "APODO",
+    "TELÉFONO",
+    "PRÉSTAMO",
+    "CICLO",
+    "RATING",
+    "PAGOS",
+    "TENDENCIA",
+    "NOTAS"
+  ];
+  const reportRows = buildCustomerReportRows(customers);
+  const dataRows = reportRows.map((r) => [
+    r.name,
+    r.nickname ?? "",
+    r.phone,
+    String(r.loanId),
+    r.paymentCycle,
+    r.rating,
+    formatPagosCell(r.paymentsMade, r.termLength),
+    r.trend,
+    r.notes ?? ""
+  ]);
+  const widths = computeColumnWidths({
+    headers,
+    rows: dataRows,
+    maxWidths: [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      56
+    ]
+  });
+  const ui = cliui({ width: cliuiTableWidth(widths) });
+  ui.div(...cliuiCells(headers, widths));
+  for (const row of dataRows) {
+    ui.div(...cliuiCells(row, widths));
   }
 
   log(ui.toString());
-  log(`\nTotal: ${rows.length} préstamos de ${customers.length} clientes`);
+  log(`\nTotal: ${reportRows.length} préstamos de ${customers.length} clientes`);
 }
 
 /** Convert serialized customers to the shape expected by buildGroupedCustomerRows. */
@@ -261,27 +277,13 @@ function outputGroupedSection(
 ): void {
   if (rows.length === 0) return;
   log(`--- ${title} (${rows.length}) ---`);
-  const ui = cliui({ width: 170 });
-  ui.div(
-    { text: "NOMBRE", padding: [0, 0, 0, 0], width: 32 },
-    { text: "APODO", padding: [0, 0, 0, 0], width: 32 },
-    { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 14 },
-    { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "RATINGS", padding: [0, 0, 0, 0], width: 8 },
-    { text: "PAGOS", padding: [0, 0, 0, 0], width: 10 }
-  );
-  for (const r of rows) {
-    const cells = rowToCells(r);
-    ui.div(
-      { text: cells[0], padding: [0, 0, 0, 0], width: 32 },
-      { text: cells[1], padding: [0, 0, 0, 0], width: 32 },
-      { text: cells[2], padding: [0, 0, 0, 0], width: 14 },
-      { text: cells[3], padding: [0, 0, 0, 0], width: 10 },
-      { text: cells[4], padding: [0, 0, 0, 0], width: 10 },
-      { text: cells[5], padding: [0, 0, 0, 0], width: 8 },
-      { text: cells[6], padding: [0, 0, 0, 0], width: 10 }
-    );
+  const headers = ["NOMBRE", "APODO", "TELÉFONO", "PRÉSTAMO", "CICLO", "RATINGS", "PAGOS"];
+  const dataRows = rows.map((r) => rowToCells(r));
+  const widths = computeColumnWidths({ headers, rows: dataRows });
+  const ui = cliui({ width: cliuiTableWidth(widths) });
+  ui.div(...cliuiCells(headers, widths));
+  for (const cells of dataRows) {
+    ui.div(...cliuiCells(cells, widths));
   }
   log(ui.toString());
   log("");
@@ -551,33 +553,53 @@ export function outputCollectionsAuditAsTable(
   rows: CollectionsAuditRow[],
   log: (message: string) => void
 ): void {
-  const ui = cliui({ width: 210 });
-  ui.div(
-    { text: "FECHA/HORA", padding: [0, 0, 0, 0], width: 20 },
-    { text: "CLIENTE", padding: [0, 0, 0, 0], width: 22 },
-    { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 14 },
-    { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "APODO", padding: [0, 0, 0, 0], width: 22 },
-    { text: "TIPO", padding: [0, 0, 0, 0], width: 22 },
-    { text: "CANAL", padding: [0, 0, 0, 0], width: 12 },
-    { text: "ESTADO", padding: [0, 0, 0, 0], width: 8 },
-    { text: "PLANTILLA", padding: [0, 0, 0, 0], width: 20 },
-    { text: "ERROR", padding: [0, 0, 0, 0], width: 30 }
-  );
-  for (const r of rows) {
+  const headers = [
+    "FECHA/HORA",
+    "CLIENTE",
+    "TELÉFONO",
+    "PRÉSTAMO",
+    "APODO",
+    "TIPO",
+    "CANAL",
+    "ESTADO",
+    "PLANTILLA",
+    "ERROR"
+  ];
+  const dataRows = rows.map((r) => {
     const sentAtShort = r.sentAt.slice(0, 19).replace("T", " ");
-    ui.div(
-      { text: sentAtShort, padding: [0, 0, 0, 0], width: 20 },
-      { text: r.customerName, padding: [0, 0, 0, 0], width: 22 },
-      { text: r.customerPhone, padding: [0, 0, 0, 0], width: 14 },
-      { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
-      { text: r.loanNickname || "—", padding: [0, 0, 0, 0], width: 22 },
-      { text: r.attemptType, padding: [0, 0, 0, 0], width: 22 },
-      { text: r.channel, padding: [0, 0, 0, 0], width: 12 },
-      { text: r.status, padding: [0, 0, 0, 0], width: 8 },
-      { text: r.templateName || "—", padding: [0, 0, 0, 0], width: 20 },
-      { text: r.notesOrError || "—", padding: [0, 0, 0, 0], width: 30 }
-    );
+    return [
+      sentAtShort,
+      r.customerName,
+      r.customerPhone,
+      String(r.loanId),
+      r.loanNickname || "—",
+      r.attemptType,
+      r.channel,
+      r.status,
+      r.templateName || "—",
+      r.notesOrError || "—"
+    ];
+  });
+  const widths = computeColumnWidths({
+    headers,
+    rows: dataRows,
+    maxWidths: [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      48
+    ]
+  });
+  const ui = cliui({ width: cliuiTableWidth(widths) });
+  ui.div(...cliuiCells(headers, widths));
+  for (const row of dataRows) {
+    ui.div(...cliuiCells(row, widths));
   }
   log(ui.toString());
   log(`\nTotal: ${rows.length} intento(s) de cobranza`);

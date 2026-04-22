@@ -5,6 +5,7 @@ import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
@@ -43,33 +44,34 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 220 });
-
-      ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "NAME", padding: [0, 0, 0, 0], width: 28 },
-        { text: "NICKNAME", padding: [0, 0, 0, 0], width: 28 },
-        { text: "PHONE", padding: [0, 0, 0, 0], width: 16 },
-        { text: "ACTIVE", padding: [0, 0, 0, 0], width: 8 },
-        { text: "NOTIFICATIONS", padding: [0, 0, 0, 0], width: 20 }
-      );
-
-      customers.forEach((customer) => {
+      const headers = ["ID", "NAME", "NICKNAME", "PHONE", "ACTIVE", "NOTIFICATIONS"];
+      const rows = customers.map((customer) => {
         const np = customer.notificationPolicy;
         const notifications = np
           ? [np.collections && "Collections", np.paymentConfirmations && "Payments"]
               .filter(Boolean)
               .join(", ") || "None"
           : "N/A";
-        ui.div(
-          { text: customer.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: customer.name, padding: [0, 0, 0, 0], width: 28 },
-          { text: customer.nickname ?? "", padding: [0, 0, 0, 0], width: 28 },
-          { text: customer.phone, padding: [0, 0, 0, 0], width: 16 },
-          { text: customer.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 8 },
-          { text: notifications, padding: [0, 0, 0, 0], width: 20 }
-        );
+        return [
+          customer.id,
+          customer.name,
+          customer.nickname ?? "",
+          customer.phone,
+          customer.isActive ? "Yes" : "No",
+          notifications
+        ];
       });
+      const widths = computeColumnWidths({
+        headers,
+        rows,
+        minWidths: [undefined, undefined, undefined, undefined, 8, 15],
+        maxWidths: [undefined, undefined, undefined, undefined, undefined, 48]
+      });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
     } catch (e) {

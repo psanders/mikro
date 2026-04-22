@@ -5,6 +5,7 @@ import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all users";
@@ -27,23 +28,23 @@ export default class List extends ListCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 160 });
-
-      ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "NAME", padding: [0, 0, 0, 0], width: 30 },
-        { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
-        { text: "ENABLED", padding: [0, 0, 0, 0], width: 10 }
-      );
-
-      users.forEach((user) => {
-        ui.div(
-          { text: user.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: user.name, padding: [0, 0, 0, 0], width: 30 },
-          { text: user.phone || "N/A", padding: [0, 0, 0, 0], width: 18 },
-          { text: user.enabled ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 }
-        );
+      const headers = ["ID", "NAME", "PHONE", "ENABLED"];
+      const rows = users.map((user) => [
+        user.id,
+        user.name,
+        user.phone || "N/A",
+        user.enabled ? "Yes" : "No"
+      ]);
+      const widths = computeColumnWidths({
+        headers,
+        rows,
+        minWidths: [undefined, undefined, undefined, 10]
       });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
     } catch (e) {

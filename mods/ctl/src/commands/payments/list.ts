@@ -7,6 +7,7 @@ import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import { validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all payments within a date range";
@@ -45,33 +46,22 @@ export default class List extends ListCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 200 });
-
-      ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
-        { text: "CUSTOMER NAME", padding: [0, 0, 0, 0], width: 30 },
-        { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
-        { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
-        { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 }
-      );
-
-      payments.forEach((payment) => {
-        ui.div(
-          { text: payment.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
-          { text: payment.loan.customer.name, padding: [0, 0, 0, 0], width: 30 },
-          { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
-          { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
-          { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
-          {
-            text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
-            padding: [0, 0, 0, 0],
-            width: 20
-          }
-        );
-      });
+      const headers = ["ID", "LOAN #", "CUSTOMER NAME", "AMOUNT", "METHOD", "STATUS", "PAID AT"];
+      const rows = payments.map((payment) => [
+        payment.id,
+        String(payment.loan.loanId),
+        payment.loan.customer.name,
+        String(payment.amount),
+        payment.method,
+        payment.status,
+        moment(payment.paidAt).format("YYYY-MM-DD HH:mm")
+      ]);
+      const widths = computeColumnWidths({ headers, rows });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
     } catch (e) {

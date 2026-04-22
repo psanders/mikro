@@ -6,6 +6,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 export default class History extends ListCommand<typeof History> {
   static override readonly description = "retrieve chat history for a customer or user";
@@ -40,34 +41,31 @@ export default class History extends ListCommand<typeof History> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
-
-      ui.div(
-        { text: "TIMESTAMP", padding: [0, 0, 0, 0], width: 22 },
-        { text: "ROLE", padding: [0, 0, 0, 0], width: 8 },
-        { text: "CONTENT", padding: [0, 0, 0, 0] }
-      );
-
-      ui.div({ text: "-".repeat(170), padding: [0, 0, 0, 0] });
-
-      messages.forEach((message) => {
-        // Truncate content if too long for display
-        const maxContentLength = 120;
+      const maxContentLength = 120;
+      const headers = ["TIMESTAMP", "ROLE", "CONTENT"];
+      const rows = messages.map((message) => {
         const content =
           message.content.length > maxContentLength
             ? message.content.substring(0, maxContentLength) + "..."
             : message.content;
-
-        ui.div(
-          {
-            text: moment(message.createdAt).format("YYYY-MM-DD HH:mm:ss"),
-            padding: [0, 0, 0, 0],
-            width: 22
-          },
-          { text: message.role, padding: [0, 0, 0, 0], width: 8 },
-          { text: content.replace(/\n/g, " "), padding: [0, 0, 0, 0] }
-        );
+        return [
+          moment(message.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+          message.role,
+          content.replace(/\n/g, " ")
+        ];
       });
+      const widths = computeColumnWidths({
+        headers,
+        rows,
+        maxWidths: [undefined, undefined, maxContentLength + 3]
+      });
+      const tableW = cliuiTableWidth(widths);
+      const ui = cliui({ width: tableW });
+      ui.div(...cliuiCells(headers, widths));
+      ui.div({ text: "-".repeat(tableW), padding: [0, 0, 0, 0], width: tableW });
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
       this.log(`\nTotal messages: ${messages.length}`);

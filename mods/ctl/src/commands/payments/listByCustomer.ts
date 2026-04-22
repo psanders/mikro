@@ -7,6 +7,7 @@ import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import { validateDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 export default class ListByCustomer extends ListCommand<typeof ListByCustomer> {
   static override readonly description = "display payments for a specific customer";
@@ -52,31 +53,21 @@ export default class ListByCustomer extends ListCommand<typeof ListByCustomer> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 170 });
-
-      ui.div(
-        { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "LOAN #", padding: [0, 0, 0, 0], width: 10 },
-        { text: "AMOUNT", padding: [0, 0, 0, 0], width: 15 },
-        { text: "METHOD", padding: [0, 0, 0, 0], width: 12 },
-        { text: "STATUS", padding: [0, 0, 0, 0], width: 12 },
-        { text: "PAID AT", padding: [0, 0, 0, 0], width: 20 }
-      );
-
-      payments.forEach((payment) => {
-        ui.div(
-          { text: payment.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: String(payment.loan.loanId), padding: [0, 0, 0, 0], width: 10 },
-          { text: String(payment.amount), padding: [0, 0, 0, 0], width: 15 },
-          { text: payment.method, padding: [0, 0, 0, 0], width: 12 },
-          { text: payment.status, padding: [0, 0, 0, 0], width: 12 },
-          {
-            text: moment(payment.paidAt).format("YYYY-MM-DD HH:mm"),
-            padding: [0, 0, 0, 0],
-            width: 20
-          }
-        );
-      });
+      const headers = ["ID", "LOAN #", "AMOUNT", "METHOD", "STATUS", "PAID AT"];
+      const rows = payments.map((payment) => [
+        payment.id,
+        String(payment.loan.loanId),
+        String(payment.amount),
+        payment.method,
+        payment.status,
+        moment(payment.paidAt).format("YYYY-MM-DD HH:mm")
+      ]);
+      const widths = computeColumnWidths({ headers, rows });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log(ui.toString());
     } catch (e) {

@@ -5,6 +5,7 @@ import { input, select } from "@inquirer/prompts";
 import cliui from "cliui";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
 type PaymentFrequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 type LoanOption = {
@@ -82,28 +83,30 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
         baseDuration
       });
 
-      const ui = cliui({ width: 150 });
-      ui.div(
-        { text: "OPT", padding: [0, 0, 0, 0], width: 6 },
-        { text: "DURATION", padding: [0, 0, 0, 0], width: 12 },
-        { text: "FREQ", padding: [0, 0, 0, 0], width: 10 },
-        { text: "INTEREST", padding: [0, 0, 0, 0], width: 12 },
-        { text: "INT. AMOUNT", padding: [0, 0, 0, 0], width: 16 },
-        { text: "TOTAL", padding: [0, 0, 0, 0], width: 16 },
-        { text: "PAYMENT/PERIOD", padding: [0, 0, 0, 0], width: 18 }
-      );
-
-      result.options.forEach((option: LoanOption) => {
-        ui.div(
-          { text: option.isBase ? ">>> " : "", padding: [0, 0, 0, 0], width: 6 },
-          { text: String(option.duration), padding: [0, 0, 0, 0], width: 12 },
-          { text: option.paymentFrequency, padding: [0, 0, 0, 0], width: 10 },
-          { text: `${(option.interestRate * 100).toFixed(2)}%`, padding: [0, 0, 0, 0], width: 12 },
-          { text: `RD$ ${option.totalInterest.toFixed(2)}`, padding: [0, 0, 0, 0], width: 16 },
-          { text: `RD$ ${option.totalRepay.toFixed(2)}`, padding: [0, 0, 0, 0], width: 16 },
-          { text: `RD$ ${option.paymentPerPeriod}`, padding: [0, 0, 0, 0], width: 18 }
-        );
-      });
+      const headers = [
+        "OPT",
+        "DURATION",
+        "FREQ",
+        "INTEREST",
+        "INT. AMOUNT",
+        "TOTAL",
+        "PAYMENT/PERIOD"
+      ];
+      const rows = result.options.map((option: LoanOption) => [
+        option.isBase ? ">>> " : "",
+        String(option.duration),
+        option.paymentFrequency,
+        `${(option.interestRate * 100).toFixed(2)}%`,
+        `RD$ ${option.totalInterest.toFixed(2)}`,
+        `RD$ ${option.totalRepay.toFixed(2)}`,
+        `RD$ ${option.paymentPerPeriod}`
+      ]);
+      const widths = computeColumnWidths({ headers, rows });
+      const ui = cliui({ width: cliuiTableWidth(widths) });
+      ui.div(...cliuiCells(headers, widths));
+      for (const row of rows) {
+        ui.div(...cliuiCells(row, widths));
+      }
 
       this.log("");
       this.log(ui.toString());
