@@ -10,7 +10,8 @@
 export interface LoanPaymentData {
   paymentFrequency: string;
   createdAt: Date;
-  payments: Array<{ paidAt: Date }>;
+  /** When `status` is present, only `COMPLETED` rows count toward payments made. */
+  payments: Array<{ paidAt: Date; status?: string }>;
   /** Customer's preferred payment day (e.g. "FRIDAY"). When set for WEEKLY loans,
    *  cycles are anchored to this day of the week so due dates fall on the
    *  customer's preferred day rather than raw 7-day intervals from creation. */
@@ -18,6 +19,8 @@ export interface LoanPaymentData {
   /** Optional cycle anchor date. When set, all cycle calculations use this
    *  instead of createdAt. Defaults to createdAt when absent. */
   startingDate?: Date | null;
+  /** When set, elapsed due cycles and missed counts are capped to the loan term (SAN). */
+  termLength?: number;
 }
 
 export interface CycleMetrics {
@@ -237,8 +240,22 @@ export function getCycleMetrics(loan: LoanPaymentData, asOfDate: Date = new Date
     cyclesElapsed = Math.max(0, Math.floor(daysSinceLoan / intervalDays));
   }
 
-  const paymentsMade = loan.payments.filter((p) => new Date(p.paidAt) <= asOf).length;
-  const missedCycles = cyclesElapsed - paymentsMade;
+  const countsAsPaid = (p: { paidAt: Date; status?: string }) => {
+    if (new Date(p.paidAt) > asOf) return false;
+    if (p.status === undefined) return true;
+    return p.status === "COMPLETED";
+  };
+  const paymentsMade = loan.payments.filter(countsAsPaid).length;
 
-  return { intervalDays, cyclesElapsed, paymentsMade, missedCycles };
+  const term = loan.termLength;
+  const cappedCycles =
+    term !== undefined && term > 0 ? Math.min(cyclesElapsed, term) : cyclesElapsed;
+  const missedCycles = Math.max(0, cappedCycles - paymentsMade);
+
+  return {
+    intervalDays,
+    cyclesElapsed: cappedCycles,
+    paymentsMade,
+    missedCycles
+  };
 }

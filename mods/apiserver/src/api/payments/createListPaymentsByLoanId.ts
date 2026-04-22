@@ -13,7 +13,7 @@ import { logger } from "../../logger.js";
 /**
  * Creates a function to list payments for a specific loan by numeric loan ID.
  * Accepts numeric loanId (e.g., 10000, 10001) and converts it to UUID internally.
- * By default, only returns COMPLETED payments unless showReversed is true.
+ * By default, returns all non-reversed payments unless showReversed is true.
  *
  * @param client - The database client
  * @returns A validated function that lists payments by loan ID
@@ -45,7 +45,7 @@ export function createListPaymentsByLoanId(client: DbClient) {
     const payments = await client.payment.findMany({
       where: {
         loanId: loan.id, // Use UUID from loan lookup
-        ...(params.showReversed ? {} : { status: "COMPLETED" })
+        ...(params.showReversed ? {} : { status: { not: "REVERSED" } })
       },
       include: {
         loan: {

@@ -11,7 +11,7 @@ export const paymentMethodEnum = z.enum(["CASH", "TRANSFER"]);
 /**
  * Enum for payment status.
  */
-export const paymentStatusEnum = z.enum(["COMPLETED", "REVERSED", "PENDING"]);
+export const paymentStatusEnum = z.enum(["COMPLETED", "PARTIAL", "REVERSED", "PENDING"]);
 
 /**
  * Schema for creating a new payment.
@@ -23,7 +23,9 @@ export const createPaymentSchema = z.object({
   paidAt: z.coerce.date().optional(),
   method: paymentMethodEnum.optional(),
   collectedById: z.uuid({ message: "Collector ID is required and must be a valid UUID" }),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  /** When set, overrides auto-classification of COMPLETED vs PARTIAL (amount vs loan.paymentAmount). */
+  status: z.enum(["COMPLETED", "PARTIAL"]).optional()
 });
 
 /**
@@ -36,7 +38,7 @@ export const reversePaymentSchema = z.object({
 
 /**
  * Schema for listing payments with date range.
- * By default only shows COMPLETED payments unless showReversed is true.
+ * By default shows all non-reversed payments unless showReversed is true.
  */
 export const listPaymentsSchema = z.object({
   startDate: z.coerce.date(),
@@ -48,7 +50,7 @@ export const listPaymentsSchema = z.object({
 
 /**
  * Schema for listing payments by customer with date range.
- * By default only shows COMPLETED payments unless showReversed is true.
+ * By default shows all non-reversed payments unless showReversed is true.
  */
 export const listPaymentsByCustomerSchema = z.object({
   customerId: z.uuid({ error: "Invalid customer ID" }),
@@ -61,7 +63,7 @@ export const listPaymentsByCustomerSchema = z.object({
 
 /**
  * Schema for listing payments by referrer with date range.
- * By default only shows COMPLETED payments unless showReversed is true.
+ * By default shows all non-reversed payments unless showReversed is true.
  */
 export const listPaymentsByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
@@ -74,7 +76,7 @@ export const listPaymentsByReferrerSchema = z.object({
 
 /**
  * Schema for listing payments by loan ID (numeric loanId, e.g., 10000, 10001).
- * By default only shows COMPLETED payments unless showReversed is true.
+ * By default shows all non-reversed payments unless showReversed is true.
  */
 export const listPaymentsByLoanIdSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),

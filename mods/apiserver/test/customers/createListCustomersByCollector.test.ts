@@ -52,13 +52,14 @@ describe("createListCustomersByCollector", () => {
       // Assert
       expect(result).to.have.length(2);
       expect(mockClient.customer.findMany.calledOnce).to.be.true;
-      expect(
-        mockClient.customer.findMany.calledWith({
-          where: { assignedCollectorId: validCollectorId, isActive: true },
-          take: undefined,
-          skip: undefined
-        })
-      ).to.be.true;
+      const findArg0 = mockClient.customer.findMany.firstCall.args[0];
+      expect(findArg0.where).to.deep.equal({
+        assignedCollectorId: validCollectorId,
+        isActive: true
+      });
+      expect(findArg0.take).to.be.undefined;
+      expect(findArg0.skip).to.be.undefined;
+      expect(findArg0.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return customers with pagination", async () => {
@@ -80,13 +81,14 @@ describe("createListCustomersByCollector", () => {
 
       // Assert
       expect(result).to.have.length(1);
-      expect(
-        mockClient.customer.findMany.calledWith({
-          where: { assignedCollectorId: validCollectorId, isActive: true },
-          take: 10,
-          skip: 5
-        })
-      ).to.be.true;
+      const findArg1 = mockClient.customer.findMany.firstCall.args[0];
+      expect(findArg1.where).to.deep.equal({
+        assignedCollectorId: validCollectorId,
+        isActive: true
+      });
+      expect(findArg1.take).to.equal(10);
+      expect(findArg1.skip).to.equal(5);
+      expect(findArg1.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return empty array when no customers found", async () => {

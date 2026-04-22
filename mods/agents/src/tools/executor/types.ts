@@ -155,6 +155,7 @@ export interface ToolExecutorDependencies {
     customer: {
       id: string;
       name: string;
+      nickname: string | null;
       phone: string;
       assignedCollectorId: string | null; // Required for validation
     };

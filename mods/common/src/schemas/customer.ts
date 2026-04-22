@@ -24,6 +24,7 @@ const notificationPolicySchema = z.object({
  */
 export const createCustomerSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  nickname: z.string().trim().min(1, "Nickname cannot be empty").optional(),
   phone: z
     .string()
     .min(1, "Phone is required")
@@ -51,11 +52,12 @@ export const createCustomerSchema = z.object({
 
 /**
  * Schema for updating an existing customer.
- * Only name, phone, notes, isActive, and preferredPaymentDay can be updated.
+ * Only name, nickname, phone, notes, isActive, preferredPaymentDay, and notificationPolicy can be updated.
  */
 export const updateCustomerSchema = z.object({
   id: z.uuid({ error: "Invalid customer ID" }),
   name: z.string().min(1, "Name is required").optional(),
+  nickname: z.string().trim().min(1, "Nickname cannot be empty").nullable().optional(),
   phone: z
     .string()
     .min(1, "Phone is required")

@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list payments within a date range.
- * By default, only returns COMPLETED payments unless showReversed is true.
+ * By default, returns all non-reversed payments (COMPLETED, PARTIAL, PENDING) unless showReversed is true.
  *
  * @param client - The database client
  * @returns A validated function that lists payments
@@ -35,7 +35,7 @@ export function createListPayments(client: DbClient) {
           gte: params.startDate,
           lte: params.endDate
         },
-        ...(params.showReversed ? {} : { status: "COMPLETED" })
+        ...(params.showReversed ? {} : { status: { not: "REVERSED" } })
       },
       include: {
         loan: {

@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Flags } from "@oclif/core";
-import { confirm, select } from "@inquirer/prompts";
+import { confirm, input, select } from "@inquirer/prompts";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
@@ -21,6 +21,10 @@ export default class Create extends BaseCommand<typeof Create> {
   static override readonly flags = {
     name: Flags.string({
       description: "Customer name",
+      required: false
+    }),
+    nickname: Flags.string({
+      description: "Customer nickname (optional)",
       required: false
     }),
     phone: Flags.string({
@@ -89,6 +93,16 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("Press ^C at any time to quit.");
 
     const name = await promptTextIfMissing(flags.name, "Name", "name");
+    let nickname: string | undefined =
+      flags.nickname !== undefined ? flags.nickname.trim() || undefined : undefined;
+    if (nickname === undefined && process.stdout.isTTY) {
+      const n = await input({
+        message: "Nickname (optional)",
+        default: "",
+        required: false
+      });
+      nickname = n.trim() || undefined;
+    }
     const phone = await promptTextIfMissing(flags.phone, "Phone (e.g., +18091234567)", "phone");
     const idNumber = await promptTextIfMissing(
       flags["id-number"],
@@ -165,6 +179,7 @@ export default class Create extends BaseCommand<typeof Create> {
     try {
       const customer = await client.createCustomer.mutate({
         name,
+        ...(nickname ? { nickname } : {}),
         phone,
         idNumber,
         collectionPoint,

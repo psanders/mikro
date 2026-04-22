@@ -12,6 +12,7 @@ import {
   getLatenessTrend,
   getReportRowHighlight,
   formatPaymentFrequency,
+  getCycleMetrics,
   buildGroupedCustomerRows,
   renderCustomersReportToPng,
   loadLogoDataUrl,
@@ -27,7 +28,9 @@ interface SerializedLoan {
   loanId: number;
   paymentFrequency: string;
   createdAt: string | Date;
-  payments: Array<{ paidAt: string | Date }>;
+  startingDate?: string | Date | null;
+  termLength: number;
+  payments: Array<{ paidAt: string | Date; status?: string }>;
   nickname?: string | null;
 }
 
@@ -37,6 +40,7 @@ interface SerializedLoan {
  */
 export interface SerializedCustomer {
   name: string;
+  nickname?: string | null;
   phone: string;
   collectionPoint?: string | null;
   notes?: string | null;
@@ -45,12 +49,24 @@ export interface SerializedCustomer {
   loans: SerializedLoan[];
 }
 
+function formatPagosCell(paymentsMade: number, termLength: number): string {
+  const t = Math.max(0, termLength);
+  if (t === 0) return "0/0";
+  return `${Math.min(paymentsMade, t)}/${t}`;
+}
+
 function toLoanData(loan: SerializedLoan, preferredPaymentDay?: string | null) {
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: new Date(loan.createdAt),
-    payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) })),
-    preferredPaymentDay
+    startingDate:
+      loan.startingDate != null && loan.startingDate !== "" ? new Date(loan.startingDate) : null,
+    payments: loan.payments.map((p) => ({
+      paidAt: new Date(p.paidAt),
+      ...(p.status !== undefined ? { status: p.status } : {})
+    })),
+    preferredPaymentDay,
+    termLength: loan.termLength
   };
 }
 
@@ -68,6 +84,8 @@ export interface CustomerReportRow {
   paymentCycle: string;
   rating: string;
   missedCount: number;
+  paymentsMade: number;
+  termLength: number;
   trend: string;
   referredBy: string;
   collectionPoint: string;
@@ -80,16 +98,22 @@ export interface CustomerReportRow {
 export function buildCustomerReportRows(customers: SerializedCustomer[]): CustomerReportRow[] {
   const rows: CustomerReportRow[] = [];
   for (const customer of customers) {
+    const customerNick = customer.nickname?.trim();
     for (const loan of customer.loans) {
       const data = toLoanData(loan, customer.preferredPaymentDay);
+      const { paymentsMade } = getCycleMetrics(data);
+      const loanNick = loan.nickname?.trim();
+      const displayNick = customerNick && customerNick.length > 0 ? customerNick : (loanNick ?? "");
       rows.push({
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
-        nickname: loan.nickname ?? "",
+        nickname: displayNick,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
+        paymentsMade,
+        termLength: loan.termLength,
         trend: getLatenessTrend(data),
         referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
@@ -115,18 +139,18 @@ export function outputCustomersAsCsv(
   log: (message: string) => void
 ): void {
   log(
-    "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+    "Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
-    const displayName = r.nickname || r.name;
     const row = [
-      `"${displayName}"`,
+      `"${r.name.replace(/"/g, '""')}"`,
+      `"${r.nickname.replace(/"/g, '""')}"`,
       r.phone,
       r.loanId,
       r.paymentCycle,
       r.rating,
-      r.missedCount,
+      formatPagosCell(r.paymentsMade, r.termLength),
       r.trend,
       `"${r.referredBy}"`,
       `"${r.collectionPoint.replace(/"/g, '""')}"`,
@@ -148,30 +172,27 @@ export function outputCustomersAsTable(
 
   ui.div(
     { text: "NOMBRE", padding: [0, 0, 0, 0], width: 25 },
+    { text: "APODO", padding: [0, 0, 0, 0], width: 25 },
     { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 15 },
     { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
     { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
     { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
-    { text: "ATRASADOS", padding: [0, 0, 0, 0], width: 10 },
+    { text: "PAGOS", padding: [0, 0, 0, 0], width: 10 },
     { text: "TENDENCIA", padding: [0, 0, 0, 0], width: 12 },
-    { text: "REFERIDOR", padding: [0, 0, 0, 0], width: 20 },
-    { text: "LUGAR DE COBRO", padding: [0, 0, 0, 0], width: 40 },
     { text: "NOTAS", padding: [0, 0, 0, 0], width: 30 }
   );
 
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
-    const displayName = r.nickname || r.name;
     ui.div(
-      { text: displayName, padding: [0, 0, 0, 0], width: 25 },
+      { text: r.name, padding: [0, 0, 0, 0], width: 25 },
+      { text: r.nickname ?? "", padding: [0, 0, 0, 0], width: 25 },
       { text: r.phone, padding: [0, 0, 0, 0], width: 15 },
       { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
       { text: r.paymentCycle, padding: [0, 0, 0, 0], width: 10 },
       { text: r.rating, padding: [0, 0, 0, 0], width: 8 },
-      { text: String(r.missedCount), padding: [0, 0, 0, 0], width: 10 },
+      { text: formatPagosCell(r.paymentsMade, r.termLength), padding: [0, 0, 0, 0], width: 10 },
       { text: r.trend, padding: [0, 0, 0, 0], width: 12 },
-      { text: r.referredBy, padding: [0, 0, 0, 0], width: 20 },
-      { text: r.collectionPoint, padding: [0, 0, 0, 0], width: 40 },
       { text: r.notes ?? "", padding: [0, 0, 0, 0], width: 30 }
     );
   }
@@ -186,13 +207,20 @@ function toCustomersForGrouping(
 ): Parameters<typeof buildGroupedCustomerRows>[0] {
   return customers.map((m) => ({
     name: m.name,
+    nickname: m.nickname,
     phone: m.phone,
     preferredPaymentDay: m.preferredPaymentDay,
     loans: m.loans.map((loan) => ({
       loanId: loan.loanId,
       paymentFrequency: loan.paymentFrequency,
       createdAt: new Date(loan.createdAt),
-      payments: loan.payments.map((p) => ({ paidAt: new Date(p.paidAt) })),
+      startingDate:
+        loan.startingDate != null && loan.startingDate !== "" ? new Date(loan.startingDate) : null,
+      termLength: loan.termLength,
+      payments: loan.payments.map((p) => ({
+        paidAt: new Date(p.paidAt),
+        ...(p.status !== undefined ? { status: p.status } : {})
+      })),
       nickname: loan.nickname
     }))
   }));
@@ -211,31 +239,18 @@ export function outputCustomersGroupedAsTable(
   const totalRows = grouped.critico.length + grouped.requiereAtencion.length + grouped.alDia.length;
   log(`Total: ${totalRows} préstamos de ${customers.length} clientes\n`);
 
-  const displayName = (r: GroupedCustomerRow) => r.nickname || r.name;
-  outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, (r) => [
-    displayName(r),
+  const cellsFor = (r: GroupedCustomerRow) => [
+    r.name,
+    r.nickname ?? "",
     r.phone,
     String(r.loanId),
     formatPaymentFrequency(r.paymentFrequency),
     ratingToStars(r.rating),
-    String(r.missedCount)
-  ]);
-  outputGroupedSection(log, "Requiere atención", grouped.requiereAtencion, (r) => [
-    displayName(r),
-    r.phone,
-    String(r.loanId),
-    formatPaymentFrequency(r.paymentFrequency),
-    ratingToStars(r.rating),
-    String(r.missedCount)
-  ]);
-  outputGroupedSection(log, "Al día", grouped.alDia, (r) => [
-    displayName(r),
-    r.phone,
-    String(r.loanId),
-    formatPaymentFrequency(r.paymentFrequency),
-    ratingToStars(r.rating),
-    String(r.missedCount)
-  ]);
+    formatPagosCell(r.paymentsMade, r.termLength)
+  ];
+  outputGroupedSection(log, "Crítico (requieren seguimiento)", grouped.critico, cellsFor);
+  outputGroupedSection(log, "Requiere atención", grouped.requiereAtencion, cellsFor);
+  outputGroupedSection(log, "Al día", grouped.alDia, cellsFor);
 }
 
 function outputGroupedSection(
@@ -246,24 +261,26 @@ function outputGroupedSection(
 ): void {
   if (rows.length === 0) return;
   log(`--- ${title} (${rows.length}) ---`);
-  const ui = cliui({ width: 132 });
+  const ui = cliui({ width: 170 });
   ui.div(
-    { text: "NOMBRE", padding: [0, 0, 0, 0], width: 28 },
-    { text: "TELEFONO", padding: [0, 0, 0, 0], width: 14 },
-    { text: "PRESTAMO", padding: [0, 0, 0, 0], width: 10 },
+    { text: "NOMBRE", padding: [0, 0, 0, 0], width: 32 },
+    { text: "APODO", padding: [0, 0, 0, 0], width: 32 },
+    { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 14 },
+    { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
     { text: "CICLO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "RATING", padding: [0, 0, 0, 0], width: 8 },
-    { text: "ATRASOS", padding: [0, 0, 0, 0], width: 10 }
+    { text: "RATINGS", padding: [0, 0, 0, 0], width: 8 },
+    { text: "PAGOS", padding: [0, 0, 0, 0], width: 10 }
   );
   for (const r of rows) {
     const cells = rowToCells(r);
     ui.div(
-      { text: cells[0], padding: [0, 0, 0, 0], width: 28 },
-      { text: cells[1], padding: [0, 0, 0, 0], width: 14 },
-      { text: cells[2], padding: [0, 0, 0, 0], width: 10 },
+      { text: cells[0], padding: [0, 0, 0, 0], width: 32 },
+      { text: cells[1], padding: [0, 0, 0, 0], width: 32 },
+      { text: cells[2], padding: [0, 0, 0, 0], width: 14 },
       { text: cells[3], padding: [0, 0, 0, 0], width: 10 },
-      { text: cells[4], padding: [0, 0, 0, 0], width: 8 },
-      { text: cells[5], padding: [0, 0, 0, 0], width: 10 }
+      { text: cells[4], padding: [0, 0, 0, 0], width: 10 },
+      { text: cells[5], padding: [0, 0, 0, 0], width: 8 },
+      { text: cells[6], padding: [0, 0, 0, 0], width: 10 }
     );
   }
   log(ui.toString());
@@ -280,18 +297,21 @@ export function outputCustomersGroupedAsCsv(
   const forGrouping = toCustomersForGrouping(customers);
   const grouped = buildGroupedCustomerRows(forGrouping);
 
-  log("Grupo,Nombre,Telefono,Prestamo,Ciclo de Pago,Rating,Pagos atrasados");
+  log("Grupo,Nombre,Apodo,Telefono,Prestamo,Ciclo de Pago,Rating,Pagos");
 
   const emit = (group: string, rows: GroupedCustomerRow[]) => {
     for (const r of rows) {
+      const name = r.name.replace(/"/g, '""');
+      const nick = r.nickname.replace(/"/g, '""');
       const row = [
         `"${group}"`,
-        `"${r.name.replace(/"/g, '""')}"`,
+        `"${name}"`,
+        `"${nick}"`,
         r.phone,
         r.loanId,
         formatPaymentFrequency(r.paymentFrequency),
         ratingToStars(r.rating),
-        r.missedCount
+        formatPagosCell(r.paymentsMade, r.termLength)
       ].join(",");
       log(row);
     }
@@ -325,11 +345,12 @@ export async function writeCustomersToExcel(
 
   worksheet.columns = [
     { header: "Nombre", key: "name", width: 25 },
+    { header: "Apodo", key: "nickname", width: 25 },
     { header: "Teléfono", key: "phone", width: 15 },
     { header: "Préstamo", key: "loanId", width: 12 },
     { header: "Ciclo de Pago", key: "paymentCycle", width: 14 },
     { header: "Rating", key: "rating", width: 8 },
-    { header: "Pagos atrasados", key: "missedCount", width: 16 },
+    { header: "Pagos", key: "pagos", width: 12 },
     { header: "Tendencia", key: "trend", width: 12 },
     { header: "Afiliado por", key: "referredBy", width: 20 },
     { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
@@ -350,16 +371,22 @@ export async function writeCustomersToExcel(
 
   const rows: ExcelRowData[] = [];
   for (const customer of customers) {
+    const customerNick = customer.nickname?.trim();
     for (const loan of customer.loans) {
       const data = toLoanData(loan, customer.preferredPaymentDay);
+      const { paymentsMade } = getCycleMetrics(data);
+      const loanNick = loan.nickname?.trim();
+      const displayNick = customerNick && customerNick.length > 0 ? customerNick : (loanNick ?? "");
       rows.push({
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
-        nickname: loan.nickname ?? "",
+        nickname: displayNick,
         paymentCycle: formatPaymentFrequency(loan.paymentFrequency),
         rating: ratingToStars(getPaymentRating(data)),
         missedCount: getMissedPaymentsCount(data),
+        paymentsMade,
+        termLength: loan.termLength,
         trend: getLatenessTrend(data),
         referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
@@ -376,14 +403,14 @@ export async function writeCustomersToExcel(
   });
 
   for (const r of rows) {
-    const displayName = r.nickname || r.name;
     const row = worksheet.addRow({
-      name: displayName,
+      name: r.name,
+      nickname: r.nickname,
       phone: r.phone,
       loanId: r.loanId,
       paymentCycle: r.paymentCycle,
       rating: r.rating,
-      missedCount: r.missedCount,
+      pagos: formatPagosCell(r.paymentsMade, r.termLength),
       trend: r.trend,
       referredBy: r.referredBy,
       collectionPoint: r.collectionPoint,
@@ -459,18 +486,19 @@ export async function writeCustomersToCsv(
 ): Promise<{ loanCount: number; customerCount: number }> {
   const lines: string[] = [];
   lines.push(
-    "Nombre,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos atrasados,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+    "Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Afiliado por,Lugar de Cobro,Notas"
   );
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
     lines.push(
       [
-        `"${r.name}"`,
+        `"${r.name.replace(/"/g, '""')}"`,
+        `"${r.nickname.replace(/"/g, '""')}"`,
         r.phone,
         r.loanId,
         r.paymentCycle,
         r.rating,
-        r.missedCount,
+        formatPagosCell(r.paymentsMade, r.termLength),
         r.trend,
         `"${r.referredBy}"`,
         `"${r.collectionPoint.replace(/"/g, '""')}"`,
@@ -523,13 +551,13 @@ export function outputCollectionsAuditAsTable(
   rows: CollectionsAuditRow[],
   log: (message: string) => void
 ): void {
-  const ui = cliui({ width: 200 });
+  const ui = cliui({ width: 210 });
   ui.div(
     { text: "FECHA/HORA", padding: [0, 0, 0, 0], width: 20 },
     { text: "CLIENTE", padding: [0, 0, 0, 0], width: 22 },
     { text: "TELÉFONO", padding: [0, 0, 0, 0], width: 14 },
     { text: "PRÉSTAMO", padding: [0, 0, 0, 0], width: 10 },
-    { text: "APODO", padding: [0, 0, 0, 0], width: 12 },
+    { text: "APODO", padding: [0, 0, 0, 0], width: 22 },
     { text: "TIPO", padding: [0, 0, 0, 0], width: 22 },
     { text: "CANAL", padding: [0, 0, 0, 0], width: 12 },
     { text: "ESTADO", padding: [0, 0, 0, 0], width: 8 },
@@ -543,7 +571,7 @@ export function outputCollectionsAuditAsTable(
       { text: r.customerName, padding: [0, 0, 0, 0], width: 22 },
       { text: r.customerPhone, padding: [0, 0, 0, 0], width: 14 },
       { text: String(r.loanId), padding: [0, 0, 0, 0], width: 10 },
-      { text: r.loanNickname || "—", padding: [0, 0, 0, 0], width: 12 },
+      { text: r.loanNickname || "—", padding: [0, 0, 0, 0], width: 22 },
       { text: r.attemptType, padding: [0, 0, 0, 0], width: 22 },
       { text: r.channel, padding: [0, 0, 0, 0], width: 12 },
       { text: r.status, padding: [0, 0, 0, 0], width: 8 },
@@ -598,7 +626,7 @@ export async function writeCollectionsAuditToExcel(
     { header: "Cliente", key: "customerName", width: 24 },
     { header: "Teléfono", key: "customerPhone", width: 16 },
     { header: "Préstamo", key: "loanId", width: 12 },
-    { header: "Apodo", key: "loanNickname", width: 14 },
+    { header: "Apodo", key: "loanNickname", width: 24 },
     { header: "Tipo", key: "attemptType", width: 22 },
     { header: "Canal", key: "channel", width: 14 },
     { header: "Estado", key: "status", width: 10 },

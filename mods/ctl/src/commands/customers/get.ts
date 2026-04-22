@@ -36,6 +36,7 @@ export default class Get extends BaseCommand<typeof Get> {
           "--------------\n" +
           `ID: \t${customer.id}\n` +
           `NAME: \t${customer.name}\n` +
+          `NICKNAME: \t${customer.nickname ?? "N/A"}\n` +
           `PHONE: \t${customer.phone}\n` +
           `ID NUMBER: \t${customer.idNumber}\n` +
           `COLLECTION POINT: \t${customer.collectionPoint}\n` +

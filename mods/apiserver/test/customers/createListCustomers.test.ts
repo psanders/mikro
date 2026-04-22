@@ -69,13 +69,11 @@ describe("createListCustomers", () => {
       // Assert
       expect(result).to.have.length(1);
       expect(mockClient.customer.findMany.calledOnce).to.be.true;
-      expect(
-        mockClient.customer.findMany.calledWith({
-          where: { isActive: true },
-          take: 10,
-          skip: 1
-        })
-      ).to.be.true;
+      const findArg = mockClient.customer.findMany.firstCall.args[0];
+      expect(findArg.where).to.deep.equal({ isActive: true });
+      expect(findArg.take).to.equal(10);
+      expect(findArg.skip).to.equal(1);
+      expect(findArg.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return empty array when no customers exist", async () => {

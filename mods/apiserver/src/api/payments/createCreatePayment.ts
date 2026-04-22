@@ -22,6 +22,7 @@ export interface CreateCreatePaymentOptions {
  * Creates a function to record a new payment for a loan.
  * Accepts numeric loanId (e.g., 10000, 10001) and converts it to UUID internally.
  * Default payment method is CASH.
+ * Status is COMPLETED when amount >= loan.paymentAmount, otherwise PARTIAL, unless `status` overrides.
  *
  * @param client - The database client
  * @param options - Optional callback when a payment is created (e.g. send WhatsApp confirmation)
@@ -37,12 +38,18 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
     const numericLoanId = typeof params.loanId === "string" ? Number(params.loanId) : params.loanId;
     const loan = await client.loan.findUnique({
       where: { loanId: numericLoanId },
-      select: { id: true }
+      select: { id: true, paymentAmount: true }
     });
 
     if (!loan) {
       throw new Error(`Loan not found with loanId: ${params.loanId}`);
     }
+
+    const expected = Number(loan.paymentAmount);
+    const amountNum = Number(params.amount);
+    const resolvedStatus =
+      params.status ??
+      (amountNum + 1e-9 < expected ? ("PARTIAL" as const) : ("COMPLETED" as const));
 
     // Check for recent payments on this loan (duplicate guard)
     const recentPaymentCutoff = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
@@ -50,7 +57,7 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
     const recentPayments = await client.payment.findMany({
       where: {
         loanId: loan.id,
-        status: "COMPLETED",
+        status: { in: ["COMPLETED", "PARTIAL"] },
         paidAt: { gte: oneHourAgo } // Limit query scope to last hour
       },
       orderBy: { paidAt: "desc" },
@@ -72,11 +79,17 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
         amount: params.amount,
         paidAt: params.paidAt,
         method: params.method ?? "CASH",
+        status: resolvedStatus,
         collectedById: params.collectedById,
         notes: params.notes
       }
     })) as unknown as Payment;
-    logger.verbose("payment created", { id: payment.id, loanId: params.loanId, loanUuid: loan.id });
+    logger.verbose("payment created", {
+      id: payment.id,
+      loanId: params.loanId,
+      loanUuid: loan.id,
+      status: resolvedStatus
+    });
     if (onPaymentCreated) {
       setImmediate(() => onPaymentCreated(payment.id));
     }

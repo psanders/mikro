@@ -22,7 +22,13 @@ export function createGetLoanByLoanId(client: DbClient) {
     params: GetLoanByLoanIdInput
   ): Promise<
     | (Loan & {
-        customer: { id: string; name: string; phone: string; assignedCollectorId: string | null };
+        customer: {
+          id: string;
+          name: string;
+          nickname: string | null;
+          phone: string;
+          assignedCollectorId: string | null;
+        };
       })
     | null
   > => {
@@ -34,6 +40,7 @@ export function createGetLoanByLoanId(client: DbClient) {
           select: {
             id: true,
             name: true,
+            nickname: true,
             phone: true,
             assignedCollectorId: true
           }
@@ -43,7 +50,13 @@ export function createGetLoanByLoanId(client: DbClient) {
     logger.verbose("loan by loan ID retrieved", { loanId: params.loanId, found: !!loan });
     return loan as
       | (Loan & {
-          customer: { id: string; name: string; phone: string; assignedCollectorId: string | null };
+          customer: {
+            id: string;
+            name: string;
+            nickname: string | null;
+            phone: string;
+            assignedCollectorId: string | null;
+          };
         })
       | null;
   };

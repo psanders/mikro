@@ -38,6 +38,12 @@ export default class Create extends BaseCommand<typeof Create> {
     notes: Flags.string({
       description: "Notes (optional)",
       required: false
+    }),
+    status: Flags.string({
+      description:
+        "Override status: COMPLETED or PARTIAL (otherwise auto from amount vs expected payment)",
+      options: ["COMPLETED", "PARTIAL"],
+      required: false
     })
   };
 
@@ -73,6 +79,27 @@ export default class Create extends BaseCommand<typeof Create> {
     );
     const notes = flags.notes || undefined;
 
+    const loan = await client.getLoanByLoanId.query({ loanId });
+    if (!loan) {
+      this.error(`Loan not found: ${loanId}`);
+      return;
+    }
+    const expected = Number(loan.paymentAmount);
+    let status: "COMPLETED" | "PARTIAL" | undefined =
+      flags.status === "COMPLETED" || flags.status === "PARTIAL" ? flags.status : undefined;
+
+    if (!status && amount < expected && process.stdout.isTTY) {
+      const ok = await confirm({
+        message: `Amount (${amount}) is less than expected payment (${expected}). Record as PARTIAL?`,
+        default: true
+      });
+      if (!ok) {
+        this.log("Aborted!");
+        return;
+      }
+      status = "PARTIAL";
+    }
+
     const ready = await confirm({ message: "Ready to create payment?" });
 
     if (!ready) {
@@ -86,11 +113,13 @@ export default class Create extends BaseCommand<typeof Create> {
         amount,
         method,
         collectedById,
-        notes
+        notes,
+        ...(status ? { status } : {})
       });
 
       this.log("Done!");
       this.log(`Payment ID: ${payment.id}`);
+      this.log(`Status: ${payment.status}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

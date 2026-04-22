@@ -28,6 +28,7 @@ import {
   listLoansByReferrerSchema,
   listLoansByCollectorSchema,
   listLoansByCustomerSchema,
+  getLoanByLoanIdSchema,
   // Payment schemas
   createPaymentSchema,
   reversePaymentSchema,
@@ -79,6 +80,7 @@ import { createListLoansByReferrer } from "../../api/loans/createListLoansByRefe
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
 import { createListLoansByCustomer } from "../../api/loans/createListLoansByCustomer.js";
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
+import { createGetLoanByLoanId } from "../../api/loans/createGetLoanByLoanId.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
@@ -303,6 +305,14 @@ export const protectedRouter = router({
       const fn = createListLoansByCustomer(ctx.db);
       return fn(input);
     }),
+
+  /**
+   * Get a single loan by numeric loan ID (includes customer for collector checks).
+   */
+  getLoanByLoanId: protectedProcedure.input(getLoanByLoanIdSchema).query(async ({ ctx, input }) => {
+    const fn = createGetLoanByLoanId(ctx.db);
+    return fn(input);
+  }),
 
   /**
    * Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED.

@@ -55,7 +55,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
           include: {
             customer: true,
             payments: {
-              where: { status: "COMPLETED" },
+              where: { status: { in: ["COMPLETED", "PARTIAL"] } },
               orderBy: { paidAt: "asc" }
             }
           }
@@ -73,7 +73,8 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
 
     const paymentIndex = allPayments.findIndex((p) => p.id === payment.id);
     const paymentNumber = paymentIndex >= 0 ? paymentIndex + 1 : allPayments.length;
-    const pendingPayments = loan.termLength - paymentNumber;
+    const completedInstallmentCount = allPayments.filter((p) => p.status === "COMPLETED").length;
+    const pendingPayments = Math.max(0, loan.termLength - completedInstallmentCount);
 
     const receiptData: ReceiptData = {
       loanNumber: String(loan.loanId),

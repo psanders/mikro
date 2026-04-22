@@ -29,7 +29,7 @@ export interface Payment {
   amount: number;
   paidAt: Date;
   method: "CASH" | "TRANSFER";
-  status: "COMPLETED" | "REVERSED" | "PENDING";
+  status: "COMPLETED" | "PARTIAL" | "REVERSED" | "PENDING";
   notes: string | null;
   loanId: string;
   collectedById: string;

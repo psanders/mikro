@@ -49,11 +49,9 @@ describe("createGetCustomerByPhone", () => {
       // Assert
       expect(result).to.deep.equal(expectedCustomer);
       expect(mockClient.customer.findFirst.calledOnce).to.be.true;
-      expect(
-        mockClient.customer.findFirst.calledWith({
-          where: { phone: validInput.phone }
-        })
-      ).to.be.true;
+      const findArg = mockClient.customer.findFirst.firstCall.args[0];
+      expect(findArg.where).to.deep.equal({ phone: validInput.phone });
+      expect(findArg.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return null when customer not found", async () => {

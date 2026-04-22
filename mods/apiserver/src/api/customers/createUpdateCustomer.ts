@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to update an existing customer.
- * Only name, phone, note, and isActive can be updated.
+ * Only name, nickname, phone, notes, isActive, preferredPaymentDay, and notificationPolicy can be updated.
  * Phone is validated and normalized to E.164 format via Zod schema transform if provided.
  *
  * @param client - The database client

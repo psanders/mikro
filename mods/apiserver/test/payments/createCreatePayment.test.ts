@@ -37,7 +37,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([]), // No recent payments
@@ -56,7 +56,7 @@ describe("createCreatePayment", () => {
       expect(
         mockClient.loan.findUnique.calledWith({
           where: { loanId: validNumericLoanId },
-          select: { id: true }
+          select: { id: true, paymentAmount: true }
         })
       ).to.be.true;
       expect(mockClient.payment.create.calledOnce).to.be.true;
@@ -65,6 +65,7 @@ describe("createCreatePayment", () => {
       expect(createCall.args[0].data.loanId).to.equal(validLoanUuid);
       expect(createCall.args[0].data.amount).to.equal(650);
       expect(createCall.args[0].data.method).to.equal("CASH");
+      expect(createCall.args[0].data.status).to.equal("COMPLETED");
       expect(createCall.args[0].data.collectedById).to.equal(validCollectorId);
       // paidAt and notes should be undefined (not included in data)
       expect(createCall.args[0].data.paidAt).to.be.undefined;
@@ -88,7 +89,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([]), // No recent payments
@@ -128,7 +129,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([]), // No recent payments
@@ -143,6 +144,63 @@ describe("createCreatePayment", () => {
       // Assert
       expect(result.notes).to.equal("Weekly payment");
       expect(result.collectedById).to.equal(validCollectorId);
+    });
+
+    it("should record PARTIAL when amount is below expected payment", async () => {
+      const expectedPayment = {
+        id: "payment-partial",
+        loanId: validLoanUuid,
+        amount: 300,
+        paidAt: new Date(),
+        method: "CASH",
+        status: "PARTIAL",
+        notes: null,
+        collectedById: validCollectorId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
+        },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(expectedPayment)
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+      const result = await createPayment({ ...validInput, amount: 300 });
+      expect(result.status).to.equal("PARTIAL");
+      const createCall = mockClient.payment.create.getCall(0);
+      expect(createCall.args[0].data.status).to.equal("PARTIAL");
+    });
+
+    it("should allow status override COMPLETED when amount is below expected", async () => {
+      const expectedPayment = {
+        id: "payment-override",
+        loanId: validLoanUuid,
+        amount: 300,
+        paidAt: new Date(),
+        method: "CASH",
+        status: "COMPLETED",
+        notes: null,
+        collectedById: validCollectorId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const mockClient = {
+        loan: {
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
+        },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(expectedPayment)
+        }
+      };
+      const createPayment = createCreatePayment(mockClient as any);
+      await createPayment({ ...validInput, amount: 300, status: "COMPLETED" });
+      const createCall = mockClient.payment.create.getCall(0);
+      expect(createCall.args[0].data.status).to.equal("COMPLETED");
     });
   });
 
@@ -206,7 +264,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([recentPayment]),
@@ -227,7 +285,7 @@ describe("createCreatePayment", () => {
         expect(mockClient.payment.create.called).to.be.false;
         const findManyCall = mockClient.payment.findMany.getCall(0);
         expect(findManyCall.args[0].where.loanId).to.equal(validLoanUuid);
-        expect(findManyCall.args[0].where.status).to.equal("COMPLETED");
+        expect(findManyCall.args[0].where.status).to.deep.equal({ in: ["COMPLETED", "PARTIAL"] });
         expect(findManyCall.args[0].where.paidAt.gte).to.be.instanceOf(Date);
         expect(findManyCall.args[0].orderBy.paidAt).to.equal("desc");
         expect(findManyCall.args[0].take).to.equal(5);
@@ -250,7 +308,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([]), // No recent payment
@@ -296,7 +354,7 @@ describe("createCreatePayment", () => {
       };
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([oldPayment]), // Old payment exists but > 10 min ago
@@ -376,7 +434,7 @@ describe("createCreatePayment", () => {
       // Arrange
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid })
+          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
         },
         payment: {
           findMany: sinon.stub().resolves([]), // No recent payments

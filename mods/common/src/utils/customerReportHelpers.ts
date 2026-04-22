@@ -77,6 +77,7 @@ export function getTimesLateInLookback(
 
   const sortedPayments = [...loan.payments]
     .filter((p) => new Date(p.paidAt) <= asOf)
+    .filter((p) => p.status === undefined || p.status === "COMPLETED")
     .sort((a, b) => new Date(a.paidAt).getTime() - new Date(b.paidAt).getTime());
 
   const threshold = getLateDaysThreshold(loan.paymentFrequency);

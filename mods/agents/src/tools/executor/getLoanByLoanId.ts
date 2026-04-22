@@ -52,6 +52,7 @@ export async function handleGetLoanByLoanId(
       customer: {
         id: loan.customer.id,
         name: loan.customer.name,
+        nickname: loan.customer.nickname,
         phone: loan.customer.phone,
         assignedCollectorId: loan.customer.assignedCollectorId
       }

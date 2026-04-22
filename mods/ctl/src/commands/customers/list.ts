@@ -27,13 +27,14 @@ export default class List extends ListCommand<typeof List> {
         limit: flags["page-size"]
       });
 
-      const ui = cliui({ width: 180 });
+      const ui = cliui({ width: 220 });
 
       ui.div(
         { text: "ID", padding: [0, 0, 0, 0], width: 38 },
-        { text: "NAME", padding: [0, 0, 0, 0], width: 35 },
-        { text: "PHONE", padding: [0, 0, 0, 0], width: 18 },
-        { text: "ACTIVE", padding: [0, 0, 0, 0], width: 10 },
+        { text: "NAME", padding: [0, 0, 0, 0], width: 32 },
+        { text: "NICKNAME", padding: [0, 0, 0, 0], width: 32 },
+        { text: "PHONE", padding: [0, 0, 0, 0], width: 16 },
+        { text: "ACTIVE", padding: [0, 0, 0, 0], width: 8 },
         { text: "NOTIFICATIONS", padding: [0, 0, 0, 0], width: 20 }
       );
 
@@ -46,9 +47,10 @@ export default class List extends ListCommand<typeof List> {
           : "N/A";
         ui.div(
           { text: customer.id, padding: [0, 0, 0, 0], width: 38 },
-          { text: customer.name, padding: [0, 0, 0, 0], width: 35 },
-          { text: customer.phone, padding: [0, 0, 0, 0], width: 18 },
-          { text: customer.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 10 },
+          { text: customer.name, padding: [0, 0, 0, 0], width: 32 },
+          { text: customer.nickname ?? "", padding: [0, 0, 0, 0], width: 32 },
+          { text: customer.phone, padding: [0, 0, 0, 0], width: 16 },
+          { text: customer.isActive ? "Yes" : "No", padding: [0, 0, 0, 0], width: 8 },
           { text: notifications, padding: [0, 0, 0, 0], width: 20 }
         );
       });

@@ -6,7 +6,8 @@
 import type { GroupedCustomerRows, GroupedCustomerRow } from "../utils/customerReportGrouping.js";
 import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
 
-export const CUSTOMERS_REPORT_WIDTH = 900;
+/** Layout width in CSS px for Satori (room for Nombre + Apodo without excess empty space). */
+export const CUSTOMERS_REPORT_WIDTH = 1040;
 
 /** Approximate height per row in the layout. */
 const ROW_HEIGHT_PX = 44;
@@ -18,6 +19,8 @@ const SECTION_HEADER_PX = 48;
 const TABLE_HEADER_PX = 36;
 /** Margin below each section. */
 const SECTION_MARGIN_PX = 20;
+/** Space between the white content card and the footer rule (included in `getCustomersReportHeight`). */
+const FOOTER_TOP_MARGIN_PX = 28;
 
 type SatoriElement = {
   type: string;
@@ -106,12 +109,13 @@ function tableHeader(): SatoriElement {
       }
     },
     [
-      el("div", { style: { flex: 1.8, textAlign: "left" } }, "Nombre"),
-      el("div", { style: { flex: 1.2, textAlign: "left" } }, "Teléfono"),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, "Préstamo"),
-      el("div", { style: { flex: 0.7, textAlign: "center" } }, "Ciclo"),
-      el("div", { style: { flex: 0.8, textAlign: "center" } }, "Rating"),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, "Atrasos")
+      el("div", { style: { flex: 1.75, textAlign: "left" } }, "Nombre"),
+      el("div", { style: { flex: 1.75, textAlign: "left" } }, "Apodo"),
+      el("div", { style: { flex: 1.05, textAlign: "left" } }, "Teléfono"),
+      el("div", { style: { flex: 0.7, textAlign: "right" } }, "Préstamo"),
+      el("div", { style: { flex: 0.6, textAlign: "center" } }, "Ciclo"),
+      el("div", { style: { flex: 0.7, textAlign: "center" } }, "Rating"),
+      el("div", { style: { flex: 0.7, textAlign: "right" } }, "Pagos")
     ]
   );
 }
@@ -134,18 +138,42 @@ function customerRow(row: GroupedCustomerRow): SatoriElement {
     [
       el(
         "div",
-        { style: { flex: 1.8, textAlign: "left", overflow: "hidden" } },
-        row.nickname || row.name
+        {
+          style: {
+            flex: 1.75,
+            textAlign: "left",
+            overflow: "hidden",
+            minWidth: 0
+          }
+        },
+        row.name
       ),
-      el("div", { style: { flex: 1.2, textAlign: "left" } }, row.phone),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, String(row.loanId)),
       el(
         "div",
-        { style: { flex: 0.7, textAlign: "center" } },
+        {
+          style: {
+            flex: 1.75,
+            textAlign: "left",
+            overflow: "hidden",
+            minWidth: 0,
+            color: "#666"
+          }
+        },
+        row.nickname?.trim() ?? ""
+      ),
+      el("div", { style: { flex: 1.05, textAlign: "left", minWidth: 0 } }, row.phone),
+      el("div", { style: { flex: 0.7, textAlign: "right" } }, String(row.loanId)),
+      el(
+        "div",
+        { style: { flex: 0.6, textAlign: "center" } },
         formatPaymentFrequency(row.paymentFrequency)
       ),
-      el("div", { style: { flex: 0.8, textAlign: "center" } }, ratingToStars(row.rating)),
-      el("div", { style: { flex: 0.8, textAlign: "right" } }, String(row.missedCount))
+      el("div", { style: { flex: 0.7, textAlign: "center" } }, ratingToStars(row.rating)),
+      el(
+        "div",
+        { style: { flex: 0.7, textAlign: "right" } },
+        `${Math.min(row.paymentsMade, row.termLength)}/${row.termLength}`
+      )
     ]
   );
 }
@@ -180,7 +208,10 @@ export function getCustomersReportHeight(grouped: GroupedCustomerRows): number {
     (grouped.alDia.length ? 1 : 0);
   const sectionOverhead =
     sectionsWithRows * (SECTION_HEADER_PX + TABLE_HEADER_PX + SECTION_MARGIN_PX);
-  return Math.max(1200, BASE_HEIGHT_PX + sectionOverhead + totalRows * ROW_HEIGHT_PX);
+  return Math.max(
+    1200,
+    BASE_HEIGHT_PX + FOOTER_TOP_MARGIN_PX + sectionOverhead + totalRows * ROW_HEIGHT_PX
+  );
 }
 
 /**
@@ -342,7 +373,8 @@ export function createCustomersReportLayout(
     "div",
     {
       style: {
-        padding: "12px 28px",
+        marginTop: `${FOOTER_TOP_MARGIN_PX}px`,
+        padding: "14px 28px 12px",
         borderTop: "1px solid #e0e0e0",
         fontSize: "14px",
         fontFamily: "Inter",
@@ -357,7 +389,7 @@ export function createCustomersReportLayout(
     {
       style: {
         flex: 1,
-        padding: "20px 20px 20px",
+        padding: "20px 20px 28px",
         display: "flex",
         flexDirection: "column",
         backgroundColor: "white",

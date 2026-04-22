@@ -162,6 +162,7 @@ export interface DbClient {
               select?: {
                 id?: boolean;
                 name?: boolean;
+                nickname?: boolean;
                 phone?: boolean;
                 assignedCollectorId?: boolean;
               };
@@ -210,6 +211,7 @@ export interface DbClient {
         amount: number;
         paidAt?: Date;
         method?: PaymentMethod;
+        status?: PaymentStatus;
         collectedById: string;
         notes?: string;
       };
@@ -229,7 +231,7 @@ export interface DbClient {
           include?: {
             customer?: boolean;
             payments?: {
-              where?: { status?: PaymentStatus };
+              where?: { status?: PaymentStatus | { in: PaymentStatus[] } };
               orderBy?: { paidAt: "asc" | "desc" };
             };
           };
@@ -239,7 +241,7 @@ export interface DbClient {
     }): Promise<PaymentWithRelations | null>;
     findMany(args: {
       where?: {
-        status?: PaymentStatus;
+        status?: PaymentStatus | { not: PaymentStatus } | { in: PaymentStatus[] };
         loanId?: string;
         paidAt?: {
           gte?: Date;

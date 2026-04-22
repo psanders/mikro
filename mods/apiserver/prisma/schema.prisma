@@ -52,6 +52,7 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   COMPLETED
+  PARTIAL
   REVERSED
   PENDING
 
@@ -148,6 +149,7 @@ model UserRole {
 model Customer {
   id                  String   @id @default(uuid())
   name                String
+  nickname            String?
   phone               String
   idNumber            String   @map("id_number")
   collectionPoint     String?   @map("collection_point")

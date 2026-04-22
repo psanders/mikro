@@ -4,6 +4,7 @@
  * Grouping logic for customer reports: Al día (4-5), Requiere atención (2-3), Crítico (1).
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
+import { getCycleMetrics } from "./calculatePaymentStatus.js";
 import { getPaymentRating, getMissedPaymentsCount } from "./customerReportHelpers.js";
 
 /**
@@ -13,7 +14,9 @@ export interface LoanForGrouping {
   loanId: number;
   paymentFrequency: string;
   createdAt: Date;
-  payments: Array<{ paidAt: Date }>;
+  startingDate?: Date | null;
+  termLength: number;
+  payments: Array<{ paidAt: Date; status?: string }>;
   nickname?: string | null;
 }
 
@@ -22,6 +25,7 @@ export interface LoanForGrouping {
  */
 export interface CustomerForGrouping {
   name: string;
+  nickname?: string | null;
   phone: string;
   preferredPaymentDay?: string | null;
   loans: LoanForGrouping[];
@@ -34,9 +38,12 @@ export interface GroupedCustomerRow {
   name: string;
   phone: string;
   loanId: number;
+  /** Display nickname for the customer. Prefers `customer.nickname`; falls back to `loan.nickname`. Empty string when neither is set. */
   nickname: string;
   rating: 1 | 2 | 3 | 4 | 5;
   missedCount: number;
+  paymentsMade: number;
+  termLength: number;
   paymentFrequency: string;
 }
 
@@ -49,11 +56,17 @@ export interface GroupedCustomerRows {
   critico: GroupedCustomerRow[];
 }
 
-function toLoanPaymentData(loan: LoanForGrouping): LoanPaymentData {
+function toLoanPaymentData(
+  loan: LoanForGrouping,
+  preferredPaymentDay?: string | null
+): LoanPaymentData {
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
-    payments: loan.payments
+    startingDate: loan.startingDate ?? null,
+    payments: loan.payments,
+    preferredPaymentDay,
+    termLength: loan.termLength
   };
 }
 
@@ -73,20 +86,23 @@ export function buildGroupedCustomerRows(
 
   for (const customer of customers) {
     for (const loan of customer.loans) {
-      const data: LoanPaymentData = {
-        ...toLoanPaymentData(loan),
-        preferredPaymentDay: customer.preferredPaymentDay
-      };
+      const data: LoanPaymentData = toLoanPaymentData(loan, customer.preferredPaymentDay);
       const rating = getPaymentRating(data, asOfDate);
       const missedCount = getMissedPaymentsCount(data, asOfDate);
+      const { paymentsMade } = getCycleMetrics(data, asOfDate);
+      const termLength = loan.termLength;
 
+      const customerNick = customer.nickname?.trim();
+      const loanNick = loan.nickname?.trim();
       const row: GroupedCustomerRow = {
         name: customer.name,
         phone: customer.phone,
         loanId: loan.loanId,
-        nickname: loan.nickname ?? "",
+        nickname: (customerNick && customerNick.length > 0 ? customerNick : loanNick) ?? "",
         rating,
         missedCount,
+        paymentsMade,
+        termLength,
         paymentFrequency: loan.paymentFrequency
       };
 

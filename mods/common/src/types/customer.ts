@@ -8,6 +8,7 @@
 export interface Customer {
   id: string;
   name: string;
+  nickname?: string | null;
   phone: string;
   idNumber: string;
   collectionPoint?: string;

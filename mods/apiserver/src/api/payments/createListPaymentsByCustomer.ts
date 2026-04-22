@@ -12,7 +12,7 @@ import { logger } from "../../logger.js";
 
 /**
  * Creates a function to list payments for all loans belonging to a specific customer.
- * By default, only returns COMPLETED payments unless showReversed is true.
+ * By default, returns all non-reversed payments unless showReversed is true.
  *
  * @param client - The database client
  * @returns A validated function that lists payments by customer
@@ -38,7 +38,7 @@ export function createListPaymentsByCustomer(client: DbClient) {
           gte: params.startDate,
           lte: params.endDate
         },
-        ...(params.showReversed ? {} : { status: "COMPLETED" })
+        ...(params.showReversed ? {} : { status: { not: "REVERSED" } })
       },
       include: {
         loan: {

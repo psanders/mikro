@@ -46,6 +46,11 @@ export default class Update extends BaseCommand<typeof Update> {
           default: customerFromDB.name,
           required: true
         }),
+        nickname: await input({
+          message: "Nickname (optional, blank to clear)",
+          default: customerFromDB.nickname ?? "",
+          required: false
+        }),
         phone: await input({
           message: "Phone (e.g., 18091234567)",
           default: customerFromDB.phone,
@@ -97,6 +102,7 @@ export default class Update extends BaseCommand<typeof Update> {
       await client.updateCustomer.mutate({
         id: args.customerId,
         name: answers.name,
+        nickname: answers.nickname.trim() === "" ? null : answers.nickname.trim(),
         phone: answers.phone,
         notes: answers.notes || undefined,
         isActive: answers.isActive,

@@ -1214,6 +1214,7 @@ export type UserRoleScalarFieldEnum = (typeof UserRoleScalarFieldEnum)[keyof typ
 export const CustomerScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nickname: 'nickname',
   phone: 'phone',
   idNumber: 'idNumber',
   collectionPoint: 'collectionPoint',

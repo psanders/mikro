@@ -216,6 +216,7 @@ async function main() {
       create: {
         id: ID.customers[i],
         name: customerNames[i],
+        nickname: i === 0 ? "Ali" : null,
         phone: `+12345678${String(i).padStart(2, "0")}`,
         idNumber: `ID-${10000 + i}`,
         collectionPoint: i % 2 === 0 ? `Point ${i + 1}` : null,
@@ -475,7 +476,7 @@ async function main() {
       else paidAt = addDays(start, p * 30);
 
       const method = p % 3 === 0 ? "TRANSFER" : "CASH";
-      let status: "COMPLETED" | "REVERSED" | "PENDING" = "COMPLETED";
+      let status: "COMPLETED" | "PARTIAL" | "REVERSED" | "PENDING" = "COMPLETED";
       if (loan.status === "ACTIVE" && p === numPayments - 1 && paymentIdx % 7 === 3)
         status = "PENDING";
       else if (paymentIdx % 11 === 5) status = "REVERSED";

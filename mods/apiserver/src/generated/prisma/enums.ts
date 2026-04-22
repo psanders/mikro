@@ -55,6 +55,7 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
 export const PaymentStatus = {
   COMPLETED: 'COMPLETED',
+  PARTIAL: 'PARTIAL',
   REVERSED: 'REVERSED',
   PENDING: 'PENDING'
 } as const
