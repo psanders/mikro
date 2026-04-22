@@ -28,7 +28,8 @@
     "db:reset": "npm run db:reset -w @mikro/apiserver",
     "keys:generate": "npx tsx .scripts/generate-keys.ts",
     "agents:eval": "npx tsx mods/agents/src/eval/cli.ts",
-    "export:loan-situation": "npx tsx .scripts/export-loan-situation.ts"
+    "export:loan-situation": "npx tsx .scripts/export-loan-situation.ts",
+    "lending:cash-position": "npx tsx .scripts/lending-cash-position.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
