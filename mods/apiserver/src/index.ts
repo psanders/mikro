@@ -384,9 +384,11 @@ async function initializeMessageProcessor() {
         const customers = await exportCollectorCustomers(params);
         return customers.map((customer) => ({
           name: customer.name,
+          nickname: customer.nickname,
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
+          preferredPaymentDay: customer.preferredPaymentDay,
           referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
@@ -403,9 +405,11 @@ async function initializeMessageProcessor() {
         const customers = await exportCustomersByReferrer(params);
         return customers.map((customer) => ({
           name: customer.name,
+          nickname: customer.nickname,
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
+          preferredPaymentDay: customer.preferredPaymentDay,
           referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,
@@ -422,9 +426,11 @@ async function initializeMessageProcessor() {
         const customers = await exportAllCustomers({});
         return customers.map((customer) => ({
           name: customer.name,
+          nickname: customer.nickname,
           phone: customer.phone,
           collectionPoint: customer.collectionPoint,
           notes: customer.notes,
+          preferredPaymentDay: customer.preferredPaymentDay,
           referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
           loans: customer.loans.map((loan) => ({
             loanId: loan.loanId,

@@ -22,6 +22,8 @@ export interface ExportedLoan {
  */
 export interface ExportedCustomer {
   name: string;
+  /** Customer-level nickname (included in agent export payloads for reports). */
+  nickname?: string | null;
   phone: string;
   collectionPoint: string | null;
   notes: string | null;
