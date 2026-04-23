@@ -17,7 +17,7 @@ describe("createGenerateReceiptFromDataApi", () => {
         await fn({
           name: "Test",
           date: "01/01/2026",
-          amountPaid: "RD$ 500",
+          amountPaid: "RD$ 500.00",
           pendingPayments: 3,
           paymentNumber: "P1"
         } as any);
@@ -38,7 +38,7 @@ describe("createGenerateReceiptFromDataApi", () => {
           loanNumber: "123",
           name: "Test",
           date: "01/01/2026",
-          amountPaid: "RD$ 500",
+          amountPaid: "RD$ 500.00",
           pendingPayments: "three" as any,
           paymentNumber: "P1"
         });

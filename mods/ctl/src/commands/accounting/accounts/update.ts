@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Flags } from "@oclif/core";
-import type { UpdateAccountInput } from "@mikro/common";
+import { formatMoney, type UpdateAccountInput } from "@mikro/common";
 import { BaseCommand } from "../../../BaseCommand.js";
 import errorHandler from "../../../errorHandler.js";
 import { promptAccountSelectIfMissing } from "../../../lib/prompts.js";
@@ -53,7 +53,7 @@ export default class Update extends BaseCommand<typeof Update> {
       this.log(`  Name: ${updated.name}`);
       this.log(`  Kind: ${updated.kind}`);
       this.log(`  Currency: ${updated.currency}`);
-      this.log(`  Balance: ${updated.currentBalance}`);
+      this.log(`  Balance: ${formatMoney(updated.currentBalance)}`);
       this.log(`  Active: ${updated.isActive}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));

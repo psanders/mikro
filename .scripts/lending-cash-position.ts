@@ -22,7 +22,7 @@
  */
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { config as loadDotenv } from "dotenv";
-import { getConfig } from "@mikro/common";
+import { formatMoney, getConfig } from "@mikro/common";
 import { dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -46,10 +46,6 @@ function decimalToNumber(v: unknown): number {
     return Number((v as { toString: () => string }).toString());
   }
   return Number(v);
-}
-
-function formatMoney(n: number): string {
-  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 async function main(): Promise<void> {

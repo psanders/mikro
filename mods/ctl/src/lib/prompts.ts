@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { input, password, select, number } from "@inquirer/prompts";
 
 /**
@@ -154,7 +155,7 @@ export async function promptAccountSelectIfMissing(
   return select({
     message,
     choices: accounts.map((a) => ({
-      name: `${a.name} (${a.kind}, ${a.currency} ${a.currentBalance.toFixed(2)})`,
+      name: `${a.name} (${a.kind}, ${a.currency} ${formatMoney(a.currentBalance)})`,
       value: a.id
     }))
   });

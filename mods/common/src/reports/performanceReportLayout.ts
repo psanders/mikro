@@ -5,6 +5,7 @@
  * Financial Summary, and narrative sections with graphics.
  */
 import type { PortfolioMetrics, ReportNarrative } from "./types.js";
+import { formatMoney } from "../utils/formatMoney.js";
 
 export const REPORT_WIDTH = 800;
 export const REPORT_HEIGHT = 2800;
@@ -30,7 +31,7 @@ function el(
 }
 
 function formatDop(n: number): string {
-  return `${n.toLocaleString("es-DO")} DOP`;
+  return `${formatMoney(n)} DOP`;
 }
 
 function formatPct(n: number): string {

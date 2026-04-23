@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Args } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -42,7 +43,7 @@ export default class Get extends BaseCommand<typeof Get> {
           `COLLECTION POINT: \t${customer.collectionPoint}\n` +
           `HOME ADDRESS: \t${customer.homeAddress}\n` +
           `JOB POSITION: \t${customer.jobPosition || "N/A"}\n` +
-          `INCOME: \t${customer.income || "N/A"}\n` +
+          `INCOME: \t${customer.income == null ? "N/A" : formatMoney(customer.income)}\n` +
           `BUSINESS OWNER: \t${customer.isBusinessOwner ? "Yes" : "No"}\n` +
           `NOTES: \t${customer.notes || ""}\n` +
           `ACTIVE: \t${customer.isActive ? "Yes" : "No"}\n` +

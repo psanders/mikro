@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { confirm } from "@inquirer/prompts";
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../../BaseCommand.js";
 import errorHandler from "../../../errorHandler.js";
@@ -89,7 +90,7 @@ export default class Create extends BaseCommand<typeof Create> {
       this.log(`  Name: ${account.name}`);
       this.log(`  Kind: ${account.kind}`);
       this.log(`  Currency: ${account.currency}`);
-      this.log(`  Balance: ${account.currentBalance}`);
+      this.log(`  Balance: ${formatMoney(account.currentBalance)}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

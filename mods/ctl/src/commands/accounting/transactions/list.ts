@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -78,7 +79,7 @@ export default class List extends ListCommand<typeof List> {
           t.account.name,
           t.toAccount?.name ?? "-",
           t.category?.name ?? "-",
-          t.amount.toFixed(2),
+          formatMoney(t.amount),
           label,
           String(t.attachmentCount)
         ];

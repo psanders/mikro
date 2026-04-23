@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import { BaseCommand } from "../../../BaseCommand.js";
@@ -35,7 +36,7 @@ export default class List extends BaseCommand<typeof List> {
         a.name,
         a.kind,
         a.currency,
-        a.currentBalance.toFixed(2),
+        formatMoney(a.currentBalance),
         a.isActive ? "Yes" : "No"
       ]);
       const widths = computeColumnWidths({

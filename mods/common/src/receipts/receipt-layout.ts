@@ -30,7 +30,7 @@ export function createReceiptLayout(
     loanNumber = "123456",
     name = "John Doe",
     date = "24/04/2024",
-    amountPaid = "RD$ 650",
+    amountPaid = "RD$ 650.00",
     pendingPayments = 9,
     paymentNumber = "P1",
     agentName = "Nombre del Agente"

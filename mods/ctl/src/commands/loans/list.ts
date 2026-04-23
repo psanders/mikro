@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -41,8 +42,8 @@ export default class List extends ListCommand<typeof List> {
       ];
       const rows = loans.map((loan) => [
         String(loan.loanId),
-        String(loan.principal),
-        String(loan.paymentAmount),
+        formatMoney(loan.principal),
+        formatMoney(loan.paymentAmount),
         loan.paymentFrequency,
         loan.status,
         moment(loan.createdAt).format("YYYY-MM-DD"),

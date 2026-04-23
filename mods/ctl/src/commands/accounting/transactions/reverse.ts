@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { confirm } from "@inquirer/prompts";
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../../BaseCommand.js";
 import errorHandler from "../../../errorHandler.js";
@@ -35,7 +36,7 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
     this.log(`  Type: ${original.type}`);
     this.log(`  Status: ${original.status}`);
     this.log(`  Account: ${original.account.name}`);
-    this.log(`  Amount: ${original.amount}`);
+    this.log(`  Amount: ${formatMoney(original.amount)}`);
     this.log(`  Description: ${original.description ?? "-"}`);
 
     if (original.status === "REVERSED") {

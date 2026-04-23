@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { confirm } from "@inquirer/prompts";
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -90,7 +91,7 @@ export default class Create extends BaseCommand<typeof Create> {
 
     if (!status && amount < expected && process.stdout.isTTY) {
       const ok = await confirm({
-        message: `Amount (${amount}) is less than expected payment (${expected}). Record as PARTIAL?`,
+        message: `Amount (${formatMoney(amount)}) is less than expected payment (${formatMoney(expected)}). Record as PARTIAL?`,
         default: true
       });
       if (!ok) {

@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { confirm } from "@inquirer/prompts";
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { existsSync, readFileSync } from "fs";
 import { basename, extname } from "path";
@@ -150,7 +151,7 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log("");
     this.log("Review:");
     this.log(`  Type: ${type}`);
-    this.log(`  Amount: ${amount}`);
+    this.log(`  Amount: ${formatMoney(amount)}`);
     this.log(`  Date: ${occurredAtRaw}`);
     if (attachments.length > 0) this.log(`  Attachments: ${attachments.length}`);
 
@@ -177,7 +178,7 @@ export default class Create extends BaseCommand<typeof Create> {
       this.log("Transaction recorded.");
       this.log(`  ID: ${txn.id}`);
       this.log(`  Type: ${txn.type}`);
-      this.log(`  Amount: ${txn.amount}`);
+      this.log(`  Amount: ${formatMoney(txn.amount)}`);
       this.log(`  Account: ${txn.account.name}`);
       if (txn.toAccount) this.log(`  To Account: ${txn.toAccount.name}`);
       if (txn.category) this.log(`  Category: ${txn.category.name}`);

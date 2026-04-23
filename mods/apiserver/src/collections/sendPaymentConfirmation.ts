@@ -5,6 +5,7 @@
  * Not called by the daily cron.
  */
 
+import { formatMoney } from "@mikro/common";
 import { getPaymentConfirmationTemplateName, getWhatsAppLanguageCode } from "./collectionConfig.js";
 import { logger } from "../logger.js";
 import {
@@ -52,7 +53,7 @@ export async function sendPaymentConfirmation(
 
   const customer = payment.loan.customer as { id: string; phone: string; name: string };
   const loan = payment.loan as { id: string; loanId: number };
-  const amount = String(payment.amount);
+  const amount = formatMoney(payment.amount);
   const paymentNumber = `Préstamo #${loan.loanId} - ${amount}`;
   const target: CollectionTarget = { customer, loan };
   const bodyParameters = [{ parameter_name: "payment_number", text: paymentNumber }];

@@ -4,7 +4,7 @@
 import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, resolve } from "path";
-import { type GenerateReceiptResponse } from "@mikro/common";
+import { formatMoney, type GenerateReceiptResponse } from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptTextIfMissing, promptNumberIfMissing } from "../../lib/prompts.js";
@@ -100,7 +100,7 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       })
     });
     const amount = await promptNumberIfMissing(undefined, "Amount (e.g. 500)", "amount");
-    const amountPaid = `RD$ ${amount.toLocaleString("es-DO")}`;
+    const amountPaid = `RD$ ${formatMoney(amount)}`;
     const paymentNumber = await promptTextIfMissing(
       undefined,
       "Payment number (e.g. P1)",

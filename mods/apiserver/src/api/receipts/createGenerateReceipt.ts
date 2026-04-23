@@ -7,6 +7,7 @@ import {
   withErrorHandlingAndValidation,
   generateReceiptSchema,
   renderReceiptToImage,
+  formatMoney,
   type GenerateReceiptInput,
   type DbClient,
   type ReceiptData
@@ -85,7 +86,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
         month: "2-digit",
         year: "numeric"
       }),
-      amountPaid: `RD$ ${Number(payment.amount).toLocaleString("es-DO")}`,
+      amountPaid: `RD$ ${formatMoney(payment.amount)}`,
       pendingPayments: Math.max(0, pendingPayments),
       paymentNumber: payment.status === "PARTIAL" ? "Parcial" : `P${completedPaymentNumber}`,
       agentName: payment.collectedBy?.name

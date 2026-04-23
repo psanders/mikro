@@ -4,6 +4,7 @@
  * At-risk loans report layout for Satori: defaulted + late (red-highlighted), with name, phone, loanId, cycle, paid, estado, AI summary.
  */
 import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
+import { formatMoney } from "../utils/formatMoney.js";
 
 export const DEFAULTED_REPORT_WIDTH = 1200;
 
@@ -53,7 +54,7 @@ function el(
 }
 
 function formatDop(n: number): string {
-  return `${n.toLocaleString("es-DO")} DOP`;
+  return `${formatMoney(n)} DOP`;
 }
 
 function tableHeader(): SatoriElement {

@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -68,7 +69,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
         payment.id,
         String(payment.loan.loanId),
         payment.loan.customer.name,
-        String(payment.amount),
+        formatMoney(payment.amount),
         payment.method,
         payment.status,
         moment(payment.paidAt).format("YYYY-MM-DD HH:mm")

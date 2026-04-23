@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
@@ -46,7 +47,7 @@ export default class Show extends BaseCommand<typeof Show> {
       this.log(`  Account: ${txn.account.name}`);
       if (txn.toAccount) this.log(`  To Account: ${txn.toAccount.name}`);
       if (txn.category) this.log(`  Category: ${txn.category.name}`);
-      this.log(`  Amount: ${txn.amount}`);
+      this.log(`  Amount: ${formatMoney(txn.amount)}`);
       this.log(`  Vendor: ${txn.vendor ?? "-"}`);
       this.log(`  Description: ${txn.description ?? "-"}`);
       this.log(`  Reference: ${txn.reference ?? "-"}`);

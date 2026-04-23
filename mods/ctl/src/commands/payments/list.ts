@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -59,7 +60,7 @@ export default class List extends ListCommand<typeof List> {
         payment.id,
         String(payment.loan.loanId),
         payment.loan.customer.name,
-        String(payment.amount),
+        formatMoney(payment.amount),
         payment.method,
         payment.status,
         moment(payment.paidAt).format("YYYY-MM-DD HH:mm")

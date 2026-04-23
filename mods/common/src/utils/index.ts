@@ -55,3 +55,4 @@ export {
   DEFAULT_OPTIONS_RANGE,
   DEFAULT_PAYMENT_ROUNDING_INCREMENT
 } from "./loanCalculatorConstants.js";
+export { formatMoney, type FormatMoneyInput } from "./formatMoney.js";

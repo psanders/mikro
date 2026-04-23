@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { formatMoney } from "@mikro/common";
 import { input, select } from "@inquirer/prompts";
 import cliui from "cliui";
 import { BaseCommand } from "../../BaseCommand.js";
@@ -97,9 +98,9 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
         String(option.duration),
         option.paymentFrequency,
         `${(option.interestRate * 100).toFixed(2)}%`,
-        `RD$ ${option.totalInterest.toFixed(2)}`,
-        `RD$ ${option.totalRepay.toFixed(2)}`,
-        `RD$ ${option.paymentPerPeriod}`
+        `RD$ ${formatMoney(option.totalInterest)}`,
+        `RD$ ${formatMoney(option.totalRepay)}`,
+        `RD$ ${formatMoney(option.paymentPerPeriod)}`
       ]);
       const widths = computeColumnWidths({ headers, rows });
       const ui = cliui({ width: cliuiTableWidth(widths) });

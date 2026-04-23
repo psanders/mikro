@@ -42,8 +42,10 @@ export {
   DEFAULT_MAX_RATE,
   DEFAULT_OPTIONS_RANGE,
   DEFAULT_PAYMENT_ROUNDING_INCREMENT,
+  formatMoney,
   type LoanPaymentData,
-  type CycleMetrics
+  type CycleMetrics,
+  type FormatMoneyInput
 } from "./utils/index.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,
