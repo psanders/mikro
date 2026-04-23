@@ -128,7 +128,6 @@ export const mikroConfigSchema = z
     publicUrl: z.string().default("http://localhost:4000"),
     receiptsPath: z.string().default("/app/receipts"),
     databaseUrl: z.string().default("file:/app/data/mikro.db"),
-    credentials: z.string().default("admin:secret"),
     jwtSecret: z
       .string()
       .min(1, "jwtSecret is required for JWT auth")

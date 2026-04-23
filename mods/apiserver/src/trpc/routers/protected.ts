@@ -53,6 +53,7 @@ import {
   runCollectionsSchema,
   runSingleCollectionSchema
 } from "@mikro/common";
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
@@ -234,6 +235,19 @@ export const protectedRouter = router({
   }),
 
   // ==================== User procedures ====================
+
+  /**
+   * Return the authenticated caller's own user record and roles.
+   * Used by CLI/mobile clients to verify a token and show "logged in as X".
+   */
+  whoami: protectedProcedure.query(async ({ ctx }) => {
+    const fn = createGetUser(ctx.db);
+    const user = await fn({ id: ctx.userId });
+    if (!user) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "User no longer exists" });
+    }
+    return { ...user, roles: ctx.roles };
+  }),
 
   /**
    * Create a new user.

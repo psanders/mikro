@@ -6,9 +6,14 @@ import { dirname } from "path";
 import { homedir } from "os";
 
 export interface Config {
-  username: string;
-  password: string;
+  /** Bearer JWT issued by the API's login mutation. */
+  token: string;
+  /** API server URL. */
   apiUrl: string;
+  /** Phone number of the logged-in user (display only). */
+  phone: string;
+  /** Display name of the logged-in user (display only). */
+  name?: string;
 }
 
 /**
@@ -26,7 +31,8 @@ export function getConfigPath(): string {
 
 /**
  * Loads the config file from disk.
- * @returns Config object or null if file doesn't exist
+ * @returns Config object or null if file doesn't exist or is from a previous
+ *   (username/password) format that is no longer supported.
  */
 export function loadConfig(): Config | null {
   const configPath = getConfigPath();
@@ -35,14 +41,34 @@ export function loadConfig(): Config | null {
     return null;
   }
 
+  let parsed: unknown;
   try {
     const content = readFileSync(configPath, "utf-8");
-    return JSON.parse(content) as Config;
+    parsed = JSON.parse(content);
   } catch (error) {
     throw new Error(
       `Failed to read config file: ${error instanceof Error ? error.message : String(error)}`
     );
   }
+
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    typeof (parsed as { token?: unknown }).token !== "string" ||
+    typeof (parsed as { apiUrl?: unknown }).apiUrl !== "string"
+  ) {
+    // Legacy username/password config - treat as not logged in so the user
+    // is prompted to run `mikro auth:login` again.
+    return null;
+  }
+
+  const c = parsed as Record<string, unknown>;
+  return {
+    token: c.token as string,
+    apiUrl: c.apiUrl as string,
+    phone: typeof c.phone === "string" ? c.phone : "",
+    name: typeof c.name === "string" ? c.name : undefined
+  };
 }
 
 /**
@@ -54,12 +80,10 @@ export function saveConfig(config: Config): void {
   const configDir = dirname(configPath);
 
   try {
-    // Create directory if it doesn't exist
     if (!existsSync(configDir)) {
       mkdirSync(configDir, { recursive: true });
     }
 
-    // Write config file
     writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
   } catch (error) {
     throw new Error(

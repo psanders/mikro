@@ -6,17 +6,19 @@ import type { AppRouter } from "@mikro/apiserver"; // type-only, no runtime depe
 
 /**
  * Creates a typed tRPC client for the Mikro API.
+ * Sends `Authorization: Bearer <token>` with every request.
+ *
  * @param baseUrl - The base URL of the API server
- * @param credentials - Basic auth credentials in "username:password" format
+ * @param token - A Bearer JWT issued by the API's login mutation
  * @returns A typed tRPC client
  */
-export function createClient(baseUrl: string, credentials: string) {
+export function createClient(baseUrl: string, token: string) {
   return createTRPCClient<AppRouter>({
     links: [
       httpBatchLink({
         url: `${baseUrl}/trpc`,
         headers: () => ({
-          Authorization: `Basic ${Buffer.from(credentials).toString("base64")}`
+          Authorization: `Bearer ${token}`
         })
       })
     ]

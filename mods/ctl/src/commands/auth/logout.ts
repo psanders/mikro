@@ -16,7 +16,8 @@ export default class Logout extends BaseCommand<typeof Logout> {
 
     const config = loadConfig();
     if (config) {
-      this.log(`Logging out ${config.username} from ${config.apiUrl}...`);
+      const who = config.name ? `${config.name} (${config.phone})` : config.phone;
+      this.log(`Logging out ${who} from ${config.apiUrl}...`);
     }
 
     try {

@@ -25,12 +25,32 @@ export const mergeRouters = t.mergeRouters;
 export const publicProcedure = t.procedure;
 
 /**
- * Protected procedure - requires Basic Auth.
- * Throws UNAUTHORIZED error if not authenticated.
+ * Protected procedure - requires a valid Bearer JWT.
+ * Narrows `ctx.userId` to a guaranteed string so downstream handlers can
+ * trust the caller's identity.
  */
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.isAuthenticated) {
+  if (!ctx.isAuthenticated || !ctx.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId,
+      roles: ctx.roles
+    }
+  });
+});
+
+/**
+ * Admin procedure - requires a valid JWT whose user has the ADMIN role.
+ * Use this for operations that must be restricted to administrators
+ * (e.g. user management, destructive overrides). Currently unused while we
+ * keep transition-era backwards compatibility, but ready to gate routes.
+ */
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.roles.includes("ADMIN")) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin role required" });
   }
   return next();
 });

@@ -63,8 +63,7 @@ export abstract class BaseCommand<T extends typeof Command> extends Command {
       this.error('Not logged in. Run "mikro auth:login" to authenticate.');
     }
 
-    const credentials = `${config.username}:${config.password}`;
-    return createClient(config.apiUrl, credentials);
+    return createClient(config.apiUrl, config.token);
   }
 
   protected async catch(err: Error & { exitCode?: number }) {

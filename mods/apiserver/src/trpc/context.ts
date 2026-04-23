@@ -3,15 +3,24 @@
  */
 import type { Request } from "express";
 import * as jose from "jose";
-import { getConfig, type DbClient } from "@mikro/common";
+import { getConfig, type DbClient, type Role } from "@mikro/common";
 import { prisma } from "../db.js";
 
 /**
- * Validates Bearer JWT and returns the subject (user id) if valid.
- * @param authHeader - The Authorization header value
- * @returns userId if token is valid, null otherwise
+ * Identity extracted from a valid Bearer JWT.
  */
-async function validateJwt(authHeader: string | undefined): Promise<string | null> {
+interface JwtIdentity {
+  userId: string;
+  roles: Role[];
+}
+
+const VALID_ROLES: Role[] = ["ADMIN", "COLLECTOR", "REFERRER"];
+
+/**
+ * Validates Bearer JWT and returns the caller's identity if valid.
+ * Roles are read from the JWT claim (issued by createLogin at sign-in time).
+ */
+async function validateJwt(authHeader: string | undefined): Promise<JwtIdentity | null> {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return null;
   }
@@ -22,70 +31,40 @@ async function validateJwt(authHeader: string | undefined): Promise<string | nul
     const secret = new TextEncoder().encode(config.jwtSecret);
     const { payload } = await jose.jwtVerify(token, secret);
     const sub = payload.sub;
-    return typeof sub === "string" ? sub : null;
+    if (typeof sub !== "string" || !sub) return null;
+    const rawRoles = Array.isArray(payload.roles) ? payload.roles : [];
+    const roles = rawRoles.filter(
+      (r): r is Role => typeof r === "string" && (VALID_ROLES as string[]).includes(r)
+    );
+    return { userId: sub, roles };
   } catch {
     return null;
   }
 }
 
 /**
- * Validates Basic Auth header against config credentials.
- * @param authHeader - The Authorization header value
- * @returns true if credentials match, false otherwise
- */
-function validateBasicAuth(authHeader: string | undefined): boolean {
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
-    return false;
-  }
-
-  const expectedCredentials = getConfig().credentials;
-  if (!expectedCredentials) {
-    return false;
-  }
-
-  try {
-    const base64Credentials = authHeader.slice(6); // Remove "Basic " prefix
-    const credentials = Buffer.from(base64Credentials, "base64").toString("utf-8");
-    return credentials === expectedCredentials;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Context available to all tRPC procedures.
+ *
+ * When `isAuthenticated` is true, `userId` and `roles` are populated from the
+ * verified Bearer JWT. `protectedProcedure` narrows those to non-optional.
  */
 export interface Context {
   db: DbClient;
   isAuthenticated: boolean;
   userId?: string;
+  roles: Role[];
 }
 
 /**
- * Creates context for each tRPC request.
- * Accepts either Bearer JWT (mobile) or Basic Auth (CLI).
- * @param opts - Request options containing the Express request
- * @returns Context with db client and authentication status
+ * Creates context for each tRPC request. Only Bearer JWT is accepted.
  */
 export async function createContext({ req }: { req: Request }): Promise<Context> {
   const authHeader = req.headers.authorization;
-  const baseContext = {
+  const identity = await validateJwt(authHeader);
+  return {
     db: prisma as unknown as DbClient,
-    isAuthenticated: false as boolean,
-    userId: undefined as string | undefined
+    isAuthenticated: !!identity,
+    userId: identity?.userId,
+    roles: identity?.roles ?? []
   };
-
-  // Bearer JWT takes precedence (for mobile app)
-  if (authHeader?.startsWith("Bearer ")) {
-    const userId = await validateJwt(authHeader);
-    return {
-      ...baseContext,
-      isAuthenticated: !!userId,
-      userId: userId ?? undefined
-    };
-  }
-
-  // Fall back to Basic Auth (for CLI)
-  const isAuthenticated = validateBasicAuth(authHeader);
-  return { ...baseContext, isAuthenticated };
 }

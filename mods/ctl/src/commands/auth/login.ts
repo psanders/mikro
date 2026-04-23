@@ -3,22 +3,35 @@
  */
 import { Flags } from "@oclif/core";
 import { input, password } from "@inquirer/prompts";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import type { AppRouter } from "@mikro/apiserver";
 import { BaseCommand } from "../../BaseCommand.js";
 import { DEFAULT_API_URL, loadConfig, saveConfig, type Config } from "../../lib/config.js";
 import { createClient } from "../../lib/trpc.js";
+
+/**
+ * Unauthenticated tRPC client used to call the public `login` mutation.
+ * `createClient` assumes a token, so we build a bare client here.
+ */
+function createAnonymousClient(baseUrl: string) {
+  return createTRPCClient<AppRouter>({
+    links: [httpBatchLink({ url: `${baseUrl}/trpc` })]
+  });
+}
 
 export default class Login extends BaseCommand<typeof Login> {
   static override readonly description = "authenticate with the Mikro API";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --username admin --password secret",
+    "<%= config.bin %> <%= command.id %> --phone +18091234567 --password secret",
     "<%= config.bin %> <%= command.id %> --api-url http://api.example.com"
   ];
   static override readonly flags = {
-    username: Flags.string({
+    phone: Flags.string({
       char: "u",
-      description: "username for authentication",
-      required: false
+      description: "phone number for authentication (E.164, e.g. +18091234567)",
+      required: false,
+      aliases: ["username"]
     }),
     password: Flags.string({
       char: "p",
@@ -28,39 +41,34 @@ export default class Login extends BaseCommand<typeof Login> {
     "api-url": Flags.string({
       description: "API server URL",
       required: false
-    }),
-    "skip-verify": Flags.boolean({
-      description: "skip connection verification before saving",
-      default: false
     })
   };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(Login);
 
-    // Check if already logged in
     const existingConfig = loadConfig();
     if (existingConfig) {
-      this.log(`Already logged in as ${existingConfig.username} to ${existingConfig.apiUrl}`);
+      const who = existingConfig.name
+        ? `${existingConfig.name} (${existingConfig.phone})`
+        : existingConfig.phone;
+      this.log(`Already logged in as ${who} to ${existingConfig.apiUrl}`);
       this.log("Use 'mikro auth:logout' to log out first.");
       return;
     }
 
-    let username: string;
+    let phone: string;
     let passwordValue: string;
     let apiUrl: string;
 
-    // Interactive mode or flag mode
-    if (flags.username && flags.password) {
-      // Flag mode
-      username = flags.username;
+    if (flags.phone && flags.password) {
+      phone = flags.phone;
       passwordValue = flags.password;
       apiUrl = flags["api-url"] || DEFAULT_API_URL;
     } else {
-      // Interactive mode
       this.log("Please provide your credentials:");
-      username = await input({
-        message: "Username",
+      phone = await input({
+        message: "Phone",
         required: true
       });
       passwordValue = await password({
@@ -76,33 +84,39 @@ export default class Login extends BaseCommand<typeof Login> {
         }));
     }
 
-    // Verify connection unless --skip-verify is set
-    if (!flags["skip-verify"]) {
-      this.log("Verifying connection...");
-      try {
-        const credentials = `${username}:${passwordValue}`;
-        const testClient = createClient(apiUrl, credentials);
-        // Try a simple query to verify credentials
-        await testClient.listUsers.query({ showDisabled: false, limit: 1 });
-        this.log("✓ Connection verified");
-      } catch (error) {
-        this.error(
-          `Failed to verify connection: ${error instanceof Error ? error.message : String(error)}\n` +
-            "Use --skip-verify to save credentials without verification."
-        );
-      }
+    let token: string;
+    try {
+      const anon = createAnonymousClient(apiUrl);
+      const result = await anon.login.mutate({ phone, password: passwordValue });
+      token = result.token;
+    } catch (error) {
+      this.error(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    // Save config
+    let displayName: string | undefined;
+    let displayPhone = phone;
+    try {
+      const authed = createClient(apiUrl, token);
+      const me = await authed.whoami.query();
+      displayName = me.name ?? undefined;
+      displayPhone = me.phone ?? phone;
+    } catch (error) {
+      this.error(
+        `Failed to verify session: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
     const config: Config = {
-      username,
-      password: passwordValue,
-      apiUrl
+      token,
+      apiUrl,
+      phone: displayPhone,
+      name: displayName
     };
 
     try {
       saveConfig(config);
-      this.log(`✓ Successfully logged in as ${username} to ${apiUrl}`);
+      const who = displayName ? `${displayName} (${displayPhone})` : displayPhone;
+      this.log(`✓ Successfully logged in as ${who} to ${apiUrl}`);
     } catch (error) {
       this.error(
         `Failed to save credentials: ${error instanceof Error ? error.message : String(error)}`
