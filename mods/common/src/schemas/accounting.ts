@@ -105,47 +105,95 @@ export const transactionAttachmentInputSchema = z.object({
 });
 export type TransactionAttachmentInput = z.infer<typeof transactionAttachmentInputSchema>;
 
-export const createTransactionSchema = z
-  .object({
-    type: transactionTypeEnum,
-    accountId: z.uuid({ error: "Invalid account ID" }),
-    toAccountId: z.uuid({ error: "Invalid destination account ID" }).optional(),
-    amount: z.number().positive("Amount must be positive"),
-    occurredAt: z.coerce.date(),
-    description: z.string().max(500).optional(),
-    vendor: z.string().max(200).optional(),
-    reference: z.string().max(200).optional(),
-    categoryId: z.uuid({ error: "Invalid category ID" }).optional(),
-    createdById: z.uuid({ error: "Creator user ID is required and must be a valid UUID" }),
-    attachments: z
-      .array(transactionAttachmentInputSchema)
-      .max(MAX_ATTACHMENTS_PER_TRANSACTION)
-      .optional()
-  })
-  .refine((v) => (v.type === "TRANSFER" ? !!v.toAccountId : true), {
-    message: "toAccountId is required when type is TRANSFER",
-    path: ["toAccountId"]
-  })
-  .refine((v) => (v.type === "TRANSFER" ? v.toAccountId !== v.accountId : true), {
-    message: "toAccountId must be different from accountId",
-    path: ["toAccountId"]
-  })
-  .refine((v) => (v.type !== "TRANSFER" ? !v.toAccountId : true), {
-    message: "toAccountId is only allowed when type is TRANSFER",
-    path: ["toAccountId"]
-  })
-  .refine((v) => (v.categoryId ? v.type === "EXPENSE" || v.type === "INCOME" : true), {
-    message: "categoryId is only allowed for EXPENSE or INCOME transactions",
-    path: ["categoryId"]
-  });
+const transactionBaseShape = {
+  type: transactionTypeEnum,
+  accountId: z.uuid({ error: "Invalid account ID" }),
+  toAccountId: z.uuid({ error: "Invalid destination account ID" }).optional(),
+  amount: z.number().positive("Amount must be positive"),
+  occurredAt: z.coerce.date(),
+  description: z.string().max(500).optional(),
+  vendor: z.string().max(200).optional(),
+  reference: z.string().max(200).optional(),
+  categoryId: z.uuid({ error: "Invalid category ID" }).optional(),
+  attachments: z
+    .array(transactionAttachmentInputSchema)
+    .max(MAX_ATTACHMENTS_PER_TRANSACTION)
+    .optional()
+} as const;
+
+/**
+ * Applies cross-field refinements to a transaction-shaped schema. Shared
+ * between the public (client-facing) schema and the internal one that also
+ * carries `createdById` injected from the authenticated session.
+ */
+function withTransactionRefinements<
+  T extends z.ZodObject<{
+    type: typeof transactionTypeEnum;
+    accountId: z.ZodType<string>;
+    toAccountId: z.ZodType<string | undefined>;
+    categoryId: z.ZodType<string | undefined>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [k: string]: any;
+  }>
+>(schema: T) {
+  return schema
+    .refine((v) => (v.type === "TRANSFER" ? !!v.toAccountId : true), {
+      message: "toAccountId is required when type is TRANSFER",
+      path: ["toAccountId"]
+    })
+    .refine((v) => (v.type === "TRANSFER" ? v.toAccountId !== v.accountId : true), {
+      message: "toAccountId must be different from accountId",
+      path: ["toAccountId"]
+    })
+    .refine((v) => (v.type !== "TRANSFER" ? !v.toAccountId : true), {
+      message: "toAccountId is only allowed when type is TRANSFER",
+      path: ["toAccountId"]
+    })
+    .refine((v) => (v.categoryId ? v.type === "EXPENSE" || v.type === "INCOME" : true), {
+      message: "categoryId is only allowed for EXPENSE or INCOME transactions",
+      path: ["categoryId"]
+    });
+}
+
+/**
+ * Public input schema for creating a transaction. `createdById` is NOT part
+ * of this schema — the server injects the authenticated user's ID from the
+ * session. See {@link createTransactionInternalSchema} for the internal
+ * representation used by the API factory.
+ */
+export const createTransactionSchema = withTransactionRefinements(z.object(transactionBaseShape));
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
+/**
+ * Internal schema used by the server-side `createCreateTransaction` factory,
+ * which also expects `createdById` (taken from the authenticated session).
+ */
+export const createTransactionInternalSchema = withTransactionRefinements(
+  z.object({
+    ...transactionBaseShape,
+    createdById: z.uuid({ error: "Creator user ID is required and must be a valid UUID" })
+  })
+);
+export type CreateTransactionInternalInput = z.infer<typeof createTransactionInternalSchema>;
+
+/**
+ * Public input schema for reversing a transaction. `createdById` is NOT part
+ * of this schema — the server injects the authenticated user's ID from the
+ * session.
+ */
 export const reverseTransactionSchema = z.object({
   id: z.uuid({ error: "Invalid transaction ID" }),
-  createdById: z.uuid({ error: "Creator user ID is required and must be a valid UUID" }),
   notes: z.string().max(500).optional()
 });
 export type ReverseTransactionInput = z.infer<typeof reverseTransactionSchema>;
+
+/**
+ * Internal schema used by the server-side `createReverseTransaction` factory.
+ */
+export const reverseTransactionInternalSchema = reverseTransactionSchema.extend({
+  createdById: z.uuid({ error: "Creator user ID is required and must be a valid UUID" })
+});
+export type ReverseTransactionInternalInput = z.infer<typeof reverseTransactionInternalSchema>;
 
 export const listTransactionsSchema = z.object({
   startDate: z.coerce.date(),

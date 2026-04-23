@@ -5,18 +5,17 @@ import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../../BaseCommand.js";
 import errorHandler from "../../../errorHandler.js";
-import { promptTextIfMissing, promptUserSelectIfMissing } from "../../../lib/prompts.js";
+import { promptTextIfMissing } from "../../../lib/prompts.js";
 
 export default class Reverse extends BaseCommand<typeof Reverse> {
   static override readonly description =
     "reverse an accounting transaction (creates a mirror transaction and marks the original as REVERSED)";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --id <uuid> --user-id <uuid>"
+    "<%= config.bin %> <%= command.id %> --id <uuid>"
   ];
   static override readonly flags = {
     id: Flags.string({ description: "Transaction ID to reverse", required: false }),
-    "user-id": Flags.string({ description: "Your user UUID (who is reversing)", required: false }),
     notes: Flags.string({ description: "Notes / reason for reversal", required: false })
   };
 
@@ -44,12 +43,6 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
       return;
     }
 
-    const createdById = await promptUserSelectIfMissing(
-      client,
-      flags["user-id"],
-      "Your user (who is reversing)",
-      "user-id"
-    );
     const notes = flags.notes
       ? flags.notes
       : process.stdout.isTTY
@@ -71,7 +64,6 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
     try {
       const reversal = await client.accounting.reverseTransaction.mutate({
         id,
-        createdById,
         ...(notes ? { notes } : {})
       });
       this.log("Transaction reversed.");

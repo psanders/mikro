@@ -696,14 +696,14 @@ export const protectedRouter = router({
       .input(createTransactionSchema)
       .mutation(async ({ ctx, input }) => {
         const fn = createCreateTransaction(ctx.db as unknown as PrismaClient);
-        return fn(input);
+        return fn({ ...input, createdById: ctx.userId });
       }),
 
     reverseTransaction: protectedProcedure
       .input(reverseTransactionSchema)
       .mutation(async ({ ctx, input }) => {
         const fn = createReverseTransaction(ctx.db as unknown as PrismaClient);
-        return fn(input);
+        return fn({ ...input, createdById: ctx.userId });
       }),
 
     listTransactions: protectedProcedure

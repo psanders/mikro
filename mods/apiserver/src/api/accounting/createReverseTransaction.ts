@@ -3,8 +3,8 @@
  */
 import {
   withErrorHandlingAndValidation,
-  reverseTransactionSchema,
-  type ReverseTransactionInput,
+  reverseTransactionInternalSchema,
+  type ReverseTransactionInternalInput,
   type AccountingTransactionWithRelations
 } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
@@ -14,7 +14,7 @@ import { toTransactionWithRelations } from "./mappers.js";
 
 export function createReverseTransaction(client: PrismaClient) {
   const fn = async (
-    params: ReverseTransactionInput
+    params: ReverseTransactionInternalInput
   ): Promise<AccountingTransactionWithRelations> => {
     logger.verbose("reversing accounting transaction", { id: params.id });
 
@@ -91,5 +91,5 @@ export function createReverseTransaction(client: PrismaClient) {
     return toTransactionWithRelations(reversal);
   };
 
-  return withErrorHandlingAndValidation(fn, reverseTransactionSchema);
+  return withErrorHandlingAndValidation(fn, reverseTransactionInternalSchema);
 }

@@ -3,8 +3,8 @@
  */
 import {
   withErrorHandlingAndValidation,
-  createTransactionSchema,
-  type CreateTransactionInput,
+  createTransactionInternalSchema,
+  type CreateTransactionInternalInput,
   type AccountingTransactionWithRelations
 } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
@@ -15,7 +15,7 @@ import { toTransactionWithRelations } from "./mappers.js";
 
 export function createCreateTransaction(client: PrismaClient) {
   const fn = async (
-    params: CreateTransactionInput
+    params: CreateTransactionInternalInput
   ): Promise<AccountingTransactionWithRelations> => {
     logger.verbose("creating accounting transaction", {
       type: params.type,
@@ -133,5 +133,5 @@ export function createCreateTransaction(client: PrismaClient) {
     return toTransactionWithRelations(created);
   };
 
-  return withErrorHandlingAndValidation(fn, createTransactionSchema);
+  return withErrorHandlingAndValidation(fn, createTransactionInternalSchema);
 }

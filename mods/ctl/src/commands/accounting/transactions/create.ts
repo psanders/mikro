@@ -13,8 +13,7 @@ import {
   promptDateIfMissing,
   promptNumberIfMissing,
   promptSelectIfMissing,
-  promptTextIfMissing,
-  promptUserSelectIfMissing
+  promptTextIfMissing
 } from "../../../lib/prompts.js";
 
 type TransactionType = "DEPOSIT" | "WITHDRAWAL" | "EXPENSE" | "INCOME" | "TRANSFER";
@@ -59,7 +58,6 @@ export default class Create extends BaseCommand<typeof Create> {
       description: "Category ID (only for EXPENSE or INCOME)",
       required: false
     }),
-    "user-id": Flags.string({ description: "Your user UUID (who is recording)", required: false }),
     attach: Flags.string({
       description: "Path to a receipt image/PDF to attach (repeatable)",
       multiple: true,
@@ -146,13 +144,6 @@ export default class Create extends BaseCommand<typeof Create> {
             : undefined
         : flags.vendor;
 
-    const createdById = await promptUserSelectIfMissing(
-      client,
-      flags["user-id"],
-      "Your user (who is recording this)",
-      "user-id"
-    );
-
     const attachmentPaths = flags.attach ?? [];
     const attachments = attachmentPaths.map((p) => this.readAttachment(p));
 
@@ -180,7 +171,6 @@ export default class Create extends BaseCommand<typeof Create> {
         ...(vendor ? { vendor } : {}),
         ...(flags.reference ? { reference: flags.reference } : {}),
         ...(categoryId ? { categoryId } : {}),
-        createdById,
         ...(attachments.length > 0 ? { attachments } : {})
       });
 
