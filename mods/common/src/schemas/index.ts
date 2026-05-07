@@ -150,13 +150,15 @@ export {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateCollectionsAuditReportSchema,
+  generateAccountingReportSchema,
   collectionAttemptTypeEnum,
   collectionAttemptStatusEnum,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
-  type GenerateCollectionsAuditReportInput
+  type GenerateCollectionsAuditReportInput,
+  type GenerateAccountingReportInput
 } from "./report.js";
 
 export {

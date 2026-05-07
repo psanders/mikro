@@ -8,3 +8,4 @@ export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.j
 export { createGenerateRenewalCandidatesReport } from "./createGenerateRenewalCandidatesReport.js";
 export { createGetCollectionsAuditReport } from "./createGetCollectionsAuditReport.js";
 export { createGenerateCollectionsAuditReport } from "./createGenerateCollectionsAuditReport.js";
+export { createGenerateAccountingReport } from "./createGenerateAccountingReport.js";

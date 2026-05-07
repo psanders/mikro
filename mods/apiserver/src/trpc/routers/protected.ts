@@ -46,6 +46,7 @@ import {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateCollectionsAuditReportSchema,
+  generateAccountingReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
   listLoanNotesByLoanSchema,
@@ -100,6 +101,7 @@ import { createGenerateDefaultedReport } from "../../api/reports/createGenerateD
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 import { createGetCollectionsAuditReport } from "../../api/reports/createGetCollectionsAuditReport.js";
 import { createGenerateCollectionsAuditReport } from "../../api/reports/createGenerateCollectionsAuditReport.js";
+import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -722,6 +724,13 @@ export const protectedRouter = router({
       .input(getTransactionAttachmentSchema)
       .query(async ({ ctx, input }) => {
         const fn = createGetTransactionAttachment(ctx.db as unknown as PrismaClient);
+        return fn(input);
+      }),
+
+    generateAccountingReport: protectedProcedure
+      .input(generateAccountingReportSchema)
+      .mutation(async ({ ctx, input }) => {
+        const fn = createGenerateAccountingReport(ctx.db as unknown as PrismaClient);
         return fn(input);
       })
   })

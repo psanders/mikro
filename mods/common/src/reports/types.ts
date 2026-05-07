@@ -47,6 +47,39 @@ export interface ReportNarrative {
   recommendation: string;
 }
 
+// ---------------------------------------------------------------------------
+// Accounting snapshot report
+// ---------------------------------------------------------------------------
+
+export interface AccountingReportAccount {
+  name: string;
+  kind: string;
+  currency: string;
+  currentBalance: number;
+}
+
+export interface AccountingReportTransaction {
+  occurredAt: string;
+  type: string;
+  accountName: string;
+  categoryName: string | null;
+  vendor: string | null;
+  description: string | null;
+  amount: number;
+}
+
+export interface AccountingReportData {
+  period: { startDate: string; endDate: string };
+  accounts: AccountingReportAccount[];
+  transactions: AccountingReportTransaction[];
+  totals: {
+    totalIncome: number;
+    totalExpenses: number;
+    netFlow: number;
+    combinedBalance: number;
+  };
+}
+
 /** One row in the daily collections audit report (one per CollectionAttempt). */
 export interface CollectionsAuditRow {
   sentAt: string;

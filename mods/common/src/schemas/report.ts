@@ -70,3 +70,14 @@ export const generateCollectionsAuditReportSchema = z.object({
 export type GenerateCollectionsAuditReportInput = z.infer<
   typeof generateCollectionsAuditReportSchema
 >;
+
+/**
+ * Schema for generating the accounting snapshot report.
+ * Optional date range; defaults to month-to-date on the server.
+ */
+export const generateAccountingReportSchema = z.object({
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional()
+});
+
+export type GenerateAccountingReportInput = z.infer<typeof generateAccountingReportSchema>;

@@ -221,11 +221,13 @@ export {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateCollectionsAuditReportSchema,
+  generateAccountingReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateCollectionsAuditReportInput,
+  type GenerateAccountingReportInput,
   // Collection schemas
   runCollectionsSchema,
   runSingleCollectionSchema,
@@ -309,14 +311,21 @@ export {
   createCollectionsAuditReportLayout,
   getCollectionsAuditReportHeight,
   COLLECTIONS_AUDIT_REPORT_WIDTH,
-  renderCollectionsAuditReportToPng
+  renderCollectionsAuditReportToPng,
+  createAccountingReportLayout,
+  getAccountingReportHeight,
+  ACCOUNTING_REPORT_WIDTH,
+  renderAccountingReportToPng
 } from "./reports/index.js";
 export type {
   NoteForSummary,
   DefaultedReportRow,
   RenewalCandidateContext,
   RenewalReportRow,
-  CollectionsAuditRow
+  CollectionsAuditRow,
+  AccountingReportAccount,
+  AccountingReportTransaction,
+  AccountingReportData
 } from "./reports/index.js";
 
 // Types (entities and client)

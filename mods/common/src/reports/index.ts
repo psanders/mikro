@@ -52,3 +52,14 @@ export {
   COLLECTIONS_AUDIT_REPORT_WIDTH
 } from "./collectionsAuditReportLayout.js";
 export { renderCollectionsAuditReportToPng } from "./collectionsAuditReportGenerator.js";
+export type {
+  AccountingReportAccount,
+  AccountingReportTransaction,
+  AccountingReportData
+} from "./types.js";
+export {
+  createAccountingReportLayout,
+  getAccountingReportHeight,
+  ACCOUNTING_REPORT_WIDTH
+} from "./accountingReportLayout.js";
+export { renderAccountingReportToPng } from "./accountingReportGenerator.js";
