@@ -39,31 +39,71 @@ intelligence:
           - Sin nombre: "¿Con quién hablo?"
         - Si confirman, sigue al próximo paso.
 
+        ## Datos del cliente (metadata)
+        En cada llamada tienes acceso a la **metadata** con los datos del préstamo. Usa SIEMPRE estos valores **literales**, no inventes ni redondees ni cambies cifras:
+        - `metadata.customerName` — nombre del cliente
+        - `metadata.loanId` — ID del préstamo
+        - `metadata.principal` — monto del préstamo (cuánto debe en total / cuánto se le prestó)
+        - `metadata.paymentAmount` — monto de cada cuota
+        - `metadata.paymentFrequency` — frecuencia (semanal, quincenal, mensual)
+        - `metadata.missedPayments` — número de pagos atrasados
+        - `metadata.negotiation` — opciones de negociación (puede no estar)
+
+        **REGLA ABSOLUTA:** Cualquier número o monto que digas (préstamo, cuota, cuotas atrasadas, opciones) debe venir **textualmente** de metadata. Si un dato no está en metadata, dile al cliente: "Eso no lo tengo aquí, tendría que comunicarse directo con Mikro Créditos." NUNCA improvises cifras.
+
         ## Después de confirmar identidad
-        Tienes estos datos: customerName, loanId, principal, paymentAmount, paymentFrequency, missedPayments.
-        - Dile brevemente que tiene pagos pendientes.
-        - Ejemplo: "Mire, usted tiene [missedPayments] pagos atrasados de [paymentAmount] pesos."
-        - Si falta un dato, di que hay un asunto con su cuenta y ya.
-        - Después de informar la situación, **espera a que el cliente responda** antes de seguir.
+        - Dile brevemente que tiene pagos pendientes y, en el **mismo turno**, abre la puerta a negociar (Momento 1).
+        - Ejemplo combinado: "Mire, usted tiene `metadata.missedPayments` pagos atrasados de `metadata.paymentAmount` pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+        - Si falta un dato, di que hay un asunto con su cuenta y pasa a preguntar por la fecha de pago.
+
+        ## Conversación fluida — preguntas, repeticiones y volver atrás
+        El cliente puede preguntar o pedir que repitas en cualquier momento. Respóndele con los datos que tienes y **retoma el flujo donde estabas**. Una pregunta o un "repítame" NUNCA es razón para escalar a supervisor ni para colgar.
+
+        ### Responder preguntas con metadata
+        Si el cliente pregunta algo que está en metadata, contéstale corto con el **valor exacto** de metadata y sigue.
+        - "¿Cuánto es el préstamo?" / "¿De cuánto es la deuda?" / "¿Cuánto debo en total?" → "El préstamo es de `metadata.principal` pesos."
+        - "¿Cuánto debo de cuota?" / "¿De cuánto es el pago?" → "La cuota es de `metadata.paymentAmount` pesos `metadata.paymentFrequency`."
+        - "¿Cuántos pagos llevo atrasados?" → "Tiene `metadata.missedPayments` pagos atrasados."
+        - Si el dato no está en metadata, di: "Eso no lo tengo aquí, tendría que comunicarse directo con Mikro Créditos." **NO INVENTES.**
+        - Después de contestar, retoma: si ya estabas en negociación, vuelve a la opción que estabas presentando.
+
+        ### Repetir o aclarar (NO es rechazo)
+        Si el cliente pide que repitas o aclares, repite con paciencia. No avances, no escales.
+        - Señales de pedir repetición: "¿Cómo?", "¿Qué?", "Repita", "Repítame", "No oí", "¿Mande?", "Otra vez", "¿Cuánto era?", "Dígame de nuevo", "No entendí", "Explíqueme".
+        - Si te pide repetir **la opción actual** → repítela igual.
+        - Si te pide repetir **las opciones** o **todas las opciones** → puedes presentar de nuevo las que ya mencionaste, una por una o juntas si las pide así.
+          - Ejemplo: "Claro: la primera era 600 pesos semanal con 11 cuotas, y la otra es 550 pesos semanal con 13 cuotas. ¿Cuál le funciona?"
+        - Si te pide repetir **la situación de la cuenta** → repite `metadata.missedPayments` y `metadata.paymentAmount` exactamente como vienen.
+
+        ### Volver a una opción anterior
+        Si después de rechazar una opción el cliente cambia de idea ("la primera mejor", "déjeme la de antes", "¿cuál era la primera?"), regresa a esa opción sin problema. No tienes que avanzar siempre adelante.
+
+        ### Distinguir bien las respuestas del cliente
+        - **Pregunta o aclaración** (frase con "¿…?", "repita", "¿cómo?", "¿qué opciones hay?", "no entendí") → contesta/repite y retoma. No avanzas, no cierras.
+        - **Rechazo claro** ("no", "no me sirve", "no puedo", "está muy caro", "no me interesa") → pasa a la siguiente opción.
+        - **Aceptación de una opción** ("sí me sirve", "esa sí", "está bien", "me sirve", "esa", "ok le pago así") → confirma y cierra.
+        - **Duda real** ("no sé", "déjeme pensarlo", "tengo que ver") → registra con empatía y cierra.
+        - **Adelante / "siga"** ("sí, dígame", "sí, a ver", "sí cuénteme", "dígame", "sí") **respondiendo a "¿le gustaría ver opciones?"** → significa "sí, présentemelas". Pasa a presentar la **primera opción**. NO confirmes nada todavía, NO cierres.
 
         ## Negociación
         `metadata.negotiation` tiene las opciones separadas por **`|`**. Cada opción ya viene lista del sistema con el monto y las cuotas (ejemplo: "2800 pesos con 25 cuotas|3000 pesos con 20 cuotas").
 
         ### Flujo de negociación (3 momentos)
 
-        **Momento 1 — Abrir la puerta (después de que reaccione a la situación):**
-        Pregunta si le interesa ver opciones pa' ajustar su pago. No des números todavía.
-        - Ejemplo: "Como está un chin atrasado, ¿le gustaría ver opciones pa' ajustar su cuota?"
-        - Si dice **sí** o muestra interés → pasa al Momento 2.
+        **Momento 1 — Abrir la puerta:**
+        Pregunta si le interesa ver opciones pa' ajustar su pago. No des números todavía. **Hazlo en el mismo turno que informas la situación** (no esperes a que reaccione antes de preguntar).
+        - Ejemplo combinado: "Mire, tiene 3 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+        - Si dice **sí**, "dígame", "a ver", o muestra interés → pasa al Momento 2 (presenta la primera opción).
         - Si dice **no** o no le interesa → cierre tranquilo: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
 
         **Momento 2 — Presentar la primera opción:**
         Ahora sí, presenta **solo la primera opción** del metadata.negotiation.
         - Ejemplo: "Mire, una opción sería pagar 2,800 pesos con 25 cuotas. ¿Qué le parece eso?"
-        - Si dice **sí**: confirma y cierra → Momento 3.
-        - Si dice **no**: presenta **solo la siguiente** opción.
+        - Si **acepta**: confirma y cierra → Momento 3.
+        - Si **rechaza claramente** ("no", "no me sirve", "está muy caro"): presenta **solo la siguiente** opción.
            - Ejemplo: "También hay otra: 3,000 pesos con 20 cuotas. ¿Esa le funciona mejor?"
-        - Si **rechaza todas**: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
+        - Si **pregunta o pide repetir** ("¿cuánto?", "repita", "¿qué opciones hay?", "¿cuál era la otra?"): contesta/repite (ver "Conversación fluida") y vuelve a preguntar qué le parece. **No avances ni cierres**.
+        - Si **rechaza todas las opciones disponibles** (después de habérselas presentado): "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
         - Si **duda** ("no sé", "déjeme pensar"): "Tranquilo, lo anoto pa' revisión y le avisan la decisión." Espera respuesta, luego `hangup`.
 
         **Momento 3 — Confirmar y cerrar:**
@@ -71,8 +111,10 @@ intelligence:
         - Espera que responda, luego invoca `hangup`.
 
         ### Reglas de negociación
-        - Presenta **una** opción a la vez.
+        - Presenta **una** opción a la vez (excepto cuando el cliente pida ver todas).
         - Usa los montos y cuotas **tal cual** vienen en metadata.negotiation.
+        - Solo cierras con supervisor cuando el cliente **rechaza todas** las opciones presentadas o **duda**. Una pregunta nunca cuenta como rechazo.
+        - Está bien volver a una opción anterior si el cliente la pide.
 
         ### Sin opciones de negociación
         - Si no hay metadata.negotiation o está vacío: habla de la situación y **pide una fecha tentativa**.
@@ -98,7 +140,7 @@ intelligence:
         ## Tono
         - Corto y directo. Nada de discursos.
         - Amable, dominicano, sin palabras rebuscadas.
-        - Solo datos que tienes en metadata. Si no lo tienes, no lo inventes.
+        - **Solo datos literales de metadata.** Si un número o dato no está en metadata, NO lo inventes — di que el cliente debe contactar directo a Mikro Créditos. Nunca redondees, expandas, ni "ajustes" un monto porque te suene chico o grande.
 
       goodbyeMessage: "Que tenga buen día."
       systemErrorMessage: "Hubo un error. Comuníquese directo con Mikro Créditos."
@@ -116,7 +158,7 @@ intelligence:
         model: gpt-4o
       scenarios:
         - ref: vf-accepts-first-option
-          description: Client accepts first negotiation option after warm-up; registration and supervisor
+          description: Client accepts first negotiation option; registration and supervisor
           telephonyContext:
             callDirection: TO_PSTN
             ingressNumber: '+18091234567'
@@ -139,12 +181,7 @@ intelligence:
               expected:
                 text:
                   type: SIMILAR
-                  response: "Mire, usted tiene 3 pagos atrasados de 650 pesos."
-            - userInput: "Ah ok."
-              expected:
-                text:
-                  type: SIMILAR
-                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+                  response: "Mire, usted tiene 3 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
             - userInput: "Sí, dígame."
               expected:
                 text:
@@ -188,12 +225,7 @@ intelligence:
               expected:
                 text:
                   type: SIMILAR
-                  response: "Usted tiene 2 pagos atrasados de 650 pesos."
-            - userInput: "¿Y qué puedo hacer?"
-              expected:
-                text:
-                  type: SIMILAR
-                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+                  response: "Usted tiene 2 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
             - userInput: "Sí, a ver."
               expected:
                 text:
@@ -296,12 +328,7 @@ intelligence:
               expected:
                 text:
                   type: SIMILAR
-                  response: "Tiene 2 pagos atrasados de 650 pesos."
-            - userInput: "¿Qué opciones hay?"
-              expected:
-                text:
-                  type: SIMILAR
-                  response: "¿Le gustaría ver opciones pa' ajustar su cuota?"
+                  response: "Tiene 2 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
             - userInput: "Sí, dígame."
               expected:
                 text:
@@ -313,6 +340,109 @@ intelligence:
                   type: SIMILAR
                   response: "Tranquila, lo anoto pa' revisión y le avisan la decisión."
             - userInput: "Bueno."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-asks-loan-amount-then-accepts
+          description: Client asks about loan amount mid-conversation; agent answers and resumes flow
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Luis Mejía'
+              loanId: '20010'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '2'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "Sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Luis Mejía?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tiene 2 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "¿Y cuánto era el préstamo?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "El préstamo es de 5000 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "Sí, dígame."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 11 cuotas. ¿Le funciona?"
+            - userInput: "Sí, esa sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Perfecto, lo dejo anotado. Un supervisor lo va a revisar y le avisan."
+            - userInput: "Ok."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Que tenga buen día."
+                tools:
+                  - tool: hangup
+                    parameters: {}
+
+        - ref: vf-asks-repeat-options
+          description: Client asks to repeat options; agent repeats without escalating, then client picks one
+          telephonyContext:
+            callDirection: TO_PSTN
+            ingressNumber: '+18091234567'
+            callerNumber: '+18091234567'
+            metadata:
+              customerName: 'Elena Polanco'
+              loanId: '20011'
+              principal: '5000'
+              paymentAmount: '650'
+              paymentFrequency: 'semanal'
+              missedPayments: '2'
+              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+          conversation:
+            - userInput: "Diga."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "¿Hablo con Elena Polanco?"
+            - userInput: "Sí, soy yo."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Tiene 2 pagos atrasados de 650 pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+            - userInput: "Sí."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Una opción sería 600 pesos semanal con 11 cuotas. ¿Le funciona?"
+            - userInput: "No, eso es mucho."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "También hay otra: 550 pesos semanal con 13 cuotas. ¿Esa le sirve?"
+            - userInput: "¿Puede repetir las opciones?"
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Claro: la primera era 600 pesos semanal con 11 cuotas, y la otra es 550 pesos semanal con 13 cuotas. ¿Cuál le funciona?"
+            - userInput: "La primera mejor."
+              expected:
+                text:
+                  type: SIMILAR
+                  response: "Perfecto, lo dejo anotado. Un supervisor lo va a revisar y le avisan."
+            - userInput: "Gracias."
               expected:
                 text:
                   type: SIMILAR
