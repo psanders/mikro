@@ -35,6 +35,13 @@ and history. It does **not** split each installment into separate principal and
 interest lines in the database; the economics of the deal are captured in the
 chosen schedule as a whole.
 
+**Past-due fees (mora):** collected mora is stored as separate `Payment` rows of
+kind `LATE_FEE`, optionally created together with an `INSTALLMENT` row for the
+same cash-in. These loan payments are **not** bridged automatically into
+`AccountingTransaction` or any bank/cash account; teams that want ledger alignment
+continue to record deposits and movements in the accounting module by hand (or
+via future automation).
+
 ## Interest
 
 Interest is part of **how a loan is priced**, not a separate running sub-ledger

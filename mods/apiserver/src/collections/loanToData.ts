@@ -10,15 +10,19 @@ export function loanToData(
     paymentFrequency: string;
     createdAt: Date;
     startingDate?: Date | null;
-    payments: Array<{ paidAt: Date }>;
+    payments: Array<{ paidAt: Date; status?: string; kind?: string }>;
   },
   preferredPaymentDay?: string | null
 ): LoanPaymentData {
+  const installmentPayments = loan.payments.filter((p) => !p.kind || p.kind === "INSTALLMENT");
   return {
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
     startingDate: loan.startingDate ?? undefined,
-    payments: loan.payments.map((p) => ({ paidAt: p.paidAt })),
+    payments: installmentPayments.map((p) => ({
+      paidAt: p.paidAt,
+      ...(p.status !== undefined ? { status: p.status } : {})
+    })),
     preferredPaymentDay: preferredPaymentDay ?? undefined
   };
 }

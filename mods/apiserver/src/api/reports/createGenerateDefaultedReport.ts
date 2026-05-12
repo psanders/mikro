@@ -94,7 +94,13 @@ export function createGenerateDefaultedReport(client: DbClient) {
       typeof v === "number" ? v : ((v as { toNumber: () => number }).toNumber?.() ?? Number(v));
 
     const rows: DefaultedReportRow[] = allLoans.map((loan, i) => {
-      const totalPaid = loan.payments.reduce(
+      const installmentRows = loan.payments.filter((p) => !p.kind || p.kind === "INSTALLMENT");
+      const moraRows = loan.payments.filter((p) => p.kind === "LATE_FEE");
+      const totalPaid = installmentRows.reduce(
+        (sum, p) => sum + principalDecimalToNumber(p.amount),
+        0
+      );
+      const moraCollected = moraRows.reduce(
         (sum, p) => sum + principalDecimalToNumber(p.amount),
         0
       );
@@ -106,6 +112,7 @@ export function createGenerateDefaultedReport(client: DbClient) {
         nickname: loan.nickname ?? "",
         paymentFrequency: loan.paymentFrequency,
         totalPaid,
+        moraCollected,
         summary: summaries[i] ?? "Sin notas",
         isDefaulted
       };

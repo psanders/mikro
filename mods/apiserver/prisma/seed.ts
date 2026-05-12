@@ -510,6 +510,7 @@ async function main() {
           paidAt,
           method,
           status,
+          kind: "INSTALLMENT",
           notes: p === 0 ? "First payment" : null,
           loanId: loan.id,
           collectedById: collector.id

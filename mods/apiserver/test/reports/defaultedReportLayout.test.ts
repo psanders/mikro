@@ -19,6 +19,7 @@ function sampleRow(
     nickname: "Jane",
     paymentFrequency: "WEEKLY",
     totalPaid: 1300,
+    moraCollected: 0,
     summary: "Sin notas",
     isDefaulted: true,
     ...overrides

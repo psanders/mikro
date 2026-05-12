@@ -16,6 +16,12 @@ import {
 describe("Payments Integration", () => {
   let db: TestDb;
   let caller: AuthenticatedCaller;
+  /** Monotonic suffix so user phones stay unique even within the same millisecond. */
+  let phoneSeq = 0;
+  const uniqueNanpPhone = () => {
+    phoneSeq += 1;
+    return `+1809${String(10_000_000 + phoneSeq).slice(1)}`;
+  };
 
   before(async () => {
     db = createTestDb();
@@ -44,16 +50,18 @@ describe("Payments Integration", () => {
   async function createCustomerWithLoan(options?: {
     referredById?: string;
     customerName?: string;
+    /** Anchor schedule in the past so mora / missed cycles tests are deterministic. */
+    startingDate?: Date;
   }) {
     const collector = await caller.createUser({
       name: "Test Collector",
-      phone: `+1809123458${String(Date.now()).slice(-2)}`,
+      phone: uniqueNanpPhone(),
       role: "COLLECTOR"
     });
 
     const customer = await caller.createCustomer({
       name: options?.customerName ?? "Payment Test Customer",
-      phone: "+18091234591",
+      phone: uniqueNanpPhone(),
       idNumber: `001-${String(Date.now()).slice(-7)}-9`,
       collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
@@ -62,7 +70,7 @@ describe("Payments Integration", () => {
         (
           await caller.createUser({
             name: "Test Referrer",
-            phone: `+1809123458${String(Date.now() + 1).slice(-2)}`,
+            phone: uniqueNanpPhone(),
             role: "REFERRER"
           })
         ).id,
@@ -74,21 +82,42 @@ describe("Payments Integration", () => {
       principal: 5000,
       termLength: 10,
       paymentAmount: 650,
-      paymentFrequency: "WEEKLY"
+      paymentFrequency: "WEEKLY",
+      ...(options?.startingDate != null ? { startingDate: options.startingDate } : {})
     });
 
     return { customer, loan, collector };
+  }
+
+  /** Installment row from createPayment split response. */
+  function installmentOf(r: {
+    installment: {
+      id: string;
+      loanId?: string;
+      amount: unknown;
+      status?: string;
+      method?: string;
+      notes?: string | null;
+      paidAt?: Date;
+      collectedById?: string;
+    } | null;
+    lateFee: unknown;
+  }) {
+    expect(r.installment, "installment row").to.not.equal(null);
+    return r.installment!;
   }
 
   describe("createPayment", () => {
     it("should create a payment with required fields", async () => {
       const { loan, collector } = await createCustomerWithLoan();
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          collectedById: collector.id
+        })
+      );
 
       expect(payment.id).to.be.a("string");
       expect(payment.loanId).to.equal(loan.id); // Payment stores UUID
@@ -100,12 +129,14 @@ describe("Payments Integration", () => {
     it("should create a payment with CASH method", async () => {
       const { loan, collector } = await createCustomerWithLoan();
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        method: "CASH",
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          method: "CASH",
+          collectedById: collector.id
+        })
+      );
 
       expect(payment.method).to.equal("CASH");
     });
@@ -113,12 +144,14 @@ describe("Payments Integration", () => {
     it("should create a payment with TRANSFER method", async () => {
       const { loan, collector } = await createCustomerWithLoan();
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        method: "TRANSFER",
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          method: "TRANSFER",
+          collectedById: collector.id
+        })
+      );
 
       expect(payment.method).to.equal("TRANSFER");
     });
@@ -127,12 +160,14 @@ describe("Payments Integration", () => {
       const { loan, collector } = await createCustomerWithLoan();
       const customDate = new Date("2026-01-15T10:00:00Z");
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: customDate,
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          paidAt: customDate,
+          collectedById: collector.id
+        })
+      );
 
       const paidAt = new Date(payment.paidAt);
       expect(paidAt.toISOString()).to.equal(customDate.toISOString());
@@ -146,11 +181,13 @@ describe("Payments Integration", () => {
       });
       const { loan } = await createCustomerWithLoan();
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          collectedById: collector.id
+        })
+      );
 
       expect(payment.collectedById).to.equal(collector.id);
     });
@@ -158,12 +195,14 @@ describe("Payments Integration", () => {
     it("should create a payment with notes", async () => {
       const { loan, collector } = await createCustomerWithLoan();
 
-      const payment = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        notes: "Partial payment for week 3",
-        collectedById: collector.id
-      });
+      const payment = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          notes: "Partial payment for week 3",
+          collectedById: collector.id
+        })
+      );
 
       expect(payment.notes).to.equal("Partial payment for week 3");
     });
@@ -194,12 +233,14 @@ describe("Payments Integration", () => {
       const { loan, collector } = await createCustomerWithLoan();
 
       // Create first payment with backdated paidAt
-      const payment1 = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-10T10:00:00Z"),
-        collectedById: collector.id
-      });
+      const payment1 = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          paidAt: new Date("2026-01-10T10:00:00Z"),
+          collectedById: collector.id
+        })
+      );
 
       // Manually update createdAt to be more than 10 minutes ago
       // This simulates payments created at different times
@@ -211,14 +252,89 @@ describe("Payments Integration", () => {
       });
 
       // Now create second payment - should succeed
-      const payment2 = await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-10T10:15:00Z"),
+      const payment2 = installmentOf(
+        await caller.createPayment({
+          loanId: loan.loanId, // Use numeric loanId
+          amount: 650,
+          paidAt: new Date("2026-01-10T10:15:00Z"),
+          collectedById: collector.id
+        })
+      );
+
+      expect(payment1.id).to.not.equal(payment2.id);
+    });
+
+    it("should split mora-first into LATE_FEE and INSTALLMENT when arrears exist", async () => {
+      const { loan, collector } = await createCustomerWithLoan({
+        startingDate: new Date("2020-01-06T12:00:00Z")
+      });
+      const paidAt = new Date("2020-02-10T12:00:00Z");
+
+      const preview = await caller.previewLateFee({ loanId: loan.loanId, asOf: paidAt });
+      expect(preview.accruedMora).to.be.greaterThan(0);
+
+      const totalIn = preview.cuota + preview.accruedMora;
+      const res = await caller.createPayment({
+        loanId: loan.loanId,
+        amount: totalIn,
+        paidAt,
         collectedById: collector.id
       });
 
-      expect(payment1.id).to.not.equal(payment2.id);
+      expect(res.lateFee).to.not.equal(null);
+      expect(res.installment).to.not.equal(null);
+      expect(Number(res.lateFee!.amount)).to.be.closeTo(preview.accruedMora, 0.02);
+      expect(Number(res.installment!.amount)).to.equal(preview.cuota);
+      expect(res.installment!.linkedPaymentId).to.equal(res.lateFee!.id);
+
+      const rows = await db.payment.findMany({ where: { loanId: loan.id } });
+      expect(rows).to.have.length(2);
+      expect(rows.map((r) => r.kind).sort()).to.deep.equal(["INSTALLMENT", "LATE_FEE"].sort());
+    });
+
+    it("should reverse INSTALLMENT and paired LATE_FEE together", async () => {
+      const { loan, collector } = await createCustomerWithLoan({
+        startingDate: new Date("2020-01-06T12:00:00Z")
+      });
+      const paidAt = new Date("2020-02-10T12:00:00Z");
+      const preview = await caller.previewLateFee({ loanId: loan.loanId, asOf: paidAt });
+      const res = await caller.createPayment({
+        loanId: loan.loanId,
+        amount: preview.cuota + preview.accruedMora,
+        paidAt,
+        collectedById: collector.id
+      });
+
+      await caller.reversePayment({ id: res.installment!.id });
+
+      const rows = await db.payment.findMany({ where: { loanId: loan.id } });
+      expect(rows).to.have.length(2);
+      expect(rows.every((r) => r.status === "REVERSED")).to.equal(true);
+    });
+
+    it("should allow a mora-only payment soon after an installment without duplicate guard", async () => {
+      const { loan, collector } = await createCustomerWithLoan({
+        startingDate: new Date("2020-01-06T12:00:00Z")
+      });
+      const paidAt = new Date("2020-02-10T12:00:00Z");
+      const preview = await caller.previewLateFee({ loanId: loan.loanId, asOf: paidAt });
+
+      await caller.createPayment({
+        loanId: loan.loanId,
+        amount: preview.cuota + preview.accruedMora,
+        paidAt,
+        collectedById: collector.id
+      });
+
+      const moraOnly = await caller.createPayment({
+        loanId: loan.loanId,
+        amount: 25,
+        kind: "LATE_FEE",
+        collectedById: collector.id
+      });
+      expect(moraOnly.installment).to.equal(null);
+      expect(moraOnly.lateFee).to.not.equal(null);
+      expect(Number(moraOnly.lateFee!.amount)).to.equal(25);
     });
   });
 

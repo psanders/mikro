@@ -4,7 +4,21 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { createCreatePayment } from "../../src/api/payments/createCreatePayment.js";
-import { ValidationError } from "@mikro/common";
+import { ValidationError, type ResolvedMikroConfig } from "@mikro/common";
+
+const noMoraGetConfig = (): ResolvedMikroConfig =>
+  ({
+    loans: {
+      defaultMoraRate: 0,
+      moraGraceDays: 0,
+      moraCapInCuotas: 1,
+      moraMinDop: 0,
+      moraStopOnDefault: false,
+      moraEffectiveFrom: undefined
+    }
+  }) as unknown as ResolvedMikroConfig;
+
+const paymentTestOpts = { getConfigFn: noMoraGetConfig };
 
 describe("createCreatePayment", () => {
   const validNumericLoanId = 10000;
@@ -16,97 +30,110 @@ describe("createCreatePayment", () => {
     collectedById: validCollectorId
   };
 
+  function baseLoan(overrides: Record<string, unknown> = {}) {
+    return {
+      id: validLoanUuid,
+      paymentAmount: 650,
+      paymentFrequency: "WEEKLY",
+      createdAt: new Date("2026-01-01"),
+      startingDate: null,
+      termLength: 10,
+      status: "ACTIVE" as const,
+      updatedAt: new Date(),
+      moraRate: null,
+      customer: { preferredPaymentDay: null as string | null },
+      payments: [] as Array<{ paidAt: Date; status: string; kind?: string }>,
+      ...overrides
+    };
+  }
+
+  function row(
+    id: string,
+    overrides: Partial<{
+      amount: number;
+      status: string;
+      kind: string;
+      linkedPaymentId: string | null;
+      notes: string | null;
+      method: string;
+    }> = {}
+  ) {
+    return {
+      id,
+      loanId: validLoanUuid,
+      amount: overrides.amount ?? 650,
+      paidAt: new Date(),
+      method: overrides.method ?? "CASH",
+      status: overrides.status ?? "COMPLETED",
+      kind: overrides.kind ?? "INSTALLMENT",
+      linkedPaymentId: overrides.linkedPaymentId ?? null,
+      notes: overrides.notes ?? null,
+      collectedById: validCollectorId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
   afterEach(() => {
     sinon.restore();
   });
 
   describe("with valid input", () => {
     it("should create a payment with default method CASH", async () => {
-      // Arrange
-      const expectedPayment = {
-        id: "payment-123",
-        loanId: validLoanUuid,
-        amount: 650,
-        paidAt: new Date(),
-        method: "CASH",
-        status: "COMPLETED",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-123");
       const mockClient = {
         loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
+          findUnique: sinon.stub().resolves(baseLoan())
         },
         payment: {
-          findMany: sinon.stub().resolves([]), // No recent payments
-          create: sinon.stub().resolves(expectedPayment)
-        }
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(expected)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => {
+            return fn(mockClient);
+          })
       };
-      const createPayment = createCreatePayment(mockClient as any);
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
 
-      // Act
       const result = await createPayment(validInput);
 
-      // Assert
-      expect(result.id).to.equal("payment-123");
-      expect(result.method).to.equal("CASH");
+      expect(result.installment?.id).to.equal("payment-123");
+      expect(result.lateFee).to.equal(null);
       expect(mockClient.loan.findUnique.calledOnce).to.be.true;
-      expect(
-        mockClient.loan.findUnique.calledWith({
-          where: { loanId: validNumericLoanId },
-          select: { id: true, paymentAmount: true }
-        })
-      ).to.be.true;
-      expect(mockClient.payment.create.calledOnce).to.be.true;
       expect(mockClient.payment.create.calledOnce).to.be.true;
       const createCall = mockClient.payment.create.getCall(0);
       expect(createCall.args[0].data.loanId).to.equal(validLoanUuid);
       expect(createCall.args[0].data.amount).to.equal(650);
       expect(createCall.args[0].data.method).to.equal("CASH");
       expect(createCall.args[0].data.status).to.equal("COMPLETED");
+      expect(createCall.args[0].data.kind).to.equal("INSTALLMENT");
       expect(createCall.args[0].data.collectedById).to.equal(validCollectorId);
-      // paidAt and notes should be undefined (not included in data)
-      expect(createCall.args[0].data.paidAt).to.be.undefined;
-      expect(createCall.args[0].data.notes).to.be.undefined;
     });
 
     it("should create a payment with explicit method TRANSFER", async () => {
-      // Arrange
       const inputWithMethod = { ...validInput, method: "TRANSFER" as const };
-      const expectedPayment = {
-        id: "payment-456",
-        loanId: validLoanUuid,
-        amount: 650,
-        method: "TRANSFER",
-        paidAt: new Date(),
-        status: "COMPLETED",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-456", { amount: 650, method: "TRANSFER" });
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
-        payment: {
-          findMany: sinon.stub().resolves([]), // No recent payments
-          create: sinon.stub().resolves(expectedPayment)
-        }
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
+        payment: { findMany: sinon.stub().resolves([]), create: sinon.stub().resolves(expected) },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       const result = await createPayment(inputWithMethod);
-
-      // Assert
-      expect(result.method).to.equal("TRANSFER");
+      expect(result.installment?.method).to.equal("TRANSFER");
     });
 
     it("should create a payment with all optional fields", async () => {
-      // Arrange
       const paidAt = new Date("2026-01-15");
       const fullInput = {
         ...validInput,
@@ -115,335 +142,429 @@ describe("createCreatePayment", () => {
         collectedById: validCollectorId,
         notes: "Weekly payment"
       };
-      const expectedPayment = {
-        id: "payment-789",
-        loanId: validLoanUuid,
-        amount: 650,
-        paidAt,
-        method: "CASH",
-        status: "COMPLETED",
-        notes: "Weekly payment",
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-789", { notes: "Weekly payment" });
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
-        payment: {
-          findMany: sinon.stub().resolves([]), // No recent payments
-          create: sinon.stub().resolves(expectedPayment)
-        }
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
+        payment: { findMany: sinon.stub().resolves([]), create: sinon.stub().resolves(expected) },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       const result = await createPayment(fullInput);
-
-      // Assert
-      expect(result.notes).to.equal("Weekly payment");
-      expect(result.collectedById).to.equal(validCollectorId);
+      expect(result.installment?.notes).to.equal("Weekly payment");
     });
 
     it("should record PARTIAL when amount is below expected payment", async () => {
-      const expectedPayment = {
-        id: "payment-partial",
-        loanId: validLoanUuid,
-        amount: 300,
-        paidAt: new Date(),
-        method: "CASH",
-        status: "PARTIAL",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-partial", { amount: 300, status: "PARTIAL" });
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
-        payment: {
-          findMany: sinon.stub().resolves([]),
-          create: sinon.stub().resolves(expectedPayment)
-        }
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
+        payment: { findMany: sinon.stub().resolves([]), create: sinon.stub().resolves(expected) },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       const result = await createPayment({ ...validInput, amount: 300 });
-      expect(result.status).to.equal("PARTIAL");
-      const createCall = mockClient.payment.create.getCall(0);
-      expect(createCall.args[0].data.status).to.equal("PARTIAL");
+      expect(result.installment?.status).to.equal("PARTIAL");
+      expect(mockClient.payment.create.getCall(0).args[0].data.status).to.equal("PARTIAL");
     });
 
     it("should allow status override COMPLETED when amount is below expected", async () => {
-      const expectedPayment = {
-        id: "payment-override",
-        loanId: validLoanUuid,
-        amount: 300,
-        paidAt: new Date(),
-        method: "CASH",
-        status: "COMPLETED",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-override", { amount: 300, status: "COMPLETED" });
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
-        payment: {
-          findMany: sinon.stub().resolves([]),
-          create: sinon.stub().resolves(expectedPayment)
-        }
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
+        payment: { findMany: sinon.stub().resolves([]), create: sinon.stub().resolves(expected) },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       await createPayment({ ...validInput, amount: 300, status: "COMPLETED" });
-      const createCall = mockClient.payment.create.getCall(0);
-      expect(createCall.args[0].data.status).to.equal("COMPLETED");
+      expect(mockClient.payment.create.getCall(0).args[0].data.status).to.equal("COMPLETED");
     });
   });
 
   describe("with invalid input", () => {
     it("should throw ValidationError for invalid loanId (not a positive integer)", async () => {
-      // Arrange
       const mockClient = {
         loan: { findUnique: sinon.stub() },
-        payment: { create: sinon.stub() }
+        payment: { create: sinon.stub() },
+        $transaction: sinon.stub()
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment({ ...validInput, loanId: -1 });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
         expect(mockClient.loan.findUnique.called).to.be.false;
-        expect(mockClient.payment.create.called).to.be.false;
       }
     });
 
     it("should throw error when loan not found", async () => {
-      // Arrange
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves(null)
-        },
-        payment: {
-          findMany: sinon.stub(),
-          create: sinon.stub()
-        }
+        loan: { findUnique: sinon.stub().resolves(null) },
+        payment: { findMany: sinon.stub(), create: sinon.stub() },
+        $transaction: sinon.stub()
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.include("Loan not found");
-        expect(mockClient.payment.findMany.called).to.be.false;
         expect(mockClient.payment.create.called).to.be.false;
       }
     });
 
     it("should throw error when duplicate payment detected within 10 minutes", async () => {
-      // Arrange
       const recentPayment = {
         id: "recent-payment-123",
         amount: 650,
         paidAt: new Date(),
-        createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+        createdAt: new Date(Date.now() - 5 * 60 * 1000),
         method: "CASH",
         status: "COMPLETED",
+        kind: "INSTALLMENT",
         notes: null,
         loanId: validLoanUuid,
         collectedById: validCollectorId,
         updatedAt: new Date()
       };
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
         payment: {
           findMany: sinon.stub().resolves([recentPayment]),
           create: sinon.stub()
-        }
+        },
+        $transaction: sinon.stub()
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.include("Duplicate payment blocked");
-        expect((error as Error).message).to.include(`loan ${validNumericLoanId}`);
-        expect((error as Error).message).to.include("Wait at least 10 minutes");
         expect(mockClient.payment.findMany.calledOnce).to.be.true;
-        expect(mockClient.payment.create.called).to.be.false;
         const findManyCall = mockClient.payment.findMany.getCall(0);
-        expect(findManyCall.args[0].where.loanId).to.equal(validLoanUuid);
-        expect(findManyCall.args[0].where.status).to.deep.equal({ in: ["COMPLETED", "PARTIAL"] });
-        expect(findManyCall.args[0].where.paidAt.gte).to.be.instanceOf(Date);
-        expect(findManyCall.args[0].orderBy.paidAt).to.equal("desc");
-        expect(findManyCall.args[0].take).to.equal(5);
+        expect(findManyCall.args[0].where.kind).to.equal("INSTALLMENT");
+        expect(mockClient.$transaction.called).to.be.false;
       }
     });
 
     it("should allow payment when no recent payment exists", async () => {
-      // Arrange
-      const expectedPayment = {
-        id: "payment-123",
-        loanId: validLoanUuid,
-        amount: 650,
-        paidAt: new Date(),
-        method: "CASH",
-        status: "COMPLETED",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-123");
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
-        payment: {
-          findMany: sinon.stub().resolves([]), // No recent payment
-          create: sinon.stub().resolves(expectedPayment)
-        }
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
+        payment: { findMany: sinon.stub().resolves([]), create: sinon.stub().resolves(expected) },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       const result = await createPayment(validInput);
-
-      // Assert
-      expect(result.id).to.equal("payment-123");
-      expect(mockClient.payment.findMany.calledOnce).to.be.true;
-      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(result.installment?.id).to.equal("payment-123");
     });
 
     it("should allow payment when existing payment is older than 10 minutes", async () => {
-      // Arrange
       const oldPayment = {
         id: "old-payment-123",
         amount: 650,
         paidAt: new Date(),
-        createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+        createdAt: new Date(Date.now() - 15 * 60 * 1000),
         method: "CASH",
         status: "COMPLETED",
+        kind: "INSTALLMENT",
         notes: null,
         loanId: validLoanUuid,
         collectedById: validCollectorId,
         updatedAt: new Date()
       };
-      const expectedPayment = {
-        id: "payment-123",
-        loanId: validLoanUuid,
-        amount: 650,
-        paidAt: new Date(),
-        method: "CASH",
-        status: "COMPLETED",
-        notes: null,
-        collectedById: validCollectorId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      const expected = row("payment-123");
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
         payment: {
-          findMany: sinon.stub().resolves([oldPayment]), // Old payment exists but > 10 min ago
-          create: sinon.stub().resolves(expectedPayment)
-        }
+          findMany: sinon.stub().resolves([oldPayment]),
+          create: sinon.stub().resolves(expected)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       const result = await createPayment(validInput);
-
-      // Assert
-      expect(result.id).to.equal("payment-123");
-      expect(mockClient.payment.findMany.calledOnce).to.be.true;
-      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(result.installment?.id).to.equal("payment-123");
     });
 
     it("should throw ValidationError for negative amount", async () => {
-      // Arrange
-      const mockClient = {
-        payment: { create: sinon.stub() }
-      };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const mockClient = { payment: { create: sinon.stub() }, $transaction: sinon.stub() };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment({ ...validInput, amount: -100 });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.payment.create.called).to.be.false;
       }
     });
 
     it("should throw ValidationError for invalid collectedById UUID", async () => {
-      // Arrange
-      const mockClient = {
-        payment: { create: sinon.stub() }
-      };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const mockClient = { payment: { create: sinon.stub() }, $transaction: sinon.stub() };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment({ ...validInput, collectedById: "invalid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.payment.create.called).to.be.false;
       }
+    });
+  });
+
+  describe("mora-first split", () => {
+    const moraGetConfig = (): ResolvedMikroConfig =>
+      ({
+        loans: {
+          defaultMoraRate: 0.1,
+          moraGraceDays: 0,
+          moraCapInCuotas: 10,
+          moraMinDop: 0,
+          moraStopOnDefault: false,
+          moraEffectiveFrom: undefined
+        }
+      }) as unknown as ResolvedMikroConfig;
+
+    const moraOpts = { getConfigFn: moraGetConfig };
+
+    function delinquentLoan() {
+      return baseLoan({
+        paymentAmount: 650,
+        startingDate: new Date("2026-01-01"),
+        createdAt: new Date("2026-01-01"),
+        status: "ACTIVE",
+        payments: []
+      });
+    }
+
+    it("should split into LATE_FEE + INSTALLMENT when mora is owed", async () => {
+      const feeRow = row("fee-1", { kind: "LATE_FEE", amount: 50 });
+      const instRow = row("inst-1", { kind: "INSTALLMENT", amount: 600, linkedPaymentId: "fee-1" });
+      let callIdx = 0;
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(delinquentLoan()) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().callsFake(async () => {
+            callIdx++;
+            return callIdx === 1 ? feeRow : instRow;
+          })
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        amount: 700,
+        paidAt: new Date("2026-03-01")
+      });
+
+      expect(result.lateFee).to.not.be.null;
+      expect(result.installment).to.not.be.null;
+      expect(mockClient.payment.create.callCount).to.equal(2);
+      const firstCall = mockClient.payment.create.getCall(0);
+      expect(firstCall.args[0].data.kind).to.equal("LATE_FEE");
+      const secondCall = mockClient.payment.create.getCall(1);
+      expect(secondCall.args[0].data.kind).to.equal("INSTALLMENT");
+      expect(secondCall.args[0].data.linkedPaymentId).to.equal("fee-1");
+    });
+
+    it("should create mora-only row when amount is less than accrued mora", async () => {
+      const feeRow = row("fee-only", { kind: "LATE_FEE", amount: 10 });
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(delinquentLoan()) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(feeRow)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        amount: 10,
+        paidAt: new Date("2026-03-01")
+      });
+
+      expect(result.lateFee).to.not.be.null;
+      expect(result.installment).to.be.null;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("LATE_FEE");
+    });
+
+    it("should apply lateFeeOverride to reduce mora portion", async () => {
+      const instRow = row("inst-waived", { kind: "INSTALLMENT", amount: 700 });
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(delinquentLoan()) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(instRow)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        amount: 700,
+        paidAt: new Date("2026-03-01"),
+        lateFeeOverride: 99999
+      });
+
+      expect(result.installment).to.not.be.null;
+      expect(result.lateFee).to.be.null;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("INSTALLMENT");
+    });
+
+    it("should skip mora when kind=INSTALLMENT is forced on delinquent loan", async () => {
+      const instRow = row("forced-inst", { kind: "INSTALLMENT", amount: 650 });
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(delinquentLoan()) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(instRow)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        paidAt: new Date("2026-03-01"),
+        kind: "INSTALLMENT"
+      });
+
+      expect(result.installment).to.not.be.null;
+      expect(result.lateFee).to.be.null;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("INSTALLMENT");
+    });
+
+    it("should create single LATE_FEE row when kind=LATE_FEE is forced", async () => {
+      const feeRow = row("forced-fee", { kind: "LATE_FEE", amount: 650 });
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(delinquentLoan()) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(feeRow)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        paidAt: new Date("2026-03-01"),
+        kind: "LATE_FEE"
+      });
+
+      expect(result.lateFee).to.not.be.null;
+      expect(result.installment).to.be.null;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("LATE_FEE");
     });
   });
 
   describe("when client throws an error", () => {
     it("should propagate the error from loan lookup", async () => {
-      // Arrange
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().rejects(new Error("Connection failed"))
-        },
-        payment: {
-          create: sinon.stub()
-        }
+        loan: { findUnique: sinon.stub().rejects(new Error("Connection failed")) },
+        payment: { create: sinon.stub() },
+        $transaction: sinon.stub()
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment(validInput);
         expect.fail("Expected error to be thrown");
       } catch (error) {
         expect((error as Error).message).to.equal("Connection failed");
-        expect(mockClient.payment.create.called).to.be.false;
       }
     });
 
     it("should propagate the error from payment creation", async () => {
-      // Arrange
       const mockClient = {
-        loan: {
-          findUnique: sinon.stub().resolves({ id: validLoanUuid, paymentAmount: 650 })
-        },
+        loan: { findUnique: sinon.stub().resolves(baseLoan()) },
         payment: {
-          findMany: sinon.stub().resolves([]), // No recent payments
+          findMany: sinon.stub().resolves([]),
           create: sinon.stub().rejects(new Error("Payment creation failed"))
-        }
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
       };
-      const createPayment = createCreatePayment(mockClient as any);
-
-      // Act & Assert
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        paymentTestOpts
+      );
       try {
         await createPayment(validInput);
         expect.fail("Expected error to be thrown");

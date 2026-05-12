@@ -48,7 +48,9 @@ export {
 export {
   createCreatePayment,
   type CreateCreatePaymentOptions,
+  type CreatePaymentResult,
   createReversePayment,
+  createPreviewLateFee,
   createListPayments,
   createListPaymentsByCustomer,
   createListPaymentsByReferrer,

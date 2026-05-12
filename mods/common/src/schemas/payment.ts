@@ -3,19 +3,16 @@
  */
 import { z } from "zod/v4";
 
-/**
- * Enum for payment methods.
- */
 export const paymentMethodEnum = z.enum(["CASH", "TRANSFER"]);
 
-/**
- * Enum for payment status.
- */
 export const paymentStatusEnum = z.enum(["COMPLETED", "PARTIAL", "REVERSED", "PENDING"]);
+
+export const paymentKindEnum = z.enum(["INSTALLMENT", "LATE_FEE"]);
 
 /**
  * Schema for creating a new payment.
  * Uses numeric loanId (e.g., 10000, 10001) instead of UUID.
+ * By default the server splits `amount` mora-first into LATE_FEE + INSTALLMENT rows when mora is owed.
  */
 export const createPaymentSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
@@ -24,34 +21,40 @@ export const createPaymentSchema = z.object({
   method: paymentMethodEnum.optional(),
   collectedById: z.uuid({ message: "Collector ID is required and must be a valid UUID" }),
   notes: z.string().optional(),
-  /** When set, overrides auto-classification of COMPLETED vs PARTIAL (amount vs loan.paymentAmount). */
-  status: z.enum(["COMPLETED", "PARTIAL"]).optional()
+  /** When set, overrides auto-classification of COMPLETED vs PARTIAL (amount vs loan.paymentAmount) on the INSTALLMENT row only. */
+  status: z.enum(["COMPLETED", "PARTIAL"]).optional(),
+  /**
+   * When set, record a single row of this kind (no auto-split).
+   * Use LATE_FEE for mora-only collection; INSTALLMENT to skip mora allocation for this payment.
+   */
+  kind: paymentKindEnum.optional(),
+  /**
+   * Reduces accrued mora used for split (waive part of mora). Does not apply when `kind` is set.
+   */
+  lateFeeOverride: z.number().min(0, "lateFeeOverride must be non-negative").optional()
 });
 
 /**
- * Schema for reversing a payment.
+ * Preview accrued mora for a loan (numeric loanId).
  */
+export const previewLateFeeSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
+  asOf: z.coerce.date().optional()
+});
+
 export const reversePaymentSchema = z.object({
   id: z.uuid({ error: "Invalid payment ID" }),
   notes: z.string().optional()
 });
 
-/**
- * Schema for listing payments with date range.
- * By default shows all non-reversed payments unless showReversed is true.
- */
 export const listPaymentsSchema = z.object({
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
-  showReversed: z.boolean().optional(), // If true, show all payments including reversed
+  showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });
 
-/**
- * Schema for listing payments by customer with date range.
- * By default shows all non-reversed payments unless showReversed is true.
- */
 export const listPaymentsByCustomerSchema = z.object({
   customerId: z.uuid({ error: "Invalid customer ID" }),
   startDate: z.coerce.date(),
@@ -61,10 +64,6 @@ export const listPaymentsByCustomerSchema = z.object({
   offset: z.number().int().nonnegative().optional()
 });
 
-/**
- * Schema for listing payments by referrer with date range.
- * By default shows all non-reversed payments unless showReversed is true.
- */
 export const listPaymentsByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
   startDate: z.coerce.date(),
@@ -74,10 +73,6 @@ export const listPaymentsByReferrerSchema = z.object({
   offset: z.number().int().nonnegative().optional()
 });
 
-/**
- * Schema for listing payments by loan ID (numeric loanId, e.g., 10000, 10001).
- * By default shows all non-reversed payments unless showReversed is true.
- */
 export const listPaymentsByLoanIdSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
   showReversed: z.boolean().optional(),
@@ -85,42 +80,13 @@ export const listPaymentsByLoanIdSchema = z.object({
   offset: z.number().int().nonnegative().optional()
 });
 
-/**
- * Input type for creating a payment.
- */
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
-
-/**
- * Input type for reversing a payment.
- */
+export type PreviewLateFeeInput = z.infer<typeof previewLateFeeSchema>;
+export type PaymentKind = z.infer<typeof paymentKindEnum>;
 export type ReversePaymentInput = z.infer<typeof reversePaymentSchema>;
-
-/**
- * Input type for listing payments.
- */
 export type ListPaymentsInput = z.infer<typeof listPaymentsSchema>;
-
-/**
- * Input type for listing payments by customer.
- */
 export type ListPaymentsByCustomerInput = z.infer<typeof listPaymentsByCustomerSchema>;
-
-/**
- * Input type for listing payments by referrer.
- */
 export type ListPaymentsByReferrerInput = z.infer<typeof listPaymentsByReferrerSchema>;
-
-/**
- * Input type for listing payments by loan ID.
- */
 export type ListPaymentsByLoanIdInput = z.infer<typeof listPaymentsByLoanIdSchema>;
-
-/**
- * Payment method enum type.
- */
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
-
-/**
- * Payment status enum type.
- */
 export type PaymentStatus = z.infer<typeof paymentStatusEnum>;

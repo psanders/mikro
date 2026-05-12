@@ -27,7 +27,10 @@ export interface DefaultedReportRow {
   loanId: number;
   nickname: string;
   paymentFrequency: string;
+  /** Sum of completed INSTALLMENT payments. */
   totalPaid: number;
+  /** Sum of completed LATE_FEE (mora) payments. */
+  moraCollected: number;
   summary: string;
   /** true = DEFAULTED status, false = ACTIVE but red-highlighted (late). */
   isDefaulted: boolean;
@@ -78,9 +81,10 @@ function tableHeader(): SatoriElement {
       el("div", { style: { flex: 1, textAlign: "left" } }, "Teléfono"),
       el("div", { style: { flex: 0.6, textAlign: "right" } }, "Préstamo"),
       el("div", { style: { flex: 0.8, textAlign: "center" } }, "Ciclo"),
-      el("div", { style: { flex: 0.7, textAlign: "right" } }, "Pagado"),
+      el("div", { style: { flex: 0.65, textAlign: "right" } }, "Pagado"),
+      el("div", { style: { flex: 0.65, textAlign: "right" } }, "Mora"),
       el("div", { style: { flex: 0.7, textAlign: "center" } }, "Estado"),
-      el("div", { style: { flex: 4, textAlign: "left" } }, "Resumen")
+      el("div", { style: { flex: 3.5, textAlign: "left" } }, "Resumen")
     ]
   );
 }
@@ -113,7 +117,8 @@ function defaultedRow(row: DefaultedReportRow): SatoriElement {
         { style: { flex: 0.8, textAlign: "center" } },
         formatPaymentFrequency(row.paymentFrequency)
       ),
-      el("div", { style: { flex: 0.7, textAlign: "right" } }, formatDop(row.totalPaid)),
+      el("div", { style: { flex: 0.65, textAlign: "right" } }, formatDop(row.totalPaid)),
+      el("div", { style: { flex: 0.65, textAlign: "right" } }, formatDop(row.moraCollected)),
       el(
         "div",
         {
@@ -130,7 +135,7 @@ function defaultedRow(row: DefaultedReportRow): SatoriElement {
         "div",
         {
           style: {
-            flex: 4,
+            flex: 3.5,
             textAlign: "left",
             flexWrap: "wrap",
             wordBreak: "break-word",

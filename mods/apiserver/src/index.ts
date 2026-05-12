@@ -43,7 +43,9 @@ import {
   getDeepgramApiKey,
   initializeLLM,
   type Message,
-  type AgentName
+  type AgentName,
+  type ToolExecutorDependencies,
+  type ExportedCustomer
 } from "@mikro/agents";
 import cron from "node-cron";
 import { prisma } from "./db.js";
@@ -282,9 +284,43 @@ async function initializeMessageProcessor() {
       isAgentDisabled
     });
 
-    // Create tool executor
+    const toExportedCustomer = (customer: {
+      name: string;
+      nickname?: string | null;
+      phone: string;
+      collectionPoint?: string | null;
+      notes?: string | null;
+      preferredPaymentDay?: string | null;
+      referredBy?: { name: string } | null;
+      loans: Array<{
+        loanId: number;
+        nickname?: string | null;
+        paymentFrequency: string;
+        createdAt: Date;
+        termLength: number;
+        payments: Array<{ paidAt: Date }>;
+      }>;
+    }): ExportedCustomer => ({
+      name: customer.name,
+      nickname: customer.nickname ?? null,
+      phone: customer.phone,
+      collectionPoint: customer.collectionPoint ?? null,
+      notes: customer.notes ?? null,
+      preferredPaymentDay: customer.preferredPaymentDay ?? null,
+      referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
+      loans: customer.loans.map((loan) => ({
+        loanId: loan.loanId,
+        notes: null,
+        nickname: loan.nickname ?? null,
+        paymentFrequency: loan.paymentFrequency,
+        createdAt: loan.createdAt,
+        termLength: loan.termLength,
+        payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
+      }))
+    });
+
     const toolExecutor = createToolExecutor({
-      createCustomer: async (params) => {
+      createCustomer: async (params: Parameters<ToolExecutorDependencies["createCustomer"]>[0]) => {
         const customer = await createCustomer(params);
         return { id: customer.id, name: customer.name, phone: customer.phone };
       },
@@ -302,11 +338,18 @@ async function initializeMessageProcessor() {
           roles: u.roles?.map((r) => ({ role: String(r.role) }))
         }));
       },
-      createPayment: async (params) => {
-        const payment = await createPayment(params);
-        return { id: payment.id, amount: payment.amount };
+      createPayment: async (params: Parameters<ToolExecutorDependencies["createPayment"]>[0]) => {
+        const res = await createPayment(params);
+        return {
+          installment: res.installment
+            ? { id: res.installment.id, amount: res.installment.amount }
+            : null,
+          lateFee: res.lateFee ? { id: res.lateFee.id, amount: res.lateFee.amount } : null
+        };
       },
-      generateReceipt: async (params) => {
+      generateReceipt: async (
+        params: Parameters<ToolExecutorDependencies["generateReceipt"]>[0]
+      ) => {
         const receipt = await generateReceipt(params);
         return { image: receipt.image, token: receipt.token };
       },
@@ -324,7 +367,9 @@ async function initializeMessageProcessor() {
           error: result.error
         };
       },
-      listLoansByCollector: async (params) => {
+      listLoansByCollector: async (
+        params: Parameters<ToolExecutorDependencies["listLoansByCollector"]>[0]
+      ) => {
         const loans = await listLoansByCollector(params);
         return loans.map((loan) => ({
           id: loan.id,
@@ -333,15 +378,19 @@ async function initializeMessageProcessor() {
           status: loan.status
         }));
       },
-      getCustomer: async (params) => {
+      getCustomer: async (params: Parameters<ToolExecutorDependencies["getCustomer"]>[0]) => {
         const customer = await getCustomer(params);
         return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
       },
-      getCustomerByPhone: async (params) => {
+      getCustomerByPhone: async (
+        params: Parameters<ToolExecutorDependencies["getCustomerByPhone"]>[0]
+      ) => {
         const customer = await getCustomerByPhone(params);
         return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
       },
-      listLoansByCustomer: async (params) => {
+      listLoansByCustomer: async (
+        params: Parameters<ToolExecutorDependencies["listLoansByCustomer"]>[0]
+      ) => {
         const loans = await listLoansByCustomer(params);
         return loans.map((loan) => ({
           id: loan.id,
@@ -350,7 +399,9 @@ async function initializeMessageProcessor() {
           status: loan.status
         }));
       },
-      listPaymentsByLoanId: async (params) => {
+      listPaymentsByLoanId: async (
+        params: Parameters<ToolExecutorDependencies["listPaymentsByLoanId"]>[0]
+      ) => {
         const payments = await listPaymentsByLoanId(params);
         return payments.map((payment) => ({
           id: payment.id,
@@ -360,14 +411,17 @@ async function initializeMessageProcessor() {
           method: payment.method
         }));
       },
-      createLoan: async (params) => {
+      createLoan: async (params: Parameters<ToolExecutorDependencies["createLoan"]>[0]) => {
         const loan = await createLoan(params);
         return { id: loan.id, loanId: loan.loanId };
       },
       calculateLoan: async (params: CalculateLoanInput) => {
-        return calculateLoan(params);
+        const result = await calculateLoan(params);
+        return result as Awaited<ReturnType<ToolExecutorDependencies["calculateLoan"]>>;
       },
-      updateLoanStatus: async (params: { loanId: number; status: string }) => {
+      updateLoanStatus: async (
+        params: Parameters<ToolExecutorDependencies["updateLoanStatus"]>[0]
+      ) => {
         return updateLoanStatus(params);
       },
       getLoanByLoanId: async (params: { loanId: number }) => {
@@ -383,76 +437,31 @@ async function initializeMessageProcessor() {
           paymentAmount: Number(loan.paymentAmount),
           paymentFrequency: loan.paymentFrequency,
           status: loan.status,
+          nickname: loan.nickname ?? null,
           customer: {
             id: loan.customer.id,
             name: loan.customer.name,
+            nickname: loan.customer.nickname ?? null,
             phone: loan.customer.phone,
             assignedCollectorId: loan.customer.assignedCollectorId
           }
-        };
+        } as Awaited<ReturnType<ToolExecutorDependencies["getLoanByLoanId"]>>;
       },
-      exportCollectorCustomers: async (params: { assignedCollectorId: string }) => {
+      exportCollectorCustomers: async (
+        params: Parameters<ToolExecutorDependencies["exportCollectorCustomers"]>[0]
+      ) => {
         const customers = await exportCollectorCustomers(params);
-        return customers.map((customer) => ({
-          name: customer.name,
-          nickname: customer.nickname,
-          phone: customer.phone,
-          collectionPoint: customer.collectionPoint,
-          notes: customer.notes,
-          preferredPaymentDay: customer.preferredPaymentDay,
-          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
-          loans: customer.loans.map((loan) => ({
-            loanId: loan.loanId,
-            notes: null,
-            nickname: loan.nickname,
-            paymentFrequency: loan.paymentFrequency,
-            createdAt: loan.createdAt,
-            termLength: loan.termLength,
-            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
-          }))
-        }));
+        return customers.map(toExportedCustomer);
       },
-      exportCustomersByReferrer: async (params: { referredById: string }) => {
+      exportCustomersByReferrer: async (
+        params: Parameters<ToolExecutorDependencies["exportCustomersByReferrer"]>[0]
+      ) => {
         const customers = await exportCustomersByReferrer(params);
-        return customers.map((customer) => ({
-          name: customer.name,
-          nickname: customer.nickname,
-          phone: customer.phone,
-          collectionPoint: customer.collectionPoint,
-          notes: customer.notes,
-          preferredPaymentDay: customer.preferredPaymentDay,
-          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
-          loans: customer.loans.map((loan) => ({
-            loanId: loan.loanId,
-            notes: null,
-            nickname: loan.nickname,
-            paymentFrequency: loan.paymentFrequency,
-            createdAt: loan.createdAt,
-            termLength: loan.termLength,
-            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
-          }))
-        }));
+        return customers.map(toExportedCustomer);
       },
       exportAllCustomers: async () => {
         const customers = await exportAllCustomers({});
-        return customers.map((customer) => ({
-          name: customer.name,
-          nickname: customer.nickname,
-          phone: customer.phone,
-          collectionPoint: customer.collectionPoint,
-          notes: customer.notes,
-          preferredPaymentDay: customer.preferredPaymentDay,
-          referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
-          loans: customer.loans.map((loan) => ({
-            loanId: loan.loanId,
-            notes: null,
-            nickname: loan.nickname,
-            paymentFrequency: loan.paymentFrequency,
-            createdAt: loan.createdAt,
-            termLength: loan.termLength,
-            payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
-          }))
-        }));
+        return customers.map(toExportedCustomer);
       },
       generatePerformanceReport: async (params: { startDate?: string; endDate?: string }) => {
         const result = await generatePerformanceReport({
@@ -475,7 +484,9 @@ async function initializeMessageProcessor() {
         });
         return { rows: result.rows, image: result.image };
       },
-      runSingleCollection: async (params) => {
+      runSingleCollection: async (
+        params: Parameters<ToolExecutorDependencies["runSingleCollection"]>[0]
+      ) => {
         const result = await runSingleCollection(
           {
             loanId: params.loanId,
@@ -495,17 +506,21 @@ async function initializeMessageProcessor() {
         );
         return result;
       },
-      renderCustomersReportToPng: async (customers) => {
+      renderCustomersReportToPng: async (
+        customers: Parameters<ToolExecutorDependencies["renderCustomersReportToPng"]>[0]
+      ) => {
         const logoDataUrl = loadLogoDataUrl(getLogoPath());
         return renderCustomersReportToPng(customers, undefined, logoDataUrl ?? undefined);
       },
       uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
         return whatsAppClient.uploadMedia(fileBuffer, mimeType);
       },
-      sendWhatsAppMessage: async (params) => {
+      sendWhatsAppMessage: async (
+        params: Parameters<ToolExecutorDependencies["sendWhatsAppMessage"]>[0]
+      ) => {
         return sendWhatsAppMessage(params);
       }
-    } as Parameters<typeof createToolExecutor>[0]);
+    });
 
     // Generic ack messages sent before slow tool execution (no LLM involved)
     const QUICK_ACK_MESSAGES = [

@@ -24,7 +24,9 @@ export const createLoanSchema = z.object({
   paymentFrequency: paymentFrequencyEnum,
   startingDate: z.coerce.date().optional(),
   nickname: z.string().max(100).optional(),
-  type: loanTypeEnum.optional()
+  type: loanTypeEnum.optional(),
+  /** Optional mora rate override for this loan (e.g. 0.1 = 10%). Falls back to config `loans.defaultMoraRate`. */
+  moraRate: z.number().min(0).max(1, "moraRate must be between 0 and 1").optional()
 });
 
 /**

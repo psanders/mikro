@@ -32,6 +32,24 @@ API-first (tRPC) with a prompt-driven CLI. It shares only authentication with
 the rest of the app. For how this relates to loans, interest, and collections at
 a conceptual level, see [ACCOUNTING.md](./ACCOUNTING.md).
 
+## Past-due fee (mora)
+
+When a loan is in arrears, Mikro can accrue a **past-due (mora)** amount using the
+configured daily-prorated formula (one cuota’s worth, capped by policy). On
+collection, cash is allocated **mora-first**: the server may create two `Payment`
+rows for one deposit — `LATE_FEE` then `INSTALLMENT` — linked so reversals and
+receipts stay consistent.
+
+- Policy defaults live under `loans` in `mikro.json` (see `mikro.json.example`):
+  `defaultMoraRate`, `moraGraceDays`, `moraCapInCuotas`, `moraMinDop`,
+  `moraStopOnDefault`, `moraEffectiveFrom`.
+- Optional per-loan override: `moraRate` on the loan.
+- API: `previewLateFee` (read-only) and `createPayment` (returns `{ installment, lateFee }`).
+- CLI: `mikro payments:create` shows cuota / mora / suggested total and supports
+  `--late-fee-override` (DOP waived from accrued mora before split).
+- Mora is **not** auto-posted to the accounting ledger; deposits are still
+  recorded manually in the accounting module when appropriate.
+
 ### Seed data (accounts and categories)
 
 After `prisma db seed`, the database includes four **accounts** (all in DOP, zero

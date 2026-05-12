@@ -40,6 +40,7 @@ CREATE TABLE "user_roles" (
 CREATE TABLE "customers" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
+    "nickname" TEXT,
     "phone" TEXT NOT NULL,
     "id_number" TEXT NOT NULL,
     "collection_point" TEXT NOT NULL,
@@ -83,6 +84,8 @@ CREATE TABLE "loans" (
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
     "starting_date" DATETIME,
+    "nickname" TEXT,
+    "mora_rate" DECIMAL,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -98,7 +101,9 @@ CREATE TABLE "payments" (
     "paid_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "method" TEXT NOT NULL DEFAULT 'CASH',
     "status" TEXT NOT NULL DEFAULT 'COMPLETED',
+    "kind" TEXT NOT NULL DEFAULT 'INSTALLMENT',
     "notes" TEXT,
+    "linked_payment_id" TEXT UNIQUE,
     "loan_id" TEXT NOT NULL,
     "collected_by_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -175,6 +180,7 @@ CREATE INDEX "loans_status_idx" ON "loans"("status");
 CREATE INDEX "payments_loan_id_idx" ON "payments"("loan_id");
 CREATE INDEX "payments_collected_by_id_idx" ON "payments"("collected_by_id");
 CREATE INDEX "payments_paid_at_idx" ON "payments"("paid_at");
+CREATE INDEX "payments_kind_idx" ON "payments"("kind");
 CREATE INDEX "messages_customer_id_idx" ON "messages"("customer_id");
 CREATE INDEX "messages_user_id_idx" ON "messages"("user_id");
 CREATE INDEX "messages_created_at_idx" ON "messages"("created_at");
@@ -235,7 +241,12 @@ export async function applySchema(db: PrismaClient) {
  * @returns A tRPC caller with isAuthenticated: true
  */
 export function createAuthenticatedCaller(db: PrismaClient) {
-  const ctx: Context = { db: db as any, isAuthenticated: true };
+  const ctx: Context = {
+    db: db as any,
+    isAuthenticated: true,
+    userId: "00000000-0000-4000-8000-000000000001",
+    roles: ["ADMIN"]
+  };
   return appRouter.createCaller(ctx);
 }
 

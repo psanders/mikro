@@ -59,6 +59,13 @@ enum PaymentStatus {
   @@map("payment_statuses")
 }
 
+enum PaymentKind {
+  INSTALLMENT
+  LATE_FEE
+
+  @@map("payment_kinds")
+}
+
 enum MessageRole {
   AI
   HUMAN
@@ -241,6 +248,8 @@ model Loan {
   termLength       Int              @map("term_length") // Number of periods (e.g., 10)
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
   paymentFrequency PaymentFrequency @map("payment_frequency")
+  /** When set, overrides global default mora rate (e.g., 0.10 for 10%). */
+  moraRate         Decimal?         @map("mora_rate")
   startingDate     DateTime?        @map("starting_date")
   nickname         String?
 
@@ -302,7 +311,13 @@ model Payment {
   paidAt    DateTime      @default(now()) @map("paid_at")
   method    PaymentMethod @default(CASH)
   status    PaymentStatus @default(COMPLETED)
+  kind      PaymentKind   @default(INSTALLMENT)
   notes     String?
+
+  /** When kind=INSTALLMENT and created with a paired LATE_FEE row, points to that LATE_FEE payment. */
+  linkedPaymentId String? @unique @map("linked_payment_id")
+  linkedLateFee     Payment? @relation("InstallmentLateFee", fields: [linkedPaymentId], references: [id], onDelete: SetNull)
+  installmentForLateFee Payment? @relation("InstallmentLateFee")
 
   // Relations
   loan          Loan    @relation(fields: [loanId], references: [id], onDelete: Cascade)
@@ -316,6 +331,7 @@ model Payment {
   @@index([loanId])
   @@index([collectedById])
   @@index([paidAt])
+  @@index([kind])
   @@map("payments")
 }
 

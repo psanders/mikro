@@ -14,3 +14,4 @@ export {
 } from "./definitions.js";
 
 export { createToolExecutor } from "./executor/index.js";
+export type { ToolExecutorDependencies, ExportedCustomer, ExportedLoan } from "./executor/index.js";

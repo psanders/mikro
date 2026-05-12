@@ -119,20 +119,24 @@ export {
 export {
   paymentMethodEnum,
   paymentStatusEnum,
+  paymentKindEnum,
   createPaymentSchema,
+  previewLateFeeSchema,
   reversePaymentSchema,
   listPaymentsSchema,
   listPaymentsByCustomerSchema,
   listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   type CreatePaymentInput,
+  type PreviewLateFeeInput,
   type ReversePaymentInput,
   type ListPaymentsInput,
   type ListPaymentsByCustomerInput,
   type ListPaymentsByReferrerInput,
   type ListPaymentsByLoanIdInput,
   type PaymentMethod,
-  type PaymentStatus
+  type PaymentStatus,
+  type PaymentKind
 } from "./payment.js";
 
 export {

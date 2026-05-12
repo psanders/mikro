@@ -31,6 +31,7 @@ import {
   getLoanByLoanIdSchema,
   // Payment schemas
   createPaymentSchema,
+  previewLateFeeSchema,
   reversePaymentSchema,
   listPaymentsSchema,
   listPaymentsByCustomerSchema,
@@ -90,6 +91,7 @@ import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByCustomer } from "../../api/payments/createListPaymentsByCustomer.js";
 import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
 import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
+import { createPreviewLateFee } from "../../api/payments/createPreviewLateFee.js";
 // Receipt API functions
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
 import { createGenerateReceiptFromDataApi } from "../../api/receipts/createGenerateReceiptFromData.js";
@@ -407,6 +409,14 @@ export const protectedRouter = router({
    */
   createPayment: protectedProcedure.input(createPaymentSchema).mutation(async ({ ctx, input }) => {
     const fn = createCreatePayment(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * Preview accrued mora (past-due fee) for a loan without recording a payment.
+   */
+  previewLateFee: protectedProcedure.input(previewLateFeeSchema).query(async ({ ctx, input }) => {
+    const fn = createPreviewLateFee(ctx.db);
     return fn(input);
   }),
 

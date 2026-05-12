@@ -31,6 +31,7 @@ export type LoanAvgAggregateOutputType = {
   principal: runtime.Decimal | null
   termLength: number | null
   paymentAmount: runtime.Decimal | null
+  moraRate: runtime.Decimal | null
 }
 
 export type LoanSumAggregateOutputType = {
@@ -38,6 +39,7 @@ export type LoanSumAggregateOutputType = {
   principal: runtime.Decimal | null
   termLength: number | null
   paymentAmount: runtime.Decimal | null
+  moraRate: runtime.Decimal | null
 }
 
 export type LoanMinAggregateOutputType = {
@@ -49,6 +51,7 @@ export type LoanMinAggregateOutputType = {
   termLength: number | null
   paymentAmount: runtime.Decimal | null
   paymentFrequency: $Enums.PaymentFrequency | null
+  moraRate: runtime.Decimal | null
   startingDate: Date | null
   nickname: string | null
   createdAt: Date | null
@@ -65,6 +68,7 @@ export type LoanMaxAggregateOutputType = {
   termLength: number | null
   paymentAmount: runtime.Decimal | null
   paymentFrequency: $Enums.PaymentFrequency | null
+  moraRate: runtime.Decimal | null
   startingDate: Date | null
   nickname: string | null
   createdAt: Date | null
@@ -81,6 +85,7 @@ export type LoanCountAggregateOutputType = {
   termLength: number
   paymentAmount: number
   paymentFrequency: number
+  moraRate: number
   startingDate: number
   nickname: number
   createdAt: number
@@ -95,6 +100,7 @@ export type LoanAvgAggregateInputType = {
   principal?: true
   termLength?: true
   paymentAmount?: true
+  moraRate?: true
 }
 
 export type LoanSumAggregateInputType = {
@@ -102,6 +108,7 @@ export type LoanSumAggregateInputType = {
   principal?: true
   termLength?: true
   paymentAmount?: true
+  moraRate?: true
 }
 
 export type LoanMinAggregateInputType = {
@@ -113,6 +120,7 @@ export type LoanMinAggregateInputType = {
   termLength?: true
   paymentAmount?: true
   paymentFrequency?: true
+  moraRate?: true
   startingDate?: true
   nickname?: true
   createdAt?: true
@@ -129,6 +137,7 @@ export type LoanMaxAggregateInputType = {
   termLength?: true
   paymentAmount?: true
   paymentFrequency?: true
+  moraRate?: true
   startingDate?: true
   nickname?: true
   createdAt?: true
@@ -145,6 +154,7 @@ export type LoanCountAggregateInputType = {
   termLength?: true
   paymentAmount?: true
   paymentFrequency?: true
+  moraRate?: true
   startingDate?: true
   nickname?: true
   createdAt?: true
@@ -248,6 +258,7 @@ export type LoanGroupByOutputType = {
   termLength: number
   paymentAmount: runtime.Decimal
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate: runtime.Decimal | null
   startingDate: Date | null
   nickname: string | null
   createdAt: Date
@@ -287,6 +298,7 @@ export type LoanWhereInput = {
   termLength?: Prisma.IntFilter<"Loan"> | number
   paymentAmount?: Prisma.DecimalFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFilter<"Loan"> | $Enums.PaymentFrequency
+  moraRate?: Prisma.DecimalNullableFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   nickname?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
@@ -307,6 +319,7 @@ export type LoanOrderByWithRelationInput = {
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
   paymentFrequency?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrderInput | Prisma.SortOrder
   startingDate?: Prisma.SortOrderInput | Prisma.SortOrder
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -330,6 +343,7 @@ export type LoanWhereUniqueInput = Prisma.AtLeast<{
   termLength?: Prisma.IntFilter<"Loan"> | number
   paymentAmount?: Prisma.DecimalFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFilter<"Loan"> | $Enums.PaymentFrequency
+  moraRate?: Prisma.DecimalNullableFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   nickname?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
@@ -350,6 +364,7 @@ export type LoanOrderByWithAggregationInput = {
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
   paymentFrequency?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrderInput | Prisma.SortOrder
   startingDate?: Prisma.SortOrderInput | Prisma.SortOrder
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -374,6 +389,7 @@ export type LoanScalarWhereWithAggregatesInput = {
   termLength?: Prisma.IntWithAggregatesFilter<"Loan"> | number
   paymentAmount?: Prisma.DecimalWithAggregatesFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyWithAggregatesFilter<"Loan"> | $Enums.PaymentFrequency
+  moraRate?: Prisma.DecimalNullableWithAggregatesFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Loan"> | Date | string | null
   nickname?: Prisma.StringNullableWithAggregatesFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Loan"> | Date | string
@@ -390,6 +406,7 @@ export type LoanCreateInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -409,6 +426,7 @@ export type LoanUncheckedCreateInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -428,6 +446,7 @@ export type LoanUpdateInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -447,6 +466,7 @@ export type LoanUncheckedUpdateInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -466,6 +486,7 @@ export type LoanCreateManyInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -482,6 +503,7 @@ export type LoanUpdateManyMutationInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -497,6 +519,7 @@ export type LoanUncheckedUpdateManyInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -523,6 +546,7 @@ export type LoanCountOrderByAggregateInput = {
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
   paymentFrequency?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrder
   startingDate?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -535,6 +559,7 @@ export type LoanAvgOrderByAggregateInput = {
   principal?: Prisma.SortOrder
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrder
 }
 
 export type LoanMaxOrderByAggregateInput = {
@@ -546,6 +571,7 @@ export type LoanMaxOrderByAggregateInput = {
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
   paymentFrequency?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrder
   startingDate?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -562,6 +588,7 @@ export type LoanMinOrderByAggregateInput = {
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
   paymentFrequency?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrder
   startingDate?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -574,6 +601,7 @@ export type LoanSumOrderByAggregateInput = {
   principal?: Prisma.SortOrder
   termLength?: Prisma.SortOrder
   paymentAmount?: Prisma.SortOrder
+  moraRate?: Prisma.SortOrder
 }
 
 export type LoanScalarRelationFilter = {
@@ -706,6 +734,7 @@ export type LoanCreateWithoutCustomerInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -724,6 +753,7 @@ export type LoanUncheckedCreateWithoutCustomerInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -770,6 +800,7 @@ export type LoanScalarWhereInput = {
   termLength?: Prisma.IntFilter<"Loan"> | number
   paymentAmount?: Prisma.DecimalFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFilter<"Loan"> | $Enums.PaymentFrequency
+  moraRate?: Prisma.DecimalNullableFilter<"Loan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   nickname?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
@@ -786,6 +817,7 @@ export type LoanCreateWithoutPaymentsInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -804,6 +836,7 @@ export type LoanUncheckedCreateWithoutPaymentsInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -838,6 +871,7 @@ export type LoanUpdateWithoutPaymentsInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -856,6 +890,7 @@ export type LoanUncheckedUpdateWithoutPaymentsInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -874,6 +909,7 @@ export type LoanCreateWithoutCollectionAttemptsInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -892,6 +928,7 @@ export type LoanUncheckedCreateWithoutCollectionAttemptsInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -926,6 +963,7 @@ export type LoanUpdateWithoutCollectionAttemptsInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -944,6 +982,7 @@ export type LoanUncheckedUpdateWithoutCollectionAttemptsInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -962,6 +1001,7 @@ export type LoanCreateWithoutNotesInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -980,6 +1020,7 @@ export type LoanUncheckedCreateWithoutNotesInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -1014,6 +1055,7 @@ export type LoanUpdateWithoutNotesInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1032,6 +1074,7 @@ export type LoanUncheckedUpdateWithoutNotesInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1050,6 +1093,7 @@ export type LoanCreateManyCustomerInput = {
   termLength: number
   paymentAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency: $Enums.PaymentFrequency
+  moraRate?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Date | string | null
   nickname?: string | null
   createdAt?: Date | string
@@ -1065,6 +1109,7 @@ export type LoanUpdateWithoutCustomerInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1083,6 +1128,7 @@ export type LoanUncheckedUpdateWithoutCustomerInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1101,6 +1147,7 @@ export type LoanUncheckedUpdateManyWithoutCustomerInput = {
   termLength?: Prisma.IntFieldUpdateOperationsInput | number
   paymentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   paymentFrequency?: Prisma.EnumPaymentFrequencyFieldUpdateOperationsInput | $Enums.PaymentFrequency
+  moraRate?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   startingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1165,6 +1212,7 @@ export type LoanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   termLength?: boolean
   paymentAmount?: boolean
   paymentFrequency?: boolean
+  moraRate?: boolean
   startingDate?: boolean
   nickname?: boolean
   createdAt?: boolean
@@ -1186,6 +1234,7 @@ export type LoanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   termLength?: boolean
   paymentAmount?: boolean
   paymentFrequency?: boolean
+  moraRate?: boolean
   startingDate?: boolean
   nickname?: boolean
   createdAt?: boolean
@@ -1203,6 +1252,7 @@ export type LoanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   termLength?: boolean
   paymentAmount?: boolean
   paymentFrequency?: boolean
+  moraRate?: boolean
   startingDate?: boolean
   nickname?: boolean
   createdAt?: boolean
@@ -1220,6 +1270,7 @@ export type LoanSelectScalar = {
   termLength?: boolean
   paymentAmount?: boolean
   paymentFrequency?: boolean
+  moraRate?: boolean
   startingDate?: boolean
   nickname?: boolean
   createdAt?: boolean
@@ -1227,7 +1278,7 @@ export type LoanSelectScalar = {
   customerId?: boolean
 }
 
-export type LoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "loanId" | "type" | "status" | "principal" | "termLength" | "paymentAmount" | "paymentFrequency" | "startingDate" | "nickname" | "createdAt" | "updatedAt" | "customerId", ExtArgs["result"]["loan"]>
+export type LoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "loanId" | "type" | "status" | "principal" | "termLength" | "paymentAmount" | "paymentFrequency" | "moraRate" | "startingDate" | "nickname" | "createdAt" | "updatedAt" | "customerId", ExtArgs["result"]["loan"]>
 export type LoanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   payments?: boolean | Prisma.Loan$paymentsArgs<ExtArgs>
@@ -1259,6 +1310,10 @@ export type $LoanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     termLength: number
     paymentAmount: runtime.Decimal
     paymentFrequency: $Enums.PaymentFrequency
+    /**
+     * * When set, overrides global default mora rate (e.g., 0.10 for 10%).
+     */
+    moraRate: runtime.Decimal | null
     startingDate: Date | null
     nickname: string | null
     createdAt: Date
@@ -1699,6 +1754,7 @@ export interface LoanFieldRefs {
   readonly termLength: Prisma.FieldRef<"Loan", 'Int'>
   readonly paymentAmount: Prisma.FieldRef<"Loan", 'Decimal'>
   readonly paymentFrequency: Prisma.FieldRef<"Loan", 'PaymentFrequency'>
+  readonly moraRate: Prisma.FieldRef<"Loan", 'Decimal'>
   readonly startingDate: Prisma.FieldRef<"Loan", 'DateTime'>
   readonly nickname: Prisma.FieldRef<"Loan", 'String'>
   readonly createdAt: Prisma.FieldRef<"Loan", 'DateTime'>

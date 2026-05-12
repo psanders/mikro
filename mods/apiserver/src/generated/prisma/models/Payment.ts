@@ -40,7 +40,9 @@ export type PaymentMinAggregateOutputType = {
   paidAt: Date | null
   method: $Enums.PaymentMethod | null
   status: $Enums.PaymentStatus | null
+  kind: $Enums.PaymentKind | null
   notes: string | null
+  linkedPaymentId: string | null
   loanId: string | null
   collectedById: string | null
   createdAt: Date | null
@@ -53,7 +55,9 @@ export type PaymentMaxAggregateOutputType = {
   paidAt: Date | null
   method: $Enums.PaymentMethod | null
   status: $Enums.PaymentStatus | null
+  kind: $Enums.PaymentKind | null
   notes: string | null
+  linkedPaymentId: string | null
   loanId: string | null
   collectedById: string | null
   createdAt: Date | null
@@ -66,7 +70,9 @@ export type PaymentCountAggregateOutputType = {
   paidAt: number
   method: number
   status: number
+  kind: number
   notes: number
+  linkedPaymentId: number
   loanId: number
   collectedById: number
   createdAt: number
@@ -89,7 +95,9 @@ export type PaymentMinAggregateInputType = {
   paidAt?: true
   method?: true
   status?: true
+  kind?: true
   notes?: true
+  linkedPaymentId?: true
   loanId?: true
   collectedById?: true
   createdAt?: true
@@ -102,7 +110,9 @@ export type PaymentMaxAggregateInputType = {
   paidAt?: true
   method?: true
   status?: true
+  kind?: true
   notes?: true
+  linkedPaymentId?: true
   loanId?: true
   collectedById?: true
   createdAt?: true
@@ -115,7 +125,9 @@ export type PaymentCountAggregateInputType = {
   paidAt?: true
   method?: true
   status?: true
+  kind?: true
   notes?: true
+  linkedPaymentId?: true
   loanId?: true
   collectedById?: true
   createdAt?: true
@@ -215,7 +227,9 @@ export type PaymentGroupByOutputType = {
   paidAt: Date
   method: $Enums.PaymentMethod
   status: $Enums.PaymentStatus
+  kind: $Enums.PaymentKind
   notes: string | null
+  linkedPaymentId: string | null
   loanId: string
   collectedById: string
   createdAt: Date
@@ -251,11 +265,15 @@ export type PaymentWhereInput = {
   paidAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   method?: Prisma.EnumPaymentMethodFilter<"Payment"> | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFilter<"Payment"> | $Enums.PaymentKind
   notes?: Prisma.StringNullableFilter<"Payment"> | string | null
+  linkedPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   loanId?: Prisma.StringFilter<"Payment"> | string
   collectedById?: Prisma.StringFilter<"Payment"> | string
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
+  linkedLateFee?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  installmentForLateFee?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   loan?: Prisma.XOR<Prisma.LoanScalarRelationFilter, Prisma.LoanWhereInput>
   collectedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -266,17 +284,22 @@ export type PaymentOrderByWithRelationInput = {
   paidAt?: Prisma.SortOrder
   method?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  linkedPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   loanId?: Prisma.SortOrder
   collectedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  linkedLateFee?: Prisma.PaymentOrderByWithRelationInput
+  installmentForLateFee?: Prisma.PaymentOrderByWithRelationInput
   loan?: Prisma.LoanOrderByWithRelationInput
   collectedBy?: Prisma.UserOrderByWithRelationInput
 }
 
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  linkedPaymentId?: string
   AND?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   OR?: Prisma.PaymentWhereInput[]
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
@@ -284,14 +307,17 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   paidAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   method?: Prisma.EnumPaymentMethodFilter<"Payment"> | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFilter<"Payment"> | $Enums.PaymentKind
   notes?: Prisma.StringNullableFilter<"Payment"> | string | null
   loanId?: Prisma.StringFilter<"Payment"> | string
   collectedById?: Prisma.StringFilter<"Payment"> | string
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
+  linkedLateFee?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
+  installmentForLateFee?: Prisma.XOR<Prisma.PaymentNullableScalarRelationFilter, Prisma.PaymentWhereInput> | null
   loan?: Prisma.XOR<Prisma.LoanScalarRelationFilter, Prisma.LoanWhereInput>
   collectedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id">
+}, "id" | "linkedPaymentId">
 
 export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -299,7 +325,9 @@ export type PaymentOrderByWithAggregationInput = {
   paidAt?: Prisma.SortOrder
   method?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  linkedPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   loanId?: Prisma.SortOrder
   collectedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -320,7 +348,9 @@ export type PaymentScalarWhereWithAggregatesInput = {
   paidAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   method?: Prisma.EnumPaymentMethodWithAggregatesFilter<"Payment"> | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusWithAggregatesFilter<"Payment"> | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindWithAggregatesFilter<"Payment"> | $Enums.PaymentKind
   notes?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  linkedPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   loanId?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   collectedById?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
@@ -333,9 +363,12 @@ export type PaymentCreateInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedLateFee?: Prisma.PaymentCreateNestedOneWithoutInstallmentForLateFeeInput
+  installmentForLateFee?: Prisma.PaymentCreateNestedOneWithoutLinkedLateFeeInput
   loan: Prisma.LoanCreateNestedOneWithoutPaymentsInput
   collectedBy: Prisma.UserCreateNestedOneWithoutCollectedPaymentsInput
 }
@@ -346,11 +379,14 @@ export type PaymentUncheckedCreateInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   loanId: string
   collectedById: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedCreateNestedOneWithoutLinkedLateFeeInput
 }
 
 export type PaymentUpdateInput = {
@@ -359,9 +395,12 @@ export type PaymentUpdateInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedLateFee?: Prisma.PaymentUpdateOneWithoutInstallmentForLateFeeNestedInput
+  installmentForLateFee?: Prisma.PaymentUpdateOneWithoutLinkedLateFeeNestedInput
   loan?: Prisma.LoanUpdateOneRequiredWithoutPaymentsNestedInput
   collectedBy?: Prisma.UserUpdateOneRequiredWithoutCollectedPaymentsNestedInput
 }
@@ -372,11 +411,14 @@ export type PaymentUncheckedUpdateInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
   collectedById?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedUpdateOneWithoutLinkedLateFeeNestedInput
 }
 
 export type PaymentCreateManyInput = {
@@ -385,7 +427,9 @@ export type PaymentCreateManyInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   loanId: string
   collectedById: string
   createdAt?: Date | string
@@ -398,6 +442,7 @@ export type PaymentUpdateManyMutationInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -409,7 +454,9 @@ export type PaymentUncheckedUpdateManyInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
   collectedById?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -426,13 +473,20 @@ export type PaymentOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type PaymentNullableScalarRelationFilter = {
+  is?: Prisma.PaymentWhereInput | null
+  isNot?: Prisma.PaymentWhereInput | null
+}
+
 export type PaymentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   method?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  linkedPaymentId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   collectedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -449,7 +503,9 @@ export type PaymentMaxOrderByAggregateInput = {
   paidAt?: Prisma.SortOrder
   method?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  linkedPaymentId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   collectedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -462,7 +518,9 @@ export type PaymentMinOrderByAggregateInput = {
   paidAt?: Prisma.SortOrder
   method?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  linkedPaymentId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   collectedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -557,6 +615,24 @@ export type PaymentUncheckedUpdateManyWithoutLoanNestedInput = {
   deleteMany?: Prisma.PaymentScalarWhereInput | Prisma.PaymentScalarWhereInput[]
 }
 
+export type PaymentCreateNestedOneWithoutInstallmentForLateFeeInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedCreateWithoutInstallmentForLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutInstallmentForLateFeeInput
+  connect?: Prisma.PaymentWhereUniqueInput
+}
+
+export type PaymentCreateNestedOneWithoutLinkedLateFeeInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLinkedLateFeeInput
+  connect?: Prisma.PaymentWhereUniqueInput
+}
+
+export type PaymentUncheckedCreateNestedOneWithoutLinkedLateFeeInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLinkedLateFeeInput
+  connect?: Prisma.PaymentWhereUniqueInput
+}
+
 export type EnumPaymentMethodFieldUpdateOperationsInput = {
   set?: $Enums.PaymentMethod
 }
@@ -565,15 +641,52 @@ export type EnumPaymentStatusFieldUpdateOperationsInput = {
   set?: $Enums.PaymentStatus
 }
 
+export type EnumPaymentKindFieldUpdateOperationsInput = {
+  set?: $Enums.PaymentKind
+}
+
+export type PaymentUpdateOneWithoutInstallmentForLateFeeNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedCreateWithoutInstallmentForLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutInstallmentForLateFeeInput
+  upsert?: Prisma.PaymentUpsertWithoutInstallmentForLateFeeInput
+  disconnect?: Prisma.PaymentWhereInput | boolean
+  delete?: Prisma.PaymentWhereInput | boolean
+  connect?: Prisma.PaymentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutInstallmentForLateFeeInput, Prisma.PaymentUpdateWithoutInstallmentForLateFeeInput>, Prisma.PaymentUncheckedUpdateWithoutInstallmentForLateFeeInput>
+}
+
+export type PaymentUpdateOneWithoutLinkedLateFeeNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLinkedLateFeeInput
+  upsert?: Prisma.PaymentUpsertWithoutLinkedLateFeeInput
+  disconnect?: Prisma.PaymentWhereInput | boolean
+  delete?: Prisma.PaymentWhereInput | boolean
+  connect?: Prisma.PaymentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutLinkedLateFeeInput, Prisma.PaymentUpdateWithoutLinkedLateFeeInput>, Prisma.PaymentUncheckedUpdateWithoutLinkedLateFeeInput>
+}
+
+export type PaymentUncheckedUpdateOneWithoutLinkedLateFeeNestedInput = {
+  create?: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+  connectOrCreate?: Prisma.PaymentCreateOrConnectWithoutLinkedLateFeeInput
+  upsert?: Prisma.PaymentUpsertWithoutLinkedLateFeeInput
+  disconnect?: Prisma.PaymentWhereInput | boolean
+  delete?: Prisma.PaymentWhereInput | boolean
+  connect?: Prisma.PaymentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PaymentUpdateToOneWithWhereWithoutLinkedLateFeeInput, Prisma.PaymentUpdateWithoutLinkedLateFeeInput>, Prisma.PaymentUncheckedUpdateWithoutLinkedLateFeeInput>
+}
+
 export type PaymentCreateWithoutCollectedByInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedLateFee?: Prisma.PaymentCreateNestedOneWithoutInstallmentForLateFeeInput
+  installmentForLateFee?: Prisma.PaymentCreateNestedOneWithoutLinkedLateFeeInput
   loan: Prisma.LoanCreateNestedOneWithoutPaymentsInput
 }
 
@@ -583,10 +696,13 @@ export type PaymentUncheckedCreateWithoutCollectedByInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   loanId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedCreateNestedOneWithoutLinkedLateFeeInput
 }
 
 export type PaymentCreateOrConnectWithoutCollectedByInput = {
@@ -623,7 +739,9 @@ export type PaymentScalarWhereInput = {
   paidAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   method?: Prisma.EnumPaymentMethodFilter<"Payment"> | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFilter<"Payment"> | $Enums.PaymentKind
   notes?: Prisma.StringNullableFilter<"Payment"> | string | null
+  linkedPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   loanId?: Prisma.StringFilter<"Payment"> | string
   collectedById?: Prisma.StringFilter<"Payment"> | string
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
@@ -636,9 +754,12 @@ export type PaymentCreateWithoutLoanInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  linkedLateFee?: Prisma.PaymentCreateNestedOneWithoutInstallmentForLateFeeInput
+  installmentForLateFee?: Prisma.PaymentCreateNestedOneWithoutLinkedLateFeeInput
   collectedBy: Prisma.UserCreateNestedOneWithoutCollectedPaymentsInput
 }
 
@@ -648,10 +769,13 @@ export type PaymentUncheckedCreateWithoutLoanInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   collectedById: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedCreateNestedOneWithoutLinkedLateFeeInput
 }
 
 export type PaymentCreateOrConnectWithoutLoanInput = {
@@ -679,13 +803,167 @@ export type PaymentUpdateManyWithWhereWithoutLoanInput = {
   data: Prisma.XOR<Prisma.PaymentUpdateManyMutationInput, Prisma.PaymentUncheckedUpdateManyWithoutLoanInput>
 }
 
+export type PaymentCreateWithoutInstallmentForLateFeeInput = {
+  id?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Date | string
+  method?: $Enums.PaymentMethod
+  status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  linkedLateFee?: Prisma.PaymentCreateNestedOneWithoutInstallmentForLateFeeInput
+  loan: Prisma.LoanCreateNestedOneWithoutPaymentsInput
+  collectedBy: Prisma.UserCreateNestedOneWithoutCollectedPaymentsInput
+}
+
+export type PaymentUncheckedCreateWithoutInstallmentForLateFeeInput = {
+  id?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Date | string
+  method?: $Enums.PaymentMethod
+  status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
+  notes?: string | null
+  linkedPaymentId?: string | null
+  loanId: string
+  collectedById: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PaymentCreateOrConnectWithoutInstallmentForLateFeeInput = {
+  where: Prisma.PaymentWhereUniqueInput
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedCreateWithoutInstallmentForLateFeeInput>
+}
+
+export type PaymentCreateWithoutLinkedLateFeeInput = {
+  id?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Date | string
+  method?: $Enums.PaymentMethod
+  status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  installmentForLateFee?: Prisma.PaymentCreateNestedOneWithoutLinkedLateFeeInput
+  loan: Prisma.LoanCreateNestedOneWithoutPaymentsInput
+  collectedBy: Prisma.UserCreateNestedOneWithoutCollectedPaymentsInput
+}
+
+export type PaymentUncheckedCreateWithoutLinkedLateFeeInput = {
+  id?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Date | string
+  method?: $Enums.PaymentMethod
+  status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
+  notes?: string | null
+  loanId: string
+  collectedById: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedCreateNestedOneWithoutLinkedLateFeeInput
+}
+
+export type PaymentCreateOrConnectWithoutLinkedLateFeeInput = {
+  where: Prisma.PaymentWhereUniqueInput
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+}
+
+export type PaymentUpsertWithoutInstallmentForLateFeeInput = {
+  update: Prisma.XOR<Prisma.PaymentUpdateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedUpdateWithoutInstallmentForLateFeeInput>
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedCreateWithoutInstallmentForLateFeeInput>
+  where?: Prisma.PaymentWhereInput
+}
+
+export type PaymentUpdateToOneWithWhereWithoutInstallmentForLateFeeInput = {
+  where?: Prisma.PaymentWhereInput
+  data: Prisma.XOR<Prisma.PaymentUpdateWithoutInstallmentForLateFeeInput, Prisma.PaymentUncheckedUpdateWithoutInstallmentForLateFeeInput>
+}
+
+export type PaymentUpdateWithoutInstallmentForLateFeeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedLateFee?: Prisma.PaymentUpdateOneWithoutInstallmentForLateFeeNestedInput
+  loan?: Prisma.LoanUpdateOneRequiredWithoutPaymentsNestedInput
+  collectedBy?: Prisma.UserUpdateOneRequiredWithoutCollectedPaymentsNestedInput
+}
+
+export type PaymentUncheckedUpdateWithoutInstallmentForLateFeeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loanId?: Prisma.StringFieldUpdateOperationsInput | string
+  collectedById?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PaymentUpsertWithoutLinkedLateFeeInput = {
+  update: Prisma.XOR<Prisma.PaymentUpdateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedUpdateWithoutLinkedLateFeeInput>
+  create: Prisma.XOR<Prisma.PaymentCreateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedCreateWithoutLinkedLateFeeInput>
+  where?: Prisma.PaymentWhereInput
+}
+
+export type PaymentUpdateToOneWithWhereWithoutLinkedLateFeeInput = {
+  where?: Prisma.PaymentWhereInput
+  data: Prisma.XOR<Prisma.PaymentUpdateWithoutLinkedLateFeeInput, Prisma.PaymentUncheckedUpdateWithoutLinkedLateFeeInput>
+}
+
+export type PaymentUpdateWithoutLinkedLateFeeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installmentForLateFee?: Prisma.PaymentUpdateOneWithoutLinkedLateFeeNestedInput
+  loan?: Prisma.LoanUpdateOneRequiredWithoutPaymentsNestedInput
+  collectedBy?: Prisma.UserUpdateOneRequiredWithoutCollectedPaymentsNestedInput
+}
+
+export type PaymentUncheckedUpdateWithoutLinkedLateFeeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
+  status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loanId?: Prisma.StringFieldUpdateOperationsInput | string
+  collectedById?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedUpdateOneWithoutLinkedLateFeeNestedInput
+}
+
 export type PaymentCreateManyCollectedByInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   loanId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -697,9 +975,12 @@ export type PaymentUpdateWithoutCollectedByInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedLateFee?: Prisma.PaymentUpdateOneWithoutInstallmentForLateFeeNestedInput
+  installmentForLateFee?: Prisma.PaymentUpdateOneWithoutLinkedLateFeeNestedInput
   loan?: Prisma.LoanUpdateOneRequiredWithoutPaymentsNestedInput
 }
 
@@ -709,10 +990,13 @@ export type PaymentUncheckedUpdateWithoutCollectedByInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedUpdateOneWithoutLinkedLateFeeNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutCollectedByInput = {
@@ -721,7 +1005,9 @@ export type PaymentUncheckedUpdateManyWithoutCollectedByInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -733,7 +1019,9 @@ export type PaymentCreateManyLoanInput = {
   paidAt?: Date | string
   method?: $Enums.PaymentMethod
   status?: $Enums.PaymentStatus
+  kind?: $Enums.PaymentKind
   notes?: string | null
+  linkedPaymentId?: string | null
   collectedById: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -745,9 +1033,12 @@ export type PaymentUpdateWithoutLoanInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  linkedLateFee?: Prisma.PaymentUpdateOneWithoutInstallmentForLateFeeNestedInput
+  installmentForLateFee?: Prisma.PaymentUpdateOneWithoutLinkedLateFeeNestedInput
   collectedBy?: Prisma.UserUpdateOneRequiredWithoutCollectedPaymentsNestedInput
 }
 
@@ -757,10 +1048,13 @@ export type PaymentUncheckedUpdateWithoutLoanInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectedById?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  installmentForLateFee?: Prisma.PaymentUncheckedUpdateOneWithoutLinkedLateFeeNestedInput
 }
 
 export type PaymentUncheckedUpdateManyWithoutLoanInput = {
@@ -769,7 +1063,9 @@ export type PaymentUncheckedUpdateManyWithoutLoanInput = {
   paidAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   method?: Prisma.EnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  kind?: Prisma.EnumPaymentKindFieldUpdateOperationsInput | $Enums.PaymentKind
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linkedPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   collectedById?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -783,11 +1079,15 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   paidAt?: boolean
   method?: boolean
   status?: boolean
+  kind?: boolean
   notes?: boolean
+  linkedPaymentId?: boolean
   loanId?: boolean
   collectedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
+  installmentForLateFee?: boolean | Prisma.Payment$installmentForLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
@@ -798,11 +1098,14 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   paidAt?: boolean
   method?: boolean
   status?: boolean
+  kind?: boolean
   notes?: boolean
+  linkedPaymentId?: boolean
   loanId?: boolean
   collectedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
@@ -813,11 +1116,14 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   paidAt?: boolean
   method?: boolean
   status?: boolean
+  kind?: boolean
   notes?: boolean
+  linkedPaymentId?: boolean
   loanId?: boolean
   collectedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
@@ -828,23 +1134,29 @@ export type PaymentSelectScalar = {
   paidAt?: boolean
   method?: boolean
   status?: boolean
+  kind?: boolean
   notes?: boolean
+  linkedPaymentId?: boolean
   loanId?: boolean
   collectedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "paidAt" | "method" | "status" | "notes" | "loanId" | "collectedById" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "paidAt" | "method" | "status" | "kind" | "notes" | "linkedPaymentId" | "loanId" | "collectedById" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
+  installmentForLateFee?: boolean | Prisma.Payment$installmentForLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type PaymentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type PaymentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  linkedLateFee?: boolean | Prisma.Payment$linkedLateFeeArgs<ExtArgs>
   loan?: boolean | Prisma.LoanDefaultArgs<ExtArgs>
   collectedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -852,6 +1164,8 @@ export type PaymentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Payment"
   objects: {
+    linkedLateFee: Prisma.$PaymentPayload<ExtArgs> | null
+    installmentForLateFee: Prisma.$PaymentPayload<ExtArgs> | null
     loan: Prisma.$LoanPayload<ExtArgs>
     collectedBy: Prisma.$UserPayload<ExtArgs>
   }
@@ -861,7 +1175,12 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     paidAt: Date
     method: $Enums.PaymentMethod
     status: $Enums.PaymentStatus
+    kind: $Enums.PaymentKind
     notes: string | null
+    /**
+     * * When kind=INSTALLMENT and created with a paired LATE_FEE row, points to that LATE_FEE payment.
+     */
+    linkedPaymentId: string | null
     loanId: string
     collectedById: string
     createdAt: Date
@@ -1260,6 +1579,8 @@ readonly fields: PaymentFieldRefs;
  */
 export interface Prisma__PaymentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  linkedLateFee<T extends Prisma.Payment$linkedLateFeeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$linkedLateFeeArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  installmentForLateFee<T extends Prisma.Payment$installmentForLateFeeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Payment$installmentForLateFeeArgs<ExtArgs>>): Prisma.Prisma__PaymentClient<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   loan<T extends Prisma.LoanDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LoanDefaultArgs<ExtArgs>>): Prisma.Prisma__LoanClient<runtime.Types.Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   collectedBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
@@ -1296,7 +1617,9 @@ export interface PaymentFieldRefs {
   readonly paidAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly method: Prisma.FieldRef<"Payment", 'PaymentMethod'>
   readonly status: Prisma.FieldRef<"Payment", 'PaymentStatus'>
+  readonly kind: Prisma.FieldRef<"Payment", 'PaymentKind'>
   readonly notes: Prisma.FieldRef<"Payment", 'String'>
+  readonly linkedPaymentId: Prisma.FieldRef<"Payment", 'String'>
   readonly loanId: Prisma.FieldRef<"Payment", 'String'>
   readonly collectedById: Prisma.FieldRef<"Payment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Payment", 'DateTime'>
@@ -1692,6 +2015,44 @@ export type PaymentDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Payments to delete.
    */
   limit?: number
+}
+
+/**
+ * Payment.linkedLateFee
+ */
+export type Payment$linkedLateFeeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Payment
+   */
+  select?: Prisma.PaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Payment
+   */
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
+}
+
+/**
+ * Payment.installmentForLateFee
+ */
+export type Payment$installmentForLateFeeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Payment
+   */
+  select?: Prisma.PaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Payment
+   */
+  omit?: Prisma.PaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PaymentInclude<ExtArgs> | null
+  where?: Prisma.PaymentWhereInput
 }
 
 /**

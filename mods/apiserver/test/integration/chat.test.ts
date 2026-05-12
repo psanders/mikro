@@ -16,6 +16,11 @@ import {
 describe("Chat Integration", () => {
   let db: TestDb;
   let caller: AuthenticatedCaller;
+  let chatPhoneSeq = 0;
+  const chatNanp = () => {
+    chatPhoneSeq += 1;
+    return `+1809${String(10_000_000 + chatPhoneSeq).slice(1)}`;
+  };
 
   before(async () => {
     db = createTestDb();
@@ -45,17 +50,17 @@ describe("Chat Integration", () => {
   async function createTestCustomer(name = "Chat Test Customer") {
     const referrer = await caller.createUser({
       name: "Test Referrer",
-      phone: "+18091234583",
+      phone: chatNanp(),
       role: "REFERRER"
     });
     const collector = await caller.createUser({
       name: "Test Collector",
-      phone: "+18091234584",
+      phone: chatNanp(),
       role: "COLLECTOR"
     });
     return caller.createCustomer({
       name,
-      phone: "+18091234599",
+      phone: chatNanp(),
       idNumber: `001-${String(Date.now()).slice(-7)}-8`,
       collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",

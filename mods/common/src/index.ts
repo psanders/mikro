@@ -15,11 +15,13 @@ export {
   getLogoPath,
   clearConfigCache,
   mikroConfigSchema,
+  loansSchema,
   llmConfigSchema,
   LLM_VENDORS,
   DEFAULT_NEAR_COMPLETION_THRESHOLDS,
   type MikroConfig,
   type ResolvedMikroConfig,
+  type LoansConfig,
   type LLMConfig,
   type LLMVendor
 } from "./config.js";
@@ -43,9 +45,16 @@ export {
   DEFAULT_OPTIONS_RANGE,
   DEFAULT_PAYMENT_ROUNDING_INCREMENT,
   formatMoney,
+  computeAccruedMora,
+  daysLateFromOldestDue,
+  amountToNumber,
+  toLoanPaymentData,
   type LoanPaymentData,
+  type LoanWithPaymentsForMora,
   type CycleMetrics,
-  type FormatMoneyInput
+  type FormatMoneyInput,
+  type ComputeAccruedMoraInput,
+  type ComputeAccruedMoraResult
 } from "./utils/index.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,
@@ -194,13 +203,16 @@ export {
   // Payment schemas
   paymentMethodEnum,
   paymentStatusEnum,
+  paymentKindEnum,
   createPaymentSchema,
+  previewLateFeeSchema,
   reversePaymentSchema,
   listPaymentsSchema,
   listPaymentsByCustomerSchema,
   listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   type CreatePaymentInput,
+  type PreviewLateFeeInput,
   type ReversePaymentInput,
   type ListPaymentsInput,
   type ListPaymentsByCustomerInput,
@@ -208,6 +220,7 @@ export {
   type ListPaymentsByLoanIdInput,
   type PaymentMethod,
   type PaymentStatus,
+  type PaymentKind,
   // Receipt schemas
   generateReceiptSchema,
   receiptDataSchema,

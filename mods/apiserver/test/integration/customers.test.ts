@@ -77,7 +77,7 @@ describe("Customers Integration", () => {
       expect(customer.idNumber).to.equal(input.idNumber);
       expect(customer.collectionPoint).to.equal(input.collectionPoint);
       expect(customer.homeAddress).to.equal(input.homeAddress);
-      expect(customer.isActive).to.equal(false); // Default is false in database
+      expect(customer.isActive).to.equal(true); // createCustomerSchema default
       expect(customer.isBusinessOwner).to.equal(false);
       expect(customer.referredById).to.equal(referrer.id);
       expect(customer.assignedCollectorId).to.equal(collector.id);
@@ -232,16 +232,8 @@ describe("Customers Integration", () => {
         assignedCollectorId: collector.id
       });
 
-      expect(created.isActive).to.equal(false); // Default is false
+      expect(created.isActive).to.equal(true); // Default from createCustomerSchema
 
-      const updated = await caller.updateCustomer({
-        id: created.id,
-        isActive: true
-      });
-
-      expect(updated.isActive).to.equal(true);
-
-      // Then deactivate
       const deactivated = await caller.updateCustomer({
         id: created.id,
         isActive: false

@@ -6,6 +6,11 @@
 
 /**
  * Loan data required for cycle metrics and report helpers.
+ *
+ * **Important:** `payments` must contain only INSTALLMENT rows.
+ * LATE_FEE payments must be filtered out before constructing this object,
+ * otherwise cycle counts and arrears will be incorrect.
+ * Use `toLoanPaymentData()` from `loanMoraHelpers` to build this correctly.
  */
 export interface LoanPaymentData {
   paymentFrequency: string;

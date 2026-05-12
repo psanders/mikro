@@ -1557,6 +1557,7 @@ export const LoanScalarFieldEnum = {
   termLength: 'termLength',
   paymentAmount: 'paymentAmount',
   paymentFrequency: 'paymentFrequency',
+  moraRate: 'moraRate',
   startingDate: 'startingDate',
   nickname: 'nickname',
   createdAt: 'createdAt',
@@ -1600,7 +1601,9 @@ export const PaymentScalarFieldEnum = {
   paidAt: 'paidAt',
   method: 'method',
   status: 'status',
+  kind: 'kind',
   notes: 'notes',
+  linkedPaymentId: 'linkedPaymentId',
   loanId: 'loanId',
   collectedById: 'collectedById',
   createdAt: 'createdAt',
@@ -1815,6 +1818,13 @@ export type EnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'PaymentStatus'
  */
 export type EnumPaymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'PaymentKind'
+ */
+export type EnumPaymentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentKind'>
     
 
 

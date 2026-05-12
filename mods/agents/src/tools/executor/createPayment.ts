@@ -10,7 +10,6 @@ export async function handleCreatePayment(
   args: Record<string, unknown>,
   context?: Record<string, unknown>
 ): Promise<ToolResult> {
-  // Get collector ID from context
   const collectorId = context?.userId as string | undefined;
   if (!collectorId) {
     return {
@@ -22,7 +21,6 @@ export async function handleCreatePayment(
   const role = context?.role as string | undefined;
   const isAdmin = role === "ADMIN";
 
-  // Parse numeric loanId from string (e.g., "10000" -> 10000)
   const loanIdInput = args.loanId as string;
   const numericLoanId = Number(loanIdInput);
   if (isNaN(numericLoanId) || numericLoanId <= 0) {
@@ -32,7 +30,6 @@ export async function handleCreatePayment(
     };
   }
 
-  // Get loan by numeric loanId (includes customer with assignedCollectorId)
   const loan = await deps.getLoanByLoanId({
     loanId: numericLoanId
   });
@@ -44,7 +41,6 @@ export async function handleCreatePayment(
     };
   }
 
-  // Validate loan is active
   if (loan.status !== "ACTIVE") {
     return {
       success: false,
@@ -52,7 +48,6 @@ export async function handleCreatePayment(
     };
   }
 
-  // Skip collector validation for admins
   if (!isAdmin) {
     if (!loan.customer.assignedCollectorId) {
       return {
@@ -70,7 +65,6 @@ export async function handleCreatePayment(
     }
   }
 
-  // Parse payment amount
   const amount = Number(args.amount);
   if (isNaN(amount) || amount <= 0) {
     return {
@@ -79,42 +73,47 @@ export async function handleCreatePayment(
     };
   }
 
-  // Create payment using numeric loanId - createPayment will handle UUID conversion internally
-  const payment = await deps.createPayment({
-    loanId: numericLoanId, // Numeric loanId - createPayment converts to UUID internally
+  const result = await deps.createPayment({
+    loanId: numericLoanId,
     amount,
     collectedById: collectorId,
     notes: args.notes as string | undefined
   });
 
+  const receiptPaymentId = result.installment?.id ?? result.lateFee?.id;
+  if (!receiptPaymentId) {
+    return { success: false, message: "No se creó ningún registro de pago" };
+  }
+
   logger.verbose("payment created via tool", {
-    paymentId: payment.id,
+    installmentId: result.installment?.id,
+    lateFeeId: result.lateFee?.id,
     loanId: loan.loanId,
     collectorId
   });
 
-  // Generate receipt
   let receipt;
   try {
     receipt = await deps.generateReceipt({
-      paymentId: payment.id
+      paymentId: receiptPaymentId
     });
     logger.verbose("receipt generated via tool", {
-      paymentId: payment.id
+      paymentId: receiptPaymentId
     });
   } catch (error) {
     const err = error as Error;
     logger.error("receipt generation failed in createPayment", {
-      paymentId: payment.id,
+      paymentId: receiptPaymentId,
       error: err.message
     });
-    // Payment was created, but receipt generation failed - keep message minimal
     return {
       success: true,
-      message: `OK - recibo pendiente, paymentId: ${payment.id}`,
+      message: `OK - recibo pendiente, paymentId: ${receiptPaymentId}`,
       data: {
-        paymentId: payment.id,
-        amount: payment.amount,
+        installmentPaymentId: result.installment?.id,
+        lateFeePaymentId: result.lateFee?.id,
+        amountInstallment: result.installment?.amount,
+        amountLateFee: result.lateFee?.amount,
         loan: {
           loanId: loan.loanId,
           principal: loan.principal,
@@ -132,15 +131,15 @@ export async function handleCreatePayment(
     };
   }
 
-  // Format success message - keep minimal so LLM doesn't elaborate
-  const successMessage = `OK`;
-
   return {
     success: true,
-    message: successMessage,
+    message: "OK",
     data: {
-      paymentId: payment.id,
-      amount: payment.amount,
+      installmentPaymentId: result.installment?.id,
+      lateFeePaymentId: result.lateFee?.id,
+      amountInstallment: result.installment?.amount,
+      amountLateFee: result.lateFee?.amount,
+      receiptPaymentId,
       receipt: {
         image: receipt.image,
         token: receipt.token

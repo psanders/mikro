@@ -62,5 +62,13 @@
       "anthropic": { "text": null, "vision": null },
       "google": { "text": null, "vision": null }
     }
+  },
+  "loans": {
+    "defaultMoraRate": 0.1,
+    "moraGraceDays": 0,
+    "moraCapInCuotas": 1,
+    "moraMinDop": 0,
+    "moraStopOnDefault": false,
+    "moraEffectiveFrom": null
   }
 }

@@ -33,18 +33,28 @@ export function createReceiptLayout(
     amountPaid = "RD$ 650.00",
     pendingPayments = 9,
     paymentNumber = "P1",
-    agentName = "Nombre del Agente"
+    agentName = "Nombre del Agente",
+    feePaid,
+    totalPaid
   } = data;
 
   const fields: Array<[string, string]> = [
     ["Numero de Prestamo:", loanNumber],
     ["Nombre:", name],
     ["Fecha:", date],
-    ["Monto Pagado:", amountPaid],
+    ["Monto Pagado:", amountPaid]
+  ];
+  if (feePaid) {
+    fields.push(["Mora Pagada:", feePaid]);
+    if (totalPaid) {
+      fields.push(["Total Pagado:", totalPaid]);
+    }
+  }
+  fields.push(
     ["Pagos Pendientes:", String(pendingPayments)],
     ["Numero de Pago:", paymentNumber],
     ["Agente:", agentName ?? ""]
-  ];
+  );
 
   const backgroundStyle = backgroundImage
     ? {

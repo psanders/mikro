@@ -121,6 +121,38 @@ const accountingSchema = z
   })
   .default(() => ({ attachmentsPath: "./data/attachments/accounting" }));
 
+/** Past-due (mora) fee policy. See README "Past-due fee". */
+export const loansSchema = z.object({
+  /** Annualized-style rate applied as `rate * (daysLate/30) * cuota` (e.g. 0.10 = 10%). */
+  defaultMoraRate: z.number().min(0).max(1).default(0.1),
+  /** No mora if calendar days late is at or below this (after effective-from window). */
+  moraGraceDays: z.number().int().min(0).default(0),
+  /** Cap accrued mora at this multiple of one cuota (e.g. 1 = at most one full cuota of mora). */
+  moraCapInCuotas: z.number().min(0).default(1),
+  /** Minimum mora in DOP when mora is otherwise positive (0 = no floor). */
+  moraMinDop: z.number().min(0).default(0),
+  /** When true, do not accrue mora past `loan.updatedAt` for DEFAULTED loans. */
+  moraStopOnDefault: z.boolean().default(false),
+  /** If set (YYYY-MM-DD), mora accrual starts from the later of this date and the oldest unpaid due date. */
+  moraEffectiveFrom: z
+    .union([
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "moraEffectiveFrom must be YYYY-MM-DD"),
+      z.null()
+    ])
+    .optional()
+});
+
+export type LoansConfig = z.infer<typeof loansSchema>;
+
+const defaultLoansConfig = (): LoansConfig => ({
+  defaultMoraRate: 0.1,
+  moraGraceDays: 0,
+  moraCapInCuotas: 1,
+  moraMinDop: 0,
+  moraStopOnDefault: false,
+  moraEffectiveFrom: undefined
+});
+
 export const mikroConfigSchema = z
   .object({
     timezone: z.string().default("America/Santo_Domingo"),
@@ -165,7 +197,8 @@ export const mikroConfigSchema = z
     reports: reportsSchema.default(() => ({})),
     accounting: accountingSchema.default(() => ({
       attachmentsPath: "./data/attachments/accounting"
-    }))
+    })),
+    loans: loansSchema.default(defaultLoansConfig)
   })
   .strict();
 
@@ -174,7 +207,14 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "collections" | "fonoster" | "voiceNotes" | "evals" | "reports" | "accounting"
+  | "whatsapp"
+  | "collections"
+  | "fonoster"
+  | "voiceNotes"
+  | "evals"
+  | "reports"
+  | "accounting"
+  | "loans"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -187,6 +227,7 @@ export type ResolvedMikroConfig = Omit<
   };
   reports: NonNullable<MikroConfig["reports"]>;
   accounting: NonNullable<MikroConfig["accounting"]>;
+  loans: LoansConfig;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";

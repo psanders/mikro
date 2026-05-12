@@ -56,3 +56,14 @@ export {
   DEFAULT_PAYMENT_ROUNDING_INCREMENT
 } from "./loanCalculatorConstants.js";
 export { formatMoney, type FormatMoneyInput } from "./formatMoney.js";
+export {
+  computeAccruedMora,
+  daysLateFromOldestDue,
+  type ComputeAccruedMoraInput,
+  type ComputeAccruedMoraResult
+} from "./lateFee.js";
+export {
+  amountToNumber,
+  toLoanPaymentData,
+  type LoanWithPaymentsForMora
+} from "./loanMoraHelpers.js";

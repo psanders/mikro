@@ -45,6 +45,12 @@ export default class Create extends BaseCommand<typeof Create> {
         "Override status: COMPLETED or PARTIAL (otherwise auto from amount vs expected payment)",
       options: ["COMPLETED", "PARTIAL"],
       required: false
+    }),
+    "late-fee-override": Flags.integer({
+      description:
+        "Waive this many DOP of accrued mora before split (optional; mora-first allocation only)",
+      required: false,
+      min: 0
     })
   };
 
@@ -86,6 +92,13 @@ export default class Create extends BaseCommand<typeof Create> {
       return;
     }
     const expected = Number(loan.paymentAmount);
+
+    const preview = await client.previewLateFee.query({ loanId });
+    this.log("");
+    this.log(`Cuota: ${formatMoney(preview.cuota)}`);
+    this.log(`Mora sugerida (hoy): ${formatMoney(preview.accruedMora)} (${preview.daysLate} días)`);
+    this.log(`Total sugerido (cuota + mora): ${formatMoney(preview.suggestedTotal)}`);
+    this.log("");
     let status: "COMPLETED" | "PARTIAL" | undefined =
       flags.status === "COMPLETED" || flags.status === "PARTIAL" ? flags.status : undefined;
 
@@ -108,19 +121,35 @@ export default class Create extends BaseCommand<typeof Create> {
       return;
     }
 
+    const lateFeeOverride = flags["late-fee-override"];
+
     try {
-      const payment = await client.createPayment.mutate({
+      const result = await client.createPayment.mutate({
         loanId,
         amount,
         method,
         collectedById,
         notes,
-        ...(status ? { status } : {})
+        ...(status ? { status } : {}),
+        ...(lateFeeOverride != null ? { lateFeeOverride } : {})
       });
 
       this.log("Done!");
-      this.log(`Payment ID: ${payment.id}`);
-      this.log(`Status: ${payment.status}`);
+      if (result.lateFee) {
+        this.log(`Late fee (mora) payment ID: ${result.lateFee.id}`);
+        this.log(
+          `  Amount: ${formatMoney(Number(result.lateFee.amount))} — status: ${result.lateFee.status}`
+        );
+      }
+      if (result.installment) {
+        this.log(`Installment payment ID: ${result.installment.id}`);
+        this.log(
+          `  Amount: ${formatMoney(Number(result.installment.amount))} — status: ${result.installment.status}`
+        );
+      }
+      if (!result.installment && !result.lateFee) {
+        this.error("No payment rows were created");
+      }
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

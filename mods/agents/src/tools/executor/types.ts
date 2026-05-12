@@ -61,13 +61,19 @@ export interface ToolExecutorDependencies {
     }>
   >;
 
-  /** Create a payment */
+  /** Create a payment (may split into INSTALLMENT + LATE_FEE rows). */
   createPayment: (params: {
-    loanId: number; // Numeric loanId - function converts to UUID internally
+    loanId: number;
     amount: number;
     collectedById: string;
     notes?: string;
-  }) => Promise<{ id: string; amount: number }>;
+    kind?: "INSTALLMENT" | "LATE_FEE";
+    lateFeeOverride?: number;
+    status?: "COMPLETED" | "PARTIAL";
+  }) => Promise<{
+    installment: { id: string; amount: number } | null;
+    lateFee: { id: string; amount: number } | null;
+  }>;
 
   /** Generate a receipt */
   generateReceipt: (params: { paymentId: string }) => Promise<{ image: string; token: string }>;

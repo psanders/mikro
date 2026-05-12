@@ -44,7 +44,10 @@ export {
   listLoansByCollectorTool,
   getCustomerTool,
   createLoanTool,
-  createToolExecutor
+  createToolExecutor,
+  type ToolExecutorDependencies,
+  type ExportedCustomer,
+  type ExportedLoan
 } from "./tools/index.js";
 
 // Router

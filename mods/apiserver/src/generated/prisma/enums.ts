@@ -63,6 +63,14 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
+export const PaymentKind = {
+  INSTALLMENT: 'INSTALLMENT',
+  LATE_FEE: 'LATE_FEE'
+} as const
+
+export type PaymentKind = (typeof PaymentKind)[keyof typeof PaymentKind]
+
+
 export const MessageRole = {
   AI: 'AI',
   HUMAN: 'HUMAN'

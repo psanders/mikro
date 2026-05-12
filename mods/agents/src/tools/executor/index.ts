@@ -109,4 +109,4 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
 }
 
 // Re-export types for convenience
-export type { ToolExecutorDependencies } from "./types.js";
+export type { ToolExecutorDependencies, ExportedCustomer, ExportedLoan } from "./types.js";

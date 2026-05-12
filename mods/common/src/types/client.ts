@@ -147,6 +147,7 @@ export interface DbClient {
         startingDate?: Date | null;
         nickname?: string | null;
         type?: LoanType;
+        moraRate?: number | null;
       };
     }): Promise<Loan>;
     findFirst(args: {
@@ -165,8 +166,16 @@ export interface DbClient {
                 nickname?: boolean;
                 phone?: boolean;
                 assignedCollectorId?: boolean;
+                preferredPaymentDay?: boolean;
               };
             };
+        payments?: {
+          where?: {
+            status?: PaymentStatus | { in: PaymentStatus[] };
+            kind?: "INSTALLMENT" | "LATE_FEE";
+          };
+          select?: { paidAt?: boolean; status?: boolean; kind?: boolean };
+        };
       };
       select?: {
         id?: boolean;
@@ -212,8 +221,10 @@ export interface DbClient {
         paidAt?: Date;
         method?: PaymentMethod;
         status?: PaymentStatus;
+        kind?: "INSTALLMENT" | "LATE_FEE";
+        linkedPaymentId?: string | null;
         collectedById: string;
-        notes?: string;
+        notes?: string | null;
       };
     }): Promise<Payment>;
     update(args: {
@@ -231,17 +242,23 @@ export interface DbClient {
           include?: {
             customer?: boolean;
             payments?: {
-              where?: { status?: PaymentStatus | { in: PaymentStatus[] } };
+              where?: {
+                status?: PaymentStatus | { in: PaymentStatus[] };
+                kind?: "INSTALLMENT" | "LATE_FEE";
+              };
               orderBy?: { paidAt: "asc" | "desc" };
             };
           };
         };
         collectedBy?: boolean;
+        linkedLateFee?: boolean;
+        installmentForLateFee?: boolean;
       };
     }): Promise<PaymentWithRelations | null>;
     findMany(args: {
       where?: {
         status?: PaymentStatus | { not: PaymentStatus } | { in: PaymentStatus[] };
+        kind?: "INSTALLMENT" | "LATE_FEE";
         loanId?: string;
         paidAt?: {
           gte?: Date;
@@ -300,6 +317,9 @@ export interface DbClient {
       }>
     >;
   };
+
+  /** Interactive transaction (Prisma). */
+  $transaction: <T>(fn: (tx: DbClient) => Promise<T>) => Promise<T>;
 }
 
 /**
@@ -311,6 +331,8 @@ export interface PaymentWithRelations extends Payment {
     payments: Payment[];
   };
   collectedBy?: User | null;
+  linkedLateFee?: Payment | null;
+  installmentForLateFee?: Payment | null;
 }
 
 /**

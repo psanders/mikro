@@ -16,9 +16,9 @@ import { config as loadDotenv } from "dotenv";
 import {
   getConfig,
   getCycleMetrics,
-  getDueDateForCycle,
-  MS_PER_DAY,
-  type LoanPaymentData
+  computeAccruedMora,
+  amountToNumber,
+  toLoanPaymentData
 } from "@mikro/common";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -48,6 +48,7 @@ const HEADERS = [
   "FREQ_PAGO",
   "DIAS_ATRASO",
   "MORA",
+  "MORA_COBRADA",
   "MONTO_ATRASO"
 ] as const;
 
@@ -103,14 +104,6 @@ function formatLoanDateShort(d: Date): string {
   return `${day}-${mon}-${yy}`;
 }
 
-function amountToNumber(amount: unknown): number {
-  if (typeof amount === "number") return amount;
-  if (amount && typeof amount === "object" && "toString" in amount) {
-    return Number((amount as { toString: () => string }).toString());
-  }
-  return Number(amount);
-}
-
 function csvEscape(value: string): string {
   if (value.includes('"') || value.includes(",") || value.includes("\r") || value.includes("\n")) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -134,38 +127,17 @@ function displayNombre(loan: { nickname: string | null; customer: { name: string
   return nick && nick.length > 0 ? nick : loan.customer.name;
 }
 
-function toLoanPaymentData(loan: {
-  paymentFrequency: string;
-  createdAt: Date;
-  startingDate: Date | null;
-  termLength: number;
-  payments: Array<{ paidAt: Date; status: string }>;
-  customer: { preferredPaymentDay: string | null };
-}): LoanPaymentData {
-  return {
-    paymentFrequency: loan.paymentFrequency,
-    createdAt: new Date(loan.createdAt),
-    startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
-    termLength: loan.termLength,
-    payments: loan.payments.map((p) => ({
-      paidAt: new Date(p.paidAt),
-      status: p.status
-    })),
-    preferredPaymentDay: loan.customer.preferredPaymentDay ?? null
-  };
-}
-
-function diasAtraso(
-  loanStart: Date,
-  paymentFrequency: string,
-  preferredPaymentDay: string | null,
-  paymentsMade: number,
-  missedCycles: number,
+function moraCollectedDop(
+  payments: Array<{ paidAt: Date; status: string; kind?: string | null; amount: unknown }>,
   asOf: Date
 ): number {
-  if (missedCycles <= 0) return 0;
-  const due = getDueDateForCycle(loanStart, paymentsMade, paymentFrequency, preferredPaymentDay);
-  return Math.max(0, Math.floor((asOf.getTime() - due.getTime()) / MS_PER_DAY));
+  let sum = 0;
+  for (const p of payments) {
+    if (p.kind !== "LATE_FEE" || p.status !== "COMPLETED") continue;
+    if (new Date(p.paidAt) > asOf) continue;
+    sum += amountToNumber(p.amount);
+  }
+  return Number(sum.toFixed(2));
 }
 
 async function main(): Promise<void> {
@@ -210,6 +182,7 @@ Options:
     url: getConfig().databaseUrl
   });
   const prisma = new PrismaClient({ adapter });
+  const cfg = getConfig();
 
   try {
     const loans = await prisma.loan.findMany({
@@ -218,7 +191,7 @@ Options:
         customer: {
           select: { name: true, idNumber: true, preferredPaymentDay: true }
         },
-        payments: { select: { paidAt: true, status: true } }
+        payments: { select: { paidAt: true, status: true, kind: true, amount: true } }
       },
       orderBy: [{ customer: { name: "asc" } }, { loanId: "asc" }]
     });
@@ -227,8 +200,6 @@ Options:
 
     const lines: string[] = [];
     lines.push(HEADERS.join(","));
-
-    const moraRate = moraPct / 100;
 
     for (const loan of loans) {
       const principal = amountToNumber(loan.principal);
@@ -247,14 +218,8 @@ Options:
       const { paymentsMade, missedCycles } = getCycleMetrics(loanData, asOfDate);
       const cuotasPendientes = Math.max(0, termLength - paymentsMade);
       const loanStart = new Date(loan.startingDate ?? loan.createdAt);
-      const dias = diasAtraso(
-        loanStart,
-        loan.paymentFrequency,
-        loan.customer.preferredPaymentDay,
-        paymentsMade,
-        missedCycles,
-        asOfDate
-      );
+      const resolvedMoraRate =
+        loan.moraRate != null ? amountToNumber(loan.moraRate) : cfg.loans.defaultMoraRate;
 
       let interesPorc = "0%";
       if (principal > 0) {
@@ -263,7 +228,21 @@ Options:
         interesPorc = `${interesPct}%`;
       }
 
-      const moraAmount = missedCycles > 0 ? moraRate * (dias / 30) * montoCuota : 0;
+      const accrued = computeAccruedMora({
+        loanData,
+        moraRate: resolvedMoraRate,
+        paymentAmount: montoCuota,
+        paymentFrequency: loan.paymentFrequency,
+        preferredPaymentDay: loan.customer.preferredPaymentDay ?? null,
+        loanStart,
+        asOfDate,
+        loanStatus: loan.status,
+        loanUpdatedAt: new Date(loan.updatedAt),
+        policy: cfg.loans
+      });
+      const moraAmount = accrued.moraAmount;
+      const dias = accrued.daysLate;
+      const moraCollected = moraCollectedDop(loan.payments, asOfDate);
       const montoAtraso = montoCuota * missedCycles + moraAmount;
 
       const fechaPrestamo = formatLoanDateShort(loanStart);
@@ -275,7 +254,7 @@ Options:
         fechaPrestamo,
         principal.toFixed(2),
         interesPorc,
-        `${Math.round(moraPct)}%`,
+        `${Math.round(resolvedMoraRate * 100)}%`,
         termLength,
         montoCuota.toFixed(2),
         paymentsMade,
@@ -284,6 +263,7 @@ Options:
         freq,
         dias,
         moraAmount.toFixed(2),
+        moraCollected.toFixed(2),
         montoAtraso.toFixed(2)
       ];
 

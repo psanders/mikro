@@ -8,6 +8,7 @@ import {
   generateReceiptSchema,
   renderReceiptToImage,
   formatMoney,
+  amountToNumber,
   type GenerateReceiptInput,
   type DbClient,
   type ReceiptData
@@ -52,11 +53,12 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     const payment = await deps.db.payment.findUnique({
       where: { id: params.paymentId },
       include: {
+        linkedLateFee: true,
         loan: {
           include: {
             customer: true,
             payments: {
-              where: { status: { in: ["COMPLETED", "PARTIAL"] } },
+              where: { status: { in: ["COMPLETED", "PARTIAL"] }, kind: "INSTALLMENT" },
               orderBy: { paidAt: "asc" }
             }
           }
@@ -78,6 +80,15 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
       completedIndex >= 0 ? completedIndex + 1 : completedPayments.length;
     const pendingPayments = Math.max(0, loan.termLength - completedPayments.length);
 
+    const kind = (payment.kind as string | undefined) ?? "INSTALLMENT";
+    const linkedFee = payment.linkedLateFee as { amount: unknown } | null | undefined;
+    const feeAmount =
+      kind === "INSTALLMENT" && linkedFee != null ? amountToNumber(linkedFee.amount) : 0;
+
+    const paymentAmountNum = amountToNumber(payment.amount);
+    const installmentDisplay = kind === "LATE_FEE" ? 0 : paymentAmountNum;
+    const moraOnlyDisplay = kind === "LATE_FEE" ? paymentAmountNum : 0;
+
     const receiptData: ReceiptData = {
       loanNumber: String(loan.loanId),
       name: loan.nickname ?? customer.name,
@@ -86,10 +97,23 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
         month: "2-digit",
         year: "numeric"
       }),
-      amountPaid: `RD$ ${formatMoney(payment.amount)}`,
+      amountPaid:
+        kind === "LATE_FEE"
+          ? `RD$ ${formatMoney(moraOnlyDisplay)}`
+          : `RD$ ${formatMoney(installmentDisplay)}`,
       pendingPayments: Math.max(0, pendingPayments),
-      paymentNumber: payment.status === "PARTIAL" ? "Parcial" : `P${completedPaymentNumber}`,
-      agentName: payment.collectedBy?.name
+      paymentNumber:
+        kind === "LATE_FEE"
+          ? "Mora"
+          : payment.status === "PARTIAL"
+            ? "Parcial"
+            : `P${completedPaymentNumber}`,
+      agentName: payment.collectedBy?.name,
+      feePaid: feeAmount > 0 ? `RD$ ${formatMoney(feeAmount)}` : undefined,
+      totalPaid:
+        feeAmount > 0 && kind === "INSTALLMENT"
+          ? `RD$ ${formatMoney(installmentDisplay + feeAmount)}`
+          : undefined
     };
 
     return renderReceiptToImage(receiptData, keysDir, assetsDir, logger);

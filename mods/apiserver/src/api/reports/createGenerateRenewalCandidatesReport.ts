@@ -24,7 +24,10 @@ import { loanToData } from "../../collections/loanToData.js";
 
 const loanInclude = {
   customer: { select: { name: true, phone: true, preferredPaymentDay: true } },
-  payments: { where: { status: "COMPLETED" as const }, orderBy: { paidAt: "asc" as const } }
+  payments: {
+    where: { status: "COMPLETED" as const, kind: "INSTALLMENT" as const },
+    orderBy: { paidAt: "asc" as const }
+  }
 };
 
 /**
