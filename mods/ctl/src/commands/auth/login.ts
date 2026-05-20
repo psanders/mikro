@@ -6,8 +6,29 @@ import { input, password } from "@inquirer/prompts";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "@mikro/apiserver";
 import { BaseCommand } from "../../BaseCommand.js";
-import { DEFAULT_API_URL, loadConfig, saveConfig, type Config } from "../../lib/config.js";
+import {
+  DEFAULT_API_URL,
+  deleteConfig,
+  loadConfig,
+  saveConfig,
+  type Config
+} from "../../lib/config.js";
 import { createClient } from "../../lib/trpc.js";
+
+/**
+ * Decode a JWT payload and return the `exp` field (seconds since epoch),
+ * or `null` if the token is malformed or has no expiry claim.
+ */
+function jwtExpiresAt(token: string): number | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf-8"));
+    return typeof payload.exp === "number" ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Unauthenticated tRPC client used to call the public `login` mutation.
@@ -49,12 +70,20 @@ export default class Login extends BaseCommand<typeof Login> {
 
     const existingConfig = loadConfig();
     if (existingConfig) {
-      const who = existingConfig.name
-        ? `${existingConfig.name} (${existingConfig.phone})`
-        : existingConfig.phone;
-      this.log(`Already logged in as ${who} to ${existingConfig.apiUrl}`);
-      this.log("Use 'mikro auth:logout' to log out first.");
-      return;
+      const exp = jwtExpiresAt(existingConfig.token);
+      const isExpired = exp !== null && exp * 1000 < Date.now();
+
+      if (isExpired) {
+        this.log("Session has expired. Starting a new login...");
+        deleteConfig();
+      } else {
+        const who = existingConfig.name
+          ? `${existingConfig.name} (${existingConfig.phone})`
+          : existingConfig.phone;
+        this.log(`Already logged in as ${who} to ${existingConfig.apiUrl}`);
+        this.log("Use 'mikro auth:logout' to log out first.");
+        return;
+      }
     }
 
     let phone: string;
