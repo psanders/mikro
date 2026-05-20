@@ -97,6 +97,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
         month: "2-digit",
         year: "numeric"
       }),
+      principalAmount: `RD$ ${formatMoney(amountToNumber(loan.principal))}`,
       amountPaid:
         kind === "LATE_FEE"
           ? `RD$ ${formatMoney(moraOnlyDisplay)}`

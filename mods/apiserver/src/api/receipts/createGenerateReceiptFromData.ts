@@ -40,10 +40,13 @@ export function createGenerateReceiptFromDataApi(deps: ReceiptFromDataDependenci
       loanNumber: params.loanNumber,
       name: params.name,
       date: params.date,
+      principalAmount: params.principalAmount,
       amountPaid: params.amountPaid,
       pendingPayments: params.pendingPayments,
       paymentNumber: params.paymentNumber,
-      agentName: params.agentName
+      agentName: params.agentName,
+      feePaid: params.feePaid,
+      totalPaid: params.totalPaid
     };
 
     return renderReceiptToImage(receiptData, keysDir, assetsDir, logger);

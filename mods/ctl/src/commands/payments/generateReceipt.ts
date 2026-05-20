@@ -15,15 +15,15 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> --payment-id 123e4567-e89b-12d3-a456-426614174000",
     "<%= config.bin %> <%= command.id %> --payment-id 123e4567-e89b-12d3-a456-426614174000 --output ./receipts",
-    "<%= config.bin %> <%= command.id %> --interactive"
+    "<%= config.bin %> <%= command.id %> --manual"
   ];
 
   static override readonly flags = {
     "payment-id": Flags.string({
-      description: "Payment ID to generate receipt for (omit when using --interactive)"
+      description: "Payment ID to generate receipt for (omit when using --manual)"
     }),
-    interactive: Flags.boolean({
-      char: "i",
+    manual: Flags.boolean({
+      char: "m",
       description: "Manually enter receipt data (no database lookup)",
       default: false
     }),
@@ -47,8 +47,8 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
 
       let result: GenerateReceiptResponse;
 
-      if (this.flags.interactive) {
-        result = await this.runInteractive();
+      if (this.flags.manual) {
+        result = await this.runManual();
       } else {
         result = await this.runFromPaymentId(outputDir);
       }
@@ -81,11 +81,9 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
     }
   }
 
-  private async runInteractive(): Promise<GenerateReceiptResponse> {
+  private async runManual(): Promise<GenerateReceiptResponse> {
     if (!process.stdout.isTTY) {
-      this.error(
-        "Interactive mode requires a TTY. Run without --interactive and use --payment-id instead."
-      );
+      this.error("Manual mode requires a TTY. Run without --manual and use --payment-id instead.");
     }
 
     this.log("Enter receipt details (no database). Press ^C to cancel.\n");
@@ -99,7 +97,13 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
         year: "numeric"
       })
     });
-    const amount = await promptNumberIfMissing(undefined, "Amount (e.g. 500)", "amount");
+    const principal = await promptNumberIfMissing(
+      undefined,
+      "Principal / Capital (e.g. 5000)",
+      "principal"
+    );
+    const principalAmount = `RD$ ${formatMoney(principal)}`;
+    const amount = await promptNumberIfMissing(undefined, "Amount paid (e.g. 500)", "amount");
     const amountPaid = `RD$ ${formatMoney(amount)}`;
     const paymentNumber = await promptTextIfMissing(
       undefined,
@@ -111,12 +115,20 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       "Pending payments (number remaining)",
       "pending-payments"
     );
+    const fee = await promptNumberIfMissing(
+      undefined,
+      "Late fee / Mora (enter 0 if none)",
+      "late-fee"
+    );
     const agentName = await promptTextIfMissing(
       undefined,
       "Agent name (optional; leave empty to skip)",
       "agent-name",
       { required: false, default: "" }
     );
+
+    const feePaid = fee > 0 ? `RD$ ${formatMoney(fee)}` : undefined;
+    const totalPaid = fee > 0 ? `RD$ ${formatMoney(amount + fee)}` : undefined;
 
     const client = this.createClient();
 
@@ -125,17 +137,20 @@ export default class GenerateReceipt extends BaseCommand<typeof GenerateReceipt>
       loanNumber,
       name,
       date,
+      principalAmount,
       amountPaid,
       paymentNumber,
       pendingPayments,
-      ...(agentName ? { agentName } : {})
+      ...(agentName ? { agentName } : {}),
+      ...(feePaid ? { feePaid } : {}),
+      ...(totalPaid ? { totalPaid } : {})
     });
   }
 
   private async runFromPaymentId(outputDir: string): Promise<GenerateReceiptResponse> {
     const paymentId = this.flags["payment-id"];
     if (!paymentId) {
-      this.error("Missing required flag: --payment-id (or use --interactive for manual entry)");
+      this.error("Missing required flag: --payment-id (or use --manual for manual entry)");
     }
 
     const client = this.createClient();

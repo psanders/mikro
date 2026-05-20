@@ -30,6 +30,7 @@ export function createReceiptLayout(
     loanNumber = "123456",
     name = "John Doe",
     date = "24/04/2024",
+    principalAmount,
     amountPaid = "RD$ 650.00",
     pendingPayments = 9,
     paymentNumber = "P1",
@@ -41,9 +42,12 @@ export function createReceiptLayout(
   const fields: Array<[string, string]> = [
     ["Numero de Prestamo:", loanNumber],
     ["Nombre:", name],
-    ["Fecha:", date],
-    ["Monto Pagado:", amountPaid]
+    ["Fecha:", date]
   ];
+  if (principalAmount) {
+    fields.push(["Capital:", principalAmount]);
+  }
+  fields.push(["Monto Pagado:", amountPaid]);
   if (feePaid) {
     fields.push(["Mora Pagada:", feePaid]);
     if (totalPaid) {

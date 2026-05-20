@@ -22,6 +22,7 @@ export const receiptDataSchema = z.object({
   loanNumber: z.string(),
   name: z.string(),
   date: z.string(),
+  principalAmount: z.string().optional(),
   amountPaid: z.string(),
   pendingPayments: z.number(),
   paymentNumber: z.string(),
