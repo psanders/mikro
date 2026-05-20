@@ -13,7 +13,7 @@ function loan(overrides: {
   termLength?: number;
   paymentAmount?: number;
   createdAt?: Date;
-  payments?: Array<{ amount: number }>;
+  payments?: Array<{ amount: number; status?: string }>;
 }) {
   const {
     principal = 5000,
@@ -29,7 +29,10 @@ function loan(overrides: {
     termLength,
     paymentAmount,
     createdAt,
-    payments
+    payments: payments.map((p) => ({
+      amount: p.amount,
+      status: p.status ?? "COMPLETED"
+    }))
   };
 }
 
@@ -86,6 +89,29 @@ describe("createGeneratePortfolioMetrics", () => {
       expect(result.totalPrincipalDop).to.equal(5000);
       expect(result.loansByStatus.ACTIVE.count).to.equal(1);
       expect(result.loansByStatus.CANCELLED.count).to.equal(0);
+    });
+
+    it("should include PARTIAL payments in totalCollectedDop but not in paymentsMade", async () => {
+      const mockLoans = [
+        loan({
+          principal: 5000,
+          status: "ACTIVE",
+          payments: [
+            { amount: 650, status: "COMPLETED" },
+            { amount: 550, status: "PARTIAL" }
+          ]
+        })
+      ];
+      const mockClient = {
+        loan: { findMany: sinon.stub().resolves(mockLoans) }
+      };
+      const getMetrics = createGeneratePortfolioMetrics(mockClient as any);
+
+      const result = await getMetrics({
+        endDate: new Date("2026-06-01")
+      });
+
+      expect(result.totalCollectedDop).to.equal(1200);
     });
   });
 

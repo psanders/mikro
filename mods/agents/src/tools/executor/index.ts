@@ -20,6 +20,7 @@ import { handleListLoansByCustomer } from "./listLoansByCustomer.js";
 import { handleListCustomerLoansByPhone } from "./listCustomerLoansByPhone.js";
 import { handleListUsers } from "./listUsers.js";
 import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
+import { handlePreviewLateFee } from "./previewLateFee.js";
 import { handleExportCollectorCustomers } from "./exportCollectorCustomers.js";
 import { handleExportCustomersByReferrer } from "./exportCustomersByReferrer.js";
 import { handleExportAllCustomers } from "./exportAllCustomers.js";
@@ -69,6 +70,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     listCustomerLoansByPhone: handleListCustomerLoansByPhone,
     listUsers: handleListUsers,
     getLoanByLoanId: handleGetLoanByLoanId,
+    previewLateFee: handlePreviewLateFee,
     exportCollectorCustomers: handleExportCollectorCustomers,
     exportCustomersByReferrer: handleExportCustomersByReferrer,
     exportAllCustomers: handleExportAllCustomers,

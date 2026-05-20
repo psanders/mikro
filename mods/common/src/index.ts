@@ -49,12 +49,14 @@ export {
   daysLateFromOldestDue,
   amountToNumber,
   toLoanPaymentData,
+  toCollectedLateFeePayments,
   type LoanPaymentData,
   type LoanWithPaymentsForMora,
   type CycleMetrics,
   type FormatMoneyInput,
   type ComputeAccruedMoraInput,
-  type ComputeAccruedMoraResult
+  type ComputeAccruedMoraResult,
+  type CollectedLateFeePayment
 } from "./utils/index.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,

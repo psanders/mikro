@@ -95,6 +95,7 @@ import {
   createListLoansByCustomer,
   createListPaymentsByLoanId,
   createGetLoanByLoanId,
+  createPreviewLateFee,
   createGetCustomer,
   createCreateLoan,
   createCalculateLoan,
@@ -224,6 +225,7 @@ async function initializeMessageProcessor() {
     const listLoansByCustomer = createListLoansByCustomer(dbClient);
     const listPaymentsByLoanId = createListPaymentsByLoanId(dbClient);
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
+    const previewLateFee = createPreviewLateFee(dbClient);
     const getCustomer = createGetCustomer(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();
@@ -446,6 +448,9 @@ async function initializeMessageProcessor() {
             assignedCollectorId: loan.customer.assignedCollectorId
           }
         } as Awaited<ReturnType<ToolExecutorDependencies["getLoanByLoanId"]>>;
+      },
+      previewLateFee: async (params: { loanId: number; asOf?: Date }) => {
+        return previewLateFee(params);
       },
       exportCollectorCustomers: async (
         params: Parameters<ToolExecutorDependencies["exportCollectorCustomers"]>[0]

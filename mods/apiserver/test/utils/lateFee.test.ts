@@ -171,6 +171,80 @@ describe("computeAccruedMora", () => {
     const r = computeAccruedMora(makeInput({ paymentAmount: 0 }));
     expect(r.moraAmount).to.equal(0);
   });
+
+  it("returns grossMoraAmount equal to moraAmount when no LATE_FEE collected", () => {
+    const r = computeAccruedMora(makeInput());
+    expect(r.grossMoraAmount).to.be.greaterThan(0);
+    expect(r.collectedMora).to.equal(0);
+    expect(r.moraAmount).to.equal(r.grossMoraAmount);
+  });
+
+  it("subtracts collected LATE_FEE paid on or after oldest missed due", () => {
+    const asOf = new Date("2026-01-31T12:00:00Z");
+    const rGross = computeAccruedMora(makeInput({ asOfDate: asOf }));
+    expect(rGross.grossMoraAmount).to.be.greaterThan(0);
+
+    const rNet = computeAccruedMora(
+      makeInput({
+        asOfDate: asOf,
+        collectedLateFeePayments: [
+          {
+            paidAt: new Date("2026-01-20T12:00:00Z"),
+            amount: rGross.grossMoraAmount,
+            status: "COMPLETED"
+          }
+        ]
+      })
+    );
+    expect(rNet.grossMoraAmount).to.equal(rGross.grossMoraAmount);
+    expect(rNet.collectedMora).to.equal(rGross.grossMoraAmount);
+    expect(rNet.moraAmount).to.equal(0);
+  });
+
+  it("ignores REVERSED LATE_FEE when netting", () => {
+    const asOf = new Date("2026-01-31T12:00:00Z");
+    const rGross = computeAccruedMora(makeInput({ asOfDate: asOf }));
+    const rNet = computeAccruedMora(
+      makeInput({
+        asOfDate: asOf,
+        collectedLateFeePayments: [
+          { paidAt: new Date("2026-01-20T12:00:00Z"), amount: 500, status: "REVERSED" }
+        ]
+      })
+    );
+    expect(rNet.collectedMora).to.equal(0);
+    expect(rNet.moraAmount).to.equal(rGross.grossMoraAmount);
+  });
+
+  it("ignores LATE_FEE paid before oldest missed due", () => {
+    const asOf = new Date("2026-01-31T12:00:00Z");
+    const rGross = computeAccruedMora(makeInput({ asOfDate: asOf }));
+    const rNet = computeAccruedMora(
+      makeInput({
+        asOfDate: asOf,
+        collectedLateFeePayments: [
+          { paidAt: new Date("2025-12-01T12:00:00Z"), amount: 999, status: "COMPLETED" }
+        ]
+      })
+    );
+    expect(rNet.collectedMora).to.equal(0);
+    expect(rNet.moraAmount).to.equal(rGross.grossMoraAmount);
+  });
+
+  it("clamps net mora to zero when collected exceeds gross", () => {
+    const asOf = new Date("2026-01-31T12:00:00Z");
+    const r = computeAccruedMora(
+      makeInput({
+        asOfDate: asOf,
+        collectedLateFeePayments: [
+          { paidAt: new Date("2026-01-20T12:00:00Z"), amount: 50_000, status: "COMPLETED" }
+        ]
+      })
+    );
+    expect(r.moraAmount).to.equal(0);
+    expect(r.grossMoraAmount).to.be.greaterThan(0);
+    expect(r.collectedMora).to.equal(50_000);
+  });
 });
 
 describe("daysLateFromOldestDue", () => {

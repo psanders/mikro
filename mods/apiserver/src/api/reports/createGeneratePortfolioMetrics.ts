@@ -19,7 +19,7 @@ interface LoanWithPayments {
   termLength: number;
   paymentAmount: { toString(): string } | number;
   createdAt: Date;
-  payments: Array<{ amount: { toString(): string } | number }>;
+  payments: Array<{ amount: { toString(): string } | number; status: string }>;
 }
 
 function toNum(v: { toString(): string } | number): number {
@@ -50,13 +50,13 @@ export function createGeneratePortfolioMetrics(client: DbClient) {
       endDate: endDate.toISOString().slice(0, 10)
     });
 
-    // Fetch all loans with completed payments (Prisma client supports include)
+    // Cash totals include COMPLETED + PARTIAL; cycle counts use COMPLETED only.
     const allLoans = await (
       client as unknown as { loan: { findMany: (args: unknown) => Promise<LoanWithPayments[]> } }
     ).loan.findMany({
       include: {
         payments: {
-          where: { status: "COMPLETED" },
+          where: { status: { in: ["COMPLETED", "PARTIAL"] } },
           orderBy: { paidAt: "asc" }
         }
       }
@@ -134,7 +134,7 @@ export function createGeneratePortfolioMetrics(client: DbClient) {
         const msSinceLoan = asOf.getTime() - loanStart.getTime();
         const daysSinceLoan = Math.max(0, Math.floor(msSinceLoan / (1000 * 60 * 60 * 24)));
         const cyclesElapsed = Math.floor(daysSinceLoan / intervalDays);
-        const paymentsMade = loan.payments.length;
+        const paymentsMade = loan.payments.filter((p) => p.status === "COMPLETED").length;
         const missedCycles = Math.max(0, cyclesElapsed - paymentsMade);
         const paymentAmount = toNum(loan.paymentAmount);
         const outstanding = (termLength - paymentsMade) * paymentAmount;

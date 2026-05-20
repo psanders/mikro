@@ -10,16 +10,25 @@ import {
   getConfig,
   computeAccruedMora,
   amountToNumber,
-  toLoanPaymentData
+  toLoanPaymentData,
+  toCollectedLateFeePayments
 } from "@mikro/common";
 
 type LoanMoraContext = Loan & {
   customer: { preferredPaymentDay: string | null };
-  payments: Array<{ paidAt: Date; status: string; kind?: string }>;
+  payments: Array<{
+    paidAt: Date;
+    status: string;
+    kind?: string | null;
+    amount?: unknown;
+  }>;
 };
 
 export interface PreviewLateFeeResult {
+  /** Net mora still owed (after subtracting collected LATE_FEE for this missed-cycle window). */
   accruedMora: number;
+  grossMora: number;
+  collectedMora: number;
   daysLate: number;
   missedCycles: number;
   cuota: number;
@@ -34,8 +43,7 @@ export function createPreviewLateFee(client: DbClient) {
       include: {
         customer: { select: { preferredPaymentDay: true } },
         payments: {
-          where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } },
-          select: { paidAt: true, status: true, kind: true }
+          where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } }
         }
       }
     })) as LoanMoraContext | null;
@@ -62,11 +70,14 @@ export function createPreviewLateFee(client: DbClient) {
       asOfDate: asOf,
       loanStatus: loan.status,
       loanUpdatedAt: new Date(loan.updatedAt),
-      policy: cfg.loans
+      policy: cfg.loans,
+      collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });
 
     return {
       accruedMora: accrued.moraAmount,
+      grossMora: accrued.grossMoraAmount,
+      collectedMora: accrued.collectedMora,
       daysLate: accrued.daysLate,
       missedCycles: accrued.missedCycles,
       cuota: montoCuota,

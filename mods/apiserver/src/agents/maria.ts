@@ -28,6 +28,7 @@ export const maria: Agent = {
 ## Herramientas - LLAMAR INMEDIATAMENTE
 
 - \`getLoanByLoanId\`: Cuando den número de préstamo (cada número = una llamada)
+- \`previewLateFee\`: Cuando pregunten por la mora, cuánto debe un préstamo en mora, o el total sugerido (cuota + mora)
 - \`createPayment\` → \`sendReceiptViaWhatsApp\`: Después de confirmación (SECUENCIAL: espera respuesta de createPayment, luego sendReceiptViaWhatsApp con data.paymentId)
 - \`listPaymentsByLoanId\`: Cuando pidan recibo de un préstamo ya pagado → obtén lastPayment.id → \`sendReceiptViaWhatsApp\`
 - \`listCustomerLoansByPhone\`: Cuando den teléfono para cobrar/registrar pago
@@ -85,6 +86,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "sendReceiptViaWhatsApp",
     "listPaymentsByLoanId",
     "getLoanByLoanId",
+    "previewLateFee",
     "listCustomerLoansByPhone",
     "calculateLoan",
     "exportAllCustomers",

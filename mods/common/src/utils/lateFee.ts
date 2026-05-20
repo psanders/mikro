@@ -11,6 +11,12 @@ import {
 } from "./calculatePaymentStatus.js";
 import type { LoansConfig } from "../config.js";
 
+export interface CollectedLateFeePayment {
+  paidAt: Date;
+  amount: number;
+  status: string;
+}
+
 export interface ComputeAccruedMoraInput {
   loanData: LoanPaymentData;
   /** Resolved mora rate (e.g. loan override or config default). */
@@ -27,10 +33,20 @@ export interface ComputeAccruedMoraInput {
     LoansConfig,
     "moraGraceDays" | "moraCapInCuotas" | "moraMinDop" | "moraStopOnDefault" | "moraEffectiveFrom"
   >;
+  /**
+   * Non-reversed LATE_FEE rows already collected. When set, `moraAmount` is net of mora paid
+   * on or after the oldest missed-cycle due date (cycle anchor via `paymentsMade` is unchanged).
+   */
+  collectedLateFeePayments?: CollectedLateFeePayment[];
 }
 
 export interface ComputeAccruedMoraResult {
+  /** Net mora still owed (gross minus collected for the current missed-cycle window). */
   moraAmount: number;
+  /** Policy-suggested mora before subtracting collected LATE_FEE for this window. */
+  grossMoraAmount: number;
+  /** Sum of non-reversed LATE_FEE paid on or after oldest missed due (and on or before as-of). */
+  collectedMora: number;
   daysLate: number;
   missedCycles: number;
   capApplied: boolean;
@@ -64,8 +80,28 @@ export function daysLateFromOldestDue(
   return Math.max(0, Math.floor((asOf.getTime() - due.getTime()) / MS_PER_DAY));
 }
 
+function sumCollectedMoraForWindow(
+  collectedLateFeePayments: CollectedLateFeePayment[] | undefined,
+  oldestMissedDue: Date | null,
+  asOf: Date
+): number {
+  if (!collectedLateFeePayments?.length || !oldestMissedDue) return 0;
+  const dueMs = oldestMissedDue.getTime();
+  const asOfMs = asOf.getTime();
+  let sum = 0;
+  for (const p of collectedLateFeePayments) {
+    if (p.status === "REVERSED") continue;
+    const paidMs = new Date(p.paidAt).getTime();
+    if (paidMs >= dueMs && paidMs <= asOfMs) {
+      sum += p.amount;
+    }
+  }
+  return sum;
+}
+
 /**
- * Accrued mora as of `asOfDate` (not reduced by any LATE_FEE payments — callers subtract collected separately if needed).
+ * Accrued mora as of `asOfDate`. When `collectedLateFeePayments` is provided, `moraAmount` is net
+ * of LATE_FEE already collected for the current missed-cycle window.
  */
 export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccruedMoraResult {
   const {
@@ -78,8 +114,23 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     asOfDate,
     loanStatus,
     loanUpdatedAt,
-    policy
+    policy,
+    collectedLateFeePayments
   } = input;
+
+  const zeroMora = (
+    missedCycles: number,
+    daysLate: number,
+    graceApplied: boolean
+  ): ComputeAccruedMoraResult => ({
+    moraAmount: 0,
+    grossMoraAmount: 0,
+    collectedMora: 0,
+    daysLate,
+    missedCycles,
+    capApplied: false,
+    graceApplied
+  });
 
   let asOf = new Date(asOfDate);
   if (policy.moraStopOnDefault && loanStatus === "DEFAULTED" && loanUpdatedAt) {
@@ -89,13 +140,7 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
   const { paymentsMade, missedCycles } = getCycleMetrics(loanData, asOf);
 
   if (missedCycles <= 0 || moraRate <= 0 || paymentAmount <= 0) {
-    return {
-      moraAmount: 0,
-      daysLate: 0,
-      missedCycles,
-      capApplied: false,
-      graceApplied: false
-    };
+    return zeroMora(missedCycles, 0, false);
   }
 
   let daysLate = daysLateFromOldestDue(
@@ -121,13 +166,7 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
 
   const graceApplied = daysLate <= policy.moraGraceDays;
   if (graceApplied) {
-    return {
-      moraAmount: 0,
-      daysLate,
-      missedCycles,
-      capApplied: false,
-      graceApplied: true
-    };
+    return zeroMora(missedCycles, daysLate, true);
   }
 
   const rawMora = moraRate * (daysLate / 30) * paymentAmount;
@@ -135,13 +174,25 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
   const capped = cap > 0 ? Math.min(rawMora, cap) : rawMora;
   const capApplied = capped < rawMora - 1e-9;
 
-  let moraAmount = capped;
-  if (policy.moraMinDop > 0 && moraAmount > 0 && moraAmount < policy.moraMinDop) {
-    moraAmount = policy.moraMinDop;
+  let grossMoraAmount = capped;
+  if (policy.moraMinDop > 0 && grossMoraAmount > 0 && grossMoraAmount < policy.moraMinDop) {
+    grossMoraAmount = policy.moraMinDop;
   }
+  grossMoraAmount = Number(grossMoraAmount.toFixed(2));
+
+  const oldestMissedDue = getDueDateForCycle(
+    loanStart,
+    paymentsMade,
+    paymentFrequency,
+    preferredPaymentDay
+  );
+  const collectedMora = sumCollectedMoraForWindow(collectedLateFeePayments, oldestMissedDue, asOf);
+  const netMora = Math.max(0, grossMoraAmount - collectedMora);
 
   return {
-    moraAmount: Number(moraAmount.toFixed(2)),
+    moraAmount: Number(netMora.toFixed(2)),
+    grossMoraAmount,
+    collectedMora: Number(collectedMora.toFixed(2)),
     daysLate,
     missedCycles,
     capApplied,

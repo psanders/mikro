@@ -394,6 +394,33 @@ export const getLoanByLoanIdTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for previewing accrued mora (past-due fee) for a loan.
+ */
+export const previewLateFeeTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "previewLateFee",
+    description:
+      "Consultar la mora (past-due fee) acumulada de un préstamo. Devuelve cuota, mora bruta, mora ya cobrada, mora neta a cobrar, días de atraso, ciclos atrasados, tasa y total sugerido (cuota + mora neta).",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description:
+            "ID numérico del préstamo (ej: 10000, 10001). Este es el número de préstamo, no el UUID."
+        },
+        asOf: {
+          type: "string",
+          description: "Fecha de corte opcional en formato YYYY-MM-DD (por defecto hoy)."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
  * Tool definition for listing payments by loan ID.
  * Used by Juan (collector) to see payment history and get payment IDs for sending receipts.
  */
@@ -655,6 +682,7 @@ export const allTools: ToolFunction[] = [
   listCustomerLoansByPhoneTool,
   listUsersTool,
   getLoanByLoanIdTool,
+  previewLateFeeTool,
   exportCollectorCustomersTool,
   exportCustomersByReferrerTool,
   exportAllCustomersTool,

@@ -150,6 +150,18 @@ export interface ToolExecutorDependencies {
     showAll?: boolean;
   }) => Promise<Array<{ id: string; loanId: number; principal: number; status: string }>>;
 
+  /** Preview accrued mora for a loan (numeric loanId). */
+  previewLateFee: (params: { loanId: number; asOf?: Date }) => Promise<{
+    accruedMora: number;
+    grossMora: number;
+    collectedMora: number;
+    daysLate: number;
+    missedCycles: number;
+    cuota: number;
+    suggestedTotal: number;
+    moraRate: number;
+  }>;
+
   /** Get loan by numeric loan ID */
   getLoanByLoanId: (params: { loanId: number }) => Promise<{
     id: string; // UUID

@@ -4,6 +4,7 @@
  * Shared helpers used by mora-aware callers (payment creation, preview, export).
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
+import type { CollectedLateFeePayment } from "./lateFee.js";
 
 /**
  * Prisma Decimal / BigInt / number — coerce to plain number.
@@ -22,7 +23,12 @@ export interface LoanWithPaymentsForMora {
   createdAt: Date;
   startingDate: Date | null;
   termLength: number;
-  payments: Array<{ paidAt: Date; status: string; kind?: string | null }>;
+  payments: Array<{
+    paidAt: Date;
+    status: string;
+    kind?: string | null;
+    amount?: unknown;
+  }>;
   customer: { preferredPaymentDay: string | null };
 }
 
@@ -46,4 +52,19 @@ export function toLoanPaymentData(loan: LoanWithPaymentsForMora): LoanPaymentDat
     })),
     preferredPaymentDay: loan.customer.preferredPaymentDay ?? null
   };
+}
+
+/**
+ * Non-reversed LATE_FEE rows for `computeAccruedMora` net mora calculation.
+ */
+export function toCollectedLateFeePayments(
+  loan: LoanWithPaymentsForMora
+): CollectedLateFeePayment[] {
+  return loan.payments
+    .filter((p) => p.kind === "LATE_FEE" && p.status !== "REVERSED")
+    .map((p) => ({
+      paidAt: new Date(p.paidAt),
+      amount: p.amount != null ? amountToNumber(p.amount) : 0,
+      status: p.status
+    }));
 }

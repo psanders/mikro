@@ -12,13 +12,14 @@ import {
   type ResolvedMikroConfig,
   computeAccruedMora,
   amountToNumber,
-  toLoanPaymentData
+  toLoanPaymentData,
+  toCollectedLateFeePayments
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
 type LoanMoraContext = Loan & {
   customer: { preferredPaymentDay: string | null };
-  payments: Array<{ paidAt: Date; status: string; kind: string }>;
+  payments: Array<{ paidAt: Date; status: string; kind: string; amount?: unknown }>;
 };
 
 export interface CreatePaymentResult {
@@ -82,8 +83,7 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       include: {
         customer: { select: { preferredPaymentDay: true } },
         payments: {
-          where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } },
-          select: { paidAt: true, status: true, kind: true }
+          where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } }
         }
       }
     })) as LoanMoraContext | null;
@@ -140,7 +140,8 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       asOfDate: paidAt,
       loanStatus: loan.status,
       loanUpdatedAt: new Date(loan.updatedAt),
-      policy: cfg.loans
+      policy: cfg.loans,
+      collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });
 
     let lateFeePortion = 0;

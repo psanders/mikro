@@ -96,8 +96,12 @@ export default class Create extends BaseCommand<typeof Create> {
     const preview = await client.previewLateFee.query({ loanId });
     this.log("");
     this.log(`Cuota: ${formatMoney(preview.cuota)}`);
-    this.log(`Mora sugerida (hoy): ${formatMoney(preview.accruedMora)} (${preview.daysLate} días)`);
-    this.log(`Total sugerido (cuota + mora): ${formatMoney(preview.suggestedTotal)}`);
+    this.log(`Mora bruta: ${formatMoney(preview.grossMora)}`);
+    this.log(`Mora ya cobrada: ${formatMoney(preview.collectedMora)}`);
+    this.log(
+      `Mora neta (a cobrar): ${formatMoney(preview.accruedMora)} (${preview.daysLate} días)`
+    );
+    this.log(`Total sugerido (cuota + mora neta): ${formatMoney(preview.suggestedTotal)}`);
     this.log("");
     let status: "COMPLETED" | "PARTIAL" | undefined =
       flags.status === "COMPLETED" || flags.status === "PARTIAL" ? flags.status : undefined;

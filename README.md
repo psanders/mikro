@@ -45,8 +45,20 @@ receipts stay consistent.
   `moraStopOnDefault`, `moraEffectiveFrom`.
 - Optional per-loan override: `moraRate` on the loan.
 - API: `previewLateFee` (read-only) and `createPayment` (returns `{ installment, lateFee }`).
-- CLI: `mikro payments:create` shows cuota / mora / suggested total and supports
-  `--late-fee-override` (DOP waived from accrued mora before split).
+- Mora preview and the auto-split **net out** already-collected (non-reversed) `LATE_FEE`
+  payments for the current missed-cycle window, so a top-up after a partial cuota is not
+  billed for mora twice.
+- CLI:
+  - `mikro loans:previewMora --loan-id 10001 [--as-of 2026-05-20]` — cuota, mora bruta,
+    mora ya cobrada, mora neta, and suggested total without creating a payment.
+  - `mikro payments:create` shows the same mora breakdown and supports `--late-fee-override`
+    (DOP waived from accrued mora before split).
+- Cash-total report metrics (`totalCollectedDop` in the portfolio report and `totalPaid` /
+  `moraCollected` in the at-risk report) include non-reversed `PARTIAL` rows, so completing a
+  cuota with a follow-up payment does **not** require reversing the earlier partial row.
+- Optional cleanup: to consolidate into one payment row, run
+  `mikro payments:reverse <partialPaymentId>` (the linked `LATE_FEE` is reversed automatically),
+  then `mikro payments:create` for the full combined amount.
 - Mora is **not** auto-posted to the accounting ledger; deposits are still
   recorded manually in the accounting module when appropriate.
 

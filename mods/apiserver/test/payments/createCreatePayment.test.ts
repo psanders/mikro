@@ -4,7 +4,12 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { createCreatePayment } from "../../src/api/payments/createCreatePayment.js";
-import { ValidationError, type ResolvedMikroConfig } from "@mikro/common";
+import {
+  ValidationError,
+  computeAccruedMora,
+  toLoanPaymentData,
+  type ResolvedMikroConfig
+} from "@mikro/common";
 
 const noMoraGetConfig = (): ResolvedMikroConfig =>
   ({
@@ -42,7 +47,12 @@ describe("createCreatePayment", () => {
       updatedAt: new Date(),
       moraRate: null,
       customer: { preferredPaymentDay: null as string | null },
-      payments: [] as Array<{ paidAt: Date; status: string; kind?: string }>,
+      payments: [] as Array<{
+        paidAt: Date;
+        status: string;
+        kind?: string;
+        amount?: number;
+      }>,
       ...overrides
     };
   }
@@ -528,6 +538,71 @@ describe("createCreatePayment", () => {
       expect(result.installment).to.be.null;
       expect(mockClient.payment.create.calledOnce).to.be.true;
       expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("LATE_FEE");
+    });
+
+    it("should not re-charge mora on top-up after PARTIAL when LATE_FEE already collected", async () => {
+      const paidAt = new Date("2026-03-01T12:00:00Z");
+      const loanWithPartial = delinquentLoan();
+      const cfg = moraGetConfig().loans;
+      const grossMora = computeAccruedMora({
+        loanData: toLoanPaymentData(loanWithPartial),
+        moraRate: cfg.defaultMoraRate,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        preferredPaymentDay: null,
+        loanStart: new Date("2026-01-01"),
+        asOfDate: paidAt,
+        loanStatus: "ACTIVE",
+        policy: cfg
+      }).grossMoraAmount;
+
+      loanWithPartial.payments = [
+        {
+          paidAt,
+          status: "COMPLETED",
+          kind: "LATE_FEE",
+          amount: grossMora
+        },
+        {
+          paidAt,
+          status: "PARTIAL",
+          kind: "INSTALLMENT",
+          amount: 550
+        }
+      ];
+
+      const instRow = row("topup-inst", {
+        kind: "INSTALLMENT",
+        amount: 1000,
+        status: "COMPLETED"
+      });
+      const mockClient = {
+        loan: { findUnique: sinon.stub().resolves(loanWithPartial) },
+        payment: {
+          findMany: sinon.stub().resolves([]),
+          create: sinon.stub().resolves(instRow)
+        },
+        $transaction: sinon
+          .stub()
+          .callsFake(async (fn: (tx: typeof mockClient) => Promise<unknown>) => fn(mockClient))
+      };
+      const createPayment = createCreatePayment(
+        mockClient as Parameters<typeof createCreatePayment>[0],
+        moraOpts
+      );
+
+      const result = await createPayment({
+        ...validInput,
+        amount: 1000,
+        paidAt
+      });
+
+      expect(result.lateFee).to.be.null;
+      expect(result.installment).to.not.be.null;
+      expect(mockClient.payment.create.calledOnce).to.be.true;
+      expect(mockClient.payment.create.getCall(0).args[0].data.kind).to.equal("INSTALLMENT");
+      expect(mockClient.payment.create.getCall(0).args[0].data.amount).to.equal(1000);
+      expect(mockClient.payment.create.getCall(0).args[0].data.status).to.equal("COMPLETED");
     });
   });
 

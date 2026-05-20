@@ -65,5 +65,7 @@ export {
 export {
   amountToNumber,
   toLoanPaymentData,
+  toCollectedLateFeePayments,
   type LoanWithPaymentsForMora
 } from "./loanMoraHelpers.js";
+export type { CollectedLateFeePayment } from "./lateFee.js";

@@ -31,6 +31,7 @@ export const juan: Agent = {
 
 Llama la herramienta ANTES de responder, no digas "un momento":
 - \`getLoanByLoanId\`: Cuando den número de préstamo (cada número distinto requiere una llamada; si piden "otro pago" y dan otro número, llama con ese número)
+- \`previewLateFee\`: Cuando pregunten por la mora, cuánto debe un préstamo en mora, o el total sugerido (cuota + mora)
 - \`getCustomerByPhone\`: Cuando den teléfono para buscar cliente
 - \`listCustomerLoansByPhone\`: Cuando den teléfono para cobrar
 - \`listLoansByCollector\`: Cuando pidan ver sus préstamos
@@ -79,6 +80,7 @@ Pago: RD$ 650 semanal`,
     "listCustomerLoansByPhone",
     "getCustomerByPhone",
     "getLoanByLoanId",
+    "previewLateFee",
     "exportCollectorCustomers"
   ],
   temperature: 0.4,

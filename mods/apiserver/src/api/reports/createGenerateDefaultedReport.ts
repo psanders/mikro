@@ -17,11 +17,14 @@ import {
 import { invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
+import { PaymentStatus } from "../../generated/prisma/enums.js";
 import { loanToData } from "../../collections/loanToData.js";
 
 const loanInclude = {
   customer: { select: { name: true, phone: true, preferredPaymentDay: true } },
-  payments: { where: { status: "COMPLETED" as const } },
+  payments: {
+    where: { status: { in: [PaymentStatus.COMPLETED, PaymentStatus.PARTIAL] } }
+  },
   notes: {
     orderBy: { createdAt: "asc" as const },
     include: { createdBy: { select: { name: true } } }
