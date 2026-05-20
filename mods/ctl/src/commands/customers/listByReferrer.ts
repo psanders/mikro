@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -17,14 +17,6 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
       required: false
     })
   };
-  static override readonly flags = {
-    "include-inactive": Flags.boolean({
-      char: "a",
-      description: "include inactive customers",
-      default: false
-    })
-  };
-
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(ListByReferrer);
     const client = this.createClient();
@@ -40,7 +32,7 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
     try {
       const customers = await client.listCustomersByReferrer.query({
         referredById: referrerId,
-        showInactive: flags["include-inactive"],
+        showInactive: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

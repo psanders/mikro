@@ -14,6 +14,18 @@ export abstract class ListCommand<T extends typeof Command> extends BaseCommand<
       char: "s",
       description: "The number of items to show",
       default: 100
+    }),
+    offset: OclifFlags.integer({
+      description: "Skip this many rows (for pagination)",
+      default: 0,
+      min: 0
+    }),
+    "include-hidden": OclifFlags.boolean({
+      char: "a",
+      description:
+        "Include hidden rows (closed loans, inactive customers, disabled users, reversed payments, etc.)",
+      default: false,
+      aliases: ["include-closed", "include-inactive", "include-disabled", "include-reversed"]
     })
   };
 }

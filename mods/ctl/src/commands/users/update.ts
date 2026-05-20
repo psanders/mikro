@@ -1,17 +1,18 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm, input, password, select } from "@inquirer/prompts";
+import { input, password, select } from "@inquirer/prompts";
 import { Args, Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
-export default class Update extends BaseCommand<typeof Update> {
+export default class Update extends MutationCommand<typeof Update> {
   static override readonly description = "modify a user's information";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> <userId>",
-    "<%= config.bin %> <%= command.id %> <userId> --password 'newSecret'"
+    "<%= config.bin %> <%= command.id %> <userId> --password 'newSecret'",
+    "<%= config.bin %> <%= command.id %> <userId> --name 'Jane' --role COLLECTOR"
   ];
   static override readonly args = {
     userId: Args.string({
@@ -20,6 +21,18 @@ export default class Update extends BaseCommand<typeof Update> {
     })
   };
   static override readonly flags = {
+    name: Flags.string({ description: "User name", required: false }),
+    phone: Flags.string({ description: "Phone number", required: false }),
+    enabled: Flags.boolean({
+      description: "Whether the user is enabled",
+      required: false,
+      allowNo: true
+    }),
+    role: Flags.string({
+      description: "User role",
+      options: ["ADMIN", "COLLECTOR", "REFERRER"],
+      required: false
+    }),
     password: Flags.string({
       description: "New password (omit to keep current or be prompted)",
       required: false
@@ -45,35 +58,49 @@ export default class Update extends BaseCommand<typeof Update> {
 
       const currentRole = userFromDB.roles?.[0]?.role;
 
-      const answers = {
-        name: await input({
-          message: "Name",
-          default: userFromDB.name,
-          required: true
-        }),
-        phone: await input({
-          message: "Phone (e.g., 18091234567)",
-          default: userFromDB.phone ?? undefined,
-          required: true
-        }),
-        enabled: await select({
-          message: "Enabled Status",
-          choices: [
-            { name: "Enabled", value: true },
-            { name: "Disabled", value: false }
-          ],
-          default: userFromDB.enabled
-        }),
-        role: await select({
-          message: "Role",
-          choices: [
-            { name: "Admin", value: "ADMIN" as const },
-            { name: "Collector", value: "COLLECTOR" as const },
-            { name: "Referrer", value: "REFERRER" as const }
-          ],
-          default: currentRole ?? "REFERRER"
-        })
-      };
+      const name =
+        flags.name ??
+        (process.stdout.isTTY
+          ? await input({ message: "Name", default: userFromDB.name, required: true })
+          : userFromDB.name);
+
+      const phone =
+        flags.phone ??
+        (process.stdout.isTTY
+          ? await input({
+              message: "Phone (e.g., 18091234567)",
+              default: userFromDB.phone ?? undefined,
+              required: true
+            })
+          : (userFromDB.phone ?? ""));
+
+      const enabled =
+        flags.enabled !== undefined
+          ? flags.enabled
+          : process.stdout.isTTY
+            ? await select({
+                message: "Enabled Status",
+                choices: [
+                  { name: "Enabled", value: true },
+                  { name: "Disabled", value: false }
+                ],
+                default: userFromDB.enabled
+              })
+            : userFromDB.enabled;
+
+      const role =
+        (flags.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined) ??
+        (process.stdout.isTTY
+          ? await select({
+              message: "Role",
+              choices: [
+                { name: "Admin", value: "ADMIN" as const },
+                { name: "Collector", value: "COLLECTOR" as const },
+                { name: "Referrer", value: "REFERRER" as const }
+              ],
+              default: (currentRole ?? "REFERRER") as "ADMIN" | "COLLECTOR" | "REFERRER"
+            })
+          : (currentRole ?? "REFERRER"));
 
       let newPassword: string | undefined = flags.password ?? undefined;
       if (newPassword === undefined && process.stdout.isTTY) {
@@ -86,19 +113,15 @@ export default class Update extends BaseCommand<typeof Update> {
         }
       }
 
-      const ready = await confirm({ message: "Ready to update user?" });
-
-      if (!ready) {
-        this.log("Aborted!");
-        return;
-      }
+      const ready = await this.confirmOrAbort(`Ready to update user ${userId}?`);
+      if (!ready) return;
 
       await client.updateUser.mutate({
         id: userId,
-        name: answers.name,
-        phone: answers.phone,
-        enabled: answers.enabled,
-        role: answers.role,
+        name,
+        phone,
+        enabled,
+        role,
         ...(newPassword !== undefined && { password: newPassword })
       });
 

@@ -1,30 +1,40 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
+import { Args, Flags } from "@oclif/core";
 import { formatMoney } from "@mikro/common";
-import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../../BaseCommand.js";
+import { MutationCommand } from "../../../MutationCommand.js";
 import errorHandler from "../../../errorHandler.js";
-import { promptTextIfMissing } from "../../../lib/prompts.js";
+import { promptTextIfMissing, promptTransactionSelectIfMissing } from "../../../lib/prompts.js";
 
-export default class Reverse extends BaseCommand<typeof Reverse> {
+export default class Reverse extends MutationCommand<typeof Reverse> {
   static override readonly description =
     "reverse an accounting transaction (creates a mirror transaction and marks the original as REVERSED)";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --id <uuid>"
+    "<%= config.bin %> <%= command.id %> <transactionId>",
+    "<%= config.bin %> <%= command.id %> <transactionId> --notes 'Duplicate entry'"
   ];
+  static override readonly args = {
+    transactionId: Args.string({
+      description: "Transaction ID to reverse",
+      required: false
+    })
+  };
   static override readonly flags = {
-    id: Flags.string({ description: "Transaction ID to reverse", required: false }),
     notes: Flags.string({ description: "Notes / reason for reversal", required: false })
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Reverse);
+    const { args, flags } = await this.parse(Reverse);
     const client = this.createClient();
 
-    const id = await promptTextIfMissing(flags.id, "Transaction ID", "id");
+    const id = await promptTransactionSelectIfMissing(
+      client,
+      args.transactionId,
+      "Transaction to reverse",
+      "transactionId"
+    );
 
     const original = await client.accounting.getTransaction.query({ id });
     if (!original) {
@@ -44,23 +54,18 @@ export default class Reverse extends BaseCommand<typeof Reverse> {
       return;
     }
 
-    const notes = flags.notes
-      ? flags.notes
-      : process.stdout.isTTY
-        ? await promptTextIfMissing(undefined, "Reason for reversal (optional)", "notes", {
-            required: false,
-            default: ""
-          })
-        : undefined;
+    const notes =
+      flags.notes !== undefined
+        ? flags.notes
+        : process.stdout.isTTY
+          ? await promptTextIfMissing(undefined, "Reason for reversal (optional)", "notes", {
+              required: false,
+              default: ""
+            })
+          : undefined;
 
-    const ready = await confirm({
-      message: "Reverse this transaction?",
-      default: false
-    });
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Reverse this transaction?", { default: false });
+    if (!ready) return;
 
     try {
       const reversal = await client.accounting.reverseTransaction.mutate({

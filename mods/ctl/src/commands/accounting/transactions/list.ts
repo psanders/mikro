@@ -28,10 +28,6 @@ export default class List extends ListCommand<typeof List> {
       description: "Filter by type",
       options: ["DEPOSIT", "WITHDRAWAL", "EXPENSE", "INCOME", "TRANSFER"],
       required: false
-    }),
-    "include-reversed": Flags.boolean({
-      description: "include reversed and reversal rows",
-      default: false
     })
   };
 
@@ -53,7 +49,7 @@ export default class List extends ListCommand<typeof List> {
               type: flags.type as "DEPOSIT" | "WITHDRAWAL" | "EXPENSE" | "INCOME" | "TRANSFER"
             }
           : {}),
-        includeReversed: flags["include-reversed"],
+        includeReversed: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

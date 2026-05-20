@@ -1,10 +1,9 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
 import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../../BaseCommand.js";
+import { MutationCommand } from "../../../MutationCommand.js";
 import errorHandler from "../../../errorHandler.js";
 import {
   promptNumberIfMissing,
@@ -14,7 +13,7 @@ import {
 
 type AccountKind = "BANK" | "CASH" | "CREDIT_CARD" | "OTHER";
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description =
     "create a new accounting account (bank, cash, credit card)";
   static override readonly examples = [
@@ -71,11 +70,8 @@ export default class Create extends BaseCommand<typeof Create> {
       { required: false }
     );
 
-    const ready = await confirm({ message: "Create this account?", default: true });
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Create this account?", { default: true });
+    if (!ready) return;
 
     try {
       const account = await client.accounting.createAccount.mutate({

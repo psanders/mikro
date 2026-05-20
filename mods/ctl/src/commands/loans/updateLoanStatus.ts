@@ -1,27 +1,28 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
-import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { Args, Flags } from "@oclif/core";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { promptNumberIfMissing, promptSelectIfMissing } from "../../lib/prompts.js";
+import { promptSelectIfMissing, promptLoanSelectIfMissing } from "../../lib/prompts.js";
 
 const STATUS_OPTIONS = ["COMPLETED", "DEFAULTED", "CANCELLED"] as const;
 type StatusOption = (typeof STATUS_OPTIONS)[number];
 
-export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatus> {
+export default class UpdateLoanStatus extends MutationCommand<typeof UpdateLoanStatus> {
   static override readonly description =
     "set a loan's status to COMPLETED, DEFAULTED, or CANCELLED";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --loan-id 10001 --status COMPLETED"
+    "<%= config.bin %> <%= command.id %> 10001 --status COMPLETED"
   ];
-  static override readonly flags = {
-    "loan-id": Flags.integer({
+  static override readonly args = {
+    loanId: Args.string({
       description: "Numeric loan ID (e.g. 10000, 10001)",
       required: false
-    }),
+    })
+  };
+  static override readonly flags = {
     status: Flags.string({
       description: "New status",
       options: [...STATUS_OPTIONS],
@@ -30,16 +31,17 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(UpdateLoanStatus);
+    const { args, flags } = await this.parse(UpdateLoanStatus);
     const client = this.createClient();
 
     this.log("This utility will update a loan's status.");
     this.log("Press ^C at any time to quit.");
 
-    const loanId = await promptNumberIfMissing(
-      flags["loan-id"],
+    const loanId = await promptLoanSelectIfMissing(
+      client,
+      args.loanId,
       "Loan ID (numeric, e.g. 10001)",
-      "loan-id"
+      "loanId"
     );
     const status = await promptSelectIfMissing<StatusOption>(
       flags.status as StatusOption | undefined,
@@ -52,12 +54,8 @@ export default class UpdateLoanStatus extends BaseCommand<typeof UpdateLoanStatu
       ]
     );
 
-    const ready = await confirm({ message: `Set loan #${loanId} to ${status}?` });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort(`Set loan #${loanId} to ${status}?`);
+    if (!ready) return;
 
     try {
       const result = await client.updateLoanStatus.mutate({ loanId, status });

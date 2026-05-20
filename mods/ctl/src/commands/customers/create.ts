@@ -2,8 +2,8 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Flags } from "@oclif/core";
-import { confirm, input, select } from "@inquirer/prompts";
-import { BaseCommand } from "../../BaseCommand.js";
+import { input, select } from "@inquirer/prompts";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
   PREFERRED_PAYMENT_DAY_CHOICES,
@@ -12,7 +12,7 @@ import {
 } from "../../lib/preferredPaymentDay.js";
 import { promptTextIfMissing, promptUserSelectIfMissing } from "../../lib/prompts.js";
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new customer";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -169,12 +169,8 @@ export default class Create extends BaseCommand<typeof Create> {
         ? { collections: flags.collections, paymentConfirmations: flags["payment-confirmations"] }
         : undefined;
 
-    const ready = await confirm({ message: "Ready to create customer?" });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Ready to create customer?");
+    if (!ready) return;
 
     try {
       const customer = await client.createCustomer.mutate({

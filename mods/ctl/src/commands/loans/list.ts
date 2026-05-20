@@ -2,7 +2,6 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { formatMoney } from "@mikro/common";
-import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
@@ -12,13 +11,6 @@ import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliT
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all loans";
   static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
-  static override readonly flags = {
-    "include-closed": Flags.boolean({
-      char: "a",
-      description: "include closed loans (completed, defaulted, and cancelled)",
-      default: false
-    })
-  };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(List);
@@ -26,7 +18,7 @@ export default class List extends ListCommand<typeof List> {
 
     try {
       const loans = await client.listLoans.query({
-        showAll: flags["include-closed"],
+        showAll: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

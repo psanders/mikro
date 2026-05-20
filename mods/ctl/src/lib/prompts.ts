@@ -5,6 +5,35 @@ import { formatMoney } from "@mikro/common";
 import { input, password, select, number } from "@inquirer/prompts";
 
 /**
+ * Parse a numeric loan ID from a positional argument or flag value.
+ */
+export function parseLoanIdArg(raw: string): number {
+  const trimmed = raw.trim();
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid loan ID: ${raw}. Expected a positive integer (e.g. 10001).`);
+  }
+  return parsed;
+}
+
+/**
+ * Prompts for a positional argument if missing.
+ */
+export async function promptArgIfMissing(
+  value: string | undefined,
+  promptFn: () => Promise<string>,
+  argName: string
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  return promptFn();
+}
+
+/**
  * Prompts for a value if it's missing, otherwise returns the provided value.
  * Throws an error if value is missing and not running in a TTY.
  */
@@ -250,5 +279,195 @@ export async function promptUserSelectIfMissing(
     }))
   });
 
+  return choice;
+}
+
+type ListLoansClient = {
+  listLoans: {
+    query: (input: { showAll?: boolean; limit?: number }) => Promise<
+      Array<{
+        loanId: number;
+        customer: { name: string };
+        status: string;
+        nickname?: string | null;
+      }>
+    >;
+  };
+};
+
+/**
+ * Helper to prompt for loan selection (numeric loan #) if a positional arg is missing.
+ */
+export async function promptLoanSelectIfMissing(
+  client: ListLoansClient,
+  value: string | undefined,
+  message: string,
+  argName: string,
+  options?: { showAll?: boolean }
+): Promise<number> {
+  if (value !== undefined && value !== "") {
+    return parseLoanIdArg(value);
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  const loans = await client.listLoans.query({
+    showAll: options?.showAll ?? false,
+    limit: 100
+  });
+  if (loans.length === 0) {
+    throw new Error("No loans found. Cannot prompt for selection.");
+  }
+  const choice = await select({
+    message,
+    choices: loans.map((l) => ({
+      name: `#${l.loanId} — ${l.customer.name}${l.nickname ? ` (${l.nickname})` : ""} [${l.status}]`,
+      value: String(l.loanId)
+    }))
+  });
+  return parseLoanIdArg(choice);
+}
+
+type ListCustomersClient = {
+  listCustomers: {
+    query: (input: {
+      showInactive?: boolean;
+      limit?: number;
+    }) => Promise<Array<{ id: string; name: string; phone: string; nickname?: string | null }>>;
+  };
+};
+
+/**
+ * Helper to prompt for customer selection if a positional arg is missing.
+ */
+export async function promptCustomerSelectIfMissing(
+  client: ListCustomersClient,
+  value: string | undefined,
+  message: string,
+  argName: string
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  const customers = await client.listCustomers.query({ showInactive: true, limit: 100 });
+  if (customers.length === 0) {
+    throw new Error("No customers found. Cannot prompt for selection.");
+  }
+  const choice = await select({
+    message,
+    choices: customers.map((c) => ({
+      name: `${c.name}${c.nickname ? ` (${c.nickname})` : ""} — ${c.phone} (${c.id})`,
+      value: c.id
+    }))
+  });
+  return choice;
+}
+
+type ListPaymentsClient = {
+  listPayments: {
+    query: (input: {
+      startDate: Date;
+      endDate: Date;
+      showReversed?: boolean;
+      limit?: number;
+    }) => Promise<
+      Array<{
+        id: string;
+        loan: { loanId: number; customer: { name: string } };
+        amount: unknown;
+      }>
+    >;
+  };
+};
+
+/**
+ * Helper to prompt for payment selection if a positional arg is missing.
+ * Uses payments from the last 30 days.
+ */
+export async function promptPaymentSelectIfMissing(
+  client: ListPaymentsClient,
+  value: string | undefined,
+  message: string,
+  argName: string
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - 30);
+  const payments = await client.listPayments.query({
+    startDate: start,
+    endDate: end,
+    showReversed: false,
+    limit: 100
+  });
+  if (payments.length === 0) {
+    throw new Error("No recent payments found. Cannot prompt for selection.");
+  }
+  const choice = await select({
+    message,
+    choices: payments.map((p) => ({
+      name: `${p.id.slice(0, 8)}… — loan #${p.loan.loanId} ${p.loan.customer.name}`,
+      value: p.id
+    }))
+  });
+  return choice;
+}
+
+type ListAccountingTransactionsClient = {
+  accounting: {
+    listTransactions: {
+      query: (input: { startDate: Date; endDate: Date; limit?: number }) => Promise<
+        Array<{
+          id: string;
+          type: string;
+          amount: number;
+          account: { name: string };
+        }>
+      >;
+    };
+  };
+};
+
+/**
+ * Helper to prompt for accounting transaction selection if a positional arg is missing.
+ */
+export async function promptTransactionSelectIfMissing(
+  client: ListAccountingTransactionsClient,
+  value: string | undefined,
+  message: string,
+  argName: string
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - 90);
+  const txns = await client.accounting.listTransactions.query({
+    startDate: start,
+    endDate: end,
+    limit: 100
+  });
+  if (txns.length === 0) {
+    throw new Error("No recent transactions found. Cannot prompt for selection.");
+  }
+  const choice = await select({
+    message,
+    choices: txns.map((t) => ({
+      name: `${t.id.slice(0, 8)}… — ${t.type} ${formatMoney(t.amount)} (${t.account.name})`,
+      value: t.id
+    }))
+  });
   return choice;
 }

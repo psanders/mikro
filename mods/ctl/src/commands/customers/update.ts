@@ -1,31 +1,72 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm, input, select } from "@inquirer/prompts";
-import { Args } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { input, select } from "@inquirer/prompts";
+import { Args, Flags } from "@oclif/core";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
   PREFERRED_PAYMENT_DAY_CHOICES,
+  PREFERRED_PAYMENT_DAY_OPTIONS,
   type PreferredPaymentDay
 } from "../../lib/preferredPaymentDay.js";
+import { promptCustomerSelectIfMissing } from "../../lib/prompts.js";
 
-export default class Update extends BaseCommand<typeof Update> {
+export default class Update extends MutationCommand<typeof Update> {
   static override readonly description = "modify a customer's information";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <customerId>"];
+  static override readonly examples = [
+    "<%= config.bin %> <%= command.id %> <customerId>",
+    "<%= config.bin %> <%= command.id %> <customerId> --name 'Jane Doe' --phone '+18091234567'"
+  ];
   static override readonly args = {
     customerId: Args.string({
       description: "The Customer ID to update",
-      required: true
+      required: false
+    })
+  };
+  static override readonly flags = {
+    name: Flags.string({ description: "Customer name", required: false }),
+    nickname: Flags.string({
+      description: "Nickname (empty string clears)",
+      required: false
+    }),
+    phone: Flags.string({ description: "Phone number", required: false }),
+    notes: Flags.string({ description: "Notes", required: false }),
+    "is-active": Flags.boolean({
+      description: "Active status",
+      required: false,
+      allowNo: true
+    }),
+    "preferred-payment-day": Flags.string({
+      description: "Preferred payment day (MONDAY-SUNDAY or none)",
+      required: false,
+      options: [...PREFERRED_PAYMENT_DAY_OPTIONS, "none"]
+    }),
+    collections: Flags.boolean({
+      description: "Collection notifications enabled",
+      required: false,
+      allowNo: true
+    }),
+    "payment-confirmations": Flags.boolean({
+      description: "Payment confirmation notifications enabled",
+      required: false,
+      allowNo: true
     })
   };
 
   public async run(): Promise<void> {
-    const { args } = await this.parse(Update);
+    const { args, flags } = await this.parse(Update);
     const client = this.createClient();
 
+    const customerId = await promptCustomerSelectIfMissing(
+      client,
+      args.customerId,
+      "Customer to update",
+      "customerId"
+    );
+
     try {
-      const customerFromDB = await client.getCustomer.query({ id: args.customerId });
+      const customerFromDB = await client.getCustomer.query({ id: customerId });
 
       if (!customerFromDB) {
         this.error("Customer not found.");
@@ -40,76 +81,112 @@ export default class Update extends BaseCommand<typeof Update> {
         ...PREFERRED_PAYMENT_DAY_CHOICES
       ];
 
-      const answers = {
-        name: await input({
-          message: "Name",
-          default: customerFromDB.name,
-          required: true
-        }),
-        nickname: await input({
+      const name =
+        flags.name ??
+        (process.stdout.isTTY
+          ? await input({ message: "Name", default: customerFromDB.name, required: true })
+          : customerFromDB.name);
+
+      let nickname: string | null;
+      if (flags.nickname !== undefined) {
+        nickname = flags.nickname.trim() === "" ? null : flags.nickname.trim();
+      } else if (process.stdout.isTTY) {
+        const n = await input({
           message: "Nickname (optional, blank to clear)",
           default: customerFromDB.nickname ?? "",
           required: false
-        }),
-        phone: await input({
-          message: "Phone (e.g., 18091234567)",
-          default: customerFromDB.phone,
-          required: true
-        }),
-        notes: await input({
-          message: "Note (optional)",
-          default: customerFromDB.notes || "",
-          required: false
-        }),
-        isActive: await select({
-          message: "Active Status",
-          choices: [
-            { name: "Active", value: true },
-            { name: "Inactive", value: false }
-          ],
-          default: customerFromDB.isActive
-        }),
-        preferredPaymentDay: await select({
-          message: "Preferred payment day",
-          choices: paymentDayChoices,
-          default: (customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
-        }),
-        collectionsEnabled: await select({
-          message: "Collection Notifications",
-          choices: [
-            { name: "Enabled", value: true },
-            { name: "Disabled", value: false }
-          ],
-          default: customerFromDB.notificationPolicy?.collections ?? true
-        }),
-        paymentConfirmationsEnabled: await select({
-          message: "Payment Confirmation Notifications",
-          choices: [
-            { name: "Enabled", value: true },
-            { name: "Disabled", value: false }
-          ],
-          default: customerFromDB.notificationPolicy?.paymentConfirmations ?? true
-        })
-      };
-
-      const ready = await confirm({ message: "Ready to update customer?" });
-
-      if (!ready) {
-        this.log("Aborted!");
-        return;
+        });
+        nickname = n.trim() === "" ? null : n.trim();
+      } else {
+        nickname = customerFromDB.nickname ?? null;
       }
 
+      const phone =
+        flags.phone ??
+        (process.stdout.isTTY
+          ? await input({ message: "Phone", default: customerFromDB.phone, required: true })
+          : customerFromDB.phone);
+
+      const notes =
+        flags.notes !== undefined
+          ? flags.notes
+          : process.stdout.isTTY
+            ? await input({
+                message: "Note (optional)",
+                default: customerFromDB.notes || "",
+                required: false
+              })
+            : customerFromDB.notes || undefined;
+
+      const isActive =
+        flags["is-active"] !== undefined
+          ? flags["is-active"]
+          : process.stdout.isTTY
+            ? await select({
+                message: "Active Status",
+                choices: [
+                  { name: "Active", value: true },
+                  { name: "Inactive", value: false }
+                ],
+                default: customerFromDB.isActive
+              })
+            : customerFromDB.isActive;
+
+      const preferredPaymentDay: PreferredPaymentDay | null =
+        flags["preferred-payment-day"] !== undefined
+          ? flags["preferred-payment-day"] === "none"
+            ? null
+            : (flags["preferred-payment-day"] as PreferredPaymentDay)
+          : process.stdout.isTTY
+            ? await select({
+                message: "Preferred payment day",
+                choices: paymentDayChoices,
+                default: (customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null
+              })
+            : ((customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null);
+
+      const collectionsEnabled =
+        flags.collections !== undefined
+          ? flags.collections
+          : process.stdout.isTTY
+            ? await select({
+                message: "Collection Notifications",
+                choices: [
+                  { name: "Enabled", value: true },
+                  { name: "Disabled", value: false }
+                ],
+                default: customerFromDB.notificationPolicy?.collections ?? true
+              })
+            : (customerFromDB.notificationPolicy?.collections ?? true);
+
+      const paymentConfirmationsEnabled =
+        flags["payment-confirmations"] !== undefined
+          ? flags["payment-confirmations"]
+          : process.stdout.isTTY
+            ? await select({
+                message: "Payment Confirmation Notifications",
+                choices: [
+                  { name: "Enabled", value: true },
+                  { name: "Disabled", value: false }
+                ],
+                default: customerFromDB.notificationPolicy?.paymentConfirmations ?? true
+              })
+            : (customerFromDB.notificationPolicy?.paymentConfirmations ?? true);
+
+      const ready = await this.confirmOrAbort(`Ready to update customer ${customerId}?`);
+      if (!ready) return;
+
       await client.updateCustomer.mutate({
-        id: args.customerId,
-        name: answers.name,
-        nickname: answers.nickname.trim() === "" ? null : answers.nickname.trim(),
-        phone: answers.phone,
-        notes: answers.notes || undefined,
-        isActive: answers.isActive,
-        preferredPaymentDay: answers.preferredPaymentDay,
+        id: customerId,
+        name,
+        nickname,
+        phone,
+        notes: notes || undefined,
+        isActive,
+        preferredPaymentDay,
         notificationPolicy: {
-          collections: answers.collectionsEnabled,
-          paymentConfirmations: answers.paymentConfirmationsEnabled
+          collections: collectionsEnabled,
+          paymentConfirmations: paymentConfirmationsEnabled
         }
       });
 

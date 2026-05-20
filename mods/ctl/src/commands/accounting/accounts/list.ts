@@ -15,9 +15,11 @@ export default class List extends BaseCommand<typeof List> {
     "<%= config.bin %> <%= command.id %> --include-inactive"
   ];
   static override readonly flags = {
-    "include-inactive": Flags.boolean({
+    "include-hidden": Flags.boolean({
+      char: "a",
       description: "include inactive accounts",
-      default: false
+      default: false,
+      aliases: ["include-inactive"]
     })
   };
 
@@ -27,7 +29,7 @@ export default class List extends BaseCommand<typeof List> {
 
     try {
       const accounts = await client.accounting.listAccounts.query({
-        includeInactive: flags["include-inactive"]
+        includeInactive: flags["include-hidden"]
       });
 
       const headers = ["ID", "NAME", "KIND", "CURRENCY", "BALANCE", "ACTIVE"];

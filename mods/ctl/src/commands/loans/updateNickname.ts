@@ -1,23 +1,24 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
-import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { Args, Flags } from "@oclif/core";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { promptTextIfMissing, promptNumberIfMissing } from "../../lib/prompts.js";
+import { promptTextIfMissing, promptLoanSelectIfMissing } from "../../lib/prompts.js";
 
-export default class UpdateNickname extends BaseCommand<typeof UpdateNickname> {
+export default class UpdateNickname extends MutationCommand<typeof UpdateNickname> {
   static override readonly description = "set or clear a loan's nickname";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    '<%= config.bin %> <%= command.id %> --loan-id 10001 --nickname "Tienda Central"'
+    '<%= config.bin %> <%= command.id %> 10001 --nickname "Tienda Central"'
   ];
-  static override readonly flags = {
-    "loan-id": Flags.integer({
+  static override readonly args = {
+    loanId: Args.string({
       description: "Numeric loan ID (e.g. 10000, 10001)",
       required: false
-    }),
+    })
+  };
+  static override readonly flags = {
     nickname: Flags.string({
       description: "Nickname to set (omit to clear)",
       required: false
@@ -25,16 +26,17 @@ export default class UpdateNickname extends BaseCommand<typeof UpdateNickname> {
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(UpdateNickname);
+    const { args, flags } = await this.parse(UpdateNickname);
     const client = this.createClient();
 
     this.log("This utility will update a loan's nickname.");
     this.log("Press ^C at any time to quit.");
 
-    const loanId = await promptNumberIfMissing(
-      flags["loan-id"],
+    const loanId = await promptLoanSelectIfMissing(
+      client,
+      args.loanId,
       "Loan ID (numeric, e.g. 10001)",
-      "loan-id"
+      "loanId"
     );
     const nicknameStr = await promptTextIfMissing(
       flags.nickname,
@@ -44,17 +46,12 @@ export default class UpdateNickname extends BaseCommand<typeof UpdateNickname> {
     );
     const nickname = nicknameStr?.trim() === "" ? null : (nicknameStr?.trim() ?? null);
 
-    const ready = await confirm({
-      message:
-        nickname !== null
-          ? `Set loan #${loanId} nickname to "${nickname}"?`
-          : `Clear nickname for loan #${loanId}?`
-    });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const message =
+      nickname !== null
+        ? `Set loan #${loanId} nickname to "${nickname}"?`
+        : `Clear nickname for loan #${loanId}?`;
+    const ready = await this.confirmOrAbort(message);
+    if (!ready) return;
 
     try {
       const result = await client.updateLoanNickname.mutate({ loanId, nickname });

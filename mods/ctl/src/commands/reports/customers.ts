@@ -13,20 +13,20 @@ export default class ReportsCustomers extends BaseCommand<typeof ReportsCustomer
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --collector <id>",
-    "<%= config.bin %> <%= command.id %> --referrer <id>",
+    "<%= config.bin %> <%= command.id %> --collector-id <id>",
+    "<%= config.bin %> <%= command.id %> --referrer-id <id>",
     "<%= config.bin %> <%= command.id %> --output report.xlsx",
-    "<%= config.bin %> <%= command.id %> --collector <id> --output report.png"
+    "<%= config.bin %> <%= command.id %> --collector-id <id> --output report.png"
   ];
 
   static override readonly flags = {
-    collector: Flags.string({
+    "collector-id": Flags.string({
       description: "Filter by collector ID (prompts interactively if omitted)",
-      exclusive: ["referrer"]
+      exclusive: ["referrer-id"]
     }),
-    referrer: Flags.string({
+    "referrer-id": Flags.string({
       description: "Filter by referrer ID (prompts interactively if omitted)",
-      exclusive: ["collector"]
+      exclusive: ["collector-id"]
     }),
     output: Flags.string({
       description:
@@ -39,19 +39,19 @@ export default class ReportsCustomers extends BaseCommand<typeof ReportsCustomer
     const { flags } = await this.parse(ReportsCustomers);
     const client = this.createClient();
 
-    if (flags.collector !== undefined && flags.referrer !== undefined) {
-      this.error("Cannot use --collector and --referrer together. Choose one.");
+    if (flags["collector-id"] !== undefined && flags["referrer-id"] !== undefined) {
+      this.error("Cannot use --collector-id and --referrer-id together. Choose one.");
     }
 
     try {
       let customers: Awaited<ReturnType<typeof client.exportAllCustomers.query>>;
 
-      if (flags.collector !== undefined) {
+      if (flags["collector-id"] !== undefined) {
         const collectorId = await promptUserSelectIfMissing(
           client,
-          flags.collector || undefined,
+          flags["collector-id"] || undefined,
           "Collector",
-          "collector",
+          "collector-id",
           { role: "COLLECTOR" }
         );
         customers = await client.exportCollectorCustomers.query({
@@ -61,12 +61,12 @@ export default class ReportsCustomers extends BaseCommand<typeof ReportsCustomer
           this.log("No hay clientes asignados a este cobrador.");
           return;
         }
-      } else if (flags.referrer !== undefined) {
+      } else if (flags["referrer-id"] !== undefined) {
         const referrerId = await promptUserSelectIfMissing(
           client,
-          flags.referrer || undefined,
+          flags["referrer-id"] || undefined,
           "Referrer",
-          "referrer",
+          "referrer-id",
           { role: "REFERRER" }
         );
         customers = await client.exportCustomersByReferrer.query({

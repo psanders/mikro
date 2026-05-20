@@ -3,26 +3,29 @@
  */
 import { confirm } from "@inquirer/prompts";
 import { formatMoney } from "@mikro/common";
-import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { Args, Flags } from "@oclif/core";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
   promptNumberIfMissing,
   promptSelectIfMissing,
-  promptUserSelectIfMissing
+  promptUserSelectIfMissing,
+  promptLoanSelectIfMissing
 } from "../../lib/prompts.js";
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new payment for a loan";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --loan-id 10000 --amount 500 --method CASH --collector-id abc-def"
+    "<%= config.bin %> <%= command.id %> 10000 --amount 500 --method CASH --collector-id abc-def"
   ];
-  static override readonly flags = {
-    "loan-id": Flags.integer({
+  static override readonly args = {
+    loanId: Args.string({
       description: "Loan ID (numeric, e.g., 10000, 10001)",
       required: false
-    }),
+    })
+  };
+  static override readonly flags = {
     amount: Flags.integer({
       description: "Payment Amount",
       required: false
@@ -55,16 +58,17 @@ export default class Create extends BaseCommand<typeof Create> {
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Create);
+    const { args, flags } = await this.parse(Create);
     const client = this.createClient();
 
     this.log("This utility will help you create a Payment.");
     this.log("Press ^C at any time to quit.");
 
-    const loanId = await promptNumberIfMissing(
-      flags["loan-id"],
+    const loanId = await promptLoanSelectIfMissing(
+      client,
+      args.loanId,
       "Loan ID (numeric, e.g., 10000, 10001)",
-      "loan-id"
+      "loanId"
     );
     const amount = await promptNumberIfMissing(flags.amount, "Amount", "amount");
     const method = await promptSelectIfMissing(
@@ -118,12 +122,8 @@ export default class Create extends BaseCommand<typeof Create> {
       status = "PARTIAL";
     }
 
-    const ready = await confirm({ message: "Ready to create payment?" });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Ready to create payment?");
+    if (!ready) return;
 
     const lateFeeOverride = flags["late-fee-override"];
 

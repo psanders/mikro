@@ -1,12 +1,11 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
 import { formatMoney } from "@mikro/common";
 import { Flags } from "@oclif/core";
 import { existsSync, readFileSync } from "fs";
 import { basename, extname } from "path";
-import { BaseCommand } from "../../../BaseCommand.js";
+import { MutationCommand } from "../../../MutationCommand.js";
 import errorHandler from "../../../errorHandler.js";
 import {
   promptAccountSelectIfMissing,
@@ -26,7 +25,7 @@ const EXT_TO_MIME: Record<string, "image/png" | "image/jpeg" | "application/pdf"
   ".pdf": "application/pdf"
 };
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description =
     "record a new accounting transaction (deposit, withdrawal, expense, income, transfer)";
   static override readonly examples = [
@@ -155,11 +154,8 @@ export default class Create extends BaseCommand<typeof Create> {
     this.log(`  Date: ${occurredAtRaw}`);
     if (attachments.length > 0) this.log(`  Attachments: ${attachments.length}`);
 
-    const ready = await confirm({ message: "Record this transaction?", default: true });
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Record this transaction?", { default: true });
+    if (!ready) return;
 
     try {
       const txn = await client.accounting.createTransaction.mutate({

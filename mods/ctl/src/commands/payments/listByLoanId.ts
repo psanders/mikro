@@ -2,30 +2,24 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { formatMoney } from "@mikro/common";
-import { Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
+import { promptLoanSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ListByLoanId extends ListCommand<typeof ListByLoanId> {
   static override readonly description = "display payments for a specific loan by numeric loan ID";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %> 10000",
-    "<%= config.bin %> <%= command.id %> 10001 --include-reversed"
+    "<%= config.bin %> <%= command.id %> 10001 -a"
   ];
   static override readonly args = {
     loanId: Args.string({
       description: "The numeric Loan ID to filter by (e.g., 10000, 10001)",
-      required: true
-    })
-  };
-  static override readonly flags = {
-    "include-reversed": Flags.boolean({
-      char: "a",
-      description: "include reversed payments",
-      default: false
+      required: false
     })
   };
 
@@ -33,10 +27,14 @@ export default class ListByLoanId extends ListCommand<typeof ListByLoanId> {
     const { args, flags } = await this.parse(ListByLoanId);
     const client = this.createClient();
 
+    const loanId = await promptLoanSelectIfMissing(client, args.loanId, "Loan ID", "loanId", {
+      showAll: flags["include-hidden"]
+    });
+
     try {
       const payments = await client.listPaymentsByLoanId.query({
-        loanId: parseInt(args.loanId),
-        showReversed: flags["include-reversed"],
+        loanId,
+        showReversed: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

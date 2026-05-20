@@ -1,13 +1,13 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm, password } from "@inquirer/prompts";
+import { password } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptTextIfMissing, promptSelectIfMissing } from "../../lib/prompts.js";
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new user";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -65,12 +65,8 @@ export default class Create extends BaseCommand<typeof Create> {
       }
     }
 
-    const ready = await confirm({ message: "Ready to create user?" });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Ready to create user?");
+    if (!ready) return;
 
     try {
       const user = await client.createUser.mutate({

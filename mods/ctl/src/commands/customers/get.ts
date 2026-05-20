@@ -7,14 +7,18 @@ import cliui from "cliui";
 import moment from "moment";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { promptCustomerSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Get extends BaseCommand<typeof Get> {
   static override readonly description = "retrieve details of a customer by ID";
-  static override readonly examples = ["<%= config.bin %> <%= command.id %> <customerId>"];
+  static override readonly examples = [
+    "<%= config.bin %> <%= command.id %> <customerId>",
+    "<%= config.bin %> <%= command.id %>"
+  ];
   static override readonly args = {
     customerId: Args.string({
       description: "The Customer ID to show details about",
-      required: true
+      required: false
     })
   };
 
@@ -22,8 +26,15 @@ export default class Get extends BaseCommand<typeof Get> {
     const { args } = await this.parse(Get);
     const client = this.createClient();
 
+    const customerId = await promptCustomerSelectIfMissing(
+      client,
+      args.customerId,
+      "Customer",
+      "customerId"
+    );
+
     try {
-      const customer = await client.getCustomer.query({ id: args.customerId });
+      const customer = await client.getCustomer.query({ id: customerId });
 
       if (!customer) {
         this.error("Customer not found.");

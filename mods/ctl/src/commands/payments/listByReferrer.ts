@@ -6,7 +6,7 @@ import { Args, Flags } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
-import { validateDate } from "../../BaseCommand.js";
+import { parseDateRange } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 import { promptUserSelectIfMissing } from "../../lib/prompts.js";
@@ -25,17 +25,10 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
   };
   static override readonly flags = {
     "start-date": Flags.string({
-      description: "start date (YYYY-MM-DD)",
-      required: true
+      description: "start date (YYYY-MM-DD); default: 30 days ago"
     }),
     "end-date": Flags.string({
-      description: "end date (YYYY-MM-DD)",
-      required: true
-    }),
-    "include-reversed": Flags.boolean({
-      char: "a",
-      description: "include reversed payments",
-      default: false
+      description: "end date (YYYY-MM-DD); default: today"
     })
   };
 
@@ -51,16 +44,16 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
       { role: "REFERRER" }
     );
 
-    // Validate date formats
-    validateDate(flags["start-date"]!);
-    validateDate(flags["end-date"]!);
+    const { startDate, endDate } = parseDateRange(flags["start-date"], flags["end-date"], {
+      defaultDays: 30
+    });
 
     try {
       const payments = await client.listPaymentsByReferrer.query({
         referredById: referrerId,
-        startDate: new Date(flags["start-date"]!),
-        endDate: new Date(flags["end-date"]!),
-        showReversed: flags["include-reversed"],
+        startDate,
+        endDate,
+        showReversed: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

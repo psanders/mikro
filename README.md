@@ -111,7 +111,7 @@ mikro accounting:categories:list
 mikro accounting:transactions:create              # walks through prompts
 mikro accounting:transactions:create --attach ./scans/edesur.pdf
 mikro accounting:transactions:list --start-date 2026-04-01 --end-date 2026-04-30
-mikro accounting:transactions:show                # with --save-attachments ./out
+mikro accounting:transactions:get <transactionId> # with --save-attachments ./out
 mikro accounting:transactions:reverse             # creates mirror + flags original
 ```
 

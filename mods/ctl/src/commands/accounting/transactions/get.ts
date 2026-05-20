@@ -2,23 +2,29 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { formatMoney } from "@mikro/common";
-import { Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import moment from "moment";
 import { BaseCommand } from "../../../BaseCommand.js";
 import errorHandler from "../../../errorHandler.js";
-import { promptTextIfMissing } from "../../../lib/prompts.js";
+import { promptTransactionSelectIfMissing } from "../../../lib/prompts.js";
 
-export default class Show extends BaseCommand<typeof Show> {
+export default class Get extends BaseCommand<typeof Get> {
   static override readonly description =
     "show a single accounting transaction, its attachments, and optionally save them to disk";
+
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --id <uuid> --save-attachments ./receipts"
+    "<%= config.bin %> <%= command.id %> <transactionId> --save-attachments ./receipts"
   ];
+  static override readonly args = {
+    transactionId: Args.string({
+      description: "Transaction ID",
+      required: false
+    })
+  };
   static override readonly flags = {
-    id: Flags.string({ description: "Transaction ID", required: false }),
     "save-attachments": Flags.string({
       description: "Directory to save attachments to",
       required: false
@@ -26,10 +32,15 @@ export default class Show extends BaseCommand<typeof Show> {
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(Show);
+    const { args, flags } = await this.parse(Get);
     const client = this.createClient();
 
-    const id = await promptTextIfMissing(flags.id, "Transaction ID", "id");
+    const id = await promptTransactionSelectIfMissing(
+      client,
+      args.transactionId,
+      "Transaction",
+      "transactionId"
+    );
 
     try {
       const txn = await client.accounting.getTransaction.query({ id });

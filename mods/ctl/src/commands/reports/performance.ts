@@ -4,16 +4,8 @@
 import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve } from "path";
-import { BaseCommand } from "../../BaseCommand.js";
+import { BaseCommand, parseDateRange } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-
-function firstDayOfYear(d: Date): Date {
-  return new Date(d.getFullYear(), 0, 1, 0, 0, 0, 0);
-}
-
-function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export default class Performance extends BaseCommand<typeof Performance> {
   static override readonly description =
@@ -42,8 +34,14 @@ export default class Performance extends BaseCommand<typeof Performance> {
   public async run(): Promise<void> {
     const { flags } = await this.parse(Performance);
 
-    const endDate = flags["end-date"] ? new Date(flags["end-date"]) : new Date();
-    const startDate = flags["start-date"] ? new Date(flags["start-date"]) : firstDayOfYear(endDate);
+    const end = flags["end-date"] ? new Date(flags["end-date"]) : new Date();
+    const start = flags["start-date"]
+      ? new Date(flags["start-date"])
+      : new Date(end.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const { endDate, startDateStr, endDateStr } = parseDateRange(
+      start.toISOString().slice(0, 10),
+      end.toISOString().slice(0, 10)
+    );
 
     const defaultExt = "png";
     const outputPath = flags.output
@@ -53,11 +51,11 @@ export default class Performance extends BaseCommand<typeof Performance> {
     try {
       const client = this.createClient();
       this.log("Generating performance report...");
-      this.log(`  Period: ${toISODate(startDate)} to ${toISODate(endDate)}`);
+      this.log(`  Period: ${startDateStr} to ${endDateStr}`);
 
       const result = await client.generatePerformanceReport.mutate({
-        startDate: toISODate(startDate),
-        endDate: toISODate(endDate)
+        startDate: startDateStr,
+        endDate: endDateStr
       });
 
       const dir = resolve(outputPath, "..");

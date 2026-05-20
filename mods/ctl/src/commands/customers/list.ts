@@ -1,7 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { Flags } from "@oclif/core";
 import cliui from "cliui";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -10,13 +9,6 @@ import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliT
 export default class List extends ListCommand<typeof List> {
   static override readonly description = "display all customers";
   static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
-  static override readonly flags = {
-    "include-inactive": Flags.boolean({
-      char: "a",
-      description: "include inactive customers",
-      default: false
-    })
-  };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(List);
@@ -24,7 +16,7 @@ export default class List extends ListCommand<typeof List> {
 
     try {
       const customers = await client.listCustomers.query({
-        showInactive: flags["include-inactive"],
+        showInactive: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

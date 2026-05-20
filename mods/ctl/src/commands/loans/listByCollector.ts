@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { formatMoney } from "@mikro/common";
-import { Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../ListCommand.js";
@@ -20,14 +20,6 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
       required: false
     })
   };
-  static override readonly flags = {
-    "include-closed": Flags.boolean({
-      char: "a",
-      description: "include closed loans (completed, defaulted, and cancelled)",
-      default: false
-    })
-  };
-
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(ListByCollector);
     const client = this.createClient();
@@ -43,7 +35,7 @@ export default class ListByCollector extends ListCommand<typeof ListByCollector>
     try {
       const loans = await client.listLoansByCollector.query({
         assignedCollectorId: collectorId,
-        showAll: flags["include-closed"],
+        showAll: flags["include-hidden"],
         limit: flags["page-size"]
       });
 

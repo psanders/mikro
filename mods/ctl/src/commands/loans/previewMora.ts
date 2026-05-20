@@ -2,50 +2,44 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { formatMoney } from "@mikro/common";
-import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { Args, Flags } from "@oclif/core";
+import { BaseCommand, parseSingleDate } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { promptNumberIfMissing } from "../../lib/prompts.js";
+import { promptLoanSelectIfMissing } from "../../lib/prompts.js";
 
 export default class PreviewMora extends BaseCommand<typeof PreviewMora> {
   static override readonly description =
     "preview accrued mora (past-due fee) for a loan as of a given date";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --loan-id 10001",
-    "<%= config.bin %> <%= command.id %> --loan-id 10001 --as-of 2026-05-20"
+    "<%= config.bin %> <%= command.id %> 10001",
+    "<%= config.bin %> <%= command.id %> 10001 --date 2026-05-20"
   ];
-  static override readonly flags = {
-    "loan-id": Flags.integer({
+  static override readonly args = {
+    loanId: Args.string({
       description: "Loan ID (numeric, e.g., 10000, 10001)",
       required: false
-    }),
-    "as-of": Flags.string({
-      description: "As-of date (YYYY-MM-DD) for mora calculation",
+    })
+  };
+  static override readonly flags = {
+    date: Flags.string({
+      description: "As-of date (YYYY-MM-DD) for mora calculation (default: today)",
       required: false
     })
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(PreviewMora);
+    const { args, flags } = await this.parse(PreviewMora);
     const client = this.createClient();
 
-    const loanId = await promptNumberIfMissing(
-      flags["loan-id"],
+    const loanId = await promptLoanSelectIfMissing(
+      client,
+      args.loanId,
       "Loan ID (numeric, e.g., 10000, 10001)",
-      "loan-id"
+      "loanId"
     );
 
-    const asOfStr = flags["as-of"];
-    let asOf: Date | undefined;
-    if (asOfStr) {
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(asOfStr.trim());
-      if (!m) {
-        this.error("Invalid --as-of date. Use YYYY-MM-DD.");
-        return;
-      }
-      asOf = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0);
-    }
+    const asOf = flags.date ? parseSingleDate(flags.date) : undefined;
 
     try {
       const preview = await client.previewLateFee.query({

@@ -1,9 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import { BaseCommand } from "../../BaseCommand.js";
+import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
   promptTextIfMissing,
@@ -11,7 +10,7 @@ import {
   promptSelectIfMissing
 } from "../../lib/prompts.js";
 
-export default class Create extends BaseCommand<typeof Create> {
+export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new loan for a customer";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -107,12 +106,8 @@ export default class Create extends BaseCommand<typeof Create> {
     const nickname = nicknameStr?.trim() || undefined;
     const type = (flags.type || "SAN") as "SAN";
 
-    const ready = await confirm({ message: "Ready to create loan?" });
-
-    if (!ready) {
-      this.log("Aborted!");
-      return;
-    }
+    const ready = await this.confirmOrAbort("Ready to create loan?");
+    if (!ready) return;
 
     try {
       const loan = await client.createLoan.mutate({
