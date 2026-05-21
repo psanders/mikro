@@ -2,14 +2,15 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { safeOptionalDate } from "./dates.js";
 
 /**
  * Schema for generating a performance report.
  * Optional date range; defaults to current month on the server.
  */
 export const generatePerformanceReportSchema = z.object({
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional()
+  startDate: safeOptionalDate,
+  endDate: safeOptionalDate
 });
 
 export type GeneratePerformanceReportInput = z.infer<typeof generatePerformanceReportSchema>;
@@ -18,8 +19,8 @@ export type GeneratePerformanceReportInput = z.infer<typeof generatePerformanceR
  * Schema for portfolio metrics query (same date semantics as report).
  */
 export const generatePortfolioMetricsSchema = z.object({
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional()
+  startDate: safeOptionalDate,
+  endDate: safeOptionalDate
 });
 
 export type GeneratePortfolioMetricsInput = z.infer<typeof generatePortfolioMetricsSchema>;
@@ -60,7 +61,7 @@ export const collectionAttemptStatusEnum = z.enum(["SENT", "FAILED"]);
  */
 export const generateCollectionsAuditReportSchema = z.object({
   /** Audit date; defaults to today on the server if omitted. */
-  date: z.coerce.date().optional(),
+  date: safeOptionalDate,
   /** Optional filter by attempt type(s). Omit to include all types. */
   attemptTypes: z.array(collectionAttemptTypeEnum).optional(),
   /** Optional filter by status(es). Omit to include SENT and FAILED. */
@@ -76,8 +77,8 @@ export type GenerateCollectionsAuditReportInput = z.infer<
  * Optional date range; defaults to month-to-date on the server.
  */
 export const generateAccountingReportSchema = z.object({
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional()
+  startDate: safeOptionalDate,
+  endDate: safeOptionalDate
 });
 
 export type GenerateAccountingReportInput = z.infer<typeof generateAccountingReportSchema>;

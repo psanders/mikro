@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { safeOptionalDate, safeRequiredDate } from "./dates.js";
 
 export const paymentMethodEnum = z.enum(["CASH", "TRANSFER"]);
 
@@ -17,7 +18,7 @@ export const paymentKindEnum = z.enum(["INSTALLMENT", "LATE_FEE"]);
 export const createPaymentSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
   amount: z.number().positive("Amount must be positive"),
-  paidAt: z.coerce.date().optional(),
+  paidAt: safeOptionalDate,
   method: paymentMethodEnum.optional(),
   collectedById: z.uuid({ message: "Collector ID is required and must be a valid UUID" }),
   notes: z.string().optional(),
@@ -39,7 +40,7 @@ export const createPaymentSchema = z.object({
  */
 export const previewLateFeeSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
-  asOf: z.coerce.date().optional()
+  asOf: safeOptionalDate
 });
 
 export const reversePaymentSchema = z.object({
@@ -48,8 +49,8 @@ export const reversePaymentSchema = z.object({
 });
 
 export const listPaymentsSchema = z.object({
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  startDate: safeRequiredDate,
+  endDate: safeRequiredDate,
   showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
@@ -57,8 +58,8 @@ export const listPaymentsSchema = z.object({
 
 export const listPaymentsByCustomerSchema = z.object({
   customerId: z.uuid({ error: "Invalid customer ID" }),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  startDate: safeRequiredDate,
+  endDate: safeRequiredDate,
   showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
@@ -66,8 +67,8 @@ export const listPaymentsByCustomerSchema = z.object({
 
 export const listPaymentsByReferrerSchema = z.object({
   referredById: z.uuid({ error: "Invalid referrer ID" }),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  startDate: safeRequiredDate,
+  endDate: safeRequiredDate,
   showReversed: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()

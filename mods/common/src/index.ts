@@ -99,6 +99,10 @@ export {
 
 // Schemas
 export {
+  // Safe date schemas (drop null/empty/invalid instead of coercing to epoch)
+  safeOptionalDate,
+  safeRequiredDate,
+  MIN_ACCEPTED_DATE_MS,
   // Customer schemas
   createCustomerSchema,
   updateCustomerSchema,

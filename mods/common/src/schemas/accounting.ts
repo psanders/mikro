@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { safeRequiredDate } from "./dates.js";
 
 export const accountKindEnum = z.enum(["BANK", "CASH", "CREDIT_CARD", "OTHER"]);
 export type AccountKind = z.infer<typeof accountKindEnum>;
@@ -110,7 +111,7 @@ const transactionBaseShape = {
   accountId: z.uuid({ error: "Invalid account ID" }),
   toAccountId: z.uuid({ error: "Invalid destination account ID" }).optional(),
   amount: z.number().positive("Amount must be positive"),
-  occurredAt: z.coerce.date(),
+  occurredAt: safeRequiredDate,
   description: z.string().max(500).optional(),
   vendor: z.string().max(200).optional(),
   reference: z.string().max(200).optional(),
@@ -196,8 +197,8 @@ export const reverseTransactionInternalSchema = reverseTransactionSchema.extend(
 export type ReverseTransactionInternalInput = z.infer<typeof reverseTransactionInternalSchema>;
 
 export const listTransactionsSchema = z.object({
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  startDate: safeRequiredDate,
+  endDate: safeRequiredDate,
   accountId: z.uuid().optional(),
   categoryId: z.uuid().optional(),
   type: transactionTypeEnum.optional(),

@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { safeOptionalDate } from "./dates.js";
 
 /**
  * Enum for loan types.
@@ -22,7 +23,7 @@ export const createLoanSchema = z.object({
   termLength: z.number().int().positive("Term length must be a positive integer"),
   paymentAmount: z.number().positive("Payment amount must be positive"),
   paymentFrequency: paymentFrequencyEnum,
-  startingDate: z.coerce.date().optional(),
+  startingDate: safeOptionalDate,
   nickname: z.string().max(100).optional(),
   type: loanTypeEnum.optional(),
   /** Optional mora rate override for this loan (e.g. 0.1 = 10%). Falls back to config `loans.defaultMoraRate`. */

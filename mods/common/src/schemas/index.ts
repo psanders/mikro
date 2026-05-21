@@ -1,6 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+export { safeOptionalDate, safeRequiredDate, MIN_ACCEPTED_DATE_MS } from "./dates.js";
+
 export {
   createCustomerSchema,
   updateCustomerSchema,
