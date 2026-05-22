@@ -19,7 +19,7 @@ const PRODUCT_LINKS = [
 ] as const;
 
 const LEGAL_LINKS = [
-  { label: "WhatsApp", href: "https://wa.me/18090000000" },
+  { label: "WhatsApp", href: "https://wa.me/18493547577" },
   { label: "Términos y condiciones", to: "/terminos" },
   { label: "Aviso de privacidad", to: "/privacidad" }
 ] as const;

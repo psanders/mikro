@@ -241,7 +241,11 @@ export function HomePage() {
             <PrimaryButton as={Link} to="/solicitud" className="w-full md:w-auto">
               Solicitar préstamo
             </PrimaryButton>
-            <SecondaryButton variant="whatsapp" className="w-full md:w-auto">
+            <SecondaryButton
+              variant="whatsapp"
+              href="https://wa.me/18493547577"
+              className="w-full md:w-auto"
+            >
               Hablar por WhatsApp
             </SecondaryButton>
           </div>
