@@ -35,9 +35,6 @@ jobs:
           cp /tmp/deploy/index.html /tmp/deploy/404.html
           echo "mikro.do" > /tmp/deploy/CNAME
 
-      - name: Debug deploy contents
-        run: ls -la /tmp/deploy/
-
       - name: Deploy to mikrosite
         run: |
           cd /tmp/deploy
