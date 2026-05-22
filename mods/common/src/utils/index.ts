@@ -55,6 +55,13 @@ export {
   DEFAULT_OPTIONS_RANGE,
   DEFAULT_PAYMENT_ROUNDING_INCREMENT
 } from "./loanCalculatorConstants.js";
+export {
+  calculateLoanOptions,
+  type CalculateLoanParams,
+  type CalculateLoanResult,
+  type LoanOption,
+  type PaymentFrequency as LoanPaymentFrequency
+} from "./calculateLoan.js";
 export { formatMoney, type FormatMoneyInput } from "./formatMoney.js";
 export {
   computeAccruedMora,

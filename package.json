@@ -5,7 +5,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "mods/*"
+    "mods/*",
+    "site"
   ],
   "scripts": {
     "clean": "lerna clean",
@@ -28,6 +29,8 @@
     "db:reset": "npm run db:reset -w @mikro/apiserver",
     "keys:generate": "npx tsx .scripts/generate-keys.ts",
     "agents:eval": "npx tsx mods/agents/src/eval/cli.ts",
+    "start:site": "npm run dev -w site",
+    "build:site": "npm run build -w site",
     "export:loan-situation": "npx tsx .scripts/export-loan-situation.ts",
     "lending:cash-position": "npx tsx .scripts/lending-cash-position.ts"
   },

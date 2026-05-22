@@ -44,6 +44,7 @@ export {
   DEFAULT_MAX_RATE,
   DEFAULT_OPTIONS_RANGE,
   DEFAULT_PAYMENT_ROUNDING_INCREMENT,
+  calculateLoanOptions,
   formatMoney,
   computeAccruedMora,
   daysLateFromOldestDue,
@@ -56,7 +57,11 @@ export {
   type FormatMoneyInput,
   type ComputeAccruedMoraInput,
   type ComputeAccruedMoraResult,
-  type CollectedLateFeePayment
+  type CollectedLateFeePayment,
+  type CalculateLoanParams,
+  type CalculateLoanResult,
+  type LoanOption,
+  type LoanPaymentFrequency
 } from "./utils/index.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,
