@@ -27,7 +27,11 @@ jobs:
       - name: Build site
         env:
           VITE_GOOGLE_FORM_URL: ${{ secrets.VITE_GOOGLE_FORM_URL }}
+          VITE_BASE: /mikrosite/
         run: npm run build --workspace=site
+
+      - name: Prepare deploy
+        run: cp site/dist/index.html site/dist/404.html
 
       - name: Deploy to mikrosite
         run: |
