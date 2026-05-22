@@ -1,0 +1,42 @@
+name: Deploy Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "mods/common/src/utils/calculateLoan.ts"
+      - "mods/common/src/utils/loanCalculatorConstants.ts"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci --workspace=site --include-workspace-root
+
+      - name: Build site
+        env:
+          VITE_GOOGLE_FORM_URL: ${{ secrets.VITE_GOOGLE_FORM_URL }}
+        run: npm run build --workspace=site
+
+      - name: Deploy to mikrosite
+        run: |
+          cd site/dist
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add origin https://x-access-token:${{ secrets.MIKROSITE_DEPLOY_TOKEN }}@github.com/psanders/mikrosite.git
+          git checkout -b main
+          git add -A
+          git commit -m "Deploy from mikro@${GITHUB_SHA::7}"
+          git push --force origin main
