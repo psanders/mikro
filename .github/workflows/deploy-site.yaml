@@ -40,7 +40,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add origin https://x-access-token:${{ secrets.MIKROSITE_DEPLOY_TOKEN }}@github.com/psanders/mikrosite.git
+          echo '!*' > .gitignore
           git checkout -b main
-          git add --force -A
+          git add -A
           git commit -m "Deploy from mikro@${GITHUB_SHA::7}"
           git push --force origin main
