@@ -31,17 +31,17 @@ jobs:
 
       - name: Prepare deploy
         run: |
-          cp site/dist/index.html site/dist/404.html
-          echo "mikro.do" > site/dist/CNAME
+          cp -r site/dist /tmp/deploy
+          cp /tmp/deploy/index.html /tmp/deploy/404.html
+          echo "mikro.do" > /tmp/deploy/CNAME
 
       - name: Deploy to mikrosite
         run: |
-          cd site/dist
+          cd /tmp/deploy
           git init
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add origin https://x-access-token:${{ secrets.MIKROSITE_DEPLOY_TOKEN }}@github.com/psanders/mikrosite.git
-          echo '!*' > .gitignore
           git checkout -b main
           git add -A
           git commit -m "Deploy from mikro@${GITHUB_SHA::7}"
