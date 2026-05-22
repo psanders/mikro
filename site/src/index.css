@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue-sky: #3F86E0;
+  --color-brand-blue-deep: #103A8A;
+  --color-brand-orange-primary: #F68A1F;
+  --color-brand-white: #FFFFFF;
+  --color-brand-yellow-accent: #FFD447;
+  --color-brand-orange-deep: #E85B1C;
+  --color-brand-blue-primary: #1F4AA8;
+  --color-brand-ink: #14254A;
+  --color-brand-mist: #E9F2FF;
+  
+  --radius-card: 20px;
+  --radius-pill: 9999px;
+  
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+@layer base {
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  input[type="range"],
+  select:not(:disabled),
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.simulator-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.simulator-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+}
+
+.simulator-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid #f68a1f;
+  box-shadow: 0 1px 4px rgba(27, 42, 78, 0.2);
+  cursor: pointer;
+}
+
+.simulator-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid #f68a1f;
+  box-shadow: 0 1px 4px rgba(27, 42, 78, 0.2);
+  cursor: pointer;
+}
