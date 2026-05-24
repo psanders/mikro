@@ -9,15 +9,15 @@ import { Simulator } from "../components/Simulator";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { SecondaryButton } from "../components/SecondaryButton";
 
-const TRUST_DESKTOP = [
-  "SUPERINTENDENCIA DE BANCOS",
-  "DATACRÉDITO",
-  "TRANSUNION",
-  "PROCONSUMIDOR",
-  "AML COMPLIANT"
+const DESIGNED_FOR_DESKTOP = [
+  "COLMADOS",
+  "TALLERS",
+  "SALONES_DE_BELLEZA",
+  "COMIDA RÁPIDA",
+  "FERRETERÍAS"
 ] as const;
 
-const TRUST_MOBILE = ["SUPERINTENDENCIA", "DATACRÉDITO", "TRANSUNION"] as const;
+const DESIGNED_FOR_MOBILE = ["COLMADOS", "SALONES", "TALLERES"] as const;
 
 const FEATURES = [
   {
@@ -133,14 +133,14 @@ export function HomePage() {
             Crédito diseñado para:
           </span>
           <div className="hidden flex-wrap items-center justify-center gap-9 md:flex">
-            {TRUST_DESKTOP.map((item) => (
+            {DESIGNED_FOR_DESKTOP.map((item) => (
               <span key={item} className="text-sm font-semibold tracking-[1.5px] text-[#9AAACB]">
                 {item}
               </span>
             ))}
           </div>
           <div className="flex flex-wrap items-center justify-center gap-[18px] md:hidden">
-            {TRUST_MOBILE.map((item) => (
+            {DESIGNED_FOR_MOBILE.map((item) => (
               <span key={item} className="text-[11px] font-semibold tracking-wide text-[#9AAACB]">
                 {item}
               </span>
