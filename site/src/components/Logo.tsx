@@ -11,25 +11,25 @@ interface LogoProps {
 }
 
 export function Logo({ inverted = false, compact = false, className }: LogoProps) {
-  const markSize = compact ? "h-7 w-7" : "h-8 w-8";
-  const markRadius = compact ? "rounded-[8px]" : "rounded-[10px]";
+  const markSize = compact ? "h-[35px] w-[35px]" : "h-10 w-10";
+  const markRadius = compact ? "rounded-[9px]" : "rounded-[10px]";
   const mSize = compact ? "text-[17px]" : "text-2xl";
-  const wordSize = compact ? "text-[21px]" : "text-[24px]";
+  const wordSize = compact ? "text-[28px]" : "text-[32px]";
 
   return (
-    <div className={clsx("flex items-center gap-2.5", className)}>
+    <div className={clsx("flex items-center", compact ? "gap-3" : "gap-3.5", className)}>
       <div
         className={clsx(
           markSize,
           markRadius,
-          "flex items-center justify-center",
+          "flex items-center justify-center pb-1",
           inverted ? "bg-white" : "bg-brand-blue-deep"
         )}
       >
         <span
           className={clsx(
             mSize,
-            "font-bold leading-none",
+            "font-bold leading-none rotate-[0.27deg]",
             inverted ? "text-brand-blue-deep" : "text-white"
           )}
         >
