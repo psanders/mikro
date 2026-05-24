@@ -1,14 +1,57 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
-import { Check, Printer, MessageCircle } from "lucide-react-native";
+import { View, Text, ScrollView, Pressable, Linking, StyleSheet } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Check, MessageCircle } from "lucide-react-native";
 import { colors } from "../lib/theme";
 import { KvRow } from "../components/ui/KvRow";
 
+function formatRD(amount: number): string {
+  return `RD$${amount.toLocaleString("es-DO")}`;
+}
+
+function formatNow(): string {
+  const now = new Date();
+  const day = now.getDate();
+  const months = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic"
+  ];
+  const month = months[now.getMonth()];
+  const h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  return `${day} ${month}, ${h % 12 || 12}:${m} ${ampm}`;
+}
+
 export default function PagoConfirmadoScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    customerName?: string;
+    amount?: string;
+    mora?: string;
+    cuota?: string;
+    method?: string;
+    loanId?: string;
+  }>();
+
+  const amount = Number(params.amount) || 0;
+  const mora = Number(params.mora) || 0;
+  const cuota = Number(params.cuota) || 0;
+  const customerName = params.customerName ?? "Cliente";
+  const method = params.method ?? "Efectivo";
+  const loanId = params.loanId ?? "";
 
   return (
     <View style={styles.screen}>
@@ -19,34 +62,33 @@ export default function PagoConfirmadoScreen() {
 
         <View style={styles.headline}>
           <Text style={styles.h1}>¡Pago registrado!</Text>
-          <Text style={styles.h2}>Cobro confirmado a José Núñez</Text>
+          <Text style={styles.h2}>Cobro confirmado a {customerName}</Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.cardAmountSection}>
             <Text style={styles.cardLabel}>TOTAL COBRADO</Text>
-            <Text style={styles.cardAmount}>RD$3,150</Text>
+            <Text style={styles.cardAmount}>{formatRD(amount)}</Text>
           </View>
           <View style={styles.cardDivider} />
-          <KvRow label="Mora aplicada" value="RD$750" />
-          <KvRow label="Cuota 4" value="RD$2,400" />
-          <KvRow label="Método" value="Efectivo" />
-          <KvRow label="Recibo" value="#R-00891" />
-          <KvRow label="Hora" value="11 may, 9:41 AM" />
+          {mora > 0 && <KvRow label="Mora aplicada" value={formatRD(mora)} />}
+          {cuota > 0 && <KvRow label="Cuota" value={formatRD(cuota)} />}
+          <KvRow label="Método" value={method} />
+          {loanId ? <KvRow label="Préstamo" value={`#${loanId}`} /> : null}
+          <KvRow label="Hora" value={formatNow()} />
         </View>
       </ScrollView>
 
       <View style={styles.actions}>
-        <View style={styles.actionRow}>
-          <Pressable style={styles.actionBtn}>
-            <Printer size={18} color={colors.brand.white} strokeWidth={2} />
-            <Text style={styles.actionBtnText}>Imprimir</Text>
-          </Pressable>
-          <Pressable style={styles.actionBtn}>
-            <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
-            <Text style={styles.actionBtnText}>WhatsApp</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          style={styles.actionBtn}
+          onPress={() => {
+            Linking.openURL("https://wa.me/").catch(() => {});
+          }}
+        >
+          <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
+          <Text style={styles.actionBtnText}>Enviar recibo</Text>
+        </Pressable>
         <Pressable style={styles.doneBtn} onPress={() => router.replace("/(tabs)")}>
           <Text style={styles.doneBtnText}>Listo</Text>
         </Pressable>
@@ -91,9 +133,7 @@ const styles = StyleSheet.create({
   },
   cardDivider: { height: 1, backgroundColor: colors.brand.mist },
   actions: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28, gap: 10 },
-  actionRow: { flexDirection: "row", gap: 10 },
   actionBtn: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

@@ -1,8 +1,16 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { useState, useMemo } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  StyleSheet
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Banknote, ArrowRightLeft, Check } from "lucide-react-native";
 import { colors, radii } from "../../lib/theme";
@@ -11,40 +19,166 @@ import { ClientRow } from "../../components/ui/ClientRow";
 import { OptionRow } from "../../components/ui/OptionRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
+import { trpc } from "../../lib/api";
 
-const PAY_OPTIONS = [
-  { key: "arrears", label: "Cobrar atrasos", value: "RD$3,150" },
-  { key: "multi", label: "Cobrar cuotas multiples", value: "RD$2,400 × N" },
-  { key: "custom", label: "Monto personalizado", value: "Escribir" },
-  { key: "settle", label: "Saldar préstamo", value: "RD$18,750" }
-];
+function formatRD(amount: number): string {
+  return `RD$${amount.toLocaleString("es-DO")}`;
+}
+
+type PayOption = "cuota" | "arrears" | "settle";
 
 export default function CobrarPagoScreen() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
+  const numericId = Number(loanId);
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState("arrears");
-  const [payMethod, setPayMethod] = useState<"cash" | "transfer">("cash");
+  const [selectedOption, setSelectedOption] = useState<PayOption>("cuota");
+  const [payMethod, setPayMethod] = useState<"CASH" | "TRANSFER">("CASH");
+  const [submitting, setSubmitting] = useState(false);
+
+  const loanQuery = trpc.getLoanByLoanId.useQuery(
+    { loanId: numericId },
+    { enabled: !isNaN(numericId) }
+  );
+  const lateFeeQuery = trpc.previewLateFee.useQuery(
+    { loanId: numericId },
+    { enabled: !isNaN(numericId) }
+  );
+  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const utils = trpc.useUtils();
+
+  const createPayment = trpc.createPayment.useMutation({
+    onSuccess: () => {
+      utils.getCollectorDashboard.invalidate();
+      utils.listPaymentsByLoanId.invalidate({ loanId: numericId });
+      utils.previewLateFee.invalidate({ loanId: numericId });
+    }
+  });
+
+  const loan = loanQuery.data;
+  const lateFee = lateFeeQuery.data;
+  const collectorId = dashboard.data?.collector.id;
+
+  const visit = useMemo(() => {
+    return (dashboard.data?.visits ?? []).find((v) => v.loanId === numericId);
+  }, [dashboard.data?.visits, numericId]);
+
+  const cuota = lateFee?.cuota ?? (loan ? Number(loan.paymentAmount) : 0);
+  const mora = lateFee?.accruedMora ?? 0;
+  const termLength = loan?.termLength ?? visit?.termLength ?? 0;
+  const paidCount = visit ? visit.installmentNumber - 1 : 0;
+  const remainingCuotas = Math.max(0, termLength - paidCount);
+  const settleAmount = remainingCuotas * cuota + mora;
+
+  const displayName =
+    loan?.customer?.nickname ??
+    loan?.customer?.name ??
+    visit?.loanNickname ??
+    visit?.customerName ??
+    "...";
+  const meta = `Préstamo #${loanId}`;
+
+  const payOptions = useMemo(() => {
+    const opts: { key: PayOption; label: string; value: string }[] = [
+      { key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) }
+    ];
+    if (mora > 0) {
+      opts.unshift({
+        key: "arrears",
+        label: "Cobrar cuota + mora",
+        value: formatRD(cuota + mora)
+      });
+    }
+    if (remainingCuotas > 1) {
+      opts.push({
+        key: "settle",
+        label: "Saldar préstamo",
+        value: formatRD(settleAmount)
+      });
+    }
+    return opts;
+  }, [cuota, mora, remainingCuotas, settleAmount]);
+
+  const amount = useMemo(() => {
+    switch (selectedOption) {
+      case "cuota":
+        return cuota;
+      case "arrears":
+        return cuota + mora;
+      case "settle":
+        return settleAmount;
+    }
+  }, [selectedOption, cuota, mora, settleAmount]);
+
+  const breakdownRows = useMemo(() => {
+    const rows: { label: string; value: string }[] = [];
+    if (selectedOption === "arrears" && mora > 0) {
+      rows.push({ label: "Cargo por mora", value: formatRD(mora) });
+    }
+    if (selectedOption === "settle") {
+      if (mora > 0) rows.push({ label: "Cargo por mora", value: formatRD(mora) });
+      rows.push({
+        label: `${remainingCuotas} cuotas restantes`,
+        value: formatRD(remainingCuotas * cuota)
+      });
+    } else {
+      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
+    }
+    return rows;
+  }, [selectedOption, mora, cuota, paidCount, remainingCuotas]);
+
+  const hintText = payOptions.find((o) => o.key === selectedOption)?.label ?? "";
+
+  const handleConfirm = async () => {
+    if (!collectorId || submitting || amount <= 0) return;
+
+    setSubmitting(true);
+    try {
+      await createPayment.mutateAsync({
+        loanId: numericId,
+        amount,
+        method: payMethod,
+        collectedById: collectorId
+      });
+
+      const methodLabel = payMethod === "CASH" ? "Efectivo" : "Transferencia";
+      router.replace({
+        pathname: "/pago-confirmado",
+        params: {
+          customerName: displayName,
+          amount: String(amount),
+          mora: String(selectedOption === "arrears" || selectedOption === "settle" ? mora : 0),
+          cuota: String(cuota),
+          method: methodLabel,
+          loanId: String(loanId)
+        }
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      Alert.alert("Error", `No se pudo registrar el cobro: ${message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
       <Header title="Registrar cobro" backMode="close" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ClientRow name="José Núñez" business="" meta="Motoconcho · Préstamo #L-00234" amount="" />
+        <ClientRow name={displayName} business="" meta={meta} amount="" />
 
         <View style={styles.amountCard}>
           <SectionLabel>MONTO A COBRAR</SectionLabel>
           <View style={styles.amountRow}>
             <Text style={styles.amountCurrency}>RD$</Text>
-            <Text style={styles.amountNumber}>3,150</Text>
+            <Text style={styles.amountNumber}>{amount.toLocaleString("es-DO")}</Text>
           </View>
-          <Text style={styles.amountHint}>Cobrar atrasos seleccionado</Text>
+          <Text style={styles.amountHint}>{hintText}</Text>
         </View>
 
         <View style={styles.optionsSection}>
           <SectionLabel>TIPO DE COBRO</SectionLabel>
-          {PAY_OPTIONS.map((o) => (
+          {payOptions.map((o) => (
             <OptionRow
               key={o.key}
               label={o.label}
@@ -57,37 +191,38 @@ export default function CobrarPagoScreen() {
 
         <View style={styles.breakdownCard}>
           <SectionLabel>CÓMO SE APLICA</SectionLabel>
-          <KvRow label="Mora (prioridad)" value="RD$750" />
-          <KvRow label="Cuota 4" value="RD$2,400" />
+          {breakdownRows.map((r) => (
+            <KvRow key={r.label} label={r.label} value={r.value} />
+          ))}
         </View>
 
         <View style={styles.methodSection}>
           <SectionLabel>MÉTODO DE PAGO</SectionLabel>
           <View style={styles.methodRow}>
             <Pressable
-              style={[styles.methodBtn, payMethod === "cash" && styles.methodBtnActive]}
-              onPress={() => setPayMethod("cash")}
+              style={[styles.methodBtn, payMethod === "CASH" && styles.methodBtnActive]}
+              onPress={() => setPayMethod("CASH")}
             >
               <Banknote
                 size={18}
-                color={payMethod === "cash" ? colors.brand.white : colors.brand.blue.deep}
+                color={payMethod === "CASH" ? colors.brand.white : colors.brand.blue.deep}
                 strokeWidth={2}
               />
-              <Text style={[styles.methodText, payMethod === "cash" && styles.methodTextActive]}>
+              <Text style={[styles.methodText, payMethod === "CASH" && styles.methodTextActive]}>
                 Efectivo
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.methodBtn, payMethod === "transfer" && styles.methodBtnActive]}
-              onPress={() => setPayMethod("transfer")}
+              style={[styles.methodBtn, payMethod === "TRANSFER" && styles.methodBtnActive]}
+              onPress={() => setPayMethod("TRANSFER")}
             >
               <ArrowRightLeft
                 size={18}
-                color={payMethod === "transfer" ? colors.brand.white : colors.brand.blue.deep}
+                color={payMethod === "TRANSFER" ? colors.brand.white : colors.brand.blue.deep}
                 strokeWidth={2}
               />
               <Text
-                style={[styles.methodText, payMethod === "transfer" && styles.methodTextActive]}
+                style={[styles.methodText, payMethod === "TRANSFER" && styles.methodTextActive]}
               >
                 Transferencia
               </Text>
@@ -96,9 +231,17 @@ export default function CobrarPagoScreen() {
         </View>
       </ScrollView>
 
-      <Pressable style={styles.ctaBtn} onPress={() => router.replace("/pago-confirmado")}>
-        <Check size={20} color={colors.brand.white} strokeWidth={2} />
-        <Text style={styles.ctaText}>Confirmar y cobrar</Text>
+      <Pressable
+        style={[styles.ctaBtn, submitting && { opacity: 0.6 }]}
+        onPress={handleConfirm}
+        disabled={submitting}
+      >
+        {submitting ? (
+          <ActivityIndicator color={colors.brand.white} />
+        ) : (
+          <Check size={20} color={colors.brand.white} strokeWidth={2} />
+        )}
+        <Text style={styles.ctaText}>{submitting ? "Procesando..." : "Confirmar y cobrar"}</Text>
       </Pressable>
     </View>
   );

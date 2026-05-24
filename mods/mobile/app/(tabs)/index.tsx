@@ -124,7 +124,7 @@ export default function HomeScreen() {
           </View>
           <ProgressBar progress={progress} color={colors.brand.white} />
           <View style={styles.heroMeta}>
-            <Text style={styles.heroMetaLeft}>{data?.visitsDone ?? 0} visitas hechas</Text>
+            <Text style={styles.heroMetaLeft}>{data?.visitsDone ?? 0} cobros realizados</Text>
             <Text style={styles.heroMetaRight}>{data?.visitsPending ?? 0} pendientes</Text>
           </View>
         </View>

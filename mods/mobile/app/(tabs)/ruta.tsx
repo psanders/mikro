@@ -71,7 +71,7 @@ export default function RutaScreen() {
 
   return (
     <View style={styles.screen}>
-      <Header title="Mi ruta" subtitle={`${formatDate()} · ${counts.all} visitas`} />
+      <Header title="Mi ruta" subtitle={`${formatDate()} · ${counts.all} cobros`} />
 
       <View style={styles.chipRow}>
         <ScrollView

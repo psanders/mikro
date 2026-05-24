@@ -10,11 +10,22 @@ import { Avatar } from "../../components/ui/Avatar";
 import { StatCard } from "../../components/ui/StatCard";
 import { ListTile } from "../../components/ui/ListTile";
 import { SectionLabel } from "../../components/ui/SectionLabel";
-import { clearToken, clearPin } from "../../lib/auth";
+import { clearToken, clearPin, clearUserName } from "../../lib/auth";
+import { trpc } from "../../lib/api";
+
+function formatRD(amount: number): string {
+  if (amount >= 1000) return `${(amount / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return String(amount);
+}
 
 export default function PerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const dashboard = trpc.getCollectorDashboard.useQuery();
+
+  const data = dashboard.data;
+  const name = data?.collector.name ?? "...";
+  const activeLoans = data?.visits.length ?? 0;
 
   return (
     <ScrollView
@@ -27,21 +38,18 @@ export default function PerfilScreen() {
 
       <View style={styles.body}>
         <View style={styles.profileCard}>
-          <Avatar name="Carlos Reyes" size={60} />
+          <Avatar name={name} size={60} />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Carlos Reyes</Text>
-            <Text style={styles.profileRole}>Cobrador · Zona Norte</Text>
-            <View style={styles.idPill}>
-              <Text style={styles.idPillText}>ID #COB-0042</Text>
-            </View>
+            <Text style={styles.profileName}>{name}</Text>
+            <Text style={styles.profileRole}>Cobrador · {activeLoans} préstamos activos</Text>
           </View>
         </View>
 
         <SectionLabel>HOY</SectionLabel>
         <View style={styles.statsRow}>
-          <StatCard value="8" label="Cobros" />
-          <StatCard value="18.2K" label="Recaudado" />
-          <StatCard value="12" label="Pendientes" />
+          <StatCard value={String(data?.visitsDone ?? 0)} label="Cobros" />
+          <StatCard value={formatRD(data?.amountCollected ?? 0)} label="Recaudado" />
+          <StatCard value={String(data?.visitsPending ?? 0)} label="Pendientes" />
         </View>
 
         <SectionLabel>AJUSTES</SectionLabel>
@@ -56,6 +64,7 @@ export default function PerfilScreen() {
           onPress={async () => {
             await clearToken();
             await clearPin();
+            await clearUserName();
             router.replace("/(auth)/login");
           }}
         >
@@ -85,17 +94,6 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1, gap: 2 },
   profileName: { fontFamily: "Geist_700Bold", fontSize: 18, color: colors.brand.white },
   profileRole: { fontFamily: "Geist_500Medium", fontSize: 12, color: "#9DB9F0" },
-  idPill: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.13)",
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
-    marginTop: 4
-  },
-  idPillText: { fontFamily: "Geist_700Bold", fontSize: 10, color: colors.brand.white },
   statsRow: { flexDirection: "row", gap: 10 },
   settingsGroup: {
     borderRadius: radii.card,

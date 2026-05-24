@@ -1,35 +1,99 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { useMemo, useState } from "react";
+import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
 import { colors } from "../lib/theme";
 import { Header } from "../components/ui/Header";
 import { KvRow } from "../components/ui/KvRow";
+import { trpc } from "../lib/api";
+
+function formatRD(amount: number): string {
+  return `RD$${amount.toLocaleString("es-DO")}`;
+}
+
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function formatToday(): string {
+  const now = new Date();
+  return `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+}
 
 export default function CuadreScreen() {
+  const [countedInput, setCountedInput] = useState("");
+
+  const dashboard = trpc.getCollectorDashboard.useQuery();
+
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const todayPayments = trpc.listPayments.useQuery({
+    startDate: startOfDay,
+    endDate: endOfDay
+  });
+
+  const collectorName = dashboard.data?.collector.name?.split(" ")[0] ?? "...";
+
+  const { cashTotal, installmentTotal, lateFeeTotal, cashCount, transferCount } = useMemo(() => {
+    const payments = (todayPayments.data ?? []).filter((p) => p.status !== "REVERSED");
+    let cash = 0;
+    let installments = 0;
+    let lateFees = 0;
+    let cashC = 0;
+    let transferC = 0;
+
+    for (const p of payments) {
+      const amt = Number(p.amount);
+      if (p.kind === "INSTALLMENT") installments += amt;
+      else if (p.kind === "LATE_FEE") lateFees += amt;
+      if (p.method === "CASH") {
+        cash += amt;
+        cashC++;
+      } else {
+        transferC++;
+      }
+    }
+
+    return {
+      cashTotal: cash,
+      installmentTotal: installments,
+      lateFeeTotal: lateFees,
+      cashCount: cashC,
+      transferCount: transferC
+    };
+  }, [todayPayments.data]);
+
+  const totalReceipts = (todayPayments.data ?? []).filter((p) => p.status !== "REVERSED").length;
+  const visitsDone = dashboard.data?.visitsDone ?? 0;
+  const visitsPending = dashboard.data?.visitsPending ?? 0;
+
+  const counted = countedInput ? Number(countedInput.replace(/,/g, "")) : null;
+  const diff = counted != null ? counted - cashTotal : null;
+
   return (
     <View style={styles.screen}>
-      <Header title="Cuadre del día" subtitle="Lunes, 11 mayo · Carlos R." />
+      <Header title="Cuadre del día" subtitle={`${formatToday()} · ${collectorName}`} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>EFECTIVO ESPERADO</Text>
           <View style={styles.summaryAmountRow}>
             <Text style={styles.summaryCurrency}>RD$</Text>
-            <Text style={styles.summaryAmount}>18,250</Text>
+            <Text style={styles.summaryAmount}>{cashTotal.toLocaleString("es-DO")}</Text>
           </View>
           <View style={styles.summaryGrid}>
             <View style={styles.summaryGridItem}>
               <Text style={styles.gridLabel}>Recibos</Text>
-              <Text style={styles.gridValue}>20</Text>
+              <Text style={styles.gridValue}>{totalReceipts}</Text>
             </View>
             <View style={styles.summaryGridItem}>
-              <Text style={styles.gridLabel}>Visitas</Text>
-              <Text style={styles.gridValue}>23</Text>
+              <Text style={styles.gridLabel}>Cobros</Text>
+              <Text style={styles.gridValue}>{visitsDone}</Text>
             </View>
             <View style={styles.summaryGridItem}>
-              <Text style={styles.gridLabel}>Promesas</Text>
-              <Text style={styles.gridValue}>2</Text>
+              <Text style={styles.gridLabel}>Pendientes</Text>
+              <Text style={styles.gridValue}>{visitsPending}</Text>
             </View>
           </View>
         </View>
@@ -38,11 +102,21 @@ export default function CuadreScreen() {
           <Text style={styles.countLabel}>EFECTIVO CONTADO</Text>
           <View style={styles.countInputRow}>
             <Text style={styles.countCurrency}>RD$</Text>
-            <Text style={styles.countAmount}>18,250</Text>
-            <View style={styles.matchPill}>
-              <Text style={styles.matchCheck}>✓</Text>
-              <Text style={styles.matchText}>Coincide</Text>
-            </View>
+            <TextInput
+              style={styles.countInput}
+              value={countedInput}
+              onChangeText={setCountedInput}
+              placeholder="0"
+              placeholderTextColor={colors.text.secondary}
+              keyboardType="numeric"
+            />
+            {diff != null && (
+              <View style={[styles.matchPill, diff !== 0 && styles.mismatchPill]}>
+                <Text style={[styles.matchText, diff !== 0 && styles.mismatchText]}>
+                  {diff === 0 ? "✓ Coincide" : `${diff > 0 ? "+" : ""}${formatRD(diff)}`}
+                </Text>
+              </View>
+            )}
           </View>
           <Text style={styles.countHint}>
             Conta el efectivo y escribe el total. El sistema te avisa si hay diferencia.
@@ -50,34 +124,13 @@ export default function CuadreScreen() {
         </View>
 
         <View style={styles.breakdownCard}>
-          <View style={styles.breakdownHeader}>
-            <KvRow label="DESGLOSE" value="Ver 20 recibos ›" />
-          </View>
-          <KvRow label="Cuotas" value="RD$15,200" />
-          <KvRow label="Atrasos" value="RD$2,400" />
-          <KvRow label="Cargos por mora" value="RD$300" />
-          <KvRow label="Abonos a cuenta" value="RD$350" />
-        </View>
-
-        <View style={styles.notesCard}>
-          <Text style={styles.notesLabel}>OBSERVACIONES</Text>
-          <View style={styles.notesBox}>
-            <Text style={styles.notesText}>
-              2 clientes en zona alta · Felipe Taveras no contestó.
-            </Text>
-          </View>
+          <Text style={styles.breakdownTitle}>DESGLOSE</Text>
+          <KvRow label="Cuotas" value={formatRD(installmentTotal)} />
+          <KvRow label="Cargos por mora" value={formatRD(lateFeeTotal)} />
+          <KvRow label="Efectivo" value={`${cashCount} cobros`} />
+          {transferCount > 0 && <KvRow label="Transferencias" value={`${transferCount} cobros`} />}
         </View>
       </ScrollView>
-
-      <View style={styles.footer}>
-        <Pressable style={styles.closeBtn}>
-          <Text style={styles.closeBtnCheck}>✓</Text>
-          <Text style={styles.closeBtnText}>Cerrar día y sincronizar</Text>
-        </Pressable>
-        <Text style={styles.footerHint}>
-          Al cerrar, se envían todos los cobros y se bloquea la edición.
-        </Text>
-      </View>
     </View>
   );
 }
@@ -137,11 +190,13 @@ const styles = StyleSheet.create({
     borderColor: "#D3DFF4"
   },
   countCurrency: { fontFamily: "Geist_600SemiBold", fontSize: 18, color: colors.text.secondary },
-  countAmount: {
+  countInput: {
+    flex: 1,
     fontFamily: "Geist_700Bold",
     fontSize: 28,
     color: colors.brand.ink,
-    letterSpacing: -0.5
+    letterSpacing: -0.5,
+    padding: 0
   },
   matchPill: {
     flexDirection: "row",
@@ -150,11 +205,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#DCFCE7",
     borderRadius: 9999,
     paddingVertical: 4,
-    paddingHorizontal: 10,
-    marginLeft: "auto"
+    paddingHorizontal: 10
   },
-  matchCheck: { fontFamily: "Geist_700Bold", fontSize: 11, color: "#15803D" },
+  mismatchPill: { backgroundColor: "#FEE2E2" },
   matchText: { fontFamily: "Geist_700Bold", fontSize: 11, color: "#15803D" },
+  mismatchText: { color: "#DC2626" },
   countHint: {
     fontFamily: "Geist_500Medium",
     fontSize: 11,
@@ -167,58 +222,11 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10
   },
-  breakdownHeader: { marginBottom: 4 },
-  notesCard: {
-    backgroundColor: colors.brand.white,
-    borderRadius: 18,
-    padding: 16,
-    gap: 8
-  },
-  notesLabel: {
+  breakdownTitle: {
     fontFamily: "Geist_700Bold",
     fontSize: 10,
     letterSpacing: 1.4,
-    color: colors.text.secondary
-  },
-  notesBox: {
-    backgroundColor: colors.bg.screen,
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#D3DFF4"
-  },
-  notesText: {
-    fontFamily: "Geist_500Medium",
-    fontSize: 12,
-    color: colors.brand.ink,
-    lineHeight: 17
-  },
-  footer: {
-    backgroundColor: colors.brand.white,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 14,
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.light
-  },
-  closeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: colors.brand.blue.deep,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 18
-  },
-  closeBtnCheck: { fontFamily: "Geist_700Bold", fontSize: 16, color: colors.brand.yellow.accent },
-  closeBtnText: { fontFamily: "Geist_700Bold", fontSize: 15, color: colors.brand.white },
-  footerHint: {
-    fontFamily: "Geist_500Medium",
-    fontSize: 11,
     color: colors.text.secondary,
-    textAlign: "center",
-    lineHeight: 15
+    marginBottom: 4
   }
 });

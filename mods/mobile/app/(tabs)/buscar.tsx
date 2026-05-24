@@ -1,83 +1,170 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Search, History, X, ChevronRight } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors } from "../../lib/theme";
-import { SectionLabel } from "../../components/ui/SectionLabel";
 import { Avatar } from "../../components/ui/Avatar";
+import { trpc } from "../../lib/api";
 
-const RECENT_SEARCHES = ["María Rosa", "809-555"];
+const RECENT_KEY = "mikro:recent_searches";
+const MAX_RECENT = 4;
 
-const CLIENTS = [
-  { id: "c1", name: "María Rosa Peralta", meta: "Activo · 1 préstamo" },
-  {
-    id: "c2",
-    name: "José Núñez",
-    meta: "En mora · 1 préstamo",
-    metaColor: colors.brand.orange.deep
-  },
-  { id: "c3", name: "Luis Pérez", meta: "Activo · 1 préstamo" }
-];
+interface CustomerSummary {
+  id: string;
+  name: string;
+  loanCount: number;
+  hasOverdue: boolean;
+}
+
+function useRecentSearches() {
+  const [recents, setRecents] = useState<string[]>([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(RECENT_KEY).then((raw) => {
+      if (raw) setRecents(JSON.parse(raw));
+    });
+  }, []);
+
+  const add = useCallback((term: string) => {
+    setRecents((prev) => {
+      const next = [term, ...prev.filter((t) => t !== term)].slice(0, MAX_RECENT);
+      AsyncStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const remove = useCallback((term: string) => {
+    setRecents((prev) => {
+      const next = prev.filter((t) => t !== term);
+      AsyncStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return { recents, add, remove };
+}
 
 export default function BuscarScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState("");
+  const { recents, add, remove } = useRecentSearches();
+  const dashboard = trpc.getCollectorDashboard.useQuery();
+
+  const customers = useMemo(() => {
+    const visits = dashboard.data?.visits ?? [];
+    const map = new Map<string, CustomerSummary>();
+    for (const v of visits) {
+      const existing = map.get(v.customerId);
+      if (existing) {
+        existing.loanCount++;
+        if (v.isOverdue) existing.hasOverdue = true;
+      } else {
+        map.set(v.customerId, {
+          id: v.customerId,
+          name: v.customerName,
+          loanCount: 1,
+          hasOverdue: v.isOverdue
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [dashboard.data?.visits]);
+
+  const trimmed = query.trim();
+  const filtered = useMemo(() => {
+    if (!trimmed) return [];
+    const q = trimmed.toLowerCase();
+    return customers.filter((c) => c.name.toLowerCase().includes(q));
+  }, [customers, trimmed]);
+
+  const handleSelect = (c: CustomerSummary) => {
+    if (trimmed) add(trimmed);
+    router.push(`/cliente/${c.id}`);
+  };
+
+  const handleRecentTap = (term: string) => {
+    setQuery(term);
+  };
 
   return (
-    <ScrollView
-      style={[styles.screen, { paddingTop: insets.top }]}
-      contentContainerStyle={{ paddingBottom: 20 }}
-    >
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Buscar cliente</Text>
         <View style={styles.searchBox}>
           <Search size={18} color={colors.brand.blue.primary} strokeWidth={2} />
-          <Text style={styles.searchPlaceholder}>Nombre, teléfono o cédula…</Text>
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <SectionLabel>BÚSQUEDAS RECIENTES</SectionLabel>
-        <View style={styles.recentList}>
-          {RECENT_SEARCHES.map((term) => (
-            <View key={term} style={styles.recentRow}>
-              <History size={18} color={colors.text.secondary} strokeWidth={2} />
-              <Text style={styles.recentText}>{term}</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Nombre o teléfono…"
+            placeholderTextColor={colors.text.secondary}
+            value={query}
+            onChangeText={setQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {query.length > 0 && (
+            <Pressable onPress={() => setQuery("")} hitSlop={8}>
               <X size={18} color={colors.text.secondary} strokeWidth={2} />
-            </View>
-          ))}
-        </View>
-
-        <SectionLabel>MIS CLIENTES</SectionLabel>
-        <View style={styles.clientList}>
-          {CLIENTS.map((c) => (
-            <Pressable
-              key={c.id}
-              style={styles.clientRow}
-              onPress={() => router.push(`/cliente/${c.id}`)}
-            >
-              <Avatar name={c.name} size={36} />
-              <View style={styles.clientMid}>
-                <Text style={styles.clientName}>{c.name}</Text>
-                <Text style={[styles.clientMeta, c.metaColor ? { color: c.metaColor } : undefined]}>
-                  {c.meta}
-                </Text>
-              </View>
-              <ChevronRight size={18} color={colors.text.secondary} strokeWidth={2} />
             </Pressable>
-          ))}
+          )}
         </View>
       </View>
-    </ScrollView>
+
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {!trimmed && recents.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>BÚSQUEDAS RECIENTES</Text>
+            <View style={styles.recentList}>
+              {recents.map((term) => (
+                <Pressable
+                  key={term}
+                  style={styles.recentRow}
+                  onPress={() => handleRecentTap(term)}
+                >
+                  <History size={18} color={colors.text.secondary} strokeWidth={2} />
+                  <Text style={styles.recentText}>{term}</Text>
+                  <Pressable onPress={() => remove(term)} hitSlop={8}>
+                    <X size={18} color={colors.text.secondary} strokeWidth={2} />
+                  </Pressable>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
+
+        {trimmed.length > 0 && filtered.length === 0 && (
+          <Text style={styles.emptyText}>Sin resultados para "{trimmed}"</Text>
+        )}
+
+        {filtered.map((c) => (
+          <Pressable key={c.id} style={styles.clientRow} onPress={() => handleSelect(c)}>
+            <Avatar name={c.name} size={36} />
+            <View style={styles.clientMid}>
+              <Text style={styles.clientName}>{c.name}</Text>
+              <Text
+                style={[styles.clientMeta, c.hasOverdue && { color: colors.brand.orange.deep }]}
+              >
+                {c.hasOverdue ? "En mora" : "Al día"} · {c.loanCount} préstamo
+                {c.loanCount !== 1 ? "s" : ""}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={colors.text.secondary} strokeWidth={2} />
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg.screen },
-  header: { paddingHorizontal: 20, paddingTop: 14, gap: 12 },
+  header: { paddingHorizontal: 20, paddingTop: 14, gap: 12, paddingBottom: 8 },
   title: { fontFamily: "Geist_700Bold", fontSize: 24, color: colors.brand.blue.deep },
   searchBox: {
     flexDirection: "row",
@@ -85,11 +172,25 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: colors.brand.mist,
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 10,
     paddingHorizontal: 16
   },
-  searchPlaceholder: { fontFamily: "Geist_500Medium", fontSize: 15, color: colors.text.secondary },
-  content: { paddingHorizontal: 20, paddingTop: 8, gap: 14 },
+  searchInput: {
+    flex: 1,
+    fontFamily: "Geist_500Medium",
+    fontSize: 15,
+    color: colors.brand.ink,
+    padding: 0
+  },
+  content: { paddingHorizontal: 20, paddingBottom: 20, gap: 8 },
+  sectionLabel: {
+    fontFamily: "Geist_700Bold",
+    fontSize: 10,
+    letterSpacing: 1.4,
+    color: colors.text.secondary,
+    paddingTop: 4,
+    paddingBottom: 2
+  },
   recentList: { gap: 8 },
   recentRow: {
     flexDirection: "row",
@@ -100,7 +201,13 @@ const styles = StyleSheet.create({
     padding: 12
   },
   recentText: { flex: 1, fontFamily: "Geist_500Medium", fontSize: 14, color: colors.brand.ink },
-  clientList: { gap: 8 },
+  emptyText: {
+    fontFamily: "Geist_500Medium",
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: "center",
+    paddingVertical: 20
+  },
   clientRow: {
     flexDirection: "row",
     alignItems: "center",

@@ -18,7 +18,7 @@ import { colors } from "../../lib/theme";
 import { Input } from "../../components/ui/Input";
 import { BtnCta } from "../../components/ui/BtnCta";
 import { api } from "../../lib/trpc";
-import { setToken, getPin, setPin } from "../../lib/auth";
+import { setToken, getPin, setPin, setUserName } from "../../lib/auth";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -50,6 +50,7 @@ export default function LoginScreen() {
       const e164 = digits.startsWith("1") ? `+${digits}` : `+1${digits}`;
       const result = await api.login.mutate({ phone: e164, password });
       await setToken(result.token);
+      if (result.name) await setUserName(result.name);
       const existingPin = await getPin();
       if (!existingPin) {
         await setPin("1234");

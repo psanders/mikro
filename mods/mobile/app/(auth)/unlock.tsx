@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,7 +9,7 @@ import { colors } from "../../lib/theme";
 import { Avatar } from "../../components/ui/Avatar";
 import { PinInput } from "../../components/ui/PinInput";
 import { PinKeypad } from "../../components/ui/PinKeypad";
-import { getPin, clearToken, clearPin } from "../../lib/auth";
+import { getPin, clearToken, clearPin, getUserName, clearUserName } from "../../lib/auth";
 
 const PIN_LENGTH = 4;
 
@@ -18,6 +18,13 @@ export default function UnlockScreen() {
   const insets = useSafeAreaInsets();
   const [entered, setEntered] = useState("");
   const [error, setError] = useState(false);
+  const [name, setName] = useState("...");
+
+  useEffect(() => {
+    getUserName().then((n) => {
+      if (n) setName(n);
+    });
+  }, []);
 
   async function handleKey(key: string) {
     if (key === "delete") {
@@ -46,6 +53,7 @@ export default function UnlockScreen() {
   async function handleChangeUser() {
     await clearToken();
     await clearPin();
+    await clearUserName();
     router.replace("/(auth)/login");
   }
 
@@ -60,10 +68,10 @@ export default function UnlockScreen() {
             <Text style={styles.logoWord}>mikro</Text>
           </View>
 
-          <Avatar name="Carlos Reyes" size={84} />
+          <Avatar name={name} size={84} />
 
           <View style={styles.greetingWrap}>
-            <Text style={styles.greeting}>Hola, Carlos.</Text>
+            <Text style={styles.greeting}>Hola, {name.split(" ")[0]}.</Text>
             <Text style={[styles.subtitle, error && styles.subtitleError]}>
               {error ? "PIN incorrecto. Intenta de nuevo." : "Ingresa tu PIN para continuar"}
             </Text>
