@@ -12,7 +12,7 @@ import { SecondaryButton } from "../components/SecondaryButton";
 const DESIGNED_FOR_DESKTOP = [
   "COLMADOS",
   "TALLERS",
-  "SALONES_DE_BELLEZA",
+  "SALONES DE BELLEZA",
   "COMIDA RÁPIDA",
   "FERRETERÍAS"
 ] as const;
