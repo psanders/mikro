@@ -217,3 +217,5 @@ export {
   type GetTransactionInput,
   type GetTransactionAttachmentInput
 } from "./accounting.js";
+
+export { getCollectorDashboardSchema, type GetCollectorDashboardInput } from "./dashboard.js";

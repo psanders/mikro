@@ -67,6 +67,9 @@ export {
   type SendReceiptViaWhatsAppDependencies
 } from "./receipts/index.js";
 
+// Dashboard operations
+export { createGetCollectorDashboard } from "./dashboard/index.js";
+
 // Report operations
 export {
   createGeneratePortfolioMetrics,

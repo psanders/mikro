@@ -252,6 +252,9 @@ export {
   type GenerateRenewalCandidatesReportInput,
   type GenerateCollectionsAuditReportInput,
   type GenerateAccountingReportInput,
+  // Dashboard schemas
+  getCollectorDashboardSchema,
+  type GetCollectorDashboardInput,
   // Collection schemas
   runCollectionsSchema,
   runSingleCollectionSchema,

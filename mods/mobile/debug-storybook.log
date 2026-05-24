@@ -1,0 +1,19 @@
+[12:51:55.170] [INFO] storybook v10.4.1
+[12:51:55.970] [DEBUG] Getting package.json info for /Users/psanders/Projects/mikro/mods/mobile/package.json...
+[12:51:56.248] [INFO] Starting...
+[12:51:56.330] [DEBUG] Starting preview..
+[12:51:56.350] [DEBUG] Using tsconfig paths for react-docgen
+[12:51:56.350] [ERROR] Failed to build the preview
+[12:51:56.351] [ERROR] [38;2;241;97;97mReferenceError: __dirname is not defined[39m
+    at Object.viteFinal (file://./.storybook-web/main.ts:11:35)
+    at file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/_node-chunks/chunk-PNYLLFX3.js:9190:36
+    at async createViteServer (file:///Users/psanders/Projects/mikro/node_modules/@storybook/builder-vite/dist/index.js:1575:21)
+    at async Module.start (file:///Users/psanders/Projects/mikro/node_modules/@storybook/builder-vite/dist/index.js:1606:17)
+    at async storybookDevServer (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/core-server/index.js:18917:158)
+    at async buildOrThrow (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/core-server/index.js:8205:12)
+    at async buildDevStandalone (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/core-server/index.js:19478:41)
+    at async withTelemetry (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/_node-chunks/chunk-CUZMMOHY.js:655:12)
+    at async dev (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/bin/core.js:2736:3)
+    at async _Command.<anonymous> (file:///Users/psanders/Projects/mikro/node_modules/storybook/dist/bin/core.js:2806:92)
+[12:51:56.353] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.

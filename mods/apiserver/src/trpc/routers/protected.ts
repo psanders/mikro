@@ -74,6 +74,8 @@ import { createGetUser } from "../../api/users/createGetUser.js";
 import { createListUsers } from "../../api/users/createListUsers.js";
 // Chat API functions
 import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
+// Dashboard API functions
+import { createGetCollectorDashboard } from "../../api/dashboard/createGetCollectorDashboard.js";
 // Loan API functions
 import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
 import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
@@ -149,6 +151,13 @@ import {
  * Protected router - procedures that require Basic Auth.
  */
 export const protectedRouter = router({
+  // ==================== Dashboard procedures ====================
+
+  getCollectorDashboard: protectedProcedure.query(async ({ ctx }) => {
+    const fn = createGetCollectorDashboard(ctx.db);
+    return fn({ collectorId: ctx.userId });
+  }),
+
   // ==================== Customer procedures ====================
 
   /**
