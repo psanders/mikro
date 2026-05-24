@@ -80,11 +80,6 @@ export function Nav() {
               </Link>
             ))}
           </div>
-          <div className="mt-3">
-            <PrimaryButton as={Link} to="/solicitud" onClick={close} className="w-full">
-              Solicitar préstamo
-            </PrimaryButton>
-          </div>
         </div>
       )}
     </header>

@@ -63,7 +63,7 @@ const STEPS = [
 
 const STATS = [
   { value: "<24h", label: "decisión promedio" },
-  { value: "+18,000", label: "clientes activos" },
+  { value: "+100", label: "clientes activos" },
   { value: "4.8★", label: "satisfacción" }
 ] as const;
 
@@ -130,7 +130,7 @@ export function HomePage() {
       <section className="bg-white px-6 py-7 md:px-20 md:py-9">
         <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-3.5 md:flex-row md:justify-between md:gap-8">
           <span className="text-center text-[13px] font-medium tracking-wide text-[#5B6B8C] md:text-sm md:tracking-[0.5px]">
-            Regulada y supervisada por:
+            Crédito diseñado para:
           </span>
           <div className="hidden flex-wrap items-center justify-center gap-9 md:flex">
             {TRUST_DESKTOP.map((item) => (
