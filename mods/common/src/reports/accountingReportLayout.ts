@@ -46,7 +46,7 @@ function sectionTitle(title: string): SatoriElement {
         fontSize: "20px",
         fontWeight: 700,
         fontFamily: "Inter",
-        color: "#1a5a96",
+        color: "#103A8A",
         marginBottom: "10px"
       }
     },
@@ -175,7 +175,7 @@ export function createAccountingReportLayout(
         {
           style: { fontSize: "24px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte Contable"
+        "mikro — Reporte Contable"
       ),
       el(
         "div",
@@ -207,7 +207,7 @@ export function createAccountingReportLayout(
     "div",
     {
       style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        background: "linear-gradient(135deg, #103A8A 0%, #1F4AA8 100%)",
         color: "white",
         padding: "20px 24px",
         marginBottom: "16px",
@@ -236,14 +236,14 @@ export function createAccountingReportLayout(
       }
     },
     [
-      summaryCard("Ingresos", formatDop(totals.totalIncome), "#27ae60"),
-      summaryCard("Gastos", formatDop(totals.totalExpenses), "#c0392b"),
+      summaryCard("Ingresos", formatDop(totals.totalIncome), "#0E7C5F"),
+      summaryCard("Gastos", formatDop(totals.totalExpenses), "#E85B1C"),
       summaryCard(
         "Flujo neto",
         formatDop(totals.netFlow),
-        totals.netFlow >= 0 ? "#27ae60" : "#c0392b"
+        totals.netFlow >= 0 ? "#0E7C5F" : "#E85B1C"
       ),
-      summaryCard("Balance total", formatDop(totals.combinedBalance), "#1565a8")
+      summaryCard("Balance total", formatDop(totals.combinedBalance), "#103A8A")
     ]
   );
 

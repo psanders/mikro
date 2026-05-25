@@ -235,7 +235,7 @@ export function createCustomersReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Clientes"
+        "mikro — Reporte de Clientes"
       ),
       el(
         "div",
@@ -267,7 +267,7 @@ export function createCustomersReportLayout(
     "div",
     {
       style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        background: "linear-gradient(135deg, #103A8A 0%, #1F4AA8 100%)",
         color: "white",
         padding: "24px 28px",
         marginBottom: "20px",
@@ -352,7 +352,7 @@ export function createCustomersReportLayout(
         [
           el(
             "div",
-            { style: { fontWeight: 700, fontSize: "20px", color: "#27ae60" } },
+            { style: { fontWeight: 700, fontSize: "20px", color: "#0E7C5F" } },
             String(grouped.alDia.length)
           ),
           el("div", {}, "Al día")

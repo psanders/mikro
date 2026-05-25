@@ -57,7 +57,7 @@ function ratingToStars(rating: number): string {
 }
 
 function ratingColor(rating: number): string {
-  if (rating >= 4) return "#27ae60";
+  if (rating >= 4) return "#0E7C5F";
   if (rating >= 3) return "#f39c12";
   return "#e74c3c";
 }
@@ -137,7 +137,7 @@ function renewalRow(row: RenewalReportRow): SatoriElement {
             flex: 0.9,
             textAlign: "center",
             fontWeight: row.isCompleted ? 600 : 400,
-            color: row.isCompleted ? "#27ae60" : "#3498db"
+            color: row.isCompleted ? "#0E7C5F" : "#3F86E0"
           }
         },
         estado
@@ -192,7 +192,7 @@ export function createRenewalReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Renovación"
+        "mikro — Reporte de Renovación"
       ),
       el(
         "div",
@@ -224,7 +224,7 @@ export function createRenewalReportLayout(
     "div",
     {
       style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        background: "linear-gradient(135deg, #103A8A 0%, #1F4AA8 100%)",
         color: "white",
         padding: "24px 28px",
         marginBottom: "20px",
@@ -267,7 +267,7 @@ export function createRenewalReportLayout(
         [
           el(
             "div",
-            { style: { fontWeight: 700, fontSize: "20px", color: "#27ae60" } },
+            { style: { fontWeight: 700, fontSize: "20px", color: "#0E7C5F" } },
             String(completedCount)
           ),
           el("div", {}, "Completados")
@@ -288,7 +288,7 @@ export function createRenewalReportLayout(
         [
           el(
             "div",
-            { style: { fontWeight: 700, fontSize: "20px", color: "#3498db" } },
+            { style: { fontWeight: 700, fontSize: "20px", color: "#3F86E0" } },
             String(activeCount)
           ),
           el("div", {}, "Por terminar")

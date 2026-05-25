@@ -1,8 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import sharp from "sharp";
@@ -11,7 +9,7 @@ import { receiptDataSchema, type ReceiptDataInput } from "../schemas/receipt.js"
 import { loadPrivateKey, createSignedToken, type ReceiptData } from "./jwt.js";
 import { generateQRCode } from "./qrcode.js";
 import { loadFonts } from "./fonts.js";
-import { createReceiptLayout, RECEIPT_WIDTH, RECEIPT_HEIGHT } from "./receipt-layout.js";
+import { createReceiptLayout, RECEIPT_WIDTH } from "./receipt-layout.js";
 
 /**
  * Response from receipt generation.
@@ -42,24 +40,6 @@ export interface CreateGenerateReceiptFromDataDeps {
   logger?: ReceiptLogger;
 }
 
-function loadBackgroundImage(assetsDir: string): string | null {
-  const pngPath = join(assetsDir, "background.png");
-  if (existsSync(pngPath)) {
-    const content = readFileSync(pngPath);
-    const base64 = content.toString("base64");
-    return `data:image/png;base64,${base64}`;
-  }
-
-  const svgPath = join(assetsDir, "background.svg");
-  if (existsSync(svgPath)) {
-    const svgContent = readFileSync(svgPath, "utf-8");
-    const base64 = Buffer.from(svgContent).toString("base64");
-    return `data:image/svg+xml;base64,${base64}`;
-  }
-
-  return null;
-}
-
 /**
  * Renders receipt data to a PNG image and JWT. No database access.
  */
@@ -73,61 +53,36 @@ export async function renderReceiptToImage(
   const token = createSignedToken(receiptData, privateKey);
   const qrCodeDataUrl = await generateQRCode(token);
   const fonts = await loadFonts();
-  const backgroundImage = loadBackgroundImage(assetsDir);
 
-  const layout = createReceiptLayout(receiptData, qrCodeDataUrl, backgroundImage);
+  const layout = createReceiptLayout(receiptData, qrCodeDataUrl);
+
+  let fieldCount = 6;
+  if (receiptData.principalAmount) fieldCount++;
+  if (receiptData.feePaid) fieldCount++;
+  if (receiptData.totalPaid) fieldCount++;
+  if (receiptData.agentName) fieldCount++;
+  const receiptHeight = 280 + fieldCount * 24 + (qrCodeDataUrl ? 160 : 0);
+
   const svg = await satori(layout as Parameters<typeof satori>[0], {
     width: RECEIPT_WIDTH,
-    height: RECEIPT_HEIGHT,
+    height: receiptHeight,
     fonts: fonts as Parameters<typeof satori>[1]["fonts"]
   });
 
   const resvg = new Resvg(svg, {
-    fitTo: { mode: "width", value: Math.round(RECEIPT_WIDTH * 1.5) }
+    fitTo: { mode: "width", value: RECEIPT_WIDTH * 2 }
   });
   const pngBuffer = resvg.render().asPng();
 
-  const WHATSAPP_MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  let compressedBuffer = pngBuffer;
-
-  if (pngBuffer.length > WHATSAPP_MAX_SIZE || pngBuffer.length > 2 * 1024 * 1024) {
-    compressedBuffer = await sharp(pngBuffer)
-      .png({
-        compressionLevel: 9,
-        adaptiveFiltering: true,
-        palette: true
-      })
-      .toBuffer();
-
-    if (compressedBuffer.length > WHATSAPP_MAX_SIZE) {
-      logger?.verbose("image still too large after compression, reducing resolution", {
-        size: compressedBuffer.length,
-        target: WHATSAPP_MAX_SIZE
-      });
-      compressedBuffer = await sharp(pngBuffer)
-        .resize(RECEIPT_WIDTH, RECEIPT_HEIGHT, {
-          fit: "contain",
-          withoutEnlargement: true
-        })
-        .png({
-          compressionLevel: 9,
-          adaptiveFiltering: true,
-          palette: true
-        })
-        .toBuffer();
-    }
-  } else {
-    compressedBuffer = await sharp(pngBuffer)
-      .png({ compressionLevel: 9, adaptiveFiltering: true })
-      .toBuffer();
-  }
+  const compressedBuffer = await sharp(pngBuffer)
+    .png({ compressionLevel: 9, adaptiveFiltering: true })
+    .toBuffer();
 
   const image = compressedBuffer.toString("base64");
   logger?.verbose("receipt generated", {
     loanNumber: receiptData.loanNumber,
     originalSize: pngBuffer.length,
-    compressedSize: compressedBuffer.length,
-    underLimit: compressedBuffer.length < WHATSAPP_MAX_SIZE
+    compressedSize: compressedBuffer.length
   });
   return { image, token, receiptData };
 }

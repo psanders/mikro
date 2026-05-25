@@ -46,7 +46,7 @@ function sectionTitle(title: string): SatoriElement {
         fontSize: "22px",
         fontWeight: 700,
         fontFamily: "Inter",
-        color: "#1a5a96",
+        color: "#103A8A",
         marginBottom: "12px"
       }
     },
@@ -269,7 +269,7 @@ export function createPerformanceReportLayout(
         {
           style: { fontSize: "28px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Rendimiento"
+        "mikro — Reporte de Rendimiento"
       ),
       el(
         "div",
@@ -301,7 +301,7 @@ export function createPerformanceReportLayout(
     "div",
     {
       style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        background: "linear-gradient(135deg, #103A8A 0%, #1F4AA8 100%)",
         color: "white",
         padding: "24px 28px",
         marginBottom: "24px",
@@ -378,7 +378,7 @@ export function createPerformanceReportLayout(
         [
           standardPct > 0
             ? el("div", {
-                style: { width: `${standardPct}%`, backgroundColor: "#3498db", height: "100%" }
+                style: { width: `${standardPct}%`, backgroundColor: "#3F86E0", height: "100%" }
               })
             : null,
           largerPct > 0
@@ -388,15 +388,15 @@ export function createPerformanceReportLayout(
             : null,
           exceptionPct > 0
             ? el("div", {
-                style: { width: `${exceptionPct}%`, backgroundColor: "#2980b9", height: "100%" }
+                style: { width: `${exceptionPct}%`, backgroundColor: "#1F4AA8", height: "100%" }
               })
             : null
         ].filter((x): x is SatoriElement => x != null)
       ),
       legendRow([
-        { color: "#3498db", label: "Estándar (5k)" },
+        { color: "#3F86E0", label: "Estándar (5k)" },
         { color: "#5dade2", label: "Mayor (10k)" },
-        { color: "#2980b9", label: "Excepción (8k/20k)" }
+        { color: "#1F4AA8", label: "Excepción (8k/20k)" }
       ]),
       el(
         "div",
@@ -413,9 +413,9 @@ export function createPerformanceReportLayout(
       ),
       verticalBarChart(
         [
-          { label: "Estándar", value: loansBySize.standard.principalDop, color: "#3498db" },
+          { label: "Estándar", value: loansBySize.standard.principalDop, color: "#3F86E0" },
           { label: "Mayor", value: loansBySize.larger.principalDop, color: "#5dade2" },
-          { label: "Excepción", value: loansBySize.exception.principalDop, color: "#2980b9" }
+          { label: "Excepción", value: loansBySize.exception.principalDop, color: "#1F4AA8" }
         ],
         formatDop
       )
@@ -491,7 +491,7 @@ export function createPerformanceReportLayout(
             : null,
           activePct > 0
             ? el("div", {
-                style: { width: `${activePct}%`, backgroundColor: "#3498db", height: "100%" }
+                style: { width: `${activePct}%`, backgroundColor: "#3F86E0", height: "100%" }
               })
             : null,
           defaultedPct > 0
@@ -503,7 +503,7 @@ export function createPerformanceReportLayout(
       ),
       legendRow([
         { color: "#2ecc71", label: "Completamente pagado" },
-        { color: "#3498db", label: "Activo" },
+        { color: "#3F86E0", label: "Activo" },
         { color: "#e74c3c", label: "En mora" }
       ]),
       el(
@@ -522,7 +522,7 @@ export function createPerformanceReportLayout(
       verticalBarChart(
         [
           { label: "Pagado", value: loansByStatus.COMPLETED.principalDop, color: "#2ecc71" },
-          { label: "Activo", value: loansByStatus.ACTIVE.principalDop, color: "#3498db" },
+          { label: "Activo", value: loansByStatus.ACTIVE.principalDop, color: "#3F86E0" },
           { label: "En mora", value: loansByStatus.DEFAULTED.principalDop, color: "#e74c3c" }
         ],
         formatDop
@@ -582,7 +582,7 @@ export function createPerformanceReportLayout(
             fontSize: "20px",
             fontWeight: 700,
             fontFamily: "Inter",
-            color: "#1a5a96"
+            color: "#103A8A"
           }
         },
         "Resumen ejecutivo"
@@ -636,7 +636,7 @@ export function createPerformanceReportLayout(
                   fontFamily: "Inter",
                   color: "#444",
                   paddingLeft: "14px",
-                  borderLeft: "3px solid #3498db"
+                  borderLeft: "3px solid #3F86E0"
                 }
               },
               insight

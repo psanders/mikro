@@ -12,220 +12,241 @@ export interface ReceiptElement {
   };
 }
 
-/**
- * Receipt dimensions (matching background.png).
- */
-export const RECEIPT_WIDTH = 1024;
-export const RECEIPT_HEIGHT = 1536;
+export const RECEIPT_WIDTH = 384;
+export const RECEIPT_HEIGHT = 0;
 
-/**
- * Create the full receipt layout for Satori.
- */
-export function createReceiptLayout(
-  data: ReceiptData,
-  qrCodeDataUrl: string | null,
-  backgroundImage: string | null
-): ReceiptElement {
-  const {
-    loanNumber = "123456",
-    name = "John Doe",
-    date = "24/04/2024",
-    principalAmount,
-    amountPaid = "RD$ 650.00",
-    pendingPayments = 9,
-    paymentNumber = "P1",
-    agentName = "Nombre del Agente",
-    feePaid,
-    totalPaid
-  } = data;
-
-  const fields: Array<[string, string]> = [
-    ["Numero de Prestamo:", loanNumber],
-    ["Nombre:", name],
-    ["Fecha:", date]
-  ];
-  if (principalAmount) {
-    fields.push(["Capital:", principalAmount]);
-  }
-  fields.push(["Monto Pagado:", amountPaid]);
-  if (feePaid) {
-    fields.push(["Mora Pagada:", feePaid]);
-    if (totalPaid) {
-      fields.push(["Total Pagado:", totalPaid]);
+function text(content: string, style: Record<string, unknown> = {}): ReceiptElement {
+  return {
+    type: "div",
+    props: {
+      style: { fontFamily: "Inter", ...style },
+      children: content
     }
-  }
-  fields.push(
-    ["Pagos Pendientes:", String(pendingPayments)],
-    ["Numero de Pago:", paymentNumber],
-    ["Agente:", agentName ?? ""]
-  );
+  };
+}
 
-  const backgroundStyle = backgroundImage
-    ? {
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-      }
-    : {
-        background:
-          "linear-gradient(180deg, #1565a8 0%, #2980b9 25%, #3498db 45%, #5dade2 65%, #48c9b0 80%, #d4a76a 90%, #e8c98a 100%)"
-      };
+function row(label: string, value: string): ReceiptElement {
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%"
+      },
+      children: [
+        text(label, { fontSize: "13px", fontWeight: 400, color: "#5B6472" }),
+        text(value, { fontSize: "13px", fontWeight: 700, color: "#14254A" })
+      ]
+    }
+  };
+}
 
-  const qrCodeElement: ReceiptElement = qrCodeDataUrl
-    ? {
-        type: "img",
-        props: {
-          src: qrCodeDataUrl,
-          width: 220,
-          height: 220,
-          style: {
-            borderRadius: "8px"
-          }
-        }
-      }
-    : {
-        type: "div",
-        props: {
-          style: {
-            width: "220px",
-            height: "220px",
-            background: "#f5f5f5",
-            border: "2px solid #e0e0e0",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          },
-          children: {
-            type: "div",
-            props: {
-              style: {
-                fontSize: "16px",
-                color: "#aaaaaa",
-                fontFamily: "Inter"
-              },
-              children: "QR CODE"
-            }
-          }
-        }
-      };
-
+function divider(): ReceiptElement {
   return {
     type: "div",
     props: {
       style: {
         width: "100%",
-        height: "100%",
+        height: "1px",
+        backgroundColor: "#E0E6EF"
+      }
+    }
+  };
+}
+
+function dashedDivider(): ReceiptElement {
+  return {
+    type: "div",
+    props: {
+      style: {
+        width: "100%",
+        borderBottom: "1px dashed #C0C8D4",
+        height: "0px"
+      }
+    }
+  };
+}
+
+/**
+ * Thermal-printer-friendly receipt layout.
+ * 384px wide (58mm thermal), no background, black on white.
+ */
+export function createReceiptLayout(
+  data: ReceiptData,
+  qrCodeDataUrl: string | null
+): ReceiptElement {
+  const {
+    loanNumber = "",
+    name = "",
+    date = "",
+    principalAmount,
+    amountPaid = "RD$ 0.00",
+    pendingPayments = 0,
+    paymentNumber = "",
+    agentName,
+    feePaid,
+    totalPaid
+  } = data;
+
+  const fields: Array<[string, string]> = [
+    ["Préstamo", `#${loanNumber}`],
+    ["Cliente", name],
+    ["Fecha", date]
+  ];
+  if (principalAmount) {
+    fields.push(["Capital", principalAmount]);
+  }
+  fields.push(["Monto Pagado", amountPaid]);
+  if (feePaid) {
+    fields.push(["Mora Pagada", feePaid]);
+    if (totalPaid) {
+      fields.push(["Total Pagado", totalPaid]);
+    }
+  }
+  fields.push(["Pagos Pendientes", String(pendingPayments)], ["No. de Pago", paymentNumber]);
+  if (agentName) {
+    fields.push(["Cobrador", agentName]);
+  }
+
+  const children: ReceiptElement[] = [
+    // Header: brand mark
+    {
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "4px",
+          paddingTop: "20px",
+          paddingBottom: "8px"
+        },
+        children: [
+          text("mikro", {
+            fontSize: "28px",
+            fontWeight: 900,
+            color: "#103A8A",
+            letterSpacing: "-0.5px"
+          }),
+          text("RECIBO DE PAGO", {
+            fontSize: "10px",
+            fontWeight: 700,
+            color: "#5B6472",
+            letterSpacing: "2px"
+          })
+        ]
+      }
+    },
+
+    dashedDivider(),
+
+    // Amount highlight
+    {
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "16px 0"
+        },
+        children: [
+          text(totalPaid ?? amountPaid, {
+            fontSize: "32px",
+            fontWeight: 900,
+            color: "#103A8A"
+          })
+        ]
+      }
+    },
+
+    divider(),
+
+    // Detail rows
+    {
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          padding: "14px 0"
+        },
+        children: fields.map(([label, value]) => row(label, value))
+      }
+    },
+
+    dashedDivider()
+  ];
+
+  // QR code
+  if (qrCodeDataUrl) {
+    children.push({
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "6px",
+          padding: "14px 0 4px 0"
+        },
+        children: [
+          {
+            type: "img",
+            props: {
+              src: qrCodeDataUrl,
+              width: 120,
+              height: 120
+            }
+          },
+          text("Escanea para verificar", {
+            fontSize: "9px",
+            color: "#8896AB"
+          })
+        ]
+      }
+    });
+  }
+
+  // Footer
+  children.push({
+    type: "div",
+    props: {
+      style: {
         display: "flex",
         flexDirection: "column",
-        ...backgroundStyle
+        alignItems: "center",
+        padding: "8px 0 20px 0",
+        gap: "2px"
       },
       children: [
-        {
-          type: "div",
-          props: {
-            style: {
-              height: "450px",
-              display: "flex"
-            }
-          }
-        },
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              justifyContent: "center",
-              paddingLeft: "45px",
-              paddingRight: "45px"
-            },
-            children: {
-              type: "div",
-              props: {
-                style: {
-                  width: "100%",
-                  background: "rgba(255, 255, 255, 0.75)",
-                  borderRadius: "28px",
-                  padding: "35px",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-                  display: "flex",
-                  flexDirection: "column",
-                  position: "relative"
-                },
-                children: [
-                  {
-                    type: "div",
-                    props: {
-                      style: {
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "24px"
-                      },
-                      children: fields.map(([label, value]) => ({
-                        type: "div",
-                        props: {
-                          style: {
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: "12px"
-                          },
-                          children: [
-                            {
-                              type: "div",
-                              props: {
-                                style: {
-                                  fontSize: "36px",
-                                  fontWeight: 700,
-                                  fontFamily: "Inter",
-                                  color: "#1a5a96"
-                                },
-                                children: label
-                              }
-                            },
-                            {
-                              type: "div",
-                              props: {
-                                style: {
-                                  fontSize: "36px",
-                                  fontWeight: 400,
-                                  fontFamily: "Inter",
-                                  color: "#333333"
-                                },
-                                children: value
-                              }
-                            }
-                          ]
-                        }
-                      }))
-                    }
-                  },
-                  {
-                    type: "div",
-                    props: {
-                      style: {
-                        display: "flex",
-                        position: "absolute",
-                        bottom: "35px",
-                        right: "35px"
-                      },
-                      children: qrCodeElement
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          type: "div",
-          props: {
-            style: {
-              flex: 1,
-              display: "flex"
-            }
-          }
-        }
+        text("Gracias por su pago", {
+          fontSize: "11px",
+          fontWeight: 700,
+          color: "#14254A"
+        }),
+        text("mikro.do", {
+          fontSize: "9px",
+          color: "#8896AB"
+        })
       ]
+    }
+  });
+
+  return {
+    type: "div",
+    props: {
+      style: {
+        width: `${RECEIPT_WIDTH}px`,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#FFFFFF",
+        padding: "0 20px"
+      },
+      children
     }
   };
 }

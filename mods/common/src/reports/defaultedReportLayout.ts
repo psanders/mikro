@@ -184,7 +184,7 @@ export function createDefaultedReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "Mikro Créditos — Reporte de Cartera en Riesgo"
+        "mikro — Reporte de Cartera en Riesgo"
       ),
       el(
         "div",
@@ -216,7 +216,7 @@ export function createDefaultedReportLayout(
     "div",
     {
       style: {
-        background: "linear-gradient(135deg, #1565a8 0%, #2980b9 100%)",
+        background: "linear-gradient(135deg, #103A8A 0%, #1F4AA8 100%)",
         color: "white",
         padding: "24px 28px",
         marginBottom: "20px",
