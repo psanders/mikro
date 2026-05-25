@@ -20,7 +20,7 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import {
   useLocalCustomer,
-  useLocalDashboard,
+  useLocalCustomerLoans,
   useLocalPaymentsByCustomer
 } from "../../lib/offline/hooks";
 
@@ -43,7 +43,7 @@ export default function ClienteDetalleScreen() {
   const router = useRouter();
 
   const { data: c } = useLocalCustomer(id);
-  const dashboard = useLocalDashboard();
+  const loansQuery = useLocalCustomerLoans(id);
 
   const dateRange = useMemo(() => {
     const end = new Date();
@@ -52,9 +52,7 @@ export default function ClienteDetalleScreen() {
   }, []);
   const payments = useLocalPaymentsByCustomer(id, dateRange.start, dateRange.end);
 
-  const visits = useMemo(() => {
-    return (dashboard.data?.visits ?? []).filter((v) => v.customerId === id);
-  }, [dashboard.data?.visits, id]);
+  const visits = loansQuery.data ?? [];
 
   const hasOverdue = visits.some((v) => v.isOverdue);
   const sinceYear = c ? new Date(c.createdAt).getFullYear() : null;

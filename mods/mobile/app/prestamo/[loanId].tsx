@@ -15,7 +15,7 @@ import {
   useLocalLoan,
   useLocalPaymentsByLoan,
   useLocalLateFeePreview,
-  useLocalDashboard
+  useLocalLoanVisit
 } from "../../lib/offline/hooks";
 
 function formatRD(amount: number): string {
@@ -86,14 +86,11 @@ export default function PrestamoDetalleScreen() {
   const loanQuery = useLocalLoan(numericId);
   const paymentsQuery = useLocalPaymentsByLoan(numericId);
   const lateFeeQuery = useLocalLateFeePreview(numericId);
-  const dashboard = useLocalDashboard();
+  const visitQuery = useLocalLoanVisit(numericId);
 
   const loan = loanQuery.data;
   const lateFee = lateFeeQuery.data;
-
-  const visit = useMemo(() => {
-    return (dashboard.data?.visits ?? []).find((v) => v.loanId === numericId);
-  }, [dashboard.data?.visits, numericId]);
+  const visit = visitQuery.data;
 
   const installmentPayments = useMemo(() => {
     return (paymentsQuery.data ?? [])

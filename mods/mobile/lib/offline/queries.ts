@@ -148,24 +148,26 @@ export interface CollectorDashboard {
   visits: DashboardVisit[];
 }
 
-export function getCollectorDashboard(): CollectorDashboard | null {
-  const collector = getCollectorInfo();
-  if (!collector) return null;
+// Computes per-loan visit metrics for an arbitrary set of loans, independent of
+// which collector is assigned. The collector-scoped dashboard and the
+// customer/loan detail screens all build on top of this so they stay consistent.
+function buildVisitsForLoans(
+  db: ReturnType<typeof getDatabase>,
+  loans: LoanRow[],
+  now: Date
+): DashboardVisit[] {
+  if (loans.length === 0) return [];
 
-  const db = getDatabase();
-  const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-  const loans = db.getAllSync<LoanRow>(
-    `SELECT l.*, c.name as customer_name, c.collection_point, c.home_address, c.preferred_payment_day
-     FROM loans l
-     JOIN customers c ON l.customer_id = c.id
-     WHERE l.status = 'ACTIVE'`
-  );
-
+  const loanIds = loans.map((l) => l.id);
+  const placeholders = loanIds.map(() => "?").join(", ");
   const allPayments = db.getAllSync<PaymentRow>(
-    `SELECT paid_at, status, kind, amount, loan_id FROM payments WHERE status != 'REVERSED'`
+    `SELECT p.paid_at, p.status, p.kind, p.amount, p.loan_id
+     FROM payments p
+     WHERE p.status != 'REVERSED' AND p.loan_id IN (${placeholders})`,
+    loanIds
   );
 
   const paymentsByLoan = new Map<string, PaymentRow[]>();
@@ -191,12 +193,7 @@ export function getCollectorDashboard(): CollectorDashboard | null {
     paidAmountByLoan.set(p.loan_id, (paidAmountByLoan.get(p.loan_id) ?? 0) + p.amount);
   }
 
-  const dailyTarget = loans.reduce((sum, l) => sum + l.payment_amount, 0);
-  const amountCollected = todayPayments.reduce((sum, p) => sum + p.amount, 0);
-  const visitsDone = paidLoanIds.size;
-  const visitsPending = loans.length - visitsDone;
-
-  const visits: DashboardVisit[] = loans.map((l) => {
+  return loans.map((l) => {
     const loanPayments = paymentsByLoan.get(l.id) ?? [];
     const installmentPayments = loanPayments.filter(
       (p) => (!p.kind || p.kind === "INSTALLMENT") && p.status === "COMPLETED"
@@ -253,13 +250,40 @@ export function getCollectorDashboard(): CollectorDashboard | null {
       nextDueDate: nextDue.toISOString()
     };
   });
+}
 
+function sortVisits(visits: DashboardVisit[]): void {
   visits.sort((a, b) => {
     if (a.paidToday !== b.paidToday) return a.paidToday ? 1 : -1;
     if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
     if (a.daysOverdue !== b.daysOverdue) return b.daysOverdue - a.daysOverdue;
     return a.customerName.localeCompare(b.customerName);
   });
+}
+
+export function getCollectorDashboard(): CollectorDashboard | null {
+  const collector = getCollectorInfo();
+  if (!collector) return null;
+
+  const db = getDatabase();
+  const now = new Date();
+
+  const loans = db.getAllSync<LoanRow>(
+    `SELECT l.*, c.name as customer_name, c.collection_point, c.home_address, c.preferred_payment_day
+     FROM loans l
+     JOIN customers c ON l.customer_id = c.id
+     WHERE l.status = 'ACTIVE' AND c.assigned_collector_id = ?`,
+    [collector.id]
+  );
+
+  const visits = buildVisitsForLoans(db, loans, now);
+
+  const dailyTarget = loans.reduce((sum, l) => sum + l.payment_amount, 0);
+  const amountCollected = visits.reduce((sum, v) => sum + v.amountPaidToday, 0);
+  const visitsDone = visits.filter((v) => v.paidToday).length;
+  const visitsPending = loans.length - visitsDone;
+
+  sortVisits(visits);
 
   return {
     collector,
@@ -269,6 +293,44 @@ export function getCollectorDashboard(): CollectorDashboard | null {
     visitsPending,
     visits
   };
+}
+
+// Loans for a single customer, regardless of which collector they're assigned
+// to. Powers the customer detail screen so any collector can see full data for
+// anyone they search.
+export function getCustomerLoans(customerId: string): DashboardVisit[] {
+  const db = getDatabase();
+  const now = new Date();
+
+  const loans = db.getAllSync<LoanRow>(
+    `SELECT l.*, c.name as customer_name, c.collection_point, c.home_address, c.preferred_payment_day
+     FROM loans l
+     JOIN customers c ON l.customer_id = c.id
+     WHERE l.status = 'ACTIVE' AND l.customer_id = ?`,
+    [customerId]
+  );
+
+  const visits = buildVisitsForLoans(db, loans, now);
+  sortVisits(visits);
+  return visits;
+}
+
+// Visit metrics for a single loan, regardless of collector assignment. Powers
+// the loan/cobro/visita/historico screens so they work for any customer.
+export function getLoanVisit(loanId: number): DashboardVisit | null {
+  const db = getDatabase();
+  const now = new Date();
+
+  const loans = db.getAllSync<LoanRow>(
+    `SELECT l.*, c.name as customer_name, c.collection_point, c.home_address, c.preferred_payment_day
+     FROM loans l
+     JOIN customers c ON l.customer_id = c.id
+     WHERE l.loan_id = ?`,
+    [loanId]
+  );
+
+  const visits = buildVisitsForLoans(db, loans, now);
+  return visits[0] ?? null;
 }
 
 // -- Customer queries --

@@ -79,7 +79,12 @@ CREATE INDEX IF NOT EXISTS idx_loan_notes_loan_id ON loan_notes(loan_id);
 CREATE INDEX IF NOT EXISTS idx_pending_mutations_status ON pending_mutations(status);
 `;
 
-const MIGRATIONS = [MIGRATION_V1];
+const MIGRATION_V2 = `
+ALTER TABLE customers ADD COLUMN assigned_collector_id TEXT;
+CREATE INDEX IF NOT EXISTS idx_customers_assigned_collector ON customers(assigned_collector_id);
+`;
+
+const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2];
 
 export function runMigrations(db: SQLiteDatabase): void {
   const result = db.getFirstSync<{ user_version: number }>("PRAGMA user_version");

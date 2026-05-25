@@ -13,6 +13,7 @@ export interface CustomerSnapshot {
   collectionPoint: string | null;
   homeAddress: string;
   preferredPaymentDay: string | null;
+  assignedCollectorId: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -151,6 +152,7 @@ export function createCollectorSync(client: DbClient) {
         collectionPoint: c.collectionPoint ?? null,
         homeAddress: c.homeAddress,
         preferredPaymentDay: c.preferredPaymentDay ?? null,
+        assignedCollectorId: c.assignedCollectorId ?? null,
         isActive: c.isActive,
         createdAt: c.createdAt.toISOString()
       })),

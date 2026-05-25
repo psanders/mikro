@@ -4,7 +4,10 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   getCollectorDashboard,
+  getCollectorInfo,
   getCustomer,
+  getCustomerLoans,
+  getLoanVisit,
   searchCustomers,
   getLoanByLoanId,
   listPaymentsByLoanId,
@@ -12,6 +15,7 @@ import {
   listPayments,
   previewLateFee,
   type CollectorDashboard,
+  type DashboardVisit,
   type CustomerRow,
   type LoanDetail,
   type PaymentDetail,
@@ -49,6 +53,63 @@ export function useLocalDashboard(): QueryResult<CollectorDashboard> {
     isLoading: !ready,
     isError: false,
     isSuccess: ready && data !== undefined
+  };
+}
+
+export function useLocalCollector(): QueryResult<{ id: string; name: string }> {
+  const version = useSyncVersion();
+  const [data, setData] = useState<{ id: string; name: string } | undefined>(undefined);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setData(getCollectorInfo() ?? undefined);
+    setReady(true);
+  }, [version]);
+
+  return {
+    data,
+    isLoading: !ready,
+    isError: false,
+    isSuccess: ready && data !== undefined
+  };
+}
+
+export function useLocalCustomerLoans(
+  customerId: string | undefined
+): QueryResult<DashboardVisit[]> {
+  const version = useSyncVersion();
+  const [data, setData] = useState<DashboardVisit[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (!customerId) {
+      setData([]);
+      return;
+    }
+    setData(getCustomerLoans(customerId));
+  }, [customerId, version]);
+
+  return {
+    data,
+    isLoading: data === undefined && !!customerId,
+    isError: false,
+    isSuccess: data !== undefined
+  };
+}
+
+export function useLocalLoanVisit(loanId: number | undefined): QueryResult<DashboardVisit> {
+  const version = useSyncVersion();
+  const [data, setData] = useState<DashboardVisit | undefined>(undefined);
+
+  useEffect(() => {
+    if (loanId === undefined || isNaN(loanId)) return;
+    setData(getLoanVisit(loanId) ?? undefined);
+  }, [loanId, version]);
+
+  return {
+    data,
+    isLoading: !data && loanId !== undefined,
+    isError: false,
+    isSuccess: data !== undefined
   };
 }
 

@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { Header } from "../../components/ui/Header";
 import { ClientRow } from "../../components/ui/ClientRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { trpc } from "../../lib/api";
-import { useLocalLoan, useLocalDashboard } from "../../lib/offline/hooks";
+import { useLocalLoan, useLocalLoanVisit, useLocalCollector } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queueLoanNote } from "../../lib/offline/mutations";
 
@@ -47,17 +47,16 @@ export default function AnotarVisitaScreen() {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const dashboard = useLocalDashboard();
+  const visitQuery = useLocalLoanVisit(numericId);
   const loanQuery = useLocalLoan(numericId);
+  const collectorQuery = useLocalCollector();
   const { isOnline, refreshState } = useSyncContext();
 
   const createNote = trpc.createLoanNote.useMutation();
 
-  const visit = useMemo(() => {
-    return (dashboard.data?.visits ?? []).find((v) => v.loanId === numericId);
-  }, [dashboard.data?.visits, numericId]);
+  const visit = visitQuery.data;
 
-  const collectorId = dashboard.data?.collector.id;
+  const collectorId = collectorQuery.data?.id;
 
   const displayName =
     loanQuery.data?.customer?.nickname ??

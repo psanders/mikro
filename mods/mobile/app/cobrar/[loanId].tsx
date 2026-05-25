@@ -20,7 +20,12 @@ import { OptionRow } from "../../components/ui/OptionRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { trpc } from "../../lib/api";
-import { useLocalLoan, useLocalLateFeePreview, useLocalDashboard } from "../../lib/offline/hooks";
+import {
+  useLocalLoan,
+  useLocalLateFeePreview,
+  useLocalLoanVisit,
+  useLocalCollector
+} from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
 
@@ -40,18 +45,17 @@ export default function CobrarPagoScreen() {
 
   const loanQuery = useLocalLoan(numericId);
   const lateFeeQuery = useLocalLateFeePreview(numericId);
-  const dashboard = useLocalDashboard();
+  const visitQuery = useLocalLoanVisit(numericId);
+  const collectorQuery = useLocalCollector();
   const { isOnline, refreshState } = useSyncContext();
 
   const createPayment = trpc.createPayment.useMutation();
 
   const loan = loanQuery.data;
   const lateFee = lateFeeQuery.data;
-  const collectorId = dashboard.data?.collector.id;
+  const collectorId = collectorQuery.data?.id;
 
-  const visit = useMemo(() => {
-    return (dashboard.data?.visits ?? []).find((v) => v.loanId === numericId);
-  }, [dashboard.data?.visits, numericId]);
+  const visit = visitQuery.data;
 
   const cuota = lateFee?.cuota ?? (loan ? Number(loan.paymentAmount) : 0);
   const mora = lateFee?.accruedMora ?? 0;
@@ -167,7 +171,7 @@ export default function CobrarPagoScreen() {
           pendingPayments: String(
             effectiveOption === "settle" ? 0 : Math.max(0, remainingCuotas - 1)
           ),
-          collectorName: dashboard.data?.collector.name ?? ""
+          collectorName: collectorQuery.data?.name ?? ""
         }
       });
     } catch (err: unknown) {
