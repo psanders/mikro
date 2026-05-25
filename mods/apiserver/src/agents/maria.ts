@@ -37,11 +37,6 @@ export const maria: Agent = {
 - \`generatePerformanceReport\`: Cuando pidan reporte de rendimiento del portafolio (métricas y gráficos, una página)
 - \`generateDefaultedReport\`: Cuando pidan reporte de mora/defaulted (todos los préstamos en mora con resumen de notas)
 - \`generateRenewalCandidatesReport\`: Cuando pidan reporte de candidatos a renovación, préstamos por terminar, quiénes son buenos para otro préstamo
-- \`generateCollectionsAuditReport\`: Cuando pidan reporte de auditoría de cobranza, quién fue notificado hoy (o una fecha), qué mensajes se enviaron y si hubo errores
-- \`runSingleCollection\`: Cuando pidan enviar recordatorio, aviso de mora o llamada de cobro a un préstamo específico (por número de préstamo)
-
-## Flujo cobro individual
-Piden enviar recordatorio, aviso de mora o llamada de cobro a un préstamo → Opcional: \`getLoanByLoanId\` para confirmar que existe → \`runSingleCollection\` con loanId. Si especifican canal (WhatsApp/llamada) o tipo (recordatorio/aviso/llamada), pásalos. Responde con el mensaje de la herramienta. Indica siempre el canal (por WhatsApp o por llamada) porque el mensaje va al cliente, no al admin (ej: "Listo. Envié recordatorio de pago por WhatsApp a [nombre] (préstamo #X)." o "Listo. Envié aviso de mora por llamada a [nombre] (préstamo #X).").
 
 ## Flujo registrar pago
 1. Admin pide registrar pago → Responde: "Dame el número de préstamo o el teléfono del cliente para buscar el préstamo."
@@ -73,11 +68,8 @@ Piden reporte de mora, reporte de defaulted, o préstamos en mora → \`generate
 ## Flujo reporte de renovación
 Piden reporte de candidatos a renovación, préstamos por terminar, quiénes pueden renovar o quiénes son buenos para otro préstamo → \`generateRenewalCandidatesReport\` (sin argumentos) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido del reporte. El usuario ya lo ve.
 
-## Flujo reporte de auditoría de cobranza
-Piden reporte de auditoría de cobranza, quién fue notificado hoy, notificaciones del día o si los mensajes se están enviando → \`generateCollectionsAuditReport\` (sin argumentos = hoy; opcional: date en YYYY-MM-DD para otra fecha) → responde SOLO "¡Listo! ¿Algo más?" - NO describas el contenido. El usuario ya lo ve.
-
 ## Clarificación de reportes
-Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), reporte de rendimiento del portafolio, reporte de mora, reporte de candidatos a renovación, o reporte de auditoría de cobranza." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`. Si dicen mora/defaulted → \`generateDefaultedReport\`. Si dicen renovación/candidatos a renovar/préstamos por terminar → \`generateRenewalCandidatesReport\`. Si dicen auditoría de cobranza/quién fue notificado/notificaciones del día → \`generateCollectionsAuditReport\` (opcional: date en YYYY-MM-DD).
+Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué reporte? Puedo enviarte: reporte de clientes (imagen o Excel), reporte de rendimiento del portafolio, reporte de mora, o reporte de candidatos a renovación." Si dicen clientes/lista → \`exportAllCustomers\`. Si piden Excel o detallado → \`exportAllCustomers\` con format "detailed". Si dicen rendimiento/portafolio/métricas → \`generatePerformanceReport\`. Si dicen mora/defaulted → \`generateDefaultedReport\`. Si dicen renovación/candidatos a renovar/préstamos por terminar → \`generateRenewalCandidatesReport\`.
 
 ## Guardrails
 - Fuera de tema: "Eso no lo puedo hacer yo. Para eso necesitas usar la aplicación o contactar soporte."`,
@@ -93,9 +85,7 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
     "generatePerformanceReport",
     "generateDefaultedReport",
     "generateRenewalCandidatesReport",
-    "generateCollectionsAuditReport",
-    "updateLoanStatus",
-    "runSingleCollection"
+    "updateLoanStatus"
   ],
   temperature: 0.4,
   evaluations: {
@@ -375,65 +365,6 @@ Si piden solo "un reporte" o "el reporte" sin especificar: pregunta "¿Qué repo
                     filename: "reporte-todos-miembros-2026-01-30.xlsx",
                     loanCount: 15,
                     customerCount: 12
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "single-collection-reminder",
-        description: "Admin asks to send a payment reminder for a specific loan",
-        turns: [
-          {
-            human: "Envía un recordatorio de pago al préstamo 10019.",
-            expectedAI:
-              "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
-            tools: [
-              {
-                name: "runSingleCollection",
-                expectedArgs: { loanId: "10019" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message:
-                    "Listo. Envié recordatorio de pago por WhatsApp a Maria Garcia (préstamo #10019).",
-                  data: {
-                    loanId: 10019,
-                    type: "PAYMENT_REMINDER",
-                    channel: "WHATSAPP",
-                    customerName: "Maria Garcia",
-                    dryRun: false
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "single-collection-with-overrides",
-        description: "Admin asks to send an overdue notice via WhatsApp for a specific loan",
-        turns: [
-          {
-            human: "Manda aviso de mora por WhatsApp al préstamo 10001.",
-            expectedAI: "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
-            tools: [
-              {
-                name: "runSingleCollection",
-                expectedArgs: { loanId: "10001", type: "OVERDUE_NOTICE", channel: "WHATSAPP" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message:
-                    "Listo. Envié aviso de mora por WhatsApp a Juan Perez (préstamo #10001).",
-                  data: {
-                    loanId: 10001,
-                    type: "OVERDUE_NOTICE",
-                    channel: "WHATSAPP",
-                    customerName: "Juan Perez",
-                    dryRun: false
                   }
                 }
               }

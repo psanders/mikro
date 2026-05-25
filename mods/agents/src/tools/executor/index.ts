@@ -27,8 +27,6 @@ import { handleExportAllCustomers } from "./exportAllCustomers.js";
 import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
 import { handleGenerateDefaultedReport } from "./handleGenerateDefaultedReport.js";
 import { handleGenerateRenewalCandidatesReport } from "./handleGenerateRenewalCandidatesReport.js";
-import { handleGenerateCollectionsAuditReport } from "./handleGenerateCollectionsAuditReport.js";
-import { handleRunSingleCollection } from "./runSingleCollection.js";
 
 /**
  * Creates a tool executor that delegates to the provided API functions.
@@ -76,9 +74,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     exportAllCustomers: handleExportAllCustomers,
     generatePerformanceReport: handleGeneratePerformanceReport,
     generateDefaultedReport: handleGenerateDefaultedReport,
-    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport,
-    generateCollectionsAuditReport: handleGenerateCollectionsAuditReport,
-    runSingleCollection: handleRunSingleCollection
+    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport
   };
 
   return async function executeTool(

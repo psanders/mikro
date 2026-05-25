@@ -51,8 +51,7 @@ describe("createGetCustomer", () => {
       expect(mockClient.customer.findUnique.calledOnce).to.be.true;
       expect(
         mockClient.customer.findUnique.calledWith({
-          where: { id: validInput.id },
-          include: { notificationPolicy: true }
+          where: { id: validInput.id }
         })
       ).to.be.true;
     });

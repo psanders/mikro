@@ -2,13 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
-export type {
-  PortfolioMetrics,
-  LoansByStatus,
-  LoansBySize,
-  ReportNarrative,
-  CollectionsAuditRow
-} from "./types.js";
+export type { PortfolioMetrics, LoansByStatus, LoansBySize, ReportNarrative } from "./types.js";
 export { buildReportNarrativePrompt, parseReportNarrativeResponse } from "./reportPrompt.js";
 export {
   createPerformanceReportLayout,
@@ -46,12 +40,6 @@ export {
   type RenewalReportRow
 } from "./renewalReportLayout.js";
 export { renderRenewalReportToPng } from "./renewalReportGenerator.js";
-export {
-  createCollectionsAuditReportLayout,
-  getCollectionsAuditReportHeight,
-  COLLECTIONS_AUDIT_REPORT_WIDTH
-} from "./collectionsAuditReportLayout.js";
-export { renderCollectionsAuditReportToPng } from "./collectionsAuditReportGenerator.js";
 export type {
   AccountingReportAccount,
   AccountingReportTransaction,

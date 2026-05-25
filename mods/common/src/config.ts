@@ -21,7 +21,7 @@ export const llmConfigSchema = z.object({
 export type LLMConfig = z.infer<typeof llmConfigSchema>;
 
 /** Valid agent names for disabledAgents. */
-export const AGENT_NAMES_CONFIG = ["joan", "juan", "maria"] as const;
+export const AGENT_NAMES_CONFIG = ["joan", "maria"] as const;
 const agentNameSchema = z.enum(AGENT_NAMES_CONFIG);
 
 const llmPurposesSchema = z.object({
@@ -31,9 +31,7 @@ const llmPurposesSchema = z.object({
 });
 
 const whatsappTemplatesSchema = z.object({
-  paymentConfirmation: z.string().default("payment_receipt"),
-  paymentReminder: z.string().default("payment_reminder"),
-  paymentOverdue: z.string().default("payment_overdue")
+  paymentConfirmation: z.string().default("payment_receipt")
 });
 
 const whatsappSchema = z.object({
@@ -42,17 +40,8 @@ const whatsappSchema = z.object({
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
   templates: whatsappTemplatesSchema.default(() => ({
-    paymentConfirmation: "payment_receipt",
-    paymentReminder: "payment_reminder",
-    paymentOverdue: "payment_overdue"
+    paymentConfirmation: "payment_receipt"
   }))
-});
-
-const collectionsSchema = z.object({
-  enabled: z.boolean().default(true),
-  cron: z.string().default("0 8 * * *"),
-  dryRun: z.boolean().default(false),
-  includeDefaulted: z.boolean().default(true)
 });
 
 const evalsVendorOverrideSchema = z.object({
@@ -70,29 +59,6 @@ const evalsSchema = z.object({
   similarityThreshold: z.number().min(0).max(1).default(0.7),
   vendors: evalsVendorsSchema.default(() => ({}))
 });
-
-const fonosterSchema = z
-  .object({
-    enabled: z.boolean().default(false),
-    workspaceAccessKeyId: z.string().default(""),
-    apikeyAccessKeyId: z.string().default(""),
-    apikeyAccessKeySecret: z.string().default(""),
-    fromNumber: z.string().default(""),
-    appRef: z.string().default("")
-  })
-  .refine(
-    (data) =>
-      !data.enabled ||
-      (data.workspaceAccessKeyId &&
-        data.apikeyAccessKeyId &&
-        data.apikeyAccessKeySecret &&
-        data.fromNumber &&
-        data.appRef),
-    {
-      message:
-        "When fonoster.enabled is true, workspaceAccessKeyId, apikeyAccessKeyId, apikeyAccessKeySecret, fromNumber, and appRef are required"
-    }
-  );
 
 const voiceNotesSchema = z.object({
   enabled: z.boolean().default(false),
@@ -172,20 +138,6 @@ export const mikroConfigSchema = z
     disabledAgents: z.array(agentNameSchema).default([]),
     llm: llmPurposesSchema,
     whatsapp: whatsappSchema,
-    collections: collectionsSchema.default(() => ({
-      enabled: true,
-      cron: "0 8 * * *",
-      dryRun: false,
-      includeDefaulted: true
-    })),
-    fonoster: fonosterSchema.default(() => ({
-      enabled: false,
-      workspaceAccessKeyId: "",
-      apikeyAccessKeyId: "",
-      apikeyAccessKeySecret: "",
-      fromNumber: "",
-      appRef: ""
-    })),
     voiceNotes: voiceNotesSchema.default(() => ({
       enabled: false,
       deepgramApiKey: ""
@@ -207,20 +159,11 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  | "whatsapp"
-  | "collections"
-  | "fonoster"
-  | "voiceNotes"
-  | "evals"
-  | "reports"
-  | "accounting"
-  | "loans"
+  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
   };
-  collections: NonNullable<MikroConfig["collections"]>;
-  fonoster: NonNullable<MikroConfig["fonoster"]>;
   voiceNotes: NonNullable<MikroConfig["voiceNotes"]>;
   evals: NonNullable<MikroConfig["evals"]> & {
     vendors: NonNullable<NonNullable<MikroConfig["evals"]>["vendors"]>;

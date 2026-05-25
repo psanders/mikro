@@ -41,16 +41,6 @@ export default class Update extends MutationCommand<typeof Update> {
       description: "Preferred payment day (MONDAY-SUNDAY or none)",
       required: false,
       options: [...PREFERRED_PAYMENT_DAY_OPTIONS, "none"]
-    }),
-    collections: Flags.boolean({
-      description: "Collection notifications enabled",
-      required: false,
-      allowNo: true
-    }),
-    "payment-confirmations": Flags.boolean({
-      description: "Payment confirmation notifications enabled",
-      required: false,
-      allowNo: true
     })
   };
 
@@ -145,34 +135,6 @@ export default class Update extends MutationCommand<typeof Update> {
               })
             : ((customerFromDB.preferredPaymentDay as PreferredPaymentDay | null) ?? null);
 
-      const collectionsEnabled =
-        flags.collections !== undefined
-          ? flags.collections
-          : process.stdout.isTTY
-            ? await select({
-                message: "Collection Notifications",
-                choices: [
-                  { name: "Enabled", value: true },
-                  { name: "Disabled", value: false }
-                ],
-                default: customerFromDB.notificationPolicy?.collections ?? true
-              })
-            : (customerFromDB.notificationPolicy?.collections ?? true);
-
-      const paymentConfirmationsEnabled =
-        flags["payment-confirmations"] !== undefined
-          ? flags["payment-confirmations"]
-          : process.stdout.isTTY
-            ? await select({
-                message: "Payment Confirmation Notifications",
-                choices: [
-                  { name: "Enabled", value: true },
-                  { name: "Disabled", value: false }
-                ],
-                default: customerFromDB.notificationPolicy?.paymentConfirmations ?? true
-              })
-            : (customerFromDB.notificationPolicy?.paymentConfirmations ?? true);
-
       const ready = await this.confirmOrAbort(`Ready to update customer ${customerId}?`);
       if (!ready) return;
 
@@ -183,11 +145,7 @@ export default class Update extends MutationCommand<typeof Update> {
         phone,
         notes: notes || undefined,
         isActive,
-        preferredPaymentDay,
-        notificationPolicy: {
-          collections: collectionsEnabled,
-          paymentConfirmations: paymentConfirmationsEnabled
-        }
+        preferredPaymentDay
       });
 
       this.log("Done!");

@@ -16,6 +16,7 @@ import { logger } from "../../logger.js";
 /** User from DB with password and roles (for login). */
 interface UserWithPassword {
   id: string;
+  name: string;
   phone: string;
   password: string | null;
   enabled: boolean;
@@ -24,6 +25,7 @@ interface UserWithPassword {
 
 export interface LoginResult {
   token: string;
+  name: string;
 }
 
 /**
@@ -75,7 +77,7 @@ export function createLogin(client: DbClient) {
       .sign(secret);
 
     logger.verbose("login success", { userId: user.id, phone: user.phone });
-    return { token };
+    return { token, name: user.name };
   };
 
   return withErrorHandlingAndValidation(fn, loginSchema);

@@ -30,7 +30,6 @@ const SLOW_TOOLS = new Set([
   "sendReceiptViaWhatsApp",
   "exportAllCustomers",
   "generatePerformanceReport",
-  "runSingleCollection",
   "exportCollectorCustomers"
 ]);
 

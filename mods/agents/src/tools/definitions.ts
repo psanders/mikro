@@ -563,42 +563,6 @@ export const generatePerformanceReportTool: ToolFunction = {
 };
 
 /**
- * Tool definition for running a single collection action (reminder, overdue notice, or call) for one loan.
- * Admin only. Can force channel and/or type, or let the system auto-determine from missed payments.
- */
-export const runSingleCollectionTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "runSingleCollection",
-    description:
-      "Enviar una accion de cobro a un solo prestamo: recordatorio de pago (PAYMENT_REMINDER), aviso de mora (OVERDUE_NOTICE) o llamada de cobro (COLLECTION_CALL). Usa el numero de prestamo (loanId). Opcional: forzar canal (WHATSAPP o PHONE_CALL) y/o tipo. Si no se especifica tipo, se determina por pagos atrasados.",
-    parameters: {
-      type: "object",
-      properties: {
-        loanId: {
-          type: "string",
-          description:
-            "ID numerico del prestamo (ej: 10019). Este es el numero de prestamo, no el UUID."
-        },
-        channel: {
-          type: "string",
-          enum: ["WHATSAPP", "PHONE_CALL"],
-          description:
-            "Canal a usar (opcional). Por defecto: WHATSAPP para recordatorio/aviso, PHONE_CALL para llamada."
-        },
-        type: {
-          type: "string",
-          enum: ["PAYMENT_REMINDER", "OVERDUE_NOTICE", "COLLECTION_CALL"],
-          description:
-            "Tipo de accion (opcional). Por defecto se calcula: 0 atrasos + dia de pago = recordatorio; 1-2 atrasos = aviso; 3+ = llamada."
-        }
-      },
-      required: ["loanId"]
-    }
-  }
-};
-
-/**
  * Tool definition for generating the at-risk loans report (PNG sent via WhatsApp).
  * Admin only. Includes DEFAULTED loans and/or ACTIVE loans with 3+ missed payments (red). Optional filter.
  */
@@ -642,29 +606,6 @@ export const generateRenewalCandidatesReportTool: ToolFunction = {
 };
 
 /**
- * Tool definition for the daily collections audit report (who was notified, message type, status, errors).
- * Admin only. Sent via WhatsApp as image. Default: today.
- */
-export const generateCollectionsAuditReportTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "generateCollectionsAuditReport",
-    description:
-      "Generar el reporte de auditoria de cobranza del dia: quien fue notificado, tipo de mensaje (recordatorio, aviso de mora, llamada), estado (enviado/fallido) y errores si los hay. Sirve para auditar que los mensajes se estan enviando. Por defecto usa la fecha de hoy. Solo admin. Se envia por WhatsApp como imagen.",
-    parameters: {
-      type: "object",
-      properties: {
-        date: {
-          type: "string",
-          description: "Fecha del dia a auditar en YYYY-MM-DD. Si no se pasa, se usa hoy."
-        }
-      },
-      required: []
-    }
-  }
-};
-
-/**
  * All available tools.
  */
 export const allTools: ToolFunction[] = [
@@ -688,9 +629,7 @@ export const allTools: ToolFunction[] = [
   exportAllCustomersTool,
   generatePerformanceReportTool,
   generateDefaultedReportTool,
-  generateRenewalCandidatesReportTool,
-  generateCollectionsAuditReportTool,
-  runSingleCollectionTool
+  generateRenewalCandidatesReportTool
 ];
 
 /**

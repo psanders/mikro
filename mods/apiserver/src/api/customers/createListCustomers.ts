@@ -19,11 +19,23 @@ import { logger } from "../../logger.js";
  */
 export function createListCustomers(client: DbClient) {
   const fn = async (params: ListCustomersInput): Promise<Customer[]> => {
-    logger.verbose("listing customers", { limit: params.limit, offset: params.offset });
+    logger.verbose("listing customers", {
+      search: params.search,
+      limit: params.limit,
+      offset: params.offset
+    });
+    const where: Record<string, unknown> = {};
+    if (!params.showInactive) where.isActive = true;
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search, mode: "insensitive" } },
+        { nickname: { contains: params.search, mode: "insensitive" } },
+        { phone: { contains: params.search } }
+      ];
+    }
     const customers = await client.customer.findMany({
-      where: params.showInactive ? undefined : { isActive: true },
-      include: { notificationPolicy: true },
-      take: params.limit,
+      where,
+      take: params.limit ?? 20,
       skip: params.offset
     });
     logger.verbose("customers listed", { count: customers.length });

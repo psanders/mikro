@@ -88,6 +88,19 @@ export function createMessageRouter(deps: RouterDependencies) {
       // Determine which agent would handle this user
       const targetAgent = ROLE_TO_AGENT[primaryRole];
 
+      // No agent configured for this role (e.g. collectors use the mobile app)
+      if (!targetAgent) {
+        logger.verbose("no agent configured for role, ignoring", {
+          phone: normalizedPhone,
+          role: primaryRole
+        });
+        return {
+          type: "ignored",
+          reason: "no agent for this role",
+          phone: normalizedPhone
+        };
+      }
+
       // Check if the target agent is disabled
       if (isAgentDisabled(targetAgent)) {
         logger.info("agent is disabled, ignoring request", {

@@ -9,7 +9,15 @@ import headers from "eslint-plugin-headers";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/*.d.ts", "**/coverage/**", "**/generated/**"]
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.d.ts",
+      "**/coverage/**",
+      "**/generated/**",
+      "mods/mobile/metro.config.js",
+      "mods/mobile/.storybook/storybook.requires.ts"
+    ]
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

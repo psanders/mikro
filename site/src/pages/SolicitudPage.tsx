@@ -360,6 +360,7 @@ const SECTION_DEFS: SectionDef[] = [
 ];
 
 export function SolicitudPage() {
+  const [sessionId] = useState(() => crypto.randomUUID());
   const [openSection, setOpenSection] = useState("personal");
   const [agreed, setAgreed] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
@@ -369,6 +370,16 @@ export function SolicitudPage() {
 
   const set = (name: string, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleToggle = (sectionId: string) => {
+    if (openSection && GOOGLE_FORM_URL) {
+      fetch(GOOGLE_FORM_URL, {
+        method: "POST",
+        body: JSON.stringify({ ...form, sessionId, partial: true, lastSection: openSection })
+      }).catch(() => {});
+    }
+    setOpenSection(openSection === sectionId ? "" : sectionId);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -388,7 +399,7 @@ export function SolicitudPage() {
     try {
       const res = await fetch(GOOGLE_FORM_URL, {
         method: "POST",
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, sessionId, partial: false })
       });
 
       if (!res.ok) {
@@ -474,7 +485,7 @@ export function SolicitudPage() {
               >
                 <button
                   type="button"
-                  onClick={() => setOpenSection(isOpen ? "" : section.id)}
+                  onClick={() => handleToggle(section.id)}
                   className="flex w-full items-center gap-4"
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-brand-mist">

@@ -14,11 +14,6 @@ const dayOfWeekEnum = z.enum([
   "SUNDAY"
 ]);
 
-const notificationPolicySchema = z.object({
-  collections: z.boolean().default(true),
-  paymentConfirmations: z.boolean().default(true)
-});
-
 /**
  * Schema for creating a new customer.
  */
@@ -46,13 +41,12 @@ export const createCustomerSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
-  preferredPaymentDay: dayOfWeekEnum.nullable().default(null),
-  notificationPolicy: notificationPolicySchema.optional()
+  preferredPaymentDay: dayOfWeekEnum.nullable().default(null)
 });
 
 /**
  * Schema for updating an existing customer.
- * Only name, nickname, phone, notes, isActive, preferredPaymentDay, and notificationPolicy can be updated.
+ * Only name, nickname, phone, notes, isActive, and preferredPaymentDay can be updated.
  */
 export const updateCustomerSchema = z.object({
   id: z.uuid({ error: "Invalid customer ID" }),
@@ -68,8 +62,7 @@ export const updateCustomerSchema = z.object({
     .optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
-  preferredPaymentDay: dayOfWeekEnum.optional().nullable(),
-  notificationPolicy: notificationPolicySchema.partial().optional()
+  preferredPaymentDay: dayOfWeekEnum.optional().nullable()
 });
 
 /**
@@ -97,7 +90,8 @@ export const getCustomerByPhoneSchema = z.object({
  * By default only shows active customers unless showInactive is true.
  */
 export const listCustomersSchema = z.object({
-  showInactive: z.boolean().optional(), // If true, show all customers including inactive
+  search: z.string().min(2).max(100).optional(),
+  showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });

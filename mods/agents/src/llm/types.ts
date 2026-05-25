@@ -18,7 +18,7 @@ export interface ModelSettings {
  * Agent configuration loaded from JSON.
  */
 export interface Agent {
-  /** Agent name (e.g., "joan", "juan", "maria") */
+  /** Agent name (e.g., "joan", "maria") */
   name: string;
   /** System prompt that defines the agent's behavior */
   systemPrompt: string;

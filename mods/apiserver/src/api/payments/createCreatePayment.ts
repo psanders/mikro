@@ -100,35 +100,6 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
     const loanStart = new Date(loan.startingDate ?? loan.createdAt);
     const paidAt = params.paidAt ?? new Date();
 
-    const duplicateGuardNeeded = (installmentPortion: number) => {
-      if (installmentPortion <= 0) return null;
-      const recentPaymentCutoff = new Date(Date.now() - 10 * 60 * 1000);
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      return { recentPaymentCutoff, oneHourAgo };
-    };
-
-    const runDuplicateGuard = async (installmentPortion: number) => {
-      const g = duplicateGuardNeeded(installmentPortion);
-      if (!g) return;
-      const recentPayments = await client.payment.findMany({
-        where: {
-          loanId: loan.id,
-          kind: "INSTALLMENT",
-          status: { in: ["COMPLETED", "PARTIAL"] },
-          paidAt: { gte: g.oneHourAgo }
-        },
-        orderBy: { paidAt: "desc" },
-        take: 5
-      });
-      const recentPayment = recentPayments.find((p) => p.createdAt >= g.recentPaymentCutoff);
-      if (recentPayment) {
-        throw new Error(
-          `Duplicate payment blocked: A payment was already recorded for loan ${params.loanId} ` +
-            `at ${recentPayment.createdAt.toISOString()}. Wait at least 10 minutes between payments.`
-        );
-      }
-    };
-
     const loanData = toLoanPaymentData(loan);
     const accrued = computeAccruedMora({
       loanData,
@@ -159,8 +130,6 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       lateFeePortion = Math.min(amountNum, suggestedMora);
       installmentPortion = amountNum - lateFeePortion;
     }
-
-    await runDuplicateGuard(installmentPortion);
 
     const method = params.method ?? "CASH";
     const notes = params.notes ?? null;

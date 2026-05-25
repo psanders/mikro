@@ -63,11 +63,11 @@ export interface DbClient {
     delete(args: { where: { id: string } }): Promise<Customer>;
     findUnique(args: {
       where: { id: string };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
     }): Promise<Customer | null>;
     findFirst(args: {
       where: { phone: string };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
     }): Promise<Customer | null>;
     findMany(args?: {
       where?: {
@@ -75,7 +75,7 @@ export interface DbClient {
         referredById?: string;
         assignedCollectorId?: string;
       };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
       take?: number;
       skip?: number;
     }): Promise<Customer[]>;
@@ -198,10 +198,26 @@ export interface DbClient {
           | boolean
           | {
               select?: {
+                id?: boolean;
                 name?: boolean;
                 phone?: boolean;
+                homeAddress?: boolean;
+                collectionPoint?: boolean;
+                preferredPaymentDay?: boolean;
               };
             };
+        payments?: {
+          where?: {
+            status?: PaymentStatus | { in: PaymentStatus[] };
+            kind?: "INSTALLMENT" | "LATE_FEE";
+          };
+          select?: { paidAt?: boolean; status?: boolean };
+        };
+        _count?: {
+          select?: {
+            payments?: boolean | { where?: { status?: string; kind?: string } };
+          };
+        };
       };
       take?: number;
       skip?: number;
@@ -260,6 +276,7 @@ export interface DbClient {
         status?: PaymentStatus | { not: PaymentStatus } | { in: PaymentStatus[] };
         kind?: "INSTALLMENT" | "LATE_FEE";
         loanId?: string;
+        collectedById?: string;
         paidAt?: {
           gte?: Date;
           lte?: Date;

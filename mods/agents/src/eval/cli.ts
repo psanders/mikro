@@ -88,7 +88,7 @@ Options:
                     Judge always uses llm.evals.
 
 Arguments:
-  agent     - Optional. Agent name (e.g. joan, juan)
+  agent     - Optional. Agent name (e.g. joan, maria)
   scenario  - Optional. Single scenario id (use with agent)
 
 Config (mikro.json):

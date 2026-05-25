@@ -79,18 +79,3 @@ export interface AccountingReportData {
     combinedBalance: number;
   };
 }
-
-/** One row in the daily collections audit report (one per CollectionAttempt). */
-export interface CollectionsAuditRow {
-  sentAt: string;
-  customerName: string;
-  customerPhone: string;
-  loanId: number;
-  loanNickname: string;
-  attemptType: string;
-  channel: string;
-  status: string;
-  templateName: string;
-  messageId: string;
-  notesOrError: string;
-}

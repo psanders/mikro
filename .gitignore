@@ -13,6 +13,7 @@ dist/
 
 # Environment variables (deprecated; use mikro.json)
 .env
+!mods/mobile/.env
 .env.local
 .env.*.local
 

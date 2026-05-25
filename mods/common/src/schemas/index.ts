@@ -155,24 +155,13 @@ export {
   generatePortfolioMetricsSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
-  generateCollectionsAuditReportSchema,
   generateAccountingReportSchema,
-  collectionAttemptTypeEnum,
-  collectionAttemptStatusEnum,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
-  type GenerateCollectionsAuditReportInput,
   type GenerateAccountingReportInput
 } from "./report.js";
-
-export {
-  runCollectionsSchema,
-  runSingleCollectionSchema,
-  type RunCollectionsInput,
-  type RunSingleCollectionInput
-} from "./collection.js";
 
 export {
   accountKindEnum,
@@ -217,3 +206,5 @@ export {
   type GetTransactionInput,
   type GetTransactionAttachmentInput
 } from "./accounting.js";
+
+export { getCollectorDashboardSchema, type GetCollectorDashboardInput } from "./dashboard.js";

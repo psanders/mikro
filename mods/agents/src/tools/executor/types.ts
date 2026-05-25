@@ -217,40 +217,6 @@ export interface ToolExecutorDependencies {
   /** Generate renewal candidates report (near-completion + completed loans, rating, AI candidacy note). Returns base64 image. */
   generateRenewalCandidatesReport: (params: Record<string, never>) => Promise<{ image: string }>;
 
-  /** Generate daily collections audit report (who was notified, type, status, errors). Optional date (YYYY-MM-DD). Returns rows + base64 image. */
-  generateCollectionsAuditReport: (params?: { date?: string }) => Promise<{
-    rows: Array<{
-      sentAt: string;
-      customerName: string;
-      customerPhone: string;
-      loanId: number;
-      loanNickname: string;
-      attemptType: string;
-      channel: string;
-      status: string;
-      templateName: string;
-      messageId: string;
-      notesOrError: string;
-    }>;
-    image: string;
-  }>;
-
-  /** Run a single collection action (reminder, overdue notice, or call) for one loan. */
-  runSingleCollection: (params: {
-    loanId: number;
-    channel?: "WHATSAPP" | "PHONE_CALL";
-    type?: "PAYMENT_REMINDER" | "OVERDUE_NOTICE" | "COLLECTION_CALL";
-    dryRun?: boolean;
-  }) => Promise<{
-    success: boolean;
-    loanId: number;
-    type: string;
-    channel: string;
-    customerName: string;
-    dryRun: boolean;
-    error?: string;
-  }>;
-
   /** Render customers report (grouped by payment health) to PNG buffer. Used for simplified format. */
   renderCustomersReportToPng: (customers: ExportedCustomer[]) => Promise<Buffer>;
 
