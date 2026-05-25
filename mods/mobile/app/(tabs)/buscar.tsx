@@ -140,10 +140,17 @@ export default function BuscarScreen() {
         )}
 
         {filtered.map((c) => (
-          <Pressable key={c.id} style={styles.clientRow} onPress={() => handleSelect(c)}>
+          <Pressable
+            key={c.id}
+            style={styles.clientRow}
+            onPress={() => handleSelect(c)}
+            testID={`customer-${c.id}`}
+          >
             <Avatar name={c.name} size={36} />
             <View style={styles.clientMid}>
-              <Text style={styles.clientName}>{c.name}</Text>
+              <Text style={styles.clientName} testID={`customer-name-${c.id}`}>
+                {c.name}
+              </Text>
             </View>
             <ChevronRight size={18} color={colors.text.secondary} strokeWidth={2} />
           </Pressable>

@@ -1,11 +1,14 @@
 appId: do.mikro.app
 ---
-- launchApp
-- runFlow:
-    when:
-      visible: "Bienvenido."
-    file: login-steps.yaml
-- runFlow:
-    when:
-      visible: "Ingresa tu PIN para continuar"
-    file: unlock-steps.yaml
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Ingresa tu PIN para continuar"
+    timeout: 10000
+- tapOn: "1"
+- tapOn: "2"
+- tapOn: "3"
+- tapOn: "4"
+- extendedWaitUntil:
+    visible: "META DE HOY"
+    timeout: 10000

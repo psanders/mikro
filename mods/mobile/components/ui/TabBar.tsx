@@ -29,6 +29,7 @@ export function TabBar({ state, descriptors, navigation }: any) {
         return (
           <Pressable
             key={route.key}
+            testID={`tab-${route.name}`}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : undefined}
             accessibilityLabel={options.tabBarAccessibilityLabel}

@@ -11,12 +11,13 @@ interface ChipProps {
   active?: boolean;
   variant?: ChipVariant;
   onPress?: () => void;
+  testID?: string;
 }
 
-export function Chip({ label, active, variant = "default", onPress }: ChipProps) {
+export function Chip({ label, active, variant = "default", onPress, testID }: ChipProps) {
   if (active) {
     return (
-      <Pressable onPress={onPress} style={[styles.container, styles.active]}>
+      <Pressable onPress={onPress} style={[styles.container, styles.active]} testID={testID}>
         <Text style={[styles.text, styles.activeText]}>{label}</Text>
       </Pressable>
     );
@@ -24,7 +25,7 @@ export function Chip({ label, active, variant = "default", onPress }: ChipProps)
 
   if (variant === "danger") {
     return (
-      <Pressable onPress={onPress} style={[styles.container, styles.danger]}>
+      <Pressable onPress={onPress} style={[styles.container, styles.danger]} testID={testID}>
         <View style={styles.dot} />
         <Text style={[styles.text, styles.dangerText]}>{label}</Text>
       </Pressable>
@@ -34,7 +35,7 @@ export function Chip({ label, active, variant = "default", onPress }: ChipProps)
   const textColor = variant === "warning" ? colors.brand.orange.deep : colors.brand.ink;
 
   return (
-    <Pressable onPress={onPress} style={styles.container}>
+    <Pressable onPress={onPress} style={styles.container} testID={testID}>
       <Text style={[styles.text, { color: textColor }]}>{label}</Text>
     </Pressable>
   );

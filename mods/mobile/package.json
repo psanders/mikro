@@ -16,8 +16,8 @@
     "build:ios:prod": "eas build --platform ios --profile production",
     "build:android:prod": "eas build --platform android --profile production",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "maestro test .maestro/",
-    "test:e2e:login": "maestro test .maestro/login.yaml"
+    "test:e2e": ".maestro/run-tests.sh",
+    "test:e2e:login": ".maestro/run-tests.sh login"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",

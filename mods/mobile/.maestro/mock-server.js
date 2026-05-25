@@ -15,10 +15,136 @@ const FAKE_TOKEN = "eyJtb2NrIjp0cnVlLCJzdWIiOiJ0ZXN0LWNvbGxlY3RvciJ9";
 const COLLECTOR = { id: "test-collector", name: "Pedro Test" };
 
 const CUSTOMERS = [
-  { id: "c1", name: "Juan Pérez", nickname: null, phone: "+18095550001", isActive: true },
-  { id: "c2", name: "María García", nickname: "La Doña", phone: "+18095550002", isActive: true },
-  { id: "c3", name: "Carlos Reyes", nickname: null, phone: "+18095550003", isActive: true }
+  {
+    id: "c1",
+    name: "Juan Pérez",
+    nickname: null,
+    phone: "+18095550001",
+    isActive: true,
+    idNumber: "001-1234567-8",
+    homeAddress: "Calle 1, Los Prados",
+    collectionPoint: "Colmado Los Prados",
+    createdAt: "2025-01-15T10:00:00.000Z"
+  },
+  {
+    id: "c2",
+    name: "María García",
+    nickname: "La Doña",
+    phone: "+18095550002",
+    isActive: true,
+    idNumber: "002-7654321-0",
+    homeAddress: "Av. Principal, Naco",
+    collectionPoint: null,
+    createdAt: "2024-06-01T10:00:00.000Z"
+  },
+  {
+    id: "c3",
+    name: "Carlos Reyes",
+    nickname: null,
+    phone: "+18095550003",
+    isActive: true,
+    idNumber: null,
+    homeAddress: "Sector Villa Mella",
+    collectionPoint: null,
+    createdAt: "2025-03-20T10:00:00.000Z"
+  }
 ];
+
+const LOANS = [
+  {
+    id: 1001,
+    customerId: "c1",
+    customer: { id: "c1", name: "Juan Pérez", nickname: null, phone: "+18095550001" },
+    principal: 30000,
+    paymentAmount: 2500,
+    termLength: 12,
+    installmentNumber: 3,
+    frequency: "DAILY",
+    status: "ACTIVE",
+    startDate: new Date(Date.now() - 30 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString()
+  },
+  {
+    id: 1002,
+    customerId: "c2",
+    customer: { id: "c2", name: "María García", nickname: "La Doña", phone: "+18095550002" },
+    principal: 20000,
+    paymentAmount: 2000,
+    termLength: 10,
+    installmentNumber: 5,
+    frequency: "DAILY",
+    status: "ACTIVE",
+    startDate: new Date(Date.now() - 60 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 60 * 86400000).toISOString()
+  },
+  {
+    id: 1003,
+    customerId: "c3",
+    customer: { id: "c3", name: "Carlos Reyes", nickname: null, phone: "+18095550003" },
+    principal: 45000,
+    paymentAmount: 3000,
+    termLength: 15,
+    installmentNumber: 1,
+    frequency: "DAILY",
+    status: "ACTIVE",
+    startDate: new Date().toISOString(),
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 1004,
+    customerId: "c1",
+    customer: { id: "c1", name: "Juan Pérez", nickname: null, phone: "+18095550001" },
+    principal: 18000,
+    paymentAmount: 1500,
+    termLength: 12,
+    installmentNumber: 8,
+    frequency: "DAILY",
+    status: "ACTIVE",
+    startDate: new Date(Date.now() - 90 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 90 * 86400000).toISOString()
+  },
+  {
+    id: 1005,
+    customerId: "c2",
+    customer: { id: "c2", name: "María García", nickname: "La Doña", phone: "+18095550002" },
+    principal: 30000,
+    paymentAmount: 3000,
+    termLength: 10,
+    installmentNumber: 2,
+    frequency: "DAILY",
+    status: "ACTIVE",
+    startDate: new Date(Date.now() - 10 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 86400000).toISOString()
+  }
+];
+
+const now = new Date();
+const PAYMENTS = [
+  {
+    id: "pay-1",
+    loanId: 1001,
+    amount: "2500",
+    kind: "INSTALLMENT",
+    method: "CASH",
+    status: "CONFIRMED",
+    collectedById: "test-collector",
+    paidAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 30).toISOString(),
+    createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 30).toISOString()
+  },
+  {
+    id: "pay-2",
+    loanId: 1002,
+    amount: "2000",
+    kind: "INSTALLMENT",
+    method: "CASH",
+    status: "CONFIRMED",
+    collectedById: "test-collector",
+    paidAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 15).toISOString(),
+    createdAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 15).toISOString()
+  }
+];
+
+let paymentCounter = PAYMENTS.length;
 
 const DASHBOARD = {
   collector: COLLECTOR,
@@ -106,11 +232,11 @@ const DASHBOARD = {
 };
 
 function ok(data) {
-  return JSON.stringify({ result: { data } });
+  return JSON.stringify([{ result: { data } }]);
 }
 
 function err(message, code) {
-  return JSON.stringify({ error: { message, code } });
+  return JSON.stringify([{ error: { message, code } }]);
 }
 
 function readBody(req) {
@@ -125,9 +251,21 @@ function getInput(url) {
   const match = url.match(/[?&]input=([^&]*)/);
   if (!match) return {};
   try {
-    return JSON.parse(decodeURIComponent(match[1]));
+    const raw = JSON.parse(decodeURIComponent(match[1]));
+    if (raw["0"] && raw["0"].json) return raw["0"].json;
+    return raw;
   } catch {
     return {};
+  }
+}
+
+function getPostInput(raw) {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed["0"] && parsed["0"].json) return parsed["0"].json;
+    return parsed;
+  } catch {
+    return null;
   }
 }
 
@@ -145,11 +283,8 @@ const server = http.createServer(async (req, res) => {
 
   // POST /trpc/login
   if (path === "/trpc/login" && req.method === "POST") {
-    const raw = await readBody(req);
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
+    const data = getPostInput(await readBody(req));
+    if (!data) {
       res.writeHead(400);
       return res.end(err("Invalid JSON", -32600));
     }
@@ -159,6 +294,44 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(401);
     return res.end(err("Invalid credentials", -32001));
+  }
+
+  // POST /trpc/createPayment
+  if (path === "/trpc/createPayment" && req.method === "POST") {
+    const data = getPostInput(await readBody(req));
+    if (!data) {
+      res.writeHead(400);
+      return res.end(err("Invalid JSON", -32600));
+    }
+    paymentCounter++;
+    const payment = {
+      id: `pay-${paymentCounter}`,
+      loanId: data.loanId,
+      amount: String(data.amount),
+      kind: data.kind || "INSTALLMENT",
+      method: data.method || "CASH",
+      status: "CONFIRMED",
+      collectedById: data.collectedById || "test-collector",
+      paidAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    PAYMENTS.push(payment);
+    res.writeHead(200);
+    return res.end(ok(payment));
+  }
+
+  // POST /trpc/createLoanNote
+  if (path === "/trpc/createLoanNote" && req.method === "POST") {
+    const data = getPostInput(await readBody(req));
+    res.writeHead(200);
+    return res.end(
+      ok({
+        id: "note-1",
+        loanId: data?.loanId,
+        text: data?.text,
+        createdAt: new Date().toISOString()
+      })
+    );
   }
 
   // GET /trpc/getCollectorDashboard
@@ -184,7 +357,65 @@ const server = http.createServer(async (req, res) => {
     return res.end(ok(results));
   }
 
-  // Catch-all for unknown tRPC routes — return empty success
+  // GET /trpc/getCustomer
+  if (path === "/trpc/getCustomer") {
+    const input = getInput(req.url);
+    const customer = CUSTOMERS.find((c) => c.id === input.id);
+    if (customer) {
+      res.writeHead(200);
+      return res.end(ok(customer));
+    }
+    res.writeHead(404);
+    return res.end(err("Customer not found", -32004));
+  }
+
+  // GET /trpc/getLoanByLoanId
+  if (path === "/trpc/getLoanByLoanId") {
+    const input = getInput(req.url);
+    const loan = LOANS.find((l) => l.id === input.loanId);
+    if (loan) {
+      res.writeHead(200);
+      return res.end(ok(loan));
+    }
+    res.writeHead(404);
+    return res.end(err("Loan not found", -32004));
+  }
+
+  // GET /trpc/previewLateFee
+  if (path === "/trpc/previewLateFee") {
+    const input = getInput(req.url);
+    const visit = DASHBOARD.visits.find((v) => v.loanId === input.loanId);
+    const loan = LOANS.find((l) => l.id === input.loanId);
+    const cuota = loan ? Number(loan.paymentAmount) : 0;
+    const accruedMora = visit && visit.isOverdue ? Math.round(cuota * 0.1) : 0;
+    res.writeHead(200);
+    return res.end(ok({ cuota, accruedMora }));
+  }
+
+  // GET /trpc/listPayments
+  if (path === "/trpc/listPayments") {
+    res.writeHead(200);
+    return res.end(ok(PAYMENTS));
+  }
+
+  // GET /trpc/listPaymentsByCustomer
+  if (path === "/trpc/listPaymentsByCustomer") {
+    const input = getInput(req.url);
+    const customerLoans = LOANS.filter((l) => l.customerId === input.customerId).map((l) => l.id);
+    const results = PAYMENTS.filter((p) => customerLoans.includes(p.loanId));
+    res.writeHead(200);
+    return res.end(ok(results));
+  }
+
+  // GET /trpc/listPaymentsByLoanId
+  if (path === "/trpc/listPaymentsByLoanId") {
+    const input = getInput(req.url);
+    const results = PAYMENTS.filter((p) => p.loanId === input.loanId);
+    res.writeHead(200);
+    return res.end(ok(results));
+  }
+
+  // Catch-all for unknown tRPC routes
   if (path.startsWith("/trpc/")) {
     res.writeHead(200);
     return res.end(ok(null));

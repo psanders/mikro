@@ -5,7 +5,8 @@ appId: do.mikro.app
 - inputText: "7853178070"
 - tapOn:
     id: "password-input"
-- inputText: "iymscvb4r"
+- inputText: "changeit"
+- tapOn: "Bienvenido."
 - tapOn: "Iniciar sesión"
 - runFlow:
     when:

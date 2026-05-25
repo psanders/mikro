@@ -3,9 +3,20 @@ appId: do.mikro.app
 - runFlow: subflows/unlock.yaml
 - assertVisible: "META DE HOY"
 - tapOn: "Ruta"
+- extendedWaitUntil:
+    visible: "Mi ruta"
+    timeout: 5000
 - tapOn:
     text: "Buscar"
     index: 1
+- extendedWaitUntil:
+    visible: "Buscar cliente"
+    timeout: 5000
 - tapOn: "Cuadre"
+- extendedWaitUntil:
+    visible: "Cuadre del día"
+    timeout: 5000
 - tapOn: "Hoy"
-- assertVisible: "META DE HOY"
+- extendedWaitUntil:
+    visible: "META DE HOY"
+    timeout: 5000
