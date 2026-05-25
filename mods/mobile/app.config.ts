@@ -20,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     }
   },
   android: {
-    package: "do.mikro.app",
+    package: "do_.mikro.app",
     adaptiveIcon: {
       backgroundColor: "#103A8A",
       foregroundImage: "./assets/android-icon-foreground.png",

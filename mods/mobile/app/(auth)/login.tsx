@@ -87,20 +87,26 @@ export default function LoginScreen() {
 
         <View style={styles.form}>
           <Input
+            testID="phone-input"
             label="Teléfono"
             value={phone}
             onChangeText={handlePhoneChange}
             placeholder="809-555-0100"
             icon={User}
             keyboardType="phone-pad"
+            textContentType="none"
+            autoComplete="off"
           />
           <Input
+            testID="password-input"
             label="Contraseña"
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
             icon={Lock}
             secureTextEntry
+            textContentType="none"
+            autoComplete="off"
           />
           <Pressable>
             <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>

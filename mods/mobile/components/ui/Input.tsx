@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, TextInput, StyleSheet } from "react-native";
+import { View, Text, TextInput, TextInputProps, StyleSheet } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { colors, radii } from "../../lib/theme";
 
@@ -13,6 +13,9 @@ interface InputProps {
   icon?: LucideIcon;
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
+  testID?: string;
+  textContentType?: TextInputProps["textContentType"];
+  autoComplete?: TextInputProps["autoComplete"];
 }
 
 export function Input({
@@ -22,7 +25,10 @@ export function Input({
   placeholder,
   icon: Icon,
   secureTextEntry,
-  keyboardType
+  keyboardType,
+  testID,
+  textContentType,
+  autoComplete
 }: InputProps) {
   return (
     <View style={styles.container}>
@@ -30,6 +36,7 @@ export function Input({
       <View style={styles.box}>
         {Icon && <Icon size={18} color={colors.brand.blue.primary} strokeWidth={2} />}
         <TextInput
+          testID={testID}
           style={styles.input}
           value={value}
           onChangeText={onChangeText}
@@ -37,6 +44,8 @@ export function Input({
           placeholderTextColor={colors.text.secondary}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
+          textContentType={textContentType}
+          autoComplete={autoComplete}
         />
       </View>
     </View>
