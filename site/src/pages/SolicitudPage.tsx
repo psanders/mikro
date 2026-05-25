@@ -544,8 +544,6 @@ export function SolicitudPage() {
                             onChange={set}
                             required
                           />
-                        </div>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <CedulaField
                             label="Cédula"
                             name="cedula"
@@ -553,6 +551,8 @@ export function SolicitudPage() {
                             onChange={set}
                             required
                           />
+                        </div>
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <DateField
                             label="Fecha de nacimiento"
                             name="fechaNacimiento"
@@ -560,8 +560,6 @@ export function SolicitudPage() {
                             onChange={set}
                             required
                           />
-                        </div>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Estado civil"
                             name="estadoCivil"
