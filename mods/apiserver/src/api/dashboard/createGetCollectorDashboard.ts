@@ -24,6 +24,7 @@ export interface DashboardVisit {
   isOverdue: boolean;
   daysOverdue: number;
   paidToday: boolean;
+  amountPaidToday: number;
   nextDueDate: string;
 }
 
@@ -81,6 +82,13 @@ export function createGetCollectorDashboard(client: DbClient) {
 
     const collectorName = collector?.name ?? "Cobrador";
     const paidLoanIds = new Set(todayPayments.map((p) => p.loanId));
+    const paidAmountByLoan = new Map<string, number>();
+    for (const p of todayPayments) {
+      paidAmountByLoan.set(
+        p.loanId,
+        (paidAmountByLoan.get(p.loanId) ?? 0) + amountToNumber(p.amount)
+      );
+    }
 
     const dailyTarget = loans.reduce((sum, l) => sum + amountToNumber(l.paymentAmount), 0);
     const amountCollected = todayPayments.reduce((sum, p) => sum + amountToNumber(p.amount), 0);
@@ -146,6 +154,7 @@ export function createGetCollectorDashboard(client: DbClient) {
           isOverdue: !paid && daysOverdue > 0,
           daysOverdue: paid ? 0 : daysOverdue,
           paidToday: paid,
+          amountPaidToday: paidAmountByLoan.get(l.id) ?? 0,
           nextDueDate: nextDue.toISOString()
         };
       })

@@ -125,7 +125,7 @@ export default function RutaScreen() {
                     ? `Hoy · ${v.address}`
                     : "Hoy"
             }
-            amount={formatRD(v.paymentAmount)}
+            amount={formatRD(v.paidToday ? v.amountPaidToday : v.paymentAmount)}
             amountSub={!v.paidToday && v.isOverdue ? "+ mora" : undefined}
             variant={v.paidToday ? "done" : v.isOverdue ? "overdue" : "default"}
             onPress={() => router.push(`/cliente/${v.customerId}`)}
