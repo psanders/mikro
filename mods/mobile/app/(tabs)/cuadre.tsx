@@ -3,10 +3,10 @@
  */
 import { useMemo, useState } from "react";
 import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
-import { colors } from "../lib/theme";
-import { Header } from "../components/ui/Header";
-import { KvRow } from "../components/ui/KvRow";
-import { trpc } from "../lib/api";
+import { colors } from "../../lib/theme";
+import { Header } from "../../components/ui/Header";
+import { KvRow } from "../../components/ui/KvRow";
+import { trpc } from "../../lib/api";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;

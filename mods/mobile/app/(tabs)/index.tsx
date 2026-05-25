@@ -81,7 +81,7 @@ export default function HomeScreen() {
           <Text style={styles.dateLine}>{formatDate()}</Text>
           <Text style={styles.greeting}>Hola, {firstName}.</Text>
         </View>
-        <Pressable style={styles.avatarCircle} onPress={() => router.push("/(tabs)/perfil")}>
+        <Pressable style={styles.avatarCircle} onPress={() => router.push("/perfil")}>
           <Text style={styles.avatarText}>
             {data?.collector.name
               .split(" ")
@@ -122,7 +122,11 @@ export default function HomeScreen() {
               <Text style={styles.heroPillText}>{pct}%</Text>
             </View>
           </View>
-          <ProgressBar progress={progress} color={colors.brand.white} />
+          <ProgressBar
+            progress={progress}
+            color={colors.brand.white}
+            trackColor={colors.brand.blue.primary}
+          />
           <View style={styles.heroMeta}>
             <Text style={styles.heroMetaLeft}>{data?.visitsDone ?? 0} cobros realizados</Text>
             <Text style={styles.heroMetaRight}>{data?.visitsPending ?? 0} pendientes</Text>
@@ -146,7 +150,7 @@ export default function HomeScreen() {
             icon={Calculator}
             label="Cuadre"
             iconColor={colors.brand.blue.primary}
-            onPress={() => router.push("/cuadre")}
+            onPress={() => router.push("/(tabs)/cuadre")}
           />
         </View>
 

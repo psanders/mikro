@@ -38,7 +38,7 @@ export default function RootLayout() {
           <Stack.Screen name="visita/[id]" options={{ presentation: "modal" }} />
           <Stack.Screen name="sincronizar" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="historico/[loanId]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="cuadre" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="perfil" options={{ animation: "slide_from_right" }} />
         </Stack>
       </QueryClientProvider>
     </trpc.Provider>
