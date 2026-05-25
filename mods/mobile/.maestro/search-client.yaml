@@ -5,3 +5,7 @@ appId: do.mikro.app
 - tapOn:
     id: "search-input"
 - inputText: "Juan"
+- extendedWaitUntil:
+    visible: "Juan Pérez"
+    timeout: 5000
+- assertVisible: "Juan Pérez"
