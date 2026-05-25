@@ -3,7 +3,7 @@
  */
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../lib/theme";
 import { Avatar } from "../../components/ui/Avatar";
@@ -15,6 +15,8 @@ const PIN_LENGTH = 4;
 
 export default function UnlockScreen() {
   const router = useRouter();
+  const { resume } = useLocalSearchParams<{ resume?: string }>();
+  const isResume = resume === "1";
   const insets = useSafeAreaInsets();
   const [entered, setEntered] = useState("");
   const [error, setError] = useState(false);
@@ -43,7 +45,11 @@ export default function UnlockScreen() {
 
     const storedPin = await getPin();
     if (next === storedPin) {
-      router.replace("/(tabs)");
+      if (isResume) {
+        router.back();
+      } else {
+        router.replace("/(tabs)");
+      }
     } else {
       setError(true);
       setEntered("");

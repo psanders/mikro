@@ -1,7 +1,9 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { Stack } from "expo-router";
+import { useEffect, useRef } from "react";
+import { AppState } from "react-native";
+import { Stack, useRouter, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
@@ -13,6 +15,29 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient, queryClient } from "../lib/api";
 import { SyncProvider } from "../lib/offline/SyncProvider";
+import { getToken, getPin } from "../lib/auth";
+
+function useAppLock() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const appState = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", async (nextState) => {
+      if (appState.current.match(/background/) && nextState === "active") {
+        const authScreens = ["/", "/(auth)/login", "/(auth)/unlock"];
+        if (!authScreens.includes(pathname)) {
+          const [token, pin] = await Promise.all([getToken(), getPin()]);
+          if (token && pin) {
+            router.push({ pathname: "/(auth)/unlock", params: { resume: "1" } });
+          }
+        }
+      }
+      appState.current = nextState;
+    });
+    return () => sub.remove();
+  }, [pathname, router]);
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -21,6 +46,8 @@ export default function RootLayout() {
     Geist_600SemiBold,
     Geist_700Bold
   });
+
+  useAppLock();
 
   if (!fontsLoaded) return null;
 

@@ -79,20 +79,13 @@ export function createCollectorSync(client: DbClient) {
   return async (params: { collectorId: string }): Promise<CollectorSyncResult> => {
     logger.verbose("collector sync started", { collectorId: params.collectorId });
 
-    const [collector, customers] = await Promise.all([
+    const [collector, allCustomers] = await Promise.all([
       client.user.findUnique({ where: { id: params.collectorId } }),
-      client.customer.findMany({
-        where: { assignedCollectorId: params.collectorId }
-      })
+      client.customer.findMany({ where: { isActive: true } })
     ]);
 
-    const customerIds = customers.map((c) => c.id);
-
     const loans = await client.loan.findMany({
-      where: {
-        customerId: customerIds.length === 1 ? customerIds[0] : undefined,
-        status: "ACTIVE"
-      },
+      where: { status: "ACTIVE" },
       include: {
         customer: {
           select: {
@@ -107,17 +100,8 @@ export function createCollectorSync(client: DbClient) {
       }
     });
 
-    const customerIdSet = new Set(customerIds);
-    const filteredLoans =
-      customerIds.length > 1 ? loans.filter((l) => customerIdSet.has(l.customerId)) : loans;
-
-    const loanIdMap = new Map<number, string>();
-    for (const l of filteredLoans) {
-      loanIdMap.set(l.loanId, l.id);
-    }
-
     const loanNoteResults: LoanNoteSnapshot[] = [];
-    for (const l of filteredLoans) {
+    for (const l of loans) {
       const notes = await client.loanNote.findMany({
         where: { loanId: l.id },
         orderBy: { createdAt: "desc" },
@@ -137,7 +121,7 @@ export function createCollectorSync(client: DbClient) {
 
     const cfg = getConfig();
 
-    type LoanWithPayments = (typeof filteredLoans)[number] & {
+    type LoanWithPayments = (typeof loans)[number] & {
       payments: Array<{
         id: string;
         amount: unknown;
@@ -158,7 +142,7 @@ export function createCollectorSync(client: DbClient) {
         id: params.collectorId,
         name: collector?.name ?? "Cobrador"
       },
-      customers: customers.map((c) => ({
+      customers: allCustomers.map((c) => ({
         id: c.id,
         name: c.name,
         nickname: c.nickname ?? null,
@@ -170,7 +154,7 @@ export function createCollectorSync(client: DbClient) {
         isActive: c.isActive,
         createdAt: c.createdAt.toISOString()
       })),
-      loans: (filteredLoans as LoanWithPayments[]).map((l) => ({
+      loans: (loans as LoanWithPayments[]).map((l) => ({
         id: l.id,
         loanId: l.loanId,
         status: l.status,
@@ -212,8 +196,8 @@ export function createCollectorSync(client: DbClient) {
 
     logger.verbose("collector sync complete", {
       collectorId: params.collectorId,
-      customers: customers.length,
-      loans: filteredLoans.length,
+      customers: allCustomers.length,
+      loans: loans.length,
       loanNotes: loanNoteResults.length
     });
 

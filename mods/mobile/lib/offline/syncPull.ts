@@ -18,6 +18,7 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
   const data = await api.collectorSync.query();
   const db = getDatabase();
 
+  db.execSync("PRAGMA foreign_keys = OFF");
   db.withTransactionSync(() => {
     db.runSync("DELETE FROM loan_notes");
     db.runSync("DELETE FROM payments WHERE id NOT LIKE 'pending_%'");
@@ -108,6 +109,7 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
 
     reinsertPendingPaymentsAsLocal(db);
   });
+  db.execSync("PRAGMA foreign_keys = ON");
 
   return {
     customers: data.customers.length,

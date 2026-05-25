@@ -162,7 +162,12 @@ export default function CobrarPagoScreen() {
           ),
           cuota: String(cuota),
           method: methodLabel,
-          loanId: String(loanId)
+          loanId: String(loanId),
+          paymentNumber: String(effectiveOption === "mora" ? 0 : paidCount + 1),
+          pendingPayments: String(
+            effectiveOption === "settle" ? 0 : Math.max(0, remainingCuotas - 1)
+          ),
+          collectorName: dashboard.data?.collector.name ?? ""
         }
       });
     } catch (err: unknown) {

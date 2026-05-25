@@ -42,7 +42,7 @@ export default function ClienteDetalleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const customer = useLocalCustomer(id);
+  const { data: c } = useLocalCustomer(id);
   const dashboard = useLocalDashboard();
 
   const dateRange = useMemo(() => {
@@ -56,7 +56,6 @@ export default function ClienteDetalleScreen() {
     return (dashboard.data?.visits ?? []).filter((v) => v.customerId === id);
   }, [dashboard.data?.visits, id]);
 
-  const c = customer.data;
   const hasOverdue = visits.some((v) => v.isOverdue);
   const sinceYear = c ? new Date(c.createdAt).getFullYear() : null;
 
@@ -127,7 +126,8 @@ export default function ClienteDetalleScreen() {
               onPress={() => {
                 if (!c?.phone) return;
                 const digits = c.phone.replace(/\D/g, "");
-                Linking.openURL(`https://wa.me/${digits}`).catch(() => {});
+                const waNumber = digits.startsWith("1") ? digits : `1${digits}`;
+                Linking.openURL(`https://wa.me/${waNumber}`).catch(() => {});
               }}
             >
               <MessageCircle size={16} color={colors.brand.blue.deep} strokeWidth={2} />

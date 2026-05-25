@@ -17,8 +17,6 @@ const MAX_RECENT = 4;
 interface CustomerSummary {
   id: string;
   name: string;
-  loanCount: number;
-  hasOverdue: boolean;
 }
 
 function useRecentSearches() {
@@ -58,19 +56,17 @@ export default function BuscarScreen() {
   const trimmed = query.trim();
   const searchEnabled = trimmed.length >= 2;
 
-  const searchResult = useLocalCustomerSearch(searchEnabled ? trimmed : "", 20);
+  const localResult = useLocalCustomerSearch(searchEnabled ? trimmed : "", 20);
 
   const filtered = useMemo(() => {
-    if (!searchEnabled || !searchResult.data) return [];
-    return searchResult.data.map(
+    if (!searchEnabled) return [];
+    return (localResult.data ?? []).map(
       (c): CustomerSummary => ({
         id: c.id,
-        name: c.nickname ?? c.name,
-        loanCount: 0,
-        hasOverdue: false
+        name: c.nickname ?? c.name
       })
     );
-  }, [searchEnabled, searchResult.data]);
+  }, [searchEnabled, localResult.data]);
 
   const handleSelect = (c: CustomerSummary) => {
     if (trimmed) add(trimmed);
@@ -128,11 +124,11 @@ export default function BuscarScreen() {
           </>
         )}
 
-        {searchEnabled && searchResult.isLoading && (
+        {searchEnabled && localResult.isLoading && filtered.length === 0 && (
           <Text style={styles.emptyText}>Buscando...</Text>
         )}
 
-        {searchEnabled && !searchResult.isLoading && filtered.length === 0 && (
+        {searchEnabled && !localResult.isLoading && filtered.length === 0 && (
           <Text style={styles.emptyText}>Sin resultados para "{trimmed}"</Text>
         )}
 
@@ -212,6 +208,5 @@ const styles = StyleSheet.create({
     padding: 12
   },
   clientMid: { flex: 1, gap: 2 },
-  clientName: { fontFamily: "Geist_600SemiBold", fontSize: 14, color: colors.brand.ink },
-  clientMeta: { fontFamily: "Geist_500Medium", fontSize: 12, color: colors.text.secondary }
+  clientName: { fontFamily: "Geist_600SemiBold", fontSize: 14, color: colors.brand.ink }
 });

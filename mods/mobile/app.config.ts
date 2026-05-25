@@ -27,7 +27,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundImage: "./assets/android-icon-background.png"
     }
   },
-  plugins: ["expo-router", "expo-secure-store", "expo-local-authentication", "expo-sqlite"],
+  plugins: [
+    "expo-router",
+    "expo-secure-store",
+    "expo-local-authentication",
+    "expo-sqlite",
+    "expo-sharing"
+  ],
   extra: {
     storybookEnabled: process.env.STORYBOOK_ENABLED === "true",
     eas: {

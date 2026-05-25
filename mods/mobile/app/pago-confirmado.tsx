@@ -7,18 +7,25 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Linking,
+  Alert,
   ActivityIndicator,
   StyleSheet
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, MessageCircle, Printer } from "lucide-react-native";
+import * as Sharing from "expo-sharing";
+import { File, Paths } from "expo-file-system";
 import { colors } from "../lib/theme";
 import { KvRow } from "../components/ui/KvRow";
 import { printReceiptWithUI, type PrintReceiptData } from "../lib/printer";
+import { api } from "../lib/trpc";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
+}
+
+function formatReceiptRD(amount: number): string {
+  return `RD$ ${amount.toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatNow(): string {
@@ -54,9 +61,13 @@ export default function PagoConfirmadoScreen() {
     cuota?: string;
     method?: string;
     loanId?: string;
+    paymentNumber?: string;
+    pendingPayments?: string;
+    collectorName?: string;
   }>();
 
   const [printing, setPrinting] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const amount = Number(params.amount) || 0;
   const mora = Number(params.mora) || 0;
@@ -64,6 +75,9 @@ export default function PagoConfirmadoScreen() {
   const customerName = params.customerName ?? "Cliente";
   const method = params.method ?? "Efectivo";
   const loanId = params.loanId ?? "";
+  const paymentNumber = Number(params.paymentNumber) || 0;
+  const pendingPayments = Number(params.pendingPayments) || 0;
+  const collectorName = params.collectorName ?? "";
 
   const handlePrint = async () => {
     setPrinting(true);
@@ -112,13 +126,52 @@ export default function PagoConfirmadoScreen() {
       <View style={styles.actions}>
         <View style={styles.actionRow}>
           <Pressable
-            style={styles.actionBtn}
-            onPress={() => {
-              Linking.openURL("https://wa.me/").catch(() => {});
+            style={[styles.actionBtn, sharing && { opacity: 0.6 }]}
+            disabled={sharing}
+            onPress={async () => {
+              setSharing(true);
+              try {
+                const now = new Date();
+                const receiptDate = now.toLocaleDateString("es-DO", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric"
+                });
+                const receiptInput = {
+                  loanNumber: loanId,
+                  name: customerName,
+                  date: receiptDate,
+                  amountPaid: formatReceiptRD(mora > 0 && paymentNumber === 0 ? mora : cuota),
+                  pendingPayments,
+                  paymentNumber: paymentNumber === 0 ? "Mora" : `P${paymentNumber}`,
+                  agentName: collectorName || undefined,
+                  feePaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(mora) : undefined,
+                  totalPaid:
+                    mora > 0 && paymentNumber > 0 ? formatReceiptRD(cuota + mora) : undefined
+                };
+                const result = await api.generateReceiptFromData.mutate(receiptInput);
+                const file = new File(Paths.cache, `recibo-${loanId}.png`);
+                file.write(result.image, { encoding: "base64" });
+                await Sharing.shareAsync(file.uri, {
+                  mimeType: "image/png",
+                  dialogTitle: "Enviar recibo"
+                });
+              } catch {
+                Alert.alert(
+                  "Error",
+                  "No se pudo generar el recibo. Verifica tu conexión a internet."
+                );
+              } finally {
+                setSharing(false);
+              }
             }}
           >
-            <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
-            <Text style={styles.actionBtnText}>WhatsApp</Text>
+            {sharing ? (
+              <ActivityIndicator size="small" color={colors.brand.white} />
+            ) : (
+              <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
+            )}
+            <Text style={styles.actionBtnText}>Enviar recibo</Text>
           </Pressable>
           <Pressable
             style={[styles.actionBtn, printing && { opacity: 0.6 }]}
