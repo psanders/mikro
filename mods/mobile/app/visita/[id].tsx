@@ -19,6 +19,9 @@ import { Header } from "../../components/ui/Header";
 import { ClientRow } from "../../components/ui/ClientRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { trpc } from "../../lib/api";
+import { useLocalLoan, useLocalDashboard } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
+import { queueLoanNote } from "../../lib/offline/mutations";
 
 const OUTCOMES = [
   { key: "promise", label: "Promesa de pago" },
@@ -44,11 +47,9 @@ export default function AnotarVisitaScreen() {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const dashboard = trpc.getCollectorDashboard.useQuery();
-  const loanQuery = trpc.getLoanByLoanId.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
+  const dashboard = useLocalDashboard();
+  const loanQuery = useLocalLoan(numericId);
+  const { isOnline, refreshState } = useSyncContext();
 
   const createNote = trpc.createLoanNote.useMutation();
 
@@ -80,11 +81,20 @@ export default function AnotarVisitaScreen() {
 
     setSubmitting(true);
     try {
-      await createNote.mutateAsync({
-        loanId: numericId,
-        content: noteContent,
-        createdById: collectorId
-      });
+      if (isOnline) {
+        await createNote.mutateAsync({
+          loanId: numericId,
+          content: noteContent,
+          createdById: collectorId
+        });
+      } else {
+        queueLoanNote({
+          loanId: numericId,
+          content: noteContent,
+          createdById: collectorId
+        });
+      }
+      refreshState();
       router.back();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error desconocido";

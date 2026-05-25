@@ -1,21 +1,49 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from "react-native";
 import { colors } from "../lib/theme";
 import { Header } from "../components/ui/Header";
 import { KvRow } from "../components/ui/KvRow";
+import { useSyncContext } from "../lib/offline/SyncProvider";
+
+function formatSyncTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+  const h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const time = `${h % 12 || 12}:${m} ${ampm}`;
+  return isToday ? `hoy, ${time}` : `${d.getDate()}/${d.getMonth() + 1} ${time}`;
+}
 
 export default function SincronizarScreen() {
+  const {
+    isOnline,
+    lastPullAt,
+    pendingCount,
+    pendingBreakdown,
+    customerCount,
+    loanCount,
+    isPulling,
+    isPushing,
+    pull,
+    push
+  } = useSyncContext();
+
   return (
     <View style={styles.screen}>
       <Header title="Sincronizar" subtitle="Datos entre tu equipo y la oficina" />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.connCard}>
-          <View style={styles.connDot} />
-          <Text style={styles.connTitle}>Conectado</Text>
-          <Text style={styles.connSub}>· Última: hoy, 7:42 AM</Text>
+          <View style={[styles.connDot, { backgroundColor: isOnline ? "#10B981" : "#7888A8" }]} />
+          <Text style={styles.connTitle}>{isOnline ? "Conectado" : "Sin conexión"}</Text>
+          {lastPullAt && <Text style={styles.connSub}>· Última: {formatSyncTime(lastPullAt)}</Text>}
         </View>
 
         <View style={styles.card}>
@@ -32,14 +60,25 @@ export default function SincronizarScreen() {
             Trae la última información de la oficina. Hazlo al iniciar tu día o antes de salir a
             ruta.
           </Text>
-          <View style={styles.lastSync}>
-            <Text style={styles.lastSyncIcon}>⟳</Text>
-            <Text style={styles.lastSyncText}>
-              Última: hoy 7:42 AM · 40 clientes · 38 préstamos
-            </Text>
-          </View>
-          <Pressable style={styles.syncBtn}>
-            <Text style={styles.syncBtnText}>Recibir datos</Text>
+          {lastPullAt && (
+            <View style={styles.lastSync}>
+              <Text style={styles.lastSyncIcon}>⟳</Text>
+              <Text style={styles.lastSyncText}>
+                Última: {formatSyncTime(lastPullAt)} · {customerCount} clientes · {loanCount}{" "}
+                préstamos
+              </Text>
+            </View>
+          )}
+          <Pressable
+            style={[styles.syncBtn, (!isOnline || isPulling) && styles.syncBtnDisabled]}
+            onPress={pull}
+            disabled={!isOnline || isPulling}
+          >
+            {isPulling ? (
+              <ActivityIndicator color={colors.brand.white} size="small" />
+            ) : (
+              <Text style={styles.syncBtnText}>Recibir datos</Text>
+            )}
           </Pressable>
         </View>
 
@@ -52,20 +91,32 @@ export default function SincronizarScreen() {
               <Text style={styles.cardTitle}>Enviar al servidor</Text>
               <Text style={styles.cardSub}>Cobros, visitas y promesas de la calle</Text>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>14</Text>
-            </View>
+            {pendingCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingCount}</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.cardDesc}>
             Sube lo registrado hoy. Sin enviar, la oficina no ve los pagos ni las promesas.
           </Text>
           <View style={styles.pendingBox}>
-            <KvRow label="Cobros pendientes" value="8" />
-            <KvRow label="Visitas anotadas" value="4" />
-            <KvRow label="Promesas de pago" value="2" />
+            <KvRow label="Cobros pendientes" value={String(pendingBreakdown.payments)} />
+            <KvRow label="Visitas anotadas" value={String(pendingBreakdown.notes)} />
           </View>
-          <Pressable style={styles.syncBtn}>
-            <Text style={styles.syncBtnText}>Enviar cambios</Text>
+          <Pressable
+            style={[
+              styles.syncBtn,
+              (!isOnline || isPushing || pendingCount === 0) && styles.syncBtnDisabled
+            ]}
+            onPress={push}
+            disabled={!isOnline || isPushing || pendingCount === 0}
+          >
+            {isPushing ? (
+              <ActivityIndicator color={colors.brand.white} size="small" />
+            ) : (
+              <Text style={styles.syncBtnText}>Enviar cambios</Text>
+            )}
           </Pressable>
         </View>
 
@@ -93,8 +144,7 @@ const styles = StyleSheet.create({
   connDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: "#10B981"
+    borderRadius: 4
   },
   connTitle: { fontFamily: "Geist_700Bold", fontSize: 14, color: colors.brand.ink },
   connSub: { fontFamily: "Geist_500Medium", fontSize: 14, color: "#7888A8" },
@@ -155,6 +205,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16
   },
+  syncBtnDisabled: { opacity: 0.5 },
   syncBtnText: { fontFamily: "Geist_700Bold", fontSize: 14, color: colors.brand.white },
   badge: {
     backgroundColor: colors.brand.orange.deep,

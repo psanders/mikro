@@ -11,7 +11,12 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
-import { trpc } from "../../lib/api";
+import {
+  useLocalLoan,
+  useLocalPaymentsByLoan,
+  useLocalLateFeePreview,
+  useLocalDashboard
+} from "../../lib/offline/hooks";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -78,19 +83,10 @@ export default function PrestamoDetalleScreen() {
   const numericId = Number(loanId);
   const router = useRouter();
 
-  const loanQuery = trpc.getLoanByLoanId.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
-  const paymentsQuery = trpc.listPaymentsByLoanId.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
-  const lateFeeQuery = trpc.previewLateFee.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
-  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const loanQuery = useLocalLoan(numericId);
+  const paymentsQuery = useLocalPaymentsByLoan(numericId);
+  const lateFeeQuery = useLocalLateFeePreview(numericId);
+  const dashboard = useLocalDashboard();
 
   const loan = loanQuery.data;
   const lateFee = lateFeeQuery.data;

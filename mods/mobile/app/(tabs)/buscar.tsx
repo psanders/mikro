@@ -9,7 +9,7 @@ import { Search, History, X, ChevronRight } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors } from "../../lib/theme";
 import { Avatar } from "../../components/ui/Avatar";
-import { trpc } from "../../lib/api";
+import { useLocalCustomerSearch } from "../../lib/offline/hooks";
 
 const RECENT_KEY = "mikro:recent_searches";
 const MAX_RECENT = 4;
@@ -58,14 +58,11 @@ export default function BuscarScreen() {
   const trimmed = query.trim();
   const searchEnabled = trimmed.length >= 2;
 
-  const searchQuery = trpc.listCustomers.useQuery(
-    { search: trimmed, limit: 20 },
-    { enabled: searchEnabled }
-  );
+  const searchResult = useLocalCustomerSearch(searchEnabled ? trimmed : "", 20);
 
   const filtered = useMemo(() => {
-    if (!searchEnabled || !searchQuery.data) return [];
-    return searchQuery.data.map(
+    if (!searchEnabled || !searchResult.data) return [];
+    return searchResult.data.map(
       (c): CustomerSummary => ({
         id: c.id,
         name: c.nickname ?? c.name,
@@ -73,7 +70,7 @@ export default function BuscarScreen() {
         hasOverdue: false
       })
     );
-  }, [searchEnabled, searchQuery.data]);
+  }, [searchEnabled, searchResult.data]);
 
   const handleSelect = (c: CustomerSummary) => {
     if (trimmed) add(trimmed);
@@ -131,11 +128,11 @@ export default function BuscarScreen() {
           </>
         )}
 
-        {searchEnabled && searchQuery.isLoading && (
+        {searchEnabled && searchResult.isLoading && (
           <Text style={styles.emptyText}>Buscando...</Text>
         )}
 
-        {searchEnabled && !searchQuery.isLoading && filtered.length === 0 && (
+        {searchEnabled && !searchResult.isLoading && filtered.length === 0 && (
           <Text style={styles.emptyText}>Sin resultados para "{trimmed}"</Text>
         )}
 

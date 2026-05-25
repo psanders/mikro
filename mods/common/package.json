@@ -9,10 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b --force",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet\"",
     "clean": "rm -rf dist"

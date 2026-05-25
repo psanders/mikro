@@ -9,7 +9,7 @@ import { colors } from "../../lib/theme";
 import { Header } from "../../components/ui/Header";
 import { PaymentRow } from "../../components/ui/PaymentRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
-import { trpc } from "../../lib/api";
+import { useLocalDashboard, useLocalPaymentsByLoan } from "../../lib/offline/hooks";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -21,11 +21,8 @@ export default function HistoricoPagosScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
 
-  const dashboard = trpc.getCollectorDashboard.useQuery();
-  const paymentsQuery = trpc.listPaymentsByLoanId.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
+  const dashboard = useLocalDashboard();
+  const paymentsQuery = useLocalPaymentsByLoan(numericId);
 
   const visit = useMemo(() => {
     return (dashboard.data?.visits ?? []).find((v) => v.loanId === numericId);

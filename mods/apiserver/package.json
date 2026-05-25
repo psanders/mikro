@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && tsc",
+    "build": "prisma generate && tsc -b --force && bash scripts/fix-prisma-esm.sh",
     "typecheck": "tsc --noEmit",
     "test": "mocha --ignore 'test/integration/**'",
     "test:integration": "mocha 'test/integration/**/*.test.ts'",

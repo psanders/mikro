@@ -5,12 +5,13 @@ import { useMemo } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MapPin, Search, Calculator } from "lucide-react-native";
+import { MapPin, Search, Calculator, CircleCheck, WifiOff, RefreshCw } from "lucide-react-native";
 import { colors } from "../../lib/theme";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { QuickAction } from "../../components/ui/QuickAction";
 import { ClientRow } from "../../components/ui/ClientRow";
-import { trpc } from "../../lib/api";
+import { useLocalDashboard } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -34,18 +35,12 @@ function formatDueLabel(iso: string): string {
   return day.charAt(0).toUpperCase() + day.slice(1);
 }
 
-function formatSyncTime(ts: number): string {
-  const d = new Date(ts);
-  const h = d.getHours();
-  const m = d.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  return `hoy ${h % 12 || 12}:${m} ${ampm}`;
-}
-
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const dashboard = useLocalDashboard();
+  const { isOnline, isPulling, isPushing, pull } = useSyncContext();
+  const isSyncing = isPulling || isPushing;
 
   const data = dashboard.data;
   const upcomingVisits = useMemo(() => {
@@ -70,15 +65,47 @@ export default function HomeScreen() {
       contentContainerStyle={{ paddingBottom: 20 }}
       refreshControl={
         <RefreshControl
-          refreshing={dashboard.isRefetching}
-          onRefresh={() => dashboard.refetch()}
+          refreshing={isPulling}
+          onRefresh={pull}
           tintColor={colors.brand.blue.primary}
         />
       }
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.dateLine}>{formatDate()}</Text>
+          <View style={styles.dateRow}>
+            <Text style={styles.dateLine}>{formatDate()}</Text>
+            <View
+              style={[
+                styles.statusPill,
+                isSyncing
+                  ? styles.statusPillSyncing
+                  : isOnline
+                    ? styles.statusPillOnline
+                    : styles.statusPillOffline
+              ]}
+            >
+              {isSyncing ? (
+                <RefreshCw size={10} color="#1D6FD0" />
+              ) : isOnline ? (
+                <CircleCheck size={10} color="#0E7C5F" />
+              ) : (
+                <WifiOff size={10} color="#7888A8" />
+              )}
+              <Text
+                style={[
+                  styles.statusPillText,
+                  isSyncing
+                    ? styles.statusTextSyncing
+                    : isOnline
+                      ? styles.statusTextOnline
+                      : styles.statusTextOffline
+                ]}
+              >
+                {isSyncing ? "Sincronizando..." : isOnline ? "Conectado" : "Desconectado"}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.greeting}>Hola, {firstName}.</Text>
         </View>
         <Pressable style={styles.avatarCircle} onPress={() => router.push("/perfil")}>
@@ -94,23 +121,6 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.body}>
-        <Pressable style={styles.syncChip} onPress={() => router.push("/sincronizar")}>
-          <View
-            style={[
-              styles.syncDot,
-              { backgroundColor: dashboard.isSuccess ? "#10B981" : colors.text.secondary }
-            ]}
-          />
-          <View style={styles.syncTextWrap}>
-            <Text style={styles.syncTitle}>
-              {dashboard.isSuccess
-                ? `Sincronizado · ${formatSyncTime(dashboard.dataUpdatedAt)}`
-                : "Conectando..."}
-            </Text>
-          </View>
-          <Text style={styles.syncArrow}>›</Text>
-        </Pressable>
-
         <View style={styles.hero}>
           <Text style={styles.heroLabel}>META DE HOY</Text>
           <View style={styles.heroRow}>
@@ -163,15 +173,15 @@ export default function HomeScreen() {
 
         <View style={styles.clientList}>
           {dashboard.isLoading && <Text style={styles.emptyText}>Cargando...</Text>}
-          {dashboard.isError && (
-            <Pressable onPress={() => dashboard.refetch()}>
-              <Text style={styles.errorText}>No se pudo cargar. Toca para reintentar.</Text>
+          {!dashboard.isLoading && !data && (
+            <Pressable onPress={pull}>
+              <Text style={styles.errorText}>Sin datos. Sincroniza para comenzar.</Text>
             </Pressable>
           )}
           {upcomingVisits.length === 0 && dashboard.isSuccess && (
             <Text style={styles.emptyText}>No hay visitas pendientes hoy.</Text>
           )}
-          {upcomingVisits.slice(0, 3).map((v) => (
+          {upcomingVisits.slice(0, 4).map((v) => (
             <ClientRow
               key={v.loanId}
               name={v.loanNickname ?? v.customerName}
@@ -203,7 +213,23 @@ const styles = StyleSheet.create({
     paddingBottom: 12
   },
   headerLeft: { gap: 2 },
+  dateRow: { flexDirection: "row" as const, alignItems: "center" as const, gap: 8 },
   dateLine: { fontFamily: "Geist_500Medium", fontSize: 12, color: colors.text.secondary },
+  statusPill: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    borderRadius: 99,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    gap: 4
+  },
+  statusPillOnline: { backgroundColor: "#D6F3E5" },
+  statusPillOffline: { backgroundColor: "#E8ECF1" },
+  statusPillSyncing: { backgroundColor: "#DBEAFE" },
+  statusPillText: { fontSize: 10, fontFamily: "Geist_600SemiBold" },
+  statusTextOnline: { color: "#0E7C5F" },
+  statusTextOffline: { color: "#7888A8" },
+  statusTextSyncing: { color: "#1D6FD0" },
   greeting: { fontFamily: "Geist_700Bold", fontSize: 24, color: colors.brand.blue.deep },
   avatarCircle: {
     width: 40,
@@ -215,21 +241,6 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontFamily: "Geist_700Bold", fontSize: 14, color: colors.brand.yellow.accent },
   body: { paddingHorizontal: 20, gap: 18 },
-  syncChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: colors.brand.white,
-    borderRadius: 12,
-    padding: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.border.light
-  },
-  syncDot: { width: 8, height: 8, borderRadius: 4 },
-  syncTextWrap: { flex: 1, gap: 1 },
-  syncTitle: { fontFamily: "Geist_700Bold", fontSize: 12, color: colors.brand.ink },
-  syncArrow: { fontFamily: "Geist_700Bold", fontSize: 16, color: colors.text.secondary },
   hero: {
     backgroundColor: colors.brand.blue.deep,
     borderRadius: 18,

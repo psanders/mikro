@@ -19,7 +19,7 @@
     "helpClass": "./dist/Help"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b --force",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet\"",
     "clean": "rm -rf dist"

@@ -70,6 +70,17 @@ export {
 // Dashboard operations
 export { createGetCollectorDashboard } from "./dashboard/index.js";
 
+// Sync operations
+export {
+  createCollectorSync,
+  type CollectorSyncResult,
+  type CustomerSnapshot,
+  type LoanSnapshot,
+  type PaymentSnapshot,
+  type LoanNoteSnapshot,
+  type MoraConfig
+} from "./sync/index.js";
+
 // Report operations
 export {
   createGeneratePortfolioMetrics,

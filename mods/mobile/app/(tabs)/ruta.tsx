@@ -8,7 +8,8 @@ import { colors } from "../../lib/theme";
 import { ClientRow } from "../../components/ui/ClientRow";
 import { Chip } from "../../components/ui/Chip";
 import { Header } from "../../components/ui/Header";
-import { trpc } from "../../lib/api";
+import { useLocalDashboard } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 type FilterKey = "all" | "pending" | "late" | "done";
 
@@ -30,7 +31,8 @@ function displayName(v: { customerName: string; loanNickname: string | null }): 
 export default function RutaScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
-  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const dashboard = useLocalDashboard();
+  const { isPulling, pull } = useSyncContext();
   const visits = dashboard.data?.visits ?? [];
 
   const counts = useMemo(() => {
@@ -103,14 +105,16 @@ export default function RutaScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={dashboard.isRefetching}
-            onRefresh={() => dashboard.refetch()}
+            refreshing={isPulling}
+            onRefresh={pull}
             tintColor={colors.brand.blue.primary}
           />
         }
       >
         {dashboard.isLoading && <Text style={styles.emptyText}>Cargando...</Text>}
-        {dashboard.isError && <Text style={styles.emptyText}>No se pudo cargar la ruta.</Text>}
+        {!dashboard.isLoading && !dashboard.data && (
+          <Text style={styles.emptyText}>Sin datos. Sincroniza para ver tu ruta.</Text>
+        )}
         {filtered.length === 0 && dashboard.isSuccess && (
           <Text style={styles.emptyText}>No hay visitas en esta categoría.</Text>
         )}

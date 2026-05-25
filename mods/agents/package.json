@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b --force",
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "start": "node dist/index.js",

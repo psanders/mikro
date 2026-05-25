@@ -6,7 +6,7 @@ import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
 import { colors } from "../../lib/theme";
 import { Header } from "../../components/ui/Header";
 import { KvRow } from "../../components/ui/KvRow";
-import { trpc } from "../../lib/api";
+import { useLocalDashboard, useLocalPayments } from "../../lib/offline/hooks";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -23,15 +23,18 @@ function formatToday(): string {
 export default function CuadreScreen() {
   const [countedInput, setCountedInput] = useState("");
 
-  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const dashboard = useLocalDashboard();
 
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  const todayPayments = trpc.listPayments.useQuery({
-    startDate: startOfDay,
-    endDate: endOfDay
-  });
+  const now = useMemo(() => new Date(), []);
+  const startOfDay = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    [now]
+  );
+  const endOfDay = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999),
+    [now]
+  );
+  const todayPayments = useLocalPayments(startOfDay, endOfDay);
 
   const collectorName = dashboard.data?.collector.name?.split(" ")[0] ?? "...";
 

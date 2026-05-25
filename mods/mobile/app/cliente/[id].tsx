@@ -18,7 +18,11 @@ import { Header } from "../../components/ui/Header";
 import { Avatar } from "../../components/ui/Avatar";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { SectionLabel } from "../../components/ui/SectionLabel";
-import { trpc } from "../../lib/api";
+import {
+  useLocalCustomer,
+  useLocalDashboard,
+  useLocalPaymentsByCustomer
+} from "../../lib/offline/hooks";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -38,18 +42,15 @@ export default function ClienteDetalleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const customer = trpc.getCustomer.useQuery({ id: id! }, { enabled: !!id });
-  const dashboard = trpc.getCollectorDashboard.useQuery();
+  const customer = useLocalCustomer(id);
+  const dashboard = useLocalDashboard();
 
   const dateRange = useMemo(() => {
     const end = new Date();
     const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 90);
-    return { startDate: start, endDate: end };
+    return { start, end };
   }, []);
-  const payments = trpc.listPaymentsByCustomer.useQuery(
-    { customerId: id!, ...dateRange },
-    { enabled: !!id }
-  );
+  const payments = useLocalPaymentsByCustomer(id, dateRange.start, dateRange.end);
 
   const visits = useMemo(() => {
     return (dashboard.data?.visits ?? []).filter((v) => v.customerId === id);

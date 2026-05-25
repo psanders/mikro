@@ -20,6 +20,9 @@ import { OptionRow } from "../../components/ui/OptionRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { trpc } from "../../lib/api";
+import { useLocalLoan, useLocalLateFeePreview, useLocalDashboard } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
+import { queuePayment } from "../../lib/offline/mutations";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -35,24 +38,12 @@ export default function CobrarPagoScreen() {
   const [payMethod, setPayMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [submitting, setSubmitting] = useState(false);
 
-  const loanQuery = trpc.getLoanByLoanId.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
-  const lateFeeQuery = trpc.previewLateFee.useQuery(
-    { loanId: numericId },
-    { enabled: !isNaN(numericId) }
-  );
-  const dashboard = trpc.getCollectorDashboard.useQuery();
-  const utils = trpc.useUtils();
+  const loanQuery = useLocalLoan(numericId);
+  const lateFeeQuery = useLocalLateFeePreview(numericId);
+  const dashboard = useLocalDashboard();
+  const { isOnline, refreshState } = useSyncContext();
 
-  const createPayment = trpc.createPayment.useMutation({
-    onSuccess: () => {
-      utils.getCollectorDashboard.invalidate();
-      utils.listPaymentsByLoanId.invalidate({ loanId: numericId });
-      utils.previewLateFee.invalidate({ loanId: numericId });
-    }
-  });
+  const createPayment = trpc.createPayment.useMutation();
 
   const loan = loanQuery.data;
   const lateFee = lateFeeQuery.data;
@@ -140,16 +131,23 @@ export default function CobrarPagoScreen() {
     if (!collectorId || submitting || amount <= 0) return;
 
     setSubmitting(true);
-    try {
-      await createPayment.mutateAsync({
-        loanId: numericId,
-        amount,
-        method: payMethod,
-        collectedById: collectorId,
-        ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : {})
-      });
+    const methodLabel = payMethod === "CASH" ? "Efectivo" : "Transferencia";
+    const paymentInput = {
+      loanId: numericId,
+      amount,
+      method: payMethod,
+      collectedById: collectorId,
+      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : {})
+    };
 
-      const methodLabel = payMethod === "CASH" ? "Efectivo" : "Transferencia";
+    try {
+      if (isOnline) {
+        await createPayment.mutateAsync(paymentInput);
+      } else {
+        queuePayment(paymentInput);
+      }
+      refreshState();
+
       router.replace({
         pathname: "/pago-confirmado",
         params: {

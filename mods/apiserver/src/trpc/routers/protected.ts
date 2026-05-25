@@ -72,6 +72,8 @@ import { createListUsers } from "../../api/users/createListUsers.js";
 import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
 // Dashboard API functions
 import { createGetCollectorDashboard } from "../../api/dashboard/createGetCollectorDashboard.js";
+// Sync API functions
+import { createCollectorSync } from "../../api/sync/createCollectorSync.js";
 // Loan API functions
 import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
 import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
@@ -143,6 +145,11 @@ export const protectedRouter = router({
 
   getCollectorDashboard: protectedProcedure.query(async ({ ctx }) => {
     const fn = createGetCollectorDashboard(ctx.db);
+    return fn({ collectorId: ctx.userId });
+  }),
+
+  collectorSync: protectedProcedure.query(async ({ ctx }) => {
+    const fn = createCollectorSync(ctx.db);
     return fn({ collectorId: ctx.userId });
   }),
 
