@@ -21,7 +21,7 @@ export const llmConfigSchema = z.object({
 export type LLMConfig = z.infer<typeof llmConfigSchema>;
 
 /** Valid agent names for disabledAgents. */
-export const AGENT_NAMES_CONFIG = ["joan", "juan", "maria"] as const;
+export const AGENT_NAMES_CONFIG = ["joan", "maria"] as const;
 const agentNameSchema = z.enum(AGENT_NAMES_CONFIG);
 
 const llmPurposesSchema = z.object({

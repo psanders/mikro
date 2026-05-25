@@ -207,63 +207,6 @@ describe("Payments Integration", () => {
       expect(payment.notes).to.equal("Partial payment for week 3");
     });
 
-    it("should block duplicate payments within 10 minutes", async () => {
-      const { loan, collector } = await createCustomerWithLoan();
-
-      await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        collectedById: collector.id
-      });
-
-      // Try to create another payment immediately - should be blocked
-      try {
-        await caller.createPayment({
-          loanId: loan.loanId, // Use numeric loanId
-          amount: 650,
-          collectedById: collector.id
-        });
-        expect.fail("Expected duplicate payment to be blocked");
-      } catch (error) {
-        expect((error as Error).message).to.include("Duplicate payment blocked");
-      }
-    });
-
-    it("should allow multiple payments for same loan when spaced 10+ minutes apart", async () => {
-      const { loan, collector } = await createCustomerWithLoan();
-
-      // Create first payment with backdated paidAt
-      const payment1 = installmentOf(
-        await caller.createPayment({
-          loanId: loan.loanId, // Use numeric loanId
-          amount: 650,
-          paidAt: new Date("2026-01-10T10:00:00Z"),
-          collectedById: collector.id
-        })
-      );
-
-      // Manually update createdAt to be more than 10 minutes ago
-      // This simulates payments created at different times
-      await db.payment.update({
-        where: { id: payment1.id },
-        data: {
-          createdAt: new Date(Date.now() - 11 * 60 * 1000) // 11 minutes ago
-        }
-      });
-
-      // Now create second payment - should succeed
-      const payment2 = installmentOf(
-        await caller.createPayment({
-          loanId: loan.loanId, // Use numeric loanId
-          amount: 650,
-          paidAt: new Date("2026-01-10T10:15:00Z"),
-          collectedById: collector.id
-        })
-      );
-
-      expect(payment1.id).to.not.equal(payment2.id);
-    });
-
     it("should split mora-first into LATE_FEE and INSTALLMENT when arrears exist", async () => {
       const { loan, collector } = await createCustomerWithLoan({
         startingDate: new Date("2020-01-06T12:00:00Z")
@@ -312,7 +255,7 @@ describe("Payments Integration", () => {
       expect(rows.every((r) => r.status === "REVERSED")).to.equal(true);
     });
 
-    it("should allow a mora-only payment soon after an installment without duplicate guard", async () => {
+    it("should allow a mora-only payment soon after an installment", async () => {
       const { loan, collector } = await createCustomerWithLoan({
         startingDate: new Date("2020-01-06T12:00:00Z")
       });

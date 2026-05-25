@@ -97,7 +97,8 @@ export const getCustomerByPhoneSchema = z.object({
  * By default only shows active customers unless showInactive is true.
  */
 export const listCustomersSchema = z.object({
-  showInactive: z.boolean().optional(), // If true, show all customers including inactive
+  search: z.string().min(2).max(100).optional(),
+  showInactive: z.boolean().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });

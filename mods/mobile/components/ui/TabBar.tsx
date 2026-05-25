@@ -3,14 +3,14 @@
  */
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { House, Map, Search, User } from "lucide-react-native";
+import { House, Map, Search, Calculator } from "lucide-react-native";
 import { colors } from "../../lib/theme";
 
 const TAB_ICONS = {
   index: House,
   ruta: Map,
   buscar: Search,
-  perfil: User
+  cuadre: Calculator
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

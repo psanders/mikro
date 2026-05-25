@@ -54,34 +54,26 @@ export default function BuscarScreen() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
   const { recents, add, remove } = useRecentSearches();
-  const dashboard = trpc.getCollectorDashboard.useQuery();
-
-  const customers = useMemo(() => {
-    const visits = dashboard.data?.visits ?? [];
-    const map = new Map<string, CustomerSummary>();
-    for (const v of visits) {
-      const existing = map.get(v.customerId);
-      if (existing) {
-        existing.loanCount++;
-        if (v.isOverdue) existing.hasOverdue = true;
-      } else {
-        map.set(v.customerId, {
-          id: v.customerId,
-          name: v.customerName,
-          loanCount: 1,
-          hasOverdue: v.isOverdue
-        });
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [dashboard.data?.visits]);
 
   const trimmed = query.trim();
+  const searchEnabled = trimmed.length >= 2;
+
+  const searchQuery = trpc.listCustomers.useQuery(
+    { search: trimmed, limit: 20 },
+    { enabled: searchEnabled }
+  );
+
   const filtered = useMemo(() => {
-    if (!trimmed) return [];
-    const q = trimmed.toLowerCase();
-    return customers.filter((c) => c.name.toLowerCase().includes(q));
-  }, [customers, trimmed]);
+    if (!searchEnabled || !searchQuery.data) return [];
+    return searchQuery.data.map(
+      (c): CustomerSummary => ({
+        id: c.id,
+        name: c.nickname ?? c.name,
+        loanCount: 0,
+        hasOverdue: false
+      })
+    );
+  }, [searchEnabled, searchQuery.data]);
 
   const handleSelect = (c: CustomerSummary) => {
     if (trimmed) add(trimmed);
@@ -138,7 +130,11 @@ export default function BuscarScreen() {
           </>
         )}
 
-        {trimmed.length > 0 && filtered.length === 0 && (
+        {searchEnabled && searchQuery.isLoading && (
+          <Text style={styles.emptyText}>Buscando...</Text>
+        )}
+
+        {searchEnabled && !searchQuery.isLoading && filtered.length === 0 && (
           <Text style={styles.emptyText}>Sin resultados para "{trimmed}"</Text>
         )}
 
@@ -147,12 +143,6 @@ export default function BuscarScreen() {
             <Avatar name={c.name} size={36} />
             <View style={styles.clientMid}>
               <Text style={styles.clientName}>{c.name}</Text>
-              <Text
-                style={[styles.clientMeta, c.hasOverdue && { color: colors.brand.orange.deep }]}
-              >
-                {c.hasOverdue ? "En mora" : "Al día"} · {c.loanCount} préstamo
-                {c.loanCount !== 1 ? "s" : ""}
-              </Text>
             </View>
             <ChevronRight size={18} color={colors.text.secondary} strokeWidth={2} />
           </Pressable>

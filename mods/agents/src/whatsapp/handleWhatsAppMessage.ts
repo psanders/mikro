@@ -452,6 +452,10 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     } else {
       // User: route to appropriate agent based on role
       const targetAgent = ROLE_TO_AGENT[route.role];
+      if (!targetAgent) {
+        logger.verbose("no agent for user role", { phone, role: route.role });
+        return;
+      }
       agent = getAgent(targetAgent);
       chatHistory = await getChatHistoryForUser(route.userId);
       context = { userId: route.userId, name: route.name, phone, role: route.role };

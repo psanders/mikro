@@ -116,7 +116,6 @@ export { validateAllLLMConfigs as initializeLLM } from "./config.js";
 export {
   AGENT_NAMES,
   AGENT_JOAN,
-  AGENT_JUAN,
   AGENT_MARIA,
   VALID_AGENT_NAMES,
   ROLE_TO_AGENT,

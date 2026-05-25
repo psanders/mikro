@@ -1,11 +1,21 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { View, Text, ScrollView, Pressable, Linking, StyleSheet } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Linking,
+  ActivityIndicator,
+  StyleSheet
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, MessageCircle } from "lucide-react-native";
+import { Check, MessageCircle, Printer } from "lucide-react-native";
 import { colors } from "../lib/theme";
 import { KvRow } from "../components/ui/KvRow";
+import { printReceiptWithUI, type PrintReceiptData } from "../lib/printer";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -46,12 +56,32 @@ export default function PagoConfirmadoScreen() {
     loanId?: string;
   }>();
 
+  const [printing, setPrinting] = useState(false);
+
   const amount = Number(params.amount) || 0;
   const mora = Number(params.mora) || 0;
   const cuota = Number(params.cuota) || 0;
   const customerName = params.customerName ?? "Cliente";
   const method = params.method ?? "Efectivo";
   const loanId = params.loanId ?? "";
+
+  const handlePrint = async () => {
+    setPrinting(true);
+    try {
+      const receiptData: PrintReceiptData = {
+        loanId,
+        customerName,
+        date: formatNow(),
+        cuota,
+        mora,
+        total: amount,
+        method
+      };
+      await printReceiptWithUI(receiptData);
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -80,15 +110,29 @@ export default function PagoConfirmadoScreen() {
       </ScrollView>
 
       <View style={styles.actions}>
-        <Pressable
-          style={styles.actionBtn}
-          onPress={() => {
-            Linking.openURL("https://wa.me/").catch(() => {});
-          }}
-        >
-          <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
-          <Text style={styles.actionBtnText}>Enviar recibo</Text>
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable
+            style={styles.actionBtn}
+            onPress={() => {
+              Linking.openURL("https://wa.me/").catch(() => {});
+            }}
+          >
+            <MessageCircle size={18} color={colors.brand.white} strokeWidth={2} />
+            <Text style={styles.actionBtnText}>WhatsApp</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, printing && { opacity: 0.6 }]}
+            onPress={handlePrint}
+            disabled={printing}
+          >
+            {printing ? (
+              <ActivityIndicator size="small" color={colors.brand.white} />
+            ) : (
+              <Printer size={18} color={colors.brand.white} strokeWidth={2} />
+            )}
+            <Text style={styles.actionBtnText}>Imprimir</Text>
+          </Pressable>
+        </View>
         <Pressable style={styles.doneBtn} onPress={() => router.replace("/(tabs)")}>
           <Text style={styles.doneBtnText}>Listo</Text>
         </Pressable>
@@ -133,7 +177,9 @@ const styles = StyleSheet.create({
   },
   cardDivider: { height: 1, backgroundColor: colors.brand.mist },
   actions: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28, gap: 10 },
+  actionRow: { flexDirection: "row", gap: 10 },
   actionBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

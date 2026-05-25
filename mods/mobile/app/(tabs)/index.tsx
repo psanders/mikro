@@ -81,7 +81,7 @@ export default function HomeScreen() {
           <Text style={styles.dateLine}>{formatDate()}</Text>
           <Text style={styles.greeting}>Hola, {firstName}.</Text>
         </View>
-        <View style={styles.avatarCircle}>
+        <Pressable style={styles.avatarCircle} onPress={() => router.push("/(tabs)/perfil")}>
           <Text style={styles.avatarText}>
             {data?.collector.name
               .split(" ")
@@ -90,7 +90,7 @@ export default function HomeScreen() {
               .slice(0, 2)
               .toUpperCase() ?? ""}
           </Text>
-        </View>
+        </Pressable>
       </View>
 
       <View style={styles.body}>

@@ -25,13 +25,13 @@ function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
 }
 
-type PayOption = "cuota" | "arrears" | "settle";
+type PayOption = "cuota" | "arrears" | "mora" | "settle";
 
 export default function CobrarPagoScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState<PayOption>("cuota");
+  const [selectedOption, setSelectedOption] = useState<PayOption | null>(null);
   const [payMethod, setPayMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [submitting, setSubmitting] = useState(false);
 
@@ -78,15 +78,17 @@ export default function CobrarPagoScreen() {
   const meta = `Préstamo #${loanId}`;
 
   const payOptions = useMemo(() => {
-    const opts: { key: PayOption; label: string; value: string }[] = [
-      { key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) }
-    ];
+    const opts: { key: PayOption; label: string; value: string }[] = [];
     if (mora > 0) {
-      opts.unshift({
+      opts.push({
         key: "arrears",
         label: "Cobrar cuota + mora",
         value: formatRD(cuota + mora)
       });
+    }
+    opts.push({ key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) });
+    if (mora > 0) {
+      opts.push({ key: "mora", label: "Solo mora", value: formatRD(mora) });
     }
     if (remainingCuotas > 1) {
       opts.push({
@@ -98,23 +100,29 @@ export default function CobrarPagoScreen() {
     return opts;
   }, [cuota, mora, remainingCuotas, settleAmount]);
 
+  const effectiveOption = selectedOption ?? (mora > 0 ? "arrears" : "cuota");
+
   const amount = useMemo(() => {
-    switch (selectedOption) {
+    switch (effectiveOption) {
       case "cuota":
         return cuota;
       case "arrears":
         return cuota + mora;
+      case "mora":
+        return mora;
       case "settle":
         return settleAmount;
     }
-  }, [selectedOption, cuota, mora, settleAmount]);
+  }, [effectiveOption, cuota, mora, settleAmount]);
 
   const breakdownRows = useMemo(() => {
     const rows: { label: string; value: string }[] = [];
-    if (selectedOption === "arrears" && mora > 0) {
+    if (effectiveOption === "mora") {
       rows.push({ label: "Cargo por mora", value: formatRD(mora) });
-    }
-    if (selectedOption === "settle") {
+    } else if (effectiveOption === "arrears" && mora > 0) {
+      rows.push({ label: "Cargo por mora", value: formatRD(mora) });
+      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
+    } else if (effectiveOption === "settle") {
       if (mora > 0) rows.push({ label: "Cargo por mora", value: formatRD(mora) });
       rows.push({
         label: `${remainingCuotas} cuotas restantes`,
@@ -124,9 +132,9 @@ export default function CobrarPagoScreen() {
       rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
     }
     return rows;
-  }, [selectedOption, mora, cuota, paidCount, remainingCuotas]);
+  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas]);
 
-  const hintText = payOptions.find((o) => o.key === selectedOption)?.label ?? "";
+  const hintText = payOptions.find((o) => o.key === effectiveOption)?.label ?? "";
 
   const handleConfirm = async () => {
     if (!collectorId || submitting || amount <= 0) return;
@@ -137,7 +145,8 @@ export default function CobrarPagoScreen() {
         loanId: numericId,
         amount,
         method: payMethod,
-        collectedById: collectorId
+        collectedById: collectorId,
+        ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : {})
       });
 
       const methodLabel = payMethod === "CASH" ? "Efectivo" : "Transferencia";
@@ -146,7 +155,13 @@ export default function CobrarPagoScreen() {
         params: {
           customerName: displayName,
           amount: String(amount),
-          mora: String(selectedOption === "arrears" || selectedOption === "settle" ? mora : 0),
+          mora: String(
+            effectiveOption === "arrears" ||
+              effectiveOption === "settle" ||
+              effectiveOption === "mora"
+              ? mora
+              : 0
+          ),
           cuota: String(cuota),
           method: methodLabel,
           loanId: String(loanId)
@@ -183,7 +198,7 @@ export default function CobrarPagoScreen() {
               key={o.key}
               label={o.label}
               value={o.value}
-              selected={selectedOption === o.key}
+              selected={effectiveOption === o.key}
               onPress={() => setSelectedOption(o.key)}
             />
           ))}
