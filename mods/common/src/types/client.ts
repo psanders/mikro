@@ -274,7 +274,7 @@ export interface DbClient {
     findMany(args: {
       where?: {
         status?: PaymentStatus | { not: PaymentStatus } | { in: PaymentStatus[] };
-        kind?: "INSTALLMENT" | "LATE_FEE";
+        kind?: "INSTALLMENT" | "LATE_FEE" | { in: ("INSTALLMENT" | "LATE_FEE")[] };
         loanId?: string;
         collectedById?: string;
         paidAt?: {

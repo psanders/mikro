@@ -74,7 +74,7 @@ export function createGetCollectorDashboard(client: DbClient) {
           collectedById: params.collectorId,
           paidAt: { gte: startOfDay, lte: endOfDay },
           status: { not: "REVERSED" },
-          kind: "INSTALLMENT"
+          kind: { in: ["INSTALLMENT", "LATE_FEE"] }
         }
       })
     ]);
