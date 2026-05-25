@@ -156,11 +156,9 @@ export default function PagoConfirmadoScreen() {
                   mimeType: "image/png",
                   dialogTitle: "Enviar recibo"
                 });
-              } catch {
-                Alert.alert(
-                  "Error",
-                  "No se pudo generar el recibo. Verifica tu conexión a internet."
-                );
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                Alert.alert("Error", `No se pudo generar el recibo: ${msg}`);
               } finally {
                 setSharing(false);
               }

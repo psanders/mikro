@@ -16,7 +16,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     bundleIdentifier: "do.mikro.app",
     infoPlist: {
-      ITSAppUsesNonExemptEncryption: false
+      ITSAppUsesNonExemptEncryption: false,
+      NSBluetoothAlwaysUsageDescription:
+        "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
+      NSBluetoothPeripheralUsageDescription:
+        "Mikro necesita Bluetooth para conectarse a la impresora térmica."
     }
   },
   android: {
@@ -25,14 +29,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#103A8A",
       foregroundImage: "./assets/android-icon-foreground.png",
       backgroundImage: "./assets/android-icon-background.png"
-    }
+    },
+    permissions: ["android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_SCAN"]
   },
   plugins: [
     "expo-router",
     "expo-secure-store",
     "expo-local-authentication",
     "expo-sqlite",
-    "expo-sharing"
+    "expo-sharing",
+    ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }]
   ],
   extra: {
     storybookEnabled: process.env.STORYBOOK_ENABLED === "true",
