@@ -91,6 +91,7 @@ export default function BuscarScreen() {
         <View style={styles.searchBox}>
           <Search size={18} color={colors.brand.blue.primary} strokeWidth={2} />
           <TextInput
+            testID="search-input"
             style={styles.searchInput}
             placeholder="Nombre o teléfono…"
             placeholderTextColor={colors.text.secondary}
