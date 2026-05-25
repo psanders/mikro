@@ -28,8 +28,8 @@ export function createListCustomers(client: DbClient) {
     if (!params.showInactive) where.isActive = true;
     if (params.search) {
       where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { nickname: { contains: params.search, mode: "insensitive" } },
+        { name: { contains: params.search } },
+        { nickname: { contains: params.search } },
         { phone: { contains: params.search } }
       ];
     }
