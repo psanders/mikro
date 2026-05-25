@@ -62,11 +62,17 @@ export default function RutaScreen() {
     key: FilterKey;
     label: string;
     variant: "default" | "warning" | "danger";
+    testID: string;
   }> = [
-    { key: "all", label: `Todas · ${counts.all}`, variant: "default" },
-    { key: "pending", label: `Pendientes · ${counts.pending}`, variant: "default" },
-    { key: "late", label: `Atrasadas · ${counts.late}`, variant: "warning" },
-    { key: "done", label: `Hechas · ${counts.done}`, variant: "default" }
+    { key: "all", label: `Todas · ${counts.all}`, variant: "default", testID: "filter-all" },
+    {
+      key: "pending",
+      label: `Pendientes · ${counts.pending}`,
+      variant: "default",
+      testID: "filter-pending"
+    },
+    { key: "late", label: `Atrasadas · ${counts.late}`, variant: "warning", testID: "filter-late" },
+    { key: "done", label: `Hechas · ${counts.done}`, variant: "default", testID: "filter-done" }
   ];
 
   return (
@@ -85,6 +91,7 @@ export default function RutaScreen() {
               label={f.label}
               active={activeFilter === f.key}
               variant={f.variant}
+              testID={f.testID}
               onPress={() => setActiveFilter(f.key)}
             />
           ))}
@@ -110,6 +117,7 @@ export default function RutaScreen() {
         {filtered.map((v) => (
           <ClientRow
             key={v.loanId}
+            testID={`visit-${v.loanId}`}
             name={displayName(v)}
             business={v.loanNickname ? v.customerName : ""}
             meta={

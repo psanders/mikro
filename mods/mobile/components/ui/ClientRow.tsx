@@ -16,6 +16,7 @@ interface ClientRowProps {
   imageUri?: string;
   variant?: RowVariant;
   onPress?: () => void;
+  testID?: string;
 }
 
 const variantStyles: Record<
@@ -48,13 +49,15 @@ export function ClientRow({
   amountSub,
   imageUri,
   variant = "default",
-  onPress
+  onPress,
+  testID
 }: ClientRowProps) {
   const v = variantStyles[variant];
 
   return (
     <Pressable
       onPress={onPress}
+      testID={testID}
       style={[
         styles.container,
         { backgroundColor: v.bg },

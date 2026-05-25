@@ -1,0 +1,156 @@
+name: Mobile E2E Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mods/apiserver/**"
+      - "mods/mobile/**"
+  pull_request:
+    paths:
+      - "mods/apiserver/**"
+      - "mods/mobile/**"
+  workflow_dispatch:
+    inputs:
+      release_android:
+        description: "Release Android build to Google Play"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mods/mobile/package.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Cache Maestro CLI
+        id: maestro-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.HOME }}/.maestro
+          key: maestro-${{ runner.os }}
+
+      - name: Install Maestro
+        if: steps.maestro-cache.outputs.cache-hit != 'true'
+        run: curl -Ls "https://get.maestro.mobile.dev" | bash
+
+      - name: Add Maestro to PATH
+        run: echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure e2e environment
+        working-directory: mods/mobile
+        run: |
+          echo "EXPO_PUBLIC_API_URL=http://10.0.2.2:4400" > .env.local
+          echo "EXPO_PUBLIC_E2E=1" >> .env.local
+
+      - name: Prebuild Android
+        working-directory: mods/mobile
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build debug APK
+        working-directory: mods/mobile/android
+        run: ./gradlew assembleDebug
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Cache AVD snapshot
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api-34-${{ runner.os }}
+
+      - name: Create AVD snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: echo "AVD snapshot created"
+
+      - name: Start mock server
+        run: node mods/mobile/.maestro/mock-server.js &
+
+      - name: Run Maestro e2e tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb install mods/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            maestro test mods/mobile/.maestro/
+
+      - name: Upload Maestro artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-artifacts
+          path: ~/.maestro/tests/
+          retention-days: 7
+
+  release-android:
+    needs: e2e-android
+    if: inputs.release_android == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (internal distribution)
+        working-directory: mods/mobile
+        run: eas build --platform android --profile preview --non-interactive
