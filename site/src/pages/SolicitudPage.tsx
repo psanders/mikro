@@ -291,6 +291,7 @@ const PROPOSITO_OPTIONS = [
 const INITIAL_FORM: Record<string, string> = {
   nombre: "",
   apellido: "",
+  telefono: "",
   cedula: "",
   fechaNacimiento: "",
   estadoCivil: "",
@@ -531,6 +532,15 @@ export function SolicitudPage() {
                             name="apellido"
                             placeholder="Ej. Pérez"
                             value={form.apellido}
+                            onChange={set}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                          <PhoneField
+                            label="Teléfono personal"
+                            name="telefono"
+                            value={form.telefono}
                             onChange={set}
                             required
                           />
