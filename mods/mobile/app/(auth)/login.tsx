@@ -55,7 +55,7 @@ export default function LoginScreen() {
       if (!existingPin) {
         await setPin("1234");
       }
-      router.replace("/(tabs)");
+      router.replace("/(auth)/unlock");
     } catch (err: unknown) {
       const message =
         err instanceof Error && err.message?.includes("Invalid")
