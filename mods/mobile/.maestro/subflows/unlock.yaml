@@ -1,0 +1,11 @@
+appId: do.mikro.app
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Bienvenido."
+    file: login-steps.yaml
+- runFlow:
+    when:
+      visible: "Ingresa tu PIN para continuar"
+    file: unlock-steps.yaml

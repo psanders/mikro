@@ -1,0 +1,11 @@
+appId: do.mikro.app
+---
+- runFlow: subflows/unlock.yaml
+- assertVisible: "META DE HOY"
+- tapOn: "Ruta"
+- tapOn:
+    text: "Buscar"
+    index: 1
+- tapOn: "Cuadre"
+- tapOn: "Hoy"
+- assertVisible: "META DE HOY"

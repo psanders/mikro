@@ -1,0 +1,27 @@
+appId: do.mikro.app
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Ingresa tu PIN para continuar"
+    file: subflows/logout.yaml
+- assertVisible: "Bienvenido."
+- tapOn:
+    id: "phone-input"
+- inputText: "7853178070"
+- tapOn:
+    point: "50%,55%"
+- inputText: "iymscvb4r"
+- tapOn: "Iniciar sesión"
+- runFlow:
+    when:
+      visible: "Save Password?"
+    file: subflows/dismiss-save-password.yaml
+- extendedWaitUntil:
+    visible: "Ingresa tu PIN para continuar"
+    timeout: 10000
+- tapOn: "1"
+- tapOn: "2"
+- tapOn: "3"
+- tapOn: "4"
+- assertVisible: "META DE HOY"

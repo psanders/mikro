@@ -1,0 +1,7 @@
+appId: do.mikro.app
+---
+- runFlow: subflows/unlock.yaml
+- tapOn: "Buscar"
+- tapOn:
+    id: "search-input"
+- inputText: "Juan"

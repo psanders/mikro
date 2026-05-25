@@ -1,0 +1,13 @@
+appId: do.mikro.app
+---
+- tapOn:
+    id: "phone-input"
+- inputText: "7853178070"
+- tapOn:
+    id: "password-input"
+- inputText: "iymscvb4r"
+- tapOn: "Iniciar sesión"
+- runFlow:
+    when:
+      visible: "Save Password?"
+    file: subflows/dismiss-save-password.yaml
