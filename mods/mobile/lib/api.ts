@@ -9,14 +9,15 @@ import { getToken } from "./auth";
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.15:4000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL!;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 2 * 60_000,
       gcTime: 5 * 60_000,
-      retry: 2
+      retry: 2,
+      refetchOnWindowFocus: false
     }
   }
 });

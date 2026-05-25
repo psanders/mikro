@@ -46,14 +46,10 @@ import {
   generatePerformanceReportSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
-  generateCollectionsAuditReportSchema,
   generateAccountingReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
-  listLoanNotesByLoanSchema,
-  // Collection schemas
-  runCollectionsSchema,
-  runSingleCollectionSchema
+  listLoanNotesByLoanSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc.js";
@@ -103,20 +99,12 @@ import { createGeneratePortfolioMetrics } from "../../api/reports/createGenerate
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
-import { createGetCollectionsAuditReport } from "../../api/reports/createGetCollectionsAuditReport.js";
-import { createGenerateCollectionsAuditReport } from "../../api/reports/createGenerateCollectionsAuditReport.js";
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
 // WhatsApp functions
 import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
-// Collections
-import {
-  runDailyCollections,
-  runSingleCollection,
-  setDryRunOverride
-} from "../../collections/index.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
 import {
@@ -571,105 +559,6 @@ export const protectedRouter = router({
       const fn = createGenerateRenewalCandidatesReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
-    }),
-
-  /**
-   * Get collections audit rows only (for a given day, default today). No PNG.
-   */
-  getCollectionsAuditReport: protectedProcedure
-    .input(generateCollectionsAuditReportSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createGetCollectionsAuditReport(ctx.db);
-      return fn(input);
-    }),
-
-  /**
-   * Generate collections audit report (rows + PNG). Daily audit of who was notified, message type, status, errors.
-   */
-  generateCollectionsAuditReport: protectedProcedure
-    .input(generateCollectionsAuditReportSchema)
-    .mutation(async ({ ctx, input }) => {
-      const fn = createGenerateCollectionsAuditReport(ctx.db);
-      return fn(input);
-    }),
-
-  // ==================== Collection procedures ====================
-
-  /**
-   * Trigger the daily collections process on demand.
-   * Evaluates all active customers and sends reminders, overdue notices, or collection calls
-   * based on their payment status. Supports dry-run mode.
-   */
-  runCollections: protectedProcedure
-    .input(runCollectionsSchema)
-    .mutation(async ({ ctx, input }) => {
-      if (input.dryRun) {
-        setDryRunOverride(true);
-      }
-
-      try {
-        const whatsAppClient = createWhatsAppClient();
-        await runDailyCollections(
-          new Date(),
-          {
-            db: ctx.db as unknown as PrismaClient,
-            sendWhatsAppTemplate: (p) =>
-              whatsAppClient.sendTemplateMessage({
-                ...p,
-                headerParameters: p.headerParameters ?? [],
-                bodyParameters: p.bodyParameters ?? []
-              })
-          },
-          input.includeDefaulted,
-          input.appRef
-        );
-      } finally {
-        if (input.dryRun) {
-          setDryRunOverride(undefined);
-        }
-      }
-
-      return { success: true, dryRun: input.dryRun };
-    }),
-
-  /**
-   * Run a single collection action (reminder, overdue notice, or call) for one loan.
-   * Optionally force channel and/or type; otherwise auto-determined from missed payments.
-   */
-  runSingleCollection: protectedProcedure
-    .input(runSingleCollectionSchema)
-    .mutation(async ({ ctx, input }) => {
-      if (input.dryRun) {
-        setDryRunOverride(true);
-      }
-
-      try {
-        const whatsAppClient = createWhatsAppClient();
-        const result = await runSingleCollection(
-          {
-            loanId: input.loanId,
-            channel: input.channel ?? undefined,
-            type: input.type ?? undefined,
-            dryRun: input.dryRun,
-            includeDefaulted: input.includeDefaulted,
-            appRef: input.appRef
-          },
-          {
-            db: ctx.db as unknown as PrismaClient,
-            sendWhatsAppTemplate: (p) =>
-              whatsAppClient.sendTemplateMessage({
-                ...p,
-                headerParameters: p.headerParameters ?? [],
-                bodyParameters: p.bodyParameters ?? []
-              })
-          }
-        );
-        return result;
-      } finally {
-        if (input.dryRun) {
-          setDryRunOverride(undefined);
-        }
-      }
     }),
 
   // ==================== Accounting procedures ====================

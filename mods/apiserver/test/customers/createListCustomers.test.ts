@@ -73,7 +73,6 @@ describe("createListCustomers", () => {
       expect(findArg.where).to.deep.equal({ isActive: true });
       expect(findArg.take).to.equal(10);
       expect(findArg.skip).to.equal(1);
-      expect(findArg.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return empty array when no customers exist", async () => {

@@ -25,9 +25,4 @@ export interface Customer {
   assignedCollectorId: string;
   createdAt: Date;
   updatedAt: Date;
-  notificationPolicy?: {
-    id: string;
-    collections: boolean;
-    paymentConfirmations: boolean;
-  } | null;
 }

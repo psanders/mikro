@@ -47,29 +47,10 @@ import {
   type ToolExecutorDependencies,
   type ExportedCustomer
 } from "@mikro/agents";
-import cron from "node-cron";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
-import { RecognizedUncaughtCode, isRecognizedUncaughtError } from "./recognizedErrors.js";
 
-// ---------------------------------------------------------------------------
-// Process-level error handlers
-// ---------------------------------------------------------------------------
-// The Fonoster SDK throws synchronously inside an EventEmitter callback
-// (call.on("error", () => { throw ... })) in its trackCall stream.  That
-// throw cannot be caught by try/catch around `for await…of` because it
-// originates in a different execution context.  Without this handler, the
-// uncaught exception kills the process.
-// ---------------------------------------------------------------------------
 process.on("uncaughtException", (err) => {
-  if (isRecognizedUncaughtError(err, RecognizedUncaughtCode.FONOSTER_CALL_TRACKING)) {
-    logger.warn("fonoster call-tracking stream error (caught at process level)", {
-      code: RecognizedUncaughtCode.FONOSTER_CALL_TRACKING,
-      message: err.message
-    });
-    return; // swallow – the call was already placed; tracking is optional
-  }
-  // Any other uncaught exception: log and exit (default Node.js behaviour)
   logger.error("uncaught exception – shutting down", { error: err.message, stack: err.stack });
   process.exit(1);
 });
@@ -78,11 +59,7 @@ process.on("unhandledRejection", (reason) => {
   const message = reason instanceof Error ? reason.message : String(reason);
   logger.error("unhandled promise rejection", { reason: message });
 });
-import {
-  runDailyCollections,
-  runSingleCollection,
-  sendPaymentConfirmation
-} from "./collections/index.js";
+
 import {
   createGetUserByPhone,
   createGetCustomerByPhone,
@@ -106,8 +83,7 @@ import {
   createExportAllCustomers,
   createGeneratePerformanceReport,
   createGenerateDefaultedReport,
-  createGenerateRenewalCandidatesReport,
-  createGenerateCollectionsAuditReport
+  createGenerateRenewalCandidatesReport
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
@@ -202,24 +178,7 @@ async function initializeMessageProcessor() {
     const getCustomerByPhone = createGetCustomerByPhone(dbClient);
     const addMessageToChatHistory = createAddMessageToChatHistory(dbClient);
     const createCustomer = createCreateCustomer(dbClient);
-    const createPayment = createCreatePayment(dbClient, {
-      onPaymentCreated: (paymentId) => {
-        sendPaymentConfirmation(paymentId, {
-          db: prisma,
-          sendWhatsAppTemplate: (p) =>
-            whatsAppClient.sendTemplateMessage({
-              ...p,
-              headerParameters: p.headerParameters ?? [],
-              bodyParameters: p.bodyParameters ?? []
-            })
-        }).catch((err: Error) =>
-          logger.error("payment confirmation send failed", {
-            paymentId,
-            error: err.message
-          })
-        );
-      }
-    });
+    const createPayment = createCreatePayment(dbClient);
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
     const listLoansByCustomer = createListLoansByCustomer(dbClient);
@@ -237,8 +196,6 @@ async function initializeMessageProcessor() {
     const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
     const generateDefaultedReport = createGenerateDefaultedReport(dbClient);
     const generateRenewalCandidatesReport = createGenerateRenewalCandidatesReport(dbClient);
-    const generateCollectionsAuditReport = createGenerateCollectionsAuditReport(dbClient);
-
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
     const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
@@ -483,34 +440,6 @@ async function initializeMessageProcessor() {
         const result = await generateRenewalCandidatesReport({});
         return { image: result.image };
       },
-      generateCollectionsAuditReport: async (params?: { date?: string }) => {
-        const result = await generateCollectionsAuditReport({
-          date: params?.date ? new Date(params.date) : undefined
-        });
-        return { rows: result.rows, image: result.image };
-      },
-      runSingleCollection: async (
-        params: Parameters<ToolExecutorDependencies["runSingleCollection"]>[0]
-      ) => {
-        const result = await runSingleCollection(
-          {
-            loanId: params.loanId,
-            channel: params.channel,
-            type: params.type,
-            dryRun: params.dryRun ?? false
-          },
-          {
-            db: prisma,
-            sendWhatsAppTemplate: (p) =>
-              whatsAppClient.sendTemplateMessage({
-                ...p,
-                headerParameters: p.headerParameters ?? [],
-                bodyParameters: p.bodyParameters ?? []
-              })
-          }
-        );
-        return result;
-      },
       renderCustomersReportToPng: async (
         customers: Parameters<ToolExecutorDependencies["renderCustomersReportToPng"]>[0]
       ) => {
@@ -656,46 +585,6 @@ async function initializeMessageProcessor() {
     markInitializationComplete();
     const finalProcessorState = getMessageProcessorState();
     logger.info("initialization marked as complete", { finalProcessorState });
-
-    // Daily collections cron (reminders, overdue notices, collection calls)
-    const { collections } = getConfig();
-    if (collections.enabled) {
-      cron.schedule(
-        collections.cron,
-        () => {
-          runDailyCollections(
-            new Date(),
-            {
-              db: prisma,
-              sendWhatsAppTemplate: (p) =>
-                whatsAppClient.sendTemplateMessage({
-                  ...p,
-                  headerParameters: p.headerParameters ?? [],
-                  bodyParameters: p.bodyParameters ?? []
-                })
-            },
-            collections.includeDefaulted
-          ).catch((err: Error) => {
-            logger.error("daily collections run failed", { error: err.message });
-          });
-        },
-        { timezone: getConfig().timezone }
-      );
-      logger.info("collections cron scheduled", {
-        cron: collections.cron,
-        timezone: getConfig().timezone
-      });
-    } else {
-      logger.verbose("collections cron disabled (config.collections.enabled=false)");
-    }
-    const fonosterEnabled = getConfig().fonoster.enabled;
-    logger.info("Fonoster collection calls", {
-      enabled: fonosterEnabled,
-      hint: fonosterEnabled
-        ? "real calls will be placed"
-        : "set fonoster.enabled=true in mikro.json to place calls"
-    });
-    // #endregion
 
     logger.verbose("message processor configured successfully");
     logger.info("message processor initialization complete", { step: "complete" });

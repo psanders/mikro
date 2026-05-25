@@ -58,8 +58,6 @@ export default class Get extends BaseCommand<typeof Get> {
           `BUSINESS OWNER: \t${customer.isBusinessOwner ? "Yes" : "No"}\n` +
           `NOTES: \t${customer.notes || ""}\n` +
           `ACTIVE: \t${customer.isActive ? "Yes" : "No"}\n` +
-          `NOTIFY COLLECTIONS: \t${customer.notificationPolicy ? (customer.notificationPolicy.collections ? "Yes" : "No") : "N/A"}\n` +
-          `NOTIFY PAYMENTS: \t${customer.notificationPolicy ? (customer.notificationPolicy.paymentConfirmations ? "Yes" : "No") : "N/A"}\n` +
           `CREATED: \t${moment(customer.createdAt).format("YYYY-MM-DD HH:mm:ss")}\n` +
           `UPDATED: \t${moment(customer.updatedAt).format("YYYY-MM-DD HH:mm:ss")}`
       );

@@ -14,7 +14,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "light",
   ios: {
     supportsTablet: false,
-    bundleIdentifier: "do.mikro.app"
+    bundleIdentifier: "do.mikro.app",
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false
+    }
   },
   android: {
     package: "do.mikro.app",
@@ -26,6 +29,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: ["expo-router", "expo-secure-store", "expo-local-authentication"],
   extra: {
-    storybookEnabled: process.env.STORYBOOK_ENABLED === "true"
+    storybookEnabled: process.env.STORYBOOK_ENABLED === "true",
+    eas: {
+      projectId: "6b8784e8-d267-4d11-924b-2dbd9a388abd"
+    }
   }
 });

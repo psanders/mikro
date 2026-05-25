@@ -54,12 +54,10 @@ export const ModelName = {
   User: 'User',
   UserRole: 'UserRole',
   Customer: 'Customer',
-  NotificationPolicy: 'NotificationPolicy',
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
   Payment: 'Payment',
-  CollectionAttempt: 'CollectionAttempt',
   LoanNote: 'LoanNote',
   AccountingAccount: 'AccountingAccount',
   AccountingCategory: 'AccountingCategory',
@@ -127,18 +125,6 @@ export const CustomerScalarFieldEnum = {
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
 
 
-export const NotificationPolicyScalarFieldEnum = {
-  id: 'id',
-  collections: 'collections',
-  paymentConfirmations: 'paymentConfirmations',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  customerId: 'customerId'
-} as const
-
-export type NotificationPolicyScalarFieldEnum = (typeof NotificationPolicyScalarFieldEnum)[keyof typeof NotificationPolicyScalarFieldEnum]
-
-
 export const LoanScalarFieldEnum = {
   id: 'id',
   loanId: 'loanId',
@@ -202,22 +188,6 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
-
-
-export const CollectionAttemptScalarFieldEnum = {
-  id: 'id',
-  channel: 'channel',
-  type: 'type',
-  status: 'status',
-  messageId: 'messageId',
-  templateName: 'templateName',
-  notes: 'notes',
-  createdAt: 'createdAt',
-  customerId: 'customerId',
-  loanId: 'loanId'
-} as const
-
-export type CollectionAttemptScalarFieldEnum = (typeof CollectionAttemptScalarFieldEnum)[keyof typeof CollectionAttemptScalarFieldEnum]
 
 
 export const LoanNoteScalarFieldEnum = {

@@ -87,16 +87,6 @@ const ID = {
     "88888888-8888-4888-a888-888888888802",
     "88888888-8888-4888-a888-888888888803"
   ],
-  collectionAttempts: [
-    "99999999-9999-4999-a999-999999999901",
-    "99999999-9999-4999-a999-999999999902",
-    "99999999-9999-4999-a999-999999999903",
-    "99999999-9999-4999-a999-999999999904",
-    "99999999-9999-4999-a999-999999999905",
-    "99999999-9999-4999-a999-999999999906",
-    "99999999-9999-4999-a999-999999999907",
-    "99999999-9999-4999-a999-999999999908"
-  ],
   accountingAccounts: [
     "cccccccc-cccc-4ccc-accc-cccccccccc01",
     "cccccccc-cccc-4ccc-accc-cccccccccc02",
@@ -648,92 +638,6 @@ async function main() {
     }
   });
   console.log("Created 3 attachments");
-
-  // ---------------------------------------------------------------------------
-  // CollectionAttempts (8): mix channel, type, status
-  // ---------------------------------------------------------------------------
-  const attemptSpecs: Array<{
-    customerId: string;
-    loanId: string;
-    channel: "WHATSAPP" | "PHONE_CALL";
-    type: "PAYMENT_CONFIRMATION" | "PAYMENT_REMINDER" | "OVERDUE_NOTICE" | "COLLECTION_CALL";
-    status: "SENT" | "FAILED";
-  }> = [
-    {
-      customerId: customers[0].id,
-      loanId: loans[0].id,
-      channel: "WHATSAPP",
-      type: "PAYMENT_REMINDER",
-      status: "SENT"
-    },
-    {
-      customerId: customers[1].id,
-      loanId: loans[2].id,
-      channel: "PHONE_CALL",
-      type: "PAYMENT_CONFIRMATION",
-      status: "SENT"
-    },
-    {
-      customerId: customers[2].id,
-      loanId: loans[5].id,
-      channel: "WHATSAPP",
-      type: "OVERDUE_NOTICE",
-      status: "SENT"
-    },
-    {
-      customerId: customers[3].id,
-      loanId: loans[3].id,
-      channel: "PHONE_CALL",
-      type: "COLLECTION_CALL",
-      status: "FAILED"
-    },
-    {
-      customerId: customers[4].id,
-      loanId: loans[8].id,
-      channel: "WHATSAPP",
-      type: "PAYMENT_CONFIRMATION",
-      status: "SENT"
-    },
-    {
-      customerId: customers[5].id,
-      loanId: loans[9].id,
-      channel: "WHATSAPP",
-      type: "PAYMENT_REMINDER",
-      status: "SENT"
-    },
-    {
-      customerId: customers[7].id,
-      loanId: loans[11].id,
-      channel: "PHONE_CALL",
-      type: "OVERDUE_NOTICE",
-      status: "FAILED"
-    },
-    {
-      customerId: customers[9].id,
-      loanId: loans[15].id,
-      channel: "WHATSAPP",
-      type: "PAYMENT_REMINDER",
-      status: "SENT"
-    }
-  ];
-  for (let i = 0; i < attemptSpecs.length; i++) {
-    const a = attemptSpecs[i];
-    await prisma.collectionAttempt.upsert({
-      where: { id: ID.collectionAttempts[i] },
-      update: {},
-      create: {
-        id: ID.collectionAttempts[i],
-        channel: a.channel,
-        type: a.type,
-        status: a.status,
-        templateName: a.channel === "WHATSAPP" ? "payment_reminder_v1" : null,
-        notes: a.status === "FAILED" ? "No answer" : null,
-        customerId: a.customerId,
-        loanId: a.loanId
-      }
-    });
-  }
-  console.log("Created 8 collection attempts");
 
   // ---------------------------------------------------------------------------
   // Accounting: 4 accounts (zero balance), 11 categories (no transactions)

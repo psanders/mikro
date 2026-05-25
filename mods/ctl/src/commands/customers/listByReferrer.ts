@@ -36,28 +36,21 @@ export default class ListByReferrer extends ListCommand<typeof ListByReferrer> {
         limit: flags["page-size"]
       });
 
-      const headers = ["ID", "NAME", "NICKNAME", "PHONE", "ACTIVE", "NOTIFICATIONS"];
+      const headers = ["ID", "NAME", "NICKNAME", "PHONE", "ACTIVE"];
       const rows = customers.map((customer) => {
-        const np = customer.notificationPolicy;
-        const notifications = np
-          ? [np.collections && "Collections", np.paymentConfirmations && "Payments"]
-              .filter(Boolean)
-              .join(", ") || "None"
-          : "N/A";
         return [
           customer.id,
           customer.name,
           customer.nickname ?? "",
           customer.phone,
-          customer.isActive ? "Yes" : "No",
-          notifications
+          customer.isActive ? "Yes" : "No"
         ];
       });
       const widths = computeColumnWidths({
         headers,
         rows,
-        minWidths: [undefined, undefined, undefined, undefined, 8, 15],
-        maxWidths: [undefined, undefined, undefined, undefined, undefined, 48]
+        minWidths: [undefined, undefined, undefined, undefined, 8],
+        maxWidths: [undefined, undefined, undefined, undefined, undefined]
       });
       const ui = cliui({ width: cliuiTableWidth(widths) });
       ui.div(...cliuiCells(headers, widths));

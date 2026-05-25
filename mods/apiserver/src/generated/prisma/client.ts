@@ -55,11 +55,6 @@ export type UserRole = Prisma.UserRoleModel
  */
 export type Customer = Prisma.CustomerModel
 /**
- * Model NotificationPolicy
- * 
- */
-export type NotificationPolicy = Prisma.NotificationPolicyModel
-/**
  * Model Loan
  * 
  */
@@ -79,11 +74,6 @@ export type Attachment = Prisma.AttachmentModel
  * 
  */
 export type Payment = Prisma.PaymentModel
-/**
- * Model CollectionAttempt
- * 
- */
-export type CollectionAttempt = Prisma.CollectionAttemptModel
 /**
  * Model LoanNote
  * 

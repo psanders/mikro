@@ -387,12 +387,10 @@ export const ModelName = {
   User: 'User',
   UserRole: 'UserRole',
   Customer: 'Customer',
-  NotificationPolicy: 'NotificationPolicy',
   Loan: 'Loan',
   Message: 'Message',
   Attachment: 'Attachment',
   Payment: 'Payment',
-  CollectionAttempt: 'CollectionAttempt',
   LoanNote: 'LoanNote',
   AccountingAccount: 'AccountingAccount',
   AccountingCategory: 'AccountingCategory',
@@ -413,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userRole" | "customer" | "notificationPolicy" | "loan" | "message" | "attachment" | "payment" | "collectionAttempt" | "loanNote" | "accountingAccount" | "accountingCategory" | "accountingTransaction" | "accountingTransactionAttachment"
+    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "loanNote" | "accountingAccount" | "accountingCategory" | "accountingTransaction" | "accountingTransactionAttachment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -636,80 +634,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.CustomerCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.CustomerCountAggregateOutputType> | number
-        }
-      }
-    }
-    NotificationPolicy: {
-      payload: Prisma.$NotificationPolicyPayload<ExtArgs>
-      fields: Prisma.NotificationPolicyFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.NotificationPolicyFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.NotificationPolicyFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        findFirst: {
-          args: Prisma.NotificationPolicyFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.NotificationPolicyFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        findMany: {
-          args: Prisma.NotificationPolicyFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
-        }
-        create: {
-          args: Prisma.NotificationPolicyCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        createMany: {
-          args: Prisma.NotificationPolicyCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.NotificationPolicyCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
-        }
-        delete: {
-          args: Prisma.NotificationPolicyDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        update: {
-          args: Prisma.NotificationPolicyUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        deleteMany: {
-          args: Prisma.NotificationPolicyDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.NotificationPolicyUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.NotificationPolicyUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>[]
-        }
-        upsert: {
-          args: Prisma.NotificationPolicyUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPolicyPayload>
-        }
-        aggregate: {
-          args: Prisma.NotificationPolicyAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationPolicy>
-        }
-        groupBy: {
-          args: Prisma.NotificationPolicyGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NotificationPolicyGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.NotificationPolicyCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NotificationPolicyCountAggregateOutputType> | number
         }
       }
     }
@@ -1006,80 +930,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PaymentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PaymentCountAggregateOutputType> | number
-        }
-      }
-    }
-    CollectionAttempt: {
-      payload: Prisma.$CollectionAttemptPayload<ExtArgs>
-      fields: Prisma.CollectionAttemptFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.CollectionAttemptFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.CollectionAttemptFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        findFirst: {
-          args: Prisma.CollectionAttemptFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.CollectionAttemptFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        findMany: {
-          args: Prisma.CollectionAttemptFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>[]
-        }
-        create: {
-          args: Prisma.CollectionAttemptCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        createMany: {
-          args: Prisma.CollectionAttemptCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.CollectionAttemptCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>[]
-        }
-        delete: {
-          args: Prisma.CollectionAttemptDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        update: {
-          args: Prisma.CollectionAttemptUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        deleteMany: {
-          args: Prisma.CollectionAttemptDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.CollectionAttemptUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.CollectionAttemptUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>[]
-        }
-        upsert: {
-          args: Prisma.CollectionAttemptUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollectionAttemptPayload>
-        }
-        aggregate: {
-          args: Prisma.CollectionAttemptAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateCollectionAttempt>
-        }
-        groupBy: {
-          args: Prisma.CollectionAttemptGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.CollectionAttemptGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.CollectionAttemptCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.CollectionAttemptCountAggregateOutputType> | number
         }
       }
     }
@@ -1536,18 +1386,6 @@ export const CustomerScalarFieldEnum = {
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
 
 
-export const NotificationPolicyScalarFieldEnum = {
-  id: 'id',
-  collections: 'collections',
-  paymentConfirmations: 'paymentConfirmations',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  customerId: 'customerId'
-} as const
-
-export type NotificationPolicyScalarFieldEnum = (typeof NotificationPolicyScalarFieldEnum)[keyof typeof NotificationPolicyScalarFieldEnum]
-
-
 export const LoanScalarFieldEnum = {
   id: 'id',
   loanId: 'loanId',
@@ -1611,22 +1449,6 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
-
-
-export const CollectionAttemptScalarFieldEnum = {
-  id: 'id',
-  channel: 'channel',
-  type: 'type',
-  status: 'status',
-  messageId: 'messageId',
-  templateName: 'templateName',
-  notes: 'notes',
-  createdAt: 'createdAt',
-  customerId: 'customerId',
-  loanId: 'loanId'
-} as const
-
-export type CollectionAttemptScalarFieldEnum = (typeof CollectionAttemptScalarFieldEnum)[keyof typeof CollectionAttemptScalarFieldEnum]
 
 
 export const LoanNoteScalarFieldEnum = {
@@ -1829,27 +1651,6 @@ export type EnumPaymentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
 
 
 /**
- * Reference to a field of type 'CollectionChannel'
- */
-export type EnumCollectionChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollectionChannel'>
-    
-
-
-/**
- * Reference to a field of type 'CollectionAttemptType'
- */
-export type EnumCollectionAttemptTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollectionAttemptType'>
-    
-
-
-/**
- * Reference to a field of type 'CollectionAttemptStatus'
- */
-export type EnumCollectionAttemptStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollectionAttemptStatus'>
-    
-
-
-/**
  * Reference to a field of type 'AccountKind'
  */
 export type EnumAccountKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountKind'>
@@ -1981,12 +1782,10 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   userRole?: Prisma.UserRoleOmit
   customer?: Prisma.CustomerOmit
-  notificationPolicy?: Prisma.NotificationPolicyOmit
   loan?: Prisma.LoanOmit
   message?: Prisma.MessageOmit
   attachment?: Prisma.AttachmentOmit
   payment?: Prisma.PaymentOmit
-  collectionAttempt?: Prisma.CollectionAttemptOmit
   loanNote?: Prisma.LoanNoteOmit
   accountingAccount?: Prisma.AccountingAccountOmit
   accountingCategory?: Prisma.AccountingCategoryOmit

@@ -422,57 +422,6 @@ export type EnumPaymentKindWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumPaymentKindFilter<$PrismaModel>
 }
 
-export type EnumCollectionChannelFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionChannel | Prisma.EnumCollectionChannelFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionChannel[]
-  notIn?: $Enums.CollectionChannel[]
-  not?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel> | $Enums.CollectionChannel
-}
-
-export type EnumCollectionAttemptTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptType | Prisma.EnumCollectionAttemptTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptType[]
-  notIn?: $Enums.CollectionAttemptType[]
-  not?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel> | $Enums.CollectionAttemptType
-}
-
-export type EnumCollectionAttemptStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptStatus | Prisma.EnumCollectionAttemptStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptStatus[]
-  notIn?: $Enums.CollectionAttemptStatus[]
-  not?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel> | $Enums.CollectionAttemptStatus
-}
-
-export type EnumCollectionChannelWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionChannel | Prisma.EnumCollectionChannelFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionChannel[]
-  notIn?: $Enums.CollectionChannel[]
-  not?: Prisma.NestedEnumCollectionChannelWithAggregatesFilter<$PrismaModel> | $Enums.CollectionChannel
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel>
-}
-
-export type EnumCollectionAttemptTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptType | Prisma.EnumCollectionAttemptTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptType[]
-  notIn?: $Enums.CollectionAttemptType[]
-  not?: Prisma.NestedEnumCollectionAttemptTypeWithAggregatesFilter<$PrismaModel> | $Enums.CollectionAttemptType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel>
-}
-
-export type EnumCollectionAttemptStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptStatus | Prisma.EnumCollectionAttemptStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptStatus[]
-  notIn?: $Enums.CollectionAttemptStatus[]
-  not?: Prisma.NestedEnumCollectionAttemptStatusWithAggregatesFilter<$PrismaModel> | $Enums.CollectionAttemptStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel>
-}
-
 export type EnumAccountKindFilter<$PrismaModel = never> = {
   equals?: $Enums.AccountKind | Prisma.EnumAccountKindFieldRefInput<$PrismaModel>
   in?: $Enums.AccountKind[]
@@ -964,57 +913,6 @@ export type NestedEnumPaymentKindWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPaymentKindFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPaymentKindFilter<$PrismaModel>
-}
-
-export type NestedEnumCollectionChannelFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionChannel | Prisma.EnumCollectionChannelFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionChannel[]
-  notIn?: $Enums.CollectionChannel[]
-  not?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel> | $Enums.CollectionChannel
-}
-
-export type NestedEnumCollectionAttemptTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptType | Prisma.EnumCollectionAttemptTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptType[]
-  notIn?: $Enums.CollectionAttemptType[]
-  not?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel> | $Enums.CollectionAttemptType
-}
-
-export type NestedEnumCollectionAttemptStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptStatus | Prisma.EnumCollectionAttemptStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptStatus[]
-  notIn?: $Enums.CollectionAttemptStatus[]
-  not?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel> | $Enums.CollectionAttemptStatus
-}
-
-export type NestedEnumCollectionChannelWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionChannel | Prisma.EnumCollectionChannelFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionChannel[]
-  notIn?: $Enums.CollectionChannel[]
-  not?: Prisma.NestedEnumCollectionChannelWithAggregatesFilter<$PrismaModel> | $Enums.CollectionChannel
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionChannelFilter<$PrismaModel>
-}
-
-export type NestedEnumCollectionAttemptTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptType | Prisma.EnumCollectionAttemptTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptType[]
-  notIn?: $Enums.CollectionAttemptType[]
-  not?: Prisma.NestedEnumCollectionAttemptTypeWithAggregatesFilter<$PrismaModel> | $Enums.CollectionAttemptType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionAttemptTypeFilter<$PrismaModel>
-}
-
-export type NestedEnumCollectionAttemptStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CollectionAttemptStatus | Prisma.EnumCollectionAttemptStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CollectionAttemptStatus[]
-  notIn?: $Enums.CollectionAttemptStatus[]
-  not?: Prisma.NestedEnumCollectionAttemptStatusWithAggregatesFilter<$PrismaModel> | $Enums.CollectionAttemptStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCollectionAttemptStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumAccountKindFilter<$PrismaModel = never> = {

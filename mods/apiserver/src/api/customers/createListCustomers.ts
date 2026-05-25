@@ -35,7 +35,6 @@ export function createListCustomers(client: DbClient) {
     }
     const customers = await client.customer.findMany({
       where,
-      include: { notificationPolicy: true },
       take: params.limit ?? 20,
       skip: params.offset
     });

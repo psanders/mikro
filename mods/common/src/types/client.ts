@@ -63,11 +63,11 @@ export interface DbClient {
     delete(args: { where: { id: string } }): Promise<Customer>;
     findUnique(args: {
       where: { id: string };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
     }): Promise<Customer | null>;
     findFirst(args: {
       where: { phone: string };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
     }): Promise<Customer | null>;
     findMany(args?: {
       where?: {
@@ -75,7 +75,7 @@ export interface DbClient {
         referredById?: string;
         assignedCollectorId?: string;
       };
-      include?: { notificationPolicy?: true };
+      include?: Record<string, never>;
       take?: number;
       skip?: number;
     }): Promise<Customer[]>;

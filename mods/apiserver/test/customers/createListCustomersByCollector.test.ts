@@ -59,7 +59,6 @@ describe("createListCustomersByCollector", () => {
       });
       expect(findArg0.take).to.be.undefined;
       expect(findArg0.skip).to.be.undefined;
-      expect(findArg0.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return customers with pagination", async () => {
@@ -88,7 +87,6 @@ describe("createListCustomersByCollector", () => {
       });
       expect(findArg1.take).to.equal(10);
       expect(findArg1.skip).to.equal(5);
-      expect(findArg1.include).to.deep.equal({ notificationPolicy: true });
     });
 
     it("should return empty array when no customers found", async () => {

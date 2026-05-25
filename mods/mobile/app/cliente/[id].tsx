@@ -41,10 +41,13 @@ export default function ClienteDetalleScreen() {
   const customer = trpc.getCustomer.useQuery({ id: id! }, { enabled: !!id });
   const dashboard = trpc.getCollectorDashboard.useQuery();
 
-  const now = new Date();
-  const ninetyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90);
+  const dateRange = useMemo(() => {
+    const end = new Date();
+    const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 90);
+    return { startDate: start, endDate: end };
+  }, []);
   const payments = trpc.listPaymentsByCustomer.useQuery(
-    { customerId: id!, startDate: ninetyDaysAgo, endDate: now },
+    { customerId: id!, ...dateRange },
     { enabled: !!id }
   );
 

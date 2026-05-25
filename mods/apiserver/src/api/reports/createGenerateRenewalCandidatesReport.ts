@@ -20,7 +20,7 @@ import {
 import { invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
-import { loanToData } from "../../collections/loanToData.js";
+import { loanToData } from "../../utils/loanToData.js";
 
 const loanInclude = {
   customer: { select: { name: true, phone: true, preferredPaymentDay: true } },
