@@ -1,10 +1,11 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
+  TextInput,
   ScrollView,
   Pressable,
   Alert,
@@ -33,7 +34,7 @@ function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
 }
 
-type PayOption = "cuota" | "arrears" | "mora" | "settle";
+type PayOption = "cuota" | "arrears" | "mora" | "settle" | "custom";
 
 export default function CobrarPagoScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
@@ -42,6 +43,8 @@ export default function CobrarPagoScreen() {
   const [selectedOption, setSelectedOption] = useState<PayOption | null>(null);
   const [payMethod, setPayMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [submitting, setSubmitting] = useState(false);
+  const [customAmountText, setCustomAmountText] = useState("");
+  const customInputRef = useRef<TextInput>(null);
 
   const loanQuery = useLocalLoan(numericId);
   const lateFeeQuery = useLocalLateFeePreview(numericId);
@@ -92,10 +95,16 @@ export default function CobrarPagoScreen() {
         value: formatRD(settleAmount)
       });
     }
+    opts.push({ key: "custom", label: "Otro monto", value: "" });
     return opts;
   }, [cuota, mora, remainingCuotas, settleAmount]);
 
   const effectiveOption = selectedOption ?? (mora > 0 ? "arrears" : "cuota");
+
+  const customAmount = useMemo(() => {
+    const n = Number(customAmountText.replace(/,/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [customAmountText]);
 
   const amount = useMemo(() => {
     switch (effectiveOption) {
@@ -107,8 +116,10 @@ export default function CobrarPagoScreen() {
         return mora;
       case "settle":
         return settleAmount;
+      case "custom":
+        return customAmount;
     }
-  }, [effectiveOption, cuota, mora, settleAmount]);
+  }, [effectiveOption, cuota, mora, settleAmount, customAmount]);
 
   const breakdownRows = useMemo(() => {
     const rows: { label: string; value: string }[] = [];
@@ -123,11 +134,16 @@ export default function CobrarPagoScreen() {
         label: `${remainingCuotas} cuotas restantes`,
         value: formatRD(remainingCuotas * cuota)
       });
+    } else if (effectiveOption === "custom") {
+      rows.push({
+        label: "Monto personalizado",
+        value: customAmount > 0 ? formatRD(customAmount) : "—"
+      });
     } else {
       rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
     }
     return rows;
-  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas]);
+  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas, customAmount]);
 
   const hintText = payOptions.find((o) => o.key === effectiveOption)?.label ?? "";
 
@@ -141,7 +157,11 @@ export default function CobrarPagoScreen() {
       amount,
       method: payMethod,
       collectedById: collectorId,
-      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : { cuota })
+      ...(effectiveOption === "mora"
+        ? { kind: "LATE_FEE" as const }
+        : effectiveOption === "custom"
+          ? {}
+          : { cuota })
     };
 
     try {
@@ -164,7 +184,7 @@ export default function CobrarPagoScreen() {
               ? mora
               : 0
           ),
-          cuota: String(cuota),
+          cuota: String(effectiveOption === "custom" ? 0 : cuota),
           method: methodLabel,
           loanId: String(loanId),
           paymentNumber: String(effectiveOption === "mora" ? 0 : paidCount + 1),
@@ -206,9 +226,28 @@ export default function CobrarPagoScreen() {
               label={o.label}
               value={o.value}
               selected={effectiveOption === o.key}
-              onPress={() => setSelectedOption(o.key)}
+              onPress={() => {
+                setSelectedOption(o.key);
+                if (o.key === "custom") {
+                  setTimeout(() => customInputRef.current?.focus(), 100);
+                }
+              }}
             />
           ))}
+          {effectiveOption === "custom" && (
+            <View style={styles.customInputCard}>
+              <Text style={styles.customInputLabel}>RD$</Text>
+              <TextInput
+                ref={customInputRef}
+                style={styles.customInput}
+                value={customAmountText}
+                onChangeText={setCustomAmountText}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+          )}
         </View>
 
         <View style={styles.breakdownCard}>
@@ -300,6 +339,28 @@ const styles = StyleSheet.create({
     borderRadius: radii.card,
     padding: 14,
     gap: 10
+  },
+  customInputCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.brand.white,
+    borderRadius: radii.sm + 4,
+    padding: 14,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.brand.blue.primary
+  },
+  customInputLabel: {
+    fontFamily: "Geist_600SemiBold",
+    fontSize: 18,
+    color: colors.brand.blue.primary
+  },
+  customInput: {
+    flex: 1,
+    fontFamily: "Geist_700Bold",
+    fontSize: 24,
+    color: colors.brand.blue.deep,
+    padding: 0
   },
   methodSection: { gap: 8 },
   methodRow: { flexDirection: "row", gap: 8 },
