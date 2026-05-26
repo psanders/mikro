@@ -51,7 +51,11 @@ export default function PerfilScreen() {
           <SectionLabel>AJUSTES</SectionLabel>
           <View style={styles.settingsGroup}>
             <ListTile icon={Bell} label="Notificaciones" />
-            <ListTile icon={ShieldCheck} label="Seguridad y PIN" />
+            <ListTile
+              icon={ShieldCheck}
+              label="Seguridad y PIN"
+              onPress={() => router.push("/cambiar-pin")}
+            />
             <ListTile icon={LifeBuoy} label="Ayuda y soporte" />
           </View>
 
