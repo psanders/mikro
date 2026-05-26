@@ -262,7 +262,7 @@ export type AccountingTransactionGroupByOutputType = {
   _max: AccountingTransactionMaxAggregateOutputType | null
 }
 
-type GetAccountingTransactionGroupByPayload<T extends AccountingTransactionGroupByArgs> = Prisma.PrismaPromise<
+export type GetAccountingTransactionGroupByPayload<T extends AccountingTransactionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AccountingTransactionGroupByOutputType, T['by']> &
       {
@@ -2503,6 +2503,11 @@ export type AccountingTransactionFindManyArgs<ExtArgs extends runtime.Types.Exte
    * Skip the first `n` AccountingTransactions.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AccountingTransactions.
+   */
   distinct?: Prisma.AccountingTransactionScalarFieldEnum | Prisma.AccountingTransactionScalarFieldEnum[]
 }
 

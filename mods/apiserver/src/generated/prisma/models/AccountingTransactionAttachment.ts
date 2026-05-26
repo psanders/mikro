@@ -213,7 +213,7 @@ export type AccountingTransactionAttachmentGroupByOutputType = {
   _max: AccountingTransactionAttachmentMaxAggregateOutputType | null
 }
 
-type GetAccountingTransactionAttachmentGroupByPayload<T extends AccountingTransactionAttachmentGroupByArgs> = Prisma.PrismaPromise<
+export type GetAccountingTransactionAttachmentGroupByPayload<T extends AccountingTransactionAttachmentGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AccountingTransactionAttachmentGroupByOutputType, T['by']> &
       {
@@ -1270,6 +1270,11 @@ export type AccountingTransactionAttachmentFindManyArgs<ExtArgs extends runtime.
    * Skip the first `n` AccountingTransactionAttachments.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AccountingTransactionAttachments.
+   */
   distinct?: Prisma.AccountingTransactionAttachmentScalarFieldEnum | Prisma.AccountingTransactionAttachmentScalarFieldEnum[]
 }
 
