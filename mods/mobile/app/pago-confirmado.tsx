@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,10 +15,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, MessageCircle, Printer } from "lucide-react-native";
 import * as Sharing from "expo-sharing";
 import { File, Paths } from "expo-file-system";
+import { captureRef } from "react-native-view-shot";
 import { colors } from "../lib/theme";
 import { KvRow } from "../components/ui/KvRow";
 import { printReceiptWithUI, type PrintReceiptData } from "../lib/printer";
 import { api } from "../lib/trpc";
+import { useSyncContext } from "../lib/offline/SyncProvider";
+import { ReceiptView, type ReceiptViewData } from "../components/ReceiptView";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -66,8 +69,10 @@ export default function PagoConfirmadoScreen() {
     collectorName?: string;
   }>();
 
+  const { isOnline } = useSyncContext();
   const [printing, setPrinting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const receiptRef = useRef<View>(null);
 
   const amount = Number(params.amount) || 0;
   const mora = Number(params.mora) || 0;
@@ -78,6 +83,29 @@ export default function PagoConfirmadoScreen() {
   const paymentNumber = Number(params.paymentNumber) || 0;
   const pendingPayments = Number(params.pendingPayments) || 0;
   const collectorName = params.collectorName ?? "";
+
+  const receiptDate = useMemo(() => {
+    return new Date().toLocaleDateString("es-DO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  }, []);
+
+  const receiptViewData = useMemo<ReceiptViewData>(
+    () => ({
+      loanNumber: loanId,
+      name: customerName,
+      date: receiptDate,
+      amountPaid: formatReceiptRD(mora > 0 && paymentNumber === 0 ? mora : cuota),
+      pendingPayments,
+      paymentNumber: paymentNumber === 0 ? "Mora" : `P${paymentNumber}`,
+      agentName: collectorName || undefined,
+      feePaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(mora) : undefined,
+      totalPaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(cuota + mora) : undefined
+    }),
+    [loanId, customerName, receiptDate, mora, cuota, paymentNumber, pendingPayments, collectorName]
+  );
 
   const handlePrint = async () => {
     setPrinting(true);
@@ -131,28 +159,28 @@ export default function PagoConfirmadoScreen() {
             onPress={async () => {
               setSharing(true);
               try {
-                const now = new Date();
-                const receiptDate = now.toLocaleDateString("es-DO", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric"
-                });
-                const receiptInput = {
-                  loanNumber: loanId,
-                  name: customerName,
-                  date: receiptDate,
-                  amountPaid: formatReceiptRD(mora > 0 && paymentNumber === 0 ? mora : cuota),
-                  pendingPayments,
-                  paymentNumber: paymentNumber === 0 ? "Mora" : `P${paymentNumber}`,
-                  agentName: collectorName || undefined,
-                  feePaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(mora) : undefined,
-                  totalPaid:
-                    mora > 0 && paymentNumber > 0 ? formatReceiptRD(cuota + mora) : undefined
-                };
-                const result = await api.generateReceiptFromData.mutate(receiptInput);
-                const file = new File(Paths.cache, `recibo-${loanId}.png`);
-                file.write(result.image, { encoding: "base64" });
-                await Sharing.shareAsync(file.uri, {
+                let fileUri: string | undefined;
+
+                if (isOnline) {
+                  try {
+                    const result = await api.generateReceiptFromData.mutate(receiptViewData);
+                    const file = new File(Paths.cache, `recibo-${loanId}.png`);
+                    file.write(result.image, { encoding: "base64" });
+                    fileUri = file.uri;
+                  } catch {
+                    // API failed (network gone mid-request) — fall through to local capture
+                  }
+                }
+
+                if (!fileUri) {
+                  fileUri = await captureRef(receiptRef, {
+                    format: "png",
+                    quality: 1,
+                    result: "tmpfile"
+                  });
+                }
+
+                await Sharing.shareAsync(fileUri, {
                   mimeType: "image/png",
                   dialogTitle: "Enviar recibo"
                 });
@@ -187,6 +215,10 @@ export default function PagoConfirmadoScreen() {
         <Pressable style={styles.doneBtn} onPress={() => router.replace("/(tabs)")}>
           <Text style={styles.doneBtnText}>Listo</Text>
         </Pressable>
+      </View>
+      {/* Off-screen receipt for offline capture */}
+      <View style={styles.offscreen}>
+        <ReceiptView ref={receiptRef} data={receiptViewData} />
       </View>
     </View>
   );
@@ -247,5 +279,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14
   },
-  doneBtnText: { fontFamily: "Geist_700Bold", fontSize: 15, color: colors.brand.blue.deep }
+  doneBtnText: { fontFamily: "Geist_700Bold", fontSize: 15, color: colors.brand.blue.deep },
+  offscreen: { position: "absolute", left: -9999, top: 0 }
 });

@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     adaptiveIcon: {
       backgroundColor: "#103A8A",
       foregroundImage: "./assets/android-icon-foreground.png",
-      backgroundImage: "./assets/android-icon-background.png"
+      monochromeImage: "./assets/android-icon-monochrome.png"
     },
     permissions: ["android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_SCAN"]
   },

@@ -181,7 +181,7 @@ export function createReceiptLayout(
     dashedDivider()
   ];
 
-  // QR code
+  // QR code or unsigned placeholder
   if (qrCodeDataUrl) {
     children.push({
       type: "div",
@@ -209,6 +209,40 @@ export function createReceiptLayout(
         ]
       }
     });
+  } else {
+    children.push({
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "14px 0 4px 0"
+        },
+        children: [
+          {
+            type: "div",
+            props: {
+              style: {
+                width: "120px",
+                height: "120px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "2px dashed #C0C8D4",
+                borderRadius: "8px"
+              },
+              children: [
+                text("SIN", { fontSize: "16px", fontWeight: 700, color: "#8896AB" }),
+                text("FIRMA", { fontSize: "16px", fontWeight: 700, color: "#8896AB" }),
+                text("DIGITAL", { fontSize: "16px", fontWeight: 700, color: "#8896AB" })
+              ]
+            }
+          }
+        ]
+      }
+    });
   }
 
   // Footer
@@ -228,9 +262,10 @@ export function createReceiptLayout(
           fontWeight: 700,
           color: "#14254A"
         }),
-        text("mikro.do", {
-          fontSize: "9px",
-          color: "#8896AB"
+        text("www.mikro.do", {
+          fontSize: "10px",
+          fontWeight: 600,
+          color: "#103A8A"
         })
       ]
     }

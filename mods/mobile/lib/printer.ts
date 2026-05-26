@@ -105,6 +105,7 @@ function buildReceiptBytes(data: PrintReceiptData): Uint8Array {
   push(...CMD.BOLD_ON);
   push(...line("Gracias por su pago!"));
   push(...CMD.BOLD_OFF);
+  push(...line("www.mikro.do"));
   push(...CMD.FEED_LINES(4));
   push(...CMD.FEED_CUT);
 
