@@ -16,6 +16,7 @@
     "build:ios:prod": "eas build --platform ios --profile production",
     "build:android:prod": "eas build --platform android --profile production",
     "build:android:local": "eas build --platform android --profile preview --local",
+    "build:ios:local": "eas build --platform ios --profile preview --local",
     "typecheck": "tsc --noEmit",
     "test:e2e": ".maestro/run-tests.sh",
     "test:e2e:login": ".maestro/run-tests.sh login"
