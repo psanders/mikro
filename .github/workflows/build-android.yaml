@@ -55,14 +55,17 @@ jobs:
         working-directory: mods/mobile
         run: npx expo prebuild --platform android --clean
 
-      # --no-daemon prevents orphaned Gradle processes on the runner
-      - name: Build debug APK
+      # assembleRelease bundles the JS into the APK so it runs standalone (no Metro).
+      # Expo's prebuild template signs release with the debug keystore, so the APK
+      # installs without any signing secrets — fine for internal distribution.
+      # --no-daemon prevents orphaned Gradle processes on the runner.
+      - name: Build release APK
         working-directory: mods/mobile/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: mikro-android-${{ github.run_number }}-${{ github.sha }}
-          path: mods/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: mods/mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30

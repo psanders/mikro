@@ -40,5 +40,9 @@ yarn-error.*
 /ios
 /android
 
+# build artifacts
+*.apk
+*.aab
+
 # Maestro test output
 .maestro/tests/
