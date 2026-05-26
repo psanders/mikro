@@ -85,6 +85,7 @@ export function createReceiptLayout(
     amountPaid = "RD$ 0.00",
     pendingPayments = 0,
     paymentNumber = "",
+    method,
     agentName,
     feePaid,
     totalPaid
@@ -93,19 +94,23 @@ export function createReceiptLayout(
   const fields: Array<[string, string]> = [
     ["Préstamo", `#${loanNumber}`],
     ["Cliente", name],
-    ["Fecha", date]
+    ["Fecha", date],
+    ["No. de Pago", paymentNumber]
   ];
+  if (method) {
+    fields.push(["Método", method]);
+  }
   if (principalAmount) {
     fields.push(["Capital", principalAmount]);
   }
-  fields.push(["Monto Pagado", amountPaid]);
+  fields.push(["Cuota", amountPaid]);
   if (feePaid) {
-    fields.push(["Mora Pagada", feePaid]);
-    if (totalPaid) {
-      fields.push(["Total Pagado", totalPaid]);
-    }
+    fields.push(["Mora", feePaid]);
   }
-  fields.push(["Pagos Pendientes", String(pendingPayments)], ["No. de Pago", paymentNumber]);
+  if (totalPaid) {
+    fields.push(["Total", totalPaid]);
+  }
+  fields.push(["Pagos Pendientes", String(pendingPayments)]);
   if (agentName) {
     fields.push(["Cobrador", agentName]);
   }
@@ -153,7 +158,7 @@ export function createReceiptLayout(
           padding: "16px 0"
         },
         children: [
-          text(totalPaid ?? amountPaid, {
+          text(totalPaid ?? feePaid ?? amountPaid, {
             fontSize: "32px",
             fontWeight: 900,
             color: "#103A8A"

@@ -141,7 +141,7 @@ export default function CobrarPagoScreen() {
       amount,
       method: payMethod,
       collectedById: collectorId,
-      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : {})
+      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : { cuota })
     };
 
     try {

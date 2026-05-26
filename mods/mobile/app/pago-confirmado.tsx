@@ -18,7 +18,7 @@ import { File, Paths } from "expo-file-system";
 import { captureRef } from "react-native-view-shot";
 import { colors } from "../lib/theme";
 import { KvRow } from "../components/ui/KvRow";
-import { printReceiptWithUI, type PrintReceiptData } from "../lib/printer";
+import { printReceiptWithUI } from "../lib/printer";
 import { api } from "../lib/trpc";
 import { useSyncContext } from "../lib/offline/SyncProvider";
 import { ReceiptView, type ReceiptViewData } from "../components/ReceiptView";
@@ -92,34 +92,58 @@ export default function PagoConfirmadoScreen() {
     });
   }, []);
 
+  const isMoraOnly = paymentNumber === 0;
+  const isPartial = !isMoraOnly && cuota > 0 && amount - mora < cuota;
+
+  const paymentLabel = isMoraOnly
+    ? "Mora"
+    : isPartial
+      ? `Parcial P${paymentNumber}`
+      : `P${paymentNumber}`;
+
   const receiptViewData = useMemo<ReceiptViewData>(
     () => ({
       loanNumber: loanId,
       name: customerName,
       date: receiptDate,
-      amountPaid: formatReceiptRD(mora > 0 && paymentNumber === 0 ? mora : cuota),
+      paymentNumber: paymentLabel,
+      method,
+      amountPaid: formatReceiptRD(isMoraOnly ? mora : cuota),
+      feePaid: isMoraOnly ? undefined : formatReceiptRD(mora),
+      totalPaid: formatReceiptRD(amount),
       pendingPayments,
-      paymentNumber: paymentNumber === 0 ? "Mora" : `P${paymentNumber}`,
-      agentName: collectorName || undefined,
-      feePaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(mora) : undefined,
-      totalPaid: mora > 0 && paymentNumber > 0 ? formatReceiptRD(cuota + mora) : undefined
+      agentName: collectorName || undefined
     }),
-    [loanId, customerName, receiptDate, mora, cuota, paymentNumber, pendingPayments, collectorName]
+    [
+      loanId,
+      customerName,
+      receiptDate,
+      paymentLabel,
+      method,
+      mora,
+      cuota,
+      amount,
+      pendingPayments,
+      collectorName
+    ]
   );
 
   const handlePrint = async () => {
     setPrinting(true);
     try {
-      const receiptData: PrintReceiptData = {
+      await printReceiptWithUI({
         loanId,
         customerName,
         date: formatNow(),
-        cuota,
+        cuota: isMoraOnly ? 0 : cuota,
         mora,
         total: amount,
-        method
-      };
-      await printReceiptWithUI(receiptData);
+        method,
+        installmentNumber: isMoraOnly ? undefined : paymentNumber,
+        pendingPayments,
+        collectorName: collectorName || undefined,
+        isPartial
+      });
     } finally {
       setPrinting(false);
     }

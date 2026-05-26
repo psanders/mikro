@@ -26,6 +26,7 @@ export const receiptDataSchema = z.object({
   amountPaid: z.string(),
   pendingPayments: z.number(),
   paymentNumber: z.string(),
+  method: z.string().optional(),
   agentName: z.string().optional(),
   feePaid: z.string().optional(),
   totalPaid: z.string().optional()

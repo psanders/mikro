@@ -9,6 +9,7 @@ export interface QueuePaymentInput {
   method?: "CASH" | "TRANSFER";
   collectedById: string;
   kind?: "INSTALLMENT" | "LATE_FEE";
+  cuota?: number;
   notes?: string;
   lateFeeOverride?: number;
 }
@@ -43,7 +44,9 @@ export function queuePayment(input: QueuePaymentInput): number {
         input.amount,
         now,
         input.method ?? "CASH",
-        "COMPLETED",
+        input.kind !== "LATE_FEE" && input.cuota != null && input.amount < input.cuota
+          ? "PARTIAL"
+          : "COMPLETED",
         input.kind ?? "INSTALLMENT",
         loan.id,
         input.collectedById,

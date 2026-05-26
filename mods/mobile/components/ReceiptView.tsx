@@ -11,12 +11,13 @@ export interface ReceiptViewData {
   loanNumber: string;
   name: string;
   date: string;
-  amountPaid: string;
-  pendingPayments: number;
   paymentNumber: string;
-  agentName?: string;
+  method?: string;
+  amountPaid: string;
   feePaid?: string;
   totalPaid?: string;
+  pendingPayments: number;
+  agentName?: string;
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -32,17 +33,14 @@ export const ReceiptView = forwardRef<View, { data: ReceiptViewData }>(({ data }
   const fields: [string, string][] = [
     ["Préstamo", `#${data.loanNumber}`],
     ["Cliente", data.name],
-    ["Fecha", data.date]
-  ];
-  fields.push(["Monto Pagado", data.amountPaid]);
-  if (data.feePaid) {
-    fields.push(["Mora Pagada", data.feePaid]);
-    if (data.totalPaid) fields.push(["Total Pagado", data.totalPaid]);
-  }
-  fields.push(
-    ["Pagos Pendientes", String(data.pendingPayments)],
+    ["Fecha", data.date],
     ["No. de Pago", data.paymentNumber]
-  );
+  ];
+  if (data.method) fields.push(["Método", data.method]);
+  fields.push(["Cuota", data.amountPaid]);
+  if (data.feePaid) fields.push(["Mora", data.feePaid]);
+  if (data.totalPaid) fields.push(["Total", data.totalPaid]);
+  fields.push(["Pagos Pendientes", String(data.pendingPayments)]);
   if (data.agentName) fields.push(["Cobrador", data.agentName]);
 
   return (
@@ -55,7 +53,7 @@ export const ReceiptView = forwardRef<View, { data: ReceiptViewData }>(({ data }
       <View style={s.dashedDivider} />
 
       <View style={s.amountSection}>
-        <Text style={s.amount}>{data.totalPaid ?? data.amountPaid}</Text>
+        <Text style={s.amount}>{data.totalPaid ?? data.feePaid ?? data.amountPaid}</Text>
       </View>
 
       <View style={s.divider} />

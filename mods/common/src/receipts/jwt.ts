@@ -29,10 +29,11 @@ export interface ReceiptData {
   amountPaid: string;
   pendingPayments: number;
   paymentNumber: string;
+  method?: string;
   agentName?: string;
-  /** When set, receipt shows past-due fee collected with this payment. */
+  /** Mora collected with this payment (always set for regular payments, even "RD$0.00"). */
   feePaid?: string;
-  /** Total cash (installment + mora) when both lines apply. */
+  /** Total cash (installment + mora). Always set when feePaid is set. */
   totalPaid?: string;
 }
 

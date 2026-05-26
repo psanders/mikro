@@ -33,7 +33,9 @@ export interface PrintReceiptData {
   method: string;
   installmentNumber?: number;
   termLength?: number;
+  pendingPayments?: number;
   collectorName?: string;
+  isPartial?: boolean;
 }
 
 function text(s: string): number[] {
@@ -76,24 +78,29 @@ function buildReceiptBytes(data: PrintReceiptData): Uint8Array {
   push(...line(`Fecha: ${data.date}`));
   push(...line(""));
 
-  if (data.mora > 0) {
+  if (data.cuota > 0) {
     push(...line(pad("Cuota:", formatRD(data.cuota))));
-    push(...line(pad("Mora:", formatRD(data.mora))));
-    push(...line(divider()));
-    push(...CMD.BOLD_ON);
-    push(...line(pad("TOTAL:", formatRD(data.total))));
-    push(...CMD.BOLD_OFF);
-  } else {
-    push(...CMD.BOLD_ON);
-    push(...line(pad("TOTAL:", formatRD(data.total))));
-    push(...CMD.BOLD_OFF);
   }
+  push(...line(pad("Mora:", formatRD(data.mora))));
+  push(...line(divider()));
+  push(...CMD.BOLD_ON);
+  push(...line(pad("TOTAL:", formatRD(data.total))));
+  push(...CMD.BOLD_OFF);
 
   push(...line(""));
   push(...line(pad("Metodo:", data.method)));
 
-  if (data.installmentNumber != null && data.termLength != null) {
-    push(...line(pad("Cuota:", `${data.installmentNumber} de ${data.termLength}`)));
+  if (data.installmentNumber != null) {
+    const prefix = data.isPartial ? "Parcial P" : "P";
+    const label =
+      data.termLength != null
+        ? `${prefix}${data.installmentNumber} de ${data.termLength}`
+        : `${prefix}${data.installmentNumber}`;
+    push(...line(pad("No. Pago:", label)));
+  }
+
+  if (data.pendingPayments != null) {
+    push(...line(pad("Pend.:", String(data.pendingPayments))));
   }
 
   if (data.collectorName) {
@@ -300,7 +307,7 @@ function pickDevice(devices: Array<{ id: string; name: string }>, data: PrintRec
         Alert.alert("Error de impresión", err instanceof Error ? err.message : "Error desconocido");
       })
   }));
-  buttons.push({ text: "Cancelar", onPress: () => {} });
+  buttons.push({ text: "Cancelar", onPress: () => Promise.resolve() });
   Alert.alert("Seleccionar impresora", "Elige un dispositivo:", buttons);
 }
 
