@@ -4,7 +4,7 @@
  * Bluetooth thermal receipt printer (58mm ESC/POS).
  * Requires react-native-ble-plx and a development build to function.
  */
-import { Alert, Platform } from "react-native";
+import { Alert, Platform, PermissionsAndroid } from "react-native";
 
 const LINE_WIDTH = 32;
 
@@ -210,44 +210,41 @@ async function writeToDevice(device: BleDevice, data: Uint8Array): Promise<void>
   }
 }
 
-export async function scanForPrinters(
-  timeoutMs = 8000
-): Promise<Array<{ id: string; name: string }>> {
+const PRINTER_NAME_KEYWORDS = ["print", "pos", "thermal", "mtp", "rpp", "xp-", "tp-", "bt-p"];
+
+function looksLikePrinter(name: string): boolean {
+  const lower = name.toLowerCase();
+  return PRINTER_NAME_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+export async function scanForPrinters(timeoutMs = 10000): Promise<{
+  matched: Array<{ id: string; name: string }>;
+  all: Array<{ id: string; name: string }>;
+}> {
   const manager = await getBleManager();
-  const printers: Array<{ id: string; name: string }> = [];
+  const matched: Array<{ id: string; name: string }> = [];
+  const all: Array<{ id: string; name: string }> = [];
   const seen = new Set<string>();
 
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       manager.stopDeviceScan();
-      resolve(printers);
+      resolve({ matched, all });
     }, timeoutMs);
 
     manager.startDeviceScan(null, null, (err, device) => {
       if (err || !device) return;
       const name = device.localName ?? device.name;
       if (!name || seen.has(device.id)) return;
-      const lower = name.toLowerCase();
-      if (
-        lower.includes("print") ||
-        lower.includes("pos") ||
-        lower.includes("thermal") ||
-        lower.includes("mtp")
-      ) {
-        seen.add(device.id);
-        printers.push({ id: device.id, name });
+      seen.add(device.id);
+      all.push({ id: device.id, name });
+      if (looksLikePrinter(name)) {
+        matched.push({ id: device.id, name });
       }
     });
 
-    if (timeoutMs > 0) {
-      // Already handled by timer
-    } else {
-      clearTimeout(timer);
-      setTimeout(() => {
-        manager.stopDeviceScan();
-        resolve(printers);
-      }, 5000);
-    }
+    // timer already handles resolution
+    void timer;
   });
 }
 
@@ -268,22 +265,65 @@ export async function printReceipt(deviceId: string, data: PrintReceiptData): Pr
   }
 }
 
-export function requestBluetoothPermission(): Promise<boolean> {
-  if (Platform.OS === "android") {
-    // Android 12+ requires BLUETOOTH_CONNECT and BLUETOOTH_SCAN
-    // This is handled by react-native-ble-plx automatically on most versions
-    return Promise.resolve(true);
+export async function requestBluetoothPermission(): Promise<boolean> {
+  if (Platform.OS !== "android") return true;
+
+  if (Platform.Version >= 31) {
+    const result = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+    ]);
+    return (
+      result[PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN] === "granted" &&
+      result[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] === "granted"
+    );
   }
-  // iOS: Bluetooth permission is requested automatically on first scan
-  return Promise.resolve(true);
+
+  const result = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+  );
+  return result === "granted";
+}
+
+function pickDevice(devices: Array<{ id: string; name: string }>, data: PrintReceiptData): void {
+  if (devices.length === 0) return;
+  if (devices.length === 1) {
+    printReceipt(devices[0].id, data).catch((err) => {
+      Alert.alert("Error de impresión", err instanceof Error ? err.message : "Error desconocido");
+    });
+    return;
+  }
+  const buttons = devices.map((d) => ({
+    text: d.name,
+    onPress: () =>
+      printReceipt(d.id, data).catch((err) => {
+        Alert.alert("Error de impresión", err instanceof Error ? err.message : "Error desconocido");
+      })
+  }));
+  buttons.push({ text: "Cancelar", onPress: () => {} });
+  Alert.alert("Seleccionar impresora", "Elige un dispositivo:", buttons);
 }
 
 export async function printReceiptWithUI(data: PrintReceiptData): Promise<void> {
   try {
-    await requestBluetoothPermission();
-    const printers = await scanForPrinters();
+    const granted = await requestBluetoothPermission();
+    if (!granted) {
+      Alert.alert(
+        "Permiso denegado",
+        "Activa los permisos de Bluetooth en Ajustes para poder imprimir.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
 
-    if (printers.length === 0) {
+    const { matched, all } = await scanForPrinters();
+
+    if (matched.length > 0) {
+      pickDevice(matched, data);
+      return;
+    }
+
+    if (all.length === 0) {
       Alert.alert(
         "No se encontró impresora",
         "Enciende la impresora Bluetooth y asegúrate que esté cerca del teléfono.",
@@ -292,14 +332,24 @@ export async function printReceiptWithUI(data: PrintReceiptData): Promise<void> 
       return;
     }
 
-    if (printers.length === 1) {
-      await printReceipt(printers[0].id, data);
-      return;
-    }
-
-    // Multiple printers — use the first one found
-    // TODO: let user pick from a list
-    await printReceipt(printers[0].id, data);
+    // Found BLE devices but none matched printer keywords — let user pick
+    Alert.alert(
+      "Seleccionar impresora",
+      "No se detectó una impresora automáticamente. ¿Cuál de estos dispositivos es tu impresora?",
+      [
+        ...all.map((d) => ({
+          text: d.name,
+          onPress: () =>
+            printReceipt(d.id, data).catch((err) => {
+              Alert.alert(
+                "Error de impresión",
+                err instanceof Error ? err.message : "Error desconocido"
+              );
+            })
+        })),
+        { text: "Cancelar", onPress: () => {} }
+      ]
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Error desconocido";
     Alert.alert("Error de impresión", msg);
