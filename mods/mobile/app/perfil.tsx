@@ -3,6 +3,7 @@
  */
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { Bell, ShieldCheck, LifeBuoy, LogOut } from "lucide-react-native";
 import { colors, radii } from "../lib/theme";
 import { Header } from "../components/ui/Header";
@@ -22,6 +23,7 @@ export default function PerfilScreen() {
   const router = useRouter();
   const dashboard = trpc.getCollectorDashboard.useQuery();
 
+  const appVersion = Constants.expoConfig?.version ?? "0.1.0";
   const data = dashboard.data;
   const name = data?.collector.name ?? "...";
   const activeLoans = data?.visits.length ?? 0;
@@ -66,7 +68,7 @@ export default function PerfilScreen() {
             <Text style={styles.logoutText}>Cerrar sesión</Text>
           </Pressable>
 
-          <Text style={styles.version}>Mikro Cobradores · v1.0.0</Text>
+          <Text style={styles.version}>Mikro Cobradores · v{appVersion}</Text>
         </View>
       </ScrollView>
     </View>

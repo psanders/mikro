@@ -1,0 +1,68 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "mods/mobile/**"
+      - "mods/common/**"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://mikro.ngrok-free.dev' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      # Keyed on mobile package.json + lockfile because expo prebuild generates
+      # build.gradle from those — we can't hash generated files that don't exist yet.
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('mods/mobile/package.json', 'mods/mobile/app.config.ts', 'package-lock.json') }}
+          restore-keys: gradle-
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: m2-${{ hashFiles('mods/mobile/package.json', 'package-lock.json') }}
+          restore-keys: m2-
+
+      - name: Install dependencies
+        run: npm ci
+
+      # --clean removes any stale android/ directory before regenerating
+      - name: Generate native Android project
+        working-directory: mods/mobile
+        run: npx expo prebuild --platform android --clean
+
+      # --no-daemon prevents orphaned Gradle processes on the runner
+      - name: Build debug APK
+        working-directory: mods/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mikro-android-${{ github.run_number }}-${{ github.sha }}
+          path: mods/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
