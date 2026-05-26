@@ -15,7 +15,7 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient, queryClient } from "../lib/api";
 import { SyncProvider } from "../lib/offline/SyncProvider";
-import { getToken, getPin } from "../lib/auth";
+import { getPin } from "../lib/auth";
 
 function useAppLock() {
   const router = useRouter();
@@ -25,10 +25,10 @@ function useAppLock() {
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (nextState) => {
       if (appState.current.match(/background/) && nextState === "active") {
-        const authScreens = ["/", "/(auth)/login", "/(auth)/unlock"];
+        const authScreens = ["/", "/(auth)/login", "/(auth)/unlock", "/cambiar-pin"];
         if (!authScreens.includes(pathname)) {
-          const [token, pin] = await Promise.all([getToken(), getPin()]);
-          if (token && pin) {
+          const pin = await getPin();
+          if (pin) {
             router.push({ pathname: "/(auth)/unlock", params: { resume: "1" } });
           }
         }

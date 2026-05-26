@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
-import { getToken, getPin, setToken, setPin, setUserName } from "../lib/auth";
+import { getToken, getPin, setToken, setUserName } from "../lib/auth";
 
 const E2E = process.env.EXPO_PUBLIC_E2E === "1";
 const FAKE_TOKEN = "eyJtb2NrIjp0cnVlLCJzdWIiOiJ0ZXN0LWNvbGxlY3RvciJ9";
@@ -15,18 +15,17 @@ export default function Index() {
     (async () => {
       if (E2E) {
         await setToken(FAKE_TOKEN);
-        await setPin("1234");
         await setUserName("Pedro Test");
-        setTarget("/(auth)/unlock");
+        setTarget("/(tabs)");
         return;
       }
       const token = await getToken();
-      const pin = await getPin();
-      if (token && pin) {
-        setTarget("/(auth)/unlock");
-      } else {
+      if (!token) {
         setTarget("/(auth)/login");
+        return;
       }
+      const pin = await getPin();
+      setTarget(pin ? "/(auth)/unlock" : "/(tabs)");
     })();
   }, []);
 

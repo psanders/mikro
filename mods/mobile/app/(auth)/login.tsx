@@ -18,7 +18,7 @@ import { colors } from "../../lib/theme";
 import { Input } from "../../components/ui/Input";
 import { BtnCta } from "../../components/ui/BtnCta";
 import { api } from "../../lib/trpc";
-import { setToken, getPin, setPin, setUserName } from "../../lib/auth";
+import { setToken, setUserName } from "../../lib/auth";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -51,11 +51,7 @@ export default function LoginScreen() {
       const result = await api.login.mutate({ phone: e164, password });
       await setToken(result.token);
       if (result.name) await setUserName(result.name);
-      const existingPin = await getPin();
-      if (!existingPin) {
-        await setPin("1234");
-      }
-      router.replace("/(auth)/unlock");
+      router.replace("/(tabs)");
     } catch (err: unknown) {
       const message =
         err instanceof Error && err.message?.includes("Invalid")

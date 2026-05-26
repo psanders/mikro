@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, Alert, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,17 +17,21 @@ type Step = "verify" | "new" | "confirm";
 
 const STEP_TITLE: Record<Step, string> = {
   verify: "Ingresa tu PIN actual",
-  new: "Ingresa tu nuevo PIN",
-  confirm: "Confirma tu nuevo PIN"
+  new: "Crea tu PIN",
+  confirm: "Confirma tu PIN"
 };
 
 export default function CambiarPinScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [step, setStep] = useState<Step>("verify");
+  const [step, setStep] = useState<Step | null>(null);
   const [entered, setEntered] = useState("");
   const [newPin, setNewPin] = useState("");
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    getPin().then((existing) => setStep(existing ? "verify" : "new"));
+  }, []);
 
   async function handleKey(key: string) {
     if (key === "delete") {
@@ -62,7 +66,7 @@ export default function CambiarPinScreen() {
     } else {
       if (next === newPin) {
         await setPin(next);
-        Alert.alert("PIN actualizado", "Tu PIN ha sido cambiado exitosamente.", [
+        Alert.alert("PIN configurado", "Tu PIN ha sido guardado exitosamente.", [
           { text: "OK", onPress: () => router.back() }
         ]);
       } else {
@@ -72,6 +76,11 @@ export default function CambiarPinScreen() {
     }
   }
 
+  if (!step) return null;
+
+  const isSetup = step === "new" && !newPin && !error;
+  const headerTitle = isSetup ? "Crear PIN" : "Cambiar PIN";
+
   const subtitle = error
     ? step === "verify"
       ? "PIN incorrecto. Intenta de nuevo."
@@ -80,7 +89,7 @@ export default function CambiarPinScreen() {
 
   return (
     <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
-      <Header title="Cambiar PIN" />
+      <Header title={headerTitle} />
       <View style={styles.body}>
         <View style={styles.top}>
           <Text style={[styles.subtitle, error && styles.subtitleError]}>{subtitle}</Text>

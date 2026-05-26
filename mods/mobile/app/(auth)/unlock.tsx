@@ -86,7 +86,7 @@ export default function UnlockScreen() {
 
         <View style={styles.pinSection}>
           <PinInput length={PIN_LENGTH} filled={entered.length} error={error} />
-          <Text style={styles.pinHint}>PIN suministrado por tu oficina</Text>
+          <Text style={styles.pinHint}>Ingresa tu PIN de 4 dígitos</Text>
         </View>
 
         <PinKeypad onPress={handleKey} />
