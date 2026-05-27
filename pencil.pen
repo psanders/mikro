@@ -4,8 +4,8 @@
     {
       "type": "frame",
       "id": "v4pCI5",
-      "x": -11227,
-      "y": -3243,
+      "x": -11228,
+      "y": 375,
       "name": "Mikro Brand Book One-Pager",
       "width": 1440,
       "fill": "#F4F8FF",
@@ -16237,8 +16237,8 @@
     {
       "type": "frame",
       "id": "UE21P",
-      "x": -1251,
-      "y": 464,
+      "x": -1308,
+      "y": 375,
       "name": "WhatsApp Updates Ad",
       "clip": true,
       "width": 1080,
@@ -16601,8 +16601,8 @@
     {
       "type": "frame",
       "id": "OoRqk",
-      "x": -51,
-      "y": 464,
+      "x": -108,
+      "y": 375,
       "name": "Instagram Ad",
       "clip": true,
       "width": 1080,
@@ -16960,8 +16960,8 @@
     {
       "type": "frame",
       "id": "FGtZi",
-      "x": 1149,
-      "y": 464,
+      "x": 1092,
+      "y": 375,
       "name": "Facebook Ad (1.91:1)",
       "clip": true,
       "width": 1200,
@@ -23572,13 +23572,492 @@
               ]
             }
           ]
+        },
+        {
+          "type": "frame",
+          "id": "p7hWQ",
+          "cornerRadius": 40,
+          "effect": {
+            "type": "shadow",
+            "shadowType": "outer",
+            "color": "#103A8A1A",
+            "offset": {
+              "x": 0,
+              "y": 16
+            },
+            "blur": 40
+          },
+          "children": [
+            {
+              "type": "frame",
+              "id": "QZSle",
+              "name": "07b Cobrar – Otro Monto",
+              "clip": true,
+              "width": 390,
+              "height": 844,
+              "fill": "#F4F8FF",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "RBjFW",
+                  "type": "ref",
+                  "ref": "g8L0O",
+                  "width": "fill_container"
+                },
+                {
+                  "id": "nPQUc",
+                  "type": "ref",
+                  "ref": "AFMnH",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Ct4uZ": {
+                      "iconFontName": "x"
+                    },
+                    "XlCal": {
+                      "content": "Registrar cobro",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    },
+                    "OJ3eJ": {
+                      "enabled": false
+                    },
+                    "zF54G": {
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "D6M4m",
+                  "name": "s7body",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": [
+                    8,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "id": "YQ79t",
+                      "type": "ref",
+                      "ref": "YPQud",
+                      "width": "fill_container",
+                      "descendants": {
+                        "fh0eC": {
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 20,
+                          "fill": {
+                            "type": "image",
+                            "enabled": true,
+                            "url": "mods/mobile/assets/avatar-guy01.png",
+                            "mode": "fill"
+                          }
+                        },
+                        "fh0eC/dYzed": {
+                          "content": "JN",
+                          "fill": "$brand.orange.deep",
+                          "enabled": false
+                        },
+                        "J6eeV": {
+                          "content": "José Núñez"
+                        },
+                        "LxVf9": {
+                          "enabled": false
+                        },
+                        "t7tfX": {
+                          "content": "Motoconcho · Préstamo #L-00234"
+                        },
+                        "dYHlG": {
+                          "enabled": false
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vguDu",
+                      "name": "s7amt",
+                      "width": "fill_container",
+                      "fill": "$brand.white",
+                      "cornerRadius": 18,
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": [
+                        24,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "fYiJI",
+                          "type": "ref",
+                          "ref": "MiuZj",
+                          "content": "MONTO A COBRAR"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "y5AV4c",
+                          "name": "s7amtR",
+                          "gap": 6,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GFEcI",
+                              "name": "s7amtCur",
+                              "fill": "$brand.blue.primary",
+                              "content": "RD$",
+                              "fontFamily": "Geist",
+                              "fontSize": 22,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "GalPW",
+                              "name": "s7amtN",
+                              "fill": "$brand.blue.deep",
+                              "content": "4,500",
+                              "lineHeight": 1,
+                              "fontFamily": "Geist",
+                              "fontSize": 54,
+                              "fontWeight": "700",
+                              "letterSpacing": -2
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "r0jqV5",
+                          "name": "s7amtH",
+                          "fill": "$brand.orange.deep",
+                          "content": "Otro monto",
+                          "fontFamily": "Geist",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "F4jdl",
+                      "name": "s7opts",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "N11n5",
+                          "type": "ref",
+                          "ref": "MiuZj",
+                          "content": "TIPO DE COBRO"
+                        },
+                        {
+                          "id": "V0Ze4u",
+                          "type": "ref",
+                          "ref": "G2w5DB",
+                          "width": "fill_container",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#D3DFF4"
+                          },
+                          "fill": "$brand.white",
+                          "descendants": {
+                            "v90CVu": {
+                              "fill": "$brand.white",
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#7888A8"
+                              }
+                            },
+                            "wir9I": {
+                              "content": "Cobrar atrasos",
+                              "fontWeight": "500"
+                            },
+                            "PrOFl": {
+                              "content": "RD$3,150",
+                              "enabled": true
+                            }
+                          }
+                        },
+                        {
+                          "id": "pCPFa",
+                          "type": "ref",
+                          "ref": "G2w5DB",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wir9I": {
+                              "content": "Cobrar cuotas multiples"
+                            },
+                            "PrOFl": {
+                              "content": "RD$2,400 × N",
+                              "enabled": true,
+                              "fill": "$brand.ink"
+                            }
+                          }
+                        },
+                        {
+                          "id": "hw92j",
+                          "type": "ref",
+                          "ref": "G2w5DB",
+                          "width": "fill_container",
+                          "fill": "$brand.mist",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$brand.blue.deep"
+                          },
+                          "descendants": {
+                            "v90CVu": {
+                              "fill": "$brand.blue.deep",
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 4,
+                                "fill": "$brand.mist"
+                              }
+                            },
+                            "wir9I": {
+                              "content": "Monto personalizado",
+                              "fontWeight": "600"
+                            },
+                            "PrOFl": {
+                              "content": "",
+                              "enabled": false,
+                              "fill": "#7888A8"
+                            }
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "quxVY",
+                          "width": "fill_container",
+                          "fill": "$brand.white",
+                          "cornerRadius": 12,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$brand.blue.primary"
+                          },
+                          "gap": 8,
+                          "padding": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wmeUV",
+                              "fill": "$brand.blue.primary",
+                              "content": "RD$",
+                              "fontFamily": "Geist",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "p3AdOB",
+                              "fill": "$brand.blue.deep",
+                              "content": "4,500",
+                              "fontFamily": "Geist",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "KxDZ3",
+                          "type": "ref",
+                          "ref": "G2w5DB",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wir9I": {
+                              "content": "Saldar préstamo"
+                            },
+                            "PrOFl": {
+                              "content": "RD$18,750",
+                              "enabled": true,
+                              "fill": "$brand.ink"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UKQzQ",
+                      "name": "s7brk",
+                      "width": "fill_container",
+                      "fill": "$brand.white",
+                      "cornerRadius": 14,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 14,
+                      "children": [
+                        {
+                          "id": "rlAiI",
+                          "type": "ref",
+                          "ref": "MiuZj",
+                          "content": "CÓMO SE APLICA"
+                        },
+                        {
+                          "id": "t6p9L",
+                          "type": "ref",
+                          "ref": "F6nZP",
+                          "width": "fill_container",
+                          "descendants": {
+                            "B917x1": {
+                              "content": "Monto personalizado"
+                            },
+                            "q368B": {
+                              "content": "RD$4,500"
+                            }
+                          }
+                        },
+                        {
+                          "id": "feS6C",
+                          "type": "ref",
+                          "ref": "F6nZP",
+                          "width": "fill_container(322)",
+                          "enabled": false,
+                          "descendants": {
+                            "B917x1": {
+                              "content": "Cuota 4"
+                            },
+                            "q368B": {
+                              "content": "RD$2,400"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "o7hrDd",
+                      "name": "s7method",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "id": "ywrcj",
+                          "type": "ref",
+                          "ref": "MiuZj",
+                          "content": "MÉTODO DE PAGO"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mSoW1",
+                          "name": "s7mthR",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ggB88",
+                              "name": "s7m1",
+                              "width": "fill_container",
+                              "fill": "$brand.blue.deep",
+                              "cornerRadius": 12,
+                              "gap": 8,
+                              "padding": 12,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "lVahk",
+                                  "name": "s7m1i",
+                                  "width": 18,
+                                  "height": 18,
+                                  "iconFontName": "banknote",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$brand.white"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "dt8uu",
+                                  "name": "s7m1t",
+                                  "fill": "$brand.white",
+                                  "content": "Efectivo",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "d5ghy",
+                              "name": "s7m2",
+                              "width": "fill_container",
+                              "fill": "$brand.white",
+                              "cornerRadius": 12,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "#D3DFF4"
+                              },
+                              "gap": 8,
+                              "padding": 12,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "x5JOd",
+                                  "name": "s7m2i",
+                                  "width": 18,
+                                  "height": 18,
+                                  "iconFontName": "arrow-right-left",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$brand.blue.deep"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "pmHk3",
+                                  "name": "s7m2t",
+                                  "fill": "$brand.blue.deep",
+                                  "content": "Transferencia",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "p5REXW",
+                  "type": "ref",
+                  "ref": "CeOUI",
+                  "width": "fill_container",
+                  "cornerRadius": 0,
+                  "descendants": {
+                    "hLf7V": {
+                      "content": "Confirmar y cobrar"
+                    },
+                    "U86FH": {
+                      "iconFontName": "check",
+                      "width": 20,
+                      "height": 20
+                    }
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     {
       "type": "frame",
       "id": "O7VGl",
-      "x": -9973,
+      "x": -9641,
       "y": 375,
       "name": "App Icons",
       "width": 3200,
@@ -23693,7 +24172,8 @@
                   "fill": "#5A7BAF",
                   "content": "No corner radius — OS applies mask",
                   "fontFamily": "Geist",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -23749,7 +24229,8 @@
                   "fill": "#5A7BAF",
                   "content": "Dark mark, safe zone center",
                   "fontFamily": "Geist",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -23803,7 +24284,8 @@
                   "fill": "#5A7BAF",
                   "content": "Gradient fill, full bleed",
                   "fontFamily": "Geist",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -23855,7 +24337,8 @@
                   "fill": "#5A7BAF",
                   "content": "White mark on dark",
                   "fontFamily": "Geist",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -23866,7 +24349,7 @@
     {
       "type": "frame",
       "id": "thgmZ",
-      "x": -9973,
+      "x": -9641,
       "y": 1925,
       "name": "Export Frames (do not edit)",
       "width": 2434,
