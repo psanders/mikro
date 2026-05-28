@@ -98,10 +98,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
         year: "numeric"
       }),
       principalAmount: `RD$ ${formatMoney(amountToNumber(loan.principal))}`,
-      amountPaid:
-        kind === "LATE_FEE"
-          ? `RD$ ${formatMoney(moraOnlyDisplay)}`
-          : `RD$ ${formatMoney(installmentDisplay)}`,
+      amountPaid: kind === "LATE_FEE" ? undefined : `RD$ ${formatMoney(installmentDisplay)}`,
       pendingPayments: Math.max(0, pendingPayments),
       paymentNumber:
         kind === "LATE_FEE"
@@ -110,7 +107,12 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
             ? "Parcial"
             : `P${completedPaymentNumber}`,
       agentName: payment.collectedBy?.name,
-      feePaid: feeAmount > 0 ? `RD$ ${formatMoney(feeAmount)}` : undefined,
+      feePaid:
+        kind === "LATE_FEE"
+          ? `RD$ ${formatMoney(moraOnlyDisplay)}`
+          : feeAmount > 0
+            ? `RD$ ${formatMoney(feeAmount)}`
+            : undefined,
       totalPaid:
         feeAmount > 0 && kind === "INSTALLMENT"
           ? `RD$ ${formatMoney(installmentDisplay + feeAmount)}`

@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
 import { getDatabase } from "./database";
 
 export interface QueuePaymentInput {
@@ -10,6 +11,7 @@ export interface QueuePaymentInput {
   collectedById: string;
   kind?: "INSTALLMENT" | "LATE_FEE";
   cuota?: number;
+  mora?: number;
   notes?: string;
   lateFeeOverride?: number;
 }
@@ -36,6 +38,13 @@ export function queuePayment(input: QueuePaymentInput): number {
   ]);
 
   if (loan) {
+    const split = computePaymentSplit({
+      amount: input.amount,
+      expectedCuota: input.cuota ?? input.amount,
+      accruedMora: input.mora ?? 0,
+      kind: input.kind
+    });
+
     db.runSync(
       `INSERT INTO payments (id, amount, paid_at, method, status, kind, loan_id, collected_by_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -44,9 +53,7 @@ export function queuePayment(input: QueuePaymentInput): number {
         input.amount,
         now,
         input.method ?? "CASH",
-        input.kind !== "LATE_FEE" && input.cuota != null && input.amount < input.cuota
-          ? "PARTIAL"
-          : "COMPLETED",
+        split.installmentStatus,
         input.kind ?? "INSTALLMENT",
         loan.id,
         input.collectedById,

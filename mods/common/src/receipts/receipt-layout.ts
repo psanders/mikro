@@ -103,7 +103,7 @@ export function createReceiptLayout(
   if (principalAmount) {
     fields.push(["Capital", principalAmount]);
   }
-  fields.push(["Cuota", amountPaid]);
+  if (amountPaid && amountPaid !== "RD$ 0.00") fields.push(["Cuota", amountPaid]);
   if (feePaid) {
     fields.push(["Mora", feePaid]);
   }

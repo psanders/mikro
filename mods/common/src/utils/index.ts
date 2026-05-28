@@ -76,3 +76,8 @@ export {
   type LoanWithPaymentsForMora
 } from "./loanMoraHelpers.js";
 export type { CollectedLateFeePayment } from "./lateFee.js";
+export {
+  computePaymentSplit,
+  type PaymentSplitInput,
+  type PaymentSplitResult
+} from "./paymentSplit.js";

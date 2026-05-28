@@ -29,6 +29,7 @@ import {
 } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
+import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -84,7 +85,9 @@ export default function CobrarPagoScreen() {
         value: formatRD(cuota + mora)
       });
     }
-    opts.push({ key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) });
+    if (mora === 0) {
+      opts.push({ key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) });
+    }
     if (mora > 0) {
       opts.push({ key: "mora", label: "Solo mora", value: formatRD(mora) });
     }
@@ -121,6 +124,17 @@ export default function CobrarPagoScreen() {
     }
   }, [effectiveOption, cuota, mora, settleAmount, customAmount]);
 
+  const split = useMemo(
+    () =>
+      computePaymentSplit({
+        amount: amount ?? 0,
+        expectedCuota: cuota,
+        accruedMora: effectiveOption === "mora" ? 0 : mora,
+        kind: effectiveOption === "mora" ? "LATE_FEE" : undefined
+      }),
+    [amount, cuota, mora, effectiveOption]
+  );
+
   const breakdownRows = useMemo(() => {
     const rows: { label: string; value: string }[] = [];
     if (effectiveOption === "mora") {
@@ -135,15 +149,22 @@ export default function CobrarPagoScreen() {
         value: formatRD(remainingCuotas * cuota)
       });
     } else if (effectiveOption === "custom") {
-      rows.push({
-        label: "Monto personalizado",
-        value: customAmount > 0 ? formatRD(customAmount) : "—"
-      });
+      if (mora > 0 && customAmount > 0) {
+        rows.push({ label: "Cargo por mora", value: formatRD(split.lateFeePortion) });
+        if (split.installmentPortion > 0) {
+          rows.push({ label: "Aplica a cuota", value: formatRD(split.installmentPortion) });
+        }
+      } else {
+        rows.push({
+          label: "Monto personalizado",
+          value: customAmount > 0 ? formatRD(customAmount) : "—"
+        });
+      }
     } else {
       rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
     }
     return rows;
-  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas, customAmount]);
+  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas, customAmount, split]);
 
   const hintText = payOptions.find((o) => o.key === effectiveOption)?.label ?? "";
 
@@ -157,11 +178,7 @@ export default function CobrarPagoScreen() {
       amount,
       method: payMethod,
       collectedById: collectorId,
-      ...(effectiveOption === "mora"
-        ? { kind: "LATE_FEE" as const }
-        : effectiveOption === "custom"
-          ? {}
-          : { cuota })
+      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : { cuota, mora })
     };
 
     try {
@@ -177,19 +194,17 @@ export default function CobrarPagoScreen() {
         params: {
           customerName: displayName,
           amount: String(amount),
-          mora: String(
-            effectiveOption === "arrears" ||
-              effectiveOption === "settle" ||
-              effectiveOption === "mora"
-              ? mora
-              : 0
-          ),
-          cuota: String(effectiveOption === "custom" ? 0 : cuota),
+          mora: String(effectiveOption === "cuota" ? 0 : mora),
+          cuota: String(effectiveOption === "custom" && mora === 0 ? 0 : cuota),
           method: methodLabel,
           loanId: String(loanId),
           paymentNumber: String(effectiveOption === "mora" ? 0 : paidCount + 1),
           pendingPayments: String(
-            effectiveOption === "settle" ? 0 : Math.max(0, remainingCuotas - 1)
+            effectiveOption === "settle"
+              ? 0
+              : effectiveOption === "mora" || split.installmentStatus === "PARTIAL"
+                ? remainingCuotas
+                : Math.max(0, remainingCuotas - 1)
           ),
           collectorName: collectorQuery.data?.name ?? ""
         }

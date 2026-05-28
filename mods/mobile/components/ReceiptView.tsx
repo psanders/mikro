@@ -13,7 +13,7 @@ export interface ReceiptViewData {
   date: string;
   paymentNumber: string;
   method?: string;
-  amountPaid: string;
+  amountPaid?: string;
   feePaid?: string;
   totalPaid?: string;
   pendingPayments: number;
@@ -37,7 +37,7 @@ export const ReceiptView = forwardRef<View, { data: ReceiptViewData }>(({ data }
     ["No. de Pago", data.paymentNumber]
   ];
   if (data.method) fields.push(["Método", data.method]);
-  fields.push(["Cuota", data.amountPaid]);
+  if (data.amountPaid) fields.push(["Cuota", data.amountPaid]);
   if (data.feePaid) fields.push(["Mora", data.feePaid]);
   if (data.totalPaid) fields.push(["Total", data.totalPaid]);
   fields.push(["Pagos Pendientes", String(data.pendingPayments)]);

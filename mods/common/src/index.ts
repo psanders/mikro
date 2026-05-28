@@ -61,7 +61,10 @@ export {
   type CalculateLoanParams,
   type CalculateLoanResult,
   type LoanOption,
-  type LoanPaymentFrequency
+  type LoanPaymentFrequency,
+  computePaymentSplit,
+  type PaymentSplitInput,
+  type PaymentSplitResult
 } from "./utils/index.js";
 export {
   LOOKBACK_WEEKS_FOR_LATENESS,

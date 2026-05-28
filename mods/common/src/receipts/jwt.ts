@@ -26,7 +26,7 @@ export interface ReceiptData {
   date: string;
   /** Original loan principal (amount borrowed). */
   principalAmount?: string;
-  amountPaid: string;
+  amountPaid?: string;
   pendingPayments: number;
   paymentNumber: string;
   method?: string;

@@ -11,6 +11,7 @@ import {
   getConfig,
   type ResolvedMikroConfig,
   computeAccruedMora,
+  computePaymentSplit,
   amountToNumber,
   toLoanPaymentData,
   toCollectedLateFeePayments
@@ -115,21 +116,16 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });
 
-    let lateFeePortion = 0;
-    let installmentPortion = amountNum;
+    const split = computePaymentSplit({
+      amount: amountNum,
+      expectedCuota: expected,
+      accruedMora: accrued.moraAmount,
+      kind: params.kind,
+      lateFeeOverride: params.lateFeeOverride,
+      statusOverride: params.status
+    });
 
-    if (params.kind === "LATE_FEE") {
-      lateFeePortion = amountNum;
-      installmentPortion = 0;
-    } else if (params.kind === "INSTALLMENT") {
-      lateFeePortion = 0;
-      installmentPortion = amountNum;
-    } else {
-      const override = params.lateFeeOverride ?? 0;
-      const suggestedMora = Math.max(0, accrued.moraAmount - override);
-      lateFeePortion = Math.min(amountNum, suggestedMora);
-      installmentPortion = amountNum - lateFeePortion;
-    }
+    const { lateFeePortion, installmentPortion } = split;
 
     const method = params.method ?? "CASH";
     const notes = params.notes ?? null;
@@ -155,16 +151,13 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       }
 
       if (installmentPortion > 0) {
-        const resolvedStatus =
-          params.status ??
-          (installmentPortion + 1e-9 < expected ? ("PARTIAL" as const) : ("COMPLETED" as const));
         const created = await tx.payment.create({
           data: {
             loanId: loan.id,
             amount: installmentPortion,
             paidAt,
             method,
-            status: resolvedStatus,
+            status: split.installmentStatus,
             kind: "INSTALLMENT",
             linkedPaymentId: lateFeeRow?.id ?? null,
             collectedById: params.collectedById,

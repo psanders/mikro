@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useState, useRef, useMemo } from "react";
+import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
 import {
   View,
   Text,
@@ -93,7 +94,13 @@ export default function PagoConfirmadoScreen() {
   }, []);
 
   const isMoraOnly = paymentNumber === 0;
-  const isPartial = !isMoraOnly && cuota > 0 && amount - mora < cuota;
+  const split = computePaymentSplit({
+    amount,
+    expectedCuota: cuota,
+    accruedMora: mora,
+    kind: isMoraOnly ? "LATE_FEE" : undefined
+  });
+  const isPartial = !isMoraOnly && split.installmentStatus === "PARTIAL";
 
   const paymentLabel = isMoraOnly
     ? "Mora"
@@ -108,8 +115,8 @@ export default function PagoConfirmadoScreen() {
       date: receiptDate,
       paymentNumber: paymentLabel,
       method,
-      amountPaid: formatReceiptRD(isMoraOnly ? mora : cuota),
-      feePaid: isMoraOnly ? undefined : formatReceiptRD(mora),
+      amountPaid: isMoraOnly ? undefined : formatReceiptRD(cuota),
+      feePaid: mora > 0 ? formatReceiptRD(mora) : undefined,
       totalPaid: formatReceiptRD(amount),
       pendingPayments,
       agentName: collectorName || undefined
@@ -168,7 +175,7 @@ export default function PagoConfirmadoScreen() {
           </View>
           <View style={styles.cardDivider} />
           {mora > 0 && <KvRow label="Mora aplicada" value={formatRD(mora)} />}
-          {cuota > 0 && <KvRow label="Cuota" value={formatRD(cuota)} />}
+          {!isMoraOnly && cuota > 0 && <KvRow label="Cuota" value={formatRD(cuota)} />}
           <KvRow label="Método" value={method} />
           {loanId ? <KvRow label="Préstamo" value={`#${loanId}`} /> : null}
           <KvRow label="Hora" value={formatNow()} />
