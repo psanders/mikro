@@ -16,6 +16,7 @@ jobs:
     env:
       EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://mikro.ngrok-free.dev' }}
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - uses: actions/checkout@v4
