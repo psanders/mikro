@@ -5,7 +5,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import {
   User,
-  Briefcase,
+  Store,
   HandCoins,
   Users,
   Home,
@@ -130,11 +130,13 @@ function DateField({ label, name, value, onChange, required }: DateFieldProps) {
   );
 }
 
+type SelectOption = string | { value: string; label: string };
+
 interface SelectFieldProps {
   label: string;
   name: string;
   placeholder: string;
-  options: string[];
+  options: SelectOption[];
   value: string;
   onChange: (name: string, value: string) => void;
   required?: boolean;
@@ -162,11 +164,15 @@ function SelectField({
         <option value="" disabled>
           {placeholder}
         </option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
+        {options.map((opt) => {
+          const optValue = typeof opt === "string" ? opt : opt.value;
+          const optLabel = typeof opt === "string" ? opt : opt.label;
+          return (
+            <option key={optValue} value={optValue}>
+              {optLabel}
+            </option>
+          );
+        })}
       </select>
     </div>
   );
@@ -251,22 +257,66 @@ const ESTADO_CIVIL_OPTIONS = [
   "Divorciado(a)",
   "Viudo(a)"
 ];
-const SITUACION_LABORAL_OPTIONS = [
-  "Empleado privado",
-  "Empleado público",
-  "Dueño de negocio",
-  "Independiente / Freelance",
-  "Jubilado(a)",
-  "Otro"
+
+// Business type — enum value + display label. Risk is scored downstream, not here.
+const TIPO_NEGOCIO_OPTIONS: SelectOption[] = [
+  { value: "COLMADO", label: "Colmado" },
+  { value: "SUPERMERCADO_PEQUENO", label: "Supermercado pequeño" },
+  { value: "FARMACIA", label: "Farmacia" },
+  { value: "FERRETERIA", label: "Ferretería" },
+  { value: "DISTRIBUIDORA_ALIMENTOS", label: "Distribuidora de alimentos" },
+  { value: "PANADERIA", label: "Panadería" },
+  { value: "CLINICA_PEQUENA", label: "Clínica pequeña" },
+  { value: "LABORATORIO", label: "Laboratorio" },
+  { value: "AGUA_PURIFICADA", label: "Agua purificada" },
+  { value: "VETERINARIA", label: "Veterinaria" },
+  { value: "PAPELERIA", label: "Papelería" },
+  { value: "VENTA_REPUESTOS", label: "Venta de repuestos" },
+  { value: "LAVANDERIA", label: "Lavandería" },
+  { value: "SERVICIOS_FUNERARIOS", label: "Servicios funerarios" },
+  { value: "SALON_BELLEZA_BARBERIA", label: "Salón de belleza / barbería" },
+  { value: "CENTRO_UNAS", label: "Centro de uñas" },
+  { value: "RESTAURANTE", label: "Restaurante" },
+  { value: "FOOD_TRUCK", label: "Food truck" },
+  { value: "BOUTIQUE_ROPA", label: "Boutique / tienda de ropa" },
+  { value: "GIMNASIO", label: "Gimnasio" },
+  { value: "TALLER_MECANICO", label: "Taller mecánico" },
+  { value: "DEALER_VEHICULOS", label: "Dealer de vehículos" },
+  { value: "EBANISTERIA", label: "Ebanistería" },
+  { value: "IMPRENTA", label: "Imprenta" },
+  { value: "ESTUDIO_FOTOGRAFICO", label: "Estudio fotográfico" },
+  { value: "EMPRESA_EVENTOS", label: "Empresa de eventos" },
+  { value: "HELADERIA", label: "Heladería" },
+  { value: "TIENDA_MUEBLES", label: "Tienda de muebles" },
+  { value: "BANCA_APUESTAS", label: "Banca de apuestas" },
+  { value: "DISCOTECA", label: "Discoteca" },
+  { value: "BAR_LIQUOR_STORE", label: "Bar / liquor store" },
+  { value: "VENTA_AMBULANTE", label: "Venta ambulante" },
+  { value: "NEGOCIO_DIGITAL", label: "Negocio totalmente digital" },
+  { value: "REVENTA_REDES", label: "Reventa por redes sociales" },
+  { value: "AGRICULTURA", label: "Agricultura" },
+  { value: "PESCA_ARTESANAL", label: "Pesca artesanal" },
+  { value: "CONSTRUCCION_PEQUENA", label: "Construcción independiente pequeña" },
+  { value: "OTRO", label: "Otro" }
 ];
-const TIEMPO_EMPLEO_OPTIONS = [
-  "Menos de 3 meses",
-  "3 a 6 meses",
+const TIEMPO_OPERANDO_OPTIONS = [
+  "Menos de 6 meses",
   "6 meses a 1 año",
-  "1 a 2 años",
-  "2 a 5 años",
+  "1 a 3 años",
+  "3 a 5 años",
   "Más de 5 años"
 ];
+const VENTAS_MENSUALES_OPTIONS = [
+  "Menos de RD$25,000",
+  "RD$25,000 – RD$50,000",
+  "RD$50,000 – RD$100,000",
+  "RD$100,000 – RD$250,000",
+  "RD$250,000 – RD$500,000",
+  "Más de RD$500,000"
+];
+const TIPO_LOCAL_OPTIONS = ["Propio", "Alquilado", "En mi vivienda"];
+const FORMALIZACION_OPTIONS = ["Tiene RNC (formalizado)", "Informal (sin RNC)"];
+const NUM_EMPLEADOS_OPTIONS = ["Solo yo", "1 a 3", "4 a 10", "Más de 10"];
 const PLAZO_OPTIONS = ["10 semanas", "12 semanas", "15 semanas", "18 semanas"];
 const TIPO_VIVIENDA_OPTIONS = ["Propia", "Alquilada", "Familiar", "Otra"];
 const TIEMPO_RESIDIENDO_OPTIONS = [
@@ -278,14 +328,50 @@ const TIEMPO_RESIDIENDO_OPTIONS = [
 ];
 const PROPOSITO_OPTIONS = [
   "Capital de trabajo",
-  "Compra de mercancía",
-  "Mejora de negocio",
-  "Remodelación de vivienda",
-  "Gastos personales",
-  "Educación",
-  "Salud",
-  "Vehículo",
+  "Compra de inventario / mercancía",
+  "Compra de equipos / maquinaria",
+  "Remodelación / ampliación del local",
+  "Compra o reparación de vehículo de trabajo",
+  "Pago a proveedores",
+  "Expansión / nueva sucursal",
+  "Consolidación de deudas del negocio",
   "Otro"
+];
+
+// Provinces — enum value + display label, properly capitalized as named in the DR.
+const PROVINCIA_OPTIONS: SelectOption[] = [
+  { value: "AZUA", label: "Azua" },
+  { value: "BAHORUCO", label: "Bahoruco" },
+  { value: "BARAHONA", label: "Barahona" },
+  { value: "DAJABON", label: "Dajabón" },
+  { value: "DISTRITO_NACIONAL", label: "Distrito Nacional" },
+  { value: "DUARTE", label: "Duarte" },
+  { value: "ELIAS_PINA", label: "Elías Piña" },
+  { value: "EL_SEIBO", label: "El Seibo" },
+  { value: "ESPAILLAT", label: "Espaillat" },
+  { value: "HATO_MAYOR", label: "Hato Mayor" },
+  { value: "HERMANAS_MIRABAL", label: "Hermanas Mirabal" },
+  { value: "INDEPENDENCIA", label: "Independencia" },
+  { value: "LA_ALTAGRACIA", label: "La Altagracia" },
+  { value: "LA_ROMANA", label: "La Romana" },
+  { value: "LA_VEGA", label: "La Vega" },
+  { value: "MARIA_TRINIDAD_SANCHEZ", label: "María Trinidad Sánchez" },
+  { value: "MONSENOR_NOUEL", label: "Monseñor Nouel" },
+  { value: "MONTE_CRISTI", label: "Monte Cristi" },
+  { value: "MONTE_PLATA", label: "Monte Plata" },
+  { value: "PEDERNALES", label: "Pedernales" },
+  { value: "PERAVIA", label: "Peravia" },
+  { value: "PUERTO_PLATA", label: "Puerto Plata" },
+  { value: "SAMANA", label: "Samaná" },
+  { value: "SAN_CRISTOBAL", label: "San Cristóbal" },
+  { value: "SAN_JOSE_DE_OCOA", label: "San José de Ocoa" },
+  { value: "SAN_JUAN", label: "San Juan" },
+  { value: "SAN_PEDRO_DE_MACORIS", label: "San Pedro de Macorís" },
+  { value: "SANCHEZ_RAMIREZ", label: "Sánchez Ramírez" },
+  { value: "SANTIAGO", label: "Santiago" },
+  { value: "SANTIAGO_RODRIGUEZ", label: "Santiago Rodríguez" },
+  { value: "SANTO_DOMINGO", label: "Santo Domingo" },
+  { value: "VALVERDE", label: "Valverde" }
 ];
 
 const INITIAL_FORM: Record<string, string> = {
@@ -295,12 +381,14 @@ const INITIAL_FORM: Record<string, string> = {
   cedula: "",
   fechaNacimiento: "",
   estadoCivil: "",
-  situacionLaboral: "",
-  empresa: "",
-  cargo: "",
-  ingresoMensual: "",
-  tiempoEmpleo: "",
-  telefonoTrabajo: "",
+  tipoNegocio: "",
+  nombreNegocio: "",
+  tiempoOperando: "",
+  ventasMensuales: "",
+  tipoLocal: "",
+  formalizacion: "",
+  numEmpleados: "",
+  telefonoNegocio: "",
   montoSolicitado: "",
   proposito: "",
   plazo: "",
@@ -311,7 +399,7 @@ const INITIAL_FORM: Record<string, string> = {
   tipoVivienda: "",
   tiempoResidiendo: "",
   direccion: "",
-  sectorCiudad: "",
+  provincia: "",
   referenciaDireccion: ""
 };
 
@@ -332,11 +420,11 @@ const SECTION_DEFS: SectionDef[] = [
     icon: User
   },
   {
-    id: "laboral",
+    id: "negocio",
     num: "02",
-    title: "Información laboral",
-    subtitle: "Cómo generas tus ingresos hoy.",
-    icon: Briefcase
+    title: "Información del negocio",
+    subtitle: "Cuéntanos sobre tu negocio.",
+    icon: Store
   },
   {
     id: "credito",
@@ -573,60 +661,83 @@ export function SolicitudPage() {
                       </>
                     )}
 
-                    {section.id === "laboral" && (
+                    {section.id === "negocio" && (
                       <>
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
-                            label="Situación laboral"
-                            name="situacionLaboral"
+                            label="Tipo de negocio"
+                            name="tipoNegocio"
                             placeholder="Seleccionar"
-                            options={SITUACION_LABORAL_OPTIONS}
-                            value={form.situacionLaboral}
+                            options={TIPO_NEGOCIO_OPTIONS}
+                            value={form.tipoNegocio}
                             onChange={set}
                             required
                           />
                           <TextField
-                            label="Nombre de la empresa / Negocio"
-                            name="empresa"
-                            placeholder="Ej. Claro Dominicana"
-                            value={form.empresa}
-                            onChange={set}
-                            required
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                          <TextField
-                            label="Cargo / Ocupación"
-                            name="cargo"
-                            placeholder="Ej. Analista de sistemas"
-                            value={form.cargo}
-                            onChange={set}
-                            required
-                          />
-                          <CurrencyField
-                            label="Ingreso mensual promedio"
-                            name="ingresoMensual"
-                            placeholder="0"
-                            value={form.ingresoMensual}
+                            label="Nombre del negocio"
+                            name="nombreNegocio"
+                            placeholder="Ej. Colmado La Esperanza"
+                            value={form.nombreNegocio}
                             onChange={set}
                             required
                           />
                         </div>
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
-                            label="Tiempo en el empleo/negocio"
-                            name="tiempoEmpleo"
+                            label="Tiempo operando"
+                            name="tiempoOperando"
                             placeholder="Seleccionar"
-                            options={TIEMPO_EMPLEO_OPTIONS}
-                            value={form.tiempoEmpleo}
+                            options={TIEMPO_OPERANDO_OPTIONS}
+                            value={form.tiempoOperando}
+                            onChange={set}
+                            required
+                          />
+                          <SelectField
+                            label="Ventas mensuales aprox."
+                            name="ventasMensuales"
+                            placeholder="Seleccionar"
+                            options={VENTAS_MENSUALES_OPTIONS}
+                            value={form.ventasMensuales}
+                            onChange={set}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                          <SelectField
+                            label="Local del negocio"
+                            name="tipoLocal"
+                            placeholder="Seleccionar"
+                            options={TIPO_LOCAL_OPTIONS}
+                            value={form.tipoLocal}
+                            onChange={set}
+                            required
+                          />
+                          <SelectField
+                            label="Formalización"
+                            name="formalizacion"
+                            placeholder="Seleccionar"
+                            options={FORMALIZACION_OPTIONS}
+                            value={form.formalizacion}
+                            onChange={set}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                          <SelectField
+                            label="Número de empleados"
+                            name="numEmpleados"
+                            placeholder="Seleccionar"
+                            options={NUM_EMPLEADOS_OPTIONS}
+                            value={form.numEmpleados}
                             onChange={set}
                             required
                           />
                           <PhoneField
-                            label="Teléfono del trabajo"
-                            name="telefonoTrabajo"
-                            value={form.telefonoTrabajo}
+                            label="Teléfono del negocio"
+                            name="telefonoNegocio"
+                            value={form.telefonoNegocio}
                             onChange={set}
+                            required
                           />
                         </div>
                       </>
@@ -728,18 +839,19 @@ export function SolicitudPage() {
                         </div>
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
-                            label="Dirección de residencia"
+                            label="Dirección (calle, número y sector)"
                             name="direccion"
-                            placeholder="Ej. Calle 1, Res. Los Prados"
+                            placeholder="Ej. Calle 1 #25, Los Prados"
                             value={form.direccion}
                             onChange={set}
                             required
                           />
-                          <TextField
-                            label="Sector / Ciudad"
-                            name="sectorCiudad"
-                            placeholder="Ej. Distrito Nacional"
-                            value={form.sectorCiudad}
+                          <SelectField
+                            label="Provincia"
+                            name="provincia"
+                            placeholder="Seleccionar"
+                            options={PROVINCIA_OPTIONS}
+                            value={form.provincia}
                             onChange={set}
                             required
                           />
