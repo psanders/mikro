@@ -15,14 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://mikro.ngrok-free.dev' }}
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-java@v4
         with:

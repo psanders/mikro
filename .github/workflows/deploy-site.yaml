@@ -9,6 +9,9 @@ on:
       - "mods/common/src/utils/loanCalculatorConstants.ts"
   workflow_dispatch:
 
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,10 +22,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Site builds from @mikro/common's source via vite aliases, so it doesn't
+      # need the root "prepare" hook (husky + @mikro/common build). Skipping
+      # scripts avoids building common, whose deps aren't installed in this
+      # site-scoped install. Optional platform binaries (esbuild/rollup) still
+      # install — only lifecycle scripts are skipped.
       - name: Install dependencies
-        run: npm ci --workspace=site --include-workspace-root
+        run: npm ci --workspace=site --include-workspace-root --ignore-scripts
 
       - name: Build site
         env:

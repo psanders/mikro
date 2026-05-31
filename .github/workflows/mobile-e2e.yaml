@@ -21,6 +21,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
 jobs:
   e2e-android:
     runs-on: ubuntu-latest
@@ -37,8 +40,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - uses: actions/setup-java@v4
         with:
@@ -146,8 +152,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install dependencies
         run: npm ci

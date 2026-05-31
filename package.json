@@ -4,6 +4,10 @@
   "description": "Mikro monorepo - Receipt generation and CLI tools",
   "type": "module",
   "private": true,
+  "packageManager": "npm@11.7.0",
+  "engines": {
+    "node": ">=22"
+  },
   "workspaces": [
     "mods/*",
     "site"
