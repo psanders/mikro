@@ -159,9 +159,7 @@ export function Footer() {
 
         <div className="mt-6 flex flex-col gap-3 text-[13px] font-medium md:flex-row md:items-center md:justify-between md:gap-6">
           <p>© 2026 Mikro, S.R.L · Santo Domingo, RD</p>
-          <p className="md:text-right">
-            RNC 1-30-12345-6 · Regulada por la Superintendencia de Bancos
-          </p>
+          <p className="md:text-right">RNC 1-33-61735-8 · No somos un banco, y eso es bueno.</p>
         </div>
       </div>
     </footer>
