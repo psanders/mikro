@@ -33,7 +33,11 @@ function pickDurationOptions(options: LoanOption[]): LoanOption[] {
   return (filtered.length > 0 ? filtered : options).sort((a, b) => a.duration - b.duration);
 }
 
-export const Simulator: React.FC = () => {
+interface SimulatorProps {
+  replayKey?: number;
+}
+
+export const Simulator: React.FC<SimulatorProps> = ({ replayKey = 0 }) => {
   const [amount, setAmount] = useState(SIMULATOR_INITIAL_AMOUNT);
   const [duration, setDuration] = useState(SIMULATOR_INITIAL_DURATION);
   const [showBadges, setShowBadges] = useState(false);
@@ -71,6 +75,10 @@ export const Simulator: React.FC = () => {
   }, [durationOptions, duration]);
 
   useEffect(() => {
+    setShowBadges(false);
+    setBadgesStage(0);
+    setSliderHighlight(false);
+
     const t1 = setTimeout(() => {
       setShowBadges(true);
       setBadgesStage(2);
@@ -91,7 +99,7 @@ export const Simulator: React.FC = () => {
       clearTimeout(t3);
       clearTimeout(t4);
     };
-  }, []);
+  }, [replayKey]);
 
   const fillPercent =
     ((amount - SIMULATOR_MIN_AMOUNT) / (SIMULATOR_MAX_AMOUNT - SIMULATOR_MIN_AMOUNT)) * 100;

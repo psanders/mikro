@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Timer, MapPin, UserCheck, ArrowRight, ArrowUpRight } from "lucide-react";
 import { Nav } from "../components/Nav";
@@ -68,6 +69,16 @@ const STATS = [
 ] as const;
 
 export function HomePage() {
+  const [replayKey, setReplayKey] = useState(0);
+  const simulatorRef = useRef<HTMLDivElement>(null);
+
+  function handleSimularCuota() {
+    setReplayKey((k) => k + 1);
+    if (window.innerWidth < 768) {
+      simulatorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   return (
     <div className="min-h-screen bg-brand-white font-sans text-brand-ink selection:bg-brand-blue-sky/30">
       <Nav />
@@ -101,7 +112,11 @@ export function HomePage() {
               <PrimaryButton as={Link} to="/solicitud" className="w-full md:w-auto">
                 Solicitar mi préstamo
               </PrimaryButton>
-              <SecondaryButton variant="calculator" className="w-full md:w-auto">
+              <SecondaryButton
+                variant="calculator"
+                className="w-full md:w-auto"
+                onClick={handleSimularCuota}
+              >
                 Simular cuota
               </SecondaryButton>
             </div>
@@ -120,8 +135,8 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="w-full shrink-0 md:flex-1 md:pl-6 lg:pl-10 xl:pl-14">
-            <Simulator />
+          <div ref={simulatorRef} className="w-full shrink-0 md:flex-1 md:pl-6 lg:pl-10 xl:pl-14">
+            <Simulator replayKey={replayKey} />
           </div>
         </div>
       </section>

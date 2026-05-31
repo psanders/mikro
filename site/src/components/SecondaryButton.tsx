@@ -10,6 +10,7 @@ interface SecondaryButtonProps {
   className?: string;
   fullWidth?: boolean;
   href?: string;
+  onClick?: () => void;
 }
 
 export function SecondaryButton({
@@ -17,7 +18,8 @@ export function SecondaryButton({
   children,
   className,
   fullWidth = false,
-  href
+  href,
+  onClick
 }: SecondaryButtonProps) {
   const Icon = variant === "calculator" ? Calculator : MessageCircle;
   const classes = clsx(
@@ -41,7 +43,7 @@ export function SecondaryButton({
   }
 
   return (
-    <button type="button" className={classes}>
+    <button type="button" className={classes} onClick={onClick}>
       {content}
     </button>
   );
