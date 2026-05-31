@@ -2,10 +2,11 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { confirm } from "@inquirer/prompts";
-import { formatMoney } from "@mikro/common";
+import { formatMoney, computePaymentSplit } from "@mikro/common";
 import { Args, Flags } from "@oclif/core";
 import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
+import { parseSingleDate, validateDate } from "../../BaseCommand.js";
 import {
   promptNumberIfMissing,
   promptSelectIfMissing,
@@ -54,6 +55,10 @@ export default class Create extends MutationCommand<typeof Create> {
         "Waive this many DOP of accrued mora before split (optional; mora-first allocation only)",
       required: false,
       min: 0
+    }),
+    "paid-at": Flags.string({
+      description: "Payment date YYYY-MM-DD (defaults to today; use when registering a late entry)",
+      required: false
     })
   };
 
@@ -90,6 +95,11 @@ export default class Create extends MutationCommand<typeof Create> {
     );
     const notes = flags.notes || undefined;
 
+    if (flags["paid-at"]) {
+      validateDate(flags["paid-at"]);
+    }
+    const paidAt = flags["paid-at"] ? parseSingleDate(flags["paid-at"]) : undefined;
+
     const loan = await client.getLoanByLoanId.query({ loanId });
     if (!loan) {
       this.error(`Loan not found: ${loanId}`);
@@ -97,20 +107,46 @@ export default class Create extends MutationCommand<typeof Create> {
     }
     const expected = Number(loan.paymentAmount);
 
-    const preview = await client.previewLateFee.query({ loanId });
+    if (paidAt) {
+      this.log(`Fecha de pago: ${paidAt.toISOString().slice(0, 10)}`);
+    }
+    const preview = await client.previewLateFee.query({
+      loanId,
+      ...(paidAt ? { asOf: paidAt } : {})
+    });
+
+    const split = computePaymentSplit({
+      amount,
+      expectedCuota: preview.cuota,
+      accruedMora: preview.accruedMora,
+      lateFeeOverride: flags["late-fee-override"],
+      statusOverride:
+        flags.status === "COMPLETED" || flags.status === "PARTIAL" ? flags.status : undefined
+    });
+
     this.log("");
     this.log(`Cuota: ${formatMoney(preview.cuota)}`);
-    this.log(`Mora bruta: ${formatMoney(preview.grossMora)}`);
-    this.log(`Mora ya cobrada: ${formatMoney(preview.collectedMora)}`);
-    this.log(
-      `Mora neta (a cobrar): ${formatMoney(preview.accruedMora)} (${preview.daysLate} días)`
-    );
-    this.log(`Total sugerido (cuota + mora neta): ${formatMoney(preview.suggestedTotal)}`);
+    if (preview.accruedMora > 0) {
+      this.log(`Mora neta: ${formatMoney(preview.accruedMora)} (${preview.daysLate} días)`);
+    }
+
+    if (amount < preview.suggestedTotal) {
+      this.log(`Pago recibido ${formatMoney(amount)} — distribuido así:`);
+      if (split.lateFeePortion > 0) {
+        this.log(`  → Mora:    ${formatMoney(split.lateFeePortion)}`);
+      }
+      this.log(
+        `  → Cuota:   ${formatMoney(split.installmentPortion)}  (${split.installmentStatus === "PARTIAL" ? "parcial" : "completa"})`
+      );
+    } else {
+      this.log(`Total: ${formatMoney(amount)}`);
+    }
     this.log("");
+
     let status: "COMPLETED" | "PARTIAL" | undefined =
       flags.status === "COMPLETED" || flags.status === "PARTIAL" ? flags.status : undefined;
 
-    if (!status && amount < expected && process.stdout.isTTY) {
+    if (!status && split.installmentStatus === "PARTIAL" && process.stdout.isTTY) {
       const ok = await confirm({
         message: `Amount (${formatMoney(amount)}) is less than expected payment (${formatMoney(expected)}). Record as PARTIAL?`,
         default: true
@@ -122,7 +158,10 @@ export default class Create extends MutationCommand<typeof Create> {
       status = "PARTIAL";
     }
 
-    const ready = await this.confirmOrAbort("Ready to create payment?");
+    const moraPart = split.lateFeePortion > 0 ? `${formatMoney(split.lateFeePortion)} mora + ` : "";
+    const cuotaLabel = split.installmentStatus === "PARTIAL" ? "cuota parcial" : "cuota";
+    const confirmMsg = `Registrar ${moraPart}${formatMoney(split.installmentPortion)} ${cuotaLabel} con ${formatMoney(amount)} recibidos?`;
+    const ready = await this.confirmOrAbort(confirmMsg);
     if (!ready) return;
 
     const lateFeeOverride = flags["late-fee-override"];
@@ -134,6 +173,7 @@ export default class Create extends MutationCommand<typeof Create> {
         method,
         collectedById,
         notes,
+        ...(paidAt ? { paidAt } : {}),
         ...(status ? { status } : {}),
         ...(lateFeeOverride != null ? { lateFeeOverride } : {})
       });
