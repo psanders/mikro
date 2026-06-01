@@ -14,6 +14,14 @@ env:
   COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
+# Serialize publishes. All runs push the shared `latest` tag, so overlapping
+# builds race on it (last writer wins) — a slower older-version build can
+# finish last and clobber `latest` with a stale image. Queue instead of
+# cancel so every tagged release still publishes its versioned image.
+concurrency:
+  group: publish-apiserver
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
