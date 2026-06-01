@@ -2,12 +2,8 @@ name: Publish API Server
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "mods/**"
-      - "package.json"
-      - "package-lock.json"
-      - "lerna.json"
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
@@ -51,6 +47,9 @@ jobs:
         run: |
           if [ -n "${{ inputs.version }}" ]; then
             echo "LERNA_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            tag="${{ github.ref_name }}"
+            echo "LERNA_VERSION=${tag#v}" >> $GITHUB_ENV
           else
             lerna_version=$(node -p "require('./lerna.json').version")
             echo "LERNA_VERSION=$lerna_version" >> $GITHUB_ENV
