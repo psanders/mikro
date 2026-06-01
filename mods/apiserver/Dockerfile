@@ -1,5 +1,5 @@
 # Production image - expects pre-built artifacts from CI
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install runtime dependencies for native modules
 RUN apk add --no-cache \
