@@ -30,11 +30,15 @@ interface QueryResult<T> {
   isSuccess: boolean;
 }
 
-function useSyncVersion(): number {
+// Changes whenever the local data could have changed: after a pull (lastPullAt
+// value updates) or when the pending-mutation queue changes. Used as the effect
+// key for every local query hook so already-mounted screens (Home, Cuadre, ...)
+// re-read the DB and stay consistent. NOTE: must use the full lastPullAt value —
+// an earlier version used its `.length`, which never changes for an ISO string,
+// so screens silently showed stale snapshots after a sync.
+function useSyncVersion(): string {
   const { lastPullAt, pendingCount } = useSyncContext();
-  return useMemo(() => {
-    return (lastPullAt ?? "").length + pendingCount;
-  }, [lastPullAt, pendingCount]);
+  return useMemo(() => `${lastPullAt ?? ""}:${pendingCount}`, [lastPullAt, pendingCount]);
 }
 
 export function useLocalDashboard(): QueryResult<CollectorDashboard> {

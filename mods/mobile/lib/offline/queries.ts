@@ -280,8 +280,12 @@ export function getCollectorDashboard(): CollectorDashboard | null {
 
   const dailyTarget = loans.reduce((sum, l) => sum + l.payment_amount, 0);
   const amountCollected = visits.reduce((sum, v) => sum + v.amountPaidToday, 0);
-  const visitsDone = visits.filter((v) => v.paidToday).length;
-  const visitsPending = loans.length - visitsDone;
+  // "Cobros" counts customers, not loans: a customer with several loans is a
+  // single visit. Done = distinct customers collected today; pending = the rest.
+  const paidCustomerIds = new Set(visits.filter((v) => v.paidToday).map((v) => v.customerId));
+  const allCustomerIds = new Set(visits.map((v) => v.customerId));
+  const visitsDone = paidCustomerIds.size;
+  const visitsPending = allCustomerIds.size - visitsDone;
 
   sortVisits(visits);
 

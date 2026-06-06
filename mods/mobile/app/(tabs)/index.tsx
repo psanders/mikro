@@ -138,7 +138,7 @@ export default function HomeScreen() {
             trackColor={colors.brand.blue.primary}
           />
           <View style={styles.heroMeta}>
-            <Text style={styles.heroMetaLeft}>{data?.visitsDone ?? 0} cobros realizados</Text>
+            <Text style={styles.heroMetaLeft}>{data?.visitsDone ?? 0} clientes</Text>
             <Text style={styles.heroMetaRight}>{data?.visitsPending ?? 0} pendientes</Text>
           </View>
         </View>

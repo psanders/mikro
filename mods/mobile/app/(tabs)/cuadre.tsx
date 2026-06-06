@@ -38,36 +38,35 @@ export default function CuadreScreen() {
 
   const collectorName = dashboard.data?.collector.name?.split(" ")[0] ?? "...";
 
-  const { cashTotal, installmentTotal, lateFeeTotal, cashCount, transferCount } = useMemo(() => {
+  const { cashTotal, transferTotal, totalReceipts } = useMemo(() => {
     const payments = (todayPayments.data ?? []).filter((p) => p.status !== "REVERSED");
+
+    // A "cuota + mora" collection is stored as two linked rows (a LATE_FEE row
+    // plus an INSTALLMENT row that references it via linkedPaymentId). Money
+    // totals sum every row, but a single collection must count as ONE receipt,
+    // so we collapse late-fee rows that belong to an installment row.
+    const linkedIds = new Set(
+      payments.map((p) => p.linkedPaymentId).filter((id): id is string => !!id)
+    );
+    const isMergedLateFee = (p: (typeof payments)[number]) =>
+      p.kind === "LATE_FEE" && linkedIds.has(p.id);
+
     let cash = 0;
-    let installments = 0;
-    let lateFees = 0;
-    let cashC = 0;
-    let transferC = 0;
+    let transfer = 0;
+    let receipts = 0;
 
     for (const p of payments) {
       const amt = Number(p.amount);
-      if (p.kind === "INSTALLMENT") installments += amt;
-      else if (p.kind === "LATE_FEE") lateFees += amt;
-      if (p.method === "CASH") {
-        cash += amt;
-        cashC++;
-      } else {
-        transferC++;
-      }
+      if (p.method === "CASH") cash += amt;
+      else transfer += amt;
+
+      // Count each collection event once (skip the merged mora row).
+      if (isMergedLateFee(p)) continue;
+      receipts++;
     }
 
-    return {
-      cashTotal: cash,
-      installmentTotal: installments,
-      lateFeeTotal: lateFees,
-      cashCount: cashC,
-      transferCount: transferC
-    };
+    return { cashTotal: cash, transferTotal: transfer, totalReceipts: receipts };
   }, [todayPayments.data]);
-
-  const totalReceipts = (todayPayments.data ?? []).filter((p) => p.status !== "REVERSED").length;
   const visitsDone = dashboard.data?.visitsDone ?? 0;
   const visitsPending = dashboard.data?.visitsPending ?? 0;
 
@@ -87,11 +86,7 @@ export default function CuadreScreen() {
           </View>
           <View style={styles.summaryGrid}>
             <View style={styles.summaryGridItem}>
-              <Text style={styles.gridLabel}>Recibos</Text>
-              <Text style={styles.gridValue}>{totalReceipts}</Text>
-            </View>
-            <View style={styles.summaryGridItem}>
-              <Text style={styles.gridLabel}>Cobros</Text>
+              <Text style={styles.gridLabel}>Clientes</Text>
               <Text style={styles.gridValue}>{visitsDone}</Text>
             </View>
             <View style={styles.summaryGridItem}>
@@ -128,10 +123,11 @@ export default function CuadreScreen() {
 
         <View style={styles.breakdownCard}>
           <Text style={styles.breakdownTitle}>DESGLOSE</Text>
-          <KvRow label="Cuotas" value={formatRD(installmentTotal)} />
-          <KvRow label="Cargos por mora" value={formatRD(lateFeeTotal)} />
-          <KvRow label="Efectivo" value={`${cashCount} cobros`} />
-          {transferCount > 0 && <KvRow label="Transferencias" value={`${transferCount} cobros`} />}
+          <KvRow label="Recibos" value={String(totalReceipts)} />
+          <KvRow label="Transferencias" value={formatRD(transferTotal)} />
+          <Text style={styles.breakdownNote}>
+            Las transferencias no entran en el efectivo a entregar.
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -231,5 +227,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     color: colors.text.secondary,
     marginBottom: 4
+  },
+  breakdownNote: {
+    fontFamily: "Geist_500Medium",
+    fontSize: 11,
+    color: colors.text.secondary,
+    lineHeight: 15,
+    marginTop: 2
   }
 });

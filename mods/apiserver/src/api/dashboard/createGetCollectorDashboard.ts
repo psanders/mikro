@@ -92,8 +92,17 @@ export function createGetCollectorDashboard(client: DbClient) {
 
     const dailyTarget = loans.reduce((sum, l) => sum + amountToNumber(l.paymentAmount), 0);
     const amountCollected = todayPayments.reduce((sum, p) => sum + amountToNumber(p.amount), 0);
-    const visitsDone = paidLoanIds.size;
-    const visitsPending = loans.length - visitsDone;
+    // "Cobros" counts customers, not loans: a customer with several loans is a
+    // single visit. Done = distinct customers collected today; pending = the rest.
+    const customerByLoanId = new Map(
+      (loans as LoanWithRelations[]).map((l) => [l.id, l.customer.id])
+    );
+    const paidCustomerIds = new Set(
+      todayPayments.map((p) => customerByLoanId.get(p.loanId)).filter((id): id is string => !!id)
+    );
+    const allCustomerIds = new Set((loans as LoanWithRelations[]).map((l) => l.customer.id));
+    const visitsDone = paidCustomerIds.size;
+    const visitsPending = allCustomerIds.size - visitsDone;
 
     type LoanWithRelations = Loan & {
       customer: {
