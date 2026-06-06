@@ -130,7 +130,7 @@ export const mikroConfigSchema = z
       .string()
       .min(1, "jwtSecret is required for JWT auth")
       .default("dev-jwt-secret-change-in-production"),
-    jwtExpiresIn: z.string().default("7d"),
+    jwtExpiresIn: z.string().default("30d"),
     keysPath: z.string().default("/app/keys"),
     assetsPath: z.string().default("/app/mods/apiserver/assets"),
     messageMaxAgeSeconds: z.number().default(60),

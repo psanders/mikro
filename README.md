@@ -123,7 +123,7 @@ Receipt attachments (PNG, JPG, PDF, max 10 MB) are stored server-side under
 The API only accepts per-user Bearer JWTs. There is no shared credential.
 
 - Log in with `mikro auth:login` and provide the phone (E.164, e.g. `+18091234567`) and password of an existing user. The CLI stores the returned JWT under `~/.mikro/config.json` and sends it as `Authorization: Bearer <token>` on every request.
-- Tokens expire after `jwtExpiresIn` (default `7d`). When a request returns 401, run `mikro auth:logout` followed by `mikro auth:login`.
+- Tokens expire after `jwtExpiresIn` (default `30d`). When a request returns 401, run `mikro auth:logout` followed by `mikro auth:login`.
 - The dev seed creates an admin user at `+1000000001` with password `password123`.
 - Most endpoints currently accept any authenticated user for backwards compatibility. Admin-only enforcement (`adminProcedure`) is wired up in the server and will be applied per-route in a follow-up.
 

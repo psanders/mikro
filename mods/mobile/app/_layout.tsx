@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useEffect, useRef } from "react";
-import { AppState } from "react-native";
+import { Alert, AppState } from "react-native";
 import { Stack, useRouter, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -15,7 +15,38 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient, queryClient } from "../lib/api";
 import { SyncProvider } from "../lib/offline/SyncProvider";
-import { getPin } from "../lib/auth";
+import { getPin, clearToken } from "../lib/auth";
+import { setSessionExpiredHandler } from "../lib/session";
+
+const E2E = process.env.EXPO_PUBLIC_E2E === "1";
+
+// Forces a clean logout when the API rejects the session (expired/invalid JWT).
+// Clears ONLY the auth token — the local SQLite database, pending mutations and
+// the user's PIN are left intact, so unsynced payments survive and push after
+// the collector signs in again.
+function useSessionExpiry() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const pathRef = useRef(pathname);
+  pathRef.current = pathname;
+
+  useEffect(() => {
+    if (E2E) return;
+    setSessionExpiredHandler(() => {
+      const authScreens = ["/", "/(auth)/login", "/(auth)/unlock"];
+      void clearToken().finally(() => {
+        if (!authScreens.includes(pathRef.current)) {
+          Alert.alert(
+            "Sesión expirada",
+            "Tu sesión venció. Inicia sesión de nuevo para continuar."
+          );
+        }
+        router.replace("/(auth)/login");
+      });
+    });
+    return () => setSessionExpiredHandler(null);
+  }, [router]);
+}
 
 function useAppLock() {
   const router = useRouter();
@@ -48,6 +79,7 @@ export default function RootLayout() {
   });
 
   useAppLock();
+  useSessionExpiry();
 
   if (!fontsLoaded) return null;
 

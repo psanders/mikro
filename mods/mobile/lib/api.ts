@@ -6,6 +6,7 @@ import { httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "@mikro/apiserver";
 import { QueryClient } from "@tanstack/react-query";
 import { getToken } from "./auth";
+import { authErrorLink } from "./authErrorLink";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -24,6 +25,7 @@ export const queryClient = new QueryClient({
 
 export const trpcClient = trpc.createClient({
   links: [
+    authErrorLink,
     httpBatchLink({
       url: `${API_URL}/trpc`,
       async headers() {
