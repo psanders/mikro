@@ -51,7 +51,7 @@ export default function CobrarPagoScreen() {
   const lateFeeQuery = useLocalLateFeePreview(numericId);
   const visitQuery = useLocalLoanVisit(numericId);
   const collectorQuery = useLocalCollector();
-  const { isOnline, refreshState } = useSyncContext();
+  const { isOnline, refreshState, pull } = useSyncContext();
 
   const createPayment = trpc.createPayment.useMutation();
 
@@ -184,10 +184,15 @@ export default function CobrarPagoScreen() {
     try {
       if (isOnline) {
         await createPayment.mutateAsync(paymentInput);
+        refreshState();
+        // The payment lives only on the server now; pull it into the local DB so
+        // Cuadre, Plan de pagos and the home "META DE HOY" reflect it instead of
+        // waiting for a stale sync.
+        void pull();
       } else {
         queuePayment(paymentInput);
+        refreshState();
       }
-      refreshState();
 
       router.replace({
         pathname: "/pago-confirmado",

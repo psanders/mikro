@@ -76,6 +76,13 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         const api = createApiClient();
         const result = await pushSync(api);
         syncState.refresh();
+        // After a successful push the local optimistic rows are deleted, so pull
+        // the authoritative server state back down. Without this Cuadre / the
+        // home "META DE HOY" would lose just-collected payments until the next
+        // stale pull.
+        if (result.succeeded > 0) {
+          await doPull(true);
+        }
         if (!silent && result.failed > 0) {
           Alert.alert(
             "Sincronización parcial",
@@ -94,7 +101,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         setIsPushing(false);
       }
     },
-    [syncState]
+    [syncState, doPull]
   );
 
   const pull = useCallback(() => doPull(false), [doPull]);
