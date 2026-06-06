@@ -29,7 +29,12 @@ import {
 } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
+import { getLastCustomerPaymentAt } from "../../lib/offline/queries";
 import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
+
+// Collectors are blocked from charging the same customer twice within this
+// window to prevent duplicate payments. Mirrors the server-side guard.
+const DEDUP_WINDOW_MS = 5 * 60 * 1000;
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -171,6 +176,25 @@ export default function CobrarPagoScreen() {
   const handleConfirm = async () => {
     if (!collectorId || submitting || amount <= 0) return;
 
+    // Guard against duplicate collections for the same customer within the
+    // window (handles double-taps, re-entries, and most sync retries before
+    // they ever reach the server).
+    const customerId = loan?.customerId ?? visit?.customerId;
+    if (customerId) {
+      const lastPaidAt = getLastCustomerPaymentAt(customerId);
+      if (lastPaidAt) {
+        const elapsed = Date.now() - new Date(lastPaidAt).getTime();
+        if (elapsed >= 0 && elapsed < DEDUP_WINDOW_MS) {
+          const mins = Math.max(1, Math.ceil((DEDUP_WINDOW_MS - elapsed) / 60000));
+          Alert.alert(
+            "Cobro reciente",
+            `Ya registraste un cobro para este cliente hace poco. Espera ${mins} min antes de cobrar de nuevo para evitar duplicados.`
+          );
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
     const methodLabel = payMethod === "CASH" ? "Efectivo" : "Transferencia";
     const paymentInput = {
@@ -216,7 +240,14 @@ export default function CobrarPagoScreen() {
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error desconocido";
-      Alert.alert("Error", `No se pudo registrar el cobro: ${message}`);
+      if (message.includes("DUPLICATE_PAYMENT")) {
+        Alert.alert(
+          "Cobro duplicado",
+          "Ya existe un cobro reciente para este cliente. No se registró un cobro duplicado."
+        );
+      } else {
+        Alert.alert("Error", `No se pudo registrar el cobro: ${message}`);
+      }
     } finally {
       setSubmitting(false);
     }

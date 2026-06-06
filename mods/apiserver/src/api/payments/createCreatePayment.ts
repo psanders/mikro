@@ -31,7 +31,18 @@ export interface CreatePaymentResult {
 export interface CreateCreatePaymentOptions {
   onPaymentCreated?: (paymentId: string) => void;
   getConfigFn?: () => ResolvedMikroConfig;
+  /**
+   * When set (> 0), reject a payment if the same collector already recorded a
+   * non-reversed payment for the same customer within this many milliseconds.
+   * Stops collectors from double-charging (e.g. a lost-response sync retry or a
+   * tap-happy re-entry). Left undefined for admins/CTL and automated flows so
+   * they are never blocked.
+   */
+  dedupWindowMs?: number;
 }
+
+/** Marker prefix so clients can recognize a duplicate rejection. */
+export const DUPLICATE_PAYMENT_ERROR = "DUPLICATE_PAYMENT";
 
 function mapPaymentRow(p: {
   id: string;
@@ -74,7 +85,7 @@ function mapPaymentRow(p: {
  * @returns A validated function that creates payment(s)
  */
 export function createCreatePayment(client: DbClient, options?: CreateCreatePaymentOptions) {
-  const { onPaymentCreated, getConfigFn } = options ?? {};
+  const { onPaymentCreated, getConfigFn, dedupWindowMs } = options ?? {};
   const resolveConfig = getConfigFn ?? getConfig;
   const fn = async (params: CreatePaymentInput): Promise<CreatePaymentResult> => {
     logger.verbose("creating payment", { loanId: params.loanId, amount: params.amount.toString() });
@@ -100,6 +111,29 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       loan.moraRate != null ? amountToNumber(loan.moraRate) : cfg.loans.defaultMoraRate;
     const loanStart = new Date(loan.startingDate ?? loan.createdAt);
     const paidAt = params.paidAt ?? new Date();
+
+    if (dedupWindowMs && dedupWindowMs > 0) {
+      const since = new Date(paidAt.getTime() - dedupWindowMs);
+      const recent = await client.payment.findMany({
+        where: {
+          collectedById: params.collectedById,
+          status: { not: "REVERSED" },
+          paidAt: { gte: since, lte: paidAt },
+          loan: { customerId: loan.customerId }
+        },
+        take: 1
+      });
+      if (recent.length > 0) {
+        const minutes = Math.round(dedupWindowMs / 60000);
+        logger.verbose("duplicate payment blocked", {
+          loanId: params.loanId,
+          collectedById: params.collectedById
+        });
+        throw new Error(
+          `${DUPLICATE_PAYMENT_ERROR}: Ya se registró un cobro para este cliente en los últimos ${minutes} minutos.`
+        );
+      }
+    }
 
     const loanData = toLoanPaymentData(loan);
     const accrued = computeAccruedMora({

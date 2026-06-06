@@ -631,6 +631,21 @@ export function listPayments(startDate: Date, endDate: Date): PaymentDetail[] {
   }));
 }
 
+// Most recent non-reversed payment time (ISO) across all of a customer's loans,
+// or null if none. Used to block collectors from double-charging the same
+// customer within a short window.
+export function getLastCustomerPaymentAt(customerId: string): string | null {
+  const db = getDatabase();
+  const row = db.getFirstSync<{ paid_at: string }>(
+    `SELECT p.paid_at FROM payments p
+     JOIN loans l ON p.loan_id = l.id
+     WHERE l.customer_id = ? AND p.status != 'REVERSED'
+     ORDER BY p.paid_at DESC LIMIT 1`,
+    [customerId]
+  );
+  return row?.paid_at ?? null;
+}
+
 // -- Late fee preview --
 
 export interface PreviewLateFeeResult {

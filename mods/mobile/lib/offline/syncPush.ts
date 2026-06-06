@@ -49,6 +49,16 @@ export async function pushSync(api: ApiClient): Promise<PushSyncResult> {
       succeeded++;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
+      // A duplicate rejection means the payment is already recorded on the
+      // server (e.g. the original push succeeded but the response was lost, then
+      // this retry fired). Treat it as done so it doesn't loop or surface as a
+      // false failure — the post-push pull will bring the canonical row down.
+      if (message.includes("DUPLICATE_PAYMENT")) {
+        db.runSync("DELETE FROM pending_mutations WHERE id = ?", [row.id]);
+        db.runSync("DELETE FROM payments WHERE id = ?", [`pending_${row.id}`]);
+        succeeded++;
+        continue;
+      }
       db.runSync(
         "UPDATE pending_mutations SET status = 'failed', error = ?, retry_count = retry_count + 1 WHERE id = ?",
         [message, row.id]

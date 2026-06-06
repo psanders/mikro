@@ -412,7 +412,12 @@ export const protectedRouter = router({
    * Create a new payment for a loan.
    */
   createPayment: protectedProcedure.input(createPaymentSchema).mutation(async ({ ctx, input }) => {
-    const fn = createCreatePayment(ctx.db);
+    // Block collectors from double-charging the same customer within 5 minutes.
+    // Admins (e.g. CTL back-office) bypass the guard.
+    const isAdmin = ctx.roles.includes("ADMIN");
+    const isCollector = ctx.roles.includes("COLLECTOR");
+    const dedupWindowMs = isCollector && !isAdmin ? 5 * 60 * 1000 : undefined;
+    const fn = createCreatePayment(ctx.db, { dedupWindowMs });
     return fn(input);
   }),
 
