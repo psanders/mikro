@@ -73,6 +73,21 @@ jobs:
           npm run build -w @mikro/common
           npm run build -w @mikro/apiserver
 
+      # Stamp the real version into tauri.conf.json so installers aren't named
+      # 0.0.0. On a v* tag use the tag (v1.2.0 -> 1.2.0); on manual dispatch
+      # fall back to lerna.json. node keeps this runner-agnostic.
+      - name: Set app version
+        shell: bash
+        run: |
+          ref="${{ github.ref_name }}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            version="${ref#v}"
+          else
+            version="$(node -p "require('./lerna.json').version")"
+          fi
+          echo "Stamping dashboard version $version"
+          node -e "const f='mods/dashboard/src-tauri/tauri.conf.json';const c=require('./'+f);c.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(c,null,2)+'\n')" "$version"
+
       - name: Build Tauri app
         id: tauri
         uses: tauri-apps/tauri-action@v0
