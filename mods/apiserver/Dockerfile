@@ -38,20 +38,13 @@ RUN chmod +x ./mods/apiserver/docker-entrypoint.sh
 RUN npm ci --omit=dev --ignore-scripts && \
     npm rebuild better-sqlite3
 
-# `npm ci` from a lockfile generated on another platform does not reliably
-# install @resvg/resvg-js's musl native binary, so the server crashes at startup
-# with "Cannot find module '@resvg/resvg-js-linux-x64-musl'". Install the
-# arch-matched binary explicitly (TARGETARCH is set by buildx; fall back to
-# Node's process.arch for a plain `docker build`). Keep the version in lockstep
-# with @resvg/resvg-js.
-ARG TARGETARCH
-RUN ARCH="${TARGETARCH:-$(node -e 'process.stdout.write(process.arch)')}" && \
-    case "$ARCH" in \
-      amd64 | x64) RESVG_BINARY="@resvg/resvg-js-linux-x64-musl" ;; \
-      arm64) RESVG_BINARY="@resvg/resvg-js-linux-arm64-musl" ;; \
-      *) echo "Unsupported architecture for resvg: $ARCH" && exit 1 ;; \
-    esac && \
-    npm install --no-save --include=optional "${RESVG_BINARY}@2.6.2"
+# `npm ci` from a macOS-generated lockfile omits the linux-musl native binaries
+# for sharp and @resvg/resvg-js, so the server crashes at startup ("Could not
+# load the sharp module" / "Cannot find module '@resvg/resvg-js-linux-x64-musl'").
+# Reinstall the native runtime packages so npm fetches the correct musl optionals
+# (sharp also pulls its @img/sharp-libvips-linuxmusl-* sub-package) for the build
+# arch — the alpine base already targets linux-musl. Versions track the lockfile.
+RUN npm install --no-save --include=optional sharp@0.34.5 @resvg/resvg-js@2.6.2
 
 # Install Prisma CLI globally for migrations
 RUN npm install -g prisma@^7.3.0 && \
