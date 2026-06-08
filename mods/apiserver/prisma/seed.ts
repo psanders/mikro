@@ -136,11 +136,13 @@ async function main() {
   // ---------------------------------------------------------------------------
   const admin = await prisma.user.upsert({
     where: { id: ID.users.admin },
-    update: { password: devPasswordHash },
+    update: { password: devPasswordHash, phone: "+18095551234" },
     create: {
       id: ID.users.admin,
       name: "Admin User",
-      phone: "+1000000001",
+      // Valid E.164 (DR) — login validates via the `phone` library, which
+      // rejects placeholder numbers like +1000000001.
+      phone: "+18095551234",
       password: devPasswordHash,
       roles: { create: [{ role: "ADMIN" }] }
     }
@@ -148,11 +150,11 @@ async function main() {
 
   const collector1 = await prisma.user.upsert({
     where: { id: ID.users.collector1 },
-    update: { password: devPasswordHash },
+    update: { password: devPasswordHash, phone: "+18091112233" },
     create: {
       id: ID.users.collector1,
       name: "Juan Collector",
-      phone: "+1000000002",
+      phone: "+18091112233",
       password: devPasswordHash,
       roles: { create: [{ role: "COLLECTOR" }] }
     }
@@ -160,11 +162,11 @@ async function main() {
 
   const collector2 = await prisma.user.upsert({
     where: { id: ID.users.collector2 },
-    update: { password: devPasswordHash },
+    update: { password: devPasswordHash, phone: "+18092223344" },
     create: {
       id: ID.users.collector2,
       name: "Ana Collector",
-      phone: "+1000000003",
+      phone: "+18092223344",
       password: devPasswordHash,
       roles: { create: [{ role: "COLLECTOR" }] }
     }
@@ -198,7 +200,7 @@ async function main() {
         id: ID.customers[i],
         name: customerNames[i],
         nickname: i === 0 ? "Ali" : null,
-        phone: `+12345678${String(i).padStart(2, "0")}`,
+        phone: `+1809555${String(1000 + i)}`,
         idNumber: `ID-${10000 + i}`,
         collectionPoint: i % 2 === 0 ? `Point ${i + 1}` : null,
         homeAddress: `${100 + i} Main St`,
