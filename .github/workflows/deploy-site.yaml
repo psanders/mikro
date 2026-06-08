@@ -38,7 +38,7 @@ jobs:
 
       - name: Build site
         env:
-          VITE_GOOGLE_FORM_URL: ${{ secrets.VITE_GOOGLE_FORM_URL }}
+          VITE_APPLICATIONS_URL: ${{ secrets.VITE_APPLICATIONS_URL }}
         run: npm run build --workspace=site
 
       - name: Prepare deploy
