@@ -44,6 +44,10 @@
     "build:mobile:ios:local": "npm run build:ios:local -w @mikro/mobile",
     "start:site": "npm run dev -w site",
     "build:site": "npm run build -w site",
+    "start:dashboard": "npm run dev -w @mikro/dashboard",
+    "build:dashboard": "npm run build -w @mikro/dashboard",
+    "tauri:dashboard:dev": "npm run tauri:dev -w @mikro/dashboard",
+    "tauri:dashboard:build": "npm run tauri:build -w @mikro/dashboard",
     "export:loan-situation": "npx tsx .scripts/export-loan-situation.ts",
     "lending:cash-position": "npx tsx .scripts/lending-cash-position.ts"
   },

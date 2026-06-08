@@ -31,3 +31,10 @@ eval-results/
 data/
 public/
 !site/public/
+# Storybook build output
+**/storybook-static/
+
+# Runtime data with PII — never commit
+contracts/
+mikro.csv
+*.csv
