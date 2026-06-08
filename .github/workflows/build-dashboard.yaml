@@ -1,0 +1,107 @@
+name: Build Dashboard (Tauri)
+
+# Builds the Mikro Operaciones desktop app (Tauri 2) for macOS + Windows,
+# pointed at the production API. On a v* tag (pushed by release.yaml) the
+# installers are attached to that GitHub Release; on manual dispatch they are
+# uploaded as workflow artifacts.
+#
+# The production API base URL is baked into the frontend at build time via
+# VITE_API_URL. Override it by setting an Actions *variable* named VITE_API_URL
+# (Settings → Secrets and variables → Actions → Variables); otherwise it falls
+# back to the same host the mobile build uses.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: build-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  # Production API the desktop app talks to (no trailing slash; the app appends /trpc).
+  VITE_API_URL: ${{ vars.VITE_API_URL || 'https://mikro.ngrok-free.dev' }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+            rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+          - platform: windows-latest
+            args: ""
+            rust-targets: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - name: Cache Rust (src-tauri)
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: mods/dashboard/src-tauri -> target
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The dashboard imports @mikro/common (runtime) and the AppRouter *type*
+      # from @mikro/apiserver, so both must be built before the frontend build.
+      # apiserver's build runs `prisma generate`, which needs no database.
+      - name: Build workspace dependencies
+        run: |
+          npm run build -w @mikro/common
+          npm run build -w @mikro/apiserver
+
+      - name: Build Tauri app
+        id: tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_API_URL: ${{ env.VITE_API_URL }}
+        with:
+          projectPath: mods/dashboard
+          args: ${{ matrix.args }}
+          # On a tag, create/append to the matching GitHub Release; on manual
+          # dispatch tagName is empty, so tauri-action only builds (no release).
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: "Mikro Operaciones ${{ github.ref_name }}"
+          releaseBody: "Desktop builds for ${{ github.ref_name }}. API: ${{ env.VITE_API_URL }}"
+          releaseDraft: false
+          prerelease: false
+
+      # Manual-dispatch runs have no release to attach to — keep the installers
+      # as downloadable artifacts instead.
+      - name: Upload installers (manual dispatch)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mikro-dashboard-${{ matrix.platform }}
+          # Covers native (target/release/bundle) and the macOS universal
+          # target (target/universal-apple-darwin/release/bundle): .dmg/.app,
+          # .msi, and the NSIS .exe.
+          path: mods/dashboard/src-tauri/target/**/release/bundle/**
+          if-no-files-found: error
