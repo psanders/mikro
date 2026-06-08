@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.2.0](https://github.com/psanders/mikro/compare/v1.1.3...v1.2.0) (2026-06-08)
+
+### Bug Fixes
+
+- **apiserver:** seed users/customers with valid E.164 phones ([437bd3e](https://github.com/psanders/mikro/commit/437bd3e8642b37a003acd89efb92c170dae4ff24))
+- **deps:** regenerate lockfile to sync site react/react-dom ([4467993](https://github.com/psanders/mikro/commit/44679934b3357c43f179f15b60ca149fd6e20254))
+
+### Features
+
+- **apiserver:** loan application pipeline; remove referrer endpoints ([d0848b4](https://github.com/psanders/mikro/commit/d0848b45f9289ea0662b3bce0081311ce6161a9d))
+- **common:** loan application schemas, scoring, and types; drop referrer ([30934ea](https://github.com/psanders/mikro/commit/30934eac0c98056b187f137d005ae486e8394770))
+- **dashboard:** ops dashboard with v2 design system ([4aea486](https://github.com/psanders/mikro/commit/4aea48669414a0474ac14a28964f63a6c1650a78))
+
 ## [1.1.3](https://github.com/psanders/mikro/compare/v1.1.2...v1.1.3) (2026-06-06)
 
 ### Bug Fixes
