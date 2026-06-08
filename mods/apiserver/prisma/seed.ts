@@ -1,23 +1,42 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Loads repo-root .env so MIKRO_CONFIG_FILE is set, then reads databaseUrl via getDatabaseUrlFromFile (same as rest of app).
+ * Loads repo-root .env so MIKRO_CONFIG_FILE is set, then resolves databaseUrl
+ * from the config file. The resolution is inlined (mirrors `getDatabaseUrlFromFile`
+ * in @mikro/common) so the seed doesn't import the @mikro/common barrel, which
+ * pulls in the receipt stack and its native @resvg/resvg-js binding — needless
+ * here and a break point in CI when the platform binary isn't installed.
  */
+import { existsSync, readFileSync } from "fs";
 import { config as loadDotenv } from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import { getDatabaseUrlFromFile } from "@mikro/common";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 
 loadDotenv({ path: resolve(repoRoot, ".env") });
 
+/** Runtime/Docker default; mirrors @mikro/common's DEFAULT_DATABASE_URL. */
+const DEFAULT_DATABASE_URL = "file:/app/data/mikro.db";
+
+function databaseUrl(): string {
+  const filePath = resolve(repoRoot, process.env.MIKRO_CONFIG_FILE ?? "mikro.json");
+  if (!existsSync(filePath)) return DEFAULT_DATABASE_URL;
+  try {
+    const raw = JSON.parse(readFileSync(filePath, "utf-8")) as { databaseUrl?: unknown };
+    if (typeof raw.databaseUrl === "string" && raw.databaseUrl.trim()) return raw.databaseUrl;
+  } catch {
+    // fall through to default
+  }
+  return DEFAULT_DATABASE_URL;
+}
+
 const adapter = new PrismaBetterSqlite3({
-  url: getDatabaseUrlFromFile(undefined, repoRoot)
+  url: databaseUrl()
 });
 
 const prisma = new PrismaClient({ adapter });
