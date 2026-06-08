@@ -22,7 +22,6 @@ import { handleListUsers } from "./listUsers.js";
 import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
 import { handlePreviewLateFee } from "./previewLateFee.js";
 import { handleExportCollectorCustomers } from "./exportCollectorCustomers.js";
-import { handleExportCustomersByReferrer } from "./exportCustomersByReferrer.js";
 import { handleExportAllCustomers } from "./exportAllCustomers.js";
 import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
 import { handleGenerateDefaultedReport } from "./handleGenerateDefaultedReport.js";
@@ -70,7 +69,6 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     getLoanByLoanId: handleGetLoanByLoanId,
     previewLateFee: handlePreviewLateFee,
     exportCollectorCustomers: handleExportCollectorCustomers,
-    exportCustomersByReferrer: handleExportCustomersByReferrer,
     exportAllCustomers: handleExportAllCustomers,
     generatePerformanceReport: handleGeneratePerformanceReport,
     generateDefaultedReport: handleGenerateDefaultedReport,

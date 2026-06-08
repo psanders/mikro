@@ -45,7 +45,6 @@ export interface SerializedCustomer {
   collectionPoint?: string | null;
   notes?: string | null;
   preferredPaymentDay?: string | null;
-  referredBy: { name: string } | null;
   loans: SerializedLoan[];
 }
 
@@ -87,7 +86,6 @@ export interface CustomerReportRow {
   paymentsMade: number;
   termLength: number;
   trend: string;
-  referredBy: string;
   collectionPoint: string;
   notes: string;
 }
@@ -115,7 +113,6 @@ export function buildCustomerReportRows(customers: SerializedCustomer[]): Custom
         paymentsMade,
         termLength: loan.termLength,
         trend: getLatenessTrend(data),
-        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? ""
       });
@@ -138,9 +135,7 @@ export function outputCustomersAsCsv(
   customers: SerializedCustomer[],
   log: (message: string) => void
 ): void {
-  log(
-    "Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Afiliado por,Lugar de Cobro,Notas"
-  );
+  log("Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Lugar de Cobro,Notas");
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
     const row = [
@@ -152,7 +147,6 @@ export function outputCustomersAsCsv(
       r.rating,
       formatPagosCell(r.paymentsMade, r.termLength),
       r.trend,
-      `"${r.referredBy}"`,
       `"${r.collectionPoint.replace(/"/g, '""')}"`,
       `"${(r.notes ?? "").replace(/"/g, '""')}"`
     ].join(",");
@@ -353,7 +347,6 @@ export async function writeCustomersToExcel(
     { header: "Rating", key: "rating", width: 8 },
     { header: "Pagos", key: "pagos", width: 12 },
     { header: "Tendencia", key: "trend", width: 12 },
-    { header: "Afiliado por", key: "referredBy", width: 20 },
     { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
     { header: "Notas", key: "notes", width: 25 }
   ];
@@ -389,7 +382,6 @@ export async function writeCustomersToExcel(
         paymentsMade,
         termLength: loan.termLength,
         trend: getLatenessTrend(data),
-        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? "",
         highlight: getReportRowHighlight(data)
@@ -413,7 +405,6 @@ export async function writeCustomersToExcel(
       rating: r.rating,
       pagos: formatPagosCell(r.paymentsMade, r.termLength),
       trend: r.trend,
-      referredBy: r.referredBy,
       collectionPoint: r.collectionPoint,
       notes: r.notes
     });
@@ -487,7 +478,7 @@ export async function writeCustomersToCsv(
 ): Promise<{ loanCount: number; customerCount: number }> {
   const lines: string[] = [];
   lines.push(
-    "Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Afiliado por,Lugar de Cobro,Notas"
+    "Nombre,Apodo,Teléfono,Préstamo,Ciclo de Pago,Rating,Pagos,Tendencia,Lugar de Cobro,Notas"
   );
   const rows = buildCustomerReportRows(customers);
   for (const r of rows) {
@@ -501,7 +492,6 @@ export async function writeCustomersToCsv(
         r.rating,
         formatPagosCell(r.paymentsMade, r.termLength),
         r.trend,
-        `"${r.referredBy}"`,
         `"${r.collectionPoint.replace(/"/g, '""')}"`,
         `"${(r.notes ?? "").replace(/"/g, '""')}"`
       ].join(",")

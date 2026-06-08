@@ -72,16 +72,13 @@ export function createMessageRouter(deps: RouterDependencies) {
         };
       }
 
-      // Get the user's primary role (prefer ADMIN > COLLECTOR > REFERRER)
+      // Get the user's primary role (prefer ADMIN > COLLECTOR)
       const roles = user.roles.map((r) => r.role);
-      let primaryRole: "ADMIN" | "COLLECTOR" | "REFERRER" = "COLLECTOR";
+      let primaryRole: "ADMIN" | "COLLECTOR" = "COLLECTOR";
 
       if (roles.includes("ADMIN")) {
         primaryRole = "ADMIN";
       } else if (roles.includes("COLLECTOR")) {
-        primaryRole = "COLLECTOR";
-      } else if (roles.includes("REFERRER")) {
-        // Referrers don't have a dedicated agent, default to COLLECTOR
         primaryRole = "COLLECTOR";
       }
 

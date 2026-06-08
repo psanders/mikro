@@ -231,7 +231,7 @@ export async function promptCategorySelectIfMissing(
   return chosen === "__none__" ? undefined : chosen;
 }
 
-export type UserRole = "ADMIN" | "COLLECTOR" | "REFERRER";
+export type UserRole = "ADMIN" | "COLLECTOR" | "REVIEWER";
 
 type ListUsersClient = {
   listUsers: {

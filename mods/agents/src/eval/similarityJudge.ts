@@ -114,7 +114,7 @@ IMPORTANT RULES:
 1. ONLY check if expected keys exist in actual with matching values
 2. IGNORE any extra keys in actual that are not in expected - they DO NOT affect the result
 3. For person names: names with the same words in different order ARE equivalent (e.g., "Pedro Santiago Sanders Almonte" = "Sanders Almonte Pedro Santiago" = "Pedro Sanders Almonte")
-4. Values are semantically equivalent if they represent the same thing (e.g., "Isaic" matches "Isaac", "REFERRER" matches "referrer")`;
+4. Values are semantically equivalent if they represent the same thing (e.g., "Isaic" matches "Isaac", "COLLECTOR" matches "collector")`;
 
   const userPrompt = `Expected arguments:
 ${JSON.stringify(expected, null, 2)}

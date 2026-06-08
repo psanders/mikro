@@ -30,7 +30,7 @@ export default class Update extends MutationCommand<typeof Update> {
     }),
     role: Flags.string({
       description: "User role",
-      options: ["ADMIN", "COLLECTOR", "REFERRER"],
+      options: ["ADMIN", "COLLECTOR", "REVIEWER"],
       required: false
     }),
     password: Flags.string({
@@ -89,18 +89,18 @@ export default class Update extends MutationCommand<typeof Update> {
             : userFromDB.enabled;
 
       const role =
-        (flags.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined) ??
+        (flags.role as "ADMIN" | "COLLECTOR" | "REVIEWER" | undefined) ??
         (process.stdout.isTTY
           ? await select({
               message: "Role",
               choices: [
                 { name: "Admin", value: "ADMIN" as const },
                 { name: "Collector", value: "COLLECTOR" as const },
-                { name: "Referrer", value: "REFERRER" as const }
+                { name: "Reviewer", value: "REVIEWER" as const }
               ],
-              default: (currentRole ?? "REFERRER") as "ADMIN" | "COLLECTOR" | "REFERRER"
+              default: (currentRole ?? "COLLECTOR") as "ADMIN" | "COLLECTOR" | "REVIEWER"
             })
-          : (currentRole ?? "REFERRER"));
+          : (currentRole ?? "COLLECTOR"));
 
       let newPassword: string | undefined = flags.password ?? undefined;
       if (newPassword === undefined && process.stdout.isTTY) {

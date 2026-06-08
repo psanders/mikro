@@ -16,7 +16,7 @@ export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new customer";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+18091234567' --id-number '123-4567890-1' --home-address '123 Main St' --referrer-id abc-def --collector-id xyz-123"
+    "<%= config.bin %> <%= command.id %> --name 'John Doe' --phone '+18091234567' --id-number '123-4567890-1' --home-address '123 Main St' --collector-id xyz-123"
   ];
   static override readonly flags = {
     name: Flags.string({
@@ -41,10 +41,6 @@ export default class Create extends MutationCommand<typeof Create> {
     }),
     "home-address": Flags.string({
       description: "Home Address",
-      required: false
-    }),
-    "referrer-id": Flags.string({
-      description: "Referrer User ID (or 'none' for no referrer)",
       required: false
     }),
     "collector-id": Flags.string({
@@ -104,20 +100,6 @@ export default class Create extends MutationCommand<typeof Create> {
       "Home Address",
       "home-address"
     );
-    let referredById: string | null;
-    if (flags["referrer-id"] === "none") {
-      referredById = null;
-    } else if (flags["referrer-id"]) {
-      referredById = flags["referrer-id"];
-    } else {
-      const users = await client.listUsers.query({ showDisabled: true });
-      const referrers = users.filter((u) => u.roles?.some((r) => r.role === "REFERRER"));
-      const choices: Array<{ name: string; value: string | null }> = [
-        { name: "None", value: null },
-        ...referrers.map((u) => ({ name: `${u.name} (${u.id})`, value: u.id as string | null }))
-      ];
-      referredById = await select({ message: "Referrer", choices });
-    }
     const assignedCollectorId = await promptUserSelectIfMissing(
       client,
       flags["collector-id"],
@@ -165,7 +147,6 @@ export default class Create extends MutationCommand<typeof Create> {
         idNumber,
         collectionPoint,
         homeAddress,
-        referredById: referredById ?? undefined,
         assignedCollectorId,
         jobPosition,
         income,

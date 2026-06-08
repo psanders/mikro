@@ -28,7 +28,6 @@ export interface ExportedCustomer {
   collectionPoint: string | null;
   notes: string | null;
   preferredPaymentDay?: string | null;
-  referredBy: { name: string } | null;
   loans: ExportedLoan[];
 }
 
@@ -43,7 +42,6 @@ export interface ToolExecutorDependencies {
     idNumber: string;
     collectionPoint?: string;
     homeAddress: string;
-    referredById?: string | null;
     assignedCollectorId?: string;
     jobPosition?: string;
     income?: number;
@@ -52,7 +50,7 @@ export interface ToolExecutorDependencies {
   }) => Promise<{ id: string; name: string; phone: string }>;
 
   /** List users with optional role filter */
-  listUsers: (params?: { role?: "ADMIN" | "COLLECTOR" | "REFERRER" }) => Promise<
+  listUsers: (params?: { role?: "ADMIN" | "COLLECTOR" | "REVIEWER" }) => Promise<
     Array<{
       id: string;
       name: string;
@@ -197,10 +195,7 @@ export interface ToolExecutorDependencies {
     assignedCollectorId: string;
   }) => Promise<ExportedCustomer[]>;
 
-  /** Export customers by referrer with loans and referrer for report generation */
-  exportCustomersByReferrer: (params: { referredById: string }) => Promise<ExportedCustomer[]>;
-
-  /** Export all customers with loans and referrer for report generation (admin only) */
+  /** Export all customers with loans for report generation (admin only) */
   exportAllCustomers: () => Promise<ExportedCustomer[]>;
 
   /** Generate performance report (metrics + LLM narrative + PNG). Returns base64 image. */

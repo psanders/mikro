@@ -24,11 +24,6 @@ export const createCustomerTool: ToolFunction = {
           description:
             "Número de teléfono del cliente (se proporciona automáticamente del contexto)"
         },
-        referredById: {
-          type: "string",
-          description:
-            "ID del referidor (UUID) o null si no tiene referidor. Proceso: 1) Pregunta al usuario '¿Quién te refirió?' o '¿Quién te habló de Mikro Créditos?', 2) Si responde 'nadie', 'ninguno', 'none', o similar, envía null, 3) De lo contrario, llama listUsers con role='REFERRER' para obtener la lista de referidores disponibles con sus IDs, 4) Haz coincidir el nombre proporcionado por el usuario con uno de la lista, 5) Si no estás seguro, muestra las opciones al usuario y confirma, 6) Usa el ID (campo 'id') del referidor seleccionado aquí."
-        },
         name: {
           type: "string",
           description: "Nombre completo del cliente extraído de la cédula de identidad"
@@ -458,15 +453,15 @@ export const listUsersTool: ToolFunction = {
   function: {
     name: "listUsers",
     description:
-      "Listar todos los usuarios disponibles. Útil para encontrar referidores (REFERRER) y cobradores (COLLECTOR) al crear un nuevo cliente. Los usuarios incluyen sus roles.",
+      "Listar todos los usuarios disponibles. Útil para encontrar cobradores (COLLECTOR) y administradores (ADMIN). Los usuarios incluyen sus roles.",
     parameters: {
       type: "object",
       properties: {
         role: {
           type: "string",
           description:
-            "Filtrar usuarios por rol: 'REFERRER' para referidores, 'COLLECTOR' para cobradores, 'ADMIN' para administradores. Si no se especifica, muestra todos los usuarios.",
-          enum: ["ADMIN", "COLLECTOR", "REFERRER"]
+            "Filtrar usuarios por rol: 'COLLECTOR' para cobradores, 'ADMIN' para administradores, 'REVIEWER' para revisores. Si no se especifica, muestra todos los usuarios.",
+          enum: ["ADMIN", "COLLECTOR", "REVIEWER"]
         }
       },
       required: []
@@ -484,24 +479,6 @@ export const exportCollectorCustomersTool: ToolFunction = {
     name: "exportCollectorCustomers",
     description:
       "Generar un reporte de los clientes asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: []
-    }
-  }
-};
-
-/**
- * Tool definition for exporting customers by referrer.
- * Used by referrers to generate a report of customers they referred.
- */
-export const exportCustomersByReferrerTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "exportCustomersByReferrer",
-    description:
-      "Generar un reporte de los clientes referidos por el usuario. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
     parameters: {
       type: "object",
       properties: {},
@@ -625,7 +602,6 @@ export const allTools: ToolFunction[] = [
   getLoanByLoanIdTool,
   previewLateFeeTool,
   exportCollectorCustomersTool,
-  exportCustomersByReferrerTool,
   exportAllCustomersTool,
   generatePerformanceReportTool,
   generateDefaultedReportTool,

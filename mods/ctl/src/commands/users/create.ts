@@ -25,7 +25,7 @@ export default class Create extends MutationCommand<typeof Create> {
     }),
     role: Flags.string({
       description: "User role",
-      options: ["ADMIN", "COLLECTOR", "REFERRER"],
+      options: ["ADMIN", "COLLECTOR", "REVIEWER"],
       required: false
     }),
     password: Flags.string({
@@ -44,13 +44,13 @@ export default class Create extends MutationCommand<typeof Create> {
     const name = await promptTextIfMissing(flags.name, "Name", "name");
     const phone = await promptTextIfMissing(flags.phone, "Phone", "phone");
     const role = await promptSelectIfMissing(
-      flags.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined,
+      flags.role as "ADMIN" | "COLLECTOR" | "REVIEWER" | undefined,
       "Role",
       "role",
       [
         { name: "Admin", value: "ADMIN" as const },
         { name: "Collector", value: "COLLECTOR" as const },
-        { name: "Referrer", value: "REFERRER" as const }
+        { name: "Reviewer", value: "REVIEWER" as const }
       ]
     );
 

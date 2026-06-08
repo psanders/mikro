@@ -9,7 +9,7 @@ export async function handleListUsers(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const role = args.role as "ADMIN" | "COLLECTOR" | "REFERRER" | undefined;
+  const role = args.role as "ADMIN" | "COLLECTOR" | "REVIEWER" | undefined;
   const users = await deps.listUsers(role ? { role } : undefined);
 
   logger.verbose("users listed via tool", { role, count: users.length });

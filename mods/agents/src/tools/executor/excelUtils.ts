@@ -69,7 +69,6 @@ export async function generateCustomersExcel(
     { header: "Rating", key: "rating", width: 8 },
     { header: "Pagos atrasados", key: "missedCount", width: 16 },
     { header: "Tendencia", key: "trend", width: 12 },
-    { header: "Afiliado por", key: "referredBy", width: 20 },
     { header: "Lugar de Cobro", key: "collectionPoint", width: 36 },
     { header: "Notas", key: "notes", width: 25 }
   ];
@@ -103,7 +102,6 @@ export async function generateCustomersExcel(
     rating: string;
     missedCount: number;
     trend: string;
-    referredBy: string;
     collectionPoint: string;
     notes: string;
     highlight: "yellow" | "red" | null;
@@ -126,7 +124,6 @@ export async function generateCustomersExcel(
         rating: ratingToStars(rating),
         missedCount,
         trend,
-        referredBy: customer.referredBy?.name ?? "N/A",
         collectionPoint: customer.collectionPoint ?? "",
         notes: customer.notes ?? "",
         highlight
@@ -150,7 +147,6 @@ export async function generateCustomersExcel(
       rating: r.rating,
       missedCount: r.missedCount,
       trend: r.trend,
-      referredBy: r.referredBy,
       collectionPoint: r.collectionPoint,
       notes: r.notes
     });

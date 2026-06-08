@@ -19,15 +19,12 @@ export async function handleCreateCustomer(
     };
   }
 
-  const referredById = (args.referredById as string | null | undefined) ?? null;
-
   const customer = await deps.createCustomer({
     name: args.name as string,
     phone,
     idNumber: args.idNumber as string,
     collectionPoint: args.collectionPoint as string | undefined,
     homeAddress: args.homeAddress as string,
-    referredById,
     jobPosition: args.jobPosition as string | undefined,
     income: args.income ? Number(args.income) : undefined,
     isBusinessOwner: args.isBusinessOwner === "true" || args.isBusinessOwner === true,
