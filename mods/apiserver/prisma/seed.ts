@@ -682,6 +682,362 @@ async function main() {
   }
   console.log("Created 11 accounting categories");
 
+  // ---------------------------------------------------------------------------
+  // Loan applications (5) — one per review-lifecycle state, for the ops dashboard.
+  // scoreData is hand-built to the ApplicationScore shape (kept import-free so the
+  // seed stays decoupled from the @mikro/common barrel / resvg).
+  // ---------------------------------------------------------------------------
+  const CAT_WEIGHTS = [
+    ["PAYMENT_CAPACITY", 30],
+    ["BUSINESS_TYPE_RISK", 20],
+    ["TRACK_RECORD_FORMALIZATION", 15],
+    ["ROOTEDNESS_STABILITY", 15],
+    ["SUPPORT_NETWORK", 10],
+    ["LOAN_PURPOSE", 10]
+  ] as const;
+
+  type ScoreParams = {
+    isc: number;
+    band: string;
+    rec: string;
+    conf: string;
+    cats: number[];
+    amount: number;
+    term: number;
+    installment: number;
+    sales: number;
+    flags?: { code: string; message: string }[];
+    notes: { topic: string; question: string; reason: string }[];
+  };
+
+  function buildScore(
+    name: string,
+    idDoc: string,
+    phone: string,
+    province: string,
+    bizType: string,
+    bizName: string,
+    p: ScoreParams
+  ) {
+    return {
+      name,
+      age: null,
+      id_document: idDoc,
+      phone,
+      business: { type_code: bizType, name: bizName, risk_level: p.band },
+      province,
+      isc: p.isc,
+      risk_band: p.band,
+      recommendation: p.rec,
+      confidence: p.conf,
+      flags: p.flags ?? [],
+      categories: CAT_WEIGHTS.map(([category, weight], i) => ({
+        category,
+        weight,
+        score: p.cats[i]
+      })),
+      indicators: {
+        amount_requested: { value: p.amount, unit: "DOP" },
+        term_weeks: { value: p.term, unit: "weeks" },
+        monthly_installment: { value: p.installment, unit: "DOP" },
+        monthly_sales: { value: p.sales, unit: "DOP" },
+        net_income: { value: Math.round(p.sales * 0.3), unit: "DOP" },
+        debt_service_ratio: { value: 0.25, unit: "ratio" }
+      },
+      evaluator_notes: p.notes
+    };
+  }
+
+  const applicationSpecs = [
+    {
+      sessionId: "seed-app-1284",
+      status: "RECEIVED",
+      daysAgo: 1,
+      firstName: "Juan",
+      lastName: "Pérez García",
+      phone: "+18095551001",
+      idNumber: "001-1234567-8",
+      maritalStatus: "Casado(a)",
+      businessType: "Comerciante",
+      businessName: "Colmado El Progreso",
+      requestedAmount: 25000,
+      purpose: "Compra de inventario / mercancía",
+      requestedTermWeeks: 12,
+      province: "Santiago",
+      homeAddress: "Calle Duarte #45, Santiago",
+      raw: {
+        businessAge: "3 a 5 años",
+        monthlySales: "RD$100,000 – RD$250,000",
+        formalization: "Informal (sin RNC)",
+        locationType: "Alquilado",
+        employeeCount: "1 a 3",
+        housingType: "Propia",
+        residenceTime: "Más de 10 años",
+        referenceName: "Distribuidora La Nacional",
+        referencePhone: "+18095550199"
+      },
+      score: {
+        isc: 82,
+        band: "LOW_RISK",
+        rec: "APPROVE",
+        conf: "HIGH",
+        cats: [85, 78, 80, 88, 75, 84],
+        amount: 25000,
+        term: 12,
+        installment: 2340,
+        sales: 175000,
+        notes: [
+          {
+            topic: "VENTAS",
+            question: "¿Las ventas mensuales se mantienen en temporada baja?",
+            reason: "Evaluar variabilidad estacional."
+          },
+          {
+            topic: "INVENTARIO",
+            question: "¿Qué proveedores maneja y en qué plazo le pagan?",
+            reason: "Capital de trabajo."
+          }
+        ]
+      } as ScoreParams
+    },
+    {
+      sessionId: "seed-app-1283",
+      status: "IN_REVIEW",
+      daysAgo: 2,
+      firstName: "Elena",
+      lastName: "Brito",
+      phone: "+18095551002",
+      idNumber: "031-0987654-1",
+      maritalStatus: "Soltero(a)",
+      businessType: "Salón de belleza",
+      businessName: "Estética Elena",
+      requestedAmount: 36000,
+      purpose: "Equipamiento",
+      requestedTermWeeks: 16,
+      province: "Moca",
+      homeAddress: "Av. Independencia #12, Moca",
+      raw: {
+        businessAge: "1 a 3 años",
+        monthlySales: "RD$50,000 – RD$100,000",
+        formalization: "Formal (con RNC)",
+        locationType: "Propio",
+        employeeCount: "1 a 3",
+        housingType: "Alquilada",
+        residenceTime: "5 a 10 años",
+        referenceName: "María Tavárez",
+        referencePhone: "+18095550188"
+      },
+      score: {
+        isc: 74,
+        band: "MODERATE_RISK",
+        rec: "APPROVE_WITH_CONDITIONS",
+        conf: "MEDIUM",
+        cats: [70, 72, 68, 80, 70, 78],
+        amount: 36000,
+        term: 16,
+        installment: 2600,
+        sales: 78000,
+        notes: [
+          {
+            topic: "ANTIGÜEDAD",
+            question: "¿Cómo ha evolucionado la clientela en el último año?",
+            reason: "Negocio relativamente nuevo."
+          }
+        ]
+      } as ScoreParams
+    },
+    {
+      sessionId: "seed-app-1282",
+      status: "APPROVED",
+      daysAgo: 4,
+      firstName: "Ramón",
+      lastName: "Tejada",
+      phone: "+18095551003",
+      idNumber: "001-5566778-9",
+      maritalStatus: "Casado(a)",
+      businessType: "Taller mecánico",
+      businessName: "Auto Tejada",
+      requestedAmount: 12000,
+      purpose: "Herramientas",
+      requestedTermWeeks: 10,
+      province: "Santiago",
+      homeAddress: "Calle 5 #30, Santiago",
+      raw: {
+        businessAge: "Más de 5 años",
+        monthlySales: "RD$100,000 – RD$250,000",
+        formalization: "Formal (con RNC)",
+        locationType: "Propio",
+        employeeCount: "4 a 6",
+        housingType: "Propia",
+        residenceTime: "Más de 10 años",
+        referenceName: "Repuestos del Cibao",
+        referencePhone: "+18095550177"
+      },
+      score: {
+        isc: 88,
+        band: "LOW_RISK",
+        rec: "APPROVE",
+        conf: "HIGH",
+        cats: [90, 85, 88, 90, 82, 86],
+        amount: 12000,
+        term: 10,
+        installment: 1320,
+        sales: 190000,
+        notes: []
+      } as ScoreParams,
+      reviewNote: "Buen historial, negocio formal estable."
+    },
+    {
+      sessionId: "seed-app-1281",
+      status: "SIGNED",
+      daysAgo: 6,
+      firstName: "María",
+      lastName: "Rosario",
+      phone: "+18095551004",
+      idNumber: "001-2233445-6",
+      maritalStatus: "Viudo(a)",
+      businessType: "Repostería",
+      businessName: "Dulces María",
+      requestedAmount: 18000,
+      purpose: "Capital de trabajo",
+      requestedTermWeeks: 12,
+      province: "Santiago",
+      homeAddress: "Calle Restauración #88, Santiago",
+      raw: {
+        businessAge: "3 a 5 años",
+        monthlySales: "RD$50,000 – RD$100,000",
+        formalization: "Informal (sin RNC)",
+        locationType: "Alquilado",
+        employeeCount: "Solo yo",
+        housingType: "Propia",
+        residenceTime: "Más de 10 años",
+        referenceName: "Panadería La Espiga",
+        referencePhone: "+18095550166"
+      },
+      score: {
+        isc: 79,
+        band: "MODERATE_RISK",
+        rec: "APPROVE",
+        conf: "HIGH",
+        cats: [78, 75, 80, 85, 72, 82],
+        amount: 18000,
+        term: 12,
+        installment: 1700,
+        sales: 72000,
+        notes: []
+      } as ScoreParams,
+      reviewNote: "Aprobada; contrato firmado en archivo.",
+      contract: true
+    },
+    {
+      sessionId: "seed-app-1280",
+      status: "REJECTED",
+      daysAgo: 7,
+      firstName: "Ana",
+      lastName: "Luna",
+      phone: "+18095551005",
+      idNumber: "402-1122334-5",
+      maritalStatus: "Soltero(a)",
+      businessType: "Venta ambulante",
+      businessName: "Ventas Ana",
+      requestedAmount: 45000,
+      purpose: "Compra de mercancía",
+      requestedTermWeeks: 20,
+      province: "La Vega",
+      homeAddress: "Sector El Ranchito, La Vega",
+      raw: {
+        businessAge: "Menos de 1 año",
+        monthlySales: "Menos de RD$50,000",
+        formalization: "Informal (sin RNC)",
+        locationType: "Ambulante",
+        employeeCount: "Solo yo",
+        housingType: "Alquilada",
+        residenceTime: "1 a 3 años",
+        referenceName: "—",
+        referencePhone: "—"
+      },
+      score: {
+        isc: 41,
+        band: "HIGH_RISK",
+        rec: "REJECT",
+        conf: "MEDIUM",
+        cats: [35, 40, 30, 45, 50, 48],
+        amount: 45000,
+        term: 20,
+        installment: 2700,
+        sales: 38000,
+        flags: [{ code: "INCOMPLETE_DATA", message: "Sin referencias verificables." }],
+        notes: [
+          {
+            topic: "CAPACIDAD",
+            question: "¿Cómo cubriría la cuota en meses de baja venta?",
+            reason: "Monto alto frente a ventas."
+          }
+        ]
+      } as ScoreParams,
+      reviewNote: "Monto solicitado muy alto frente a la capacidad de pago; sin referencias."
+    }
+  ];
+
+  const now = Date.now();
+  const day = 86_400_000;
+  for (const a of applicationSpecs) {
+    const createdAt = new Date(now - a.daysAgo * day);
+    const reviewed = a.status !== "RECEIVED";
+    const sd = buildScore(
+      `${a.firstName} ${a.lastName}`,
+      a.idNumber,
+      a.phone,
+      a.province,
+      a.businessType,
+      a.businessName,
+      a.score
+    );
+    const create = {
+      sessionId: a.sessionId,
+      status: a.status as never,
+      firstName: a.firstName,
+      lastName: a.lastName,
+      phone: a.phone,
+      idNumber: a.idNumber,
+      maritalStatus: a.maritalStatus,
+      businessType: a.businessType,
+      businessName: a.businessName,
+      requestedAmount: a.requestedAmount,
+      purpose: a.purpose,
+      requestedTermWeeks: a.requestedTermWeeks,
+      province: a.province,
+      homeAddress: a.homeAddress,
+      rawData: a.raw as never,
+      scoreData: sd as never,
+      score: a.score.isc,
+      riskBand: a.score.band,
+      recommendation: a.score.rec,
+      scoredAt: createdAt,
+      submittedAt: createdAt,
+      createdAt,
+      ...(reviewed ? { reviewedById: admin.id, reviewedAt: createdAt } : {}),
+      ...("reviewNote" in a && a.reviewNote ? { reviewNote: a.reviewNote } : {}),
+      ...("contract" in a && a.contract
+        ? {
+            contractFilename: `${a.sessionId}.pdf`,
+            contractOriginalName: "contrato-firmado.pdf",
+            contractMimeType: "application/pdf",
+            contractSize: 120_000,
+            contractSha256: "seed-placeholder",
+            signedById: admin.id,
+            signedAt: createdAt
+          }
+        : {})
+    };
+    await prisma.loanApplication.upsert({
+      where: { sessionId: a.sessionId },
+      update: { status: a.status as never },
+      create
+    });
+  }
+  console.log(`Created ${applicationSpecs.length} loan applications`);
+
   console.log("Database seeding completed!");
 }
 
