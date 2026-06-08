@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette (Pencil brand.*) */
+  --color-brand-blue-deep: #103a8a;
+  --color-brand-blue-primary: #1f4aa8;
+  --color-brand-blue-sky: #3f86e0;
+  --color-brand-ink: #14254a;
+  --color-brand-mist: #e9f2ff;
+  --color-brand-orange-primary: #f68a1f;
+  --color-brand-orange-deep: #e85b1c;
+  --color-brand-yellow-accent: #ffd447;
+  --color-brand-white: #ffffff;
+
+  /* Semantic design-system tokens (Pencil ds.*) */
+  --color-ds-bg: #f4f7fb;
+  --color-ds-surface: #ffffff;
+  --color-ds-border: #e5eaf1;
+  --color-ds-subtle: #eef3f9;
+  --color-ds-muted: #697a93;
+  --color-ds-green: #16a34a;
+  --color-ds-green-bg: #e8f7ee;
+  --color-ds-amber: #d97706;
+  --color-ds-amber-bg: #fdf1e3;
+  --color-ds-red: #dc2626;
+  --color-ds-red-bg: #fcebeb;
+
+  /* Radii (Pencil radius.*) */
+  --radius-card: 20px;
+  --radius-ds: 10px;
+  --radius-pill: 9999px;
+
+  /* Type — the Pencil design uses Geist */
+  --font-sans:
+    Geist, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-brand-ink);
+  background: var(--color-ds-bg);
+}
+
+/* Standard sliding transition between list and detail screens, via the View
+   Transitions API. Triggered by navigations that pass `viewTransition: true`. */
+@keyframes mikro-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mikro-slide-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+::view-transition-old(root) {
+  animation: 160ms ease both mikro-slide-out;
+}
+::view-transition-new(root) {
+  animation: 220ms ease both mikro-slide-in;
+}
