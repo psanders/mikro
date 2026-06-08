@@ -10,7 +10,6 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ChevronLeft,
   Check,
   CheckCircle2,
   Circle,
@@ -180,7 +179,11 @@ export function SolicitudDetailPage() {
     <div className="flex h-full flex-col">
       <PageHeader
         title={`Solicitud #${app.id.slice(0, 8).toUpperCase()}`}
-        subtitle={`Solicitudes / ${name} · ${st.label}`}
+        subtitle={`${name} · ${st.label}`}
+        back={{
+          label: "Solicitudes",
+          onClick: () => navigate("/solicitudes", { viewTransition: true })
+        }}
         action={
           <div className="flex items-center gap-[10px]">
             {app.status !== "CONVERTED" && (
@@ -227,14 +230,6 @@ export function SolicitudDetailPage() {
       )}
 
       <div className="flex flex-col gap-[14px] overflow-auto p-7">
-        <button
-          type="button"
-          onClick={() => navigate("/solicitudes", { viewTransition: true })}
-          className="flex w-fit items-center gap-1 text-[13px] font-medium text-brand-blue-primary"
-        >
-          <ChevronLeft size={15} /> Volver a solicitudes
-        </button>
-
         <div className="flex items-start gap-5">
           {/* Content: flat data sections */}
           <div className="flex flex-1 flex-col divide-y divide-ds-border overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">

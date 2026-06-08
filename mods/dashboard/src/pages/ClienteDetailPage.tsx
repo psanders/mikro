@@ -10,7 +10,7 @@
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
@@ -88,18 +88,11 @@ export function ClienteDetailPage() {
     <div className="flex h-full flex-col">
       <PageHeader
         title={c.name}
-        subtitle={`Clientes / ${c.nickname ?? c.name} · ${c.isActive ? "Activo" : "Inactivo"}`}
+        subtitle={`${c.nickname ?? c.name} · ${c.isActive ? "Activo" : "Inactivo"}`}
+        back={{ label: "Clientes", onClick: () => navigate("/clientes", { viewTransition: true }) }}
       />
 
       <div className="flex flex-col gap-[14px] overflow-auto p-7">
-        <button
-          type="button"
-          onClick={() => navigate("/clientes", { viewTransition: true })}
-          className="flex w-fit items-center gap-1 text-[13px] font-medium text-brand-blue-primary"
-        >
-          <ChevronLeft size={15} /> Volver a clientes
-        </button>
-
         <div className="flex items-start gap-5">
           {/* Content */}
           <div className="flex flex-1 flex-col divide-y divide-ds-border overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">

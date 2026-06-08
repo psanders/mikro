@@ -48,6 +48,13 @@ body {
   background: var(--color-ds-bg);
 }
 
+/* Clickable affordance: non-disabled buttons (the dashboard renders most
+   clickable rows, nav items, and tiles as <button>) show a pointer on hover.
+   Disabled controls keep the default cursor. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 /* Standard sliding transition between list and detail screens, via the View
    Transitions API. Triggered by navigations that pass `viewTransition: true`. */
 @keyframes mikro-slide-in {
