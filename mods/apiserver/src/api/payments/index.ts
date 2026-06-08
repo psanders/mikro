@@ -10,5 +10,4 @@ export { createReversePayment } from "./createReversePayment.js";
 export { createPreviewLateFee } from "./createPreviewLateFee.js";
 export { createListPayments } from "./createListPayments.js";
 export { createListPaymentsByCustomer } from "./createListPaymentsByCustomer.js";
-export { createListPaymentsByReferrer } from "./createListPaymentsByReferrer.js";
 export { createListPaymentsByLoanId } from "./createListPaymentsByLoanId.js";

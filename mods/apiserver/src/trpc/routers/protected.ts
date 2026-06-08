@@ -7,10 +7,8 @@ import {
   updateCustomerSchema,
   getCustomerSchema,
   listCustomersSchema,
-  listCustomersByReferrerSchema,
   listCustomersByCollectorSchema,
   exportCollectorCustomersSchema,
-  exportCustomersByReferrerSchema,
   exportAllCustomersSchema,
   // User schemas
   createUserSchema,
@@ -25,7 +23,6 @@ import {
   updateLoanStatusSchema,
   updateLoanNicknameSchema,
   listLoansSchema,
-  listLoansByReferrerSchema,
   listLoansByCollectorSchema,
   listLoansByCustomerSchema,
   getLoanByLoanIdSchema,
@@ -35,7 +32,6 @@ import {
   reversePaymentSchema,
   listPaymentsSchema,
   listPaymentsByCustomerSchema,
-  listPaymentsByReferrerSchema,
   listPaymentsByLoanIdSchema,
   // Receipt schemas
   generateReceiptSchema,
@@ -49,19 +45,28 @@ import {
   generateAccountingReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
-  listLoanNotesByLoanSchema
+  listLoanNotesByLoanSchema,
+  // Loan application schemas
+  listApplicationsSchema,
+  getApplicationSchema,
+  claimApplicationSchema,
+  approveApplicationSchema,
+  rejectApplicationSchema,
+  reopenApplicationSchema,
+  uploadSignedContractSchema,
+  getApplicationContractSchema,
+  convertApplicationSchema,
+  updateApplicationSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure } from "../trpc.js";
+import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
 import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
 import { createGetCustomer } from "../../api/customers/createGetCustomer.js";
 import { createListCustomers } from "../../api/customers/createListCustomers.js";
-import { createListCustomersByReferrer } from "../../api/customers/createListCustomersByReferrer.js";
 import { createListCustomersByCollector } from "../../api/customers/createListCustomersByCollector.js";
 import { createExportCollectorCustomers } from "../../api/customers/createExportCollectorCustomers.js";
-import { createExportCustomersByReferrer } from "../../api/customers/createExportCustomersByReferrer.js";
 import { createExportAllCustomers } from "../../api/customers/createExportAllCustomers.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
@@ -79,17 +84,28 @@ import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
 import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
 import { createUpdateLoanNickname } from "../../api/loans/createUpdateLoanNickname.js";
 import { createListLoans } from "../../api/loans/createListLoans.js";
-import { createListLoansByReferrer } from "../../api/loans/createListLoansByReferrer.js";
 import { createListLoansByCollector } from "../../api/loans/createListLoansByCollector.js";
 import { createListLoansByCustomer } from "../../api/loans/createListLoansByCustomer.js";
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 import { createGetLoanByLoanId } from "../../api/loans/createGetLoanByLoanId.js";
+// Loan application API functions
+import { createListApplications } from "../../api/applications/createListApplications.js";
+import { createGetApplication } from "../../api/applications/createGetApplication.js";
+import {
+  createClaimApplication,
+  createApproveApplication,
+  createRejectApplication,
+  createReopenApplication
+} from "../../api/applications/reviewApplication.js";
+import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
+import { createGetApplicationContract } from "../../api/applications/createGetApplicationContract.js";
+import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
+import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
 import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByCustomer } from "../../api/payments/createListPaymentsByCustomer.js";
-import { createListPaymentsByReferrer } from "../../api/payments/createListPaymentsByReferrer.js";
 import { createListPaymentsByLoanId } from "../../api/payments/createListPaymentsByLoanId.js";
 import { createPreviewLateFee } from "../../api/payments/createPreviewLateFee.js";
 // Receipt API functions
@@ -192,16 +208,6 @@ export const protectedRouter = router({
   }),
 
   /**
-   * List customers by referrer ID.
-   */
-  listCustomersByReferrer: protectedProcedure
-    .input(listCustomersByReferrerSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListCustomersByReferrer(ctx.db);
-      return fn(input);
-    }),
-
-  /**
    * List customers by collector ID.
    */
   listCustomersByCollector: protectedProcedure
@@ -223,18 +229,7 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Export customers by referrer ID with loans and referrer for report generation.
-   * Returns customers referred by a specific user with active loans and payment status.
-   */
-  exportCustomersByReferrer: protectedProcedure
-    .input(exportCustomersByReferrerSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createExportCustomersByReferrer(ctx.db);
-      return fn(input);
-    }),
-
-  /**
-   * Export all active customers with loans and referrer for report generation.
+   * Export all active customers with loans for report generation.
    * Admin-only operation that returns all customers with active loans and payment status.
    */
   exportAllCustomers: protectedProcedure.input(exportAllCustomersSchema).query(async ({ ctx }) => {
@@ -327,16 +322,6 @@ export const protectedRouter = router({
   }),
 
   /**
-   * List loans for customers referred by a specific user.
-   */
-  listLoansByReferrer: protectedProcedure
-    .input(listLoansByReferrerSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListLoansByReferrer(ctx.db);
-      return fn(input);
-    }),
-
-  /**
    * List loans for customers assigned to a specific collector.
    */
   listLoansByCollector: protectedProcedure
@@ -406,6 +391,107 @@ export const protectedRouter = router({
       return fn(input);
     }),
 
+  // ==================== Loan application procedures ====================
+
+  /**
+   * List loan applications (solicitudes) with optional status filter + pagination.
+   * Restricted to reviewers (ADMIN/REVIEWER) — applications carry applicant PII.
+   */
+  listApplications: reviewerProcedure
+    .input(listApplicationsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListApplications(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Get a single loan application by id or sessionId. Reviewers (ADMIN/REVIEWER) only.
+   */
+  getApplication: reviewerProcedure.input(getApplicationSchema).query(async ({ ctx, input }) => {
+    const fn = createGetApplication(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * Claim a RECEIVED application for review (-> IN_REVIEW). ADMIN/REVIEWER only.
+   */
+  claimApplication: reviewerProcedure
+    .input(claimApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createClaimApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Approve an application (RECEIVED|IN_REVIEW -> APPROVED). ADMIN/REVIEWER only.
+   */
+  approveApplication: reviewerProcedure
+    .input(approveApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createApproveApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Reject an application with a reason (RECEIVED|IN_REVIEW -> REJECTED). ADMIN/REVIEWER only.
+   */
+  rejectApplication: reviewerProcedure
+    .input(rejectApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createRejectApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Reopen a decided application (APPROVED|REJECTED -> IN_REVIEW). ADMIN/REVIEWER only.
+   */
+  reopenApplication: reviewerProcedure
+    .input(reopenApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createReopenApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Upload a signed contract PDF (APPROVED -> SIGNED). ADMIN/REVIEWER only.
+   */
+  uploadSignedContract: reviewerProcedure
+    .input(uploadSignedContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createUploadSignedContract(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Fetch the stored signed contract (base64) for an application. ADMIN/REVIEWER only.
+   */
+  getApplicationContract: reviewerProcedure
+    .input(getApplicationContractSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createGetApplicationContract(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Convert a SIGNED application into a Customer + Loan (-> CONVERTED). ADMIN/REVIEWER only.
+   */
+  convertApplication: reviewerProcedure
+    .input(convertApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createConvertApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Edit an application's fields; re-derives + re-scores. ADMIN/REVIEWER only.
+   */
+  updateApplication: reviewerProcedure
+    .input(updateApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createUpdateApplication(ctx.db);
+      return fn(input);
+    }),
+
   // ==================== Payment procedures ====================
 
   /**
@@ -454,16 +540,6 @@ export const protectedRouter = router({
     .input(listPaymentsByCustomerSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByCustomer(ctx.db);
-      return fn(input);
-    }),
-
-  /**
-   * List payments for all customers referred by a specific user within a date range.
-   */
-  listPaymentsByReferrer: protectedProcedure
-    .input(listPaymentsByReferrerSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListPaymentsByReferrer(ctx.db);
       return fn(input);
     }),
 

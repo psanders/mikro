@@ -12,7 +12,7 @@
 export const Role = {
   ADMIN: 'ADMIN',
   COLLECTOR: 'COLLECTOR',
-  REFERRER: 'REFERRER'
+  REVIEWER: 'REVIEWER'
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
@@ -137,3 +137,17 @@ export const CategoryKind = {
 } as const
 
 export type CategoryKind = (typeof CategoryKind)[keyof typeof CategoryKind]
+
+
+export const ApplicationStatus = {
+  DRAFT: 'DRAFT',
+  RECEIVED: 'RECEIVED',
+  IN_REVIEW: 'IN_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SIGNED: 'SIGNED',
+  CONVERTED: 'CONVERTED',
+  ABANDONED: 'ABANDONED'
+} as const
+
+export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus]

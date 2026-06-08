@@ -14,7 +14,7 @@ datasource db {
 enum Role {
   ADMIN
   COLLECTOR
-  REFERRER
+  REVIEWER
 
   @@map("roles")
 }
@@ -127,6 +127,24 @@ enum CategoryKind {
   @@map("accounting_category_kinds")
 }
 
+// Lifecycle of a public loan application (solicitud) as it moves through the
+// origination pipeline. Only DRAFT and RECEIVED are assigned at intake; the
+// remaining states are reserved for later phases (human review, signing,
+// conversion). Scoring is NOT a stage — it is a derived attribute recomputed on
+// every write (see the score* columns below), so there is no "scored" status.
+enum ApplicationStatus {
+  DRAFT // Partial submission, still being filled in
+  RECEIVED // Completed submission, awaiting processing
+  IN_REVIEW // A human has picked it up
+  APPROVED // Human approved
+  REJECTED // Human rejected (terminal)
+  SIGNED // Signed contract uploaded
+  CONVERTED // Converted to Customer + Loan (terminal)
+  ABANDONED // Stale partial that never completed (terminal)
+
+  @@map("application_statuses")
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -143,7 +161,6 @@ model User {
   // Relations
   roles               UserRole[]
   createdCustomers    Customer[] @relation("CreatedBy")
-  referredCustomers   Customer[] @relation("ReferredBy")
   assignedCustomers   Customer[] @relation("AssignedCollector")
   messages            Message[]
   collectedPayments   Payment[]  @relation("CollectedPayments")
@@ -185,8 +202,6 @@ model Customer {
   // Relations
   createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
   createdById         String?  @map("created_by_id")
-  referredBy          User?    @relation("ReferredBy", fields: [referredById], references: [id])
-  referredById        String?  @map("referred_by_id")
   assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
   assignedCollectorId String?  @map("assigned_collector_id")
 
@@ -392,4 +407,70 @@ model AccountingTransactionAttachment {
 
   @@index([transactionId])
   @@map("accounting_transaction_attachments")
+}
+
+// A loan application (solicitud) submitted from the public website form.
+// Stable, English-named columns carry the fields the origination pipeline
+// depends on; `rawData` holds the full normalized submission so the form can
+// evolve without breaking the pipeline. One row per `sessionId` (the form
+// streams partial autosaves and a final submit under the same session).
+model LoanApplication {
+  id          String            @id @default(uuid())
+  sessionId   String            @unique @map("session_id")
+  status      ApplicationStatus @default(DRAFT)
+  lastSection String?           @map("last_section")
+
+  // Stable extracted fields (subset of the form; everything also lives in rawData)
+  firstName         String?   @map("first_name")
+  lastName          String?   @map("last_name")
+  phone             String?
+  idNumber          String?   @map("id_number")
+  dateOfBirth       DateTime? @map("date_of_birth")
+  maritalStatus     String?   @map("marital_status")
+  businessType      String?   @map("business_type")
+  businessName      String?   @map("business_name")
+  requestedAmount   Decimal?  @map("requested_amount")
+  purpose           String?
+  requestedTermWeeks Int?     @map("requested_term_weeks")
+  province          String?
+  homeAddress       String?   @map("home_address")
+
+  // Full normalized payload (audit trail + buffer against form drift)
+  rawData Json @map("raw_data")
+
+  // Deterministic Mikro Score result, recomputed + persisted on every write.
+  // scoreData holds the full ApplicationScore; the rest are denormalized for
+  // filtering/display.
+  scoreData      Json?     @map("score_data")
+  score          Int? // ISC 0-100
+  riskBand       String?   @map("risk_band")
+  recommendation String?
+  scoredAt       DateTime? @map("scored_at")
+
+  // Human review decision (latest), recorded by the review mutations.
+  reviewedById String?   @map("reviewed_by_id")
+  reviewedAt   DateTime? @map("reviewed_at")
+  reviewNote   String?   @map("review_note")
+
+  // Signed contract (Phase 3): bytes live on disk under contractsPath as
+  // <sha256>.pdf; these columns are the metadata + who/when signed.
+  contractFilename     String?   @map("contract_filename")
+  contractOriginalName String?   @map("contract_original_name")
+  contractMimeType     String?   @map("contract_mime_type")
+  contractSize         Int?      @map("contract_size")
+  contractSha256       String?   @map("contract_sha256")
+  signedById           String?   @map("signed_by_id")
+  signedAt             DateTime? @map("signed_at")
+
+  // Reserved for Phase 3 conversion (unused in this phase)
+  customerId String? @map("customer_id")
+  loanId     Int?    @map("loan_id")
+
+  submittedAt DateTime? @map("submitted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([sessionId])
+  @@map("loan_applications")
 }

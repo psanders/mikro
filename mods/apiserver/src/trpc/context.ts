@@ -14,7 +14,7 @@ interface JwtIdentity {
   roles: Role[];
 }
 
-const VALID_ROLES: Role[] = ["ADMIN", "COLLECTOR", "REFERRER"];
+const VALID_ROLES: Role[] = ["ADMIN", "COLLECTOR", "REVIEWER"];
 
 /**
  * Validates Bearer JWT and returns the caller's identity if valid.

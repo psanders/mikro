@@ -6,7 +6,7 @@ import {
   exportAllCustomersSchema,
   type ExportAllCustomersInput,
   type DbClient,
-  type CustomerWithLoansAndReferrer
+  type CustomerWithLoans
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -20,7 +20,7 @@ import { logger } from "../../logger.js";
  */
 export function createExportAllCustomers(client: DbClient) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature required by schema
-  const fn = async (_input: ExportAllCustomersInput): Promise<CustomerWithLoansAndReferrer[]> => {
+  const fn = async (_input: ExportAllCustomersInput): Promise<CustomerWithLoans[]> => {
     logger.verbose("exporting all customers");
 
     const customers = await client.customer.findMany({
@@ -34,11 +34,9 @@ export function createExportAllCustomers(client: DbClient) {
             payments: {
               where: { status: "COMPLETED" },
               orderBy: { paidAt: "desc" }
-              // Need all completed payments for payment status calculation
             }
           }
-        },
-        referredBy: { select: { name: true } }
+        }
       }
     });
 

@@ -395,7 +395,8 @@ export const ModelName = {
   AccountingAccount: 'AccountingAccount',
   AccountingCategory: 'AccountingCategory',
   AccountingTransaction: 'AccountingTransaction',
-  AccountingTransactionAttachment: 'AccountingTransactionAttachment'
+  AccountingTransactionAttachment: 'AccountingTransactionAttachment',
+  LoanApplication: 'LoanApplication'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -411,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "loanNote" | "accountingAccount" | "accountingCategory" | "accountingTransaction" | "accountingTransactionAttachment"
+    modelProps: "user" | "userRole" | "customer" | "loan" | "message" | "attachment" | "payment" | "loanNote" | "accountingAccount" | "accountingCategory" | "accountingTransaction" | "accountingTransactionAttachment" | "loanApplication"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1303,6 +1304,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LoanApplication: {
+      payload: Prisma.$LoanApplicationPayload<ExtArgs>
+      fields: Prisma.LoanApplicationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LoanApplicationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LoanApplicationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        findFirst: {
+          args: Prisma.LoanApplicationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LoanApplicationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        findMany: {
+          args: Prisma.LoanApplicationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>[]
+        }
+        create: {
+          args: Prisma.LoanApplicationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        createMany: {
+          args: Prisma.LoanApplicationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LoanApplicationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>[]
+        }
+        delete: {
+          args: Prisma.LoanApplicationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        update: {
+          args: Prisma.LoanApplicationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        deleteMany: {
+          args: Prisma.LoanApplicationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LoanApplicationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LoanApplicationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>[]
+        }
+        upsert: {
+          args: Prisma.LoanApplicationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoanApplicationPayload>
+        }
+        aggregate: {
+          args: Prisma.LoanApplicationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLoanApplication>
+        }
+        groupBy: {
+          args: Prisma.LoanApplicationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoanApplicationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LoanApplicationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoanApplicationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1379,7 +1454,6 @@ export const CustomerScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   createdById: 'createdById',
-  referredById: 'referredById',
   assignedCollectorId: 'assignedCollectorId'
 } as const
 
@@ -1523,6 +1597,50 @@ export const AccountingTransactionAttachmentScalarFieldEnum = {
 export type AccountingTransactionAttachmentScalarFieldEnum = (typeof AccountingTransactionAttachmentScalarFieldEnum)[keyof typeof AccountingTransactionAttachmentScalarFieldEnum]
 
 
+export const LoanApplicationScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  status: 'status',
+  lastSection: 'lastSection',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  phone: 'phone',
+  idNumber: 'idNumber',
+  dateOfBirth: 'dateOfBirth',
+  maritalStatus: 'maritalStatus',
+  businessType: 'businessType',
+  businessName: 'businessName',
+  requestedAmount: 'requestedAmount',
+  purpose: 'purpose',
+  requestedTermWeeks: 'requestedTermWeeks',
+  province: 'province',
+  homeAddress: 'homeAddress',
+  rawData: 'rawData',
+  scoreData: 'scoreData',
+  score: 'score',
+  riskBand: 'riskBand',
+  recommendation: 'recommendation',
+  scoredAt: 'scoredAt',
+  reviewedById: 'reviewedById',
+  reviewedAt: 'reviewedAt',
+  reviewNote: 'reviewNote',
+  contractFilename: 'contractFilename',
+  contractOriginalName: 'contractOriginalName',
+  contractMimeType: 'contractMimeType',
+  contractSize: 'contractSize',
+  contractSha256: 'contractSha256',
+  signedById: 'signedById',
+  signedAt: 'signedAt',
+  customerId: 'customerId',
+  loanId: 'loanId',
+  submittedAt: 'submittedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LoanApplicationScalarFieldEnum = (typeof LoanApplicationScalarFieldEnum)[keyof typeof LoanApplicationScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1531,12 +1649,44 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const NullsOrder = {
   first: 'first',
   last: 'last'
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
 
@@ -1679,6 +1829,27 @@ export type EnumTransactionStatusFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
+ * Reference to a field of type 'ApplicationStatus'
+ */
+export type EnumApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApplicationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1806,6 +1977,7 @@ export type GlobalOmitConfig = {
   accountingCategory?: Prisma.AccountingCategoryOmit
   accountingTransaction?: Prisma.AccountingTransactionOmit
   accountingTransactionAttachment?: Prisma.AccountingTransactionAttachmentOmit
+  loanApplication?: Prisma.LoanApplicationOmit
 }
 
 /* Types for Logging */

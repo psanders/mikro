@@ -54,3 +54,14 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next();
 });
+
+/**
+ * Reviewer procedure - requires a valid JWT whose user has the ADMIN or REVIEWER
+ * role. Use this for loan-application review actions (claim/approve/reject/reopen).
+ */
+export const reviewerProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.roles.includes("ADMIN") && !ctx.roles.includes("REVIEWER")) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Reviewer or admin role required" });
+  }
+  return next();
+});

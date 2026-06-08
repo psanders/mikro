@@ -101,3 +101,8 @@ export type AccountingTransaction = Prisma.AccountingTransactionModel
  * 
  */
 export type AccountingTransactionAttachment = Prisma.AccountingTransactionAttachmentModel
+/**
+ * Model LoanApplication
+ * 
+ */
+export type LoanApplication = Prisma.LoanApplicationModel

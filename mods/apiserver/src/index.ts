@@ -23,9 +23,11 @@ import {
   ValidationError,
   renderCustomersReportToPng,
   loadLogoDataUrl,
-  MAX_TRPC_REQUEST_BYTES
+  MAX_TRPC_REQUEST_BYTES,
+  applicationPayloadSchema,
+  normalizeApplication
 } from "@mikro/common";
-import type { CalculateLoanInput } from "@mikro/common";
+import type { CalculateLoanInput, DbClient } from "@mikro/common";
 import {
   handleWhatsAppMessage,
   getWebhookVerifyToken,
@@ -79,11 +81,11 @@ import {
   createUpdateLoanStatus,
   createListUsers,
   createExportCollectorCustomers,
-  createExportCustomersByReferrer,
   createExportAllCustomers,
   createGeneratePerformanceReport,
   createGenerateDefaultedReport,
-  createGenerateRenewalCandidatesReport
+  createGenerateRenewalCandidatesReport,
+  createUpsertApplication
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
@@ -95,16 +97,99 @@ const app = express();
 const cfg = getConfig();
 const PORT = cfg.port;
 
+// CORS for browser-based clients: the ops dashboard web build and the Tauri
+// webview send a cross-origin `Origin`; native clients (mobile/CLI) do not and
+// are unaffected. Allowed origins come from config (`corsAllowedOrigins`). We
+// echo the specific origin (never `*`) with `Vary: Origin`, allow the
+// Authorization header used for Bearer auth, and answer the preflight `OPTIONS`
+// before body parsing/routes. tRPC uses a header token (no cookies), so no
+// credentials flag is needed.
+const allowedOrigins = new Set(cfg.corsAllowedOrigins);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 // The /trpc endpoint accepts transaction attachments inline as base64, so its
 // JSON body can be much larger than Express's 100kb default. Apply a dedicated
 // parser for /trpc before the global one (body-parser is a no-op once req.body
 // is populated, so the global parser below still handles everything else).
 app.use("/trpc", express.json({ limit: MAX_TRPC_REQUEST_BYTES }));
+// Public application intake: small body cap (a solicitud is a few KB of text).
+app.use("/v1/applications", express.json({ limit: "32kb" }));
 app.use(express.json());
 
 // Health check endpoint
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// Public loan application (solicitud) intake — UNAUTHENTICATED. The public
+// website form posts here (partial autosaves + a final submit), all keyed by a
+// client-generated `sessionId`. We normalize and upsert by session. We always
+// respond `{ result: "ok" }` on success (the form expects that shape) and never
+// leak schema details; only a genuine DB failure returns 500 so the form can
+// show its connection-error message.
+const upsertApplication = createUpsertApplication(prisma as unknown as DbClient);
+
+// Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
+// production hardening (shared store, WAF, captcha) is a follow-up.
+const APPLICATION_RATE_LIMIT = 30;
+const APPLICATION_RATE_WINDOW_MS = 60_000;
+const applicationHits = new Map<string, { count: number; resetAt: number }>();
+
+function applicationRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = applicationHits.get(ip);
+  if (!entry || now > entry.resetAt) {
+    applicationHits.set(ip, { count: 1, resetAt: now + APPLICATION_RATE_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > APPLICATION_RATE_LIMIT;
+}
+
+app.post("/v1/applications", async (req, res) => {
+  const ip = req.ip ?? "unknown";
+  if (applicationRateLimited(ip)) {
+    res.status(429).json({ result: "error" });
+    return;
+  }
+
+  const parsed = applicationPayloadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    // Lenient: log server-side, don't leak schema details. Still 200 so partial
+    // autosaves stay silent for the user.
+    logger.warn("application intake: invalid payload", {
+      sessionId: (req.body as { sessionId?: unknown })?.sessionId,
+      issues: parsed.error.issues.length
+    });
+    res.json({ result: "ok" });
+    return;
+  }
+
+  try {
+    const normalized = normalizeApplication(parsed.data);
+    await upsertApplication(normalized);
+    res.json({ result: "ok" });
+  } catch (err) {
+    logger.error("application intake: upsert failed", {
+      sessionId: parsed.data.sessionId,
+      error: err instanceof Error ? err.message : String(err)
+    });
+    res.status(500).json({ result: "error" });
+  }
 });
 
 // tRPC API
@@ -191,7 +276,6 @@ async function initializeMessageProcessor() {
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
     const exportCollectorCustomers = createExportCollectorCustomers(dbClient);
-    const exportCustomersByReferrer = createExportCustomersByReferrer(dbClient);
     const exportAllCustomers = createExportAllCustomers(dbClient);
     const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
     const generateDefaultedReport = createGenerateDefaultedReport(dbClient);
@@ -250,7 +334,6 @@ async function initializeMessageProcessor() {
       collectionPoint?: string | null;
       notes?: string | null;
       preferredPaymentDay?: string | null;
-      referredBy?: { name: string } | null;
       loans: Array<{
         loanId: number;
         nickname?: string | null;
@@ -266,7 +349,6 @@ async function initializeMessageProcessor() {
       collectionPoint: customer.collectionPoint ?? null,
       notes: customer.notes ?? null,
       preferredPaymentDay: customer.preferredPaymentDay ?? null,
-      referredBy: customer.referredBy ? { name: customer.referredBy.name } : null,
       loans: customer.loans.map((loan) => ({
         loanId: loan.loanId,
         notes: null,
@@ -283,7 +365,7 @@ async function initializeMessageProcessor() {
         const customer = await createCustomer(params);
         return { id: customer.id, name: customer.name, phone: customer.phone };
       },
-      listUsers: async (params?: { role?: "ADMIN" | "COLLECTOR" | "REFERRER" }) => {
+      listUsers: async (params?: { role?: "ADMIN" | "COLLECTOR" | "REVIEWER" }) => {
         const allUsers = await listUsers({});
         // Filter by role if provided
         let filteredUsers = allUsers;
@@ -413,12 +495,6 @@ async function initializeMessageProcessor() {
         params: Parameters<ToolExecutorDependencies["exportCollectorCustomers"]>[0]
       ) => {
         const customers = await exportCollectorCustomers(params);
-        return customers.map(toExportedCustomer);
-      },
-      exportCustomersByReferrer: async (
-        params: Parameters<ToolExecutorDependencies["exportCustomersByReferrer"]>[0]
-      ) => {
-        const customers = await exportCustomersByReferrer(params);
         return customers.map(toExportedCustomer);
       },
       exportAllCustomers: async () => {

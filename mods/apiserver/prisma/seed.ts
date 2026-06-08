@@ -29,9 +29,7 @@ const ID = {
   users: {
     admin: "11111111-1111-4111-a111-111111111111",
     collector1: "22222222-2222-4222-a222-222222222221",
-    collector2: "22222222-2222-4222-a222-222222222222",
-    referrer1: "33333333-3333-4333-a333-333333333331",
-    referrer2: "33333333-3333-4333-a333-333333333332"
+    collector2: "22222222-2222-4222-a222-222222222222"
   },
   customers: [
     "44444444-4444-4444-a444-444444444401",
@@ -134,7 +132,7 @@ async function main() {
   const devPasswordHash = await bcrypt.hash("password123", 10);
 
   // ---------------------------------------------------------------------------
-  // Users (5): 1 admin, 2 collectors, 2 referrers (dev password: password123)
+  // Users (3): 1 admin, 2 collectors (dev password: password123)
   // ---------------------------------------------------------------------------
   const admin = await prisma.user.upsert({
     where: { id: ID.users.admin },
@@ -172,33 +170,8 @@ async function main() {
     }
   });
 
-  const referrer1 = await prisma.user.upsert({
-    where: { id: ID.users.referrer1 },
-    update: { password: devPasswordHash },
-    create: {
-      id: ID.users.referrer1,
-      name: "Maria Referrer",
-      phone: "+1000000004",
-      password: devPasswordHash,
-      roles: { create: [{ role: "REFERRER" }] }
-    }
-  });
-
-  const referrer2 = await prisma.user.upsert({
-    where: { id: ID.users.referrer2 },
-    update: { password: devPasswordHash },
-    create: {
-      id: ID.users.referrer2,
-      name: "Pedro Referrer",
-      phone: "+1000000005",
-      password: devPasswordHash,
-      roles: { create: [{ role: "REFERRER" }] }
-    }
-  });
-
   const collectors = [collector1, collector2];
-  const referrers = [referrer1, referrer2];
-  console.log("Created 5 users");
+  console.log("Created 3 users");
 
   // ---------------------------------------------------------------------------
   // Customers (10)
@@ -217,7 +190,6 @@ async function main() {
   ];
   const customers: Awaited<ReturnType<typeof prisma.customer.upsert>>[] = [];
   for (let i = 0; i < 10; i++) {
-    const referredBy = referrers[i % 2];
     const assignedCollector = i < 6 ? collectors[i % 2] : null;
     const c = await prisma.customer.upsert({
       where: { id: ID.customers[i] },
@@ -238,7 +210,6 @@ async function main() {
         notes: i === 2 || i === 5 ? "Follow up on payment" : null,
         preferredPaymentDay: i % 2 === 0 ? "FRIDAY" : i % 2 === 1 ? "MONDAY" : null,
         createdById: admin.id,
-        referredById: referredBy.id,
         assignedCollectorId: assignedCollector?.id ?? null
       }
     });

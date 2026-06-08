@@ -22,10 +22,8 @@ export {
   createGetCustomer,
   createGetCustomerByPhone,
   createListCustomers,
-  createListCustomersByReferrer,
   createListCustomersByCollector,
   createExportCollectorCustomers,
-  createExportCustomersByReferrer,
   createExportAllCustomers
 } from "./customers/index.js";
 
@@ -37,12 +35,26 @@ export {
   createCreateLoan,
   createUpdateLoanStatus,
   createListLoans,
-  createListLoansByReferrer,
   createListLoansByCollector,
   createListLoansByCustomer,
   createGetLoanByLoanId,
   createCalculateLoan
 } from "./loans/index.js";
+
+// Loan application (intake + review) operations
+export {
+  createUpsertApplication,
+  createListApplications,
+  createGetApplication,
+  createClaimApplication,
+  createApproveApplication,
+  createRejectApplication,
+  createReopenApplication,
+  createUploadSignedContract,
+  createGetApplicationContract,
+  createConvertApplication,
+  createUpdateApplication
+} from "./applications/index.js";
 
 // Payment operations
 export {
@@ -53,7 +65,6 @@ export {
   createPreviewLateFee,
   createListPayments,
   createListPaymentsByCustomer,
-  createListPaymentsByReferrer,
   createListPaymentsByLoanId
 } from "./payments/index.js";
 

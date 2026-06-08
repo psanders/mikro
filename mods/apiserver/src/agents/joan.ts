@@ -22,28 +22,25 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
    - Si dice [SESIÓN ACTIVA] y el usuario te saluda: "¡Qué bueno verte de nuevo! ¿Continuamos con tu aplicación?"
    - Si dice [SESIÓN ACTIVA] y el usuario no saluda: NO te presentes, responde directamente.
    - Si el usuario NO saluda (pide algo directamente): NO saludes, responde directamente a su solicitud.
-2. REQUISITOS (cuando pregunten qué necesitan): "Lo primero es que para empezar con nosotros debes venir con un referido. Además solo habilitamos prestamos de 5000 para nuestros primeros clientes. Estás de acuerdo?"
-3. REFERIDOR (cuando acepten): "Me puedes decir quien te refirió a Mikro?"
-4. VERIFICAR REFERIDOR: Cuando digan el nombre → llama \`listUsers\` con role="REFERRER". Si está en la lista, pregunta: "A perfecto. Y tienes negocio propio o eres empleado?"
-5. SEGÚN RESPUESTA:
-   - Si dice NEGOCIO: "Entiendo. Y que tiempo tiene tu negocio?" → espera respuesta → "Perfecto. Y mas o menos cuales son los ingresos mensuales?" → espera respuesta → pasa a DÍA DE PAGO
-   - Si dice EMPLEADO: "Entiendo. Y cuanto ganas mas o menos al mes?" → espera respuesta → pasa a DÍA DE PAGO
-5.5. DÍA DE PAGO: "Y que dia de la semana prefieres para hacer tus pagos?" → espera respuesta (ej: lunes, martes, miércoles...) → pasa a CÉDULA. Al llamar \`createCustomer\` usa preferredPaymentDay: el día en inglés (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY). Si no dicen ninguno usa MONDAY.
-6. CÉDULA FRENTE: "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
-7. CÉDULA ATRÁS: "Muy bien. Ahora necesito la foto de la parte de atrás de la cédula."
-8. CONFIRMAR: "Ya revisé tu cédula. Tu nombre es [nombre] y tu número de cédula es [número]. ¿Está correcto?"
-9. CREAR: Cuando confirmen → llama \`createCustomer\` y responde: "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!"
+2. REQUISITOS (cuando pregunten qué necesitan): "Solo habilitamos préstamos de 5000 para nuestros primeros clientes. ¿Estás de acuerdo?"
+3. SEGÚN RESPUESTA cuando acepten:
+   - Pregunta: "¿Tienes negocio propio o eres empleado?"
+   - Si dice NEGOCIO: "Entiendo. ¿Y qué tiempo tiene tu negocio?" → espera respuesta → "Perfecto. ¿Y más o menos cuáles son los ingresos mensuales?" → espera respuesta → pasa a DÍA DE PAGO
+   - Si dice EMPLEADO: "Entiendo. ¿Y cuánto ganas más o menos al mes?" → espera respuesta → pasa a DÍA DE PAGO
+4. DÍA DE PAGO: "¿Y qué día de la semana prefieres para hacer tus pagos?" → espera respuesta → pasa a CÉDULA. Al llamar \`createCustomer\` usa preferredPaymentDay: el día en inglés (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY). Si no dicen ninguno usa MONDAY.
+5. CÉDULA FRENTE: "Ya casi estamos terminando. Ahora necesito una foto de tu cédula del frente."
+6. CÉDULA ATRÁS: "Muy bien. Ahora necesito la foto de la parte de atrás de la cédula."
+7. CONFIRMAR: "Ya revisé tu cédula. Tu nombre es [nombre] y tu número de cédula es [número]. ¿Está correcto?"
+8. CREAR: Cuando confirmen → llama \`createCustomer\` y responde: "¡Listo! Ya creé tu cuenta. Alguien del equipo te va a contactar pronto. ¡Gracias!"
 
 ## Herramientas
 
-- \`listUsers\`: Llama INMEDIATAMENTE cuando digan quién los refirió
 - \`createCustomer\`: Llama INMEDIATAMENTE cuando confirmen que los datos están correctos. Incluye preferredPaymentDay (día que dijo el usuario, en inglés: MONDAY-SUNDAY; por defecto MONDAY).
 
 ## Guardrails
 
-- Si el referidor no está en la lista: "Ese nombre no lo encontré. ¿Puedes decirme el nombre completo de quien te refirió?"
 - Preguntas fuera de tema: "Solo puedo ayudarte con el préstamo."`,
-  allowedTools: ["createCustomer", "listUsers"],
+  allowedTools: ["createCustomer"],
   temperature: 0.3,
   evaluations: {
     context: { phone: "+18091234567" },
@@ -60,46 +57,23 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           {
             human: "A bien. Que necesito?",
             expectedAI:
-              "Lo primero es que para empezar con nosotros debes venir con un referido. Además solo habilitamos prestamos de 5000 para nuestros primeros clientes. Estás de acuerdo?"
+              "Solo habilitamos préstamos de 5000 para nuestros primeros clientes. ¿Estás de acuerdo?"
           },
           {
             human: "Si, está bien.",
-            expectedAI: "Me puedes decir quien te refirió a Mikro?"
-          },
-          {
-            human: "Si, fue Isaic",
-            expectedAI: "A perfecto. Y tienes negocio propio o eres empleado?",
-            tools: [
-              {
-                name: "listUsers",
-                expectedArgs: { role: "REFERRER" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message: "Users found",
-                  data: [
-                    {
-                      id: "user-1",
-                      name: "Isaic Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234568"
-                    }
-                  ]
-                }
-              }
-            ]
+            expectedAI: "¿Tienes negocio propio o eres empleado?"
           },
           {
             human: "Si, soy dueño de negocio.",
-            expectedAI: "Entiendo. Y que tiempo tiene tu negocio?"
+            expectedAI: "Entiendo. ¿Y qué tiempo tiene tu negocio?"
           },
           {
             human: "Tenemos aquí seis meses.",
-            expectedAI: "Perfecto. Y mas o menos cuales son los ingresos mensuales?"
+            expectedAI: "Perfecto. ¿Y más o menos cuáles son los ingresos mensuales?"
           },
           {
             human: "Mas o menos hacemos 1000 RD$ semanales.",
-            expectedAI: "Y que dia de la semana prefieres para hacer tus pagos?"
+            expectedAI: "¿Y qué día de la semana prefieres para hacer tus pagos?"
           },
           {
             human: "Los miercoles",
@@ -154,42 +128,19 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           {
             human: "Bueno, que necesito para aplicar?",
             expectedAI:
-              "Lo primero es que para empezar con nosotros debes venir con un referido. Además solo habilitamos prestamos de 5000 para nuestros primeros clientes. Estás de acuerdo?"
+              "Solo habilitamos préstamos de 5000 para nuestros primeros clientes. ¿Estás de acuerdo?"
           },
           {
             human: "Si, de acuerdo.",
-            expectedAI: "Me puedes decir quien te refirió a Mikro?"
-          },
-          {
-            human: "Fue Pedro Martinez",
-            expectedAI: "A perfecto. Y tienes negocio propio o eres empleado?",
-            tools: [
-              {
-                name: "listUsers",
-                expectedArgs: { role: "REFERRER" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message: "Users found",
-                  data: [
-                    {
-                      id: "user-2",
-                      name: "Pedro Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234569"
-                    }
-                  ]
-                }
-              }
-            ]
+            expectedAI: "¿Tienes negocio propio o eres empleado?"
           },
           {
             human: "Soy empleado",
-            expectedAI: "Entiendo. Y cuanto ganas mas o menos al mes?"
+            expectedAI: "Entiendo. ¿Y cuánto ganas más o menos al mes?"
           },
           {
             human: "Gano como 15,000 pesos al mes",
-            expectedAI: "Y que dia de la semana prefieres para hacer tus pagos?"
+            expectedAI: "¿Y qué día de la semana prefieres para hacer tus pagos?"
           },
           {
             human: "Los miercoles",
@@ -233,85 +184,6 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
         ]
       },
       {
-        id: "referrer-not-found",
-        description: "Handle case when referrer is not in the system",
-        turns: [
-          {
-            human: "Hola",
-            expectedAI:
-              "Hey, que tal? Te habla Joan de Mikro Créditos. Estoy aquí para ayudarte a aplicar para el préstamo."
-          },
-          {
-            human: "Quiero aplicar para un préstamo",
-            expectedAI:
-              "Lo primero es que para empezar con nosotros debes venir con un referido. Además solo habilitamos prestamos de 5000 para nuestros primeros clientes. Estás de acuerdo?"
-          },
-          {
-            human: "Si, dale.",
-            expectedAI: "Me puedes decir quien te refirió a Mikro?"
-          },
-          {
-            human: "Me refirió Juan Nadie",
-            expectedAI:
-              "Ese nombre no lo encontré. ¿Puedes decirme el nombre completo de quien te refirió?",
-            tools: [
-              {
-                name: "listUsers",
-                expectedArgs: { role: "REFERRER" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message: "Users found",
-                  data: [
-                    {
-                      id: "user-1",
-                      name: "Isaic Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234568"
-                    },
-                    {
-                      id: "user-2",
-                      name: "Pedro Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234569"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            human: "Ah perdón, fue Isaic Martinez",
-            expectedAI: "A perfecto. Y tienes negocio propio o eres empleado?",
-            tools: [
-              {
-                name: "listUsers",
-                expectedArgs: { role: "REFERRER" },
-                matchMode: "strict",
-                mockResponse: {
-                  success: true,
-                  message: "Users found",
-                  data: [
-                    {
-                      id: "user-1",
-                      name: "Isaic Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234568"
-                    },
-                    {
-                      id: "user-2",
-                      name: "Pedro Martinez",
-                      role: "REFERRER",
-                      phone: "+18091234569"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
         id: "off-topic-question",
         description: "Handle off-topic questions during the flow",
         turns: [
@@ -327,7 +199,7 @@ CRÍTICO: Haz UNA SOLA pregunta por turno. NO combines pasos. NO te adelantes.
           {
             human: "Ok, bueno. Que necesito para el préstamo?",
             expectedAI:
-              "Lo primero es que para empezar con nosotros debes venir con un referido. Además solo habilitamos prestamos de 5000 para nuestros primeros clientes. Estás de acuerdo?"
+              "Solo habilitamos préstamos de 5000 para nuestros primeros clientes. ¿Estás de acuerdo?"
           }
         ]
       }

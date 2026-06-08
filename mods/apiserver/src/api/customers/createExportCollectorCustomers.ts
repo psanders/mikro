@@ -6,7 +6,7 @@ import {
   exportCollectorCustomersSchema,
   type ExportCollectorCustomersInput,
   type DbClient,
-  type CustomerWithLoansAndReferrer
+  type CustomerWithLoans
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -18,9 +18,7 @@ import { logger } from "../../logger.js";
  * @returns A validated function that exports collector customers
  */
 export function createExportCollectorCustomers(client: DbClient) {
-  const fn = async (
-    params: ExportCollectorCustomersInput
-  ): Promise<CustomerWithLoansAndReferrer[]> => {
+  const fn = async (params: ExportCollectorCustomersInput): Promise<CustomerWithLoans[]> => {
     logger.verbose("exporting customers by collector", { collectorId: params.assignedCollectorId });
 
     const customers = await client.customer.findMany({
@@ -35,11 +33,9 @@ export function createExportCollectorCustomers(client: DbClient) {
             payments: {
               where: { status: "COMPLETED" },
               orderBy: { paidAt: "desc" }
-              // Need all completed payments for payment status calculation
             }
           }
-        },
-        referredBy: { select: { name: true } }
+        }
       }
     });
 
