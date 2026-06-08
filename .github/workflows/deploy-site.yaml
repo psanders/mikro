@@ -36,6 +36,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --workspace=site --include-workspace-root --ignore-scripts
 
+      # Vite 8 bundles with rolldown, whose native binding ships as a
+      # platform-specific optional dependency. npm records only the lockfile
+      # author's platform (darwin-arm64), so the linux-x64 runner is left
+      # without a binding and `vite build` dies with MODULE_NOT_FOUND. Install
+      # the matching linux binary explicitly, pinned to the resolved rolldown
+      # version so it tracks future bumps.
+      - name: Install rolldown linux binary
+        run: npm install --no-save "@rolldown/binding-linux-x64-gnu@$(node -p "require('./node_modules/rolldown/package.json').version")"
+
       - name: Build site
         env:
           VITE_APPLICATIONS_URL: ${{ secrets.VITE_APPLICATIONS_URL }}
