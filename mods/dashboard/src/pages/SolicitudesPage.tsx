@@ -12,6 +12,7 @@ import { Button } from "../components/ui/Button";
 import { StatusText } from "../components/ui/StatusText";
 import {
   STATUS_TABS,
+  DEFAULT_STATUS,
   statusMeta,
   formatDop,
   isForbidden,
@@ -20,18 +21,17 @@ import {
 
 const PAGE_SIZE = 20;
 
-/** "all" = no status filter (Todas tab). */
-type StatusFilter = ApplicationStatus | "all";
-
 // Pencil "Operations / 03 Solicitudes (Bandeja)" (Jnc0R): toolbar (status tabs +
 // search) over a table of applications wired to listApplications.
 export function SolicitudesPage() {
   const navigate = useNavigate();
   // Remember the chosen filter for the session, so returning from a detail
-  // restores the same view.
-  const [status, setStatus] = useState<StatusFilter>(
-    () => (sessionStorage.getItem("solicitudes.status") as StatusFilter) || "all"
-  );
+  // restores the same view. (Migrate any legacy "all" value — the Todas tab was
+  // removed — to the default lifecycle tab.)
+  const [status, setStatus] = useState<ApplicationStatus>(() => {
+    const saved = sessionStorage.getItem("solicitudes.status") as ApplicationStatus | "all" | null;
+    return saved && saved !== "all" ? saved : DEFAULT_STATUS;
+  });
   const [search, setSearch] = useState(() => sessionStorage.getItem("solicitudes.q") ?? "");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
@@ -42,10 +42,7 @@ export function SolicitudesPage() {
     sessionStorage.setItem("solicitudes.q", search);
   }, [search]);
 
-  const apps = trpc.listApplications.useQuery({
-    status: status === "all" ? undefined : status,
-    limit
-  });
+  const apps = trpc.listApplications.useQuery({ status, limit });
 
   // Resolve evaluator (reviewedById) names for the EVALUADOR column.
   const users = trpc.listUsers.useQuery({});
@@ -81,7 +78,7 @@ export function SolicitudesPage() {
         {/* Toolbar: status tabs + search */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            {[{ label: "Todas", value: "all" as StatusFilter }, ...STATUS_TABS].map((t) => (
+            {STATUS_TABS.map((t) => (
               <Tab
                 key={t.label}
                 active={status === t.value}

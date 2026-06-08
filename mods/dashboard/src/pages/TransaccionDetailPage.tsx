@@ -3,7 +3,7 @@
  */
 import { useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Paperclip } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusText } from "../components/ui/StatusText";
@@ -31,19 +31,15 @@ export function TransaccionDetailPage() {
     <div className="flex h-full flex-col">
       <PageHeader
         title={`${tipo.label} · ${formatDop(tx.amount)}`}
-        subtitle={`Contabilidad / ${tx.account.name} · ${formatDate(tx.occurredAt)}`}
+        subtitle={`${tx.account.name} · ${formatDate(tx.occurredAt)}`}
+        back={{
+          label: "Contabilidad",
+          onClick: () => navigate("/contabilidad", { viewTransition: true })
+        }}
         action={<StatusText tone={estado.tone}>{estado.label}</StatusText>}
       />
 
       <div className="flex flex-col gap-[14px] overflow-auto p-7">
-        <button
-          type="button"
-          onClick={() => navigate("/contabilidad", { viewTransition: true })}
-          className="flex w-fit items-center gap-1 text-[13px] font-medium text-brand-blue-primary"
-        >
-          <ChevronLeft size={15} /> Volver a contabilidad
-        </button>
-
         {/* Flat content card: detail + attachments */}
         <div className="flex flex-col divide-y divide-ds-border overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">
           <div className="flex flex-col gap-4 px-6 py-5">
