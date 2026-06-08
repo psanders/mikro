@@ -19,7 +19,8 @@ import {
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
 
-const GOOGLE_FORM_URL = import.meta.env.VITE_GOOGLE_FORM_URL as string | undefined;
+// Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
+const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
 
 const inputBase =
   "w-full rounded-xl border-[1.5px] border-[#E6EEFB] bg-white px-4 py-3.5 text-[15px] font-medium text-brand-ink placeholder:text-[#7888A8] focus:border-brand-blue-sky focus:outline-none";
@@ -374,33 +375,36 @@ const PROVINCIA_OPTIONS: SelectOption[] = [
   { value: "VALVERDE", label: "Valverde" }
 ];
 
+// English field keys — these match the apiserver's stable columns 1:1 (the
+// promoted ones) plus the rawData-only fields. User-visible labels/options stay
+// in Spanish; only these state keys are English.
 const INITIAL_FORM: Record<string, string> = {
-  nombre: "",
-  apellido: "",
-  telefono: "",
-  cedula: "",
-  fechaNacimiento: "",
-  estadoCivil: "",
-  tipoNegocio: "",
-  nombreNegocio: "",
-  tiempoOperando: "",
-  ventasMensuales: "",
-  tipoLocal: "",
-  formalizacion: "",
-  numEmpleados: "",
-  telefonoNegocio: "",
-  montoSolicitado: "",
-  proposito: "",
-  plazo: "",
-  nombreConyuge: "",
-  telefonoConyuge: "",
-  nombreReferencia: "",
-  telefonoReferencia: "",
-  tipoVivienda: "",
-  tiempoResidiendo: "",
-  direccion: "",
-  provincia: "",
-  referenciaDireccion: ""
+  firstName: "",
+  lastName: "",
+  phone: "",
+  idNumber: "",
+  dateOfBirth: "",
+  maritalStatus: "",
+  businessType: "",
+  businessName: "",
+  businessAge: "",
+  monthlySales: "",
+  locationType: "",
+  formalization: "",
+  employeeCount: "",
+  businessPhone: "",
+  requestedAmount: "",
+  purpose: "",
+  requestedTermWeeks: "",
+  spouseName: "",
+  spousePhone: "",
+  referenceName: "",
+  referencePhone: "",
+  housingType: "",
+  residenceTime: "",
+  homeAddress: "",
+  province: "",
+  addressReference: ""
 };
 
 interface SectionDef {
@@ -463,9 +467,10 @@ export function SolicitudPage() {
   };
 
   const handleToggle = (sectionId: string) => {
-    if (openSection && GOOGLE_FORM_URL) {
-      fetch(GOOGLE_FORM_URL, {
+    if (openSection && APPLICATIONS_URL) {
+      fetch(APPLICATIONS_URL, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, sessionId, partial: true, lastSection: openSection })
       }).catch(() => {});
     }
@@ -480,15 +485,16 @@ export function SolicitudPage() {
     }
     setError("");
 
-    if (!GOOGLE_FORM_URL) {
+    if (!APPLICATIONS_URL) {
       setError("El formulario no está configurado. Contacta al administrador.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await fetch(GOOGLE_FORM_URL, {
+      const res = await fetch(APPLICATIONS_URL, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, sessionId, partial: false })
       });
 
@@ -609,17 +615,17 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
                             label="Nombre(s)"
-                            name="nombre"
+                            name="firstName"
                             placeholder="Ej. Juan Carlos"
-                            value={form.nombre}
+                            value={form.firstName}
                             onChange={set}
                             required
                           />
                           <TextField
                             label="Apellido(s)"
-                            name="apellido"
+                            name="lastName"
                             placeholder="Ej. Pérez"
-                            value={form.apellido}
+                            value={form.lastName}
                             onChange={set}
                             required
                           />
@@ -627,15 +633,15 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <PhoneField
                             label="Teléfono personal"
-                            name="telefono"
-                            value={form.telefono}
+                            name="phone"
+                            value={form.phone}
                             onChange={set}
                             required
                           />
                           <CedulaField
                             label="Cédula"
-                            name="cedula"
-                            value={form.cedula}
+                            name="idNumber"
+                            value={form.idNumber}
                             onChange={set}
                             required
                           />
@@ -643,17 +649,17 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <DateField
                             label="Fecha de nacimiento"
-                            name="fechaNacimiento"
-                            value={form.fechaNacimiento}
+                            name="dateOfBirth"
+                            value={form.dateOfBirth}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Estado civil"
-                            name="estadoCivil"
+                            name="maritalStatus"
                             placeholder="Seleccionar"
                             options={ESTADO_CIVIL_OPTIONS}
-                            value={form.estadoCivil}
+                            value={form.maritalStatus}
                             onChange={set}
                             required
                           />
@@ -666,18 +672,18 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Tipo de negocio"
-                            name="tipoNegocio"
+                            name="businessType"
                             placeholder="Seleccionar"
                             options={TIPO_NEGOCIO_OPTIONS}
-                            value={form.tipoNegocio}
+                            value={form.businessType}
                             onChange={set}
                             required
                           />
                           <TextField
                             label="Nombre del negocio"
-                            name="nombreNegocio"
+                            name="businessName"
                             placeholder="Ej. Colmado La Esperanza"
-                            value={form.nombreNegocio}
+                            value={form.businessName}
                             onChange={set}
                             required
                           />
@@ -685,19 +691,19 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Tiempo operando"
-                            name="tiempoOperando"
+                            name="businessAge"
                             placeholder="Seleccionar"
                             options={TIEMPO_OPERANDO_OPTIONS}
-                            value={form.tiempoOperando}
+                            value={form.businessAge}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Ventas mensuales aprox."
-                            name="ventasMensuales"
+                            name="monthlySales"
                             placeholder="Seleccionar"
                             options={VENTAS_MENSUALES_OPTIONS}
-                            value={form.ventasMensuales}
+                            value={form.monthlySales}
                             onChange={set}
                             required
                           />
@@ -705,19 +711,19 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Local del negocio"
-                            name="tipoLocal"
+                            name="locationType"
                             placeholder="Seleccionar"
                             options={TIPO_LOCAL_OPTIONS}
-                            value={form.tipoLocal}
+                            value={form.locationType}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Formalización"
-                            name="formalizacion"
+                            name="formalization"
                             placeholder="Seleccionar"
                             options={FORMALIZACION_OPTIONS}
-                            value={form.formalizacion}
+                            value={form.formalization}
                             onChange={set}
                             required
                           />
@@ -725,17 +731,17 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Número de empleados"
-                            name="numEmpleados"
+                            name="employeeCount"
                             placeholder="Seleccionar"
                             options={NUM_EMPLEADOS_OPTIONS}
-                            value={form.numEmpleados}
+                            value={form.employeeCount}
                             onChange={set}
                             required
                           />
                           <PhoneField
                             label="Teléfono del negocio"
-                            name="telefonoNegocio"
-                            value={form.telefonoNegocio}
+                            name="businessPhone"
+                            value={form.businessPhone}
                             onChange={set}
                             required
                           />
@@ -748,18 +754,18 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <CurrencyField
                             label="Monto solicitado"
-                            name="montoSolicitado"
+                            name="requestedAmount"
                             placeholder="0"
-                            value={form.montoSolicitado}
+                            value={form.requestedAmount}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Propósito del préstamo"
-                            name="proposito"
+                            name="purpose"
                             placeholder="Seleccionar"
                             options={PROPOSITO_OPTIONS}
-                            value={form.proposito}
+                            value={form.purpose}
                             onChange={set}
                             required
                           />
@@ -767,10 +773,10 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Plazo"
-                            name="plazo"
+                            name="requestedTermWeeks"
                             placeholder="Seleccionar"
                             options={PLAZO_OPTIONS}
-                            value={form.plazo}
+                            value={form.requestedTermWeeks}
                             onChange={set}
                             required
                           />
@@ -783,31 +789,31 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
                             label="Nombre del cónyuge (opcional)"
-                            name="nombreConyuge"
+                            name="spouseName"
                             placeholder="Ej. María González"
-                            value={form.nombreConyuge}
+                            value={form.spouseName}
                             onChange={set}
                           />
                           <PhoneField
                             label="Teléfono del cónyuge"
-                            name="telefonoConyuge"
-                            value={form.telefonoConyuge}
+                            name="spousePhone"
+                            value={form.spousePhone}
                             onChange={set}
                           />
                         </div>
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
                             label="Nombre de referencia personal"
-                            name="nombreReferencia"
+                            name="referenceName"
                             placeholder="Ej. Pedro Ramírez"
-                            value={form.nombreReferencia}
+                            value={form.referenceName}
                             onChange={set}
                             required
                           />
                           <PhoneField
                             label="Teléfono de referencia personal"
-                            name="telefonoReferencia"
-                            value={form.telefonoReferencia}
+                            name="referencePhone"
+                            value={form.referencePhone}
                             onChange={set}
                             required
                           />
@@ -820,19 +826,19 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <SelectField
                             label="Tipo de vivienda"
-                            name="tipoVivienda"
+                            name="housingType"
                             placeholder="Seleccionar"
                             options={TIPO_VIVIENDA_OPTIONS}
-                            value={form.tipoVivienda}
+                            value={form.housingType}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Tiempo residiendo"
-                            name="tiempoResidiendo"
+                            name="residenceTime"
                             placeholder="Seleccionar"
                             options={TIEMPO_RESIDIENDO_OPTIONS}
-                            value={form.tiempoResidiendo}
+                            value={form.residenceTime}
                             onChange={set}
                             required
                           />
@@ -840,18 +846,18 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
                             label="Dirección (calle, número y sector)"
-                            name="direccion"
+                            name="homeAddress"
                             placeholder="Ej. Calle 1 #25, Los Prados"
-                            value={form.direccion}
+                            value={form.homeAddress}
                             onChange={set}
                             required
                           />
                           <SelectField
                             label="Provincia"
-                            name="provincia"
+                            name="province"
                             placeholder="Seleccionar"
                             options={PROVINCIA_OPTIONS}
-                            value={form.provincia}
+                            value={form.province}
                             onChange={set}
                             required
                           />
@@ -859,9 +865,9 @@ export function SolicitudPage() {
                         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                           <TextField
                             label="Referencia de dirección"
-                            name="referenciaDireccion"
+                            name="addressReference"
                             placeholder="Ej. Frente al parque"
-                            value={form.referenciaDireccion}
+                            value={form.addressReference}
                             onChange={set}
                           />
                         </div>
