@@ -8,8 +8,10 @@ export type {
   DbClient,
   UserRole,
   PaymentWithRelations,
-  CustomerWithLoansAndReferrer
+  CustomerWithLoans,
+  LoanApplicationWriteData
 } from "./client.js";
+export type { LoanApplication, ApplicationStatus } from "./application.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

@@ -7,7 +7,7 @@ import { validatePhone } from "../utils/validatePhone.js";
 /**
  * Role enum matching Prisma schema.
  */
-export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REFERRER"]);
+export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REVIEWER"]);
 
 /**
  * Schema for login (phone + password).

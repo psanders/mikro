@@ -124,7 +124,22 @@ export const mikroConfigSchema = z
     timezone: z.string().default("America/Santo_Domingo"),
     port: z.number().default(4000),
     publicUrl: z.string().default("http://localhost:4000"),
+    // Origins allowed to call the API from a browser: the ops dashboard web build
+    // and Tauri webview, plus the public website (which posts loan applications to
+    // the public intake endpoint). Native clients (mobile/CLI) are unaffected by
+    // CORS. Defaults cover local dev; add the deployed dashboard + website origins
+    // here in production.
+    corsAllowedOrigins: z
+      .array(z.string())
+      .default([
+        "http://localhost:5174",
+        "tauri://localhost",
+        "http://tauri.localhost",
+        "http://localhost:5173"
+      ]),
     receiptsPath: z.string().default("/app/receipts"),
+    // Where signed loan-application contract PDFs are stored on disk.
+    contractsPath: z.string().default("/app/contracts"),
     databaseUrl: z.string().default("file:/app/data/mikro.db"),
     jwtSecret: z
       .string()

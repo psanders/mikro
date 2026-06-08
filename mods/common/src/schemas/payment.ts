@@ -65,15 +65,6 @@ export const listPaymentsByCustomerSchema = z.object({
   offset: z.number().int().nonnegative().optional()
 });
 
-export const listPaymentsByReferrerSchema = z.object({
-  referredById: z.uuid({ error: "Invalid referrer ID" }),
-  startDate: safeRequiredDate,
-  endDate: safeRequiredDate,
-  showReversed: z.boolean().optional(),
-  limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional()
-});
-
 export const listPaymentsByLoanIdSchema = z.object({
   loanId: z.number().int().positive("Loan ID must be a positive integer"),
   showReversed: z.boolean().optional(),
@@ -87,7 +78,6 @@ export type PaymentKind = z.infer<typeof paymentKindEnum>;
 export type ReversePaymentInput = z.infer<typeof reversePaymentSchema>;
 export type ListPaymentsInput = z.infer<typeof listPaymentsSchema>;
 export type ListPaymentsByCustomerInput = z.infer<typeof listPaymentsByCustomerSchema>;
-export type ListPaymentsByReferrerInput = z.infer<typeof listPaymentsByReferrerSchema>;
 export type ListPaymentsByLoanIdInput = z.infer<typeof listPaymentsByLoanIdSchema>;
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
 export type PaymentStatus = z.infer<typeof paymentStatusEnum>;

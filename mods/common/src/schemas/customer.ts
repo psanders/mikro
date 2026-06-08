@@ -37,7 +37,6 @@ export const createCustomerSchema = z.object({
   income: z.number().optional(),
   isBusinessOwner: z.boolean().optional(),
   createdById: z.uuid().optional(),
-  referredById: z.uuid({ error: "Invalid referrer ID" }).nullable().optional(),
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
@@ -97,17 +96,6 @@ export const listCustomersSchema = z.object({
 });
 
 /**
- * Schema for listing customers by referrer.
- * By default only shows active customers unless showInactive is true.
- */
-export const listCustomersByReferrerSchema = z.object({
-  referredById: z.uuid({ error: "Invalid referrer ID" }),
-  showInactive: z.boolean().optional(),
-  limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional()
-});
-
-/**
  * Schema for listing customers by collector.
  * By default only shows active customers unless showInactive is true.
  */
@@ -120,18 +108,10 @@ export const listCustomersByCollectorSchema = z.object({
 
 /**
  * Schema for exporting collector customers.
- * Returns customers with loans, referrer, and payment status for report generation.
+ * Returns customers with loans and payment status for report generation.
  */
 export const exportCollectorCustomersSchema = z.object({
   assignedCollectorId: z.uuid({ error: "Invalid collector ID" })
-});
-
-/**
- * Schema for exporting customers by referrer.
- * Returns customers referred by a specific user with loans and payment status.
- */
-export const exportCustomersByReferrerSchema = z.object({
-  referredById: z.uuid({ error: "Invalid referrer ID" })
 });
 
 /**
@@ -166,11 +146,6 @@ export type GetCustomerByPhoneInput = z.infer<typeof getCustomerByPhoneSchema>;
 export type ListCustomersInput = z.infer<typeof listCustomersSchema>;
 
 /**
- * Input type for listing customers by referrer.
- */
-export type ListCustomersByReferrerInput = z.infer<typeof listCustomersByReferrerSchema>;
-
-/**
  * Input type for listing customers by collector.
  */
 export type ListCustomersByCollectorInput = z.infer<typeof listCustomersByCollectorSchema>;
@@ -179,11 +154,6 @@ export type ListCustomersByCollectorInput = z.infer<typeof listCustomersByCollec
  * Input type for exporting collector customers.
  */
 export type ExportCollectorCustomersInput = z.infer<typeof exportCollectorCustomersSchema>;
-
-/**
- * Input type for exporting customers by referrer.
- */
-export type ExportCustomersByReferrerInput = z.infer<typeof exportCustomersByReferrerSchema>;
 
 /**
  * Input type for exporting all customers.

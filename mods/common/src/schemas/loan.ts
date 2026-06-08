@@ -97,16 +97,6 @@ export const listLoansSchema = z.object({
 });
 
 /**
- * Schema for listing loans by referrer (customers referred by a user).
- */
-export const listLoansByReferrerSchema = z.object({
-  referredById: z.uuid({ error: "Invalid referrer ID" }),
-  showAll: z.boolean().optional(),
-  limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().nonnegative().optional()
-});
-
-/**
  * Schema for listing loans by collector (customers assigned to a collector).
  */
 export const listLoansByCollectorSchema = z.object({
@@ -145,11 +135,6 @@ export type GetLoanInput = z.infer<typeof getLoanSchema>;
  * Input type for listing loans.
  */
 export type ListLoansInput = z.infer<typeof listLoansSchema>;
-
-/**
- * Input type for listing loans by referrer.
- */
-export type ListLoansByReferrerInput = z.infer<typeof listLoansByReferrerSchema>;
 
 /**
  * Input type for listing loans by collector.

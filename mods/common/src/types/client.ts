@@ -10,6 +10,7 @@ import type { Customer } from "./customer.js";
 import type { User } from "./user.js";
 import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
+import type { LoanApplication, ApplicationStatus } from "./application.js";
 
 /**
  * UserRole entity type.
@@ -66,13 +67,12 @@ export interface DbClient {
       include?: Record<string, never>;
     }): Promise<Customer | null>;
     findFirst(args: {
-      where: { phone: string };
+      where: { phone?: string; idNumber?: string };
       include?: Record<string, never>;
     }): Promise<Customer | null>;
     findMany(args?: {
       where?: {
         isActive?: boolean;
-        referredById?: string;
         assignedCollectorId?: string;
       };
       include?: Record<string, never>;
@@ -82,7 +82,6 @@ export interface DbClient {
     findMany(args: {
       where?: {
         isActive?: boolean;
-        referredById?: string;
         assignedCollectorId?: string;
       };
       include: {
@@ -96,11 +95,10 @@ export interface DbClient {
             };
           };
         };
-        referredBy?: { select?: { name?: boolean } };
       };
       take?: number;
       skip?: number;
-    }): Promise<CustomerWithLoansAndReferrer[]>;
+    }): Promise<CustomerWithLoans[]>;
   };
 
   message: {
@@ -189,7 +187,6 @@ export interface DbClient {
         customerId?: string;
         status?: string | { not: string };
         customer?: {
-          referredById?: string;
           assignedCollectorId?: string;
         };
       };
@@ -283,9 +280,6 @@ export interface DbClient {
         };
         loan?: {
           customerId?: string;
-          customer?: {
-            referredById?: string;
-          };
         };
       };
       include?: {
@@ -335,8 +329,66 @@ export interface DbClient {
     >;
   };
 
+  loanApplication: {
+    upsert(args: {
+      where: { sessionId: string };
+      create: LoanApplicationWriteData & { sessionId: string };
+      update: LoanApplicationWriteData;
+    }): Promise<LoanApplication>;
+    update(args: {
+      where: { id: string };
+      data: Partial<LoanApplicationWriteData>;
+    }): Promise<LoanApplication>;
+    findUnique(args: { where: { id: string } }): Promise<LoanApplication | null>;
+    findFirst(args: { where: { sessionId: string } }): Promise<LoanApplication | null>;
+    findMany(args?: {
+      where?: { status?: ApplicationStatus };
+      orderBy?: { createdAt?: "asc" | "desc" };
+      take?: number;
+      skip?: number;
+    }): Promise<LoanApplication[]>;
+  };
+
   /** Interactive transaction (Prisma). */
   $transaction: <T>(fn: (tx: DbClient) => Promise<T>) => Promise<T>;
+}
+
+/** Writable columns for a loan application upsert. */
+export interface LoanApplicationWriteData {
+  status: ApplicationStatus;
+  lastSection: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  idNumber: string | null;
+  dateOfBirth: Date | null;
+  maritalStatus: string | null;
+  businessType: string | null;
+  businessName: string | null;
+  requestedAmount: number | null;
+  purpose: string | null;
+  requestedTermWeeks: number | null;
+  province: string | null;
+  homeAddress: string | null;
+  rawData: unknown;
+  scoreData?: unknown;
+  score?: number | null;
+  riskBand?: string | null;
+  recommendation?: string | null;
+  scoredAt?: Date | null;
+  reviewedById?: string | null;
+  reviewedAt?: Date | null;
+  reviewNote?: string | null;
+  contractFilename?: string | null;
+  contractOriginalName?: string | null;
+  contractMimeType?: string | null;
+  contractSize?: number | null;
+  contractSha256?: string | null;
+  signedById?: string | null;
+  signedAt?: Date | null;
+  customerId?: string | null;
+  loanId?: number | null;
+  submittedAt?: Date | null;
 }
 
 /**
@@ -353,13 +405,12 @@ export interface PaymentWithRelations extends Payment {
 }
 
 /**
- * Customer with loans and referrer for report export.
+ * Customer with loans for report export.
  */
-export interface CustomerWithLoansAndReferrer extends Customer {
+export interface CustomerWithLoans extends Customer {
   loans: Array<
     Loan & {
       payments: Payment[];
     }
   >;
-  referredBy: { name: string } | null;
 }
