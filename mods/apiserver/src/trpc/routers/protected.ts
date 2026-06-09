@@ -53,6 +53,7 @@ import {
   approveApplicationSchema,
   rejectApplicationSchema,
   reopenApplicationSchema,
+  promoteApplicationSchema,
   uploadSignedContractSchema,
   getApplicationContractSchema,
   generateApplicationContractSchema,
@@ -106,6 +107,7 @@ import { createGetApplicationContract } from "../../api/applications/createGetAp
 import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
+import { createPromoteApplication } from "../../api/applications/createPromoteApplication.js";
 import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
 import { createUploadIdImage } from "../../api/applications/createUploadIdImage.js";
 import { createGetIdImage } from "../../api/applications/createGetIdImage.js";
@@ -457,6 +459,16 @@ export const protectedRouter = router({
     .input(reopenApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createReopenApplication(ctx.db);
+      return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Promote a reviewer-completed DRAFT into the queue (-> RECEIVED). ADMIN/REVIEWER only.
+   */
+  promoteApplication: reviewerProcedure
+    .input(promoteApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createPromoteApplication(ctx.db);
       return fn(input, ctx.userId);
     }),
 

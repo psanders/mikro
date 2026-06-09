@@ -91,6 +91,7 @@ export const DEFAULT_STATUS: ApplicationStatus = "RECEIVED";
 
 /** Which review/pipeline actions are valid from a given status (mirrors the API). */
 export function allowedActions(status: string): {
+  canPromote: boolean;
   canClaim: boolean;
   canApprove: boolean;
   canReject: boolean;
@@ -99,6 +100,7 @@ export function allowedActions(status: string): {
   canConvert: boolean;
 } {
   return {
+    canPromote: status === "DRAFT",
     canClaim: status === "RECEIVED",
     canApprove: status === "RECEIVED" || status === "IN_REVIEW",
     canReject: status === "RECEIVED" || status === "IN_REVIEW",

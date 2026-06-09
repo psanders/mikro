@@ -245,6 +245,12 @@ export const reopenApplicationSchema = z
   .refine(requireRef, refMessage);
 
 /**
+ * Promote a reviewer-completed DRAFT into the active queue (-> RECEIVED). Used
+ * when an applicant's partial submission is finished by phone with the reviewer.
+ */
+export const promoteApplicationSchema = z.object(applicationRef).refine(requireRef, refMessage);
+
+/**
  * Generate the loan contract PDF for an application. The applicant identity
  * comes from the application; the negotiated terms (principal from the request,
  * plus installments/amount/frequency/start) and the debtor's gender are
@@ -268,6 +274,7 @@ export type ClaimApplicationInput = z.infer<typeof claimApplicationSchema>;
 export type ApproveApplicationInput = z.infer<typeof approveApplicationSchema>;
 export type RejectApplicationInput = z.infer<typeof rejectApplicationSchema>;
 export type ReopenApplicationInput = z.infer<typeof reopenApplicationSchema>;
+export type PromoteApplicationInput = z.infer<typeof promoteApplicationSchema>;
 export type GenerateApplicationContractInput = z.infer<typeof generateApplicationContractSchema>;
 
 // ---- review transition validation ----
@@ -275,9 +282,17 @@ export type GenerateApplicationContractInput = z.infer<typeof generateApplicatio
 type Status = z.infer<typeof applicationStatusEnum>;
 
 /** The review/pipeline action being attempted (drives the allowed source statuses). */
-export type ReviewAction = "claim" | "approve" | "reject" | "reopen" | "sign" | "convert";
+export type ReviewAction =
+  | "promote"
+  | "claim"
+  | "approve"
+  | "reject"
+  | "reopen"
+  | "sign"
+  | "convert";
 
 const REVIEW_TRANSITIONS: Record<ReviewAction, { from: Status[]; to: Status }> = {
+  promote: { from: ["DRAFT"], to: "RECEIVED" },
   claim: { from: ["RECEIVED"], to: "IN_REVIEW" },
   approve: { from: ["RECEIVED", "IN_REVIEW"], to: "APPROVED" },
   reject: { from: ["RECEIVED", "IN_REVIEW"], to: "REJECTED" },

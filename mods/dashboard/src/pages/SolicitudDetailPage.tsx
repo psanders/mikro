@@ -124,6 +124,7 @@ export function SolicitudDetailPage() {
     setNote("");
     refresh();
   };
+  const promote = trpc.promoteApplication.useMutation({ onSuccess: refresh });
   const claim = trpc.claimApplication.useMutation({ onSuccess: refresh });
   const approve = trpc.approveApplication.useMutation({ onSuccess: noteRefresh });
   const reject = trpc.rejectApplication.useMutation({
@@ -166,6 +167,7 @@ export function SolicitudDetailPage() {
   const terminal = app.status === "REJECTED";
   const currentIdx = STEPS.findIndex((s) => s.status === app.status);
   const busy =
+    promote.isPending ||
     claim.isPending ||
     approve.isPending ||
     reject.isPending ||
@@ -509,6 +511,28 @@ export function SolicitudDetailPage() {
                 </>
               )}
             </RailCard>
+
+            {/* Draft → promote into the active queue */}
+            {actions.canPromote && (
+              <RailCard label="Borrador">
+                <span className="text-[13px] text-ds-muted">
+                  Completaste los datos con el solicitante. Promuévela a Nueva para entrar a la cola
+                  de evaluación.
+                </span>
+                {promote.isError && (
+                  <span className="text-[13px] text-ds-red">{promote.error.message}</span>
+                )}
+                <Button
+                  variant="primary"
+                  icon={ArrowRight}
+                  block
+                  disabled={busy}
+                  onClick={() => promote.mutate({ id })}
+                >
+                  Promover a Nueva
+                </Button>
+              </RailCard>
+            )}
 
             {/* Review / decision */}
             {(actions.canApprove || actions.canReject || actions.canClaim) && (
