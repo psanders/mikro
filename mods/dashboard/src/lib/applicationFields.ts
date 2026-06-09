@@ -15,6 +15,8 @@ export interface FieldDef {
   label: string;
   type: "text" | "date" | "select";
   options?: FieldOption[];
+  /** Masked/validated input (Dominican cédula or phone). */
+  format?: "cedula" | "phone";
 }
 export interface FieldSection {
   title: string;
@@ -145,8 +147,8 @@ export const EDIT_SECTIONS: FieldSection[] = [
     fields: [
       { key: "firstName", label: "Nombre(s)", type: "text" },
       { key: "lastName", label: "Apellido(s)", type: "text" },
-      { key: "phone", label: "Teléfono", type: "text" },
-      { key: "idNumber", label: "Cédula", type: "text" },
+      { key: "phone", label: "Teléfono", type: "text", format: "phone" },
+      { key: "idNumber", label: "Cédula", type: "text", format: "cedula" },
       { key: "dateOfBirth", label: "Fecha de nacimiento", type: "date" },
       { key: "maritalStatus", label: "Estado civil", type: "select", options: ESTADO_CIVIL }
     ]
@@ -161,7 +163,7 @@ export const EDIT_SECTIONS: FieldSection[] = [
       { key: "locationType", label: "Local", type: "select", options: TIPO_LOCAL },
       { key: "formalization", label: "Formalización", type: "select", options: FORMALIZACION },
       { key: "employeeCount", label: "Nº de empleados", type: "select", options: NUM_EMPLEADOS },
-      { key: "businessPhone", label: "Teléfono del negocio", type: "text" }
+      { key: "businessPhone", label: "Teléfono del negocio", type: "text", format: "phone" }
     ]
   },
   {
@@ -176,9 +178,9 @@ export const EDIT_SECTIONS: FieldSection[] = [
     title: "Referencias",
     fields: [
       { key: "spouseName", label: "Nombre del cónyuge", type: "text" },
-      { key: "spousePhone", label: "Teléfono del cónyuge", type: "text" },
+      { key: "spousePhone", label: "Teléfono del cónyuge", type: "text", format: "phone" },
       { key: "referenceName", label: "Nombre de referencia", type: "text" },
-      { key: "referencePhone", label: "Teléfono de referencia", type: "text" }
+      { key: "referencePhone", label: "Teléfono de referencia", type: "text", format: "phone" }
     ]
   },
   {
@@ -198,4 +200,5 @@ export const EDIT_SECTIONS: FieldSection[] = [
   }
 ];
 
-export const ALL_EDIT_KEYS = EDIT_SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
+export const ALL_EDIT_FIELDS = EDIT_SECTIONS.flatMap((s) => s.fields);
+export const ALL_EDIT_KEYS = ALL_EDIT_FIELDS.map((f) => f.key);

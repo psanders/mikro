@@ -23,7 +23,8 @@ import {
   X,
   Pencil,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  IdCard
 } from "lucide-react";
 import type { ApplicationScore } from "@mikro/common";
 import { trpc } from "../lib/trpc";
@@ -37,6 +38,8 @@ import {
   statusMeta,
   riskBandMeta,
   allowedActions,
+  recommendationLabel,
+  confidenceLabel,
   formatDop,
   formatDate,
   isForbidden
@@ -94,6 +97,8 @@ export function SolicitudDetailPage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const fileRef = useRef<HTMLInputElement>(null);
+  const idFileRef = useRef<HTMLInputElement>(null);
+  const idSideRef = useRef<"FRONT" | "BACK">("FRONT");
 
   const q = trpc.getApplication.useQuery({ id });
   const users = trpc.listUsers.useQuery({});
@@ -137,6 +142,7 @@ export function SolicitudDetailPage() {
       navigate("/solicitudes", { viewTransition: true });
     }
   });
+  const uploadId = trpc.uploadIdImage.useMutation({ onSuccess: refresh });
 
   if (q.isPending) return <CenterMessage>Cargando…</CenterMessage>;
   if (q.isError) {
@@ -166,7 +172,8 @@ export function SolicitudDetailPage() {
     reopen.isPending ||
     upload.isPending ||
     convert.isPending ||
-    del.isPending;
+    del.isPending ||
+    uploadId.isPending;
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -184,6 +191,36 @@ export function SolicitudDetailPage() {
     const c = await utils.getApplicationContract.fetch({ id });
     const bytes = Uint8Array.from(atob(c.dataBase64), (ch) => ch.charCodeAt(0));
     const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    window.open(url, "_blank");
+  };
+
+  const pickId = (side: "FRONT" | "BACK") => {
+    idSideRef.current = side;
+    idFileRef.current?.click();
+  };
+
+  const onPickIdFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = String(reader.result).split(",")[1] ?? "";
+      uploadId.mutate({
+        id,
+        side: idSideRef.current,
+        originalName: f.name,
+        mimeType: f.type as "image/jpeg" | "image/png" | "image/webp",
+        dataBase64: b64
+      });
+    };
+    reader.readAsDataURL(f);
+    e.target.value = "";
+  };
+
+  const viewIdImage = async (side: "FRONT" | "BACK") => {
+    const img = await utils.getIdImage.fetch({ id, side });
+    const bytes = Uint8Array.from(atob(img.dataBase64), (ch) => ch.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: img.mimeType }));
     window.open(url, "_blank");
   };
 
@@ -218,16 +255,6 @@ export function SolicitudDetailPage() {
                 Generar contrato
               </Button>
             )}
-            {app.contractFilename && (
-              <Button
-                variant="secondary"
-                icon={FileText}
-                disabled={busy}
-                onClick={() => void viewContract()}
-              >
-                Ver PDF
-              </Button>
-            )}
           </div>
         }
       />
@@ -237,6 +264,13 @@ export function SolicitudDetailPage() {
         accept="application/pdf"
         className="hidden"
         onChange={onPickFile}
+      />
+      <input
+        ref={idFileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={onPickIdFile}
       />
 
       {editOpen && (
@@ -301,16 +335,47 @@ export function SolicitudDetailPage() {
               <KV k="Provincia" v={app.province ?? "—"} />
             </Section>
 
+            <Section label="Documentos de identidad">
+              <div className="col-span-3 grid grid-cols-2 gap-4">
+                <IdTile
+                  label="Cédula (frente)"
+                  filename={app.idFrontOriginalName ?? app.idFrontFilename}
+                  canEdit={app.status !== "CONVERTED"}
+                  busy={busy}
+                  onView={() => void viewIdImage("FRONT")}
+                  onUpload={() => pickId("FRONT")}
+                />
+                <IdTile
+                  label="Cédula (dorso)"
+                  filename={app.idBackOriginalName ?? app.idBackFilename}
+                  canEdit={app.status !== "CONVERTED"}
+                  busy={busy}
+                  onView={() => void viewIdImage("BACK")}
+                  onUpload={() => pickId("BACK")}
+                />
+              </div>
+            </Section>
+
             <Section label="Contrato">
               <div className="col-span-3 flex items-center gap-[11px] rounded-[8px] bg-ds-subtle px-[14px] py-3">
-                <FileText size={18} className="text-ds-muted" />
-                <div className="flex flex-1 flex-col">
-                  <span className="text-[13px] font-medium text-brand-ink">
-                    Contrato de préstamo
-                  </span>
+                <FileText size={18} className="shrink-0 text-ds-muted" />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  {app.contractFilename ? (
+                    <button
+                      type="button"
+                      onClick={() => void viewContract()}
+                      className="cursor-pointer truncate text-left text-[13px] font-medium text-brand-blue-primary hover:underline"
+                    >
+                      {app.contractOriginalName ?? "Contrato de préstamo"}
+                    </button>
+                  ) : (
+                    <span className="text-[13px] font-medium text-brand-ink">
+                      Contrato de préstamo
+                    </span>
+                  )}
                   <span className="text-[12px] font-medium text-ds-muted">
                     {app.contractFilename
-                      ? `${app.contractOriginalName ?? app.contractFilename} · firmado ${formatDate(app.signedAt)}`
+                      ? `Firmado ${formatDate(app.signedAt)}`
                       : "Se genera y sube al firmar, tras la aprobación"}
                   </span>
                 </div>
@@ -371,7 +436,8 @@ export function SolicitudDetailPage() {
                   </div>
                   {score && (
                     <>
-                      <RailRow k="Recomendación" v={score.recommendation} />
+                      <RailRow k="Recomendación" v={recommendationLabel(score.recommendation)} />
+                      <RailRow k="Confianza" v={confidenceLabel(score.confidence)} />
                       <button
                         type="button"
                         onClick={() => setShowBreakdown((v) => !v)}
@@ -655,6 +721,52 @@ function KV({ k, v }: { k: string; v: ReactNode }) {
     <div className="flex flex-col gap-[3px]">
       <span className="text-[12px] font-medium text-ds-muted">{k}</span>
       <span className="text-[14px] font-medium text-brand-ink">{v}</span>
+    </div>
+  );
+}
+
+function IdTile({
+  label,
+  filename,
+  canEdit,
+  busy,
+  onView,
+  onUpload
+}: {
+  label: string;
+  filename: string | null;
+  canEdit: boolean;
+  busy: boolean;
+  onView: () => void;
+  onUpload: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-[11px] rounded-[8px] bg-ds-subtle px-[14px] py-3">
+      <IdCard size={18} className="shrink-0 text-ds-muted" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[12px] font-medium text-ds-muted">{label}</span>
+        {filename ? (
+          <button
+            type="button"
+            onClick={onView}
+            className="cursor-pointer truncate text-left text-[13px] font-medium text-brand-blue-primary hover:underline"
+          >
+            {filename}
+          </button>
+        ) : (
+          <span className="text-[13px] font-medium text-brand-ink">Sin subir</span>
+        )}
+      </div>
+      {canEdit && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onUpload}
+          className="shrink-0 cursor-pointer text-[13px] font-medium text-brand-blue-primary hover:underline disabled:opacity-50"
+        >
+          {filename ? "Reemplazar" : "Subir"}
+        </button>
+      )}
     </div>
   );
 }

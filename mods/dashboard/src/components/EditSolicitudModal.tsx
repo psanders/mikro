@@ -5,7 +5,8 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
-import { EDIT_SECTIONS, ALL_EDIT_KEYS, type FieldDef } from "../lib/applicationFields";
+import { EDIT_SECTIONS, ALL_EDIT_FIELDS, type FieldDef } from "../lib/applicationFields";
+import { applyFormat, formatError } from "../lib/inputFormat";
 
 interface EditSolicitudModalProps {
   id: string;
@@ -23,43 +24,67 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
   const initial = () => {
     const r = (rawData as Record<string, unknown> | null) ?? {};
     const out: Record<string, string> = {};
-    for (const k of ALL_EDIT_KEYS) out[k] = typeof r[k] === "string" ? (r[k] as string) : "";
+    for (const f of ALL_EDIT_FIELDS) {
+      const v = typeof r[f.key] === "string" ? (r[f.key] as string) : "";
+      // Normalize pre-existing values to the mask so they display consistently.
+      out[f.key] = f.format && v ? applyFormat(f.format, v) : v;
+    }
     return out;
   };
   const [form, setForm] = useState<Record<string, string>>(initial);
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const setFormatted = (f: FieldDef, v: string) =>
+    set(f.key, f.format ? applyFormat(f.format, v) : v);
 
   const update = trpc.updateApplication.useMutation({
     onSuccess: () => onSaved()
   });
 
-  const renderField = (f: FieldDef) => (
-    <div key={f.key} className="flex flex-col gap-[6px]">
-      <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
-      {f.type === "select" ? (
-        <select
-          className={`${inputCls} ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
-          value={form[f.key] ?? ""}
-          onChange={(e) => set(f.key, e.target.value)}
-        >
-          <option value="">Seleccionar…</option>
-          {f.options?.map((o) => (
-            <option key={o.value} value={o.value} className="text-brand-ink">
-              {o.label}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={f.type === "date" ? "date" : "text"}
-          className={`${inputCls} placeholder:text-ds-muted`}
-          placeholder={f.type === "date" ? undefined : "Sin completar"}
-          value={form[f.key] ?? ""}
-          onChange={(e) => set(f.key, e.target.value)}
-        />
-      )}
-    </div>
+  // Block save while any formatted field has a partial (invalid) value.
+  const hasErrors = ALL_EDIT_FIELDS.some(
+    (f) => f.format && formatError(f.format, form[f.key] ?? "")
   );
+
+  const renderField = (f: FieldDef) => {
+    const err = f.format ? formatError(f.format, form[f.key] ?? "") : null;
+    return (
+      <div key={f.key} className="flex flex-col gap-[6px]">
+        <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
+        {f.type === "select" ? (
+          <select
+            className={`${inputCls} ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
+            value={form[f.key] ?? ""}
+            onChange={(e) => set(f.key, e.target.value)}
+          >
+            <option value="">Seleccionar…</option>
+            {f.options?.map((o) => (
+              <option key={o.value} value={o.value} className="text-brand-ink">
+                {o.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={f.type === "date" ? "date" : "text"}
+            inputMode={f.format ? "numeric" : undefined}
+            className={`${inputCls} placeholder:text-ds-muted ${err ? "border-ds-red focus:border-ds-red" : ""}`}
+            placeholder={
+              f.format === "cedula"
+                ? "000-0000000-0"
+                : f.format === "phone"
+                  ? "(000) 000-0000"
+                  : f.type === "date"
+                    ? undefined
+                    : "Sin completar"
+            }
+            value={form[f.key] ?? ""}
+            onChange={(e) => setFormatted(f, e.target.value)}
+          />
+        )}
+        {err && <span className="text-[12px] font-medium text-ds-red">{err}</span>}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
@@ -95,7 +120,7 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
           </Button>
           <Button
             variant="primary"
-            disabled={update.isPending}
+            disabled={update.isPending || hasErrors}
             onClick={() => update.mutate({ id, patch: form })}
           >
             {update.isPending ? "Guardando…" : "Guardar cambios"}

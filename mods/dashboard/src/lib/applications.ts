@@ -47,6 +47,34 @@ export function riskBandMeta(band: string | null): { label: string; tone: BadgeT
   return RISK_BAND_META[band] ?? { label: band, tone: "neutral" };
 }
 
+// Scoring engine recommendation codes → human-readable Spanish labels.
+export const RECOMMENDATION_META: Record<string, string> = {
+  APPROVE: "Aprobar",
+  APPROVE_WITH_CONDITIONS: "Aprobar con condiciones",
+  MANUAL_REVIEW: "Revisión manual",
+  LIKELY_REJECT: "Probable rechazo",
+  REJECT: "Rechazar",
+  REJECT_OUT_OF_ZONE: "Rechazar — fuera de zona",
+  REJECT_CRITICAL_BUSINESS: "Rechazar — negocio no elegible"
+};
+
+export function recommendationLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  return RECOMMENDATION_META[value] ?? value;
+}
+
+// Scoring confidence codes → human-readable Spanish labels.
+export const CONFIDENCE_META: Record<string, string> = {
+  HIGH: "Alta",
+  MEDIUM: "Media",
+  LOW: "Baja"
+};
+
+export function confidenceLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  return CONFIDENCE_META[value] ?? value;
+}
+
 /** Status filter tabs for the list (Pencil Jnc0R), in display order. */
 export const STATUS_TABS: Array<{ label: string; value: ApplicationStatus }> = [
   { label: "Nuevas", value: "RECEIVED" },

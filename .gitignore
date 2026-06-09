@@ -31,6 +31,8 @@ eval-results/
 data/
 public/
 !site/public/
+!mods/dashboard/public/
+!mods/dashboard/public/**
 # Storybook build output
 **/storybook-static/
 
