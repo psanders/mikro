@@ -344,3 +344,14 @@ export const updateApplicationSchema = z
   .refine(requireRef, refMessage);
 
 export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
+
+// ---- manual purge (hard delete) ----
+
+/**
+ * Permanently delete a loan application (manual purge of an abandoned/dead flow).
+ * Irreversible: the row is removed and any stored contract file is unlinked.
+ * Not allowed for CONVERTED applications (they own a real Customer + Loan).
+ */
+export const deleteApplicationSchema = z.object(applicationRef).refine(requireRef, refMessage);
+
+export type DeleteApplicationInput = z.infer<typeof deleteApplicationSchema>;

@@ -339,6 +339,7 @@ export interface DbClient {
       where: { id: string };
       data: Partial<LoanApplicationWriteData>;
     }): Promise<LoanApplication>;
+    delete(args: { where: { id: string } }): Promise<LoanApplication>;
     findUnique(args: { where: { id: string } }): Promise<LoanApplication | null>;
     findFirst(args: { where: { sessionId: string } }): Promise<LoanApplication | null>;
     findMany(args?: {

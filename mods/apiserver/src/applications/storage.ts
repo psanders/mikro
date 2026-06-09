@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { createHash } from "crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { getConfig, resolvePathFromConfigDir, MAX_ATTACHMENT_SIZE_BYTES } from "@mikro/common";
 import { logger } from "../logger.js";
@@ -47,6 +47,18 @@ export function saveContract(params: { dataBase64: string }): SavedContract {
   writeFileSync(absolutePath, buffer);
   logger.verbose("contract saved", { filename, size: buffer.length });
   return { filename, size: buffer.length, sha256, absolutePath };
+}
+
+/**
+ * Best-effort unlink of a stored contract file. Used when an application is
+ * purged so we don't leave orphaned PDFs on disk. Missing files are ignored.
+ */
+export function deleteContract(filename: string): void {
+  const absolutePath = join(getContractsDir(), filename);
+  if (existsSync(absolutePath)) {
+    unlinkSync(absolutePath);
+    logger.verbose("contract deleted", { filename });
+  }
 }
 
 /**

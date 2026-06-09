@@ -57,7 +57,8 @@ import {
   getApplicationContractSchema,
   generateApplicationContractSchema,
   convertApplicationSchema,
-  updateApplicationSchema
+  updateApplicationSchema,
+  deleteApplicationSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
@@ -103,6 +104,7 @@ import { createGetApplicationContract } from "../../api/applications/createGetAp
 import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
+import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
@@ -503,6 +505,16 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const fn = createUpdateApplication(ctx.db);
       return fn(input);
+    }),
+
+  /**
+   * Manually purge (hard delete) an application. Irreversible. ADMIN/REVIEWER only.
+   */
+  deleteApplication: reviewerProcedure
+    .input(deleteApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createDeleteApplication(ctx.db);
+      return fn(input, ctx.userId);
     }),
 
   // ==================== Payment procedures ====================

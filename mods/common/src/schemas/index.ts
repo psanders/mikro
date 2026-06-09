@@ -19,6 +19,7 @@ export {
   uploadSignedContractSchema,
   convertApplicationSchema,
   updateApplicationSchema,
+  deleteApplicationSchema,
   APPLICATION_STABLE_KEYS,
   APPLICATION_RAW_ONLY_KEYS,
   APPLICATION_CONTENT_KEYS,
@@ -36,7 +37,8 @@ export {
   type GetApplicationContractInput,
   type UploadSignedContractInput,
   type ConvertApplicationInput,
-  type UpdateApplicationInput
+  type UpdateApplicationInput,
+  type DeleteApplicationInput
 } from "./application.js";
 
 export {

@@ -21,7 +21,9 @@ import {
   History,
   Upload,
   X,
-  Pencil
+  Pencil,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import type { ApplicationScore } from "@mikro/common";
 import { trpc } from "../lib/trpc";
@@ -101,6 +103,7 @@ export function SolicitudDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [contractOpen, setContractOpen] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const userName = useMemo(() => {
     const map = new Map<string, string>();
@@ -128,6 +131,12 @@ export function SolicitudDetailPage() {
   const reopen = trpc.reopenApplication.useMutation({ onSuccess: noteRefresh });
   const upload = trpc.uploadSignedContract.useMutation({ onSuccess: refresh });
   const convert = trpc.convertApplication.useMutation({ onSuccess: refresh });
+  const del = trpc.deleteApplication.useMutation({
+    onSuccess: () => {
+      void utils.listApplications.invalidate();
+      navigate("/solicitudes", { viewTransition: true });
+    }
+  });
 
   if (q.isPending) return <CenterMessage>Cargando…</CenterMessage>;
   if (q.isError) {
@@ -156,7 +165,8 @@ export function SolicitudDetailPage() {
     reject.isPending ||
     reopen.isPending ||
     upload.isPending ||
-    convert.isPending;
+    convert.isPending ||
+    del.isPending;
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -566,6 +576,52 @@ export function SolicitudDetailPage() {
                 Reabrir
               </Button>
             )}
+
+            {/* Manual purge (hard delete) — abandoned/dead flows. Not for CONVERTED. */}
+            {app.status !== "CONVERTED" &&
+              (deleteConfirm ? (
+                <RailCard label="Descartar solicitud">
+                  <div className="flex items-start gap-[10px]">
+                    <AlertTriangle size={16} className="mt-px shrink-0 text-ds-red" />
+                    <span className="text-[13px] font-medium text-brand-ink">
+                      Se elimina de forma permanente. No se puede deshacer.
+                    </span>
+                  </div>
+                  {del.isError && (
+                    <span className="text-[13px] text-ds-red">{del.error.message}</span>
+                  )}
+                  <div className="flex gap-[10px]">
+                    <Button
+                      variant="secondary"
+                      block
+                      disabled={busy}
+                      onClick={() => setDeleteConfirm(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      icon={Trash2}
+                      block
+                      className="text-ds-red"
+                      disabled={busy}
+                      onClick={() => del.mutate({ id })}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                </RailCard>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setDeleteConfirm(true)}
+                  className="flex cursor-pointer items-center justify-center gap-2 self-center py-1 text-[13px] font-medium text-ds-muted transition-colors hover:text-ds-red disabled:opacity-50"
+                >
+                  <Trash2 size={15} />
+                  Descartar solicitud
+                </button>
+              ))}
           </div>
         </div>
       </div>
