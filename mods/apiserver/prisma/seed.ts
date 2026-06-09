@@ -976,6 +976,54 @@ async function main() {
         ]
       } as ScoreParams,
       reviewNote: "Monto solicitado muy alto frente a la capacidad de pago; sin referencias."
+    },
+    // Dead/abandoned flows — primary targets for the manual purge (hard delete).
+    {
+      sessionId: "seed-app-draft-9001",
+      status: "DRAFT",
+      daysAgo: 3,
+      firstName: "Pedro",
+      lastName: "Núñez",
+      phone: "+18095551006",
+      idNumber: "402-7654321-0",
+      maritalStatus: "Soltero(a)",
+      businessType: "Colmado",
+      businessName: "Colmado Núñez",
+      requestedAmount: 30000,
+      purpose: "Capital de trabajo",
+      requestedTermWeeks: 12,
+      province: "Puerto Plata",
+      homeAddress: "Calle Principal, Puerto Plata",
+      raw: {
+        businessAge: "1 a 3 años",
+        monthlySales: "RD$50,000 – RD$100,000"
+      },
+      score: null
+    },
+    {
+      sessionId: "seed-app-aband-9002",
+      status: "ABANDONED",
+      daysAgo: 21,
+      firstName: "Rosa",
+      lastName: "Mejía",
+      phone: "+18095551007",
+      idNumber: "031-1472583-6",
+      maritalStatus: "Casado(a)",
+      businessType: "Salón de belleza / barbería",
+      businessName: "Salón Rosa",
+      requestedAmount: 18000,
+      purpose: "Compra de equipos / maquinaria",
+      requestedTermWeeks: 10,
+      province: "Santiago",
+      homeAddress: "Los Jardines, Santiago",
+      raw: {
+        businessAge: "Más de 5 años",
+        monthlySales: "Menos de RD$25,000",
+        formalization: "Informal (sin RNC)",
+        housingType: "Familiar",
+        residenceTime: "Más de 10 años"
+      },
+      score: null
     }
   ];
 
@@ -983,16 +1031,20 @@ async function main() {
   const day = 86_400_000;
   for (const a of applicationSpecs) {
     const createdAt = new Date(now - a.daysAgo * day);
-    const reviewed = a.status !== "RECEIVED";
-    const sd = buildScore(
-      `${a.firstName} ${a.lastName}`,
-      a.idNumber,
-      a.phone,
-      a.province,
-      a.businessType,
-      a.businessName,
-      a.score
+    const reviewed = ["IN_REVIEW", "APPROVED", "SIGNED", "REJECTED", "CONVERTED"].includes(
+      a.status
     );
+    const sd = a.score
+      ? buildScore(
+          `${a.firstName} ${a.lastName}`,
+          a.idNumber,
+          a.phone,
+          a.province,
+          a.businessType,
+          a.businessName,
+          a.score
+        )
+      : null;
     const create = {
       sessionId: a.sessionId,
       status: a.status as never,
@@ -1010,11 +1062,11 @@ async function main() {
       homeAddress: a.homeAddress,
       rawData: a.raw as never,
       scoreData: sd as never,
-      score: a.score.isc,
-      riskBand: a.score.band,
-      recommendation: a.score.rec,
-      scoredAt: createdAt,
-      submittedAt: createdAt,
+      score: a.score?.isc ?? null,
+      riskBand: a.score?.band ?? null,
+      recommendation: a.score?.rec ?? null,
+      scoredAt: a.score ? createdAt : null,
+      submittedAt: a.status === "DRAFT" ? null : createdAt,
       createdAt,
       ...(reviewed ? { reviewedById: admin.id, reviewedAt: createdAt } : {}),
       ...("reviewNote" in a && a.reviewNote ? { reviewNote: a.reviewNote } : {}),
