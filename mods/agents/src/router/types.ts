@@ -8,7 +8,6 @@ import type { AgentName } from "../constants.js";
  * Result of routing a message.
  */
 export type RouteResult =
-  | { type: "guest"; phone: string }
   | { type: "user"; userId: string; name: string; role: Role; phone: string }
   | { type: "customer"; customerId: string; phone: string }
   | { type: "ignored"; reason: string; phone: string };

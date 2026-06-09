@@ -5,7 +5,6 @@ import type { Agent, AgentName } from "@mikro/agents";
 import { AGENT_NAMES } from "@mikro/agents";
 import { logger } from "../logger.js";
 import { agentConfigSchema } from "./agentSchema.js";
-import { joan } from "./joan.js";
 import { maria } from "./maria.js";
 
 /**
@@ -39,8 +38,7 @@ export function loadAgents(): Map<AgentName, Agent> {
 
   const agents = new Map<AgentName, Agent>();
   const agentConfigs: Array<{ name: AgentName; config: unknown }> = [
-    { name: AGENT_NAMES[0], config: joan },
-    { name: AGENT_NAMES[1], config: maria }
+    { name: AGENT_NAMES[0], config: maria }
   ];
 
   for (const { name, config } of agentConfigs) {

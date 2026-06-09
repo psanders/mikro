@@ -37,16 +37,24 @@ describe("handleWhatsAppMessage", () => {
     ]
   });
 
+  const adminRoute = {
+    type: "user" as const,
+    userId: "user-1",
+    name: "Admin",
+    role: "ADMIN" as const,
+    phone: "+1234567890"
+  };
+
   const mockMessageProcessor = {
-    routeMessage: sinon.stub().resolves({ type: "guest" as const }),
+    routeMessage: sinon.stub().resolves(adminRoute),
     invokeLLM: sinon.stub().resolves("AI response"),
     sendWhatsAppMessage: sinon.stub().resolves({ messages: [{ id: "response-123" }] }),
     downloadMedia: sinon.stub().resolves("data:image/png;base64,mock"),
     getChatHistoryForUser: sinon.stub().resolves([]),
     addMessageForUser: sinon.stub().resolves(),
     getAgent: sinon.stub().returns({
-      name: "joan",
-      systemPrompt: "You are Joan",
+      name: "maria",
+      systemPrompt: "You are Maria",
       tools: []
     })
   };
@@ -54,7 +62,7 @@ describe("handleWhatsAppMessage", () => {
   beforeEach(() => {
     // Recreate stubs each run so afterEach's sinon.restore() doesn't leave
     // mockMessageProcessor with restored (non-stub) methods for the next test.
-    mockMessageProcessor.routeMessage = sinon.stub().resolves({ type: "guest" as const });
+    mockMessageProcessor.routeMessage = sinon.stub().resolves(adminRoute);
     mockMessageProcessor.invokeLLM = sinon.stub().resolves("AI response");
     mockMessageProcessor.sendWhatsAppMessage = sinon
       .stub()
@@ -63,8 +71,8 @@ describe("handleWhatsAppMessage", () => {
     mockMessageProcessor.getChatHistoryForUser = sinon.stub().resolves([]);
     mockMessageProcessor.addMessageForUser = sinon.stub().resolves();
     mockMessageProcessor.getAgent = sinon.stub().returns({
-      name: "joan",
-      systemPrompt: "You are Joan",
+      name: "maria",
+      systemPrompt: "You are Maria",
       tools: []
     });
 
@@ -263,10 +271,11 @@ describe("handleWhatsAppMessage", () => {
   describe("session handling", () => {
     const recentTimestamp = () => String(Math.floor(Date.now() / 1000) - 10);
 
-    it("should pass isNewSession true for first guest message", async () => {
+    it("ignores unknown (guest) phones — no AI reply (Joan removed)", async () => {
       const guestPhone = "+15551112222";
       mockMessageProcessor.routeMessage.withArgs(guestPhone).resolves({
-        type: "guest" as const,
+        type: "ignored" as const,
+        reason: "unknown phone — onboarding over WhatsApp is disabled",
         phone: guestPhone
       });
 
@@ -281,7 +290,7 @@ describe("handleWhatsAppMessage", () => {
                     {
                       from: guestPhone,
                       type: "text",
-                      id: "msg-first",
+                      id: "msg-guest",
                       timestamp: recentTimestamp(),
                       text: { body: "Hola" }
                     }
@@ -295,48 +304,9 @@ describe("handleWhatsAppMessage", () => {
 
       await handleWhatsAppMessage(webhook);
 
-      expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
-      const invokeArgs = mockMessageProcessor.invokeLLM.getCall(0).args;
-      expect(invokeArgs[5]).to.equal(true);
-    });
-
-    it("should pass isNewSession false for second guest message within session", async () => {
-      const guestPhone = "+15553334444";
-      mockMessageProcessor.routeMessage.withArgs(guestPhone).resolves({
-        type: "guest" as const,
-        phone: guestPhone
-      });
-
-      const webhook = (from: string, id: string, body: string) => ({
-        object: "whatsapp_business_account",
-        entry: [
-          {
-            changes: [
-              {
-                value: {
-                  messages: [
-                    { from, type: "text", id, timestamp: recentTimestamp(), text: { body } }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      });
-
-      await handleWhatsAppMessage(webhook(guestPhone, "msg-1", "Hola"));
-      expect(
-        mockMessageProcessor.invokeLLM.callCount,
-        "first webhook should invoke LLM once"
-      ).to.equal(1);
-      expect(mockMessageProcessor.invokeLLM.getCall(0).args[5]).to.equal(true);
-
-      await handleWhatsAppMessage(webhook(guestPhone, "msg-2", "Necesito ayuda"));
-      expect(
-        mockMessageProcessor.invokeLLM.callCount,
-        "second webhook should invoke LLM (total 2)"
-      ).to.equal(2);
-      expect(mockMessageProcessor.invokeLLM.getCall(1).args[5]).to.equal(false);
+      expect(mockMessageProcessor.invokeLLM.called, "no LLM for unknown phones").to.be.false;
+      expect(mockMessageProcessor.sendWhatsAppMessage.called, "no reply for unknown phones").to.be
+        .false;
     });
 
     it("should pass isNewSession true for first user message", async () => {
@@ -345,7 +315,7 @@ describe("handleWhatsAppMessage", () => {
       mockMessageProcessor.routeMessage.withArgs(userPhone).resolves({
         type: "user" as const,
         userId,
-        role: "COLLECTOR" as const,
+        role: "ADMIN" as const,
         phone: userPhone
       });
       mockMessageProcessor.getChatHistoryForUser.withArgs(userId).resolves([]);
@@ -385,7 +355,7 @@ describe("handleWhatsAppMessage", () => {
       mockMessageProcessor.routeMessage.withArgs(userPhone).resolves({
         type: "user" as const,
         userId,
-        role: "COLLECTOR" as const,
+        role: "ADMIN" as const,
         phone: userPhone
       });
       mockMessageProcessor.getChatHistoryForUser.withArgs(userId).resolves([]);

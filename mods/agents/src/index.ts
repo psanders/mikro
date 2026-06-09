@@ -115,10 +115,8 @@ export { validateAllLLMConfigs as initializeLLM } from "./config.js";
 // Constants
 export {
   AGENT_NAMES,
-  AGENT_JOAN,
   AGENT_MARIA,
   VALID_AGENT_NAMES,
   ROLE_TO_AGENT,
-  GUEST_AGENT,
   type AgentName
 } from "./constants.js";

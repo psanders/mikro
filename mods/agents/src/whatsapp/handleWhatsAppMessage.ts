@@ -11,11 +11,10 @@ import {
 import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
-import { getGuestConversation, addGuestMessage } from "../conversations/inMemoryStore.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
 import { getMessageMaxAgeSeconds } from "../config.js";
 import { logger } from "../logger.js";
-import { GUEST_AGENT, ROLE_TO_AGENT, type AgentName } from "../constants.js";
+import { ROLE_TO_AGENT, type AgentName } from "../constants.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -429,46 +428,30 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    let agent: Agent;
-    let chatHistory: Message[];
-    let context: Record<string, unknown>;
-
-    if (route.type === "guest") {
-      // Guest: use guest agent, in-memory chat history
-      agent = getAgent(GUEST_AGENT);
-      chatHistory = getGuestConversation(phone);
-      context = { phone };
-
-      // Add user message to in-memory history
-      addGuestMessage(phone, {
-        role: "user",
-        content: imageUrl
-          ? [
-              { type: "text", text: userMessage },
-              { type: "image_url", image_url: { url: imageUrl } }
-            ]
-          : userMessage
-      });
-    } else {
-      // User: route to appropriate agent based on role
-      const targetAgent = ROLE_TO_AGENT[route.role];
-      if (!targetAgent) {
-        logger.verbose("no agent for user role", { phone, role: route.role });
-        return;
-      }
-      agent = getAgent(targetAgent);
-      chatHistory = await getChatHistoryForUser(route.userId);
-      context = { userId: route.userId, name: route.name, phone, role: route.role };
-
-      // Add user message to DB
-      await addMessageForUser({
-        userId: route.userId,
-        role: "HUMAN",
-        content: userMessage || "[Image]"
-      });
+    // Only known users (e.g. ADMIN -> Maria) reach an agent — Mikro does not
+    // onboard prospects over WhatsApp, so unknown numbers are already ignored.
+    const targetAgent = ROLE_TO_AGENT[route.role];
+    if (!targetAgent) {
+      logger.verbose("no agent for user role", { phone, role: route.role });
+      return;
     }
+    const agent: Agent = getAgent(targetAgent);
+    const chatHistory: Message[] = await getChatHistoryForUser(route.userId);
+    const context: Record<string, unknown> = {
+      userId: route.userId,
+      name: route.name,
+      phone,
+      role: route.role
+    };
 
-    const sessionIdentifier = route.type === "guest" ? phone : route.userId;
+    // Add user message to DB
+    await addMessageForUser({
+      userId: route.userId,
+      role: "HUMAN",
+      content: userMessage || "[Image]"
+    });
+
+    const sessionIdentifier = route.userId;
     const newSession = isNewSession(sessionIdentifier);
 
     // Step 3: Invoke the LLM
@@ -479,37 +462,17 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     const responseText = typeof result === "string" ? result : result.text;
     const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
 
-    // Step 4 & 5: Save AI response and send via WhatsApp (parallel for user path)
-    if (route.type === "guest") {
-      addGuestMessage(phone, {
-        role: "assistant",
-        content: responseText,
-        tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
-      });
-      if (responseText) {
-        await sendWhatsAppMessage({
-          phone,
-          message: responseText
-        });
-      }
+    // Step 4 & 5: Save AI response and send via WhatsApp (in parallel).
+    const savePromise = addMessageForUser({
+      userId: route.userId,
+      role: "AI",
+      content: responseText,
+      tools: toolsExecuted.length > 0 ? toolsExecuted.map((t) => t.name) : undefined
+    });
+    if (responseText) {
+      await Promise.all([savePromise, sendWhatsAppMessage({ phone, message: responseText })]);
     } else {
-      const savePromise = addMessageForUser({
-        userId: route.userId,
-        role: "AI",
-        content: responseText,
-        tools: toolsExecuted.length > 0 ? toolsExecuted.map((t) => t.name) : undefined
-      });
-      if (responseText) {
-        await Promise.all([
-          savePromise,
-          sendWhatsAppMessage({
-            phone,
-            message: responseText
-          })
-        ]);
-      } else {
-        await savePromise;
-      }
+      await savePromise;
     }
     if (responseText) {
       logger.verbose("response sent", {

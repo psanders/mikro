@@ -7,7 +7,7 @@
 import type { RouteResult, RouterDependencies } from "./types.js";
 import { logger } from "../logger.js";
 import { validatePhone } from "@mikro/common";
-import { ROLE_TO_AGENT, GUEST_AGENT } from "../constants.js";
+import { ROLE_TO_AGENT } from "../constants.js";
 
 /**
  * Creates a message router that determines routing based on phone number lookup.
@@ -129,25 +129,12 @@ export function createMessageRouter(deps: RouterDependencies) {
       };
     }
 
-    // Step 3: Unknown phone - this is a guest
-    // Check if guest agent is disabled
-    if (isAgentDisabled(GUEST_AGENT)) {
-      logger.info("agent is disabled, ignoring request", {
-        phone: normalizedPhone,
-        agentName: GUEST_AGENT,
-        routeType: "guest",
-        reason: "agent is disabled"
-      });
-      return {
-        type: "ignored",
-        reason: "agent is disabled",
-        phone: normalizedPhone
-      };
-    }
-
-    logger.verbose("phone is unknown, routing to guest agent", { phone: normalizedPhone });
+    // Step 3: Unknown phone — no onboarding agent. Mikro does not onboard
+    // prospects over WhatsApp, so the AI never replies to new/unknown numbers.
+    logger.verbose("phone is unknown, ignoring (no onboarding agent)", { phone: normalizedPhone });
     return {
-      type: "guest",
+      type: "ignored",
+      reason: "unknown phone — onboarding over WhatsApp is disabled",
       phone: normalizedPhone
     };
   };
