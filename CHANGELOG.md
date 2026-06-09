@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](https://github.com/psanders/mikro/compare/v1.2.4...v1.3.0) (2026-06-09)
+
+### Bug Fixes
+
+- **apiserver:** stop baking a stray mikro.db into the image; pin db path ([1fb1569](https://github.com/psanders/mikro/commit/1fb15698d9a37fb9078834a271e43914460fe467))
+- **dashboard:** draft visibility + edit-form placeholders ([1695ccd](https://github.com/psanders/mikro/commit/1695ccda098fd499ff412fd05737447cc62b334e))
+- restore nested site react/react-dom in lock for npm ci ([29fa569](https://github.com/psanders/mikro/commit/29fa569fa7e2c7bc82b2c2862212c9fdfc7aa525))
+- sync package-lock with pdfkit deps for contract generation ([e93da74](https://github.com/psanders/mikro/commit/e93da743be354ee679abeff37a4156e963b9e677))
+
+### Features
+
+- **applications:** manual purge (hard delete) of abandoned solicitudes ([595d6f5](https://github.com/psanders/mikro/commit/595d6f59637a8b4ac9a13e956656e5a172d40864))
+- **applications:** promote a completed DRAFT to RECEIVED ([e275d0b](https://github.com/psanders/mikro/commit/e275d0bbb76b4b3fd1206b8689954ea7f01c70c0))
+- **applications:** static cédula front/back image uploads ([9dc44c8](https://github.com/psanders/mikro/commit/9dc44c875145f090fb21866dcaecd97a68494e37))
+- **dashboard:** solicitud detail polish — documents, labels, validation ([2456395](https://github.com/psanders/mikro/commit/2456395b09ed905416abe3260c6ad3c18b340845))
+- post-approval loan contract PDF generation ([76d1ed2](https://github.com/psanders/mikro/commit/76d1ed269a1977c9796359b55d5fa31a20d2bebd))
+
 ## [1.2.4](https://github.com/psanders/mikro/compare/v1.2.3...v1.2.4) (2026-06-09)
 
 ### Bug Fixes
