@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.2.4](https://github.com/psanders/mikro/compare/v1.2.3...v1.2.4) (2026-06-09)
+
+### Bug Fixes
+
+- **ci:** green site deploy + point intake at the apiserver ([e50b26a](https://github.com/psanders/mikro/commit/e50b26a0d1702f30ab6205b0cce60691b30298ef))
+
+### Features
+
+- **dashboard:** solicitud list/detail refinements (OpenSpec tasks 1-3) ([98b4f38](https://github.com/psanders/mikro/commit/98b4f385732941c4277cb7a4fe3ff08e1c0d7880))
+
 ## [1.2.3](https://github.com/psanders/mikro/compare/v1.2.2...v1.2.3) (2026-06-08)
 
 ### Bug Fixes
