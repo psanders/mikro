@@ -15,12 +15,14 @@ if (!process.env.MIKRO_CONFIG_FILE) {
   process.env.MIKRO_CONFIG_FILE = resolve(repoRoot, "mikro.json");
 }
 
-import { getConfig } from "@mikro/common";
+import { getResolvedDatabaseUrl } from "@mikro/common";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "./generated/prisma/client.js";
 
+// Absolute, cwd-independent file: URL so the server attaches to the same db that
+// `migrate deploy`/seed target — never a stray relative copy.
 const adapter = new PrismaBetterSqlite3({
-  url: getConfig().databaseUrl
+  url: getResolvedDatabaseUrl()
 });
 
 export const prisma = new PrismaClient({ adapter });

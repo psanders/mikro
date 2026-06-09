@@ -232,6 +232,37 @@ export function getDatabaseUrlFromFile(configPath?: string, baseDir?: string): s
 }
 
 /**
+ * Normalize a SQLite databaseUrl to an absolute `file:` URL. A relative `file:`
+ * path is resolved against the directory containing the config file — never
+ * process.cwd() — so the server, `migrate deploy`, and the seed all attach to the
+ * SAME database no matter which working directory they're launched from. Without
+ * this, a relative URL spawns a second db (e.g. a stray nested data/mikro.db) and
+ * migrations land on one file while the server reads another. Non-file URLs
+ * (e.g. ":memory:") are returned unchanged.
+ *
+ * @param databaseUrl - The raw databaseUrl from config
+ * @param configFilePath - Path to the config file (its directory is the base)
+ */
+export function resolveDatabaseUrl(databaseUrl: string, configFilePath?: string): string {
+  const FILE_PREFIX = "file:";
+  if (!databaseUrl.startsWith(FILE_PREFIX)) return databaseUrl;
+  const filePath = databaseUrl.slice(FILE_PREFIX.length);
+  // In-memory and absolute paths need no resolution.
+  if (filePath.startsWith(":") || path.isAbsolute(filePath)) return databaseUrl;
+  const baseDir = configFilePath ? path.dirname(configFilePath) : path.dirname(getConfigFilePath());
+  return `${FILE_PREFIX}${path.resolve(baseDir, filePath)}`;
+}
+
+/**
+ * The loaded config's databaseUrl, normalized to an absolute `file:` URL via
+ * {@link resolveDatabaseUrl}. Use this (not `getConfig().databaseUrl`) wherever a
+ * SQLite connection is opened, so the path is cwd-independent.
+ */
+export function getResolvedDatabaseUrl(): string {
+  return resolveDatabaseUrl(getConfig().databaseUrl, getConfigFilePath());
+}
+
+/**
  * Resolve a path from config (e.g. keysPath, assetsPath). If the path is absolute, return as-is.
  * Otherwise resolve it relative to the directory containing the config file.
  */

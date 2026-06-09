@@ -10,6 +10,8 @@ export {
   getConfig,
   getConfigFilePath,
   getDatabaseUrlFromFile,
+  resolveDatabaseUrl,
+  getResolvedDatabaseUrl,
   DEFAULT_DATABASE_URL,
   resolvePathFromConfigDir,
   getLogoPath,

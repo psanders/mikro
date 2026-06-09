@@ -1,0 +1,61 @@
+# Docker build context is the repo root (publish-apiserver.yaml: context: .).
+# Docker only honors the .dockerignore at the context root, so this file — not
+# mods/apiserver/.dockerignore — governs what gets baked into the image. Keep
+# stray databases, env files, and dev artifacts OUT of the image.
+
+# Dependencies (image runs `npm ci` itself)
+node_modules/
+**/node_modules/
+
+# Database files — NEVER bake a copy of the SQLite db into the image; the server
+# reads /app/data/mikro.db from the runtime volume. A baked db shadows/seeds the
+# volume with stale schema (e.g. missing migrations) and breaks queries.
+**/*.db
+**/*.db-journal
+**/data/
+
+# Environment + secrets
+.env
+.env.local
+.env.*.local
+**/.env*
+mikro.json
+mikro-*.json
+
+# Tests
+**/test/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Source we don't ship (the image copies dist/ + src/generated only)
+**/*.tsbuildinfo
+
+# Logs
+**/*.log
+logs/
+
+# VCS + tooling
+.git/
+.gitignore
+.gitattributes
+.github/
+.husky/
+.vscode/
+.idea/
+.scripts/
+**/.scripts/
+.keys/
+**/.keys/
+
+# OS files
+**/.DS_Store
+Thumbs.db
+
+# Docs
+**/README.md
+*.md
+
+# Storybook output (never needed in the API image)
+**/storybook-static/
