@@ -55,6 +55,7 @@ import {
   reopenApplicationSchema,
   uploadSignedContractSchema,
   getApplicationContractSchema,
+  generateApplicationContractSchema,
   convertApplicationSchema,
   updateApplicationSchema
 } from "@mikro/common";
@@ -99,6 +100,7 @@ import {
 } from "../../api/applications/reviewApplication.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
 import { createGetApplicationContract } from "../../api/applications/createGetApplicationContract.js";
+import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
 // Payment API functions
@@ -469,6 +471,17 @@ export const protectedRouter = router({
     .input(getApplicationContractSchema)
     .query(async ({ ctx, input }) => {
       const fn = createGetApplicationContract(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Render the loan contract PDF for an application from the request data +
+   * reviewer-supplied terms (post-approval). ADMIN/REVIEWER only. Stateless.
+   */
+  generateApplicationContract: reviewerProcedure
+    .input(generateApplicationContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateApplicationContract(ctx.db);
       return fn(input);
     }),
 

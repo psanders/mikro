@@ -16,6 +16,10 @@ export {
   type ApplicationContract
 } from "./createGetApplicationContract.js";
 export {
+  createGenerateApplicationContract,
+  type GeneratedContract
+} from "./createGenerateApplicationContract.js";
+export {
   createConvertApplication,
   type ConvertApplicationResult
 } from "./createConvertApplication.js";

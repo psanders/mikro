@@ -34,7 +34,8 @@ public/
 # Storybook build output
 **/storybook-static/
 
-# Runtime data with PII — never commit
-contracts/
+# Runtime data with PII — never commit (root-anchored so it does not match
+# source dirs like mods/common/src/contracts/)
+/contracts/
 mikro.csv
 *.csv

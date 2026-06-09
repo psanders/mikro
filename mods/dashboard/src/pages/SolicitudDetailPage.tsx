@@ -30,6 +30,7 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { EditSolicitudModal } from "../components/EditSolicitudModal";
+import { GenerateContractModal } from "../components/GenerateContractModal";
 import {
   statusMeta,
   riskBandMeta,
@@ -98,6 +99,7 @@ export function SolicitudDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [note, setNote] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   const userName = useMemo(() => {
@@ -196,6 +198,16 @@ export function SolicitudDetailPage() {
                 Editar
               </Button>
             )}
+            {["APPROVED", "SIGNED", "CONVERTED"].includes(app.status) && (
+              <Button
+                variant="secondary"
+                icon={FileText}
+                disabled={busy}
+                onClick={() => setContractOpen(true)}
+              >
+                Generar contrato
+              </Button>
+            )}
             {app.contractFilename && (
               <Button
                 variant="secondary"
@@ -226,6 +238,14 @@ export function SolicitudDetailPage() {
             setEditOpen(false);
             refresh();
           }}
+        />
+      )}
+
+      {contractOpen && (
+        <GenerateContractModal
+          id={id}
+          defaultInstallments={app.requestedTermWeeks}
+          onClose={() => setContractOpen(false)}
         />
       )}
 

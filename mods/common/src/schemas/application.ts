@@ -245,10 +245,31 @@ export const reopenApplicationSchema = z
   .object({ ...applicationRef, note: z.string().max(2000).optional() })
   .refine(requireRef, refMessage);
 
+/**
+ * Generate the loan contract PDF for an application. The applicant identity
+ * comes from the application; the negotiated terms (principal from the request,
+ * plus installments/amount/frequency/start) and the debtor's gender are
+ * supplied by the reviewer at the post-approval "Generar contrato" step.
+ */
+export const generateApplicationContractSchema = z
+  .object({
+    ...applicationRef,
+    gender: z.enum(["M", "F"]),
+    installments: z.number().int().positive(),
+    installmentAmount: z.number().positive(),
+    frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+    startDate: z.string().min(1),
+    /** Optional overrides if the application data is incomplete. */
+    maritalStatus: z.string().trim().max(40).optional(),
+    occupation: z.string().trim().max(80).optional()
+  })
+  .refine(requireRef, refMessage);
+
 export type ClaimApplicationInput = z.infer<typeof claimApplicationSchema>;
 export type ApproveApplicationInput = z.infer<typeof approveApplicationSchema>;
 export type RejectApplicationInput = z.infer<typeof rejectApplicationSchema>;
 export type ReopenApplicationInput = z.infer<typeof reopenApplicationSchema>;
+export type GenerateApplicationContractInput = z.infer<typeof generateApplicationContractSchema>;
 
 // ---- review transition validation ----
 
