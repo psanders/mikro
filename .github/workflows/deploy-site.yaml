@@ -31,19 +31,18 @@ jobs:
       # Site builds from @mikro/common's source via vite aliases, so it doesn't
       # need the root "prepare" hook (husky + @mikro/common build). Skipping
       # scripts avoids building common, whose deps aren't installed in this
-      # site-scoped install. Optional platform binaries (esbuild/rollup) still
-      # install — only lifecycle scripts are skipped.
+      # site-scoped install.
+      #
+      # Use `npm install` rather than `npm ci`: vite 8 (rolldown),
+      # @tailwindcss/oxide and lightningcss ship their native engines as
+      # platform-specific optional dependencies, but the committed lockfile only
+      # records the author's platform (darwin-arm64). `npm ci` honors that
+      # pruned set verbatim, leaving the linux-x64 runner without bindings and
+      # failing `vite build` with MODULE_NOT_FOUND. `npm install` re-resolves
+      # optional deps for the runner's platform and pulls the linux binaries.
+      # The lockfile mutation is not committed by this deploy job.
       - name: Install dependencies
-        run: npm ci --workspace=site --include-workspace-root --ignore-scripts
-
-      # Vite 8 bundles with rolldown, whose native binding ships as a
-      # platform-specific optional dependency. npm records only the lockfile
-      # author's platform (darwin-arm64), so the linux-x64 runner is left
-      # without a binding and `vite build` dies with MODULE_NOT_FOUND. Install
-      # the matching linux binary explicitly, pinned to the resolved rolldown
-      # version so it tracks future bumps.
-      - name: Install rolldown linux binary
-        run: npm install --no-save "@rolldown/binding-linux-x64-gnu@$(node -p "require('./node_modules/rolldown/package.json').version")"
+        run: npm install --workspace=site --include-workspace-root --ignore-scripts
 
       - name: Build site
         env:
