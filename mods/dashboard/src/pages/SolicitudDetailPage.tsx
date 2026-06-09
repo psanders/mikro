@@ -54,7 +54,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   LOAN_PURPOSE: "Propósito del préstamo"
 };
 
-// Pipeline steps in order (excludes terminal REJECTED/ABANDONED — handled apart).
+// Pipeline steps in order (excludes terminal REJECTED — handled apart).
 const STEPS: Array<{ status: string; label: string }> = [
   { status: "RECEIVED", label: "Nueva" },
   { status: "IN_REVIEW", label: "En evaluación" },
@@ -163,7 +163,7 @@ export function SolicitudDetailPage() {
   const assignee = app.reviewedById
     ? (userName.get(app.reviewedById) ?? "Asignado")
     : "Sin asignar";
-  const terminal = app.status === "REJECTED" || app.status === "ABANDONED";
+  const terminal = app.status === "REJECTED";
   const currentIdx = STEPS.findIndex((s) => s.status === app.status);
   const busy =
     claim.isPending ||

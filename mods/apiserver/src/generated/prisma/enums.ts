@@ -146,8 +146,7 @@ export const ApplicationStatus = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   SIGNED: 'SIGNED',
-  CONVERTED: 'CONVERTED',
-  ABANDONED: 'ABANDONED'
+  CONVERTED: 'CONVERTED'
 } as const
 
 export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus]

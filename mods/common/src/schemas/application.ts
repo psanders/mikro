@@ -196,8 +196,7 @@ export const applicationStatusEnum = z.enum([
   "APPROVED",
   "REJECTED",
   "SIGNED",
-  "CONVERTED",
-  "ABANDONED"
+  "CONVERTED"
 ]);
 
 export const listApplicationsSchema = z.object({

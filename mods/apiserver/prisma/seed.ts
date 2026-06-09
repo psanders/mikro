@@ -977,7 +977,7 @@ async function main() {
       } as ScoreParams,
       reviewNote: "Monto solicitado muy alto frente a la capacidad de pago; sin referencias."
     },
-    // Dead/abandoned flows — primary targets for the manual purge (hard delete).
+    // Incomplete draft (partial submission) — primary target for manual purge.
     {
       sessionId: "seed-app-draft-9001",
       status: "DRAFT",
@@ -997,31 +997,6 @@ async function main() {
       raw: {
         businessAge: "1 a 3 años",
         monthlySales: "RD$50,000 – RD$100,000"
-      },
-      score: null
-    },
-    {
-      sessionId: "seed-app-aband-9002",
-      status: "ABANDONED",
-      daysAgo: 21,
-      firstName: "Rosa",
-      lastName: "Mejía",
-      phone: "+18095551007",
-      idNumber: "031-1472583-6",
-      maritalStatus: "Casado(a)",
-      businessType: "Salón de belleza / barbería",
-      businessName: "Salón Rosa",
-      requestedAmount: 18000,
-      purpose: "Compra de equipos / maquinaria",
-      requestedTermWeeks: 10,
-      province: "Santiago",
-      homeAddress: "Los Jardines, Santiago",
-      raw: {
-        businessAge: "Más de 5 años",
-        monthlySales: "Menos de RD$25,000",
-        formalization: "Informal (sin RNC)",
-        housingType: "Familiar",
-        residenceTime: "Más de 10 años"
       },
       score: null
     }

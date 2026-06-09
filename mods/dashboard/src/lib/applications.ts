@@ -13,8 +13,7 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
   | "SIGNED"
-  | "CONVERTED"
-  | "ABANDONED";
+  | "CONVERTED";
 
 // Status renders as plain text (Pencil v2): neutral everywhere except "Nueva"
 // (RECEIVED) which is green to flag a new, actionable item in the inbox.
@@ -25,8 +24,7 @@ export const STATUS_META: Record<ApplicationStatus, { label: string; tone: Badge
   APPROVED: { label: "Aprobada", tone: "neutral" },
   REJECTED: { label: "Rechazada", tone: "neutral" },
   SIGNED: { label: "Firmada", tone: "neutral" },
-  CONVERTED: { label: "Convertida", tone: "neutral" },
-  ABANDONED: { label: "Abandonada", tone: "neutral" }
+  CONVERTED: { label: "Convertida", tone: "neutral" }
 };
 
 export function statusMeta(status: string): { label: string; tone: BadgeTone } {

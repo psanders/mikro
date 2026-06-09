@@ -9,8 +9,7 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
   | "SIGNED"
-  | "CONVERTED"
-  | "ABANDONED";
+  | "CONVERTED";
 
 /**
  * Loan application (solicitud) entity type — a public form submission stored on
