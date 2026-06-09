@@ -1,0 +1,14 @@
+-- Restore customers.nickname.
+--
+-- 20260422142835_add_customer_nickname_and_partial_payment_status added this
+-- column, but the SQLite table rebuild in 20260607200000_remove_referrer
+-- recreated "customers" WITHOUT carrying nickname forward, silently dropping it.
+-- The Prisma schema still declares customers.nickname, so applying the
+-- migrations from scratch produced a table that does not match the schema —
+-- breaking every fresh deploy (e.g. `prisma.customer` selects fail with
+-- "column customers.nickname does not exist").
+--
+-- Re-add it so the migrations reproduce the schema. Databases that already have
+-- the column (patched out-of-band) should `prisma migrate resolve --applied`
+-- this migration instead of running it.
+ALTER TABLE "customers" ADD COLUMN "nickname" TEXT;
