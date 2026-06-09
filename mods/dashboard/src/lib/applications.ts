@@ -54,7 +54,10 @@ export const STATUS_TABS: Array<{ label: string; value: ApplicationStatus }> = [
   { label: "Aprobadas", value: "APPROVED" },
   { label: "Documentos", value: "SIGNED" },
   { label: "Convertidas", value: "CONVERTED" },
-  { label: "Rechazadas", value: "REJECTED" }
+  { label: "Rechazadas", value: "REJECTED" },
+  // Pre-submission drafts (and abandoned ones) live at the end — visible but out
+  // of the active-work flow. Replaces the removed "Todas" tab for this purpose.
+  { label: "Borradores", value: "DRAFT" }
 ];
 
 /** Default filter when none is remembered. */

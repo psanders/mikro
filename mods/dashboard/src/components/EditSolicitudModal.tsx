@@ -38,13 +38,13 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
       <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
       {f.type === "select" ? (
         <select
-          className={inputCls}
+          className={`${inputCls} ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
           value={form[f.key] ?? ""}
           onChange={(e) => set(f.key, e.target.value)}
         >
-          <option value="">—</option>
+          <option value="">Seleccionar…</option>
           {f.options?.map((o) => (
-            <option key={o.value} value={o.value}>
+            <option key={o.value} value={o.value} className="text-brand-ink">
               {o.label}
             </option>
           ))}
@@ -52,7 +52,8 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
       ) : (
         <input
           type={f.type === "date" ? "date" : "text"}
-          className={inputCls}
+          className={`${inputCls} placeholder:text-ds-muted`}
+          placeholder={f.type === "date" ? undefined : "Sin completar"}
           value={form[f.key] ?? ""}
           onChange={(e) => set(f.key, e.target.value)}
         />
