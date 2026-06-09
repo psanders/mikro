@@ -345,6 +345,44 @@ export const updateApplicationSchema = z
 
 export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 
+// ---- identity document images (cédula front/back) ----
+
+/** Which side of the cédula an image represents. */
+export const idImageSideEnum = z.enum(["FRONT", "BACK"]);
+
+const idImageMimeType = z.enum(["image/jpeg", "image/png", "image/webp"], {
+  error: "ID image must be a JPEG, PNG, or WebP"
+});
+
+/**
+ * Upload one side of the applicant's cédula. A static image (no OCR/extraction);
+ * stored on disk, metadata persisted on the application. Available before the
+ * prospect is converted to a customer.
+ */
+export const uploadIdImageSchema = z
+  .object({
+    ...applicationRef,
+    side: idImageSideEnum,
+    originalName: z.string().min(1).max(255),
+    mimeType: idImageMimeType,
+    /** Base64-encoded image contents (no data: prefix). */
+    dataBase64: z
+      .string()
+      .min(1, "Image content is required")
+      .refine((b) => Math.ceil((b.length * 3) / 4) <= MAX_ATTACHMENT_SIZE_BYTES, {
+        message: "Image exceeds the maximum allowed size"
+      })
+  })
+  .refine(requireRef, refMessage);
+
+export const getIdImageSchema = z
+  .object({ ...applicationRef, side: idImageSideEnum })
+  .refine(requireRef, refMessage);
+
+export type IdImageSide = z.infer<typeof idImageSideEnum>;
+export type UploadIdImageInput = z.infer<typeof uploadIdImageSchema>;
+export type GetIdImageInput = z.infer<typeof getIdImageSchema>;
+
 // ---- manual purge (hard delete) ----
 
 /**

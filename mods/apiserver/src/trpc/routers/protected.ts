@@ -58,7 +58,9 @@ import {
   generateApplicationContractSchema,
   convertApplicationSchema,
   updateApplicationSchema,
-  deleteApplicationSchema
+  deleteApplicationSchema,
+  uploadIdImageSchema,
+  getIdImageSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
@@ -105,6 +107,8 @@ import { createGenerateApplicationContract } from "../../api/applications/create
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
 import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
+import { createUploadIdImage } from "../../api/applications/createUploadIdImage.js";
+import { createGetIdImage } from "../../api/applications/createGetIdImage.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
@@ -516,6 +520,22 @@ export const protectedRouter = router({
       const fn = createDeleteApplication(ctx.db);
       return fn(input, ctx.userId);
     }),
+
+  /**
+   * Upload one side of the applicant's cédula (static image). ADMIN/REVIEWER only.
+   */
+  uploadIdImage: reviewerProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
+    const fn = createUploadIdImage(ctx.db);
+    return fn(input, ctx.userId);
+  }),
+
+  /**
+   * Fetch a stored cédula image (front/back) as base64. ADMIN/REVIEWER only.
+   */
+  getIdImage: reviewerProcedure.input(getIdImageSchema).query(async ({ ctx, input }) => {
+    const fn = createGetIdImage(ctx.db);
+    return fn(input);
+  }),
 
   // ==================== Payment procedures ====================
 

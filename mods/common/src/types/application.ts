@@ -50,6 +50,16 @@ export interface LoanApplication {
   contractSha256: string | null;
   signedById: string | null;
   signedAt: Date | null;
+  idFrontFilename: string | null;
+  idFrontOriginalName: string | null;
+  idFrontMimeType: string | null;
+  idFrontSize: number | null;
+  idBackFilename: string | null;
+  idBackOriginalName: string | null;
+  idBackMimeType: string | null;
+  idBackSize: number | null;
+  idUploadedById: string | null;
+  idUploadedAt: Date | null;
   customerId: string | null;
   loanId: number | null;
   submittedAt: Date | null;

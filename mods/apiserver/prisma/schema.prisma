@@ -462,6 +462,20 @@ model LoanApplication {
   signedById           String?   @map("signed_by_id")
   signedAt             DateTime? @map("signed_at")
 
+  // Identity document images (front/back of the cédula). Static uploads stored
+  // on disk under contractsPath as <sha256>.<ext>; these columns are metadata
+  // only — no OCR/extraction. Captured before converting the prospect.
+  idFrontFilename     String?   @map("id_front_filename")
+  idFrontOriginalName String?   @map("id_front_original_name")
+  idFrontMimeType     String?   @map("id_front_mime_type")
+  idFrontSize         Int?      @map("id_front_size")
+  idBackFilename      String?   @map("id_back_filename")
+  idBackOriginalName  String?   @map("id_back_original_name")
+  idBackMimeType      String?   @map("id_back_mime_type")
+  idBackSize          Int?      @map("id_back_size")
+  idUploadedById      String?   @map("id_uploaded_by_id")
+  idUploadedAt        DateTime? @map("id_uploaded_at")
+
   // Reserved for Phase 3 conversion (unused in this phase)
   customerId String? @map("customer_id")
   loanId     Int?    @map("loan_id")

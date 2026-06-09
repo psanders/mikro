@@ -25,3 +25,5 @@ export {
 } from "./createConvertApplication.js";
 export { createUpdateApplication } from "./createUpdateApplication.js";
 export { createDeleteApplication } from "./createDeleteApplication.js";
+export { createUploadIdImage } from "./createUploadIdImage.js";
+export { createGetIdImage, type IdImage } from "./createGetIdImage.js";

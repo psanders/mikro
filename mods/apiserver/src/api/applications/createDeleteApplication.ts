@@ -3,7 +3,7 @@
  */
 import type { DbClient, LoanApplication, DeleteApplicationInput } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
-import { deleteContract } from "../../applications/storage.js";
+import { deleteContract, deleteImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
 
 async function loadByRef(
@@ -33,14 +33,21 @@ export function createDeleteApplication(client: DbClient) {
     }
 
     await client.loanApplication.delete({ where: { id: app.id } });
-    if (app.contractFilename) {
+
+    // Best-effort cleanup of on-disk files; never fail the purge over a leftover.
+    const orphans: Array<[string | null, (f: string) => void]> = [
+      [app.contractFilename, deleteContract],
+      [app.idFrontFilename, deleteImage],
+      [app.idBackFilename, deleteImage]
+    ];
+    for (const [filename, unlink] of orphans) {
+      if (!filename) continue;
       try {
-        deleteContract(app.contractFilename);
+        unlink(filename);
       } catch (error) {
-        // Don't fail the purge on a leftover file; just log it.
-        logger.warn("failed to delete contract file during purge", {
+        logger.warn("failed to delete file during purge", {
           id: app.id,
-          filename: app.contractFilename,
+          filename,
           error: (error as Error).message
         });
       }

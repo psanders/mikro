@@ -20,6 +20,9 @@ export {
   convertApplicationSchema,
   updateApplicationSchema,
   deleteApplicationSchema,
+  idImageSideEnum,
+  uploadIdImageSchema,
+  getIdImageSchema,
   APPLICATION_STABLE_KEYS,
   APPLICATION_RAW_ONLY_KEYS,
   APPLICATION_CONTENT_KEYS,
@@ -38,7 +41,10 @@ export {
   type UploadSignedContractInput,
   type ConvertApplicationInput,
   type UpdateApplicationInput,
-  type DeleteApplicationInput
+  type DeleteApplicationInput,
+  type IdImageSide,
+  type UploadIdImageInput,
+  type GetIdImageInput
 } from "./application.js";
 
 export {

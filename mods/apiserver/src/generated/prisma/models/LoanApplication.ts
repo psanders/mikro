@@ -31,6 +31,8 @@ export type LoanApplicationAvgAggregateOutputType = {
   requestedTermWeeks: number | null
   score: number | null
   contractSize: number | null
+  idFrontSize: number | null
+  idBackSize: number | null
   loanId: number | null
 }
 
@@ -39,6 +41,8 @@ export type LoanApplicationSumAggregateOutputType = {
   requestedTermWeeks: number | null
   score: number | null
   contractSize: number | null
+  idFrontSize: number | null
+  idBackSize: number | null
   loanId: number | null
 }
 
@@ -74,6 +78,16 @@ export type LoanApplicationMinAggregateOutputType = {
   contractSha256: string | null
   signedById: string | null
   signedAt: Date | null
+  idFrontFilename: string | null
+  idFrontOriginalName: string | null
+  idFrontMimeType: string | null
+  idFrontSize: number | null
+  idBackFilename: string | null
+  idBackOriginalName: string | null
+  idBackMimeType: string | null
+  idBackSize: number | null
+  idUploadedById: string | null
+  idUploadedAt: Date | null
   customerId: string | null
   loanId: number | null
   submittedAt: Date | null
@@ -113,6 +127,16 @@ export type LoanApplicationMaxAggregateOutputType = {
   contractSha256: string | null
   signedById: string | null
   signedAt: Date | null
+  idFrontFilename: string | null
+  idFrontOriginalName: string | null
+  idFrontMimeType: string | null
+  idFrontSize: number | null
+  idBackFilename: string | null
+  idBackOriginalName: string | null
+  idBackMimeType: string | null
+  idBackSize: number | null
+  idUploadedById: string | null
+  idUploadedAt: Date | null
   customerId: string | null
   loanId: number | null
   submittedAt: Date | null
@@ -154,6 +178,16 @@ export type LoanApplicationCountAggregateOutputType = {
   contractSha256: number
   signedById: number
   signedAt: number
+  idFrontFilename: number
+  idFrontOriginalName: number
+  idFrontMimeType: number
+  idFrontSize: number
+  idBackFilename: number
+  idBackOriginalName: number
+  idBackMimeType: number
+  idBackSize: number
+  idUploadedById: number
+  idUploadedAt: number
   customerId: number
   loanId: number
   submittedAt: number
@@ -168,6 +202,8 @@ export type LoanApplicationAvgAggregateInputType = {
   requestedTermWeeks?: true
   score?: true
   contractSize?: true
+  idFrontSize?: true
+  idBackSize?: true
   loanId?: true
 }
 
@@ -176,6 +212,8 @@ export type LoanApplicationSumAggregateInputType = {
   requestedTermWeeks?: true
   score?: true
   contractSize?: true
+  idFrontSize?: true
+  idBackSize?: true
   loanId?: true
 }
 
@@ -211,6 +249,16 @@ export type LoanApplicationMinAggregateInputType = {
   contractSha256?: true
   signedById?: true
   signedAt?: true
+  idFrontFilename?: true
+  idFrontOriginalName?: true
+  idFrontMimeType?: true
+  idFrontSize?: true
+  idBackFilename?: true
+  idBackOriginalName?: true
+  idBackMimeType?: true
+  idBackSize?: true
+  idUploadedById?: true
+  idUploadedAt?: true
   customerId?: true
   loanId?: true
   submittedAt?: true
@@ -250,6 +298,16 @@ export type LoanApplicationMaxAggregateInputType = {
   contractSha256?: true
   signedById?: true
   signedAt?: true
+  idFrontFilename?: true
+  idFrontOriginalName?: true
+  idFrontMimeType?: true
+  idFrontSize?: true
+  idBackFilename?: true
+  idBackOriginalName?: true
+  idBackMimeType?: true
+  idBackSize?: true
+  idUploadedById?: true
+  idUploadedAt?: true
   customerId?: true
   loanId?: true
   submittedAt?: true
@@ -291,6 +349,16 @@ export type LoanApplicationCountAggregateInputType = {
   contractSha256?: true
   signedById?: true
   signedAt?: true
+  idFrontFilename?: true
+  idFrontOriginalName?: true
+  idFrontMimeType?: true
+  idFrontSize?: true
+  idBackFilename?: true
+  idBackOriginalName?: true
+  idBackMimeType?: true
+  idBackSize?: true
+  idUploadedById?: true
+  idUploadedAt?: true
   customerId?: true
   loanId?: true
   submittedAt?: true
@@ -419,6 +487,16 @@ export type LoanApplicationGroupByOutputType = {
   contractSha256: string | null
   signedById: string | null
   signedAt: Date | null
+  idFrontFilename: string | null
+  idFrontOriginalName: string | null
+  idFrontMimeType: string | null
+  idFrontSize: number | null
+  idBackFilename: string | null
+  idBackOriginalName: string | null
+  idBackMimeType: string | null
+  idBackSize: number | null
+  idUploadedById: string | null
+  idUploadedAt: Date | null
   customerId: string | null
   loanId: number | null
   submittedAt: Date | null
@@ -483,6 +561,16 @@ export type LoanApplicationWhereInput = {
   contractSha256?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   signedById?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   signedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
+  idFrontFilename?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontOriginalName?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontMimeType?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontSize?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
+  idBackFilename?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackOriginalName?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackMimeType?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackSize?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
+  idUploadedById?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idUploadedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
   customerId?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   loanId?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
   submittedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
@@ -524,6 +612,16 @@ export type LoanApplicationOrderByWithRelationInput = {
   contractSha256?: Prisma.SortOrderInput | Prisma.SortOrder
   signedById?: Prisma.SortOrderInput | Prisma.SortOrder
   signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontFilename?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontOriginalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackFilename?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackOriginalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  idUploadedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  idUploadedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
   loanId?: Prisma.SortOrderInput | Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -568,6 +666,16 @@ export type LoanApplicationWhereUniqueInput = Prisma.AtLeast<{
   contractSha256?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   signedById?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   signedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
+  idFrontFilename?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontOriginalName?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontMimeType?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idFrontSize?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
+  idBackFilename?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackOriginalName?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackMimeType?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idBackSize?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
+  idUploadedById?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
+  idUploadedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
   customerId?: Prisma.StringNullableFilter<"LoanApplication"> | string | null
   loanId?: Prisma.IntNullableFilter<"LoanApplication"> | number | null
   submittedAt?: Prisma.DateTimeNullableFilter<"LoanApplication"> | Date | string | null
@@ -609,6 +717,16 @@ export type LoanApplicationOrderByWithAggregationInput = {
   contractSha256?: Prisma.SortOrderInput | Prisma.SortOrder
   signedById?: Prisma.SortOrderInput | Prisma.SortOrder
   signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontFilename?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontOriginalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackFilename?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackOriginalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackMimeType?: Prisma.SortOrderInput | Prisma.SortOrder
+  idBackSize?: Prisma.SortOrderInput | Prisma.SortOrder
+  idUploadedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  idUploadedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
   loanId?: Prisma.SortOrderInput | Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -658,6 +776,16 @@ export type LoanApplicationScalarWhereWithAggregatesInput = {
   contractSha256?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
   signedById?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
   signedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LoanApplication"> | Date | string | null
+  idFrontFilename?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idFrontOriginalName?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idFrontMimeType?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idFrontSize?: Prisma.IntNullableWithAggregatesFilter<"LoanApplication"> | number | null
+  idBackFilename?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idBackOriginalName?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idBackMimeType?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idBackSize?: Prisma.IntNullableWithAggregatesFilter<"LoanApplication"> | number | null
+  idUploadedById?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
+  idUploadedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LoanApplication"> | Date | string | null
   customerId?: Prisma.StringNullableWithAggregatesFilter<"LoanApplication"> | string | null
   loanId?: Prisma.IntNullableWithAggregatesFilter<"LoanApplication"> | number | null
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LoanApplication"> | Date | string | null
@@ -699,6 +827,16 @@ export type LoanApplicationCreateInput = {
   contractSha256?: string | null
   signedById?: string | null
   signedAt?: Date | string | null
+  idFrontFilename?: string | null
+  idFrontOriginalName?: string | null
+  idFrontMimeType?: string | null
+  idFrontSize?: number | null
+  idBackFilename?: string | null
+  idBackOriginalName?: string | null
+  idBackMimeType?: string | null
+  idBackSize?: number | null
+  idUploadedById?: string | null
+  idUploadedAt?: Date | string | null
   customerId?: string | null
   loanId?: number | null
   submittedAt?: Date | string | null
@@ -740,6 +878,16 @@ export type LoanApplicationUncheckedCreateInput = {
   contractSha256?: string | null
   signedById?: string | null
   signedAt?: Date | string | null
+  idFrontFilename?: string | null
+  idFrontOriginalName?: string | null
+  idFrontMimeType?: string | null
+  idFrontSize?: number | null
+  idBackFilename?: string | null
+  idBackOriginalName?: string | null
+  idBackMimeType?: string | null
+  idBackSize?: number | null
+  idUploadedById?: string | null
+  idUploadedAt?: Date | string | null
   customerId?: string | null
   loanId?: number | null
   submittedAt?: Date | string | null
@@ -781,6 +929,16 @@ export type LoanApplicationUpdateInput = {
   contractSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idFrontFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idBackFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idUploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idUploadedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -822,6 +980,16 @@ export type LoanApplicationUncheckedUpdateInput = {
   contractSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idFrontFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idBackFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idUploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idUploadedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -863,6 +1031,16 @@ export type LoanApplicationCreateManyInput = {
   contractSha256?: string | null
   signedById?: string | null
   signedAt?: Date | string | null
+  idFrontFilename?: string | null
+  idFrontOriginalName?: string | null
+  idFrontMimeType?: string | null
+  idFrontSize?: number | null
+  idBackFilename?: string | null
+  idBackOriginalName?: string | null
+  idBackMimeType?: string | null
+  idBackSize?: number | null
+  idUploadedById?: string | null
+  idUploadedAt?: Date | string | null
   customerId?: string | null
   loanId?: number | null
   submittedAt?: Date | string | null
@@ -904,6 +1082,16 @@ export type LoanApplicationUpdateManyMutationInput = {
   contractSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idFrontFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idBackFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idUploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idUploadedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -945,6 +1133,16 @@ export type LoanApplicationUncheckedUpdateManyInput = {
   contractSha256?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  idFrontFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idFrontSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idBackFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackOriginalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idBackSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  idUploadedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idUploadedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   loanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -986,6 +1184,16 @@ export type LoanApplicationCountOrderByAggregateInput = {
   contractSha256?: Prisma.SortOrder
   signedById?: Prisma.SortOrder
   signedAt?: Prisma.SortOrder
+  idFrontFilename?: Prisma.SortOrder
+  idFrontOriginalName?: Prisma.SortOrder
+  idFrontMimeType?: Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrder
+  idBackFilename?: Prisma.SortOrder
+  idBackOriginalName?: Prisma.SortOrder
+  idBackMimeType?: Prisma.SortOrder
+  idBackSize?: Prisma.SortOrder
+  idUploadedById?: Prisma.SortOrder
+  idUploadedAt?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
@@ -998,6 +1206,8 @@ export type LoanApplicationAvgOrderByAggregateInput = {
   requestedTermWeeks?: Prisma.SortOrder
   score?: Prisma.SortOrder
   contractSize?: Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrder
+  idBackSize?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
 }
 
@@ -1033,6 +1243,16 @@ export type LoanApplicationMaxOrderByAggregateInput = {
   contractSha256?: Prisma.SortOrder
   signedById?: Prisma.SortOrder
   signedAt?: Prisma.SortOrder
+  idFrontFilename?: Prisma.SortOrder
+  idFrontOriginalName?: Prisma.SortOrder
+  idFrontMimeType?: Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrder
+  idBackFilename?: Prisma.SortOrder
+  idBackOriginalName?: Prisma.SortOrder
+  idBackMimeType?: Prisma.SortOrder
+  idBackSize?: Prisma.SortOrder
+  idUploadedById?: Prisma.SortOrder
+  idUploadedAt?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
@@ -1072,6 +1292,16 @@ export type LoanApplicationMinOrderByAggregateInput = {
   contractSha256?: Prisma.SortOrder
   signedById?: Prisma.SortOrder
   signedAt?: Prisma.SortOrder
+  idFrontFilename?: Prisma.SortOrder
+  idFrontOriginalName?: Prisma.SortOrder
+  idFrontMimeType?: Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrder
+  idBackFilename?: Prisma.SortOrder
+  idBackOriginalName?: Prisma.SortOrder
+  idBackMimeType?: Prisma.SortOrder
+  idBackSize?: Prisma.SortOrder
+  idUploadedById?: Prisma.SortOrder
+  idUploadedAt?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
@@ -1084,6 +1314,8 @@ export type LoanApplicationSumOrderByAggregateInput = {
   requestedTermWeeks?: Prisma.SortOrder
   score?: Prisma.SortOrder
   contractSize?: Prisma.SortOrder
+  idFrontSize?: Prisma.SortOrder
+  idBackSize?: Prisma.SortOrder
   loanId?: Prisma.SortOrder
 }
 
@@ -1127,6 +1359,16 @@ export type LoanApplicationSelect<ExtArgs extends runtime.Types.Extensions.Inter
   contractSha256?: boolean
   signedById?: boolean
   signedAt?: boolean
+  idFrontFilename?: boolean
+  idFrontOriginalName?: boolean
+  idFrontMimeType?: boolean
+  idFrontSize?: boolean
+  idBackFilename?: boolean
+  idBackOriginalName?: boolean
+  idBackMimeType?: boolean
+  idBackSize?: boolean
+  idUploadedById?: boolean
+  idUploadedAt?: boolean
   customerId?: boolean
   loanId?: boolean
   submittedAt?: boolean
@@ -1168,6 +1410,16 @@ export type LoanApplicationSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   contractSha256?: boolean
   signedById?: boolean
   signedAt?: boolean
+  idFrontFilename?: boolean
+  idFrontOriginalName?: boolean
+  idFrontMimeType?: boolean
+  idFrontSize?: boolean
+  idBackFilename?: boolean
+  idBackOriginalName?: boolean
+  idBackMimeType?: boolean
+  idBackSize?: boolean
+  idUploadedById?: boolean
+  idUploadedAt?: boolean
   customerId?: boolean
   loanId?: boolean
   submittedAt?: boolean
@@ -1209,6 +1461,16 @@ export type LoanApplicationSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   contractSha256?: boolean
   signedById?: boolean
   signedAt?: boolean
+  idFrontFilename?: boolean
+  idFrontOriginalName?: boolean
+  idFrontMimeType?: boolean
+  idFrontSize?: boolean
+  idBackFilename?: boolean
+  idBackOriginalName?: boolean
+  idBackMimeType?: boolean
+  idBackSize?: boolean
+  idUploadedById?: boolean
+  idUploadedAt?: boolean
   customerId?: boolean
   loanId?: boolean
   submittedAt?: boolean
@@ -1250,6 +1512,16 @@ export type LoanApplicationSelectScalar = {
   contractSha256?: boolean
   signedById?: boolean
   signedAt?: boolean
+  idFrontFilename?: boolean
+  idFrontOriginalName?: boolean
+  idFrontMimeType?: boolean
+  idFrontSize?: boolean
+  idBackFilename?: boolean
+  idBackOriginalName?: boolean
+  idBackMimeType?: boolean
+  idBackSize?: boolean
+  idUploadedById?: boolean
+  idUploadedAt?: boolean
   customerId?: boolean
   loanId?: boolean
   submittedAt?: boolean
@@ -1257,7 +1529,7 @@ export type LoanApplicationSelectScalar = {
   updatedAt?: boolean
 }
 
-export type LoanApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "status" | "lastSection" | "firstName" | "lastName" | "phone" | "idNumber" | "dateOfBirth" | "maritalStatus" | "businessType" | "businessName" | "requestedAmount" | "purpose" | "requestedTermWeeks" | "province" | "homeAddress" | "rawData" | "scoreData" | "score" | "riskBand" | "recommendation" | "scoredAt" | "reviewedById" | "reviewedAt" | "reviewNote" | "contractFilename" | "contractOriginalName" | "contractMimeType" | "contractSize" | "contractSha256" | "signedById" | "signedAt" | "customerId" | "loanId" | "submittedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["loanApplication"]>
+export type LoanApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "status" | "lastSection" | "firstName" | "lastName" | "phone" | "idNumber" | "dateOfBirth" | "maritalStatus" | "businessType" | "businessName" | "requestedAmount" | "purpose" | "requestedTermWeeks" | "province" | "homeAddress" | "rawData" | "scoreData" | "score" | "riskBand" | "recommendation" | "scoredAt" | "reviewedById" | "reviewedAt" | "reviewNote" | "contractFilename" | "contractOriginalName" | "contractMimeType" | "contractSize" | "contractSha256" | "signedById" | "signedAt" | "idFrontFilename" | "idFrontOriginalName" | "idFrontMimeType" | "idFrontSize" | "idBackFilename" | "idBackOriginalName" | "idBackMimeType" | "idBackSize" | "idUploadedById" | "idUploadedAt" | "customerId" | "loanId" | "submittedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["loanApplication"]>
 
 export type $LoanApplicationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "LoanApplication"
@@ -1296,6 +1568,16 @@ export type $LoanApplicationPayload<ExtArgs extends runtime.Types.Extensions.Int
     contractSha256: string | null
     signedById: string | null
     signedAt: Date | null
+    idFrontFilename: string | null
+    idFrontOriginalName: string | null
+    idFrontMimeType: string | null
+    idFrontSize: number | null
+    idBackFilename: string | null
+    idBackOriginalName: string | null
+    idBackMimeType: string | null
+    idBackSize: number | null
+    idUploadedById: string | null
+    idUploadedAt: Date | null
     customerId: string | null
     loanId: number | null
     submittedAt: Date | null
@@ -1757,6 +2039,16 @@ export interface LoanApplicationFieldRefs {
   readonly contractSha256: Prisma.FieldRef<"LoanApplication", 'String'>
   readonly signedById: Prisma.FieldRef<"LoanApplication", 'String'>
   readonly signedAt: Prisma.FieldRef<"LoanApplication", 'DateTime'>
+  readonly idFrontFilename: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idFrontOriginalName: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idFrontMimeType: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idFrontSize: Prisma.FieldRef<"LoanApplication", 'Int'>
+  readonly idBackFilename: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idBackOriginalName: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idBackMimeType: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idBackSize: Prisma.FieldRef<"LoanApplication", 'Int'>
+  readonly idUploadedById: Prisma.FieldRef<"LoanApplication", 'String'>
+  readonly idUploadedAt: Prisma.FieldRef<"LoanApplication", 'DateTime'>
   readonly customerId: Prisma.FieldRef<"LoanApplication", 'String'>
   readonly loanId: Prisma.FieldRef<"LoanApplication", 'Int'>
   readonly submittedAt: Prisma.FieldRef<"LoanApplication", 'DateTime'>
