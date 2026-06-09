@@ -33,18 +33,25 @@ jobs:
       # scripts avoids building common, whose deps aren't installed in this
       # site-scoped install.
       #
+      - name: Install dependencies
+        run: npm ci --workspace=site --include-workspace-root --ignore-scripts
+
       # vite 8 (rolldown), @tailwindcss/oxide and lightningcss ship their native
       # engines as platform-specific optional dependencies, but the committed
-      # lockfile only records the author's platform (darwin-arm64). Both `npm ci`
-      # and `npm install` honor that pruned set and leave the linux-x64 runner
-      # without bindings, failing `vite build` with MODULE_NOT_FOUND (a known npm
-      # optional-deps bug). Removing the lockfile forces a full re-resolution so
-      # npm pulls the linux binaries. The deploy job never commits the lockfile,
-      # so this is local to the runner.
-      - name: Install dependencies
+      # lockfile only records the author's platform (darwin-arm64) — a known npm
+      # optional-deps bug. `npm ci` honors that pruned set verbatim, so the
+      # linux-x64 runner is left without bindings and `vite build` dies with
+      # MODULE_NOT_FOUND. Install the matching linux binaries explicitly, each
+      # pinned to its parent's resolved version. (Deleting the lockfile to force
+      # re-resolution is not viable here: it drags the whole monorepo into the
+      # install and trips an unrelated @mikro/mobile peer-dep conflict.)
+      - name: Install linux native engines
         run: |
-          rm -f package-lock.json
-          npm install --workspace=site --include-workspace-root --ignore-scripts
+          ver() { node -p "require('./node_modules/$1/package.json').version"; }
+          npm install --no-save --ignore-scripts \
+            "@rolldown/binding-linux-x64-gnu@$(ver rolldown)" \
+            "@tailwindcss/oxide-linux-x64-gnu@$(ver @tailwindcss/oxide)" \
+            "lightningcss-linux-x64-gnu@$(ver lightningcss)"
 
       - name: Build site
         env:
