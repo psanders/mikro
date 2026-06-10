@@ -15,6 +15,7 @@ import { ClientesPage } from "./pages/ClientesPage";
 import { ClienteDetailPage } from "./pages/ClienteDetailPage";
 import { ContabilidadPage } from "./pages/ContabilidadPage";
 import { TransaccionDetailPage } from "./pages/TransaccionDetailPage";
+import { ModeloPage } from "./pages/ModeloPage";
 
 /** Renders the authenticated shell, or bounces to login when unauthenticated. */
 function RequireAuth() {
@@ -48,6 +49,7 @@ function AppRoutes() {
           <Route path="clientes/:id" element={<ClienteDetailPage />} />
           <Route path="contabilidad" element={<ContabilidadPage />} />
           <Route path="contabilidad/:id" element={<TransaccionDetailPage />} />
+          <Route path="modelo" element={<ModeloPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -22,6 +22,7 @@ import {
   Upload,
   X,
   Pencil,
+  Printer,
   Trash2,
   AlertTriangle,
   IdCard
@@ -40,6 +41,7 @@ import {
   allowedActions,
   recommendationLabel,
   confidenceLabel,
+  fieldDisplayLabel,
   formatDop,
   formatDate,
   isForbidden
@@ -144,6 +146,9 @@ export function SolicitudDetailPage() {
     }
   });
   const uploadId = trpc.uploadIdImage.useMutation({ onSuccess: refresh });
+  const deleteId = trpc.deleteIdImage.useMutation({ onSuccess: refresh });
+  const deleteContract = trpc.deleteApplicationContract.useMutation({ onSuccess: refresh });
+  const [printing, setPrinting] = useState(false);
 
   if (q.isPending) return <CenterMessage>Cargando…</CenterMessage>;
   if (q.isError) {
@@ -175,7 +180,10 @@ export function SolicitudDetailPage() {
     upload.isPending ||
     convert.isPending ||
     del.isPending ||
-    uploadId.isPending;
+    uploadId.isPending ||
+    deleteId.isPending ||
+    deleteContract.isPending ||
+    printing;
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -219,6 +227,18 @@ export function SolicitudDetailPage() {
     e.target.value = "";
   };
 
+  const printSummary = async () => {
+    setPrinting(true);
+    try {
+      const result = await utils.generateApplicationSummary.fetch({ id });
+      const bytes = Uint8Array.from(atob(result.dataBase64), (ch) => ch.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      window.open(url, "_blank");
+    } finally {
+      setPrinting(false);
+    }
+  };
+
   const viewIdImage = async (side: "FRONT" | "BACK") => {
     const img = await utils.getIdImage.fetch({ id, side });
     const bytes = Uint8Array.from(atob(img.dataBase64), (ch) => ch.charCodeAt(0));
@@ -247,6 +267,14 @@ export function SolicitudDetailPage() {
                 Editar
               </Button>
             )}
+            <Button
+              variant="secondary"
+              icon={Printer}
+              disabled={busy}
+              onClick={() => void printSummary()}
+            >
+              Imprimir
+            </Button>
             {["APPROVED", "SIGNED", "CONVERTED"].includes(app.status) && (
               <Button
                 variant="secondary"
@@ -304,16 +332,19 @@ export function SolicitudDetailPage() {
               <KV k="Apellido(s)" v={app.lastName ?? "—"} />
               <KV k="Teléfono" v={app.phone ?? "—"} />
               <KV k="Cédula" v={app.idNumber ?? "—"} />
+              <KV k="Fecha de nacimiento" v={app.dateOfBirth ? formatDate(app.dateOfBirth) : "—"} />
+              <KV k="Estado civil" v={app.maritalStatus ?? "—"} />
             </Section>
 
             <Section label="Negocio">
-              <KV k="Tipo de negocio" v={app.businessType ?? "—"} />
+              <KV k="Tipo de negocio" v={fieldDisplayLabel("businessType", app.businessType)} />
               <KV k="Nombre del negocio" v={app.businessName ?? "—"} />
               <KV k="Tiempo operando" v={raw(app, "businessAge")} />
               <KV k="Ventas mensuales" v={raw(app, "monthlySales")} />
               <KV k="Local" v={raw(app, "locationType")} />
               <KV k="Formalización" v={raw(app, "formalization")} />
               <KV k="Nº de empleados" v={raw(app, "employeeCount")} />
+              <KV k="Teléfono del negocio" v={raw(app, "businessPhone")} />
             </Section>
 
             <Section label="Crédito">
@@ -326,6 +357,8 @@ export function SolicitudDetailPage() {
             </Section>
 
             <Section label="Referencias">
+              <KV k="Nombre del cónyuge" v={raw(app, "spouseName")} />
+              <KV k="Teléfono del cónyuge" v={raw(app, "spousePhone")} />
               <KV k="Nombre de referencia" v={raw(app, "referenceName")} />
               <KV k="Teléfono de referencia" v={raw(app, "referencePhone")} />
             </Section>
@@ -334,56 +367,56 @@ export function SolicitudDetailPage() {
               <KV k="Tipo de vivienda" v={raw(app, "housingType")} />
               <KV k="Tiempo residiendo" v={raw(app, "residenceTime")} />
               <KV k="Dirección" v={app.homeAddress ?? "—"} />
-              <KV k="Provincia" v={app.province ?? "—"} />
+              <KV k="Provincia" v={fieldDisplayLabel("province", app.province)} />
+              <KV k="Referencia de dirección" v={raw(app, "addressReference")} />
             </Section>
 
-            <Section label="Documentos de identidad">
-              <div className="col-span-3 grid grid-cols-2 gap-4">
-                <IdTile
+            <Section label="Documentos">
+              <div className="col-span-3 flex flex-col gap-[10px]">
+                <DocRow
+                  icon={IdCard}
                   label="Cédula (frente)"
-                  filename={app.idFrontOriginalName ?? app.idFrontFilename}
+                  hasFile={!!app.idFrontFilename}
                   canEdit={app.status !== "CONVERTED"}
                   busy={busy}
                   onView={() => void viewIdImage("FRONT")}
                   onUpload={() => pickId("FRONT")}
+                  onRemove={
+                    app.status !== "CONVERTED"
+                      ? () => deleteId.mutate({ id, side: "FRONT" })
+                      : undefined
+                  }
                 />
-                <IdTile
+                <DocRow
+                  icon={IdCard}
                   label="Cédula (dorso)"
-                  filename={app.idBackOriginalName ?? app.idBackFilename}
+                  hasFile={!!app.idBackFilename}
                   canEdit={app.status !== "CONVERTED"}
                   busy={busy}
                   onView={() => void viewIdImage("BACK")}
                   onUpload={() => pickId("BACK")}
+                  onRemove={
+                    app.status !== "CONVERTED"
+                      ? () => deleteId.mutate({ id, side: "BACK" })
+                      : undefined
+                  }
                 />
-              </div>
-            </Section>
-
-            <Section label="Contrato">
-              <div className="col-span-3 flex items-center gap-[11px] rounded-[8px] bg-ds-subtle px-[14px] py-3">
-                <FileText size={18} className="shrink-0 text-ds-muted" />
-                <div className="flex min-w-0 flex-1 flex-col">
-                  {app.contractFilename ? (
-                    <button
-                      type="button"
-                      onClick={() => void viewContract()}
-                      className="cursor-pointer truncate text-left text-[13px] font-medium text-brand-blue-primary hover:underline"
-                    >
-                      {app.contractOriginalName ?? "Contrato de préstamo"}
-                    </button>
-                  ) : (
-                    <span className="text-[13px] font-medium text-brand-ink">
-                      Contrato de préstamo
-                    </span>
-                  )}
-                  <span className="text-[12px] font-medium text-ds-muted">
-                    {app.contractFilename
-                      ? `Firmado ${formatDate(app.signedAt)}`
-                      : "Se genera y sube al firmar, tras la aprobación"}
-                  </span>
-                </div>
-                <span className="text-[13px] font-medium text-ds-muted">
-                  {app.contractFilename ? "Firmado" : "Pendiente"}
-                </span>
+                <DocRow
+                  icon={FileText}
+                  label="Contrato"
+                  hasFile={!!app.contractFilename}
+                  canEdit={
+                    (actions.canSign || !!app.contractFilename) && app.status !== "CONVERTED"
+                  }
+                  busy={busy}
+                  onView={app.contractFilename ? () => void viewContract() : undefined}
+                  onUpload={() => fileRef.current?.click()}
+                  onRemove={
+                    app.contractFilename && app.status !== "CONVERTED"
+                      ? () => deleteContract.mutate({ id })
+                      : undefined
+                  }
+                />
               </div>
             </Section>
 
@@ -749,46 +782,54 @@ function KV({ k, v }: { k: string; v: ReactNode }) {
   );
 }
 
-function IdTile({
+function DocRow({
+  icon: Icon,
   label,
-  filename,
+  hasFile,
   canEdit,
   busy,
   onView,
-  onUpload
+  onUpload,
+  onRemove
 }: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
-  filename: string | null;
+  hasFile: boolean;
   canEdit: boolean;
   busy: boolean;
-  onView: () => void;
+  onView?: () => void;
   onUpload: () => void;
+  onRemove?: () => void;
 }) {
   return (
     <div className="flex items-center gap-[11px] rounded-[8px] bg-ds-subtle px-[14px] py-3">
-      <IdCard size={18} className="shrink-0 text-ds-muted" />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-[12px] font-medium text-ds-muted">{label}</span>
-        {filename ? (
-          <button
-            type="button"
-            onClick={onView}
-            className="cursor-pointer truncate text-left text-[13px] font-medium text-brand-blue-primary hover:underline"
-          >
-            {filename}
-          </button>
-        ) : (
-          <span className="text-[13px] font-medium text-brand-ink">Sin subir</span>
-        )}
-      </div>
+      <Icon size={18} className="shrink-0 text-ds-muted" />
+      <span
+        className={`flex-1 text-[13px] font-medium ${hasFile && onView ? "cursor-pointer text-brand-blue-primary hover:underline" : "text-brand-ink"}`}
+        onClick={hasFile && onView ? onView : undefined}
+        role={hasFile && onView ? "button" : undefined}
+      >
+        {label}
+      </span>
       {canEdit && (
         <button
           type="button"
           disabled={busy}
           onClick={onUpload}
-          className="shrink-0 cursor-pointer text-[13px] font-medium text-brand-blue-primary hover:underline disabled:opacity-50"
+          className="shrink-0 text-[13px] font-medium text-brand-blue-primary hover:underline disabled:opacity-50"
         >
-          {filename ? "Reemplazar" : "Subir"}
+          {hasFile ? "Reemplazar" : "Subir"}
+        </button>
+      )}
+      {hasFile && onRemove && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onRemove}
+          aria-label={`Eliminar ${label}`}
+          className="shrink-0 text-ds-muted transition-colors hover:text-ds-red disabled:opacity-50"
+        >
+          <X size={14} />
         </button>
       )}
     </div>

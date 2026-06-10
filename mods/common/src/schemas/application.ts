@@ -393,9 +393,99 @@ export const getIdImageSchema = z
   .object({ ...applicationRef, side: idImageSideEnum })
   .refine(requireRef, refMessage);
 
+/** Delete one side of the applicant's cédula. */
+export const deleteIdImageSchema = z
+  .object({ ...applicationRef, side: idImageSideEnum })
+  .refine(requireRef, refMessage);
+
+/** Delete the uploaded signed contract from an application. */
+export const deleteApplicationContractSchema = z
+  .object(applicationRef)
+  .refine(requireRef, refMessage);
+
 export type IdImageSide = z.infer<typeof idImageSideEnum>;
 export type UploadIdImageInput = z.infer<typeof uploadIdImageSchema>;
 export type GetIdImageInput = z.infer<typeof getIdImageSchema>;
+export type DeleteIdImageInput = z.infer<typeof deleteIdImageSchema>;
+export type DeleteApplicationContractInput = z.infer<typeof deleteApplicationContractSchema>;
+
+// ---- display label lookup maps (value → human-readable Spanish) ----
+
+export const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  COLMADO: "Colmado",
+  SUPERMERCADO_PEQUENO: "Supermercado pequeño",
+  FARMACIA: "Farmacia",
+  FERRETERIA: "Ferretería",
+  DISTRIBUIDORA_ALIMENTOS: "Distribuidora de alimentos",
+  PANADERIA: "Panadería",
+  CLINICA_PEQUENA: "Clínica pequeña",
+  LABORATORIO: "Laboratorio",
+  AGUA_PURIFICADA: "Agua purificada",
+  VETERINARIA: "Veterinaria",
+  PAPELERIA: "Papelería",
+  VENTA_REPUESTOS: "Venta de repuestos",
+  LAVANDERIA: "Lavandería",
+  SERVICIOS_FUNERARIOS: "Servicios funerarios",
+  SALON_BELLEZA_BARBERIA: "Salón de belleza / barbería",
+  CENTRO_UNAS: "Centro de uñas",
+  RESTAURANTE: "Restaurante",
+  FOOD_TRUCK: "Food truck",
+  BOUTIQUE_ROPA: "Boutique / tienda de ropa",
+  GIMNASIO: "Gimnasio",
+  TALLER_MECANICO: "Taller mecánico",
+  DEALER_VEHICULOS: "Dealer de vehículos",
+  EBANISTERIA: "Ebanistería",
+  IMPRENTA: "Imprenta",
+  ESTUDIO_FOTOGRAFICO: "Estudio fotográfico",
+  EMPRESA_EVENTOS: "Empresa de eventos",
+  HELADERIA: "Heladería",
+  TIENDA_MUEBLES: "Tienda de muebles",
+  BANCA_APUESTAS: "Banca de apuestas",
+  DISCOTECA: "Discoteca",
+  BAR_LIQUOR_STORE: "Bar / liquor store",
+  VENTA_AMBULANTE: "Venta ambulante",
+  NEGOCIO_DIGITAL: "Negocio totalmente digital",
+  REVENTA_REDES: "Reventa por redes sociales",
+  AGRICULTURA: "Agricultura",
+  PESCA_ARTESANAL: "Pesca artesanal",
+  CONSTRUCCION_PEQUENA: "Construcción independiente pequeña",
+  OTRO: "Otro"
+};
+
+export const PROVINCE_LABELS: Record<string, string> = {
+  AZUA: "Azua",
+  BAHORUCO: "Bahoruco",
+  BARAHONA: "Barahona",
+  DAJABON: "Dajabón",
+  DISTRITO_NACIONAL: "Distrito Nacional",
+  DUARTE: "Duarte",
+  ELIAS_PINA: "Elías Piña",
+  EL_SEIBO: "El Seibo",
+  ESPAILLAT: "Espaillat",
+  HATO_MAYOR: "Hato Mayor",
+  HERMANAS_MIRABAL: "Hermanas Mirabal",
+  INDEPENDENCIA: "Independencia",
+  LA_ALTAGRACIA: "La Altagracia",
+  LA_ROMANA: "La Romana",
+  LA_VEGA: "La Vega",
+  MARIA_TRINIDAD_SANCHEZ: "María Trinidad Sánchez",
+  MONSENOR_NOUEL: "Monseñor Nouel",
+  MONTE_CRISTI: "Monte Cristi",
+  MONTE_PLATA: "Monte Plata",
+  PEDERNALES: "Pedernales",
+  PERAVIA: "Peravia",
+  PUERTO_PLATA: "Puerto Plata",
+  SAMANA: "Samaná",
+  SAN_CRISTOBAL: "San Cristóbal",
+  SAN_JOSE_DE_OCOA: "San José de Ocoa",
+  SAN_JUAN: "San Juan",
+  SAN_PEDRO_DE_MACORIS: "San Pedro de Macorís",
+  SANCHEZ_RAMIREZ: "Sánchez Ramírez",
+  SANTIAGO: "Santiago",
+  SANTIAGO_RODRIGUEZ: "Santiago Rodríguez",
+  SANTO_DOMINGO: "Santo Domingo",
+  VALVERDE: "Valverde"
+};
 
 // ---- manual purge (hard delete) ----
 
@@ -407,3 +497,12 @@ export type GetIdImageInput = z.infer<typeof getIdImageSchema>;
 export const deleteApplicationSchema = z.object(applicationRef).refine(requireRef, refMessage);
 
 export type DeleteApplicationInput = z.infer<typeof deleteApplicationSchema>;
+
+// ---- application summary PDF ----
+
+/** Generate a printable summary PDF of any application. Stateless — no side effects. */
+export const generateApplicationSummarySchema = z
+  .object(applicationRef)
+  .refine(requireRef, refMessage);
+
+export type GenerateApplicationSummaryInput = z.infer<typeof generateApplicationSummarySchema>;

@@ -5,5 +5,12 @@
  * (not the barrel) so the pdfkit dependency stays out of the dashboard bundle.
  */
 export { renderContractPdf } from "./generator.js";
+export { renderSummaryPdf } from "./summaryGenerator.js";
 export { CONTRACT_CONSTANTS } from "./constants.js";
 export type { ContractData, ContractFrequency } from "./types.js";
+export type {
+  SolicitudSummaryData,
+  SummaryScoreCategory,
+  SummaryScoreIndicators,
+  SummaryEvaluatorNote
+} from "./summaryGenerator.js";

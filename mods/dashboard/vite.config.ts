@@ -8,6 +8,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
+const stubPath = path.resolve(dir, "src/server-stub.ts");
 
 // The dashboard runs both as a plain web SPA and, wrapped by Tauri, as a desktop
 // app. The build is identical for both — Tauri only points its webview at the
@@ -31,7 +32,13 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
     alias: {
       react: path.resolve(dir, "../../node_modules/react"),
-      "react-dom": path.resolve(dir, "../../node_modules/react-dom")
+      "react-dom": path.resolve(dir, "../../node_modules/react-dom"),
+      // Server-only packages pulled in transitively through @mikro/common.
+      // The webview never calls these code paths — stub them out so the .node
+      // binary doesn't cause a build-time "not valid UTF-8" parse failure.
+      "@resvg/resvg-js": stubPath,
+      sharp: stubPath,
+      satori: stubPath
     }
   }
 });

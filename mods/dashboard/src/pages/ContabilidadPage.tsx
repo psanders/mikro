@@ -294,8 +294,18 @@ function AccountsStrip({
       </div>
     );
   }
+  const totalBalance = accounts.reduce((sum, a) => sum + a.currentBalance, 0);
   return (
     <div className="flex gap-3 flex-wrap">
+      <div className="flex flex-col gap-2 rounded-[14px] bg-brand-blue-deep px-[18px] py-[18px] min-w-[160px]">
+        <div className="flex items-center justify-between">
+          <span className="text-[12px] font-medium text-white/90">Balance total</span>
+          <span className="text-[11px] font-medium text-white/60">todas las cuentas</span>
+        </div>
+        <span className="text-[22px] font-bold leading-tight tracking-[-0.5px] text-white">
+          {formatDop(totalBalance)}
+        </span>
+      </div>
       {accounts.map((a) => (
         <div
           key={a.id}

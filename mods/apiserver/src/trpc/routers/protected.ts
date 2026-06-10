@@ -61,7 +61,10 @@ import {
   updateApplicationSchema,
   deleteApplicationSchema,
   uploadIdImageSchema,
-  getIdImageSchema
+  getIdImageSchema,
+  deleteIdImageSchema,
+  deleteApplicationContractSchema,
+  generateApplicationSummarySchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
@@ -111,6 +114,9 @@ import { createPromoteApplication } from "../../api/applications/createPromoteAp
 import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
 import { createUploadIdImage } from "../../api/applications/createUploadIdImage.js";
 import { createGetIdImage } from "../../api/applications/createGetIdImage.js";
+import { createDeleteIdImage } from "../../api/applications/createDeleteIdImage.js";
+import { createDeleteApplicationContract } from "../../api/applications/createDeleteApplicationContract.js";
+import { createGenerateApplicationSummary } from "../../api/applications/createGenerateApplicationSummary.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
@@ -548,6 +554,28 @@ export const protectedRouter = router({
     const fn = createGetIdImage(ctx.db);
     return fn(input);
   }),
+
+  /** Remove one side of the applicant's cédula. ADMIN/REVIEWER only. */
+  deleteIdImage: reviewerProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
+    const fn = createDeleteIdImage(ctx.db);
+    return fn(input);
+  }),
+
+  /** Remove the stored signed contract and revert SIGNED → APPROVED. ADMIN/REVIEWER only. */
+  deleteApplicationContract: reviewerProcedure
+    .input(deleteApplicationContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createDeleteApplicationContract(ctx.db);
+      return fn(input);
+    }),
+
+  /** Render a printable solicitud summary PDF. ADMIN/REVIEWER only. */
+  generateApplicationSummary: reviewerProcedure
+    .input(generateApplicationSummarySchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createGenerateApplicationSummary(ctx.db);
+      return fn(input);
+    }),
 
   // ==================== Payment procedures ====================
 

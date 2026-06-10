@@ -2,7 +2,15 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Inbox, Users, Wallet, Banknote, TrendingUp } from "lucide-react";
+import {
+  LayoutDashboard,
+  Inbox,
+  Users,
+  Wallet,
+  Banknote,
+  TrendingUp,
+  Calculator
+} from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { useAuth } from "../context/AuthContext";
 import { NavSidebar, type NavItem } from "./ui/NavSidebar";
@@ -16,7 +24,8 @@ const ENTRIES: Array<{ icon: NavItem["icon"]; label: string; to?: string }> = [
   { icon: Users, label: "Clientes", to: "/clientes" },
   { icon: Wallet, label: "Préstamos" },
   { icon: Banknote, label: "Contabilidad", to: "/contabilidad" },
-  { icon: TrendingUp, label: "Reportes" }
+  { icon: TrendingUp, label: "Reportes" },
+  { icon: Calculator, label: "Modelo", to: "/modelo" }
 ];
 
 const ROLE_LABELS: Record<string, string> = {
