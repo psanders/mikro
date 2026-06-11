@@ -4,6 +4,7 @@
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { readFileSync } from "fs";
 
 // Load .env so MIKRO_CONFIG_FILE can point to mikro.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -130,9 +131,13 @@ app.use("/trpc", express.json({ limit: MAX_TRPC_REQUEST_BYTES }));
 app.use("/v1/applications", express.json({ limit: "32kb" }));
 app.use(express.json());
 
-// Health check endpoint
+// Health check endpoint. Reports the running version so deploys can verify
+// the expected image actually came up.
+const apiserverVersion: string = JSON.parse(
+  readFileSync(resolve(__dirname, "../package.json"), "utf8")
+).version;
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", version: apiserverVersion });
 });
 
 // Public loan application (solicitud) intake — UNAUTHENTICATED. The public
