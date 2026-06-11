@@ -1,8 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Canonical machine-readable English result shape for the Mikro Score engine,
- * matching the mikro-score skill's export_json.py output.
+ * Canonical machine-readable English result shape for the Mikro Score engine.
  */
 
 export type RiskBand =

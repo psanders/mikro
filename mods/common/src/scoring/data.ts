@@ -1,11 +1,14 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Business-risk lookup for the Mikro Score engine, ported verbatim from the
- * mikro-score skill's data/riesgo_negocios.json. Source:
- * NIVELES_DE_RIESGO_DE_NEGOCIOS_EN_RD.pdf (reconstructed; recalibrate against
- * real default history). An unmapped `tipoNegocio` code is scored MEDIO and
- * flagged for manual classification.
+ * Business-risk lookup for the Mikro Score engine, aligned 1:1 with the public
+ * form's `tipoNegocio` codes and classified per NIVELES DE RIESGO DE NEGOCIOS
+ * EN RD.pdf (the credit-policy source of truth). The PDF's "Riesgo Crítico"
+ * categories (negocios ilegales, casinos informales, pirámides, prestamistas
+ * informales, etc.) are not offered as form options, so no code maps to
+ * CRITICO today; the level remains for evaluator overrides and future codes.
+ * An unmapped or OTRO `tipoNegocio` is scored MEDIO and flagged for manual
+ * classification.
  */
 
 export type RiskLevel = "BAJO" | "MEDIO" | "ALTO" | "CRITICO";
@@ -19,25 +22,45 @@ export const PUNTAJE_POR_NIVEL: Record<RiskLevel, number> = {
 
 // Maps the form's `tipoNegocio` code to its risk level. `null` => unrecognized.
 export const MAPA_CODIGOS: Record<string, RiskLevel | null> = {
+  // Riesgo Bajo
   COLMADO: "BAJO",
-  SALON_BELLEZA_BARBERIA: "BAJO",
   FARMACIA: "BAJO",
   FERRETERIA: "BAJO",
-  PULPERIA: "BAJO",
-  VENTA_VIVERES: "BAJO",
+  SUPERMERCADO_PEQUENO: "BAJO",
+  DISTRIBUIDORA_ALIMENTOS: "BAJO",
+  PANADERIA: "BAJO",
+  CLINICA_PEQUENA: "BAJO",
+  LABORATORIO: "BAJO",
+  AGUA_PURIFICADA: "BAJO",
+  VETERINARIA: "BAJO",
+  PAPELERIA: "BAJO",
+  VENTA_REPUESTOS: "BAJO",
+  LAVANDERIA: "BAJO",
+  SERVICIOS_FUNERARIOS: "BAJO",
+  // Riesgo Medio
+  SALON_BELLEZA_BARBERIA: "MEDIO",
   RESTAURANTE: "MEDIO",
-  COMEDOR: "MEDIO",
-  VENTA_ROPA: "MEDIO",
-  VENTA_CALZADO: "MEDIO",
-  TALLER: "MEDIO",
-  AGROPECUARIA: "MEDIO",
-  TRANSPORTE: "MEDIO",
-  CONSTRUCCION: "ALTO",
-  ARTESANIA: "ALTO",
-  BAR_LIQUOR_STORE: "ALTO",
+  FOOD_TRUCK: "MEDIO",
+  BOUTIQUE_ROPA: "MEDIO",
+  GIMNASIO: "MEDIO",
+  CENTRO_UNAS: "MEDIO",
+  TALLER_MECANICO: "MEDIO",
+  DEALER_VEHICULOS: "MEDIO",
+  EBANISTERIA: "MEDIO",
+  IMPRENTA: "MEDIO",
+  ESTUDIO_FOTOGRAFICO: "MEDIO",
+  EMPRESA_EVENTOS: "MEDIO",
+  HELADERIA: "MEDIO",
+  TIENDA_MUEBLES: "MEDIO",
+  // Riesgo Alto
+  BANCA_APUESTAS: "ALTO",
   DISCOTECA: "ALTO",
-  PRESTAMISTA: "ALTO",
-  JUEGOS_AZAR: "CRITICO",
-  BANCA_LOTERIA: "CRITICO",
+  BAR_LIQUOR_STORE: "ALTO",
+  VENTA_AMBULANTE: "ALTO",
+  NEGOCIO_DIGITAL: "ALTO",
+  AGRICULTURA: "ALTO",
+  PESCA_ARTESANAL: "ALTO",
+  CONSTRUCCION_PEQUENA: "ALTO",
+  REVENTA_REDES: "ALTO",
   OTRO: null
 };

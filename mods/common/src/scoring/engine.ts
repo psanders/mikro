@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Mikro Score — deterministic credit-scoring engine. TypeScript port of the
- * mikro-score skill's scoring_engine.py (the Python skill remains the reference
- * spec). Pure and side-effect-free: given identical input + CONFIG it returns an
- * identical ApplicationScore. Matches on the form's Spanish display values
- * (e.g. "Propia", "Informal (sin RNC)", "Más de 5 años"), which is what
- * LoanApplication.rawData stores.
+ * Mikro Score — deterministic credit-scoring engine and the reference spec for
+ * the model. Pure and side-effect-free: given identical input + CONFIG it
+ * returns an identical ApplicationScore. Matches on the form's Spanish display
+ * values (e.g. "Propia", "Informal (sin RNC)", "Más de 5 años"), which is what
+ * LoanApplication.rawData stores. Empty answers score 0; fallback midpoints
+ * apply only to non-empty unrecognized values.
  */
 import type { NormalizedApplication } from "../schemas/application.js";
 import { MAPA_CODIGOS, PUNTAJE_POR_NIVEL, type RiskLevel } from "./data.js";
@@ -153,7 +153,7 @@ function scoreCapacity(
       code: "INCOMPLETE_DATA",
       message: "Faltan datos de capacidad de pago (ventas / monto / plazo)."
     });
-    return { score: 30, info };
+    return { score: 0, info };
   }
   const meses = semanas / CONFIG.semanas_por_mes;
   const cuota = (monto * (1 + CONFIG.tasa_flat)) / meses;
@@ -193,6 +193,9 @@ function scoreBusinessRisk(
   const nivel = MAPA_CODIGOS[code];
   const reconocido = code in MAPA_CODIGOS && nivel != null;
   const info: BusinessRiskInfo = { codigo: code, nivel: nivel ?? null, reconocido };
+  if (!code) {
+    return { score: 0, info };
+  }
   if (nivel === "CRITICO") {
     flags.push({ code: "CRITICAL_BUSINESS", message: `Rubro ${code} en categoria CRITICA.` });
     return { score: PUNTAJE_POR_NIVEL.CRITICO, info };
@@ -204,56 +207,66 @@ function scoreBusinessRisk(
   return { score: PUNTAJE_POR_NIVEL[nivel], info };
 }
 
+// Empty answers earn 0; firstMatch fallbacks apply only to non-empty
+// unrecognized values, so partial applications don't collect default points.
 function scoreTrackRecord(input: ScoreInput): { score: number; formalOk: boolean } {
   let s = 0;
-  s += firstMatch(
-    lc(input.businessAge),
-    [
-      ["más de 5", 40],
-      ["3 a 5", 34],
-      ["1 a 3", 26],
-      ["6 meses", 16],
-      ["menos de", 6]
-    ],
-    16
-  );
+  if (has(input.businessAge)) {
+    s += firstMatch(
+      lc(input.businessAge),
+      [
+        ["más de 5", 40],
+        ["3 a 5", 34],
+        ["1 a 3", 26],
+        ["6 meses", 16],
+        ["menos de", 6]
+      ],
+      16
+    );
+  }
   const formal = lc(input.formalization);
   const formalOk = formal.includes("rnc") && !formal.includes("sin");
-  s += formalOk ? 30 : 8;
-  s += firstMatch(
-    lc(input.locationType),
-    [
-      ["propio", 18],
-      ["alquilado", 12],
-      ["vivienda", 8]
-    ],
-    8
-  );
+  s += formalOk ? 30 : has(input.formalization) ? 8 : 0;
+  if (has(input.locationType)) {
+    s += firstMatch(
+      lc(input.locationType),
+      [
+        ["propio", 18],
+        ["alquilado", 12],
+        ["vivienda", 8]
+      ],
+      8
+    );
+  }
   s += has(input.employeeCount) ? 12 : 0;
   return { score: Math.min(s, 100), formalOk };
 }
 
 function scoreRootedness(input: ScoreInput): { score: number; direccionVerificable: boolean } {
   let s = 0;
-  s += firstMatch(
-    lc(input.housingType),
-    [
-      ["propia", 45],
-      ["familiar", 32],
-      ["alquilada", 20]
-    ],
-    20
-  );
-  s += firstMatch(
-    lc(input.residenceTime),
-    [
-      ["más de 10", 40],
-      ["5 a 10", 32],
-      ["1 a 5", 22],
-      ["menos de", 10]
-    ],
-    15
-  );
+  if (has(input.housingType)) {
+    s += firstMatch(
+      lc(input.housingType),
+      [
+        ["propia", 45],
+        ["familiar", 32],
+        ["alquilada", 20]
+      ],
+      20
+    );
+  }
+  if (has(input.residenceTime)) {
+    s += firstMatch(
+      lc(input.residenceTime),
+      [
+        ["más de 10", 40],
+        ["5 a 10", 32],
+        ["1 a 5", 22],
+        ["menos de", 10]
+      ],
+      15
+    );
+  }
   const dirOk = has(input.homeAddress);
   const refOk = has(input.addressReference);
   s += dirOk && refOk ? 15 : dirOk ? 8 : 0;
@@ -299,7 +312,7 @@ function scorePurpose(input: ScoreInput): { score: number; clasificacion: string
   }
   return p.trim()
     ? { score: 60, clasificacion: "Otro" }
-    : { score: 50, clasificacion: "Sin clasificar" };
+    : { score: 0, clasificacion: "Sin clasificar" };
 }
 
 function recommend(band: InternalBand, flags: ScoreFlag[]): [Recommendation, Confidence] {
@@ -378,7 +391,13 @@ function evaluatorNotes(
         "La renta es un gasto fijo no capturado en el formulario que reduce la capacidad real de pago."
     });
   }
-  if (!businessRecognized) {
+  if (!has(input.businessType)) {
+    n.push({
+      topic: "Clasificacion del rubro",
+      question: "El solicitante no indicó el tipo de negocio.",
+      reason: "Capturar el rubro para poder clasificar el riesgo del negocio."
+    });
+  } else if (!businessRecognized) {
     n.push({
       topic: "Clasificacion del rubro",
       question: `Rubro '${(input.businessName || "").trim() || input.businessType}' no clasificado en la lista Mikro.`,
