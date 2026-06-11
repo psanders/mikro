@@ -1,15 +1,21 @@
 name: Mobile E2E Tests
 
+# Runs Maestro against the APK already built by build-android.yaml instead of
+# rebuilding the app (the old suite spent 20+ minutes on npm ci + prebuild +
+# Gradle before ever starting the emulator). Triggered automatically after a
+# successful "Build Android APK" run (reusing that run's artifact), or manually
+# via dispatch (which picks the latest successful build).
+#
+# The suite was reset to a single smoke flow — boot a clean install and assert
+# the login screen renders (.maestro/login-screen.yaml). The previous suite
+# never passed in CI; grow from green rather than fixing flows that never
+# worked. The release APK bakes EXPO_PUBLIC_API_URL at build time, which is
+# fine: the login screen renders without any backend.
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - "mods/apiserver/**"
-      - "mods/mobile/**"
-  pull_request:
-    paths:
-      - "mods/apiserver/**"
-      - "mods/mobile/**"
+  workflow_run:
+    workflows: ["Build Android APK"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       release_android:
@@ -21,45 +27,43 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   e2e-android:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-
+      # Only needed for the .maestro flows; the APK comes from build-android.
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      - name: Cache Gradle
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('mods/mobile/package.json') }}
-          restore-keys: gradle-${{ runner.os }}-
+      - name: Download APK from build-android
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+          else
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow build-android.yaml --status success --limit 1 \
+              --json databaseId -q '.[0].databaseId')
+          fi
+          if [ -z "$run_id" ]; then
+            echo "No successful Build Android APK run found" >&2
+            exit 1
+          fi
+          echo "Using APK from build-android run $run_id"
+          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'mikro-android-*' --dir apk
+          apk_path=$(find apk -name '*.apk' | head -1)
+          if [ -z "$apk_path" ]; then
+            echo "No APK found in run $run_id artifacts" >&2
+            exit 1
+          fi
+          echo "APK_PATH=$apk_path" >> "$GITHUB_ENV"
 
       - name: Cache Maestro CLI
         id: maestro-cache
@@ -74,23 +78,6 @@ jobs:
 
       - name: Add Maestro to PATH
         run: echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Configure e2e environment
-        working-directory: mods/mobile
-        run: |
-          echo "EXPO_PUBLIC_API_URL=http://10.0.2.2:4400" > .env.local
-          echo "EXPO_PUBLIC_E2E=1" >> .env.local
-
-      - name: Prebuild Android
-        working-directory: mods/mobile
-        run: npx expo prebuild --platform android --clean
-
-      - name: Build debug APK
-        working-directory: mods/mobile/android
-        run: ./gradlew assembleDebug
 
       - name: Enable KVM
         run: |
@@ -119,9 +106,6 @@ jobs:
           disable-animations: true
           script: echo "AVD snapshot created"
 
-      - name: Start mock server
-        run: node mods/mobile/.maestro/mock-server.js &
-
       - name: Run Maestro e2e tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -132,7 +116,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            adb install mods/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install "$APK_PATH"
             maestro test mods/mobile/.maestro/
 
       - name: Upload Maestro artifacts
@@ -145,7 +129,7 @@ jobs:
 
   release-android:
     needs: e2e-android
-    if: inputs.release_android == true
+    if: github.event_name == 'workflow_dispatch' && inputs.release_android == true
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

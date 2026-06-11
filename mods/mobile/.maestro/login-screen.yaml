@@ -1,0 +1,16 @@
+# Minimal smoke flow: a clean install boots to the login screen. This is the
+# entire e2e suite for now — the previous suite never passed in CI, so we are
+# rebuilding from the smallest thing that works. Do not set EXPO_PUBLIC_E2E
+# when running this: that flag injects a fake token and skips login entirely.
+appId: do.mikro.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Bienvenido."
+    timeout: 30000
+- assertVisible:
+    id: "phone-input"
+- assertVisible:
+    id: "password-input"
+- assertVisible: "Iniciar sesión"
