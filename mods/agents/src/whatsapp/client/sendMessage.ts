@@ -76,6 +76,42 @@ export async function sendMessage(
   params: SendWhatsAppMessageInput
 ): Promise<WhatsAppSendResponse> {
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+  // Interactive Flow message takes precedence: an entirely different request
+  // body (a button that opens a native in-chat form). Text/media are ignored.
+  if (params.flow) {
+    const f = params.flow;
+    const requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "interactive",
+      interactive: {
+        type: "flow",
+        ...(f.header && { header: { type: "text", text: f.header } }),
+        body: { text: f.body },
+        ...(f.footer && { footer: { text: f.footer } }),
+        action: {
+          name: "flow",
+          parameters: {
+            flow_message_version: "3",
+            flow_token: f.flowToken,
+            flow_id: f.flowId,
+            flow_cta: f.cta,
+            flow_action: "navigate",
+            flow_action_payload: { screen: f.screen }
+          }
+        }
+      }
+    };
+    logger.verbose("sending whatsapp flow message", {
+      phone: params.phone,
+      flowId: f.flowId,
+      screen: f.screen
+    });
+    return sendRequest(url, accessToken, params.phone, "flow", requestBody);
+  }
+
   const mediaType = getMediaType(params);
 
   logger.verbose("sending whatsapp api request", {
@@ -168,6 +204,20 @@ export async function sendMessage(
     });
   }
 
+  return sendRequest(url, accessToken, params.phone, mediaType, requestBody);
+}
+
+/**
+ * POST a prepared message body to the WhatsApp Graph API and parse the response.
+ * Shared by text, media, and interactive (Flow) sends.
+ */
+async function sendRequest(
+  url: string,
+  accessToken: string,
+  phone: string,
+  kind: string,
+  requestBody: Record<string, unknown>
+): Promise<WhatsAppSendResponse> {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -184,7 +234,7 @@ export async function sendMessage(
     data = JSON.parse(responseText) as WhatsAppSendResponse & WhatsAppApiError;
   } catch {
     logger.error("failed to parse whatsapp response", {
-      phone: params.phone,
+      phone,
       status: response.status,
       responseText
     });
@@ -196,31 +246,29 @@ export async function sendMessage(
     const errorCode = data.error?.code;
     const errorType = data.error?.type;
     logger.error("whatsapp api error", {
-      phone: params.phone,
+      phone,
       error: errorMessage,
       errorCode,
       errorType,
       status: response.status,
       fullResponse: JSON.stringify(data),
-      requestBody: mediaType !== "text" ? JSON.stringify(requestBody) : undefined
+      requestBody: kind !== "text" ? JSON.stringify(requestBody) : undefined
     });
     throw new Error(
       `WhatsApp API error: ${errorMessage}${errorCode ? ` (Code: ${errorCode})` : ""}`
     );
   }
 
-  // Log response for debugging
-  if (mediaType !== "text") {
-    logger.verbose(`whatsapp ${mediaType} message response`, {
-      phone: params.phone,
+  if (kind !== "text") {
+    logger.verbose(`whatsapp ${kind} message response`, {
+      phone,
       messageId: data.messages?.[0]?.id,
-      mediaType,
-      fullResponse: JSON.stringify(data),
+      kind,
       status: response.status
     });
   } else {
     logger.verbose("whatsapp api response received", {
-      phone: params.phone,
+      phone,
       messageId: data.messages?.[0]?.id,
       type: "text"
     });

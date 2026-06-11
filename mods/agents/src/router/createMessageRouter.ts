@@ -14,9 +14,9 @@ import { ROLE_TO_AGENT } from "../constants.js";
  *
  * Routing rules:
  * 1. Customer → Log and ignore (customers don't use agents)
- * 2. User (COLLECTOR role) → Route to Juan agent
+ * 2. User (COLLECTOR role) → Ignored (collectors use the mobile app)
  * 3. User (ADMIN role) → Route to Maria agent
- * 4. Unknown phone (Guest) → Route to Joan agent for onboarding
+ * 4. Unknown phone (prospect) → guest_intake when intake is enabled, else ignored
  *
  * @param deps - Dependencies for database lookups
  * @returns A function that routes messages based on phone number
@@ -34,7 +34,7 @@ import { ROLE_TO_AGENT } from "../constants.js";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getCustomerByPhone, isAgentDisabled } = deps;
+  const { getUserByPhone, getCustomerByPhone, isAgentDisabled, isIntakeEnabled } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
@@ -129,9 +129,14 @@ export function createMessageRouter(deps: RouterDependencies) {
       };
     }
 
-    // Step 3: Unknown phone — no onboarding agent. Mikro does not onboard
-    // prospects over WhatsApp, so the AI never replies to new/unknown numbers.
-    logger.verbose("phone is unknown, ignoring (no onboarding agent)", { phone: normalizedPhone });
+    // Step 3: Unknown phone — a prospect. When intake is enabled, route to the
+    // Flow-based loan-application intake; otherwise ignore (legacy behavior).
+    if (isIntakeEnabled()) {
+      logger.verbose("phone is unknown, routing to prospect intake", { phone: normalizedPhone });
+      return { type: "guest_intake", phone: normalizedPhone };
+    }
+
+    logger.verbose("phone is unknown, ignoring (intake disabled)", { phone: normalizedPhone });
     return {
       type: "ignored",
       reason: "unknown phone — onboarding over WhatsApp is disabled",

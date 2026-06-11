@@ -7,7 +7,8 @@ import {
   handleWhatsAppMessage,
   setMessageProcessor,
   markInitializationComplete,
-  resetProcessedMessageIdsForTesting
+  resetProcessedMessageIdsForTesting,
+  resetIntakeFlowThrottleForTesting
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
 import { ValidationError } from "@mikro/common";
@@ -56,7 +57,8 @@ describe("handleWhatsAppMessage", () => {
       name: "maria",
       systemPrompt: "You are Maria",
       tools: []
-    })
+    }),
+    submitApplicationFromFlow: sinon.stub().resolves()
   };
 
   beforeEach(() => {
@@ -75,8 +77,10 @@ describe("handleWhatsAppMessage", () => {
       systemPrompt: "You are Maria",
       tools: []
     });
+    mockMessageProcessor.submitApplicationFromFlow = sinon.stub().resolves();
 
     resetProcessedMessageIdsForTesting();
+    resetIntakeFlowThrottleForTesting();
     clearSessionsForTesting();
     setMessageProcessor(mockMessageProcessor);
     markInitializationComplete();
@@ -389,6 +393,109 @@ describe("handleWhatsAppMessage", () => {
       await handleWhatsAppMessage(webhook("msg-u2", "Registrar un pago"));
       expect(mockMessageProcessor.invokeLLM.calledTwice).to.be.true;
       expect(mockMessageProcessor.invokeLLM.getCall(1).args[5]).to.equal(false);
+    });
+  });
+
+  describe("prospect intake flow", () => {
+    const recentTimestamp = () => String(Math.floor(Date.now() / 1000) - 10);
+    const prospect = "+18095559999";
+
+    const guestWebhook = (id: string, body = "Hola") => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  { from: prospect, type: "text", id, timestamp: recentTimestamp(), text: { body } }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    const nfmWebhook = (id: string, answers: Record<string, unknown>) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: prospect,
+                    type: "interactive",
+                    id,
+                    timestamp: recentTimestamp(),
+                    interactive: {
+                      type: "nfm_reply",
+                      nfm_reply: {
+                        name: "flow",
+                        body: "Sent",
+                        response_json: JSON.stringify(answers)
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    it("sends the Flow form to a guest_intake-routed prospect", async () => {
+      mockMessageProcessor.routeMessage
+        .withArgs(prospect)
+        .resolves({ type: "guest_intake" as const, phone: prospect });
+
+      await handleWhatsAppMessage(guestWebhook("msg-g1"));
+
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      const arg = mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0];
+      expect(arg.phone).to.equal(prospect);
+      expect(arg.flow, "flow message sent").to.exist;
+      expect(arg.flow.screen).to.equal("SOLICITUD");
+      expect(mockMessageProcessor.invokeLLM.called, "no LLM for intake").to.be.false;
+    });
+
+    it("does not re-send the Flow within the throttle window", async () => {
+      mockMessageProcessor.routeMessage
+        .withArgs(prospect)
+        .resolves({ type: "guest_intake" as const, phone: prospect });
+
+      await handleWhatsAppMessage(guestWebhook("msg-g1"));
+      await handleWhatsAppMessage(guestWebhook("msg-g2"));
+
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce, "flow sent only once").to.be.true;
+    });
+
+    it("submits a completed Flow and confirms to the prospect", async () => {
+      await handleWhatsAppMessage(
+        nfmWebhook("msg-nfm1", {
+          firstName: "Juan",
+          lastName: "Pérez",
+          businessType: "COLMADO",
+          dateOfBirth: "632361600000",
+          requestedAmount: "30000"
+        })
+      );
+
+      expect(mockMessageProcessor.submitApplicationFromFlow.calledOnce).to.be.true;
+      const payload = mockMessageProcessor.submitApplicationFromFlow.firstCall.args[0];
+      expect(payload.sessionId).to.equal("wa-msg-nfm1");
+      expect(payload.phone).to.equal(prospect);
+      expect(payload.partial).to.equal(false);
+      expect(payload.firstName).to.equal("Juan");
+      expect(payload.dateOfBirth).to.equal("1990-01-15");
+      // confirmation message sent (text, not a flow)
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.be.a("string");
+      // no LLM/agent involvement for a flow submission
+      expect(mockMessageProcessor.invokeLLM.called).to.be.false;
     });
   });
 

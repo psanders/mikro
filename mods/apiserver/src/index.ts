@@ -44,6 +44,7 @@ import {
   getDisabledAgents,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
+  getWhatsAppIntakeFlow,
   initializeLLM,
   type Message,
   type AgentName,
@@ -329,7 +330,8 @@ async function initializeMessageProcessor() {
           isActive: customer.isActive
         };
       },
-      isAgentDisabled
+      isAgentDisabled,
+      isIntakeEnabled: () => getWhatsAppIntakeFlow().enabled
     });
 
     const toExportedCustomer = (customer: {
@@ -636,6 +638,23 @@ async function initializeMessageProcessor() {
       );
     }
 
+    // Persist a prospect intake Flow submission through the same path as the
+    // website form: validate the payload, normalize, upsert + score by session.
+    const submitApplicationFromFlow = async (
+      payload: Record<string, string | boolean>
+    ): Promise<void> => {
+      const parsed = applicationPayloadSchema.safeParse(payload);
+      if (!parsed.success) {
+        logger.warn("intake flow: invalid payload", {
+          sessionId: typeof payload.sessionId === "string" ? payload.sessionId : undefined,
+          issues: parsed.error.issues.length
+        });
+        return;
+      }
+      const normalized = normalizeApplication(parsed.data);
+      await upsertApplication(normalized);
+    };
+
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -644,6 +663,7 @@ async function initializeMessageProcessor() {
       getChatHistoryForUser,
       addMessageForUser,
       getAgent: (name: AgentName) => getAgent(agents, name),
+      submitApplicationFromFlow,
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 

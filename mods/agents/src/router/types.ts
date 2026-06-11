@@ -10,6 +10,7 @@ import type { AgentName } from "../constants.js";
 export type RouteResult =
   | { type: "user"; userId: string; name: string; role: Role; phone: string }
   | { type: "customer"; customerId: string; phone: string }
+  | { type: "guest_intake"; phone: string }
   | { type: "ignored"; reason: string; phone: string };
 
 /**
@@ -43,4 +44,6 @@ export interface RouterDependencies {
   getCustomerByPhone: (params: { phone: string }) => Promise<CustomerLookupResult | null>;
   /** Check if an agent is disabled */
   isAgentDisabled: (agentName: AgentName) => boolean;
+  /** Whether prospect intake over WhatsApp (Flow) is active. */
+  isIntakeEnabled: () => boolean;
 }

@@ -12,9 +12,14 @@ import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
-import { getMessageMaxAgeSeconds } from "../config.js";
+import { getMessageMaxAgeSeconds, getWhatsAppIntakeFlow } from "../config.js";
 import { logger } from "../logger.js";
 import { ROLE_TO_AGENT, type AgentName } from "../constants.js";
+import {
+  buildIntakeFlowMessage,
+  mapFlowAnswersToPayload,
+  INTAKE_RECEIVED_MESSAGE
+} from "./intakeFlow.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -59,6 +64,12 @@ export interface MessageProcessorDependencies {
   getAgent: (name: AgentName) => Agent;
   /** Optional: transcribe voice note (audio data URL) to text. When set, voice notes are processed as text. */
   transcribeVoiceNote?: (audioDataUrl: string) => Promise<string>;
+  /**
+   * Optional: persist a prospect loan application submitted via the intake Flow.
+   * Receives the website-shaped intake payload (English keys, phone injected).
+   * When unset, Flow submissions are ignored.
+   */
+  submitApplicationFromFlow?: (payload: Record<string, string | boolean>) => Promise<void>;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -71,6 +82,29 @@ let initializationComplete = false;
 /** Deduplicate webhook delivery: message id -> timestamp (ms). Pruned by TTL. */
 const processedMessageIds = new Map<string, number>();
 const DEDUP_TTL_MS = 60_000;
+
+/**
+ * Throttle the intake-Flow greeting so a chatty prospect isn't spammed with the
+ * form button on every message. phone -> last-sent timestamp (ms).
+ */
+const intakeFlowSentAt = new Map<string, number>();
+const INTAKE_FLOW_RESEND_MS = 60 * 60_000; // 1 hour
+
+function shouldSendIntakeFlow(phone: string): boolean {
+  const now = Date.now();
+  for (const [p, ts] of intakeFlowSentAt) {
+    if (now - ts > INTAKE_FLOW_RESEND_MS) intakeFlowSentAt.delete(p);
+  }
+  const last = intakeFlowSentAt.get(phone);
+  if (last && now - last < INTAKE_FLOW_RESEND_MS) return false;
+  intakeFlowSentAt.set(phone, now);
+  return true;
+}
+
+/** Clear intake-flow throttle (for testing only). */
+export function resetIntakeFlowThrottleForTesting(): void {
+  intakeFlowSentAt.clear();
+}
 
 function pruneProcessedMessageIds(): void {
   const now = Date.now();
@@ -323,8 +357,23 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     getChatHistoryForUser,
     addMessageForUser,
     getAgent,
-    transcribeVoiceNote
+    transcribeVoiceNote,
+    submitApplicationFromFlow
   } = messageProcessor;
+
+  // Intake Flow submission: a completed solicitud arrives as an interactive
+  // nfm_reply with the answers as a JSON string. Ingest it (no routing/LLM) and
+  // confirm. Handled before routing because the submitter is still an unknown
+  // prospect — there is no agent conversation to run.
+  if (type === "interactive" && message.interactive?.nfm_reply) {
+    await processIntakeFlowSubmission(
+      message,
+      phone,
+      sendWhatsAppMessage,
+      submitApplicationFromFlow
+    );
+    return;
+  }
 
   // Start routing early so it runs in parallel with media download/transcription
   const routePromise = routeMessage(phone);
@@ -428,8 +477,28 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // Only known users (e.g. ADMIN -> Maria) reach an agent — Mikro does not
-    // onboard prospects over WhatsApp, so unknown numbers are already ignored.
+    // Prospect (unknown number) with intake enabled: greet with the Flow form
+    // button. Throttled so repeated messages don't re-send the button.
+    if (route.type === "guest_intake") {
+      if (!shouldSendIntakeFlow(phone)) {
+        logger.verbose("intake flow recently sent, skipping resend", { phone });
+        return;
+      }
+      const { flowId } = getWhatsAppIntakeFlow();
+      try {
+        await sendWhatsAppMessage(buildIntakeFlowMessage(phone, flowId));
+        logger.info("intake flow sent to prospect", { phone, flowId });
+      } catch (error) {
+        intakeFlowSentAt.delete(phone); // allow retry on a later message
+        logger.error("failed to send intake flow", {
+          phone,
+          error: (error as Error).message
+        });
+      }
+      return;
+    }
+
+    // Only known users (e.g. ADMIN -> Maria) reach an agent.
     const targetAgent = ROLE_TO_AGENT[route.role];
     if (!targetAgent) {
       logger.verbose("no agent for user role", { phone, role: route.role });
@@ -499,6 +568,63 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       });
     } catch {
       logger.error("failed to send error message", { phone });
+    }
+  }
+}
+
+/**
+ * Ingest a completed intake Flow: parse the answers, map them to the website
+ * intake payload (phone injected, redelivery-safe sessionId), persist via the
+ * injected submitter, and confirm to the prospect. Failures are logged and a
+ * soft error is sent so the prospect can retry.
+ */
+async function processIntakeFlowSubmission(
+  message: WhatsAppMessage,
+  phone: string,
+  sendWhatsAppMessage: MessageProcessorDependencies["sendWhatsAppMessage"],
+  submitApplicationFromFlow: MessageProcessorDependencies["submitApplicationFromFlow"]
+): Promise<void> {
+  if (!submitApplicationFromFlow) {
+    logger.warn("intake flow submission received but no submitter configured", { phone });
+    return;
+  }
+
+  const responseJson = message.interactive?.nfm_reply?.response_json;
+  if (!responseJson) {
+    logger.warn("intake flow reply missing response_json", { phone, messageId: message.id });
+    return;
+  }
+
+  let answers: Record<string, unknown>;
+  try {
+    answers = JSON.parse(responseJson) as Record<string, unknown>;
+  } catch {
+    logger.error("failed to parse intake flow response_json", { phone, messageId: message.id });
+    return;
+  }
+
+  // sessionId keyed on the message id: a redelivered webhook upserts the same row.
+  const sessionId = `wa-${message.id}`;
+  const payload = mapFlowAnswersToPayload(answers, phone, sessionId);
+
+  try {
+    await submitApplicationFromFlow(payload);
+    logger.info("intake flow application submitted", { phone, sessionId });
+    await sendWhatsAppMessage({ phone, message: INTAKE_RECEIVED_MESSAGE });
+  } catch (error) {
+    logger.error("failed to submit intake flow application", {
+      phone,
+      sessionId,
+      error: (error as Error).message
+    });
+    try {
+      await sendWhatsAppMessage({
+        phone,
+        message:
+          "Hubo un problema al recibir tu solicitud. Por favor, intenta de nuevo en unos minutos."
+      });
+    } catch {
+      logger.error("failed to send intake error message", { phone });
     }
   }
 }

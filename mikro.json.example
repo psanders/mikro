@@ -33,6 +33,10 @@
     "accessToken": "your-whatsapp-access-token",
     "verifyToken": "mikro_webhook_token",
     "languageCode": "es_DO",
+    "intakeFlow": {
+      "enabled": false,
+      "flowId": ""
+    },
     "templates": {
       "paymentConfirmation": "payment_receipt",
       "paymentReminder": "payment_reminder",

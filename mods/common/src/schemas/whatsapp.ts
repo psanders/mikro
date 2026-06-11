@@ -26,6 +26,26 @@ export const whatsappAudioSchema = z.object({
 });
 
 /**
+ * Schema for a WhatsApp Flow completion reply (`interactive.nfm_reply`). When a
+ * user submits a Flow, the form answers arrive as a JSON string in
+ * `response_json`. Parsed downstream into the application payload.
+ */
+export const whatsappNfmReplySchema = z.object({
+  response_json: z.string(),
+  body: z.string().optional(),
+  name: z.string().optional()
+});
+
+/**
+ * Schema for the `interactive` content of an incoming message. Only the Flow
+ * reply (`nfm_reply`) is consumed today.
+ */
+export const whatsappInteractiveSchema = z.object({
+  type: z.string(),
+  nfm_reply: whatsappNfmReplySchema.optional()
+});
+
+/**
  * Enum for WhatsApp incoming message types.
  * These are the message types that can be received from the WhatsApp webhook.
  */
@@ -54,7 +74,8 @@ export const whatsappMessageSchema = z.object({
   timestamp: z.string(),
   text: whatsappTextSchema.optional(),
   image: whatsappImageSchema.optional(),
-  audio: whatsappAudioSchema.optional()
+  audio: whatsappAudioSchema.optional(),
+  interactive: whatsappInteractiveSchema.optional()
 });
 
 /**
@@ -113,6 +134,30 @@ export const sendWhatsAppTemplateSchema = z.object({
 export const mediaTypeEnum = z.enum(["image", "document", "video", "audio"]);
 
 /**
+ * Parameters for sending an interactive WhatsApp Flow message — a button that
+ * opens a native in-chat form (used for the prospect loan-application intake).
+ * The flow itself is a published asset on the Meta side, referenced by `flowId`.
+ */
+export const whatsappFlowMessageSchema = z.object({
+  /** Published Flow ID from WhatsApp Manager. */
+  flowId: z.string().min(1, "flowId is required"),
+  /** Opaque token echoed back in the nfm_reply webhook (correlates submission). */
+  flowToken: z.string().min(1, "flowToken is required"),
+  /** First screen id to open (e.g. "SOLICITUD"). */
+  screen: z.string().min(1, "screen is required"),
+  /** Button label that opens the flow. */
+  cta: z.string().min(1, "cta is required"),
+  /** Message body text shown above the button. */
+  body: z.string().min(1, "body is required"),
+  /** Optional header text. */
+  header: z.string().optional(),
+  /** Optional footer text. */
+  footer: z.string().optional()
+});
+
+export type WhatsAppFlowMessageInput = z.infer<typeof whatsappFlowMessageSchema>;
+
+/**
  * Schema for sending a WhatsApp message.
  * Supports text, image, document, video, and audio messages.
  *
@@ -164,7 +209,14 @@ export const sendWhatsAppMessageSchema = z
     mediaType: mediaTypeEnum.optional(),
 
     /** Caption for image, document, or video messages (not supported for audio) */
-    caption: z.string().optional()
+    caption: z.string().optional(),
+
+    /**
+     * Interactive WhatsApp Flow message: renders a button that opens a native
+     * in-chat form. When set, the message is sent as an `interactive` flow and
+     * all text/media fields are ignored.
+     */
+    flow: whatsappFlowMessageSchema.optional()
   })
   .refine(
     (data) =>
@@ -176,10 +228,11 @@ export const sendWhatsAppMessageSchema = z
       data.videoUrl ||
       data.videoId ||
       data.audioUrl ||
-      data.audioId,
+      data.audioId ||
+      data.flow,
     {
       message:
-        "Either message, imageUrl, mediaId, documentUrl, documentId, videoUrl, videoId, audioUrl, or audioId must be provided"
+        "Either message, imageUrl, mediaId, documentUrl, documentId, videoUrl, videoId, audioUrl, audioId, or flow must be provided"
     }
   );
 
@@ -197,6 +250,16 @@ export type WhatsAppImage = z.infer<typeof whatsappImageSchema>;
  * Type for WhatsApp message audio content (voice notes).
  */
 export type WhatsAppAudio = z.infer<typeof whatsappAudioSchema>;
+
+/**
+ * Type for a WhatsApp Flow completion reply.
+ */
+export type WhatsAppNfmReply = z.infer<typeof whatsappNfmReplySchema>;
+
+/**
+ * Type for the interactive content of an incoming message.
+ */
+export type WhatsAppInteractive = z.infer<typeof whatsappInteractiveSchema>;
 
 /**
  * Type for WhatsApp incoming message types.
