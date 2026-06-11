@@ -105,7 +105,7 @@
                   { "id": "REVENTA_REDES", "title": "Reventa por redes sociales" },
                   { "id": "AGRICULTURA", "title": "Agricultura" },
                   { "id": "PESCA_ARTESANAL", "title": "Pesca artesanal" },
-                  { "id": "CONSTRUCCION_PEQUENA", "title": "Construcción independiente pequeña" },
+                  { "id": "CONSTRUCCION_PEQUENA", "title": "Construcción pequeña" },
                   { "id": "OTRO", "title": "Otro" }
                 ]
               },
@@ -132,7 +132,7 @@
               {
                 "type": "Dropdown",
                 "name": "monthlySales",
-                "label": "Ventas mensuales aprox.",
+                "label": "Ventas mensuales",
                 "required": true,
                 "data-source": [
                   { "id": "Menos de RD$25,000", "title": "Menos de RD$25,000" },
@@ -190,20 +190,21 @@
               {
                 "type": "TextInput",
                 "name": "requestedAmount",
-                "label": "Monto solicitado (RD$)",
+                "label": "Monto solicitado",
+                "helper-text": "En pesos (RD$)",
                 "input-type": "number",
                 "required": true
               },
               {
                 "type": "Dropdown",
                 "name": "purpose",
-                "label": "Propósito del préstamo",
+                "label": "Propósito",
                 "required": true,
                 "data-source": [
                   { "id": "Capital de trabajo", "title": "Capital de trabajo" },
                   {
                     "id": "Compra de inventario / mercancía",
-                    "title": "Compra de inventario / mercancía"
+                    "title": "Compra de inventario"
                   },
                   {
                     "id": "Compra de equipos / maquinaria",
@@ -211,17 +212,17 @@
                   },
                   {
                     "id": "Remodelación / ampliación del local",
-                    "title": "Remodelación / ampliación del local"
+                    "title": "Remodelación del local"
                   },
                   {
                     "id": "Compra o reparación de vehículo de trabajo",
-                    "title": "Compra o reparación de vehículo de trabajo"
+                    "title": "Reparación de vehículo"
                   },
                   { "id": "Pago a proveedores", "title": "Pago a proveedores" },
                   { "id": "Expansión / nueva sucursal", "title": "Expansión / nueva sucursal" },
                   {
                     "id": "Consolidación de deudas del negocio",
-                    "title": "Consolidación de deudas del negocio"
+                    "title": "Consolidar deudas"
                   },
                   { "id": "Otro", "title": "Otro" }
                 ]
@@ -245,28 +246,28 @@
               {
                 "type": "TextInput",
                 "name": "spouseName",
-                "label": "Nombre del cónyuge (opcional)",
+                "label": "Nombre del cónyuge",
                 "input-type": "text",
                 "required": false
               },
               {
                 "type": "TextInput",
                 "name": "spousePhone",
-                "label": "Teléfono del cónyuge (opcional)",
+                "label": "Tel. del cónyuge",
                 "input-type": "phone",
                 "required": false
               },
               {
                 "type": "TextInput",
                 "name": "referenceName",
-                "label": "Nombre de referencia personal",
+                "label": "Nombre de referencia",
                 "input-type": "text",
                 "required": true
               },
               {
                 "type": "TextInput",
                 "name": "referencePhone",
-                "label": "Teléfono de referencia personal",
+                "label": "Tel. de referencia",
                 "input-type": "phone",
                 "required": true
               },
@@ -302,7 +303,8 @@
               {
                 "type": "TextInput",
                 "name": "homeAddress",
-                "label": "Dirección (calle, número y sector)",
+                "label": "Dirección",
+                "helper-text": "Calle, número y sector",
                 "input-type": "text",
                 "required": true
               },
@@ -349,7 +351,8 @@
               {
                 "type": "TextInput",
                 "name": "addressReference",
-                "label": "Referencia de dirección (opcional)",
+                "label": "Ref. de dirección",
+                "helper-text": "Ej. frente al parque",
                 "input-type": "text",
                 "required": false
               },
