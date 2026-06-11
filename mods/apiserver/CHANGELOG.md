@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.5.0](https://github.com/psanders/mikro/compare/v1.4.1...v1.5.0) (2026-06-11)
+
+### Bug Fixes
+
+- **whatsapp:** shorten Flow labels (<=20) and option titles (<=30) ([2a8b257](https://github.com/psanders/mikro/commit/2a8b25707f93031c7b87753b55b9f569e781ee84))
+
+### Features
+
+- **apiserver:** report running version in /health ([e235bed](https://github.com/psanders/mikro/commit/e235bedcec0373d971913b1b36f3f692cb2eabf6))
+- **whatsapp:** prospect loan-application intake via native Flow form ([57133c1](https://github.com/psanders/mikro/commit/57133c1bfd222061e6b54c4bd4652387e1cd4e39))
+
 ## [1.4.1](https://github.com/psanders/mikro/compare/v1.4.0...v1.4.1) (2026-06-11)
 
 ### Bug Fixes
