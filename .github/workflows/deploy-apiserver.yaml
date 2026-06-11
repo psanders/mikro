@@ -1,0 +1,221 @@
+name: Deploy API Server
+
+# Deploys a published psanders/mikro image to the DigitalOcean droplet, so a
+# release no longer requires logging in, editing compose, and updating by hand.
+#
+# After publish-apiserver.yaml pushes a release image, this workflow
+# automatically smoke-tests that exact image in CI (boot + health + the public
+# solicitud intake happy path). The deploy itself only runs from the manual
+# "Run workflow" button — that click is the approval gate. (GitHub environment
+# required-reviewer gates need a paid plan on private repos; if the repo ever
+# moves to one, add reviewers to the `production` environment and a
+# workflow_run deploy path can replace the dispatch-only rule.)
+#
+# A manual run re-smoke-tests the requested version, then SSHes into the
+# droplet, pins MIKRO_IMAGE in the compose directory's .env, and runs
+# `docker compose up -d`. If the new container doesn't come up healthy, it
+# rolls back to the previously pinned image. Dispatch an older version to roll
+# back manually.
+#
+# Required repo configuration:
+#   secrets.DEPLOY_SSH_HOST   droplet IP or hostname
+#   secrets.DEPLOY_SSH_USER   SSH user
+#   secrets.DEPLOY_SSH_KEY    SSH private key (PEM)
+#   vars.DEPLOY_COMPOSE_DIR   directory on the droplet with compose.yaml + mikro.json
+
+on:
+  workflow_run:
+    workflows: ["Publish API Server"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version to deploy (e.g. 1.4.0; empty = current release in lerna.json)"
+        required: false
+
+# One deploy at a time; queue rather than cancel so a started deploy finishes.
+concurrency:
+  group: deploy-apiserver
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    # Skip entirely when the publish run failed or was cancelled.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            v="${{ inputs.version }}"
+            [ -n "$v" ] || v=$(node -p "require('./lerna.json').version")
+          else
+            # publish-apiserver runs on vX.Y.Z tags; head_branch carries the tag name.
+            v="${{ github.event.workflow_run.head_branch }}"
+          fi
+          v="${v#v}"
+          if ! echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Could not resolve a semver version from '$v'" >&2
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Version: psanders/mikro:$v" >> "$GITHUB_STEP_SUMMARY"
+
+  # Boot the exact published image in CI and exercise the public happy path.
+  # Runs automatically after every publish (pre-deploy verification) and again
+  # as the first step of every manual deploy.
+  smoke-test:
+    needs: resolve
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Boot image with CI config
+        run: |
+          mkdir -p ci-smoke/keys
+          cp mikro.json.example ci-smoke/mikro.json
+          docker run -d --name mikro-smoke -p 4000:4000 \
+            -v "$PWD/ci-smoke/mikro.json:/app/mikro.json:ro" \
+            -v "$PWD/ci-smoke/keys:/app/keys" \
+            -e MIKRO_CONFIG_FILE=/app/mikro.json \
+            psanders/mikro:${{ needs.resolve.outputs.version }}
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:4000/health >/dev/null 2>&1; then
+              curl -fsS http://localhost:4000/health
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become healthy in 60s" >&2
+          exit 1
+
+      - name: Verify reported version
+        run: |
+          got=$(curl -fsS http://localhost:4000/health | jq -r '.version // empty')
+          want="${{ needs.resolve.outputs.version }}"
+          # Images published before /health reported a version return nothing;
+          # tolerate that so older versions can still be rolled back to.
+          if [ -z "$got" ]; then
+            echo "::warning::/health reports no version (image predates the field); skipping check"
+          elif [ "$got" != "$want" ]; then
+            echo "Version mismatch: image reports $got, expected $want" >&2
+            exit 1
+          fi
+
+      - name: Critical path — public solicitud intake
+        run: |
+          res=$(curl -fsS -X POST http://localhost:4000/v1/applications \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "sessionId": "ci-smoke-${{ github.run_id }}",
+              "partial": false,
+              "firstName": "Prueba",
+              "lastName": "CI",
+              "phone": "(809) 555-0100",
+              "idNumber": "001-0000000-1",
+              "dateOfBirth": "1990-01-15",
+              "maritalStatus": "Soltero(a)",
+              "businessType": "COLMADO",
+              "businessName": "Colmado CI",
+              "businessAge": "1 a 3 años",
+              "monthlySales": "RD$50,000 – RD$100,000",
+              "locationType": "Propio",
+              "formalization": "Informal (sin RNC)",
+              "employeeCount": "Solo yo",
+              "businessPhone": "(809) 555-0101",
+              "requestedAmount": "30,000",
+              "purpose": "Capital de trabajo",
+              "requestedTermWeeks": "12 semanas",
+              "referenceName": "Referencia CI",
+              "referencePhone": "(809) 555-0102",
+              "housingType": "Propia",
+              "residenceTime": "Más de 10 años",
+              "homeAddress": "Calle 1 #25",
+              "province": "PUERTO_PLATA",
+              "addressReference": "Frente al parque"
+            }')
+          echo "$res"
+          echo "$res" | grep -q '"result"[[:space:]]*:[[:space:]]*"ok"'
+
+      - name: Container logs
+        if: failure()
+        run: docker logs mikro-smoke
+
+      - name: Next step hint
+        if: github.event_name == 'workflow_run'
+        run: |
+          v="${{ needs.resolve.outputs.version }}"
+          echo "Image psanders/mikro:$v passed the smoke test." >> "$GITHUB_STEP_SUMMARY"
+          echo "To deploy it, run this workflow manually (Actions → Deploy API Server → Run workflow)." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    # Manual dispatch only — the "Run workflow" click is the approval.
+    if: github.event_name == 'workflow_dispatch'
+    needs: [resolve, smoke-test]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          COMPOSE_DIR: ${{ vars.DEPLOY_COMPOSE_DIR }}
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: VERSION,COMPOSE_DIR
+          script: |
+            set -e
+            cd "$COMPOSE_DIR"
+
+            # Pin the image version in .env (compose.yaml reads MIKRO_IMAGE),
+            # remembering the previous pin for rollback.
+            touch .env
+            prev=$(grep '^MIKRO_IMAGE=' .env | cut -d= -f2- || true)
+            grep -v '^MIKRO_IMAGE=' .env > .env.next || true
+            echo "MIKRO_IMAGE=psanders/mikro:${VERSION}" >> .env.next
+            mv .env.next .env
+
+            docker compose pull apiserver
+            docker compose up -d apiserver
+
+            # Wait for the new container to answer and (when reported) confirm
+            # the running version matches what we deployed.
+            ok=""
+            for i in $(seq 1 30); do
+              body=$(curl -fsS http://localhost:4000/health 2>/dev/null || true)
+              if echo "$body" | grep -q '"ok"'; then
+                got=$(echo "$body" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
+                if [ -z "$got" ] || [ "$got" = "$VERSION" ]; then
+                  ok=1
+                  break
+                fi
+              fi
+              sleep 2
+            done
+
+            if [ -z "$ok" ]; then
+              echo "Deploy of ${VERSION} failed health check" >&2
+              docker logs --tail 50 mikro-apiserver || true
+              if [ -n "$prev" ]; then
+                echo "Rolling back to ${prev}" >&2
+                grep -v '^MIKRO_IMAGE=' .env > .env.next || true
+                echo "MIKRO_IMAGE=${prev}" >> .env.next
+                mv .env.next .env
+                docker compose up -d apiserver
+              fi
+              exit 1
+            fi
+
+            echo "Deployed psanders/mikro:${VERSION} successfully."

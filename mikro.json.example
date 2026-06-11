@@ -39,20 +39,6 @@
       "paymentOverdue": "payment_overdue"
     }
   },
-  "collections": {
-    "enabled": true,
-    "cron": "0 10 * * *",
-    "dryRun": false,
-    "includeDefaulted": true
-  },
-  "fonoster": {
-    "enabled": false,
-    "workspaceAccessKeyId": "",
-    "apikeyAccessKeyId": "",
-    "apikeyAccessKeySecret": "",
-    "fromNumber": "",
-    "appRef": ""
-  },
   "voiceNotes": {
     "enabled": false,
     "deepgramApiKey": ""
