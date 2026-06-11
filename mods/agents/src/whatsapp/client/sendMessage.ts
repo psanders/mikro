@@ -99,6 +99,7 @@ export async function sendMessage(
             flow_id: f.flowId,
             flow_cta: f.cta,
             flow_action: "navigate",
+            ...(f.mode && { mode: f.mode }),
             flow_action_payload: { screen: f.screen }
           }
         }

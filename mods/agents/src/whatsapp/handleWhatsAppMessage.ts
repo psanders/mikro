@@ -484,9 +484,9 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
         logger.verbose("intake flow recently sent, skipping resend", { phone });
         return;
       }
-      const { flowId } = getWhatsAppIntakeFlow();
+      const { flowId, draft } = getWhatsAppIntakeFlow();
       try {
-        await sendWhatsAppMessage(buildIntakeFlowMessage(phone, flowId));
+        await sendWhatsAppMessage(buildIntakeFlowMessage(phone, flowId, draft));
         logger.info("intake flow sent to prospect", { phone, flowId });
       } catch (error) {
         intakeFlowSentAt.delete(phone); // allow retry on a later message

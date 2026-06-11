@@ -35,7 +35,8 @@
     "languageCode": "es_DO",
     "intakeFlow": {
       "enabled": false,
-      "flowId": ""
+      "flowId": "",
+      "draft": false
     },
     "templates": {
       "paymentConfirmation": "payment_receipt",

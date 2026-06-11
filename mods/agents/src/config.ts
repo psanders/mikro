@@ -81,9 +81,9 @@ export function getWhatsAppAccessToken(): string {
  * Prospect intake Flow config. Intake is active only when explicitly enabled
  * AND a published `flowId` is set; otherwise unknown numbers keep being ignored.
  */
-export function getWhatsAppIntakeFlow(): { enabled: boolean; flowId: string } {
-  const { enabled, flowId } = getConfig().whatsapp.intakeFlow;
-  return { enabled: enabled && flowId.length > 0, flowId };
+export function getWhatsAppIntakeFlow(): { enabled: boolean; flowId: string; draft: boolean } {
+  const { enabled, flowId, draft } = getConfig().whatsapp.intakeFlow;
+  return { enabled: enabled && flowId.length > 0, flowId, draft };
 }
 
 /**

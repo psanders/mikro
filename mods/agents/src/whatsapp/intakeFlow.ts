@@ -30,7 +30,11 @@ export const INTAKE_RECEIVED_MESSAGE =
  * `flowToken` is opaque and echoed back in the nfm_reply; we derive it from the
  * phone so logs correlate, though the submitter's phone also comes from `from`.
  */
-export function buildIntakeFlowMessage(phone: string, flowId: string): SendWhatsAppMessageInput {
+export function buildIntakeFlowMessage(
+  phone: string,
+  flowId: string,
+  draft = false
+): SendWhatsAppMessageInput {
   return {
     phone,
     flow: {
@@ -40,7 +44,8 @@ export function buildIntakeFlowMessage(phone: string, flowId: string): SendWhats
       cta: INTAKE_FLOW_CTA,
       header: INTAKE_FLOW_HEADER,
       body: INTAKE_FLOW_BODY,
-      footer: INTAKE_FLOW_FOOTER
+      footer: INTAKE_FLOW_FOOTER,
+      ...(draft && { mode: "draft" as const })
     }
   };
 }

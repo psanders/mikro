@@ -41,7 +41,10 @@ const whatsappTemplatesSchema = z.object({
 // published in WhatsApp Manager.
 const whatsappIntakeFlowSchema = z.object({
   enabled: z.boolean().default(false),
-  flowId: z.string().default("")
+  flowId: z.string().default(""),
+  // Send the Flow in draft mode (only WABA admins/testers can open it). Lets
+  // you test the deployed intake before the business is verified/published.
+  draft: z.boolean().default(false)
 });
 
 const whatsappSchema = z.object({
@@ -49,7 +52,11 @@ const whatsappSchema = z.object({
   accessToken: z.string().min(1, "WhatsApp accessToken is required"),
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
-  intakeFlow: whatsappIntakeFlowSchema.default(() => ({ enabled: false, flowId: "" })),
+  intakeFlow: whatsappIntakeFlowSchema.default(() => ({
+    enabled: false,
+    flowId: "",
+    draft: false
+  })),
   templates: whatsappTemplatesSchema.default(() => ({
     paymentConfirmation: "payment_receipt"
   }))

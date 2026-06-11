@@ -152,7 +152,12 @@ export const whatsappFlowMessageSchema = z.object({
   /** Optional header text. */
   header: z.string().optional(),
   /** Optional footer text. */
-  footer: z.string().optional()
+  footer: z.string().optional(),
+  /**
+   * "draft" sends an unpublished Flow (only WABA admins/testers can open it) —
+   * used to test before the business is verified. Omitted = published.
+   */
+  mode: z.enum(["draft", "published"]).optional()
 });
 
 export type WhatsAppFlowMessageInput = z.infer<typeof whatsappFlowMessageSchema>;
