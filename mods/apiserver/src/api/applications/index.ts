@@ -24,6 +24,7 @@ export {
   type ConvertApplicationResult
 } from "./createConvertApplication.js";
 export { createUpdateApplication } from "./createUpdateApplication.js";
+export { createCreateApplication } from "./createCreateApplication.js";
 export { createPromoteApplication } from "./createPromoteApplication.js";
 export { createDeleteApplication } from "./createDeleteApplication.js";
 export { createUploadIdImage } from "./createUploadIdImage.js";

@@ -60,6 +60,7 @@ import {
   generateApplicationContractSchema,
   convertApplicationSchema,
   updateApplicationSchema,
+  createApplicationSchema,
   deleteApplicationSchema,
   uploadIdImageSchema,
   getIdImageSchema,
@@ -111,6 +112,7 @@ import { createGetApplicationContract } from "../../api/applications/createGetAp
 import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
+import { createCreateApplication } from "../../api/applications/createCreateApplication.js";
 import { createPromoteApplication } from "../../api/applications/createPromoteApplication.js";
 import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
 import { createUploadIdImage } from "../../api/applications/createUploadIdImage.js";
@@ -519,6 +521,16 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const fn = createConvertApplication(ctx.db);
       return fn(input, ctx.userId);
+    }),
+
+  /**
+   * Manually create a new application from the dashboard. ADMIN/REVIEWER only.
+   */
+  createApplication: reviewerProcedure
+    .input(createApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreateApplication(ctx.db);
+      return fn(input);
     }),
 
   /**

@@ -3,13 +3,14 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Search } from "../components/ui/Search";
 import { Tab } from "../components/ui/Tab";
 import { Button } from "../components/ui/Button";
 import { StatusText } from "../components/ui/StatusText";
+import { NuevaSolicitudModal } from "../components/NuevaSolicitudModal";
 import {
   STATUS_TABS,
   DEFAULT_STATUS,
@@ -34,6 +35,7 @@ export function SolicitudesPage() {
   });
   const [search, setSearch] = useState(() => sessionStorage.getItem("solicitudes.q") ?? "");
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     sessionStorage.setItem("solicitudes.status", status);
@@ -72,7 +74,15 @@ export function SolicitudesPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Solicitudes" subtitle={subtitle} />
+      <PageHeader
+        title="Solicitudes"
+        subtitle={subtitle}
+        action={
+          <Button variant="primary" icon={Plus} onClick={() => setCreateOpen(true)}>
+            Nueva solicitud
+          </Button>
+        }
+      />
 
       <div className="flex flex-col gap-4 p-7">
         {/* Toolbar: status tabs + search */}
@@ -91,18 +101,12 @@ export function SolicitudesPage() {
               </Tab>
             ))}
           </div>
-          <div className="flex items-center gap-[10px]">
-            <Search
-              placeholder="Buscar solicitud o cliente…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-[300px]"
-            />
-            {/* Filtros — visual placeholder; advanced filtering lands later. */}
-            <Button variant="secondary" icon={SlidersHorizontal} disabled title="Próximamente">
-              Filtros
-            </Button>
-          </div>
+          <Search
+            placeholder="Buscar solicitud o cliente…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-[300px]"
+          />
         </div>
 
         {/* Table */}
@@ -199,6 +203,15 @@ export function SolicitudesPage() {
           </div>
         )}
       </div>
+
+      {createOpen && (
+        <NuevaSolicitudModal
+          onClose={() => {
+            setCreateOpen(false);
+            apps.refetch();
+          }}
+        />
+      )}
     </div>
   );
 }

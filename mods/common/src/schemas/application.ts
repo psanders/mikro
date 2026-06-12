@@ -359,6 +359,15 @@ export const updateApplicationSchema = z
 
 export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 
+// Dashboard-initiated creation: a reviewer manually enters a new application.
+// No sessionId required — the server generates one. Patch keys match the public
+// form's English content keys (same as updateApplication).
+export const createApplicationSchema = z.object({
+  patch: z.record(z.string(), z.string()).default({})
+});
+
+export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
+
 // ---- identity document images (cédula front/back) ----
 
 /** Which side of the cédula an image represents. */
