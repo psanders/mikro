@@ -208,11 +208,13 @@ export {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
+  generateModeloReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
-  type GenerateAccountingReportInput
+  type GenerateAccountingReportInput,
+  type GenerateModeloReportInput
 } from "./report.js";
 
 export {

@@ -43,6 +43,7 @@ import {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
+  generateModeloReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
   listLoanNotesByLoanSchema,
@@ -134,6 +135,7 @@ import { createGeneratePerformanceReport } from "../../api/reports/createGenerat
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
+import { createGenerateModeloReport } from "../../api/reports/createGenerateModeloReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -710,6 +712,17 @@ export const protectedRouter = router({
       const fn = createGeneratePerformanceReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
+    }),
+
+  /**
+   * Generate the Modelo de negocio (projection model) PDF from the supplied
+   * parameters. Stateless — no DB; returns the base64 PDF + filename.
+   */
+  generateModeloReport: protectedProcedure
+    .input(generateModeloReportSchema)
+    .mutation(async ({ input }) => {
+      const fn = createGenerateModeloReport();
+      return fn(input);
     }),
 
   /**

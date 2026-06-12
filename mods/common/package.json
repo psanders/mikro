@@ -22,6 +22,10 @@
     "./contracts": {
       "types": "./dist/contracts/index.d.ts",
       "default": "./dist/contracts/index.js"
+    },
+    "./projection": {
+      "types": "./dist/projection/index.d.ts",
+      "default": "./dist/projection/index.js"
     }
   },
   "scripts": {

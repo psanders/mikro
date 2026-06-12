@@ -301,11 +301,13 @@ export {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
+  generateModeloReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
+  type GenerateModeloReportInput,
   // Dashboard schemas
   getCollectorDashboardSchema,
   type GetCollectorDashboardInput,

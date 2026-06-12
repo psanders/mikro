@@ -7,3 +7,4 @@ export { createGeneratePerformanceReport } from "./createGeneratePerformanceRepo
 export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.js";
 export { createGenerateRenewalCandidatesReport } from "./createGenerateRenewalCandidatesReport.js";
 export { createGenerateAccountingReport } from "./createGenerateAccountingReport.js";
+export { createGenerateModeloReport } from "./createGenerateModeloReport.js";

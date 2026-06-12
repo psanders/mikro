@@ -10,6 +10,32 @@
  */
 import PDFDocument from "pdfkit";
 import { BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "../schemas/application.js";
+import {
+  PAGE_H,
+  MARGIN,
+  CONTENT_W,
+  BRAND_INK,
+  BRAND_DEEP,
+  BRAND_PRIMARY,
+  BRAND_SKY,
+  TEXT,
+  MUTED,
+  LIGHT,
+  PANEL,
+  TRACK,
+  RULE,
+  GREEN,
+  AMBER,
+  RED,
+  type Fonts,
+  resolveFonts,
+  needsPage,
+  drawLogo,
+  sectionHead,
+  subHead,
+  kvRow,
+  kvFull
+} from "./pdfBrand.js";
 
 export interface SummaryScoreCategory {
   category: string;
@@ -86,37 +112,6 @@ export interface SolicitudSummaryData {
   } | null;
 }
 
-const PAGE_W = 612;
-const PAGE_H = 792;
-const MARGIN = 54;
-const CONTENT_W = PAGE_W - MARGIN * 2;
-const BOTTOM = PAGE_H - MARGIN;
-
-// Brand palette — mirrors dashboard tokens in mods/dashboard/src/index.css.
-const BRAND_INK = "#14254a";
-const BRAND_DEEP = "#103a8a";
-const BRAND_PRIMARY = "#1f4aa8";
-const BRAND_SKY = "#3f86e0";
-const TEXT = "#1f2937";
-const MUTED = "#6b7280";
-const LIGHT = "#9aa3b2";
-const PANEL = "#f3f6fc";
-const TRACK = "#e6ebf4";
-const RULE = "#e2e7f0";
-
-// Risk-band accent colors (match the detail-page score card signal).
-const GREEN = "#1f9d57";
-const AMBER = "#c2890b";
-const RED = "#c0392b";
-
-/** Resolved font face names for the current document. */
-interface Fonts {
-  reg: string;
-  med: string;
-  semi: string;
-  bold: string;
-}
-
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Borrador",
   RECEIVED: "Nueva",
@@ -171,8 +166,18 @@ const INDICATOR_LABELS: Record<keyof SummaryScoreIndicators, string> = {
 };
 
 const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre"
 ];
 
 function formatDate(d: Date | null): string {
@@ -209,97 +214,33 @@ function formatIndicator(ind: { value: number | null; unit: string } | undefined
   return `${ind.value}${ind.unit ? ` ${ind.unit}` : ""}`;
 }
 
-/** Add a page if `height` pt won't fit before the bottom margin. */
-function needsPage(doc: PDFKit.PDFDocument, height: number) {
-  if (doc.y + height > BOTTOM) doc.addPage();
-}
-
-/**
- * Draw the Mikro wordmark as vector at (x, y), in brand-deep Inter Bold.
- * Returns the drawn height. The favicon "m" mark is intentionally omitted —
- * glyph centering inside the rounded square never sits right in pdfkit.
- */
-function drawLogo(doc: PDFKit.PDFDocument, F: Fonts, x: number, y: number): number {
-  const size = 28;
-  doc.font(F.bold).fontSize(size);
-  doc.fillColor(BRAND_DEEP).text("mikro", x, y, { lineBreak: false, characterSpacing: -0.3 });
-  return doc.currentLineHeight();
-}
-
-/** Section heading — a brand-primary accent tick + uppercase tracked label. */
-function sectionHead(doc: PDFKit.PDFDocument, F: Fonts, title: string) {
-  needsPage(doc, 48);
-  doc.moveDown(0.7);
-  const y = doc.y;
-  doc.save().roundedRect(MARGIN, y + 0.5, 3, 10, 1.5).fill(BRAND_PRIMARY).restore();
-  doc.fillColor(BRAND_PRIMARY).font(F.semi).fontSize(8.5)
-    .text(title.toUpperCase(), MARGIN + 11, y, { width: CONTENT_W - 11, characterSpacing: 0.9 });
-  doc.moveDown(0.55);
-}
-
-/** Small grey sub-heading inside a section (e.g. "DESGLOSE POR CATEGORÍA"). */
-function subHead(doc: PDFKit.PDFDocument, F: Fonts, title: string) {
-  needsPage(doc, 24);
-  doc.moveDown(0.5);
-  doc.fillColor(MUTED).font(F.semi).fontSize(7.5)
-    .text(title.toUpperCase(), MARGIN, doc.y, { characterSpacing: 0.9 });
-  doc.moveDown(0.45);
-}
-
-/** Two-column key/value row. */
-function kvRow(
-  doc: PDFKit.PDFDocument,
-  F: Fonts,
-  left: [string, string],
-  right?: [string, string]
-) {
-  needsPage(doc, 26);
-  const y = doc.y;
-  const colW = CONTENT_W / 2 - 8;
-
-  doc.fillColor(LIGHT).font(F.med).fontSize(7.5).text(left[0].toUpperCase(), MARGIN, y, {
-    width: colW,
-    characterSpacing: 0.4
-  });
-  doc.fillColor(TEXT).font(F.reg).fontSize(10.5).text(left[1], MARGIN, y + 10, { width: colW });
-
-  if (right) {
-    const x2 = MARGIN + CONTENT_W / 2 + 8;
-    doc.fillColor(LIGHT).font(F.med).fontSize(7.5).text(right[0].toUpperCase(), x2, y, {
-      width: colW,
-      characterSpacing: 0.4
-    });
-    doc.fillColor(TEXT).font(F.reg).fontSize(10.5).text(right[1], x2, y + 10, { width: colW });
-  }
-
-  doc.y = y + 27;
-}
-
-/** Single full-width key/value row (value may wrap). */
-function kvFull(doc: PDFKit.PDFDocument, F: Fonts, label: string, value: string) {
-  needsPage(doc, 26);
-  const y = doc.y;
-  doc.fillColor(LIGHT).font(F.med).fontSize(7.5).text(label.toUpperCase(), MARGIN, y, {
-    width: CONTENT_W,
-    characterSpacing: 0.4
-  });
-  doc.fillColor(TEXT).font(F.reg).fontSize(10.5).text(value, MARGIN, y + 10, { width: CONTENT_W });
-  doc.y = doc.y + 8;
-}
-
 /** A labelled score bar: name on the left, value on the right, filled track below. */
 function scoreBar(doc: PDFKit.PDFDocument, F: Fonts, label: string, value: number) {
   needsPage(doc, 30);
   const y = doc.y;
   const v = clamp100(value);
-  doc.fillColor(TEXT).font(F.reg).fontSize(9).text(label, MARGIN, y, { width: CONTENT_W - 52 });
-  doc.fillColor(BRAND_INK).font(F.semi).fontSize(9)
+  doc
+    .fillColor(TEXT)
+    .font(F.reg)
+    .fontSize(9)
+    .text(label, MARGIN, y, { width: CONTENT_W - 52 });
+  doc
+    .fillColor(BRAND_INK)
+    .font(F.semi)
+    .fontSize(9)
     .text(`${value}`, MARGIN + CONTENT_W - 52, y, { width: 28, align: "right" });
-  doc.fillColor(LIGHT).font(F.reg).fontSize(8)
+  doc
+    .fillColor(LIGHT)
+    .font(F.reg)
+    .fontSize(8)
     .text("/100", MARGIN + CONTENT_W - 24, y + 0.5, { width: 24, align: "right" });
   const barY = y + 14;
   doc.save().roundedRect(MARGIN, barY, CONTENT_W, 5, 2.5).fill(TRACK).restore();
-  doc.save().roundedRect(MARGIN, barY, (v / 100) * CONTENT_W, 5, 2.5).fill(BRAND_PRIMARY).restore();
+  doc
+    .save()
+    .roundedRect(MARGIN, barY, (v / 100) * CONTENT_W, 5, 2.5)
+    .fill(BRAND_PRIMARY)
+    .restore();
   doc.y = barY + 14;
 }
 
@@ -311,16 +252,29 @@ function noteBlock(doc: PDFKit.PDFDocument, F: Fonts, n: SummaryEvaluatorNote) {
   const w = CONTENT_W - 12;
   const topY = doc.y;
 
-  doc.fillColor(BRAND_SKY).font(F.semi).fontSize(7.5)
+  doc
+    .fillColor(BRAND_SKY)
+    .font(F.semi)
+    .fontSize(7.5)
     .text(n.topic.toUpperCase(), x, topY, { width: w, characterSpacing: 0.6 });
-  doc.fillColor(BRAND_INK).font(F.reg).fontSize(10.5)
+  doc
+    .fillColor(BRAND_INK)
+    .font(F.reg)
+    .fontSize(10.5)
     .text(n.question, x, doc.y + 1.5, { width: w });
   if (n.reason?.trim()) {
-    doc.fillColor(MUTED).font(F.reg).fontSize(9)
+    doc
+      .fillColor(MUTED)
+      .font(F.reg)
+      .fontSize(9)
       .text(n.reason, x, doc.y + 1.5, { width: w, lineGap: 1 });
   }
   // Accent bar spanning the card height.
-  doc.save().roundedRect(MARGIN, topY + 1, 3, doc.y - topY - 2, 1.5).fill(BRAND_SKY).restore();
+  doc
+    .save()
+    .roundedRect(MARGIN, topY + 1, 3, doc.y - topY - 2, 1.5)
+    .fill(BRAND_SKY)
+    .restore();
   doc.moveDown(0.85);
 }
 
@@ -343,40 +297,68 @@ function renderScorePage(doc: PDFKit.PDFDocument, F: Fonts, data: SolicitudSumma
   const numW = doc.widthOfString(String(score));
   const numY = panelY + 16;
   doc.fillColor(BRAND_INK).text(String(score), MARGIN + 24, numY);
-  doc.fillColor(MUTED).font(F.med).fontSize(15).text("/ 100", MARGIN + 24 + numW + 8, numY + 22);
+  doc
+    .fillColor(MUTED)
+    .font(F.med)
+    .fontSize(15)
+    .text("/ 100", MARGIN + 24 + numW + 8, numY + 22);
   // Risk band under the number
   if (data.riskBand) {
-    doc.fillColor(bandColor(data.riskBand)).font(F.semi).fontSize(11)
+    doc
+      .fillColor(bandColor(data.riskBand))
+      .font(F.semi)
+      .fontSize(11)
       .text(RISK_LABELS[data.riskBand] ?? data.riskBand, MARGIN + 24, numY + 50);
   }
 
   // Right column: recommendation + confidence
   const rx = MARGIN + CONTENT_W / 2 + 16;
   const rw = CONTENT_W / 2 - 40;
-  doc.fillColor(LIGHT).font(F.med).fontSize(7.5)
+  doc
+    .fillColor(LIGHT)
+    .font(F.med)
+    .fontSize(7.5)
     .text("RECOMENDACIÓN", rx, panelY + 18, { characterSpacing: 0.5 });
-  doc.fillColor(BRAND_INK).font(F.semi).fontSize(11.5).text(
-    data.recommendation ? (RECOMMENDATION_LABELS[data.recommendation] ?? data.recommendation) : "—",
-    rx,
-    panelY + 29,
-    { width: rw }
-  );
-  doc.fillColor(LIGHT).font(F.med).fontSize(7.5)
+  doc
+    .fillColor(BRAND_INK)
+    .font(F.semi)
+    .fontSize(11.5)
+    .text(
+      data.recommendation
+        ? (RECOMMENDATION_LABELS[data.recommendation] ?? data.recommendation)
+        : "—",
+      rx,
+      panelY + 29,
+      { width: rw }
+    );
+  doc
+    .fillColor(LIGHT)
+    .font(F.med)
+    .fontSize(7.5)
     .text("CONFIANZA", rx, panelY + 54, { characterSpacing: 0.5 });
-  doc.fillColor(BRAND_INK).font(F.semi).fontSize(11.5).text(
-    data.confidence ? (CONFIDENCE_LABELS[data.confidence] ?? data.confidence) : "—",
-    rx,
-    panelY + 65,
-    { width: rw }
-  );
+  doc
+    .fillColor(BRAND_INK)
+    .font(F.semi)
+    .fontSize(11.5)
+    .text(
+      data.confidence ? (CONFIDENCE_LABELS[data.confidence] ?? data.confidence) : "—",
+      rx,
+      panelY + 65,
+      { width: rw }
+    );
 
   doc.y = panelY + panelH + 18;
 
   // Full-width progress bar
   const barY = doc.y;
-  const fill = data.riskBand === "LOW_RISK" ? GREEN : bandColor(data.riskBand) === RED ? RED : BRAND_PRIMARY;
+  const fill =
+    data.riskBand === "LOW_RISK" ? GREEN : bandColor(data.riskBand) === RED ? RED : BRAND_PRIMARY;
   doc.save().roundedRect(MARGIN, barY, CONTENT_W, 6, 3).fill(TRACK).restore();
-  doc.save().roundedRect(MARGIN, barY, (clamp100(score) / 100) * CONTENT_W, 6, 3).fill(fill).restore();
+  doc
+    .save()
+    .roundedRect(MARGIN, barY, (clamp100(score) / 100) * CONTENT_W, 6, 3)
+    .fill(fill)
+    .restore();
   doc.y = barY + 20;
 
   // ── Category breakdown ────────────────────────────────────────────────────
@@ -416,7 +398,10 @@ function renderScorePage(doc: PDFKit.PDFDocument, F: Fonts, data: SolicitudSumma
     subHead(doc, F, "Alertas");
     for (const f of data.flags) {
       needsPage(doc, 16);
-      doc.fillColor(RED).font(F.semi).fontSize(9.5)
+      doc
+        .fillColor(RED)
+        .font(F.semi)
+        .fontSize(9.5)
         .text(`•  ${f.message}`, MARGIN, doc.y, { width: CONTENT_W });
       doc.moveDown(0.25);
     }
@@ -439,16 +424,7 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
   const done = new Promise<Buffer>((res) => doc.on("end", () => res(Buffer.concat(chunks))));
 
   // Register Inter (or fall back to the built-in Times faces).
-  let F: Fonts;
-  if (data.fonts) {
-    doc.registerFont("Inter", data.fonts.regular);
-    doc.registerFont("Inter-Med", data.fonts.medium);
-    doc.registerFont("Inter-Semi", data.fonts.semibold);
-    doc.registerFont("Inter-Bold", data.fonts.bold);
-    F = { reg: "Inter", med: "Inter-Med", semi: "Inter-Semi", bold: "Inter-Bold" };
-  } else {
-    F = { reg: "Times-Roman", med: "Times-Roman", semi: "Times-Bold", bold: "Times-Bold" };
-  }
+  const F = resolveFonts(doc, data.fonts);
 
   const name = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || "—";
   const statusLabel = STATUS_LABELS[data.status] ?? data.status;
@@ -460,32 +436,65 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
   // ── Branded header ──────────────────────────────────────────────────────────
   const markH = drawLogo(doc, F, MARGIN, MARGIN);
 
-  doc.fillColor(BRAND_INK).font(F.bold).fontSize(18)
+  doc
+    .fillColor(BRAND_INK)
+    .font(F.bold)
+    .fontSize(18)
     .text("Solicitud de préstamo", MARGIN, MARGIN + markH + 14, { width: CONTENT_W });
-  doc.fillColor(MUTED).font(F.reg).fontSize(9.5).text(
-    `#${data.id.slice(0, 8).toUpperCase()}    ·    ${formatDate(data.createdAt)}    ·    ${statusLabel}`,
-    MARGIN,
-    doc.y + 3,
-    { width: CONTENT_W }
-  );
+  doc
+    .fillColor(MUTED)
+    .font(F.reg)
+    .fontSize(9.5)
+    .text(
+      `#${data.id.slice(0, 8).toUpperCase()}    ·    ${formatDate(data.createdAt)}    ·    ${statusLabel}`,
+      MARGIN,
+      doc.y + 3,
+      { width: CONTENT_W }
+    );
 
   doc.moveDown(0.5);
-  doc.save().strokeColor(BRAND_DEEP).lineWidth(2)
-    .moveTo(MARGIN, doc.y).lineTo(MARGIN + CONTENT_W, doc.y).stroke().restore();
+  doc
+    .save()
+    .strokeColor(BRAND_DEEP)
+    .lineWidth(2)
+    .moveTo(MARGIN, doc.y)
+    .lineTo(MARGIN + CONTENT_W, doc.y)
+    .stroke()
+    .restore();
   doc.moveDown(0.3);
 
   // ── Solicitante ──────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Solicitante");
   kvRow(doc, F, ["Nombre completo", name], ["Teléfono", val(data.phone)]);
-  kvRow(doc, F, ["Cédula", val(data.idNumber)], ["Fecha de nacimiento", formatDate(data.dateOfBirth)]);
+  kvRow(
+    doc,
+    F,
+    ["Cédula", val(data.idNumber)],
+    ["Fecha de nacimiento", formatDate(data.dateOfBirth)]
+  );
   kvRow(doc, F, ["Estado civil", val(data.maritalStatus)], undefined);
 
   // ── Negocio ──────────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Negocio");
-  kvRow(doc, F, ["Tipo de negocio", businessTypeLabel], ["Nombre del negocio", val(data.businessName)]);
-  kvRow(doc, F, ["Tiempo operando", val(data.businessAge)], ["Ventas mensuales", val(data.monthlySales)]);
+  kvRow(
+    doc,
+    F,
+    ["Tipo de negocio", businessTypeLabel],
+    ["Nombre del negocio", val(data.businessName)]
+  );
+  kvRow(
+    doc,
+    F,
+    ["Tiempo operando", val(data.businessAge)],
+    ["Ventas mensuales", val(data.monthlySales)]
+  );
   kvRow(doc, F, ["Local", val(data.locationType)], ["Formalización", val(data.formalization)]);
-  kvRow(doc, F, ["Nº de empleados", val(data.employeeCount)], ["Teléfono del negocio", val(data.businessPhone)]);
+  kvRow(
+    doc,
+    F,
+    ["Nº de empleados", val(data.employeeCount)],
+    ["Teléfono del negocio", val(data.businessPhone)]
+  );
 
   // ── Crédito ───────────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Crédito solicitado");
@@ -499,18 +508,23 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
 
   // ── Referencias ───────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Referencias");
-  const spouseDisplay =
-    data.spouseName ? `${data.spouseName}${data.spousePhone ? ` · ${data.spousePhone}` : ""}` : "—";
-  const refDisplay =
-    data.referenceName
-      ? `${data.referenceName}${data.referencePhone ? ` · ${data.referencePhone}` : ""}`
-      : "—";
+  const spouseDisplay = data.spouseName
+    ? `${data.spouseName}${data.spousePhone ? ` · ${data.spousePhone}` : ""}`
+    : "—";
+  const refDisplay = data.referenceName
+    ? `${data.referenceName}${data.referencePhone ? ` · ${data.referencePhone}` : ""}`
+    : "—";
   kvRow(doc, F, ["Cónyuge", spouseDisplay], undefined);
   kvRow(doc, F, ["Referencia personal", refDisplay], undefined);
 
   // ── Vivienda ────────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Vivienda");
-  kvRow(doc, F, ["Tipo de vivienda", val(data.housingType)], ["Tiempo residiendo", val(data.residenceTime)]);
+  kvRow(
+    doc,
+    F,
+    ["Tipo de vivienda", val(data.housingType)],
+    ["Tiempo residiendo", val(data.residenceTime)]
+  );
   kvRow(doc, F, ["Provincia", provinceLabel], ["Dirección", val(data.homeAddress)]);
   if (data.addressReference) {
     kvFull(doc, F, "Referencia de dirección", data.addressReference);
@@ -537,20 +551,32 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
     doc.page.margins.bottom = 0;
-    doc.save().strokeColor(RULE).lineWidth(0.5)
-      .moveTo(MARGIN, fy - 9).lineTo(MARGIN + CONTENT_W, fy - 9).stroke().restore();
-    doc.fillColor(LIGHT).font(F.reg).fontSize(7.5).text(
-      "Mikro S.R.L.  ·  RNC 1-33-61735-8  ·  Para uso interno únicamente.",
-      MARGIN,
-      fy,
-      { width: CONTENT_W - 60, align: "left", lineBreak: false }
-    );
-    doc.fillColor(LIGHT).font(F.reg).fontSize(7.5).text(
-      `${i + 1} / ${range.count}`,
-      MARGIN + CONTENT_W - 60,
-      fy,
-      { width: 60, align: "right", lineBreak: false }
-    );
+    doc
+      .save()
+      .strokeColor(RULE)
+      .lineWidth(0.5)
+      .moveTo(MARGIN, fy - 9)
+      .lineTo(MARGIN + CONTENT_W, fy - 9)
+      .stroke()
+      .restore();
+    doc
+      .fillColor(LIGHT)
+      .font(F.reg)
+      .fontSize(7.5)
+      .text("Mikro S.R.L.  ·  RNC 1-33-61735-8  ·  Para uso interno únicamente.", MARGIN, fy, {
+        width: CONTENT_W - 60,
+        align: "left",
+        lineBreak: false
+      });
+    doc
+      .fillColor(LIGHT)
+      .font(F.reg)
+      .fontSize(7.5)
+      .text(`${i + 1} / ${range.count}`, MARGIN + CONTENT_W - 60, fy, {
+        width: 60,
+        align: "right",
+        lineBreak: false
+      });
   }
 
   doc.end();

@@ -7,6 +7,7 @@ import {
   Banknote,
   Calendar,
   CalendarClock,
+  FileDown,
   Flag,
   Info,
   ListOrdered,
@@ -34,6 +35,7 @@ import {
   type ProjectionResult
 } from "../lib/projection";
 import { inferDefaults } from "../lib/modelDefaults";
+import { saveFile } from "../lib/saveFile";
 
 const FRECUENCIAS: Array<{ value: FrecuenciaPago; label: string }> = [
   { value: "DIARIO", label: "Diario" },
@@ -193,6 +195,16 @@ export function ModeloPage() {
 
   const result = useMemo(() => (config ? runProjection(config) : null), [config]);
 
+  // Export the on-screen projection as a branded PDF. Saves via the shared
+  // helper (native dialog in Tauri, browser download on web). Uses the active
+  // `config` so the PDF matches exactly what the page is showing.
+  const exportPdf = trpc.generateModeloReport.useMutation({
+    onSuccess: async (r) => {
+      const bytes = Uint8Array.from(atob(r.dataBase64), (c) => c.charCodeAt(0));
+      await saveFile(bytes, r.filename, "application/pdf");
+    }
+  });
+
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => (f ? { ...f, [key]: e.target.value } : f));
 
@@ -207,6 +219,23 @@ export function ModeloPage() {
       <PageHeader
         title="Modelo de negocio"
         subtitle="Proyección financiera y punto de equilibrio · valores precargados desde la operación"
+        action={
+          <>
+            {exportPdf.isError && (
+              <span className="text-[13px] text-ds-red" role="alert">
+                No se pudo exportar
+              </span>
+            )}
+            <Button
+              variant="secondary"
+              icon={FileDown}
+              disabled={config === null || exportPdf.isPending}
+              onClick={() => config && exportPdf.mutate(config)}
+            >
+              {exportPdf.isPending ? "Generando…" : "Exportar PDF"}
+            </Button>
+          </>
+        }
       />
 
       {form === null ? (

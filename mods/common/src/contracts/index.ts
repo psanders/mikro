@@ -6,6 +6,8 @@
  */
 export { renderContractPdf } from "./generator.js";
 export { renderSummaryPdf } from "./summaryGenerator.js";
+export { renderModeloReportPdf } from "./modeloReportGenerator.js";
+export type { ModeloReportData } from "./modeloReportGenerator.js";
 export type { ContractData, ContractFrequency } from "./types.js";
 export type {
   SolicitudSummaryData,
