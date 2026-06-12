@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { FileDown, X } from "lucide-react";
 import { trpc } from "../lib/trpc";
+import { saveFile } from "../lib/saveFile";
 import { Button } from "./ui/Button";
 import { Field } from "./ui/Field";
 
@@ -26,14 +27,9 @@ export function GenerateContractModal({ id, defaultInstallments, onClose }: Prop
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const generate = trpc.generateApplicationContract.useMutation({
-    onSuccess: (r) => {
+    onSuccess: async (r) => {
       const bytes = Uint8Array.from(atob(r.dataBase64), (c) => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = r.filename;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      await saveFile(bytes, r.filename, "application/pdf");
       onClose();
     }
   });

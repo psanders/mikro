@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import type { ApplicationScore } from "@mikro/common";
 import { trpc } from "../lib/trpc";
+import { saveFile } from "../lib/saveFile";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
@@ -200,8 +201,7 @@ export function SolicitudDetailPage() {
   const viewContract = async () => {
     const c = await utils.getApplicationContract.fetch({ id });
     const bytes = Uint8Array.from(atob(c.dataBase64), (ch) => ch.charCodeAt(0));
-    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-    window.open(url, "_blank");
+    await saveFile(bytes, `contrato-${id.slice(0, 8)}.pdf`, "application/pdf");
   };
 
   const pickId = (side: "FRONT" | "BACK") => {
@@ -232,8 +232,7 @@ export function SolicitudDetailPage() {
     try {
       const result = await utils.generateApplicationSummary.fetch({ id });
       const bytes = Uint8Array.from(atob(result.dataBase64), (ch) => ch.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-      window.open(url, "_blank");
+      await saveFile(bytes, `solicitud-${id.slice(0, 8)}.pdf`, "application/pdf");
     } finally {
       setPrinting(false);
     }
@@ -242,8 +241,8 @@ export function SolicitudDetailPage() {
   const viewIdImage = async (side: "FRONT" | "BACK") => {
     const img = await utils.getIdImage.fetch({ id, side });
     const bytes = Uint8Array.from(atob(img.dataBase64), (ch) => ch.charCodeAt(0));
-    const url = URL.createObjectURL(new Blob([bytes], { type: img.mimeType }));
-    window.open(url, "_blank");
+    const ext = img.mimeType.split("/")[1] ?? "jpg";
+    await saveFile(bytes, `cedula-${side.toLowerCase()}-${id.slice(0, 8)}.${ext}`, img.mimeType);
   };
 
   return (

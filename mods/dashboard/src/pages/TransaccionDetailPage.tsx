@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Paperclip } from "lucide-react";
 import { trpc } from "../lib/trpc";
+import { saveFile } from "../lib/saveFile";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusText } from "../components/ui/StatusText";
 import { formatDop, formatDate } from "../lib/applications";
@@ -119,13 +120,7 @@ function AttachmentRow({ attachment }: { attachment: Attachment }) {
         id: attachment.id
       });
       const bytes = Uint8Array.from(atob(payload.dataBase64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: payload.mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = payload.originalName ?? payload.filename;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      await saveFile(bytes, payload.originalName ?? payload.filename, payload.mimeType);
     } finally {
       setLoading(false);
     }
