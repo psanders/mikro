@@ -63,5 +63,33 @@
     "moraMinDop": 0,
     "moraStopOnDefault": false,
     "moraEffectiveFrom": null
+  },
+  "contract": {
+    "creditor": {
+      "legalName": "Your Company, S.R.L.",
+      "rnc": "0-00-00000-0",
+      "address": "Your address, City, República Dominicana",
+      "representative": {
+        "name": "Representative Full Name",
+        "cedula": "000-0000000-0",
+        "city": "Your City"
+      }
+    },
+    "payment": {
+      "bank": "Your Bank",
+      "accountType": "cuenta de ahorros",
+      "accountNumber": "000000000",
+      "accountHolder": "Account Holder Name",
+      "accountHolderCedula": "000-0000000-0"
+    },
+    "mora": { "ratePct": 10, "periodDays": 30 },
+    "city": "Your City",
+    "notary": {
+      "name": "Notary Full Name",
+      "collegeNumber": "0000",
+      "rnc": "000-0000000-0",
+      "office": "Notary office address, City, República Dominicana",
+      "municipality": "Your City"
+    }
   }
 }

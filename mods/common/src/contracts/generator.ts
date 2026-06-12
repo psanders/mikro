@@ -9,7 +9,8 @@
  * Note: this pdfkit build does not render Helvetica glyphs, so all text is Times.
  */
 import PDFDocument from "pdfkit";
-import { CONTRACT_CONSTANTS as K, FREQUENCY_PLURAL } from "./constants.js";
+import { FREQUENCY_PLURAL } from "./constants.js";
+import { getContractConfig } from "../config.js";
 import { numberToWords, pesosInWords } from "./numberToWords.js";
 import type { ContractData } from "./types.js";
 
@@ -53,6 +54,19 @@ function endDate(start: Date, freq: ContractData["frequency"], n: number): Date 
 }
 
 export function renderContractPdf(data: ContractData): Promise<Buffer> {
+  // Names are stored in proper case in config; the contract renders them upper-
+  // case (same convention as the debtor name). Legal-entity names are left as-is.
+  const cfg = getContractConfig();
+  const up = (s: string) => s.toUpperCase();
+  const K = {
+    ...cfg,
+    creditor: {
+      ...cfg.creditor,
+      representative: { ...cfg.creditor.representative, name: up(cfg.creditor.representative.name) }
+    },
+    payment: { ...cfg.payment, accountHolder: up(cfg.payment.accountHolder) },
+    notary: { ...cfg.notary, name: up(cfg.notary.name) }
+  };
   const doc = new PDFDocument({
     size: "LETTER",
     margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
@@ -202,7 +216,7 @@ function signatureTable(doc: PDFKit.PDFDocument, deudorNombre: string, repName: 
   const y = doc.y;
   centeredLines(doc, MARGIN, colW, [
     { text: "_".repeat(35), bold: false },
-    { text: K.creditor.legalName, bold: true },
+    { text: getContractConfig().creditor.legalName, bold: true },
     { text: `Repr. ${repName}`, bold: false },
     { text: "EL ACREEDOR", bold: true }
   ]);

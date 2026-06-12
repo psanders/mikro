@@ -128,6 +128,110 @@ export const loansSchema = z.object({
 
 export type LoansConfig = z.infer<typeof loansSchema>;
 
+/**
+ * Dominican cédula format 000-0000000-0 (3-7-1). Empty is allowed so the app
+ * boots without contract data; a non-empty value must be well-formed.
+ */
+const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
+const cedulaField = z
+  .string()
+  .default("")
+  .refine((v) => v === "" || CEDULA_RE.test(v), {
+    message: "cédula must look like 000-0000000-0"
+  });
+
+/**
+ * RNC: a 9-digit company RNC (e.g. 1-23-45678-9) or an 11-digit cédula used as
+ * RNC. Validate digit count rather than dash placement, which varies. Empty ok.
+ */
+const rncField = z
+  .string()
+  .default("")
+  .refine((v) => v === "" || (/^[\d-]+$/.test(v) && [9, 11].includes(v.replace(/-/g, "").length)), {
+    message: "RNC must be 9 or 11 digits (e.g. 1-23-45678-9 or 000-0000000-0)"
+  });
+
+/**
+ * Fixed legal-entity data printed on the loan contract (creditor, payment
+ * account, certifying notary). This is real PII/business data, so it lives in
+ * mikro.json (gitignored) rather than source. Names are stored in proper case
+ * and upper-cased at render time. All fields default to empty so the app boots
+ * without it; contracts just render blanks until it's filled.
+ */
+const contractSchema = z
+  .object({
+    creditor: z
+      .object({
+        legalName: z.string().default(""),
+        rnc: rncField,
+        address: z.string().default(""),
+        representative: z
+          .object({
+            name: z.string().default(""),
+            cedula: cedulaField,
+            city: z.string().default("")
+          })
+          .default(() => ({ name: "", cedula: "", city: "" }))
+      })
+      .default(() => ({
+        legalName: "",
+        rnc: "",
+        address: "",
+        representative: { name: "", cedula: "", city: "" }
+      })),
+    payment: z
+      .object({
+        bank: z.string().default(""),
+        accountType: z.string().default(""),
+        accountNumber: z.string().default(""),
+        accountHolder: z.string().default(""),
+        accountHolderCedula: cedulaField
+      })
+      .default(() => ({
+        bank: "",
+        accountType: "",
+        accountNumber: "",
+        accountHolder: "",
+        accountHolderCedula: ""
+      })),
+    mora: z
+      .object({
+        ratePct: z.number().default(10),
+        periodDays: z.number().default(30)
+      })
+      .default(() => ({ ratePct: 10, periodDays: 30 })),
+    city: z.string().default(""),
+    notary: z
+      .object({
+        name: z.string().default(""),
+        collegeNumber: z.string().default(""),
+        rnc: rncField,
+        office: z.string().default(""),
+        municipality: z.string().default("")
+      })
+      .default(() => ({ name: "", collegeNumber: "", rnc: "", office: "", municipality: "" }))
+  })
+  .default(() => ({
+    creditor: {
+      legalName: "",
+      rnc: "",
+      address: "",
+      representative: { name: "", cedula: "", city: "" }
+    },
+    payment: {
+      bank: "",
+      accountType: "",
+      accountNumber: "",
+      accountHolder: "",
+      accountHolderCedula: ""
+    },
+    mora: { ratePct: 10, periodDays: 30 },
+    city: "",
+    notary: { name: "", collegeNumber: "", rnc: "", office: "", municipality: "" }
+  }));
+
+export type ContractConfig = z.infer<typeof contractSchema>;
+
 const defaultLoansConfig = (): LoansConfig => ({
   defaultMoraRate: 0.1,
   moraGraceDays: 0,
@@ -183,7 +287,8 @@ export const mikroConfigSchema = z
     accounting: accountingSchema.default(() => ({
       attachmentsPath: "./data/attachments/accounting"
     })),
-    loans: loansSchema.default(defaultLoansConfig)
+    loans: loansSchema.default(defaultLoansConfig),
+    contract: contractSchema
   })
   .strict();
 
@@ -192,7 +297,7 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans"
+  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans" | "contract"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -204,6 +309,7 @@ export type ResolvedMikroConfig = Omit<
   reports: NonNullable<MikroConfig["reports"]>;
   accounting: NonNullable<MikroConfig["accounting"]>;
   loans: LoansConfig;
+  contract: ContractConfig;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";
@@ -299,6 +405,14 @@ export function resolvePathFromConfigDir(
 export function getLogoPath(): string {
   const cfg = getConfig();
   return resolvePathFromConfigDir(path.join(cfg.assetsPath, "logo.png"));
+}
+
+/**
+ * Fixed legal-entity data for the loan contract (creditor, payment account,
+ * notary). Sourced from mikro.json, not hardcoded — it is real PII.
+ */
+export function getContractConfig(): ContractConfig {
+  return getConfig().contract;
 }
 
 /**

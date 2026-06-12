@@ -6,7 +6,6 @@
  */
 export { renderContractPdf } from "./generator.js";
 export { renderSummaryPdf } from "./summaryGenerator.js";
-export { CONTRACT_CONSTANTS } from "./constants.js";
 export type { ContractData, ContractFrequency } from "./types.js";
 export type {
   SolicitudSummaryData,

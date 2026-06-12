@@ -15,6 +15,7 @@ export {
   DEFAULT_DATABASE_URL,
   resolvePathFromConfigDir,
   getLogoPath,
+  getContractConfig,
   clearConfigCache,
   mikroConfigSchema,
   loansSchema,
