@@ -48,7 +48,6 @@ describe("Payments Integration", () => {
    * Helper to create a customer with a loan for payment tests.
    */
   async function createCustomerWithLoan(options?: {
-    referredById?: string;
     customerName?: string;
     /** Anchor schedule in the past so mora / missed cycles tests are deterministic. */
     startingDate?: Date;
@@ -65,15 +64,6 @@ describe("Payments Integration", () => {
       idNumber: `001-${String(Date.now()).slice(-7)}-9`,
       collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
-      referredById:
-        options?.referredById ??
-        (
-          await caller.createUser({
-            name: "Test Referrer",
-            phone: uniqueNanpPhone(),
-            role: "REFERRER"
-          })
-        ).id,
       assignedCollectorId: collector.id
     });
 
@@ -493,117 +483,6 @@ describe("Payments Integration", () => {
 
       const payments = await caller.listPaymentsByCustomer({
         customerId: customer.id,
-        startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31")
-      });
-
-      expect(payments).to.be.an("array");
-      expect(payments).to.have.lengthOf(0);
-    });
-  });
-
-  describe("listPaymentsByReferrer", () => {
-    it("should list payments for customers referred by a specific user", async () => {
-      // Create referrers
-      const referrer1 = await caller.createUser({
-        name: "Referrer 1",
-        phone: "+18091234592",
-        role: "REFERRER"
-      });
-      const referrer2 = await caller.createUser({
-        name: "Referrer 2",
-        phone: "+18091234593",
-        role: "REFERRER"
-      });
-
-      // Create customers with different referrers
-      const { loan: loan1, collector: collector1 } = await createCustomerWithLoan({
-        customerName: "Referred by 1 - A",
-        referredById: referrer1.id
-      });
-      const { loan: loan2, collector: collector2 } = await createCustomerWithLoan({
-        customerName: "Referred by 1 - B",
-        referredById: referrer1.id
-      });
-      const { loan: loan3, collector: collector3 } = await createCustomerWithLoan({
-        customerName: "Referred by 2",
-        referredById: referrer2.id
-      });
-
-      // Create payments
-      await caller.createPayment({
-        loanId: loan1.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-15"),
-        collectedById: collector1.id
-      });
-      await caller.createPayment({
-        loanId: loan2.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-16"),
-        collectedById: collector2.id
-      });
-      await caller.createPayment({
-        loanId: loan3.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-17"),
-        collectedById: collector3.id
-      });
-
-      const payments = await caller.listPaymentsByReferrer({
-        referredById: referrer1.id,
-        startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31")
-      });
-
-      expect(payments).to.have.lengthOf(2);
-    });
-
-    it("should filter by date range for referrer", async () => {
-      const referrer = await caller.createUser({
-        name: "Test Referrer",
-        phone: "+18091234594",
-        role: "REFERRER"
-      });
-      const { loan, collector } = await createCustomerWithLoan({ referredById: referrer.id });
-
-      await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-05"),
-        collectedById: collector.id
-      });
-      await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-01-15"),
-        collectedById: collector.id
-      });
-      await caller.createPayment({
-        loanId: loan.loanId, // Use numeric loanId
-        amount: 650,
-        paidAt: new Date("2026-02-05"),
-        collectedById: collector.id
-      });
-
-      const payments = await caller.listPaymentsByReferrer({
-        referredById: referrer.id,
-        startDate: new Date("2026-01-10"),
-        endDate: new Date("2026-01-31")
-      });
-
-      expect(payments).to.have.lengthOf(1);
-    });
-
-    it("should return empty array for referrer with no referred customers", async () => {
-      const referrer = await caller.createUser({
-        name: "Empty Referrer",
-        phone: "+18091234595",
-        role: "REFERRER"
-      });
-
-      const payments = await caller.listPaymentsByReferrer({
-        referredById: referrer.id,
         startDate: new Date("2026-01-01"),
         endDate: new Date("2026-01-31")
       });

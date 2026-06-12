@@ -36,7 +36,7 @@ describe("Loan Notes Integration", () => {
     await db.$disconnect();
   });
 
-  async function createUserWithRole(role: "COLLECTOR" | "REFERRER", suffix: string) {
+  async function createUserWithRole(role: "COLLECTOR", suffix: string) {
     return caller.createUser({
       name: `Test ${role} ${suffix}`,
       phone: `+1809${Date.now().toString().slice(-7)}${suffix}`,
@@ -46,7 +46,6 @@ describe("Loan Notes Integration", () => {
 
   async function createCustomerWithDefaultedLoan() {
     const collector = await createUserWithRole("COLLECTOR", "c");
-    const referrer = await createUserWithRole("REFERRER", "r");
 
     const customer = await caller.createCustomer({
       name: "Defaulted Customer",
@@ -54,7 +53,6 @@ describe("Loan Notes Integration", () => {
       idNumber: `001-${Date.now().toString().slice(-7)}-9`,
       collectionPoint: "https://example.com/test",
       homeAddress: "Test Address",
-      referredById: referrer.id,
       assignedCollectorId: collector.id
     });
 
@@ -68,7 +66,7 @@ describe("Loan Notes Integration", () => {
 
     await caller.updateLoanStatus({ loanId: loan.loanId, status: "DEFAULTED" });
 
-    return { customer, loan, collector, referrer };
+    return { customer, loan, collector };
   }
 
   describe("createLoanNote", () => {
@@ -87,7 +85,7 @@ describe("Loan Notes Integration", () => {
     });
 
     it("should store multiple notes for the same loan", async () => {
-      const { loan, collector, referrer } = await createCustomerWithDefaultedLoan();
+      const { loan, collector } = await createCustomerWithDefaultedLoan();
 
       await caller.createLoanNote({
         loanId: loan.loanId,
@@ -98,7 +96,7 @@ describe("Loan Notes Integration", () => {
       await caller.createLoanNote({
         loanId: loan.loanId,
         content: "Customer promised Friday payment",
-        createdById: referrer.id
+        createdById: collector.id
       });
 
       const notes = await caller.listLoanNotesByLoan({ loanId: loan.loanId });
@@ -152,7 +150,6 @@ describe("Loan Notes Integration", () => {
         idNumber: "001-9999999-1",
         collectionPoint: "https://example.com/other",
         homeAddress: "Other Address",
-        referredById: (await createUserWithRole("REFERRER", "r2")).id,
         assignedCollectorId: collector.id
       });
 

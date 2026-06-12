@@ -39,32 +39,26 @@ describe("Customers Integration", () => {
   });
 
   /**
-   * Helper to create test referrer and collector users.
+   * Helper to create a test collector user.
    */
   async function createTestUsers() {
-    const referrer = await caller.createUser({
-      name: "Test Referrer",
-      phone: "+18091234567",
-      role: "REFERRER"
-    });
     const collector = await caller.createUser({
       name: "Test Collector",
       phone: "+18091234568",
       role: "COLLECTOR"
     });
-    return { referrer, collector };
+    return { collector };
   }
 
   describe("createCustomer", () => {
     it("should create a customer with required fields", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const input = {
         name: "John Doe",
         phone: "+18091234569",
         idNumber: "001-1234567-8",
         collectionPoint: "https://example.com/market-square",
         homeAddress: "123 Main St, City",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       };
 
@@ -79,12 +73,11 @@ describe("Customers Integration", () => {
       expect(customer.homeAddress).to.equal(input.homeAddress);
       expect(customer.isActive).to.equal(true); // createCustomerSchema default
       expect(customer.isBusinessOwner).to.equal(false);
-      expect(customer.referredById).to.equal(referrer.id);
       expect(customer.assignedCollectorId).to.equal(collector.id);
     });
 
     it("should create a customer with optional fields", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const input = {
         name: "Jane Smith",
         phone: "+18091234570",
@@ -94,7 +87,6 @@ describe("Customers Integration", () => {
         jobPosition: "Shop Owner",
         income: 5000,
         isBusinessOwner: true,
-        referredById: referrer.id,
         assignedCollectorId: collector.id,
         notes: "Test note"
       };
@@ -107,8 +99,8 @@ describe("Customers Integration", () => {
       expect(customer.notes).to.equal(input.notes);
     });
 
-    it("should create a customer with referrer and collector", async () => {
-      const { referrer, collector } = await createTestUsers();
+    it("should create a customer with a collector", async () => {
+      const { collector } = await createTestUsers();
 
       const input = {
         name: "Bob Johnson",
@@ -116,20 +108,18 @@ describe("Customers Integration", () => {
         idNumber: "003-3456789-0",
         collectionPoint: "https://example.com/central-market",
         homeAddress: "789 Pine Rd",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       };
 
       const customer = await caller.createCustomer(input);
 
-      expect(customer.referredById).to.equal(referrer.id);
       expect(customer.assignedCollectorId).to.equal(collector.id);
     });
   });
 
   describe("getCustomer", () => {
     it("should retrieve a customer by ID", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       // Create a customer first
       const created = await caller.createCustomer({
         name: "Test Customer",
@@ -137,7 +127,6 @@ describe("Customers Integration", () => {
         idNumber: "004-4567890-1",
         collectionPoint: "https://example.com/test-point",
         homeAddress: "Test Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -159,14 +148,13 @@ describe("Customers Integration", () => {
 
   describe("updateCustomer", () => {
     it("should update customer name", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const created = await caller.createCustomer({
         name: "Original Name",
         phone: "+18091234573",
         idNumber: "005-5678901-2",
         collectionPoint: "https://example.com/update-point",
         homeAddress: "Update Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -180,14 +168,13 @@ describe("Customers Integration", () => {
     });
 
     it("should update customer phone", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const created = await caller.createCustomer({
         name: "Phone Test",
         phone: "+18091234574",
         idNumber: "006-6789012-3",
         collectionPoint: "https://example.com/phone-point",
         homeAddress: "Phone Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -201,14 +188,13 @@ describe("Customers Integration", () => {
     });
 
     it("should update customer note", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const created = await caller.createCustomer({
         name: "Note Test",
         phone: "+18091234576",
         idNumber: "007-7890123-4",
         collectionPoint: "https://example.com/note-point",
         homeAddress: "Note Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -221,14 +207,13 @@ describe("Customers Integration", () => {
     });
 
     it("should deactivate a customer", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       const created = await caller.createCustomer({
         name: "Active Customer",
         phone: "+18091234577",
         idNumber: "008-8901234-5",
         collectionPoint: "https://example.com/active-point",
         homeAddress: "Active Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -245,7 +230,7 @@ describe("Customers Integration", () => {
 
   describe("listCustomers", () => {
     it("should list all customers", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       // Create multiple customers
       await caller.createCustomer({
         name: "Customer 1",
@@ -253,7 +238,6 @@ describe("Customers Integration", () => {
         idNumber: "010-0123456-7",
         collectionPoint: "https://example.com/point-1",
         homeAddress: "Address 1",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
       await caller.createCustomer({
@@ -262,7 +246,6 @@ describe("Customers Integration", () => {
         idNumber: "011-1234567-8",
         collectionPoint: "https://example.com/point-2",
         homeAddress: "Address 2",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
       await caller.createCustomer({
@@ -271,7 +254,6 @@ describe("Customers Integration", () => {
         idNumber: "012-2345678-9",
         collectionPoint: "https://example.com/point-3",
         homeAddress: "Address 3",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -284,7 +266,7 @@ describe("Customers Integration", () => {
     });
 
     it("should respect limit parameter", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       // Create 5 customers
       for (let i = 1; i <= 5; i++) {
         await caller.createCustomer({
@@ -293,7 +275,6 @@ describe("Customers Integration", () => {
           idNumber: `020-${String(i).padStart(7, "0")}-${i}`,
           collectionPoint: `https://example.com/point-${i}`,
           homeAddress: `Address ${i}`,
-          referredById: referrer.id,
           assignedCollectorId: collector.id
         });
       }
@@ -305,7 +286,7 @@ describe("Customers Integration", () => {
     });
 
     it("should respect offset parameter", async () => {
-      const { referrer, collector } = await createTestUsers();
+      const { collector } = await createTestUsers();
       // Create 5 customers
       for (let i = 1; i <= 5; i++) {
         await caller.createCustomer({
@@ -314,7 +295,6 @@ describe("Customers Integration", () => {
           idNumber: `030-${String(i).padStart(7, "0")}-${i}`,
           collectionPoint: `https://example.com/point-${i}`,
           homeAddress: `Address ${i}`,
-          referredById: referrer.id,
           assignedCollectorId: collector.id
         });
       }
@@ -335,78 +315,6 @@ describe("Customers Integration", () => {
     });
   });
 
-  describe("listCustomersByReferrer", () => {
-    it("should list customers by referrer", async () => {
-      // Create referrer
-      const referrer = await caller.createUser({
-        name: "Test Referrer",
-        phone: "+18091234630",
-        role: "REFERRER"
-      });
-      const otherReferrer = await caller.createUser({
-        name: "Other Referrer",
-        phone: "+18091234631",
-        role: "REFERRER"
-      });
-
-      const { collector } = await createTestUsers();
-      // Create customers with different referrers
-      await caller.createCustomer({
-        name: "Referred Customer 1",
-        phone: "+18091234610",
-        idNumber: "040-0123456-7",
-        collectionPoint: "https://example.com/point",
-        homeAddress: "Address",
-        referredById: referrer.id,
-        assignedCollectorId: collector.id
-      });
-      await caller.createCustomer({
-        name: "Referred Customer 2",
-        phone: "+18091234611",
-        idNumber: "041-1234567-8",
-        collectionPoint: "https://example.com/point",
-        homeAddress: "Address",
-        referredById: referrer.id,
-        assignedCollectorId: collector.id
-      });
-      await caller.createCustomer({
-        name: "Other Referred",
-        phone: "+18091234612",
-        idNumber: "042-2345678-9",
-        collectionPoint: "https://example.com/point",
-        homeAddress: "Address",
-        referredById: otherReferrer.id,
-        assignedCollectorId: collector.id
-      });
-
-      // listCustomersByReferrer filters by isActive: true by default
-      const customers = await caller.listCustomersByReferrer({
-        referredById: referrer.id,
-        showInactive: true
-      });
-
-      expect(customers).to.have.lengthOf(2);
-      customers.forEach((m) => {
-        expect(m.referredById).to.equal(referrer.id);
-      });
-    });
-
-    it("should return empty array for referrer with no customers", async () => {
-      const referrer = await caller.createUser({
-        name: "Empty Referrer",
-        phone: "+18091234632",
-        role: "REFERRER"
-      });
-
-      const customers = await caller.listCustomersByReferrer({
-        referredById: referrer.id
-      });
-
-      expect(customers).to.be.an("array");
-      expect(customers).to.have.lengthOf(0);
-    });
-  });
-
   describe("listCustomersByCollector", () => {
     it("should list customers by collector", async () => {
       // Create collector
@@ -421,7 +329,6 @@ describe("Customers Integration", () => {
         role: "COLLECTOR"
       });
 
-      const { referrer } = await createTestUsers();
       // Create customers with different collectors
       await caller.createCustomer({
         name: "Assigned Customer 1",
@@ -429,7 +336,6 @@ describe("Customers Integration", () => {
         idNumber: "050-0123456-7",
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
       await caller.createCustomer({
@@ -438,7 +344,6 @@ describe("Customers Integration", () => {
         idNumber: "051-1234567-8",
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
       await caller.createCustomer({
@@ -447,7 +352,6 @@ describe("Customers Integration", () => {
         idNumber: "052-2345678-9",
         collectionPoint: "https://example.com/point",
         homeAddress: "Address",
-        referredById: referrer.id,
         assignedCollectorId: otherCollector.id
       });
 

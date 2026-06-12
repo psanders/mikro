@@ -13,7 +13,7 @@ import { logger } from "../../logger.js";
 /**
  * Creates a function to create a new customer.
  * Phone is validated and normalized to E.164 format via Zod schema transform.
- * Referrer and collector are required.
+ * Collector is required.
  *
  * @param client - The database client
  * @returns A validated function that creates a customer

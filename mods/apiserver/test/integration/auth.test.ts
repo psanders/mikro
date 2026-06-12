@@ -89,18 +89,6 @@ describe("Authentication Integration", () => {
       }
     });
 
-    it("should reject unauthenticated listCustomersByReferrer", async () => {
-      try {
-        await unauthenticatedCaller.listCustomersByReferrer({
-          referredById: "550e8400-e29b-41d4-a716-446655440000"
-        });
-        expect.fail("Expected UNAUTHORIZED error");
-      } catch (error) {
-        expect(error).to.be.instanceOf(TRPCError);
-        expect((error as TRPCError).code).to.equal("UNAUTHORIZED");
-      }
-    });
-
     it("should reject unauthenticated listCustomersByCollector", async () => {
       try {
         await unauthenticatedCaller.listCustomersByCollector({
@@ -202,20 +190,6 @@ describe("Authentication Integration", () => {
       try {
         await unauthenticatedCaller.listPaymentsByCustomer({
           customerId: "550e8400-e29b-41d4-a716-446655440000",
-          startDate: new Date("2026-01-01"),
-          endDate: new Date("2026-12-31")
-        });
-        expect.fail("Expected UNAUTHORIZED error");
-      } catch (error) {
-        expect(error).to.be.instanceOf(TRPCError);
-        expect((error as TRPCError).code).to.equal("UNAUTHORIZED");
-      }
-    });
-
-    it("should reject unauthenticated listPaymentsByReferrer", async () => {
-      try {
-        await unauthenticatedCaller.listPaymentsByReferrer({
-          referredById: "550e8400-e29b-41d4-a716-446655440000",
           startDate: new Date("2026-01-01"),
           endDate: new Date("2026-12-31")
         });

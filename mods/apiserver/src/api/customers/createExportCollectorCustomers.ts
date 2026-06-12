@@ -11,8 +11,8 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to export customers by collector ID with loans and referrer.
- * Returns customers with active loans, all completed payments, and referrer info for report generation.
+ * Creates a function to export customers by collector ID with loans.
+ * Returns customers with active loans and all completed payments for report generation.
  *
  * @param client - The database client
  * @returns A validated function that exports collector customers

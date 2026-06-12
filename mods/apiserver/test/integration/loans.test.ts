@@ -48,9 +48,6 @@ describe("Loans Integration", () => {
       idNumber: "001-1234567-8",
       collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
-      referredById: (
-        await caller.createUser({ name: "Test Referrer", phone: "+18091234579", role: "REFERRER" })
-      ).id,
       assignedCollectorId: (
         await caller.createUser({
           name: "Test Collector",
@@ -165,11 +162,6 @@ describe("Loans Integration", () => {
 
     it("should create loans for different customers with unique loanIds", async () => {
       // Create multiple customers
-      const referrer = await caller.createUser({
-        name: "Test Referrer",
-        phone: "+18091234585",
-        role: "REFERRER"
-      });
       const collector = await caller.createUser({
         name: "Test Collector",
         phone: "+18091234586",
@@ -182,7 +174,6 @@ describe("Loans Integration", () => {
         idNumber: "001-1234567-1",
         collectionPoint: "https://example.com/point-1",
         homeAddress: "Address 1",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 
@@ -192,7 +183,6 @@ describe("Loans Integration", () => {
         idNumber: "001-1234567-2",
         collectionPoint: "https://example.com/point-2",
         homeAddress: "Address 2",
-        referredById: referrer.id,
         assignedCollectorId: collector.id
       });
 

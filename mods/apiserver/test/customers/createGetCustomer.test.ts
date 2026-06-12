@@ -31,7 +31,6 @@ describe("createGetCustomer", () => {
         isActive: true,
         idCardOnRecord: false,
         createdById: null,
-        referredById: null,
         assignedCollectorId: null,
         createdAt: new Date(),
         updatedAt: new Date()

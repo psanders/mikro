@@ -7,7 +7,6 @@ import { createCreateCustomer } from "../../src/api/customers/createCreateCustom
 import { ValidationError } from "@mikro/common";
 
 describe("createCreateCustomer", () => {
-  const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
   const validCollectorId = "660e8400-e29b-41d4-a716-446655440001";
   const validInput = {
     name: "John Doe",
@@ -15,7 +14,6 @@ describe("createCreateCustomer", () => {
     idNumber: "001-1234567-8",
     collectionPoint: "https://example.com/main-office",
     homeAddress: "123 Main St",
-    referredById: validReferrerId,
     assignedCollectorId: validCollectorId
   };
 
@@ -59,78 +57,6 @@ describe("createCreateCustomer", () => {
       expect(callArgs.data.name).to.equal(validInput.name);
       expect(callArgs.data.phone).to.equal("+18091234567"); // Normalized to E.164 format
       expect(callArgs.data.idNumber).to.equal(validInput.idNumber);
-    });
-
-    it("should create a customer without a referrer", async () => {
-      // Arrange
-      const inputWithoutReferrer = {
-        name: validInput.name,
-        phone: validInput.phone,
-        idNumber: validInput.idNumber,
-        homeAddress: validInput.homeAddress
-      };
-      const expectedCustomer = {
-        id: "customer-no-ref",
-        ...inputWithoutReferrer,
-        phone: "18091234567",
-        referredById: null,
-        jobPosition: null,
-        income: null,
-        isBusinessOwner: false,
-        isActive: true,
-        idCardOnRecord: false,
-        note: null,
-        createdById: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const mockClient = {
-        customer: {
-          create: sinon.stub().resolves(expectedCustomer)
-        }
-      };
-      const createCustomer = createCreateCustomer(mockClient as any);
-
-      // Act
-      const result = await createCustomer(inputWithoutReferrer);
-
-      // Assert
-      expect(result.id).to.equal("customer-no-ref");
-      expect(result.referredById).to.be.null;
-      expect(mockClient.customer.create.calledOnce).to.be.true;
-    });
-
-    it("should create a customer with null referrer", async () => {
-      // Arrange
-      const inputWithNullReferrer = { ...validInput, referredById: null };
-      const expectedCustomer = {
-        id: "customer-null-ref",
-        ...inputWithNullReferrer,
-        phone: "18091234567",
-        jobPosition: null,
-        income: null,
-        isBusinessOwner: false,
-        isActive: true,
-        idCardOnRecord: false,
-        note: null,
-        createdById: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const mockClient = {
-        customer: {
-          create: sinon.stub().resolves(expectedCustomer)
-        }
-      };
-      const createCustomer = createCreateCustomer(mockClient as any);
-
-      // Act
-      const result = await createCustomer(inputWithNullReferrer);
-
-      // Assert
-      expect(result.id).to.equal("customer-null-ref");
-      expect(result.referredById).to.be.null;
-      expect(mockClient.customer.create.calledOnce).to.be.true;
     });
 
     it("should create a customer with optional fields", async () => {
@@ -197,23 +123,6 @@ describe("createCreateCustomer", () => {
       // Act & Assert
       try {
         await createCustomer({ ...validInput, name: "" });
-        expect.fail("Expected ValidationError to be thrown");
-      } catch (error) {
-        expect(error).to.be.instanceOf(ValidationError);
-        expect(mockClient.customer.create.called).to.be.false;
-      }
-    });
-
-    it("should throw ValidationError for invalid referredById UUID", async () => {
-      // Arrange
-      const mockClient = {
-        customer: { create: sinon.stub() }
-      };
-      const createCustomer = createCreateCustomer(mockClient as any);
-
-      // Act & Assert
-      try {
-        await createCustomer({ ...validInput, referredById: "invalid-uuid" });
         expect.fail("Expected ValidationError to be thrown");
       } catch (error) {
         expect(error).to.be.instanceOf(ValidationError);

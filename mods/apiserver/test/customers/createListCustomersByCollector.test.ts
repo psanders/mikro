@@ -22,7 +22,6 @@ describe("createListCustomersByCollector", () => {
     isActive: true,
     idCardOnRecord: false,
     createdById: null,
-    referredById: null,
     assignedCollectorId: validCollectorId,
     createdAt: new Date(),
     updatedAt: new Date()

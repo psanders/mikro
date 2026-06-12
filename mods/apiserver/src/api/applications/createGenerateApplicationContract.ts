@@ -1,7 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { DbClient, GenerateApplicationContractInput } from "@mikro/common";
+import {
+  BUSINESS_TYPE_LABELS,
+  PROVINCE_LABELS,
+  type DbClient,
+  type GenerateApplicationContractInput
+} from "@mikro/common";
 import { renderContractPdf, type ContractData } from "@mikro/common/contracts";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
@@ -38,8 +43,12 @@ export function createGenerateApplicationContract(client: DbClient) {
         cedula: app.idNumber,
         gender: input.gender,
         maritalStatus: input.maritalStatus ?? app.maritalStatus?.toLowerCase() ?? undefined,
-        occupation: input.occupation ?? app.businessType ?? undefined,
-        city: app.province ?? "—"
+        occupation:
+          input.occupation ??
+          (app.businessType
+            ? (BUSINESS_TYPE_LABELS[app.businessType] ?? app.businessType)
+            : undefined),
+        city: app.province ? (PROVINCE_LABELS[app.province] ?? app.province) : "—"
       },
       principal: Number(app.requestedAmount) || 0,
       installments: input.installments,

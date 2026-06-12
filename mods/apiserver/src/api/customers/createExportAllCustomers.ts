@@ -11,8 +11,8 @@ import {
 import { logger } from "../../logger.js";
 
 /**
- * Creates a function to export all active customers with loans and referrer.
- * Returns all active customers with active loans, completed payments, and referrer info for report generation.
+ * Creates a function to export all active customers with loans.
+ * Returns all active customers with active loans and completed payments for report generation.
  * This is an admin-only operation.
  *
  * @param client - The database client

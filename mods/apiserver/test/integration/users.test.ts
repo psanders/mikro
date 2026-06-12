@@ -88,23 +88,6 @@ describe("Users Integration", () => {
       expect(roles).to.have.lengthOf(1);
       expect(roles[0].role).to.equal("COLLECTOR");
     });
-
-    it("should create a user with REFERRER role", async () => {
-      const input = {
-        name: "Referrer User",
-        phone: "+18091234570",
-        role: "REFERRER" as const
-      };
-
-      const user = await caller.createUser(input);
-
-      // Verify role was created by querying the database directly
-      const roles = await db.userRole.findMany({
-        where: { userId: user.id }
-      });
-      expect(roles).to.have.lengthOf(1);
-      expect(roles[0].role).to.equal("REFERRER");
-    });
   });
 
   describe("getUser", () => {

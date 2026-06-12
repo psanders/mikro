@@ -48,11 +48,6 @@ describe("Chat Integration", () => {
    * Helper to create a test customer.
    */
   async function createTestCustomer(name = "Chat Test Customer") {
-    const referrer = await caller.createUser({
-      name: "Test Referrer",
-      phone: chatNanp(),
-      role: "REFERRER"
-    });
     const collector = await caller.createUser({
       name: "Test Collector",
       phone: chatNanp(),
@@ -64,7 +59,6 @@ describe("Chat Integration", () => {
       idNumber: `001-${String(Date.now()).slice(-7)}-8`,
       collectionPoint: "https://example.com/test-point",
       homeAddress: "Test Address",
-      referredById: referrer.id,
       assignedCollectorId: collector.id
     });
   }

@@ -6,8 +6,6 @@ import sinon from "sinon";
 import { createExportAllCustomers } from "../../src/api/customers/createExportAllCustomers.js";
 
 describe("createExportAllCustomers", () => {
-  const validReferrerId = "550e8400-e29b-41d4-a716-446655440000";
-
   const createMockCustomerWithLoans = (id: string, name: string) => ({
     id,
     name,
@@ -22,7 +20,6 @@ describe("createExportAllCustomers", () => {
     idCardOnRecord: false,
     notes: "Test notes",
     createdById: null,
-    referredById: validReferrerId,
     assignedCollectorId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -55,8 +52,7 @@ describe("createExportAllCustomers", () => {
           }
         ]
       }
-    ],
-    referredBy: { name: "John Referrer" }
+    ]
   });
 
   afterEach(() => {
@@ -84,13 +80,11 @@ describe("createExportAllCustomers", () => {
       // Assert
       expect(result).to.have.length(3);
       expect(result[0].loans).to.have.length(1);
-      expect(result[0].referredBy!.name).to.equal("John Referrer");
       expect(mockClient.customer.findMany.calledOnce).to.be.true;
 
       const callArgs = mockClient.customer.findMany.firstCall.args[0];
       expect(callArgs.where.isActive).to.equal(true);
       expect(callArgs.include.loans).to.exist;
-      expect(callArgs.include.referredBy).to.exist;
     });
 
     it("should return empty array when no customers found", async () => {

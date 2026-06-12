@@ -234,8 +234,8 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Export customers by collector ID with loans and referrer for report generation.
-   * Returns customers with active loans, payment status, and referrer info.
+   * Export customers by collector ID with loans for report generation.
+   * Returns customers with active loans and payment status.
    */
   exportCollectorCustomers: protectedProcedure
     .input(exportCollectorCustomersSchema)
