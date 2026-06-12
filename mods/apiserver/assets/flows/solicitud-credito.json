@@ -52,11 +52,26 @@
                 "label": "Estado civil",
                 "required": true,
                 "data-source": [
-                  { "id": "Soltero(a)", "title": "Soltero(a)" },
-                  { "id": "Casado(a)", "title": "Casado(a)" },
-                  { "id": "Unión libre", "title": "Unión libre" },
-                  { "id": "Divorciado(a)", "title": "Divorciado(a)" },
-                  { "id": "Viudo(a)", "title": "Viudo(a)" }
+                  {
+                    "id": "Soltero(a)",
+                    "title": "Soltero(a)"
+                  },
+                  {
+                    "id": "Casado(a)",
+                    "title": "Casado(a)"
+                  },
+                  {
+                    "id": "Unión libre",
+                    "title": "Unión libre"
+                  },
+                  {
+                    "id": "Divorciado(a)",
+                    "title": "Divorciado(a)"
+                  },
+                  {
+                    "id": "Viudo(a)",
+                    "title": "Viudo(a)"
+                  }
                 ]
               },
               {
@@ -67,46 +82,160 @@
                 "type": "Dropdown",
                 "name": "businessType",
                 "label": "Tipo de negocio",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "COLMADO", "title": "Colmado" },
-                  { "id": "SUPERMERCADO_PEQUENO", "title": "Supermercado pequeño" },
-                  { "id": "FARMACIA", "title": "Farmacia" },
-                  { "id": "FERRETERIA", "title": "Ferretería" },
-                  { "id": "DISTRIBUIDORA_ALIMENTOS", "title": "Distribuidora de alimentos" },
-                  { "id": "PANADERIA", "title": "Panadería" },
-                  { "id": "CLINICA_PEQUENA", "title": "Clínica pequeña" },
-                  { "id": "LABORATORIO", "title": "Laboratorio" },
-                  { "id": "AGUA_PURIFICADA", "title": "Agua purificada" },
-                  { "id": "VETERINARIA", "title": "Veterinaria" },
-                  { "id": "PAPELERIA", "title": "Papelería" },
-                  { "id": "VENTA_REPUESTOS", "title": "Venta de repuestos" },
-                  { "id": "LAVANDERIA", "title": "Lavandería" },
-                  { "id": "SERVICIOS_FUNERARIOS", "title": "Servicios funerarios" },
-                  { "id": "SALON_BELLEZA_BARBERIA", "title": "Salón de belleza / barbería" },
-                  { "id": "CENTRO_UNAS", "title": "Centro de uñas" },
-                  { "id": "RESTAURANTE", "title": "Restaurante" },
-                  { "id": "FOOD_TRUCK", "title": "Food truck" },
-                  { "id": "BOUTIQUE_ROPA", "title": "Boutique / tienda de ropa" },
-                  { "id": "GIMNASIO", "title": "Gimnasio" },
-                  { "id": "TALLER_MECANICO", "title": "Taller mecánico" },
-                  { "id": "DEALER_VEHICULOS", "title": "Dealer de vehículos" },
-                  { "id": "EBANISTERIA", "title": "Ebanistería" },
-                  { "id": "IMPRENTA", "title": "Imprenta" },
-                  { "id": "ESTUDIO_FOTOGRAFICO", "title": "Estudio fotográfico" },
-                  { "id": "EMPRESA_EVENTOS", "title": "Empresa de eventos" },
-                  { "id": "HELADERIA", "title": "Heladería" },
-                  { "id": "TIENDA_MUEBLES", "title": "Tienda de muebles" },
-                  { "id": "BANCA_APUESTAS", "title": "Banca de apuestas" },
-                  { "id": "DISCOTECA", "title": "Discoteca" },
-                  { "id": "BAR_LIQUOR_STORE", "title": "Bar / liquor store" },
-                  { "id": "VENTA_AMBULANTE", "title": "Venta ambulante" },
-                  { "id": "NEGOCIO_DIGITAL", "title": "Negocio totalmente digital" },
-                  { "id": "REVENTA_REDES", "title": "Reventa por redes sociales" },
-                  { "id": "AGRICULTURA", "title": "Agricultura" },
-                  { "id": "PESCA_ARTESANAL", "title": "Pesca artesanal" },
-                  { "id": "CONSTRUCCION_PEQUENA", "title": "Construcción pequeña" },
-                  { "id": "OTRO", "title": "Otro" }
+                  {
+                    "id": "COLMADO",
+                    "title": "Colmado"
+                  },
+                  {
+                    "id": "SUPERMERCADO_PEQUENO",
+                    "title": "Supermercado pequeño"
+                  },
+                  {
+                    "id": "FARMACIA",
+                    "title": "Farmacia"
+                  },
+                  {
+                    "id": "FERRETERIA",
+                    "title": "Ferretería"
+                  },
+                  {
+                    "id": "DISTRIBUIDORA_ALIMENTOS",
+                    "title": "Distribuidora de alimentos"
+                  },
+                  {
+                    "id": "PANADERIA",
+                    "title": "Panadería"
+                  },
+                  {
+                    "id": "CLINICA_PEQUENA",
+                    "title": "Clínica pequeña"
+                  },
+                  {
+                    "id": "LABORATORIO",
+                    "title": "Laboratorio"
+                  },
+                  {
+                    "id": "AGUA_PURIFICADA",
+                    "title": "Agua purificada"
+                  },
+                  {
+                    "id": "VETERINARIA",
+                    "title": "Veterinaria"
+                  },
+                  {
+                    "id": "PAPELERIA",
+                    "title": "Papelería"
+                  },
+                  {
+                    "id": "VENTA_REPUESTOS",
+                    "title": "Venta de repuestos"
+                  },
+                  {
+                    "id": "LAVANDERIA",
+                    "title": "Lavandería"
+                  },
+                  {
+                    "id": "SERVICIOS_FUNERARIOS",
+                    "title": "Servicios funerarios"
+                  },
+                  {
+                    "id": "SALON_BELLEZA_BARBERIA",
+                    "title": "Salón de belleza / barbería"
+                  },
+                  {
+                    "id": "CENTRO_UNAS",
+                    "title": "Centro de uñas"
+                  },
+                  {
+                    "id": "RESTAURANTE",
+                    "title": "Restaurante"
+                  },
+                  {
+                    "id": "FOOD_TRUCK",
+                    "title": "Food truck"
+                  },
+                  {
+                    "id": "BOUTIQUE_ROPA",
+                    "title": "Boutique / tienda de ropa"
+                  },
+                  {
+                    "id": "GIMNASIO",
+                    "title": "Gimnasio"
+                  },
+                  {
+                    "id": "TALLER_MECANICO",
+                    "title": "Taller mecánico"
+                  },
+                  {
+                    "id": "DEALER_VEHICULOS",
+                    "title": "Dealer de vehículos"
+                  },
+                  {
+                    "id": "EBANISTERIA",
+                    "title": "Ebanistería"
+                  },
+                  {
+                    "id": "IMPRENTA",
+                    "title": "Imprenta"
+                  },
+                  {
+                    "id": "ESTUDIO_FOTOGRAFICO",
+                    "title": "Estudio fotográfico"
+                  },
+                  {
+                    "id": "EMPRESA_EVENTOS",
+                    "title": "Empresa de eventos"
+                  },
+                  {
+                    "id": "HELADERIA",
+                    "title": "Heladería"
+                  },
+                  {
+                    "id": "TIENDA_MUEBLES",
+                    "title": "Tienda de muebles"
+                  },
+                  {
+                    "id": "BANCA_APUESTAS",
+                    "title": "Banca de apuestas"
+                  },
+                  {
+                    "id": "DISCOTECA",
+                    "title": "Discoteca"
+                  },
+                  {
+                    "id": "BAR_LIQUOR_STORE",
+                    "title": "Bar / liquor store"
+                  },
+                  {
+                    "id": "VENTA_AMBULANTE",
+                    "title": "Venta ambulante"
+                  },
+                  {
+                    "id": "NEGOCIO_DIGITAL",
+                    "title": "Negocio totalmente digital"
+                  },
+                  {
+                    "id": "REVENTA_REDES",
+                    "title": "Reventa por redes sociales"
+                  },
+                  {
+                    "id": "AGRICULTURA",
+                    "title": "Agricultura"
+                  },
+                  {
+                    "id": "PESCA_ARTESANAL",
+                    "title": "Pesca artesanal"
+                  },
+                  {
+                    "id": "CONSTRUCCION_PEQUENA",
+                    "title": "Construcción pequeña"
+                  },
+                  {
+                    "id": "OTRO",
+                    "title": "Otro"
+                  }
                 ]
               },
               {
@@ -114,66 +243,126 @@
                 "name": "businessName",
                 "label": "Nombre del negocio",
                 "input-type": "text",
-                "required": true
+                "required": false
               },
               {
                 "type": "Dropdown",
                 "name": "businessAge",
                 "label": "Tiempo operando",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Menos de 6 meses", "title": "Menos de 6 meses" },
-                  { "id": "6 meses a 1 año", "title": "6 meses a 1 año" },
-                  { "id": "1 a 3 años", "title": "1 a 3 años" },
-                  { "id": "3 a 5 años", "title": "3 a 5 años" },
-                  { "id": "Más de 5 años", "title": "Más de 5 años" }
+                  {
+                    "id": "Menos de 6 meses",
+                    "title": "Menos de 6 meses"
+                  },
+                  {
+                    "id": "6 meses a 1 año",
+                    "title": "6 meses a 1 año"
+                  },
+                  {
+                    "id": "1 a 3 años",
+                    "title": "1 a 3 años"
+                  },
+                  {
+                    "id": "3 a 5 años",
+                    "title": "3 a 5 años"
+                  },
+                  {
+                    "id": "Más de 5 años",
+                    "title": "Más de 5 años"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "monthlySales",
                 "label": "Ventas mensuales",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Menos de RD$25,000", "title": "Menos de RD$25,000" },
-                  { "id": "RD$25,000 – RD$50,000", "title": "RD$25,000 – RD$50,000" },
-                  { "id": "RD$50,000 – RD$100,000", "title": "RD$50,000 – RD$100,000" },
-                  { "id": "RD$100,000 – RD$250,000", "title": "RD$100,000 – RD$250,000" },
-                  { "id": "RD$250,000 – RD$500,000", "title": "RD$250,000 – RD$500,000" },
-                  { "id": "Más de RD$500,000", "title": "Más de RD$500,000" }
+                  {
+                    "id": "Menos de RD$25,000",
+                    "title": "Menos de RD$25,000"
+                  },
+                  {
+                    "id": "RD$25,000 – RD$50,000",
+                    "title": "RD$25,000 – RD$50,000"
+                  },
+                  {
+                    "id": "RD$50,000 – RD$100,000",
+                    "title": "RD$50,000 – RD$100,000"
+                  },
+                  {
+                    "id": "RD$100,000 – RD$250,000",
+                    "title": "RD$100,000 – RD$250,000"
+                  },
+                  {
+                    "id": "RD$250,000 – RD$500,000",
+                    "title": "RD$250,000 – RD$500,000"
+                  },
+                  {
+                    "id": "Más de RD$500,000",
+                    "title": "Más de RD$500,000"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "locationType",
                 "label": "Local del negocio",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Propio", "title": "Propio" },
-                  { "id": "Alquilado", "title": "Alquilado" },
-                  { "id": "En mi vivienda", "title": "En mi vivienda" }
+                  {
+                    "id": "Propio",
+                    "title": "Propio"
+                  },
+                  {
+                    "id": "Alquilado",
+                    "title": "Alquilado"
+                  },
+                  {
+                    "id": "En mi vivienda",
+                    "title": "En mi vivienda"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "formalization",
                 "label": "Formalización",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Tiene RNC (formalizado)", "title": "Tiene RNC (formalizado)" },
-                  { "id": "Informal (sin RNC)", "title": "Informal (sin RNC)" }
+                  {
+                    "id": "Tiene RNC (formalizado)",
+                    "title": "Tiene RNC (formalizado)"
+                  },
+                  {
+                    "id": "Informal (sin RNC)",
+                    "title": "Informal (sin RNC)"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "employeeCount",
                 "label": "Número de empleados",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Solo yo", "title": "Solo yo" },
-                  { "id": "1 a 3", "title": "1 a 3" },
-                  { "id": "4 a 10", "title": "4 a 10" },
-                  { "id": "Más de 10", "title": "Más de 10" }
+                  {
+                    "id": "Solo yo",
+                    "title": "Solo yo"
+                  },
+                  {
+                    "id": "1 a 3",
+                    "title": "1 a 3"
+                  },
+                  {
+                    "id": "4 a 10",
+                    "title": "4 a 10"
+                  },
+                  {
+                    "id": "Más de 10",
+                    "title": "Más de 10"
+                  }
                 ]
               },
               {
@@ -181,7 +370,7 @@
                 "name": "businessPhone",
                 "label": "Teléfono del negocio",
                 "input-type": "phone",
-                "required": true
+                "required": false
               },
               {
                 "type": "TextSubheading",
@@ -193,15 +382,18 @@
                 "label": "Monto solicitado",
                 "helper-text": "En pesos (RD$)",
                 "input-type": "number",
-                "required": true
+                "required": false
               },
               {
                 "type": "Dropdown",
                 "name": "purpose",
                 "label": "Propósito",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Capital de trabajo", "title": "Capital de trabajo" },
+                  {
+                    "id": "Capital de trabajo",
+                    "title": "Capital de trabajo"
+                  },
                   {
                     "id": "Compra de inventario / mercancía",
                     "title": "Compra de inventario"
@@ -218,25 +410,46 @@
                     "id": "Compra o reparación de vehículo de trabajo",
                     "title": "Reparación de vehículo"
                   },
-                  { "id": "Pago a proveedores", "title": "Pago a proveedores" },
-                  { "id": "Expansión / nueva sucursal", "title": "Expansión / nueva sucursal" },
+                  {
+                    "id": "Pago a proveedores",
+                    "title": "Pago a proveedores"
+                  },
+                  {
+                    "id": "Expansión / nueva sucursal",
+                    "title": "Expansión / nueva sucursal"
+                  },
                   {
                     "id": "Consolidación de deudas del negocio",
                     "title": "Consolidar deudas"
                   },
-                  { "id": "Otro", "title": "Otro" }
+                  {
+                    "id": "Otro",
+                    "title": "Otro"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "requestedTermWeeks",
                 "label": "Plazo",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "10 semanas", "title": "10 semanas" },
-                  { "id": "12 semanas", "title": "12 semanas" },
-                  { "id": "15 semanas", "title": "15 semanas" },
-                  { "id": "18 semanas", "title": "18 semanas" }
+                  {
+                    "id": "10 semanas",
+                    "title": "10 semanas"
+                  },
+                  {
+                    "id": "12 semanas",
+                    "title": "12 semanas"
+                  },
+                  {
+                    "id": "15 semanas",
+                    "title": "15 semanas"
+                  },
+                  {
+                    "id": "18 semanas",
+                    "title": "18 semanas"
+                  }
                 ]
               },
               {
@@ -262,14 +475,14 @@
                 "name": "referenceName",
                 "label": "Nombre de referencia",
                 "input-type": "text",
-                "required": true
+                "required": false
               },
               {
                 "type": "TextInput",
                 "name": "referencePhone",
                 "label": "Tel. de referencia",
                 "input-type": "phone",
-                "required": true
+                "required": false
               },
               {
                 "type": "TextSubheading",
@@ -279,25 +492,52 @@
                 "type": "Dropdown",
                 "name": "housingType",
                 "label": "Tipo de vivienda",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Propia", "title": "Propia" },
-                  { "id": "Alquilada", "title": "Alquilada" },
-                  { "id": "Familiar", "title": "Familiar" },
-                  { "id": "Otra", "title": "Otra" }
+                  {
+                    "id": "Propia",
+                    "title": "Propia"
+                  },
+                  {
+                    "id": "Alquilada",
+                    "title": "Alquilada"
+                  },
+                  {
+                    "id": "Familiar",
+                    "title": "Familiar"
+                  },
+                  {
+                    "id": "Otra",
+                    "title": "Otra"
+                  }
                 ]
               },
               {
                 "type": "Dropdown",
                 "name": "residenceTime",
                 "label": "Tiempo residiendo",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "Menos de 1 año", "title": "Menos de 1 año" },
-                  { "id": "1 a 3 años", "title": "1 a 3 años" },
-                  { "id": "3 a 5 años", "title": "3 a 5 años" },
-                  { "id": "5 a 10 años", "title": "5 a 10 años" },
-                  { "id": "Más de 10 años", "title": "Más de 10 años" }
+                  {
+                    "id": "Menos de 1 año",
+                    "title": "Menos de 1 año"
+                  },
+                  {
+                    "id": "1 a 3 años",
+                    "title": "1 a 3 años"
+                  },
+                  {
+                    "id": "3 a 5 años",
+                    "title": "3 a 5 años"
+                  },
+                  {
+                    "id": "5 a 10 años",
+                    "title": "5 a 10 años"
+                  },
+                  {
+                    "id": "Más de 10 años",
+                    "title": "Más de 10 años"
+                  }
                 ]
               },
               {
@@ -306,46 +546,142 @@
                 "label": "Dirección",
                 "helper-text": "Calle, número y sector",
                 "input-type": "text",
-                "required": true
+                "required": false
               },
               {
                 "type": "Dropdown",
                 "name": "province",
                 "label": "Provincia",
-                "required": true,
+                "required": false,
                 "data-source": [
-                  { "id": "AZUA", "title": "Azua" },
-                  { "id": "BAHORUCO", "title": "Bahoruco" },
-                  { "id": "BARAHONA", "title": "Barahona" },
-                  { "id": "DAJABON", "title": "Dajabón" },
-                  { "id": "DISTRITO_NACIONAL", "title": "Distrito Nacional" },
-                  { "id": "DUARTE", "title": "Duarte" },
-                  { "id": "ELIAS_PINA", "title": "Elías Piña" },
-                  { "id": "EL_SEIBO", "title": "El Seibo" },
-                  { "id": "ESPAILLAT", "title": "Espaillat" },
-                  { "id": "HATO_MAYOR", "title": "Hato Mayor" },
-                  { "id": "HERMANAS_MIRABAL", "title": "Hermanas Mirabal" },
-                  { "id": "INDEPENDENCIA", "title": "Independencia" },
-                  { "id": "LA_ALTAGRACIA", "title": "La Altagracia" },
-                  { "id": "LA_ROMANA", "title": "La Romana" },
-                  { "id": "LA_VEGA", "title": "La Vega" },
-                  { "id": "MARIA_TRINIDAD_SANCHEZ", "title": "María Trinidad Sánchez" },
-                  { "id": "MONSENOR_NOUEL", "title": "Monseñor Nouel" },
-                  { "id": "MONTE_CRISTI", "title": "Monte Cristi" },
-                  { "id": "MONTE_PLATA", "title": "Monte Plata" },
-                  { "id": "PEDERNALES", "title": "Pedernales" },
-                  { "id": "PERAVIA", "title": "Peravia" },
-                  { "id": "PUERTO_PLATA", "title": "Puerto Plata" },
-                  { "id": "SAMANA", "title": "Samaná" },
-                  { "id": "SAN_CRISTOBAL", "title": "San Cristóbal" },
-                  { "id": "SAN_JOSE_DE_OCOA", "title": "San José de Ocoa" },
-                  { "id": "SAN_JUAN", "title": "San Juan" },
-                  { "id": "SAN_PEDRO_DE_MACORIS", "title": "San Pedro de Macorís" },
-                  { "id": "SANCHEZ_RAMIREZ", "title": "Sánchez Ramírez" },
-                  { "id": "SANTIAGO", "title": "Santiago" },
-                  { "id": "SANTIAGO_RODRIGUEZ", "title": "Santiago Rodríguez" },
-                  { "id": "SANTO_DOMINGO", "title": "Santo Domingo" },
-                  { "id": "VALVERDE", "title": "Valverde" }
+                  {
+                    "id": "AZUA",
+                    "title": "Azua"
+                  },
+                  {
+                    "id": "BAHORUCO",
+                    "title": "Bahoruco"
+                  },
+                  {
+                    "id": "BARAHONA",
+                    "title": "Barahona"
+                  },
+                  {
+                    "id": "DAJABON",
+                    "title": "Dajabón"
+                  },
+                  {
+                    "id": "DISTRITO_NACIONAL",
+                    "title": "Distrito Nacional"
+                  },
+                  {
+                    "id": "DUARTE",
+                    "title": "Duarte"
+                  },
+                  {
+                    "id": "ELIAS_PINA",
+                    "title": "Elías Piña"
+                  },
+                  {
+                    "id": "EL_SEIBO",
+                    "title": "El Seibo"
+                  },
+                  {
+                    "id": "ESPAILLAT",
+                    "title": "Espaillat"
+                  },
+                  {
+                    "id": "HATO_MAYOR",
+                    "title": "Hato Mayor"
+                  },
+                  {
+                    "id": "HERMANAS_MIRABAL",
+                    "title": "Hermanas Mirabal"
+                  },
+                  {
+                    "id": "INDEPENDENCIA",
+                    "title": "Independencia"
+                  },
+                  {
+                    "id": "LA_ALTAGRACIA",
+                    "title": "La Altagracia"
+                  },
+                  {
+                    "id": "LA_ROMANA",
+                    "title": "La Romana"
+                  },
+                  {
+                    "id": "LA_VEGA",
+                    "title": "La Vega"
+                  },
+                  {
+                    "id": "MARIA_TRINIDAD_SANCHEZ",
+                    "title": "María Trinidad Sánchez"
+                  },
+                  {
+                    "id": "MONSENOR_NOUEL",
+                    "title": "Monseñor Nouel"
+                  },
+                  {
+                    "id": "MONTE_CRISTI",
+                    "title": "Monte Cristi"
+                  },
+                  {
+                    "id": "MONTE_PLATA",
+                    "title": "Monte Plata"
+                  },
+                  {
+                    "id": "PEDERNALES",
+                    "title": "Pedernales"
+                  },
+                  {
+                    "id": "PERAVIA",
+                    "title": "Peravia"
+                  },
+                  {
+                    "id": "PUERTO_PLATA",
+                    "title": "Puerto Plata"
+                  },
+                  {
+                    "id": "SAMANA",
+                    "title": "Samaná"
+                  },
+                  {
+                    "id": "SAN_CRISTOBAL",
+                    "title": "San Cristóbal"
+                  },
+                  {
+                    "id": "SAN_JOSE_DE_OCOA",
+                    "title": "San José de Ocoa"
+                  },
+                  {
+                    "id": "SAN_JUAN",
+                    "title": "San Juan"
+                  },
+                  {
+                    "id": "SAN_PEDRO_DE_MACORIS",
+                    "title": "San Pedro de Macorís"
+                  },
+                  {
+                    "id": "SANCHEZ_RAMIREZ",
+                    "title": "Sánchez Ramírez"
+                  },
+                  {
+                    "id": "SANTIAGO",
+                    "title": "Santiago"
+                  },
+                  {
+                    "id": "SANTIAGO_RODRIGUEZ",
+                    "title": "Santiago Rodríguez"
+                  },
+                  {
+                    "id": "SANTO_DOMINGO",
+                    "title": "Santo Domingo"
+                  },
+                  {
+                    "id": "VALVERDE",
+                    "title": "Valverde"
+                  }
                 ]
               },
               {
