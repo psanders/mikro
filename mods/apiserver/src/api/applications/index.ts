@@ -2,6 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 export { createUpsertApplication } from "./createUpsertApplication.js";
+export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
+export { createSubmitApplicationFromFlow } from "./createSubmitApplicationFromFlow.js";
+export { createSendApplicationPromo, type PromoResult } from "./createSendApplicationPromo.js";
 export { createListApplications } from "./createListApplications.js";
 export { createGetApplication } from "./createGetApplication.js";
 export {

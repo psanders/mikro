@@ -113,6 +113,10 @@ import { createGenerateApplicationContract } from "../../api/applications/create
 import { createConvertApplication } from "../../api/applications/createConvertApplication.js";
 import { createUpdateApplication } from "../../api/applications/createUpdateApplication.js";
 import { createCreateApplication } from "../../api/applications/createCreateApplication.js";
+import {
+  createSendApplicationPromo,
+  type PromoResult
+} from "../../api/applications/createSendApplicationPromo.js";
 import { createPromoteApplication } from "../../api/applications/createPromoteApplication.js";
 import { createDeleteApplication } from "../../api/applications/createDeleteApplication.js";
 import { createUploadIdImage } from "../../api/applications/createUploadIdImage.js";
@@ -142,7 +146,11 @@ import { createGenerateModeloReport } from "../../api/reports/createGenerateMode
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
 // WhatsApp functions
-import { createSendWhatsAppMessage, createWhatsAppClient } from "@mikro/agents";
+import {
+  createSendWhatsAppMessage,
+  createWhatsAppClient,
+  getWhatsAppPromoTemplate
+} from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
 import {
@@ -525,12 +533,31 @@ export const protectedRouter = router({
 
   /**
    * Manually create a new application from the dashboard. ADMIN/REVIEWER only.
+   *
+   * When `input.sendPromo` is set and the created application has a phone, also
+   * sends the approved promo template (CTA opens the intake Flow) to that phone.
+   * The send is best-effort: it never rolls back creation. The result carries the
+   * full application plus a `promo` outcome (`null` when not requested).
    */
   createApplication: reviewerProcedure
     .input(createApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createCreateApplication(ctx.db);
-      return fn(input);
+      const application = await fn(input);
+
+      let promo: PromoResult | null = null;
+      if (input.sendPromo) {
+        const whatsAppClient = createWhatsAppClient();
+        const { templateName, languageCode } = getWhatsAppPromoTemplate();
+        const sendPromo = createSendApplicationPromo({
+          sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
+          templateName,
+          languageCode
+        });
+        promo = await sendPromo(application.phone);
+      }
+
+      return { ...application, promo };
     }),
 
   /**

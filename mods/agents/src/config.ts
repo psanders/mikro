@@ -87,6 +87,21 @@ export function getWhatsAppIntakeFlow(): { enabled: boolean; flowId: string; dra
 }
 
 /**
+ * Promo template config: the approved Flow template (CTA opens the intake Flow)
+ * sent when a reviewer opts in on manual application creation, plus the language
+ * code to send it under (the shared WhatsApp language).
+ */
+export function getWhatsAppPromoTemplate(): { templateName: string; languageCode: string } {
+  const { templates, languageCode } = getConfig().whatsapp;
+  return {
+    templateName: templates.loanApplicationPromo,
+    // Temporary per-template language pin (the approved template is English).
+    // Falls back to the shared WhatsApp language when left empty.
+    languageCode: templates.loanApplicationPromoLanguage || languageCode
+  };
+}
+
+/**
  * Get the path for storing receipt images.
  */
 export function getReceiptsPath(): string {

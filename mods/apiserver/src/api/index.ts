@@ -44,6 +44,9 @@ export {
 // Loan application (intake + review) operations
 export {
   createUpsertApplication,
+  createFindLatestApplicationByPhone,
+  createSubmitApplicationFromFlow,
+  createSendApplicationPromo,
   createListApplications,
   createGetApplication,
   createClaimApplication,
