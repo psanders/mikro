@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.1](https://github.com/psanders/mikro/compare/v1.6.0...v1.6.1) (2026-06-13)
+
+### Bug Fixes
+
+- **docker:** use prebuild-install for better-sqlite3 to avoid QEMU SIGILL ([2932a4c](https://github.com/psanders/mikro/commit/2932a4cd1d61209343383b29378694feeda9c325))
+
 # [1.6.0](https://github.com/psanders/mikro/compare/v1.5.0...v1.6.0) (2026-06-13)
 
 ### Bug Fixes
