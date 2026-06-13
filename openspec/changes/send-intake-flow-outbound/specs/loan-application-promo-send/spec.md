@@ -28,6 +28,27 @@ The Nueva Solicitud modal SHALL offer a "Enviar promoción por WhatsApp" option,
 - **THEN** the application is still created
 - **AND** the response reports a promo send error (the application is not left in a partial state)
 
+### Requirement: Promo send matches the approved template's format
+
+The promo send SHALL match the `loan_application` template's defined format, or WhatsApp rejects it (error 132012). That template has an **image header** and a **Flow CTA button**, so each send SHALL include: the configured language (`en`), a header **image parameter** (a publicly reachable banner URL — WhatsApp does not reuse the template's sample image), and a **Flow button component** carrying a `flow_token`. The banner SHALL be served by the API server from a bundled asset (no external host); its URL defaults to `publicUrl` + the asset route and MAY be overridden in config.
+
+#### Scenario: Send includes image header and Flow button
+
+- **WHEN** the promo is sent for an application with a phone
+- **THEN** the template message includes a header image parameter and a Flow button component with a flow token
+- **AND** WhatsApp accepts it (no 132012 format error)
+
+#### Scenario: Banner is served by the API server
+
+- **WHEN** the configured promo image URL is empty
+- **THEN** the send uses `publicUrl` + the promo asset route
+- **AND** the API server serves the bundled banner at that route
+
+#### Scenario: Missing banner is reported, not sent blindly
+
+- **WHEN** no banner image is configured or resolvable
+- **THEN** the dashboard surfaces a clear "configure the promo image" error and no malformed send is attempted
+
 ### Requirement: Promo send is reviewer-gated
 
 The creation path that triggers a promo send SHALL require reviewer-level authentication. Unauthenticated or non-reviewer callers SHALL receive an authorization error and SHALL NOT trigger a send.

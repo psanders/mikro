@@ -125,7 +125,21 @@ export const sendWhatsAppTemplateSchema = z.object({
   /** Header component parameters: positional (string) or named ({ parameter_name, text }). */
   headerParameters: z.array(templateParameterSchema).optional().default([]),
   /** Body component parameters: positional (string) or named ({ parameter_name, text }). */
-  bodyParameters: z.array(templateParameterSchema).optional().default([])
+  bodyParameters: z.array(templateParameterSchema).optional().default([]),
+  /**
+   * Public URL for an IMAGE header. Required when the template was created with an
+   * image header — WhatsApp treats it as a per-send parameter (the sample image
+   * set in the template is not reused). Omit for text or no-header templates.
+   */
+  headerImageUrl: z.string().url().optional(),
+  /**
+   * Flow button token. Required when the template's CTA is a WhatsApp Flow
+   * button: the send must include a `sub_type: "flow"` button component carrying
+   * this token (echoed back in the nfm_reply). Omit for templates without a Flow
+   * button. Optional `flowActionData` seeds the Flow's first screen if it needs input.
+   */
+  flowToken: z.string().min(1).optional(),
+  flowActionData: z.record(z.string(), z.unknown()).optional()
 });
 
 /**

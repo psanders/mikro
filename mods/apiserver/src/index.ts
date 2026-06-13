@@ -16,7 +16,12 @@ if (!process.env.MIKRO_CONFIG_FILE) {
   process.env.MIKRO_CONFIG_FILE = resolve(repoRoot, "mikro.json");
 }
 
-import { getConfig, getLogoPath } from "@mikro/common";
+import {
+  getConfig,
+  getLogoPath,
+  getPromoBannerPath,
+  LOAN_APPLICATION_PROMO_ASSET_ROUTE
+} from "@mikro/common";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
@@ -141,6 +146,16 @@ const apiserverVersion: string = JSON.parse(
 ).version;
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", version: apiserverVersion });
+});
+
+// Public promo banner — UNAUTHENTICATED. The `loan_application` WhatsApp template
+// has an image header that WhatsApp fetches by URL at send time; serve the bundled
+// banner here so we don't depend on an external host. A single-file route (not a
+// static mount) keeps the rest of assets/ (Flow JSON, fonts) private.
+app.get(LOAN_APPLICATION_PROMO_ASSET_ROUTE, (_req, res) => {
+  res.sendFile(getPromoBannerPath(), (err) => {
+    if (err && !res.headersSent) res.status(404).end();
+  });
 });
 
 // Public loan application (solicitud) intake — UNAUTHENTICATED. The public

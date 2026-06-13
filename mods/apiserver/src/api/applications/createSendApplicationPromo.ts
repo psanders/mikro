@@ -18,6 +18,14 @@ interface Deps {
   templateName: string;
   /** Language code the template is registered under. */
   languageCode: string;
+  /** Public URL for the template's image header (required per-send parameter). */
+  imageUrl: string;
+}
+
+interface SendArgs {
+  phone: string | null;
+  /** Token for the template's Flow button; echoed back on Flow submission. */
+  flowToken: string;
 }
 
 /**
@@ -26,15 +34,27 @@ interface Deps {
  * throwing, so the caller (manual creation) never rolls back over a failed send.
  */
 export function createSendApplicationPromo(deps: Deps) {
-  return async (phone: string | null): Promise<PromoResult> => {
+  return async ({ phone, flowToken }: SendArgs): Promise<PromoResult> => {
     if (!phone) return { sent: false, error: "La solicitud no tiene teléfono." };
+    if (!deps.imageUrl) {
+      return {
+        sent: false,
+        error: "Falta configurar whatsapp.templates.loanApplicationPromoImageUrl."
+      };
+    }
     try {
       const res = await deps.sendTemplateMessage({
         phone,
         templateName: deps.templateName,
         languageCode: deps.languageCode,
         headerParameters: [],
-        bodyParameters: []
+        bodyParameters: [],
+        // The template has an IMAGE header (per-send parameter).
+        headerImageUrl: deps.imageUrl,
+        // The promo template's CTA is a WhatsApp Flow button; the send must carry
+        // a flow token. Correlation is by phone, so the value is opaque (we use
+        // the application id) but it is required for the template format to match.
+        flowToken
       });
       const messageId = res.messages?.[0]?.id;
       logger.verbose("application promo sent", { phone, messageId });

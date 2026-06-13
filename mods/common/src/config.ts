@@ -40,7 +40,11 @@ const whatsappTemplatesSchema = z.object({
   // When set, it overrides the language for the promo send only; leave empty to
   // fall back to `whatsapp.languageCode`. Remove the default once a Spanish
   // (es_DO) template is approved.
-  loanApplicationPromoLanguage: z.string().default("en_US")
+  loanApplicationPromoLanguage: z.string().default("en"),
+  // The promo template has an IMAGE header, which WhatsApp requires as a
+  // per-send parameter (the sample set in the template is not reused). Point this
+  // at a publicly reachable JPEG/PNG of the promo banner.
+  loanApplicationPromoImageUrl: z.string().default("")
 });
 
 // Prospect loan-application intake over WhatsApp via a native Flow form. Off by
@@ -69,7 +73,8 @@ const whatsappSchema = z.object({
   templates: whatsappTemplatesSchema.default(() => ({
     paymentConfirmation: "payment_receipt",
     loanApplicationPromo: "loan_application",
-    loanApplicationPromoLanguage: "en_US"
+    loanApplicationPromoLanguage: "en",
+    loanApplicationPromoImageUrl: ""
   }))
 });
 
@@ -416,6 +421,20 @@ export function resolvePathFromConfigDir(
 export function getLogoPath(): string {
   const cfg = getConfig();
   return resolvePathFromConfigDir(path.join(cfg.assetsPath, "logo.png"));
+}
+
+/**
+ * Public HTTP route the API server serves the loan-application promo banner at,
+ * and the asset filename on disk. The `loan_application` WhatsApp template has an
+ * image header that WhatsApp fetches by URL at send time; serving it from the API
+ * server (already public for the webhook) avoids an external host.
+ */
+export const LOAN_APPLICATION_PROMO_ASSET_ROUTE = "/assets/loan-application-promo.jpg";
+
+/** Disk path to the promo banner asset (assetsPath/loan-application-promo.jpg). */
+export function getPromoBannerPath(): string {
+  const cfg = getConfig();
+  return resolvePathFromConfigDir(path.join(cfg.assetsPath, "loan-application-promo.jpg"));
 }
 
 /**
