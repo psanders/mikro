@@ -79,6 +79,7 @@ export {
   getWhatsAppPhoneNumberId,
   getWhatsAppAccessToken,
   getWhatsAppIntakeFlow,
+  getWhatsAppPromoTemplate,
   getReceiptsPath,
   getPublicUrl,
   getVoiceNotesEnabled,

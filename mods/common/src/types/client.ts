@@ -342,6 +342,10 @@ export interface DbClient {
     delete(args: { where: { id: string } }): Promise<LoanApplication>;
     findUnique(args: { where: { id: string } }): Promise<LoanApplication | null>;
     findFirst(args: { where: { sessionId: string } }): Promise<LoanApplication | null>;
+    findFirst(args: {
+      where: { phone: string };
+      orderBy?: { createdAt?: "asc" | "desc" };
+    }): Promise<LoanApplication | null>;
     findMany(args?: {
       where?: { status?: ApplicationStatus };
       orderBy?: { createdAt?: "asc" | "desc" };

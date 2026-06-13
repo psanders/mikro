@@ -87,7 +87,9 @@ import {
   createGeneratePerformanceReport,
   createGenerateDefaultedReport,
   createGenerateRenewalCandidatesReport,
-  createUpsertApplication
+  createUpsertApplication,
+  createFindLatestApplicationByPhone,
+  createSubmitApplicationFromFlow
 } from "./api/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
@@ -148,6 +150,9 @@ app.get("/health", (_req, res) => {
 // leak schema details; only a genuine DB failure returns 500 so the form can
 // show its connection-error message.
 const upsertApplication = createUpsertApplication(prisma as unknown as DbClient);
+const findLatestApplicationByPhone = createFindLatestApplicationByPhone(
+  prisma as unknown as DbClient
+);
 
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
 // production hardening (shared store, WAF, captcha) is a follow-up.
@@ -638,22 +643,13 @@ async function initializeMessageProcessor() {
       );
     }
 
-    // Persist a prospect intake Flow submission through the same path as the
-    // website form: validate the payload, normalize, upsert + score by session.
-    const submitApplicationFromFlow = async (
-      payload: Record<string, string | boolean>
-    ): Promise<void> => {
-      const parsed = applicationPayloadSchema.safeParse(payload);
-      if (!parsed.success) {
-        logger.warn("intake flow: invalid payload", {
-          sessionId: typeof payload.sessionId === "string" ? payload.sessionId : undefined,
-          issues: parsed.error.issues.length
-        });
-        return;
-      }
-      const normalized = normalizeApplication(parsed.data);
-      await upsertApplication(normalized);
-    };
+    // Persist a prospect intake Flow submission: same normalize+upsert path as the
+    // website form, plus WhatsApp-only phone correlation (folds a completed Flow
+    // into an existing application for the sender's phone). Website POST is unaffected.
+    const submitApplicationFromFlow = createSubmitApplicationFromFlow({
+      upsertApplication,
+      findLatestApplicationByPhone
+    });
 
     const processorConfig = {
       routeMessage,

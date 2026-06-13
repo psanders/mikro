@@ -363,7 +363,10 @@ export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 // No sessionId required — the server generates one. Patch keys match the public
 // form's English content keys (same as updateApplication).
 export const createApplicationSchema = z.object({
-  patch: z.record(z.string(), z.string()).default({})
+  patch: z.record(z.string(), z.string()).default({}),
+  // When true and the created application has a phone, also send the approved
+  // promo template (CTA opens the intake Flow) to that phone after creation.
+  sendPromo: z.boolean().default(false)
 });
 
 export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;

@@ -31,7 +31,16 @@ const llmPurposesSchema = z.object({
 });
 
 const whatsappTemplatesSchema = z.object({
-  paymentConfirmation: z.string().default("payment_receipt")
+  paymentConfirmation: z.string().default("payment_receipt"),
+  // Approved Flow template whose CTA opens the loan-application intake Flow.
+  // Sent as the "promoción" when a reviewer opts in on manual creation.
+  loanApplicationPromo: z.string().default("loan_application"),
+  // TEMPORARY: the currently approved `loan_application` template is English, so
+  // its send language is pinned here independently of the shared `languageCode`.
+  // When set, it overrides the language for the promo send only; leave empty to
+  // fall back to `whatsapp.languageCode`. Remove the default once a Spanish
+  // (es_DO) template is approved.
+  loanApplicationPromoLanguage: z.string().default("en_US")
 });
 
 // Prospect loan-application intake over WhatsApp via a native Flow form. Off by
@@ -58,7 +67,9 @@ const whatsappSchema = z.object({
     draft: false
   })),
   templates: whatsappTemplatesSchema.default(() => ({
-    paymentConfirmation: "payment_receipt"
+    paymentConfirmation: "payment_receipt",
+    loanApplicationPromo: "loan_application",
+    loanApplicationPromoLanguage: "en_US"
   }))
 });
 
