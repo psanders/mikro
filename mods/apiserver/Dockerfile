@@ -34,8 +34,13 @@ COPY mods/apiserver/assets ./mods/apiserver/assets
 COPY mods/apiserver/docker-entrypoint.sh ./mods/apiserver/docker-entrypoint.sh
 RUN chmod +x ./mods/apiserver/docker-entrypoint.sh
 
-# Install production dependencies and rebuild native modules
+# Install production dependencies and install native modules.
+# prebuild-install downloads the prebuilt binary (linux-arm64-musl for Alpine,
+# linux-amd64 for x86); avoids npm rebuild which calls node-gyp directly and
+# compiles from source — that SIGILL's under QEMU arm64 emulation.
 RUN npm ci --omit=dev --ignore-scripts && \
+    node node_modules/.bin/prebuild-install \
+        --directory node_modules/better-sqlite3 || \
     npm rebuild better-sqlite3
 
 # `npm ci` from a macOS-generated lockfile omits the linux-musl native binaries
