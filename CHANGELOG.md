@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.6.0](https://github.com/psanders/mikro/compare/v1.5.0...v1.6.0) (2026-06-13)
+
+### Bug Fixes
+
+- **ci:** align site react/react-dom with root override; add lock-check ([e0f7b71](https://github.com/psanders/mikro/commit/e0f7b715bebb5420238adbd4bc4b8839cf7a9e61))
+- **contracts:** move legal-entity data to mikro.json; drop cedula assets ([e8045b8](https://github.com/psanders/mikro/commit/e8045b82baa7dd4400de8b5665a5237215de6e64))
+- **contracts:** render human-readable labels in loan contract PDF ([0496473](https://github.com/psanders/mikro/commit/049647394cd9da53f1a78c1b5228f0b61adfba44))
+
+### Features
+
+- **dashboard:** export the business-model projection as a branded PDF ([eeb84b4](https://github.com/psanders/mikro/commit/eeb84b40cb45495dd9bbb7f0bf6f4ab3eb884404))
+- **dashboard:** save files via native dialog in the Tauri desktop app ([615208c](https://github.com/psanders/mikro/commit/615208c686d63e64385bb8b39c299831d6668692))
+- **solicitudes:** manually create loan applications from the dashboard ([d59068e](https://github.com/psanders/mikro/commit/d59068e87b127d9e2a3d3401c4d6136cb7d98d74))
+
 # [1.5.0](https://github.com/psanders/mikro/compare/v1.4.1...v1.5.0) (2026-06-11)
 
 ### Bug Fixes
