@@ -40,8 +40,6 @@
     },
     "templates": {
       "paymentConfirmation": "payment_receipt",
-      "paymentReminder": "payment_reminder",
-      "paymentOverdue": "payment_overdue",
       "loanApplicationPromo": "loan_application",
       "loanApplicationPromoLanguage": "en",
       "loanApplicationPromoImageUrl": ""
