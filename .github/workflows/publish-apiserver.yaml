@@ -45,9 +45,6 @@ jobs:
           npm run build
           npm run db:generate -w @mikro/apiserver
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -71,5 +68,5 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           dockerfile: mods/apiserver/Dockerfile
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: "latest,${{ env.LERNA_VERSION }}"
