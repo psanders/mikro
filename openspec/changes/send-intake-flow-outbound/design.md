@@ -26,8 +26,11 @@ The Pencil design for the UI is complete and approved (this change's gate): in `
 **1. Send on create, gated by a modal checkbox.**
 The promo send is an optional side effect of `createApplication`, triggered by a `sendPromo` flag the modal sets from its default-unchecked checkbox. Because creation is a one-shot action, there is no path to send twice. Alternative considered: a standalone rail action on the detail view — rejected for screen clutter and double-send risk.
 
-**2. Send the bare approved template, no transport change.**
-The `loan_application` template already embeds the Flow CTA. We call the existing `sendTemplateMessage({ phone, templateName, languageCode })`. Alternative considered: pass a per-recipient `flow_token` (would require a Flow button component on the send) — rejected because correlation is phone-based.
+**2. Send must match the template's full format (image header + Flow button).**
+Initial assumption (bare send) was wrong: the approved `loan_application` template defines an **image header** and a **Flow CTA button**, and WhatsApp validates the send against that format (error 132012 otherwise). So `sendTemplateMessage` was extended to emit (a) a header **image** component (`headerImageUrl`) and (b) a **Flow button** component with a `flow_token`. Verified live against a test number: bare/partial sends return 132012; image-header + flow-button is accepted. Language is `en` (not `en_US` → 132001). The `flow_token` is opaque here (correlation is phone-based) — we pass the application id.
+
+**2b. Promo banner is served by the API server, not an external host.**
+WhatsApp re-requires the header image on every send (the template's sample image is not reused), so we need a public image URL. The banner is bundled in the repo (`mods/apiserver/assets/loan-application-promo.jpg`, exported from the Pencil "Facebook Ad (1.91:1)" frame) and served by a single dedicated API-server route (`/assets/loan-application-promo.jpg`) — the server is already public for the webhook. The send URL defaults to `publicUrl` + that route; `whatsapp.templates.loanApplicationPromoImageUrl` overrides it. Alternatives considered: WhatsApp media-id upload (id expiry/caching complexity) and the marketing site (couples sends to site deploys) — both rejected; the API server is the natural owner. A single-file route (not a static mount) keeps the rest of `assets/` private.
 
 **3. Promo send is best-effort, non-blocking to creation.**
 The application is created first; the send happens after. A WhatsApp error does not roll back creation — the mutation returns the application plus a promo result (`{ sent: boolean, messageId?, error? }`) so the dashboard can show creation success with a promo-specific confirmation or error.

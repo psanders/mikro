@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { getConfig, clearConfigCache } from "@mikro/common";
+import { getConfig, clearConfigCache, LOAN_APPLICATION_PROMO_ASSET_ROUTE } from "@mikro/common";
 import { type LLMConfig, type LLMPurpose, validateModelForVendor } from "./llm/providers.js";
 
 /** LLM purposes required at apiserver/agents startup. Evals is only required when running evals. */
@@ -91,13 +91,23 @@ export function getWhatsAppIntakeFlow(): { enabled: boolean; flowId: string; dra
  * sent when a reviewer opts in on manual application creation, plus the language
  * code to send it under (the shared WhatsApp language).
  */
-export function getWhatsAppPromoTemplate(): { templateName: string; languageCode: string } {
-  const { templates, languageCode } = getConfig().whatsapp;
+export function getWhatsAppPromoTemplate(): {
+  templateName: string;
+  languageCode: string;
+  imageUrl: string;
+} {
+  const cfg = getConfig();
+  const { templates, languageCode } = cfg.whatsapp;
+  // The template's IMAGE header is a per-send parameter. Default to the banner
+  // the API server serves (publicUrl + asset route); an explicit config URL wins.
+  const publicBase = cfg.publicUrl.replace(/\/+$/, "");
   return {
     templateName: templates.loanApplicationPromo,
     // Temporary per-template language pin (the approved template is English).
     // Falls back to the shared WhatsApp language when left empty.
-    languageCode: templates.loanApplicationPromoLanguage || languageCode
+    languageCode: templates.loanApplicationPromoLanguage || languageCode,
+    imageUrl:
+      templates.loanApplicationPromoImageUrl || `${publicBase}${LOAN_APPLICATION_PROMO_ASSET_ROUTE}`
   };
 }
 

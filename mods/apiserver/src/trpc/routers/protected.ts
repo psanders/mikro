@@ -548,13 +548,14 @@ export const protectedRouter = router({
       let promo: PromoResult | null = null;
       if (input.sendPromo) {
         const whatsAppClient = createWhatsAppClient();
-        const { templateName, languageCode } = getWhatsAppPromoTemplate();
+        const { templateName, languageCode, imageUrl } = getWhatsAppPromoTemplate();
         const sendPromo = createSendApplicationPromo({
           sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
           templateName,
-          languageCode
+          languageCode,
+          imageUrl
         });
-        promo = await sendPromo(application.phone);
+        promo = await sendPromo({ phone: application.phone, flowToken: application.id });
       }
 
       return { ...application, promo };

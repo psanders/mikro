@@ -30,4 +30,4 @@
 - [x] 6.1 Mutation tests: `sendPromo: true` with a phone sends once and returns the message id; without a phone returns `sent: false`; omitted sends nothing; WhatsApp error returns a promo error without failing creation; reviewer gating enforced.
 - [x] 6.2 Correlation tests: WhatsApp Flow submission merges into the matching application by phone; no match creates a new row; most-recent wins on multiple matches.
 - [x] 6.3 Regression tests: two website submissions sharing a phone stay distinct; website submission does not merge by phone.
-- [ ] 6.4 Manual verify: create a manual application with the checkbox on and a test number; confirm the template (Flow CTA) arrives and the confirmation shows; complete the Flow and confirm it updates the originating application.
+- [x] 6.4 Manual verify: create a manual application with the checkbox on and a test number; confirm the template (Flow CTA) arrives and the confirmation shows; complete the Flow and confirm it updates the originating application.

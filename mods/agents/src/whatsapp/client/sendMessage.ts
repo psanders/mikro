@@ -305,10 +305,26 @@ export async function sendTemplateMessage(
     return { type: "text", parameter_name: p.parameter_name, text: p.text };
   };
 
+  type TemplateParam =
+    | { type: "text"; text: string; parameter_name?: string }
+    | { type: "image"; image: { link: string } }
+    | {
+        type: "action";
+        action: { flow_token: string; flow_action_data?: Record<string, unknown> };
+      };
   const components: Array<{
     type: string;
-    parameters: Array<{ type: "text"; text: string; parameter_name?: string }>;
+    sub_type?: string;
+    index?: string;
+    parameters: TemplateParam[];
   }> = [];
+  // An image header is a per-send parameter and must precede text header params.
+  if (params.headerImageUrl) {
+    components.push({
+      type: "header",
+      parameters: [{ type: "image", image: { link: params.headerImageUrl } }]
+    });
+  }
   if (headerParameters.length > 0) {
     components.push({
       type: "header",
@@ -319,6 +335,25 @@ export async function sendTemplateMessage(
     components.push({
       type: "body",
       parameters: bodyParameters.map(toParamObject)
+    });
+  }
+  // Flow CTA templates require a button component carrying the flow token; the
+  // template's defined format includes the Flow button, so omitting this fails
+  // with error 132012 ("parameter format does not match the created template").
+  if (params.flowToken) {
+    components.push({
+      type: "button",
+      sub_type: "flow",
+      index: "0",
+      parameters: [
+        {
+          type: "action",
+          action: {
+            flow_token: params.flowToken,
+            ...(params.flowActionData ? { flow_action_data: params.flowActionData } : {})
+          }
+        }
+      ]
     });
   }
   const requestBody = {

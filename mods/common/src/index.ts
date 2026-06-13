@@ -15,6 +15,8 @@ export {
   DEFAULT_DATABASE_URL,
   resolvePathFromConfigDir,
   getLogoPath,
+  getPromoBannerPath,
+  LOAN_APPLICATION_PROMO_ASSET_ROUTE,
   getContractConfig,
   clearConfigCache,
   mikroConfigSchema,
