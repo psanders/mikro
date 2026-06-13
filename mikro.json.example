@@ -33,11 +33,6 @@
     "accessToken": "your-whatsapp-access-token",
     "verifyToken": "mikro_webhook_token",
     "languageCode": "es_DO",
-    "intakeFlow": {
-      "enabled": false,
-      "flowId": "",
-      "draft": false
-    },
     "templates": {
       "paymentConfirmation": "payment_receipt",
       "loanApplicationPromo": "loan_application",

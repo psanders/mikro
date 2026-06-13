@@ -16,7 +16,8 @@ import { ROLE_TO_AGENT } from "../constants.js";
  * 1. Customer → Log and ignore (customers don't use agents)
  * 2. User (COLLECTOR role) → Ignored (collectors use the mobile app)
  * 3. User (ADMIN role) → Route to Maria agent
- * 4. Unknown phone (prospect) → guest_intake when intake is enabled, else ignored
+ * 4. Unknown phone (prospect) → ignored (no automated WhatsApp response;
+ *    outreach is outbound-only and replies are handled manually)
  *
  * @param deps - Dependencies for database lookups
  * @returns A function that routes messages based on phone number
@@ -34,7 +35,7 @@ import { ROLE_TO_AGENT } from "../constants.js";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getCustomerByPhone, isAgentDisabled, isIntakeEnabled } = deps;
+  const { getUserByPhone, getCustomerByPhone, isAgentDisabled } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
@@ -129,17 +130,15 @@ export function createMessageRouter(deps: RouterDependencies) {
       };
     }
 
-    // Step 3: Unknown phone — a prospect. When intake is enabled, route to the
-    // Flow-based loan-application intake; otherwise ignore (legacy behavior).
-    if (isIntakeEnabled()) {
-      logger.verbose("phone is unknown, routing to prospect intake", { phone: normalizedPhone });
-      return { type: "guest_intake", phone: normalizedPhone };
-    }
-
-    logger.verbose("phone is unknown, ignoring (intake disabled)", { phone: normalizedPhone });
+    // Step 3: Unknown phone — a prospect. We do not auto-respond over WhatsApp;
+    // outreach is outbound-only (the promo) and replies are handled manually
+    // via an external application.
+    logger.verbose("phone is unknown, ignoring (no automated response)", {
+      phone: normalizedPhone
+    });
     return {
       type: "ignored",
-      reason: "unknown phone — onboarding over WhatsApp is disabled",
+      reason: "unknown phone — no automated WhatsApp response",
       phone: normalizedPhone
     };
   };

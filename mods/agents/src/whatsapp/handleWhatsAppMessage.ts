@@ -12,14 +12,13 @@ import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
-import { getMessageMaxAgeSeconds, getWhatsAppIntakeFlow } from "../config.js";
+import { getMessageMaxAgeSeconds } from "../config.js";
 import { logger } from "../logger.js";
 import { ROLE_TO_AGENT, type AgentName } from "../constants.js";
 import {
-  buildIntakeFlowMessage,
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
-} from "./intakeFlow.js";
+} from "./loanApplicationFlowSubmission.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -82,29 +81,6 @@ let initializationComplete = false;
 /** Deduplicate webhook delivery: message id -> timestamp (ms). Pruned by TTL. */
 const processedMessageIds = new Map<string, number>();
 const DEDUP_TTL_MS = 60_000;
-
-/**
- * Throttle the intake-Flow greeting so a chatty prospect isn't spammed with the
- * form button on every message. phone -> last-sent timestamp (ms).
- */
-const intakeFlowSentAt = new Map<string, number>();
-const INTAKE_FLOW_RESEND_MS = 60 * 60_000; // 1 hour
-
-function shouldSendIntakeFlow(phone: string): boolean {
-  const now = Date.now();
-  for (const [p, ts] of intakeFlowSentAt) {
-    if (now - ts > INTAKE_FLOW_RESEND_MS) intakeFlowSentAt.delete(p);
-  }
-  const last = intakeFlowSentAt.get(phone);
-  if (last && now - last < INTAKE_FLOW_RESEND_MS) return false;
-  intakeFlowSentAt.set(phone, now);
-  return true;
-}
-
-/** Clear intake-flow throttle (for testing only). */
-export function resetIntakeFlowThrottleForTesting(): void {
-  intakeFlowSentAt.clear();
-}
 
 function pruneProcessedMessageIds(): void {
   const now = Date.now();
@@ -474,27 +450,6 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
     if (route.type === "ignored") {
       logger.verbose("message ignored", { phone, reason: route.reason });
-      return;
-    }
-
-    // Prospect (unknown number) with intake enabled: greet with the Flow form
-    // button. Throttled so repeated messages don't re-send the button.
-    if (route.type === "guest_intake") {
-      if (!shouldSendIntakeFlow(phone)) {
-        logger.verbose("intake flow recently sent, skipping resend", { phone });
-        return;
-      }
-      const { flowId, draft } = getWhatsAppIntakeFlow();
-      try {
-        await sendWhatsAppMessage(buildIntakeFlowMessage(phone, flowId, draft));
-        logger.info("intake flow sent to prospect", { phone, flowId });
-      } catch (error) {
-        intakeFlowSentAt.delete(phone); // allow retry on a later message
-        logger.error("failed to send intake flow", {
-          phone,
-          error: (error as Error).message
-        });
-      }
       return;
     }
 

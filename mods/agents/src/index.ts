@@ -78,7 +78,6 @@ export {
   getWebhookVerifyToken,
   getWhatsAppPhoneNumberId,
   getWhatsAppAccessToken,
-  getWhatsAppIntakeFlow,
   getWhatsAppPromoTemplate,
   getReceiptsPath,
   getPublicUrl,

@@ -7,8 +7,7 @@ import {
   handleWhatsAppMessage,
   setMessageProcessor,
   markInitializationComplete,
-  resetProcessedMessageIdsForTesting,
-  resetIntakeFlowThrottleForTesting
+  resetProcessedMessageIdsForTesting
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
 import { ValidationError } from "@mikro/common";
@@ -80,7 +79,6 @@ describe("handleWhatsAppMessage", () => {
     mockMessageProcessor.submitApplicationFromFlow = sinon.stub().resolves();
 
     resetProcessedMessageIdsForTesting();
-    resetIntakeFlowThrottleForTesting();
     clearSessionsForTesting();
     setMessageProcessor(mockMessageProcessor);
     markInitializationComplete();
@@ -447,30 +445,17 @@ describe("handleWhatsAppMessage", () => {
       ]
     });
 
-    it("sends the Flow form to a guest_intake-routed prospect", async () => {
-      mockMessageProcessor.routeMessage
-        .withArgs(prospect)
-        .resolves({ type: "guest_intake" as const, phone: prospect });
+    it("does not respond to an unknown number (no greeting, no notification)", async () => {
+      mockMessageProcessor.routeMessage.withArgs(prospect).resolves({
+        type: "ignored" as const,
+        reason: "unknown phone — no automated WhatsApp response",
+        phone: prospect
+      });
 
       await handleWhatsAppMessage(guestWebhook("msg-g1"));
 
-      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
-      const arg = mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0];
-      expect(arg.phone).to.equal(prospect);
-      expect(arg.flow, "flow message sent").to.exist;
-      expect(arg.flow.screen).to.equal("SOLICITUD");
-      expect(mockMessageProcessor.invokeLLM.called, "no LLM for intake").to.be.false;
-    });
-
-    it("does not re-send the Flow within the throttle window", async () => {
-      mockMessageProcessor.routeMessage
-        .withArgs(prospect)
-        .resolves({ type: "guest_intake" as const, phone: prospect });
-
-      await handleWhatsAppMessage(guestWebhook("msg-g1"));
-      await handleWhatsAppMessage(guestWebhook("msg-g2"));
-
-      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce, "flow sent only once").to.be.true;
+      expect(mockMessageProcessor.sendWhatsAppMessage.called, "nothing sent back").to.be.false;
+      expect(mockMessageProcessor.invokeLLM.called, "no LLM").to.be.false;
     });
 
     it("submits a completed Flow and confirms to the prospect", async () => {

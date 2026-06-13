@@ -2,27 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { expect } from "chai";
-import {
-  buildIntakeFlowMessage,
-  mapFlowAnswersToPayload,
-  INTAKE_FLOW_SCREEN
-} from "../../src/whatsapp/intakeFlow.js";
+import { mapFlowAnswersToPayload } from "../../src/whatsapp/loanApplicationFlowSubmission.js";
 
-describe("intakeFlow", () => {
-  describe("buildIntakeFlowMessage", () => {
-    it("builds an interactive flow message opening the intake screen", () => {
-      const msg = buildIntakeFlowMessage("+18095551234", "flow-abc");
-      expect(msg.phone).to.equal("+18095551234");
-      expect(msg.flow).to.exist;
-      expect(msg.flow?.flowId).to.equal("flow-abc");
-      expect(msg.flow?.screen).to.equal(INTAKE_FLOW_SCREEN);
-      expect(msg.flow?.cta).to.be.a("string").and.not.empty;
-      expect(msg.flow?.body).to.be.a("string").and.not.empty;
-      // flowToken correlates by phone
-      expect(msg.flow?.flowToken).to.contain("+18095551234");
-    });
-  });
-
+describe("loanApplicationFlowSubmission", () => {
   describe("mapFlowAnswersToPayload", () => {
     const baseAnswers = {
       firstName: "Juan",
