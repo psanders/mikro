@@ -78,15 +78,6 @@ export function getWhatsAppAccessToken(): string {
 }
 
 /**
- * Prospect intake Flow config. Intake is active only when explicitly enabled
- * AND a published `flowId` is set; otherwise unknown numbers keep being ignored.
- */
-export function getWhatsAppIntakeFlow(): { enabled: boolean; flowId: string; draft: boolean } {
-  const { enabled, flowId, draft } = getConfig().whatsapp.intakeFlow;
-  return { enabled: enabled && flowId.length > 0, flowId, draft };
-}
-
-/**
  * Promo template config: the approved Flow template (CTA opens the intake Flow)
  * sent when a reviewer opts in on manual application creation, plus the language
  * code to send it under (the shared WhatsApp language).

@@ -1,54 +1,16 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Prospect loan-application intake over WhatsApp via a native Flow form. An
- * unknown number that messages the business line is greeted with a button that
- * opens the published Flow (the in-chat equivalent of the website's solicitud
- * form). On submit, the answers arrive as an `nfm_reply` and are mapped to the
- * same intake payload the website posts, so scoring and the dashboard are
- * identical regardless of channel.
+ * Ingestion of loan-application Flow submissions over WhatsApp. The outbound
+ * promo template's CTA opens the published Flow; on submit, the answers arrive
+ * as an `nfm_reply` and are mapped to the same intake payload the website posts,
+ * so scoring and the dashboard are identical regardless of channel.
  */
-import type { SendWhatsAppMessageInput } from "@mikro/common";
-
-/** First (and only) screen id in solicitud-credito.json. */
-export const INTAKE_FLOW_SCREEN = "SOLICITUD";
-
-const INTAKE_FLOW_CTA = "Solicitar crédito";
-const INTAKE_FLOW_HEADER = "Mikro Crédito";
-const INTAKE_FLOW_BODY =
-  "¡Hola! Para evaluar tu solicitud de crédito, toca el botón y completa el formulario. " +
-  "Toma menos de 5 minutos y tu información viaja cifrada.";
-const INTAKE_FLOW_FOOTER = "Respuesta en menos de 24 horas";
 
 /** Confirmation sent after a successful Flow submission (mirrors the website success screen). */
 export const INTAKE_RECEIVED_MESSAGE =
   "¡Solicitud recibida! La revisaremos y te responderemos en menos de 24 horas. " +
   "Si tienes preguntas, escríbenos por aquí.";
-
-/**
- * Build the interactive Flow message that opens the intake form.
- * `flowToken` is opaque and echoed back in the nfm_reply; we derive it from the
- * phone so logs correlate, though the submitter's phone also comes from `from`.
- */
-export function buildIntakeFlowMessage(
-  phone: string,
-  flowId: string,
-  draft = false
-): SendWhatsAppMessageInput {
-  return {
-    phone,
-    flow: {
-      flowId,
-      flowToken: `intake-${phone}-${Date.now()}`,
-      screen: INTAKE_FLOW_SCREEN,
-      cta: INTAKE_FLOW_CTA,
-      header: INTAKE_FLOW_HEADER,
-      body: INTAKE_FLOW_BODY,
-      footer: INTAKE_FLOW_FOOTER,
-      ...(draft && { mode: "draft" as const })
-    }
-  };
-}
 
 /**
  * Convert a Flow DatePicker value (Unix epoch milliseconds as a string) to the

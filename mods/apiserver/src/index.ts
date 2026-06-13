@@ -49,7 +49,6 @@ import {
   getDisabledAgents,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
-  getWhatsAppIntakeFlow,
   initializeLLM,
   type Message,
   type AgentName,
@@ -350,8 +349,7 @@ async function initializeMessageProcessor() {
           isActive: customer.isActive
         };
       },
-      isAgentDisabled,
-      isIntakeEnabled: () => getWhatsAppIntakeFlow().enabled
+      isAgentDisabled
     });
 
     const toExportedCustomer = (customer: {

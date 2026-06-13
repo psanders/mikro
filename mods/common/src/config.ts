@@ -47,29 +47,11 @@ const whatsappTemplatesSchema = z.object({
   loanApplicationPromoImageUrl: z.string().default("")
 });
 
-// Prospect loan-application intake over WhatsApp via a native Flow form. Off by
-// default: when enabled, an unknown number that messages the business line is
-// greeted with a button that opens the published Flow (`flowId`). Disabled
-// unless `flowId` is set, so prospects keep being ignored until a real Flow is
-// published in WhatsApp Manager.
-const whatsappIntakeFlowSchema = z.object({
-  enabled: z.boolean().default(false),
-  flowId: z.string().default(""),
-  // Send the Flow in draft mode (only WABA admins/testers can open it). Lets
-  // you test the deployed intake before the business is verified/published.
-  draft: z.boolean().default(false)
-});
-
 const whatsappSchema = z.object({
   phoneNumberId: z.string().min(1, "WhatsApp phoneNumberId is required"),
   accessToken: z.string().min(1, "WhatsApp accessToken is required"),
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
-  intakeFlow: whatsappIntakeFlowSchema.default(() => ({
-    enabled: false,
-    flowId: "",
-    draft: false
-  })),
   templates: whatsappTemplatesSchema.default(() => ({
     paymentConfirmation: "payment_receipt",
     loanApplicationPromo: "loan_application",
