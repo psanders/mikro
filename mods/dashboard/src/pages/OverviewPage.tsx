@@ -1,13 +1,17 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronRight, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatCard } from "../components/ui/StatCard";
 import { StatusText } from "../components/ui/StatusText";
+import { Button } from "../components/ui/Button";
+import { SendPromoModal } from "../components/SendPromoModal";
 import { statusMeta, formatDop, isForbidden } from "../lib/applications";
+import { MessageCircle } from "lucide-react";
 
 const todaySubtitle = `Resumen de operaciones · ${new Intl.DateTimeFormat("es-DO", {
   weekday: "long",
@@ -15,15 +19,49 @@ const todaySubtitle = `Resumen de operaciones · ${new Intl.DateTimeFormat("es-D
   month: "short"
 }).format(new Date())}`;
 
+interface ToastState {
+  type: "success" | "error";
+  message: string;
+}
+
+function Toast({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 8000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  const isSuccess = toast.type === "success";
+  return (
+    <div
+      className={`fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-[10px] px-4 py-3 shadow-lg ${
+        isSuccess ? "bg-ds-green text-white" : "bg-ds-red text-white"
+      }`}
+    >
+      {isSuccess ? <CheckCircle size={16} /> : <XCircle size={16} />}
+      <span className="text-[13px] font-medium">{toast.message}</span>
+    </div>
+  );
+}
+
 // Pencil "Operations / 02 Inicio (Dashboard)" (IDIY8): page header + four KPI
 // cards (placeholder) + the recent-requests table, now wired to listApplications.
 export function OverviewPage() {
   const navigate = useNavigate();
   const apps = trpc.listApplications.useQuery({ limit: 6 });
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Inicio" subtitle={todaySubtitle} />
+      <PageHeader
+        title="Inicio"
+        subtitle={todaySubtitle}
+        action={
+          <Button variant="primary" icon={MessageCircle} onClick={() => setPromoOpen(true)}>
+            Enviar promoción
+          </Button>
+        }
+      />
 
       <div className="flex flex-col gap-5 p-7">
         {/* KPIs — placeholder figures pending report procedures */}
@@ -123,6 +161,16 @@ export function OverviewPage() {
           })}
         </div>
       </div>
+
+      {promoOpen && (
+        <SendPromoModal
+          onClose={() => setPromoOpen(false)}
+          onSuccess={(message) => setToast({ type: "success", message })}
+          onError={(message) => setToast({ type: "error", message })}
+        />
+      )}
+
+      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }

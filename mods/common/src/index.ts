@@ -141,6 +141,7 @@ export {
   deleteIdImageSchema,
   deleteApplicationContractSchema,
   generateApplicationSummarySchema,
+  sendPromoSchema,
   BUSINESS_TYPE_LABELS,
   PROVINCE_LABELS,
   APPLICATION_STABLE_KEYS,
@@ -170,6 +171,7 @@ export {
   type DeleteIdImageInput,
   type DeleteApplicationContractInput,
   type GenerateApplicationSummaryInput,
+  type SendPromoInput,
   // Customer schemas
   createCustomerSchema,
   updateCustomerSchema,

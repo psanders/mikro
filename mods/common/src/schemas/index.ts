@@ -28,6 +28,7 @@ export {
   deleteIdImageSchema,
   deleteApplicationContractSchema,
   generateApplicationSummarySchema,
+  sendPromoSchema,
   BUSINESS_TYPE_LABELS,
   PROVINCE_LABELS,
   APPLICATION_STABLE_KEYS,
@@ -56,7 +57,8 @@ export {
   type GetIdImageInput,
   type DeleteIdImageInput,
   type DeleteApplicationContractInput,
-  type GenerateApplicationSummaryInput
+  type GenerateApplicationSummaryInput,
+  type SendPromoInput
 } from "./application.js";
 
 export {

@@ -518,3 +518,10 @@ export const generateApplicationSummarySchema = z
   .refine(requireRef, refMessage);
 
 export type GenerateApplicationSummaryInput = z.infer<typeof generateApplicationSummarySchema>;
+
+// ---- standalone promo send ----
+
+/** Send the promo template to a phone without creating a loan application. */
+export const sendPromoSchema = z.object({ phone: z.string() });
+
+export type SendPromoInput = z.infer<typeof sendPromoSchema>;

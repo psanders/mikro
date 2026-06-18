@@ -31336,6 +31336,82 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TfXGP",
+                          "name": "promo-opt",
+                          "width": "fill_container",
+                          "fill": "#E8F7EE",
+                          "cornerRadius": 10,
+                          "stroke": "$ds.green",
+                          "strokeWidth": 1,
+                          "gap": 12,
+                          "padding": [
+                            13,
+                            14
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "T2sm7H",
+                              "name": "checkbox",
+                              "width": 20,
+                              "height": 20,
+                              "fill": "$ds.surface",
+                              "cornerRadius": 6,
+                              "stroke": "$ds.green",
+                              "strokeWidth": 2,
+                              "justifyContent": "center",
+                              "alignItems": "center"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "j2Q31",
+                              "name": "txt",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "iTMts",
+                                  "name": "label",
+                                  "fill": "$brand.ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Enviar promoción por WhatsApp",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "wAhPZ",
+                                  "name": "sub",
+                                  "fill": "$ds.muted",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Al guardar, le enviamos la invitación de solicitud al WhatsApp del prospecto. Requiere teléfono.",
+                                  "lineHeight": 1.3,
+                                  "fontFamily": "Geist",
+                                  "fontSize": 11,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "icon",
+                              "id": "ENIYq",
+                              "name": "wa",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "message-circle",
+                              "library": "lucide",
+                              "fill": "$ds.green"
+                            }
+                          ]
                         }
                       ]
                     },

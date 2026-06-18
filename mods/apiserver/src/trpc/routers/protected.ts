@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { randomUUID } from "crypto";
 import {
   // Customer schemas
   createCustomerSchema,
@@ -66,7 +67,8 @@ import {
   getIdImageSchema,
   deleteIdImageSchema,
   deleteApplicationContractSchema,
-  generateApplicationSummarySchema
+  generateApplicationSummarySchema,
+  sendPromoSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
@@ -618,6 +620,31 @@ export const protectedRouter = router({
       const fn = createGenerateApplicationSummary(ctx.db);
       return fn(input);
     }),
+
+  /**
+   * Send the promo template to a phone without creating a loan application.
+   * Available to any authenticated user. Best-effort: errors are returned as
+   * `{ sent: false, error }` rather than thrown.
+   */
+  sendPromo: protectedProcedure.input(sendPromoSchema).mutation(async ({ input }) => {
+    const whatsAppClient = createWhatsAppClient();
+    const { templateName, languageCode, imageUrl } = getWhatsAppPromoTemplate();
+    const sendFn = createSendApplicationPromo({
+      sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
+      templateName,
+      languageCode,
+      imageUrl
+    });
+    // Normalize to E.164 — same logic as normalizeApplication's parsePhone.
+    const digits = input.phone.replace(/\D/g, "");
+    const e164 =
+      digits.length === 10
+        ? `+1${digits}`
+        : digits.length === 11 && digits.startsWith("1")
+          ? `+${digits}`
+          : null;
+    return sendFn({ phone: e164, flowToken: randomUUID() });
+  }),
 
   // ==================== Payment procedures ====================
 
