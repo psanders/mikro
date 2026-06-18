@@ -427,7 +427,6 @@ function RegisterTransactionModal({
               className="w-full"
               required
             >
-              <option value="">— Seleccionar —</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -444,7 +443,6 @@ function RegisterTransactionModal({
                 className="w-full"
                 required
               >
-                <option value="">— Seleccionar —</option>
                 {accounts
                   .filter((a) => a.id !== accountId)
                   .map((a) => (
@@ -463,7 +461,6 @@ function RegisterTransactionModal({
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full"
               >
-                <option value="">— Sin categoría —</option>
                 {filteredCategories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
