@@ -123,10 +123,10 @@ export function ClientesPage() {
                     {c.nickname && <span className="text-xs text-ds-muted">{c.nickname}</span>}
                   </div>
                 </div>
-                <span className="w-[150px] text-[13px] text-ds-muted">{c.idNumber || "—"}</span>
-                <span className="w-[150px] text-[13px] text-brand-ink">{c.phone || "—"}</span>
+                <span className="w-[150px] text-[13px] text-ds-muted">{c.idNumber || ""}</span>
+                <span className="w-[150px] text-[13px] text-brand-ink">{c.phone || ""}</span>
                 <span className="flex-1 truncate text-[13px] text-ds-muted">
-                  {c.homeAddress || "—"}
+                  {c.homeAddress || ""}
                 </span>
                 <span className="w-[110px]">
                   <StatusText tone="neutral">{c.isActive ? "Activo" : "Inactivo"}</StatusText>

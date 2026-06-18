@@ -139,7 +139,7 @@ export function SolicitudesPage() {
           )}
 
           {rows.map((a, i) => {
-            const name = [a.firstName, a.lastName].filter(Boolean).join(" ").trim() || "—";
+            const name = [a.firstName, a.lastName].filter(Boolean).join(" ").trim() || "";
             const st = statusMeta(a.status);
             const last = i === rows.length - 1;
             return (
@@ -166,13 +166,13 @@ export function SolicitudesPage() {
                 </div>
                 <div className="flex flex-1 flex-col">
                   <span className="text-sm font-medium text-brand-ink">{name}</span>
-                  <span className="text-xs text-ds-muted">{a.businessName ?? "—"}</span>
+                  <span className="text-xs text-ds-muted">{a.businessName ?? ""}</span>
                 </div>
                 <span className="w-[130px] text-sm font-medium text-brand-ink">
                   {formatDop(a.requestedAmount)}
                 </span>
                 <span className="w-20 text-sm font-medium text-brand-ink">
-                  {a.score != null ? a.score : "—"}
+                  {a.score != null ? a.score : ""}
                 </span>
                 <span className="w-[160px] text-[13px] text-ds-muted">
                   {a.reviewedById ? (userName.get(a.reviewedById) ?? "Asignado") : "Sin asignar"}

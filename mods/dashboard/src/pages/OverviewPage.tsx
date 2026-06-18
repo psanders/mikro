@@ -128,7 +128,7 @@ export function OverviewPage() {
           )}
 
           {apps.data?.map((app, i, arr) => {
-            const name = [app.firstName, app.lastName].filter(Boolean).join(" ").trim() || "—";
+            const name = [app.firstName, app.lastName].filter(Boolean).join(" ").trim() || "";
             const st = statusMeta(app.status);
             const last = i === arr.length - 1;
             return (
@@ -142,13 +142,13 @@ export function OverviewPage() {
               >
                 <div className="flex flex-1 flex-col">
                   <span className="text-sm font-medium text-brand-ink">{name}</span>
-                  <span className="text-xs text-ds-muted">{app.businessName ?? "—"}</span>
+                  <span className="text-xs text-ds-muted">{app.businessName ?? ""}</span>
                 </div>
                 <span className="w-[150px] text-sm font-medium text-brand-ink">
                   {formatDop(app.requestedAmount)}
                 </span>
                 <span className="w-[110px] text-[13px] text-ds-muted">
-                  {app.score != null ? app.score : "—"}
+                  {app.score != null ? app.score : ""}
                 </span>
                 <span className="w-[150px]">
                   <StatusText tone={st.tone}>{st.label}</StatusText>

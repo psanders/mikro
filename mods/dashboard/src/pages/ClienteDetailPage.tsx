@@ -98,19 +98,19 @@ export function ClienteDetailPage() {
           <div className="flex flex-1 flex-col divide-y divide-ds-border overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">
             <Section label="Datos del cliente">
               <KV k="Nombre completo" v={c.name} />
-              <KV k="Apodo" v={c.nickname ?? "—"} />
-              <KV k="Cédula" v={c.idNumber || "—"} />
-              <KV k="Teléfono" v={c.phone || "—"} />
-              <KV k="Dirección" v={c.homeAddress || "—"} />
-              <KV k="Ocupación" v={c.jobPosition ?? "—"} />
-              <KV k="Ingreso mensual" v={c.income != null ? formatDop(c.income) : "—"} />
+              <KV k="Apodo" v={c.nickname ?? ""} />
+              <KV k="Cédula" v={c.idNumber || ""} />
+              <KV k="Teléfono" v={c.phone || ""} />
+              <KV k="Dirección" v={c.homeAddress || ""} />
+              <KV k="Ocupación" v={c.jobPosition ?? ""} />
+              <KV k="Ingreso mensual" v={c.income != null ? formatDop(c.income) : ""} />
               <KV k="Dueño de negocio" v={c.isBusinessOwner ? "Sí" : "No"} />
               <KV
                 k="Día de pago"
                 v={
                   c.preferredPaymentDay
                     ? (DAY_OF_WEEK_LABELS[c.preferredPaymentDay] ?? c.preferredPaymentDay)
-                    : "—"
+                    : ""
                 }
               />
               <KV k="Cédula en archivo" v={c.idCardOnRecord ? "Sí" : "No"} />
@@ -126,8 +126,8 @@ export function ClienteDetailPage() {
                     : "Sin asignar"
                 }
               />
-              <KV k="Creado por" v={c.createdById ? (userName.get(c.createdById) ?? "—") : "—"} />
-              <KV k="Punto de cobro" v={c.collectionPoint ?? "—"} />
+              <KV k="Creado por" v={c.createdById ? (userName.get(c.createdById) ?? "") : ""} />
+              <KV k="Punto de cobro" v={c.collectionPoint ?? ""} />
             </Section>
 
             {/* Loans */}
@@ -321,7 +321,7 @@ function KV({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex flex-col gap-[3px]">
       <span className="text-[12px] font-medium text-ds-muted">{k}</span>
-      <span className="text-[14px] font-medium text-brand-ink">{v}</span>
+      <span className="min-h-[1.2em] text-[14px] font-medium text-brand-ink">{v}</span>
     </div>
   );
 }

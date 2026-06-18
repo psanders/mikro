@@ -206,7 +206,7 @@ export function ContabilidadPage() {
               tx.type === "TRANSFER" && tx.toAccount
                 ? `${tx.account.name} → ${tx.toAccount.name}`
                 : tx.account.name;
-            const descripcion = tx.description || tx.vendor || "—";
+            const descripcion = tx.description || tx.vendor || "";
             return (
               <button
                 key={tx.id}
@@ -226,7 +226,7 @@ export function ContabilidadPage() {
                 </span>
                 <span className="w-[160px] truncate text-[13px] text-brand-ink">{cuenta}</span>
                 <span className="w-[130px] truncate text-[13px] text-ds-muted">
-                  {tx.category?.name ?? "—"}
+                  {tx.category?.name ?? ""}
                 </span>
                 <span className="flex-1 truncate text-[13px] text-ds-muted">{descripcion}</span>
                 <span className="w-[120px] text-right text-[13px] font-medium text-brand-ink">

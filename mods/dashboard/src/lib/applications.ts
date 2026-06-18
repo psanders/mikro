@@ -59,7 +59,7 @@ export const RECOMMENDATION_META: Record<string, string> = {
 };
 
 export function recommendationLabel(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "";
   return RECOMMENDATION_META[value] ?? value;
 }
 
@@ -71,7 +71,7 @@ export const CONFIDENCE_META: Record<string, string> = {
 };
 
 export function confidenceLabel(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "";
   return CONFIDENCE_META[value] ?? value;
 }
 
@@ -114,14 +114,15 @@ export function allowedActions(status: string): {
 
 export function formatDop(value: unknown): string {
   const n = Number(value);
-  return `RD$ ${Number.isFinite(n) ? n.toLocaleString("es-DO", { maximumFractionDigits: 0 }) : "—"}`;
+  if (!Number.isFinite(n)) return "";
+  return `RD$ ${n.toLocaleString("es-DO", { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDate(value: string | Date | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "";
   const d = new Date(value);
   return Number.isNaN(d.getTime())
-    ? "—"
+    ? ""
     : new Intl.DateTimeFormat("es-DO", { day: "numeric", month: "short", year: "numeric" }).format(
         d
       );
@@ -144,7 +145,7 @@ SELECT_LABELS.set("province", new Map(Object.entries(PROVINCE_LABELS)));
  * For select fields, looks up the option label. Falls back to the raw value.
  */
 export function fieldDisplayLabel(key: string, value: unknown): string {
-  if (value == null || value === "") return "—";
+  if (value == null || value === "") return "";
   const s = String(value);
   return SELECT_LABELS.get(key)?.get(s) ?? s;
 }

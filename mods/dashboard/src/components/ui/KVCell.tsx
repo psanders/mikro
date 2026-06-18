@@ -24,7 +24,7 @@ export function KVCell({ label, value, last, className }: KVCellProps) {
       )}
     >
       <span className="text-[11px] font-medium text-ds-muted">{label}</span>
-      <span className="text-[15px] font-medium text-brand-ink">{value}</span>
+      <span className="min-h-[1.2em] text-[15px] font-medium text-brand-ink">{value}</span>
     </div>
   );
 }

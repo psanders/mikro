@@ -451,7 +451,7 @@ function Results({ result }: { result: ProjectionResult }) {
         <StatCard
           label="Punto de equilibrio"
           icon={Flag}
-          value={summary.breakEvenMonth !== null ? `Mes ${summary.breakEvenMonth}` : "—"}
+          value={summary.breakEvenMonth !== null ? `Mes ${summary.breakEvenMonth}` : ""}
           delta={{
             text: be !== null ? `Semana ${be} del horizonte` : "No se alcanza en el horizonte",
             tone: be !== null ? "green" : "red",

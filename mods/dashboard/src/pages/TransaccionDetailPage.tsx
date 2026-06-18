@@ -58,9 +58,9 @@ export function TransaccionDetailPage() {
               <KV label="Cuenta" value={tx.account.name} />
               {tx.toAccount && <KV label="Cuenta destino" value={tx.toAccount.name} />}
               {tx.category && <KV label="Categoría" value={tx.category.name} />}
-              <KV label="Descripción" value={tx.description ?? "—"} />
-              <KV label="Proveedor" value={tx.vendor ?? "—"} />
-              <KV label="Referencia" value={tx.reference ?? "—"} />
+              <KV label="Descripción" value={tx.description ?? ""} />
+              <KV label="Proveedor" value={tx.vendor ?? ""} />
+              <KV label="Referencia" value={tx.reference ?? ""} />
               <KV label="Registrado por" value={tx.createdBy.name} />
               <KV label="Creado el" value={formatDate(tx.createdAt)} />
             </div>
@@ -256,7 +256,7 @@ function KV({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-[3px]">
       <span className="text-[12px] font-medium text-ds-muted">{label}</span>
-      <span className="text-[14px] font-medium text-brand-ink">{value}</span>
+      <span className="min-h-[1.2em] text-[14px] font-medium text-brand-ink">{value}</span>
     </div>
   );
 }

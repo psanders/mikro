@@ -92,7 +92,7 @@ function nextHint(status: string): string | null {
 
 function raw(app: { rawData?: unknown }, key: string): string {
   const v = (app.rawData as Record<string, unknown> | null)?.[key];
-  return typeof v === "string" && v.trim() ? v : "—";
+  return typeof v === "string" && v.trim() ? v : "";
 }
 
 /** Promo send outcome handed off via navigation state from the Nueva Solicitud modal. */
@@ -168,7 +168,7 @@ export function SolicitudDetailPage() {
   const app = q.data;
   if (!app) return <CenterMessage tone="error">Solicitud no encontrada.</CenterMessage>;
 
-  const name = [app.firstName, app.lastName].filter(Boolean).join(" ").trim() || "—";
+  const name = [app.firstName, app.lastName].filter(Boolean).join(" ").trim() || "";
   const st = statusMeta(app.status);
   const band = riskBandMeta(app.riskBand);
   const score = (app.scoreData as ApplicationScore | null) ?? null;
@@ -356,17 +356,17 @@ export function SolicitudDetailPage() {
           {/* Content: flat data sections */}
           <div className="flex flex-1 flex-col divide-y divide-ds-border overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">
             <Section label="Solicitante">
-              <KV k="Nombre(s)" v={app.firstName ?? "—"} />
-              <KV k="Apellido(s)" v={app.lastName ?? "—"} />
-              <KV k="Teléfono" v={app.phone ?? "—"} />
-              <KV k="Cédula" v={app.idNumber ?? "—"} />
-              <KV k="Fecha de nacimiento" v={app.dateOfBirth ? formatDate(app.dateOfBirth) : "—"} />
-              <KV k="Estado civil" v={app.maritalStatus ?? "—"} />
+              <KV k="Nombre(s)" v={app.firstName ?? ""} />
+              <KV k="Apellido(s)" v={app.lastName ?? ""} />
+              <KV k="Teléfono" v={app.phone ?? ""} />
+              <KV k="Cédula" v={app.idNumber ?? ""} />
+              <KV k="Fecha de nacimiento" v={app.dateOfBirth ? formatDate(app.dateOfBirth) : ""} />
+              <KV k="Estado civil" v={app.maritalStatus ?? ""} />
             </Section>
 
             <Section label="Negocio">
               <KV k="Tipo de negocio" v={fieldDisplayLabel("businessType", app.businessType)} />
-              <KV k="Nombre del negocio" v={app.businessName ?? "—"} />
+              <KV k="Nombre del negocio" v={app.businessName ?? ""} />
               <KV k="Tiempo operando" v={raw(app, "businessAge")} />
               <KV k="Ventas mensuales" v={raw(app, "monthlySales")} />
               <KV k="Local" v={raw(app, "locationType")} />
@@ -377,11 +377,8 @@ export function SolicitudDetailPage() {
 
             <Section label="Crédito">
               <KV k="Monto solicitado" v={formatDop(app.requestedAmount)} />
-              <KV k="Propósito" v={app.purpose ?? "—"} />
-              <KV
-                k="Plazo"
-                v={app.requestedTermWeeks ? `${app.requestedTermWeeks} semanas` : "—"}
-              />
+              <KV k="Propósito" v={app.purpose ?? ""} />
+              <KV k="Plazo" v={app.requestedTermWeeks ? `${app.requestedTermWeeks} semanas` : ""} />
             </Section>
 
             <Section label="Referencias">
@@ -394,7 +391,7 @@ export function SolicitudDetailPage() {
             <Section label="Vivienda">
               <KV k="Tipo de vivienda" v={raw(app, "housingType")} />
               <KV k="Tiempo residiendo" v={raw(app, "residenceTime")} />
-              <KV k="Dirección" v={app.homeAddress ?? "—"} />
+              <KV k="Dirección" v={app.homeAddress ?? ""} />
               <KV k="Provincia" v={fieldDisplayLabel("province", app.province)} />
               <KV k="Referencia de dirección" v={raw(app, "addressReference")} />
             </Section>
@@ -711,8 +708,8 @@ export function SolicitudDetailPage() {
             {/* Converted: linked records */}
             {app.status === "CONVERTED" && (
               <RailCard label="Resultado">
-                <RailRow k="Cliente" v={app.customerId ?? "—"} />
-                <RailRow k="Préstamo" v={app.loanId != null ? `#${app.loanId}` : "—"} />
+                <RailRow k="Cliente" v={app.customerId ?? ""} />
+                <RailRow k="Préstamo" v={app.loanId != null ? `#${app.loanId}` : ""} />
               </RailCard>
             )}
 
@@ -805,7 +802,7 @@ function KV({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex flex-col gap-[3px]">
       <span className="text-[12px] font-medium text-ds-muted">{k}</span>
-      <span className="text-[14px] font-medium text-brand-ink">{v}</span>
+      <span className="min-h-[1.2em] text-[14px] font-medium text-brand-ink">{v}</span>
     </div>
   );
 }
