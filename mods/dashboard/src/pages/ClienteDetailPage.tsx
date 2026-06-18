@@ -15,6 +15,7 @@ import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
+import { Select } from "../components/ui/Select";
 import { StatusText } from "../components/ui/StatusText";
 import { formatDop, formatDate, isForbidden } from "../lib/applications";
 import {
@@ -392,14 +393,10 @@ function RegistrarPagoForm({
       />
       <div className="flex flex-col gap-[7px]">
         <label className="text-[13px] font-medium text-brand-ink">Método</label>
-        <select
-          value={method}
-          onChange={(e) => setMethod(e.target.value as PagoTerms["method"])}
-          className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
-        >
+        <Select value={method} onChange={(e) => setMethod(e.target.value as PagoTerms["method"])}>
           <option value="CASH">Efectivo</option>
           <option value="TRANSFER">Transferencia</option>
-        </select>
+        </Select>
       </div>
       <Field label="Nota (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
       {error && <span className="text-[13px] text-ds-red">{error}</span>}

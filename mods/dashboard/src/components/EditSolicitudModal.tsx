@@ -5,6 +5,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
+import { Select } from "./ui/Select";
 import { EDIT_SECTIONS, ALL_EDIT_FIELDS, type FieldDef } from "../lib/applicationFields";
 import { applyFormat, formatError } from "../lib/inputFormat";
 
@@ -16,7 +17,7 @@ interface EditSolicitudModalProps {
 }
 
 const inputCls =
-  "w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[10px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky";
+  "w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky";
 
 // Single edit modal grouped by the form's sections. Prefilled from rawData;
 // saving sends the full field set as a patch to updateApplication (re-scores).
@@ -51,8 +52,8 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
       <div key={f.key} className="flex flex-col gap-[6px]">
         <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
         {f.type === "select" ? (
-          <select
-            className={`${inputCls} ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
+          <Select
+            className={`w-full ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
             value={form[f.key] ?? ""}
             onChange={(e) => set(f.key, e.target.value)}
           >
@@ -62,7 +63,7 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
                 {o.label}
               </option>
             ))}
-          </select>
+          </Select>
         ) : (
           <input
             type={f.type === "date" ? "date" : "text"}

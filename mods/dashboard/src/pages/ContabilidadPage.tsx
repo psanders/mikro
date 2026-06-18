@@ -7,6 +7,7 @@ import { ChevronRight, Paperclip, Plus } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Tab } from "../components/ui/Tab";
+import { Select } from "../components/ui/Select";
 import { StatusText } from "../components/ui/StatusText";
 import { formatDop, formatDate } from "../lib/applications";
 import {
@@ -122,42 +123,34 @@ export function ContabilidadPage() {
                 type="date"
                 value={dateRange.startDate.slice(0, 10)}
                 onChange={(e) => handleDateChange("startDate", e.target.value)}
-                className="rounded-[8px] border border-ds-border bg-ds-surface px-2 py-1 text-[13px] text-brand-ink focus:outline-none"
+                className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               />
               <label className="text-xs text-ds-muted">Hasta</label>
               <input
                 type="date"
                 value={dateRange.endDate.slice(0, 10)}
                 onChange={(e) => handleDateChange("endDate", e.target.value)}
-                className="rounded-[8px] border border-ds-border bg-ds-surface px-2 py-1 text-[13px] text-brand-ink focus:outline-none"
+                className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               />
             </div>
 
-            <select
-              value={accountId}
-              onChange={(e) => handleAccountChange(e.target.value)}
-              className="rounded-[8px] border border-ds-border bg-ds-surface px-2 py-1 text-[13px] text-brand-ink focus:outline-none"
-            >
+            <Select value={accountId} onChange={(e) => handleAccountChange(e.target.value)}>
               <option value="">Todas las cuentas</option>
               {accounts.data?.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
                 </option>
               ))}
-            </select>
+            </Select>
 
-            <select
-              value={categoryId}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="rounded-[8px] border border-ds-border bg-ds-surface px-2 py-1 text-[13px] text-brand-ink focus:outline-none"
-            >
+            <Select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)}>
               <option value="">Todas las categorías</option>
               {categories.data?.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
-            </select>
+            </Select>
 
             <label className="flex items-center gap-2 text-[13px] text-brand-ink cursor-pointer">
               <input
@@ -413,10 +406,10 @@ function RegisterTransactionModal({
           className="flex flex-col gap-4 overflow-y-auto max-h-[80vh] p-6"
         >
           <FormField label="Tipo">
-            <select
+            <Select
               value={type}
               onChange={(e) => setType(e.target.value as TransactionType)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full"
               required
             >
               {TYPE_TABS.filter((t) => t.value !== "all").map((t) => (
@@ -424,14 +417,14 @@ function RegisterTransactionModal({
                   {t.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </FormField>
 
           <FormField label="Cuenta">
-            <select
+            <Select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full"
               required
             >
               <option value="">— Seleccionar —</option>
@@ -440,15 +433,15 @@ function RegisterTransactionModal({
                   {a.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </FormField>
 
           {showToAccount && (
             <FormField label="Cuenta destino">
-              <select
+              <Select
                 value={toAccountId}
                 onChange={(e) => setToAccountId(e.target.value)}
-                className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+                className="w-full"
                 required
               >
                 <option value="">— Seleccionar —</option>
@@ -459,16 +452,16 @@ function RegisterTransactionModal({
                       {a.name}
                     </option>
                   ))}
-              </select>
+              </Select>
             </FormField>
           )}
 
           {showCategory && (
             <FormField label="Categoría">
-              <select
+              <Select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+                className="w-full"
               >
                 <option value="">— Sin categoría —</option>
                 {filteredCategories.map((c) => (
@@ -476,7 +469,7 @@ function RegisterTransactionModal({
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
           )}
 
@@ -487,7 +480,7 @@ function RegisterTransactionModal({
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               required
               placeholder="0.00"
             />
@@ -498,7 +491,7 @@ function RegisterTransactionModal({
               type="datetime-local"
               value={occurredAt}
               onChange={(e) => setOccurredAt(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               required
             />
           </FormField>
@@ -508,7 +501,7 @@ function RegisterTransactionModal({
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               maxLength={500}
               placeholder="Opcional"
             />
@@ -519,7 +512,7 @@ function RegisterTransactionModal({
               type="text"
               value={vendor}
               onChange={(e) => setVendor(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               maxLength={200}
               placeholder="Opcional"
             />
@@ -530,7 +523,7 @@ function RegisterTransactionModal({
               type="text"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] text-brand-ink focus:outline-none"
+              className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               maxLength={200}
               placeholder="Opcional"
             />

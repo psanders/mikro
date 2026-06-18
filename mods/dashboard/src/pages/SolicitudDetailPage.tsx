@@ -33,6 +33,7 @@ import { saveFile } from "../lib/saveFile";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
+import { Select } from "../components/ui/Select";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { EditSolicitudModal } from "../components/EditSolicitudModal";
 import { GenerateContractModal } from "../components/GenerateContractModal";
@@ -943,16 +944,15 @@ function ConvertForm({
       />
       <div className="flex flex-col gap-[7px]">
         <label className="text-[13px] font-medium text-brand-ink">Frecuencia</label>
-        <select
+        <Select
           value={paymentFrequency}
           onChange={(e) => setPaymentFrequency(e.target.value as ConvertTerms["paymentFrequency"])}
-          className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
         >
           <option value="DAILY">Diario</option>
           <option value="WEEKLY">Semanal</option>
           <option value="BIWEEKLY">Quincenal</option>
           <option value="MONTHLY">Mensual</option>
-        </select>
+        </Select>
       </div>
       {error && <span className="text-[13px] text-ds-red">{error}</span>}
       <Button

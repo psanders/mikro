@@ -10,6 +10,7 @@ import { trpc } from "../lib/trpc";
 import { saveFile } from "../lib/saveFile";
 import { Button } from "./ui/Button";
 import { Field } from "./ui/Field";
+import { Select } from "./ui/Select";
 
 type Frequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 
@@ -58,14 +59,10 @@ export function GenerateContractModal({ id, defaultInstallments, onClose }: Prop
             <label className="text-[13px] font-medium text-brand-ink">
               Sexo (para el contrato)
             </label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value as "M" | "F")}
-              className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
-            >
+            <Select value={gender} onChange={(e) => setGender(e.target.value as "M" | "F")}>
               <option value="F">Femenino</option>
               <option value="M">Masculino</option>
-            </select>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -86,16 +83,12 @@ export function GenerateContractModal({ id, defaultInstallments, onClose }: Prop
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-[7px]">
               <label className="text-[13px] font-medium text-brand-ink">Frecuencia</label>
-              <select
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value as Frequency)}
-                className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
-              >
+              <Select value={frequency} onChange={(e) => setFrequency(e.target.value as Frequency)}>
                 <option value="DAILY">Diaria</option>
                 <option value="WEEKLY">Semanal</option>
                 <option value="BIWEEKLY">Quincenal</option>
                 <option value="MONTHLY">Mensual</option>
-              </select>
+              </Select>
             </div>
             <div className="flex flex-col gap-[7px]">
               <label className="text-[13px] font-medium text-brand-ink">Primera cuota</label>
@@ -103,7 +96,7 @@ export function GenerateContractModal({ id, defaultInstallments, onClose }: Prop
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[11px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
+                className="rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[12px] text-sm font-medium text-brand-ink outline-none focus:border-brand-blue-sky"
               />
             </div>
           </div>
