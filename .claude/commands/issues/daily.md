@@ -60,6 +60,7 @@ Fetch and display open issues for `psanders/mikro` so the user can pick what to 
    After displaying, ask with **AskUserQuestion**:
    - "What do you want to do?" with options:
      - Work on an issue (enter number)
+     - Review an issue (assess status / linked PR)
      - Report a new issue
      - Nothing, just browsing
 
@@ -84,6 +85,26 @@ Fetch and display open issues for `psanders/mikro` so the user can pick what to 
    If "Jump straight to implementation": invoke `/opsx:propose` with the issue as input.
    If "Investigate / research only": proceed with investigation in the current conversation.
    If "Close or comment": ask for the comment text or confirmation to close, then run the appropriate `gh` command.
+
+   If "Review an issue": ask for the issue number, then assess its current state instead of building:
+
+   ```bash
+   gh issue view <number> --repo psanders/mikro --json number,title,body,labels,state,url
+   gh pr list --repo psanders/mikro --state all --search "<number>" --json number,title,state,url,headRefName
+   ```
+
+   Then:
+   - Read the issue's acceptance criteria / expected behavior.
+   - Search the codebase (and any linked PR/branch) for the relevant implementation.
+   - Produce a verdict — **Done**, **Partial**, or **Not started** — and check each acceptance
+     criterion against concrete evidence (cite `file:line`, commits, or PRs).
+   - Offer next steps with **AskUserQuestion**:
+     - Close as completed (post an evidence comment, then close) — only with the user's confirmation
+     - Comment with findings (leave open)
+     - Start/continue work (fall through to the "How do you want to start?" flow above)
+     - Nothing
+
+   Never comment on or close an issue without explicit confirmation.
 
    If "Report a new issue": invoke the `/report-issue` command flow.
 
