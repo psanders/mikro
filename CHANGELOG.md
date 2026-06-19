@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.9.1](https://github.com/psanders/mikro/compare/v1.9.0...v1.9.1) (2026-06-19)
+
+### Bug Fixes
+
+- **apiserver:** promote promo-sent log to info to surface messageId ([a1849d8](https://github.com/psanders/mikro/commit/a1849d87d03aefeec1089a516cf04949834154ef))
+- **dashboard:** replace inline promo banner with toast in SolicitudDetailPage ([1edb0e6](https://github.com/psanders/mikro/commit/1edb0e679b3df413c601c85de15a666427fb1ecb))
+- **dashboard:** select defaults + registrar transacción button height ([fa46fad](https://github.com/psanders/mikro/commit/fa46fad103c364ae569924354e592ad408448847))
+- **dashboard:** unify select height via shared Select component ([#40](https://github.com/psanders/mikro/issues/40)) ([997e07b](https://github.com/psanders/mikro/commit/997e07b2217e7d682f7a95d0465bbd11c6b7f05d))
+
+### Features
+
+- **dashboard:** consolidate toast notifications across all mutation sites ([3460021](https://github.com/psanders/mikro/commit/34600214a8c4338f09917f5cc78ff4af54d2c707))
+
 # [1.9.0](https://github.com/psanders/mikro/compare/v1.8.0...v1.9.0) (2026-06-18)
 
 ### Features

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.9.1](https://github.com/psanders/mikro/compare/v1.9.0...v1.9.1) (2026-06-19)
+
+### Bug Fixes
+
+- **apiserver:** promote promo-sent log to info to surface messageId ([a1849d8](https://github.com/psanders/mikro/commit/a1849d87d03aefeec1089a516cf04949834154ef))
+
 # [1.9.0](https://github.com/psanders/mikro/compare/v1.8.0...v1.9.0) (2026-06-18)
 
 ### Features
