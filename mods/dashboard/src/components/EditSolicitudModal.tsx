@@ -27,8 +27,12 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
     const out: Record<string, string> = {};
     for (const f of ALL_EDIT_FIELDS) {
       const v = typeof r[f.key] === "string" ? (r[f.key] as string) : "";
-      // Normalize pre-existing values to the mask so they display consistently.
-      out[f.key] = f.format && v ? applyFormat(f.format, v) : v;
+      if (f.type === "select" && !v && f.options?.length) {
+        out[f.key] = f.options[0].value;
+      } else {
+        // Normalize pre-existing values to the mask so they display consistently.
+        out[f.key] = f.format && v ? applyFormat(f.format, v) : v;
+      }
     }
     return out;
   };
@@ -53,11 +57,10 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
         <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
         {f.type === "select" ? (
           <Select
-            className={`w-full ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
+            className="w-full"
             value={form[f.key] ?? ""}
             onChange={(e) => set(f.key, e.target.value)}
           >
-            <option value="">Seleccionar…</option>
             {f.options?.map((o) => (
               <option key={o.value} value={o.value} className="text-brand-ink">
                 {o.label}

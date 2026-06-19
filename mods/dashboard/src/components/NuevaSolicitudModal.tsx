@@ -32,7 +32,13 @@ interface Props {
 
 export function NuevaSolicitudModal({ onClose }: Props) {
   const navigate = useNavigate();
-  const [form, setForm] = useState<Record<string, string>>({});
+  const [form, setForm] = useState<Record<string, string>>(() => {
+    const defaults: Record<string, string> = {};
+    for (const f of ALL_FIELDS) {
+      if (f.type === "select" && f.options?.length) defaults[f.key] = f.options[0].value;
+    }
+    return defaults;
+  });
   const [sendPromo, setSendPromo] = useState(false);
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
   const setFormatted = (f: FieldDef, v: string) =>
@@ -60,11 +66,10 @@ export function NuevaSolicitudModal({ onClose }: Props) {
         <label className="text-[13px] font-medium text-brand-ink">{f.label}</label>
         {f.type === "select" ? (
           <Select
-            className={`w-full ${(form[f.key] ?? "") === "" ? "text-ds-muted" : ""}`}
+            className="w-full"
             value={form[f.key] ?? ""}
             onChange={(e) => set(f.key, e.target.value)}
           >
-            <option value="">Seleccionar…</option>
             {f.options?.map((o) => (
               <option key={o.value} value={o.value} className="text-brand-ink">
                 {o.label}

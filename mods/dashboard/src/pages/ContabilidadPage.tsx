@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Paperclip, Plus } from "lucide-react";
 import { trpc } from "../lib/trpc";
+import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Tab } from "../components/ui/Tab";
 import { Select } from "../components/ui/Select";
@@ -87,14 +88,9 @@ export function ContabilidadPage() {
         title="Contabilidad"
         subtitle={subtitle}
         action={
-          <button
-            type="button"
-            onClick={() => setShowRegisterForm(true)}
-            className="flex items-center gap-2 rounded-[10px] bg-brand-blue-primary px-4 py-2 text-[13px] font-medium text-white hover:opacity-90"
-          >
-            <Plus size={15} />
+          <Button variant="primary" icon={Plus} onClick={() => setShowRegisterForm(true)}>
             Registrar transacción
-          </button>
+          </Button>
         }
       />
 
@@ -336,8 +332,11 @@ function RegisterTransactionModal({
   const createTx = trpc.accounting.createTransaction.useMutation({ onSuccess });
 
   const [type, setType] = useState<TransactionType>("DEPOSIT");
-  const [accountId, setAccountId] = useState("");
-  const [toAccountId, setToAccountId] = useState("");
+  const [accountId, setAccountId] = useState(() => accounts[0]?.id ?? "");
+  const [toAccountId, setToAccountId] = useState(() => {
+    const first = accounts.find((a) => a.id !== (accounts[0]?.id ?? ""));
+    return first?.id ?? "";
+  });
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [occurredAt, setOccurredAt] = useState(() => new Date().toISOString().slice(0, 16));
