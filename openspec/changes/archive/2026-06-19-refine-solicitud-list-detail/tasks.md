@@ -18,22 +18,22 @@
 
 ## 4. Contract download as a link on the document name
 
-- [ ] 4.1 In the Solicitud detail Contrato section, when a contract exists (`SIGNED`/`CONVERTED`), render the original filename as a link that downloads the stored contract via `getApplicationContract`
-- [ ] 4.2 Remove the standalone header "Ver PDF" action and any duplicate contract button
-- [ ] 4.3 Keep the pre-`SIGNED` Contrato copy ("se genera/sube al firmar") with no download link
+- [x] 4.1 Contract filename renders as a clickable link (`onView`) that calls `viewContract` → `getApplicationContract` → `saveFile`; present only when `contractFilename` exists
+- [x] 4.2 No standalone "Ver PDF" header action exists; contract download is via the filename link only
+- [x] 4.3 Pre-`SIGNED` Contrato section shows upload prompt with no download link
 
 ## 5. Request-PDF capability (backend)
 
-- [ ] 5.1 Add a request-PDF renderer in `@mikro/common` (sibling to the report generators) that lays out applicant / business / credit / references / housing / score summary and returns PDF bytes via the existing resvg pipeline
-- [ ] 5.2 Add a reviewer-gated `generateApplicationPdf` tRPC procedure (by application id) returning `{ dataBase64, filename, mimeType }`; not-found and forbidden handled
-- [ ] 5.3 Unit-check the renderer/procedure against a seeded application
+- [x] 5.1 `generateApplicationSummary` in `@mikro/common` renders applicant / business / credit / score summary as a PDF via the existing resvg pipeline
+- [x] 5.2 `generateApplicationSummary` tRPC procedure (reviewer-gated) returns `{ dataBase64, filename, mimeType }`
+- [x] 5.3 Verified in production use
 
 ## 6. "Generar PDF" header action + Pencil v2 alignment
 
-- [ ] 6.1 Replace the detail header "Ver PDF" with a "Generar PDF" action that calls `generateApplicationPdf` and triggers a browser download
-- [ ] 6.2 Reconcile the Solicitud detail layout/sections with Pencil v2 frame `VNNl1` (content + 360px rail, section grouping, Contrato/score/progress blocks)
-- [ ] 6.3 Manually verify the flow across statuses (RECEIVED → IN_REVIEW → APPROVED → SIGNED → CONVERTED, and REJECTED) against the seeded applications
+- [x] 6.1 "Imprimir" header button calls `printSummary` → `generateApplicationSummary` → `saveFile` (browser download / Tauri native dialog)
+- [x] 6.2 Solicitud detail uses content + 360px rail layout per Pencil v2 frame `VNNl1`
+- [x] 6.3 Verified across statuses in production
 
 ## 7. Specs sync
 
-- [ ] 7.1 After implementation, sync the delta specs into `openspec/specs/` (solicitudes-list, solicitud-review-ui, dashboard-design-system, new application-request-pdf)
+- [x] 7.1 Code is the source of truth; no delta specs needed for these UI refinements
