@@ -7,6 +7,7 @@ import { ChevronRight, Paperclip, Plus } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "../components/ui/Button";
 import { PageHeader } from "../components/ui/PageHeader";
+import { useToast } from "../components/ui/ToastProvider";
 import { Tab } from "../components/ui/Tab";
 import { Select } from "../components/ui/Select";
 import { StatusText } from "../components/ui/StatusText";
@@ -26,6 +27,7 @@ const PAGE_SIZE = 20;
 export function ContabilidadPage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const toast = useToast();
 
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [activeType, setActiveType] = useState<TransactionType | "all">("all");
@@ -259,6 +261,7 @@ export function ContabilidadPage() {
             setShowRegisterForm(false);
             void utils.accounting.listTransactions.invalidate();
             void utils.accounting.listAccounts.invalidate();
+            toast.success("Transacción registrada");
           }}
         />
       )}

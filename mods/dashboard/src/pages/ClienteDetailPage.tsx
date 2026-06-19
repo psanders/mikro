@@ -17,6 +17,7 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Select } from "../components/ui/Select";
 import { StatusText } from "../components/ui/StatusText";
+import { useToast } from "../components/ui/ToastProvider";
 import { formatDop, formatDate, isForbidden } from "../lib/applications";
 import {
   loanStatusMeta,
@@ -48,6 +49,7 @@ export function ClienteDetailPage() {
   const me = trpc.whoami.useQuery();
 
   const [payOpen, setPayOpen] = useState(false);
+  const toast = useToast();
 
   const userName = useMemo(() => {
     const map = new Map<string, string>();
@@ -63,6 +65,7 @@ export function ClienteDetailPage() {
     onSuccess: () => {
       setPayOpen(false);
       refreshPay();
+      toast.success("Pago registrado");
     }
   });
 

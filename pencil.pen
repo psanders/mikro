@@ -27409,10 +27409,11 @@
                       "content": "Resumen de operaciones · martes 2 jun"
                     },
                     "Y2e2yr/A53AL": {
-                      "icon": "plus"
+                      "icon": "message-circle",
+                      "library": "lucide"
                     },
                     "Y2e2yr/M9EJZ": {
-                      "content": "Nueva solicitud"
+                      "content": "Enviar promoción"
                     }
                   }
                 },
@@ -45887,18 +45888,7 @@
                               "id": "Xmf7f",
                               "name": "c",
                               "width": 130,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "aSb2U",
-                                  "name": "t",
-                                  "fill": "$ds.muted",
-                                  "content": "—",
-                                  "fontFamily": "Geist",
-                                  "fontSize": 13,
-                                  "fontWeight": "500"
-                                }
-                              ]
+                              "height": "fit_content(17)"
                             },
                             {
                               "type": "frame",

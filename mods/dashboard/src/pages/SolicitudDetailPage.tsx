@@ -7,7 +7,7 @@
  * convert by status). Accordions and status chips are gone; status reads as the
  * stepper. All review/pipeline mutations are preserved unchanged.
  */
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Check,
@@ -35,6 +35,7 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Select } from "../components/ui/Select";
 import { ProgressBar } from "../components/ui/ProgressBar";
+import { useToast } from "../components/ui/ToastProvider";
 import { EditSolicitudModal } from "../components/EditSolicitudModal";
 import { GenerateContractModal } from "../components/GenerateContractModal";
 import {
@@ -105,6 +106,7 @@ export function SolicitudDetailPage() {
   const location = useLocation();
   const promo = (location.state as { promo?: PromoResult | null } | null)?.promo ?? null;
   const [promoDismissed, setPromoDismissed] = useState(false);
+  const toast = useToast();
   const utils = trpc.useUtils();
   const fileRef = useRef<HTMLInputElement>(null);
   const idFileRef = useRef<HTMLInputElement>(null);
@@ -134,11 +136,22 @@ export function SolicitudDetailPage() {
     setNote("");
     refresh();
   };
-  const promote = trpc.promoteApplication.useMutation({ onSuccess: refresh });
+  const promote = trpc.promoteApplication.useMutation({
+    onSuccess: () => {
+      toast.success("Promovida a nueva");
+      refresh();
+    }
+  });
   const claim = trpc.claimApplication.useMutation({ onSuccess: refresh });
-  const approve = trpc.approveApplication.useMutation({ onSuccess: noteRefresh });
+  const approve = trpc.approveApplication.useMutation({
+    onSuccess: () => {
+      toast.success("Solicitud aprobada");
+      noteRefresh();
+    }
+  });
   const reject = trpc.rejectApplication.useMutation({
     onSuccess: () => {
+      toast.success("Solicitud rechazada");
       setRejectOpen(false);
       setRejectReason("");
       refresh();
@@ -146,9 +159,15 @@ export function SolicitudDetailPage() {
   });
   const reopen = trpc.reopenApplication.useMutation({ onSuccess: noteRefresh });
   const upload = trpc.uploadSignedContract.useMutation({ onSuccess: refresh });
-  const convert = trpc.convertApplication.useMutation({ onSuccess: refresh });
+  const convert = trpc.convertApplication.useMutation({
+    onSuccess: () => {
+      toast.success("Convertida a préstamo");
+      refresh();
+    }
+  });
   const del = trpc.deleteApplication.useMutation({
     onSuccess: () => {
+      toast.success("Solicitud eliminada");
       void utils.listApplications.invalidate();
       navigate("/solicitudes", { viewTransition: true });
     }
@@ -157,6 +176,14 @@ export function SolicitudDetailPage() {
   const deleteId = trpc.deleteIdImage.useMutation({ onSuccess: refresh });
   const deleteContract = trpc.deleteApplicationContract.useMutation({ onSuccess: refresh });
   const [printing, setPrinting] = useState(false);
+
+  useEffect(() => {
+    if (promote.isError) toast.error(promote.error.message);
+  }, [promote.isError, promote.error, toast]);
+
+  useEffect(() => {
+    if (del.isError) toast.error(del.error.message);
+  }, [del.isError, del.error, toast]);
 
   if (q.isPending) return <CenterMessage>Cargando…</CenterMessage>;
   if (q.isError) {
@@ -578,9 +605,6 @@ export function SolicitudDetailPage() {
                   Completaste los datos con el solicitante. Promuévela a Nueva para entrar a la cola
                   de evaluación.
                 </span>
-                {promote.isError && (
-                  <span className="text-[13px] text-ds-red">{promote.error.message}</span>
-                )}
                 <Button
                   variant="primary"
                   icon={ArrowRight}
@@ -736,9 +760,6 @@ export function SolicitudDetailPage() {
                       Se elimina de forma permanente. No se puede deshacer.
                     </span>
                   </div>
-                  {del.isError && (
-                    <span className="text-[13px] text-ds-red">{del.error.message}</span>
-                  )}
                   <div className="flex gap-[10px]">
                     <Button
                       variant="secondary"

@@ -8,6 +8,7 @@ import { trpc } from "../lib/trpc";
 import { saveFile } from "../lib/saveFile";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatusText } from "../components/ui/StatusText";
+import { useToast } from "../components/ui/ToastProvider";
 import { formatDop, formatDate } from "../lib/applications";
 import { typeMeta, statusMeta } from "../lib/accounting";
 
@@ -17,6 +18,7 @@ export function TransaccionDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const toast = useToast();
 
   const q = trpc.accounting.getTransaction.useQuery({ id }, { enabled: !!id });
 
@@ -87,6 +89,7 @@ export function TransaccionDetailPage() {
           <ReverseSection
             transactionId={tx.id}
             onReversed={() => {
+              toast.success("Transacción revertida");
               void utils.accounting.getTransaction.invalidate({ id });
               void utils.accounting.listTransactions.invalidate();
             }}

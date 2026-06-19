@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
 import { Select } from "./ui/Select";
+import { useToast } from "./ui/ToastProvider";
 import { EDIT_SECTIONS, ALL_EDIT_FIELDS, type FieldDef } from "../lib/applicationFields";
 import { applyFormat, formatError } from "../lib/inputFormat";
 
@@ -22,6 +23,7 @@ const inputCls =
 // Single edit modal grouped by the form's sections. Prefilled from rawData;
 // saving sends the full field set as a patch to updateApplication (re-scores).
 export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolicitudModalProps) {
+  const toast = useToast();
   const initial = () => {
     const r = (rawData as Record<string, unknown> | null) ?? {};
     const out: Record<string, string> = {};
@@ -42,7 +44,10 @@ export function EditSolicitudModal({ id, rawData, onClose, onSaved }: EditSolici
     set(f.key, f.format ? applyFormat(f.format, v) : v);
 
   const update = trpc.updateApplication.useMutation({
-    onSuccess: () => onSaved()
+    onSuccess: () => {
+      toast.success("Cambios guardados");
+      onSaved();
+    }
   });
 
   // Block save while any formatted field has a partial (invalid) value.

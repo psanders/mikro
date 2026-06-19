@@ -7,6 +7,7 @@ import { Check, MessageCircle, X } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
 import { Select } from "./ui/Select";
+import { useToast } from "./ui/ToastProvider";
 import { applyFormat, formatError } from "../lib/inputFormat";
 import { ALL_EDIT_FIELDS } from "../lib/applicationFields";
 import type { FieldDef } from "../lib/applicationFields";
@@ -32,6 +33,7 @@ interface Props {
 
 export function NuevaSolicitudModal({ onClose }: Props) {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {};
     for (const f of ALL_FIELDS) {
@@ -47,6 +49,7 @@ export function NuevaSolicitudModal({ onClose }: Props) {
   const create = trpc.createApplication.useMutation({
     onSuccess: (app) => {
       onClose();
+      toast.success("Solicitud creada");
       navigate(`/solicitudes/${app.id}`, { viewTransition: true, state: { promo: app.promo } });
     }
   });
