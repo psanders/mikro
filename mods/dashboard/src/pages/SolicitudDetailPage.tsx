@@ -8,7 +8,7 @@
  * stepper. All review/pipeline mutations are preserved unchanged.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Check,
   CheckCircle2,
@@ -97,15 +97,9 @@ function raw(app: { rawData?: unknown }, key: string): string {
   return typeof v === "string" && v.trim() ? v : "";
 }
 
-/** Promo send outcome handed off via navigation state from the Nueva Solicitud modal. */
-type PromoResult = { sent: boolean; messageId?: string; error?: string };
-
 export function SolicitudDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const promo = (location.state as { promo?: PromoResult | null } | null)?.promo ?? null;
-  const [promoDismissed, setPromoDismissed] = useState(false);
   const toast = useToast();
   const utils = trpc.useUtils();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -281,29 +275,6 @@ export function SolicitudDetailPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {promo && !promoDismissed && (
-        <div
-          className={`flex items-center gap-[10px] border-b px-7 py-3 text-[13px] font-medium ${
-            promo.sent
-              ? "border-ds-green/30 bg-[#E8F7EE] text-ds-green"
-              : "border-ds-red/30 bg-ds-red/10 text-ds-red"
-          }`}
-        >
-          {promo.sent ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
-          <span className="flex-1">
-            {promo.sent
-              ? "Promoción enviada por WhatsApp."
-              : `No se pudo enviar la promoción: ${promo.error ?? "error desconocido"}`}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPromoDismissed(true)}
-            className="text-current opacity-70 hover:opacity-100"
-          >
-            <X size={15} />
-          </button>
-        </div>
-      )}
       <PageHeader
         title={`Solicitud #${app.id.slice(0, 8).toUpperCase()}`}
         subtitle={`${name} · ${st.label}`}

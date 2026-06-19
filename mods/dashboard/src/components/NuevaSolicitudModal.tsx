@@ -49,8 +49,16 @@ export function NuevaSolicitudModal({ onClose }: Props) {
   const create = trpc.createApplication.useMutation({
     onSuccess: (app) => {
       onClose();
-      toast.success("Solicitud creada");
-      navigate(`/solicitudes/${app.id}`, { viewTransition: true, state: { promo: app.promo } });
+      if (app.promo) {
+        if (app.promo.sent) {
+          toast.success("Solicitud creada · Promoción enviada");
+        } else {
+          toast.error(app.promo.error ?? "No se pudo enviar la promoción");
+        }
+      } else {
+        toast.success("Solicitud creada");
+      }
+      navigate(`/solicitudes/${app.id}`, { viewTransition: true });
     }
   });
 
