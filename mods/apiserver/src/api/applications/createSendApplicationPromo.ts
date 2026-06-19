@@ -57,7 +57,7 @@ export function createSendApplicationPromo(deps: Deps) {
         flowToken
       });
       const messageId = res.messages?.[0]?.id;
-      logger.verbose("application promo sent", { phone, messageId });
+      logger.info("application promo sent", { phone, messageId });
       return { sent: true, messageId };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
