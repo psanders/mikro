@@ -37,6 +37,13 @@ export interface Agent {
   model?: string;
   /** Temperature setting for the model */
   temperature: number;
+  /**
+   * Which text becomes the user-facing reply when the model emits text both
+   * alongside a tool call and after the tool result. "final" uses the post-tool
+   * text (with fallback to the alongside-tool text); "pre-tool" prefers the
+   * alongside-tool text. Defaults to "final".
+   */
+  replyMode: "final" | "pre-tool";
   /** Optional evaluation configuration */
   evaluations?: AgentEvaluation;
 }

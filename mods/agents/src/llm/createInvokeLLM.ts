@@ -485,9 +485,18 @@ export function createInvokeLLM(
         response = await modelWithTools.invoke(langchainMessages);
       }
 
-      // Prefer text from the turn that had tool calls (e.g. full closing phrase + hangup);
-      // the follow-up turn after tool execution is often just goodbye or empty.
-      const finalResponse = textFromTurnWithToolCall.trim() || getTextFromContent(response.content);
+      // Choose the user-facing text per the agent's reply mode:
+      // - "pre-tool" (e.g. María): prefer text emitted ALONGSIDE the tool call
+      //   (her "¡Listo!" reply); the post-tool turn is often empty.
+      // - "final" (default, e.g. José): prefer the POST-tool text (the question or
+      //   closing generated after seeing the tool result); the alongside-tool text
+      //   is just a lead-in that should not be surfaced.
+      // Each falls back to the other when its preferred text is empty.
+      const postToolText = getTextFromContent(response.content);
+      const finalResponse =
+        agent.replyMode === "pre-tool"
+          ? textFromTurnWithToolCall.trim() || postToolText
+          : postToolText.trim() || textFromTurnWithToolCall;
 
       logger.verbose("llm response received", {
         agent: agent.name,

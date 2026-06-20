@@ -55,6 +55,13 @@ export const agentConfigSchema = z.object({
   allowedTools: z.array(z.string()).min(0, "Allowed tools must be an array"),
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).default(0.7),
+  // Which text becomes the user-facing reply when the model emits text both
+  // alongside a tool call and after the tool result. "final" (default) uses the
+  // post-tool text (falling back to the alongside-tool text); "pre-tool" prefers
+  // the alongside-tool text. Agents whose reply is generated AFTER seeing tool
+  // results (e.g. José's intake) want "final"; agents that reply alongside the
+  // call (e.g. María's "¡Listo!") want "pre-tool".
+  replyMode: z.enum(["final", "pre-tool"]).default("final"),
   /** Optional evaluation suite (used by the eval CLI; ignored at runtime). */
   evaluations: evaluationsSchema.optional()
 });

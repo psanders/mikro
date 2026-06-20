@@ -442,14 +442,30 @@ function evaluatorNotes(
 }
 
 /**
+ * Normalize a province to a comparable key: uppercase, strip diacritics, and
+ * collapse any run of non-alphanumerics to a single `_`. This lets the zone
+ * check match the served province regardless of how it was captured — display
+ * value ("Puerto Plata"), enum key ("PUERTO_PLATA"), or with stray punctuation
+ * ("Puerto Plata.") all normalize to "PUERTO_PLATA".
+ */
+function normalizeProvince(province: string): string {
+  return (province ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/**
  * Run the deterministic Mikro Score model over a scorer input.
  */
 export function scoreInput(input: ScoreInput): ApplicationScore {
   const w = CONFIG.pesos;
   const flags: ScoreFlag[] = [];
 
-  const prov = (input.province || "").trim().toUpperCase();
-  if (prov && prov !== CONFIG.zona_cobertura) {
+  const prov = normalizeProvince(input.province || "");
+  if (prov && prov !== normalizeProvince(CONFIG.zona_cobertura)) {
     flags.push({ code: "OUT_OF_ZONE", message: `Provincia ${prov} fuera de zona de cobertura.` });
   }
   if (input.partial) {

@@ -20,6 +20,7 @@
     - createPayment
     - sendReceiptViaWhatsApp
   temperature: 0.4
+  replyMode: pre-tool # this agent replies alongside its tool call (see below)
 
 # Full agent: every optional field shown.
 - name: José
@@ -35,6 +36,10 @@
     - saveAnswer
     - finalizeApplication
   temperature: 0.3
+  # replyMode "final" (default): the user-facing reply is the text generated
+  # AFTER the tool result (José's question/closing). "pre-tool" prefers the text
+  # emitted ALONGSIDE the tool call (María's "¡Listo!" pattern). Omit for "final".
+  replyMode: final
   # Optional eval suite (used by the eval CLI only; ignored at runtime).
   evaluations:
     context:
