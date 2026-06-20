@@ -10,6 +10,8 @@ services:
     volumes:
       # Mikro configuration
       - ./mikro.json:/app/mikro.json:ro
+      # Agent definitions
+      - ./agents.yaml:/app/agents.yaml:ro
       # Database persistence
       - ./data:/app/data
       # Signing keys for receipts
