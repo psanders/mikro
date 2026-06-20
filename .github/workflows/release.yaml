@@ -57,5 +57,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Pull latest (avoid EBEHIND if commits land during runner startup)
+        run: git pull --rebase origin main
+
       - name: Version and tag
         run: npx lerna version --conventional-commits --yes

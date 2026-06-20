@@ -4,14 +4,6 @@ on:
   push:
     tags:
       - "v*"
-    branches:
-      - main
-    paths:
-      - "mods/apiserver/**"
-      - "mods/common/**"
-      - "lerna.json"
-      - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
     inputs:
       version:
@@ -20,7 +12,6 @@ on:
 
 env:
   COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 # Serialize publishes. All runs push the shared `latest` tag, so overlapping
 # builds race on it (last writer wins) — a slower older-version build can
@@ -54,7 +45,7 @@ jobs:
           npm run db:generate -w @mikro/apiserver
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Get version
         run: |
