@@ -20,8 +20,6 @@ dist/
 # Config (contains secrets)
 mikro.json
 mikro-prod.json
-# Agent definitions (edited per-deploy; agents.yaml.example is checked in)
-agents.yaml
 
 # Keys
 .keys/*.pem
