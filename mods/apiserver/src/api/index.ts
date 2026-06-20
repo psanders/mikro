@@ -45,6 +45,7 @@ export {
 export {
   createUpsertApplication,
   createFindLatestApplicationByPhone,
+  createGetApplicationByPhone,
   createSubmitApplicationFromFlow,
   createSendApplicationPromo,
   createListApplications,

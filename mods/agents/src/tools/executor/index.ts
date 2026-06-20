@@ -72,7 +72,21 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     exportAllCustomers: handleExportAllCustomers,
     generatePerformanceReport: handleGeneratePerformanceReport,
     generateDefaultedReport: handleGenerateDefaultedReport,
-    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport
+    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport,
+    getApplicationState: async (d, _args, ctx) => {
+      if (!d.joseGetApplicationState)
+        return { success: false, message: "getApplicationState not configured" };
+      return d.joseGetApplicationState(ctx);
+    },
+    saveAnswer: async (d, args, ctx) => {
+      if (!d.joseSaveAnswer) return { success: false, message: "saveAnswer not configured" };
+      return d.joseSaveAnswer(args, ctx);
+    },
+    finalizeApplication: async (d, args, ctx) => {
+      if (!d.joseFinalizeApplication)
+        return { success: false, message: "finalizeApplication not configured" };
+      return d.joseFinalizeApplication(args, ctx);
+    }
   };
 
   return async function executeTool(

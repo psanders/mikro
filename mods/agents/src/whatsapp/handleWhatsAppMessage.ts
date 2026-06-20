@@ -19,6 +19,7 @@ import {
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
+import { handleProspectMessage } from "./handleProspectMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -61,6 +62,8 @@ export interface MessageProcessorDependencies {
   }) => Promise<void>;
   /** Get agent by name */
   getAgent: (name: AgentName) => Agent;
+  /** José prospect intake agent. When set, activates WhatsApp intake for prospects. */
+  joseAgent?: Agent;
   /** Optional: transcribe voice note (audio data URL) to text. When set, voice notes are processed as text. */
   transcribeVoiceNote?: (audioDataUrl: string) => Promise<string>;
   /**
@@ -333,6 +336,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     getChatHistoryForUser,
     addMessageForUser,
     getAgent,
+    joseAgent,
     transcribeVoiceNote,
     submitApplicationFromFlow
   } = messageProcessor;
@@ -450,6 +454,30 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
     if (route.type === "ignored") {
       logger.verbose("message ignored", { phone, reason: route.reason });
+      return;
+    }
+
+    // Prospect: partial application → José; completed → hold message.
+    if (route.type === "prospect") {
+      if (!route.partial) {
+        logger.verbose("prospect application already complete, sending hold message", { phone });
+        await sendWhatsAppMessage({
+          phone,
+          message: "Tu solicitud ya está en revisión. Pronto te contactaremos."
+        });
+        return;
+      }
+      if (!joseAgent) {
+        logger.verbose("jose agent not configured, ignoring prospect message", { phone });
+        return;
+      }
+      const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
+        invokeLLM,
+        joseAgent
+      });
+      if (result.text) {
+        await sendWhatsAppMessage({ phone, message: result.text });
+      }
       return;
     }
 

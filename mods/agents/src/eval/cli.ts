@@ -16,7 +16,7 @@ loadDotenv({ path: resolve(__dirname, "../../../../.env") });
 
 import { getConfig, type LLMConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
-import { loadAgents } from "../../../apiserver/src/agents/loadAgents.js";
+import { loadAgents } from "../agents/index.js";
 import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
 import { runAgentEval, runScenario, type EvalResults, type ScenarioResult } from "./runner.js";
 import {

@@ -582,6 +582,56 @@ export const generateRenewalCandidatesReportTool: ToolFunction = {
   }
 };
 
+// ── José intake tools ──────────────────────────────────────────────────────
+
+export const getApplicationStateTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getApplicationState",
+    description:
+      "Obtener el estado actual de la solicitud del prospecto: campos completados, campos faltantes, puntuación simulada (ISC) y si existe alguna razón para rechazar (fuera de zona, tipo de negocio crítico). Llamar al inicio de cada turno para tener la información más reciente.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+export const saveAnswerTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "saveAnswer",
+    description:
+      "Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo.",
+    parameters: {
+      type: "object",
+      properties: {
+        fields: {
+          type: "object",
+          description:
+            "Objeto con pares campo:valor. Claves válidas: firstName, lastName, phone, idNumber, dateOfBirth, maritalStatus, businessType, businessName, requestedAmount, purpose, requestedTermWeeks, province, homeAddress, businessAge, monthlySales, locationType, formalization, employeeCount, businessPhone, spouseName, spousePhone, referenceName, referencePhone, housingType, residenceTime, addressReference"
+        }
+      },
+      required: ["fields"]
+    }
+  }
+};
+
+export const finalizeApplicationTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "finalizeApplication",
+    description:
+      "Finalizar la solicitud marcándola como completa (partial: false). Llama esta herramienta cuando: (1) la puntuación simulada es >= 80, (2) se han recopilado todos los campos aplicables, (3) el prospecto está fuera de zona o tiene negocio crítico, o (4) han pasado 4 turnos sin guardar ningún campo. Esta función también envía el mensaje de cierre al prospecto.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
 /**
  * All available tools.
  */
@@ -605,7 +655,10 @@ export const allTools: ToolFunction[] = [
   exportAllCustomersTool,
   generatePerformanceReportTool,
   generateDefaultedReportTool,
-  generateRenewalCandidatesReportTool
+  generateRenewalCandidatesReportTool,
+  getApplicationStateTool,
+  saveAnswerTool,
+  finalizeApplicationTool
 ];
 
 /**

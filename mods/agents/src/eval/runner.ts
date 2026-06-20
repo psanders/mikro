@@ -107,8 +107,14 @@ async function runTurn(
     isNewSession
   );
 
-  // Test similarity
-  const similarity = await similarityTest(turn.expectedAI, actualAI);
+  // Test similarity (skip if turn marks pre-tool text as non-deterministic)
+  const similarity = turn.skipResponseCheck
+    ? {
+        similar: true,
+        confidence: 1,
+        reason: "Response check skipped (pre-tool text non-deterministic)"
+      }
+    : await similarityTest(turn.expectedAI, actualAI);
 
   // Verify tools
   const toolVerification = await verifyTools();

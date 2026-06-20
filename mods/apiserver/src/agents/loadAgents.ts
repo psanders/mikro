@@ -2,10 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { Agent, AgentName } from "@mikro/agents";
-import { AGENT_NAMES } from "@mikro/agents";
+import { AGENT_NAMES, jose, maria } from "@mikro/agents";
 import { logger } from "../logger.js";
 import { agentConfigSchema } from "./agentSchema.js";
-import { maria } from "./maria.js";
 
 /**
  * Load a single agent configuration from TypeScript module.
@@ -38,7 +37,8 @@ export function loadAgents(): Map<AgentName, Agent> {
 
   const agents = new Map<AgentName, Agent>();
   const agentConfigs: Array<{ name: AgentName; config: unknown }> = [
-    { name: AGENT_NAMES[0], config: maria }
+    { name: AGENT_NAMES[0], config: maria },
+    { name: AGENT_NAMES[1], config: jose }
   ];
 
   for (const { name, config } of agentConfigs) {

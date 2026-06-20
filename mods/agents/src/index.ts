@@ -117,7 +117,11 @@ export { validateAllLLMConfigs as initializeLLM } from "./config.js";
 export {
   AGENT_NAMES,
   AGENT_MARIA,
+  AGENT_JOSE,
   VALID_AGENT_NAMES,
   ROLE_TO_AGENT,
   type AgentName
 } from "./constants.js";
+
+// Agent definitions
+export { jose, maria, loadAgents, JOSE_SYSTEM_PROMPT } from "./agents/index.js";

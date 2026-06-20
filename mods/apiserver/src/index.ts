@@ -50,6 +50,7 @@ import {
   getVoiceNotesEnabled,
   getDeepgramApiKey,
   initializeLLM,
+  AGENT_JOSE,
   type Message,
   type AgentName,
   type ToolExecutorDependencies,
@@ -93,8 +94,14 @@ import {
   createGenerateRenewalCandidatesReport,
   createUpsertApplication,
   createFindLatestApplicationByPhone,
+  createGetApplicationByPhone,
   createSubmitApplicationFromFlow
 } from "./api/index.js";
+import {
+  createGetApplicationState,
+  createSaveAnswer,
+  createFinalizeApplication
+} from "./api/jose/index.js";
 import { loadAgents, getAgent } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
 
@@ -349,7 +356,8 @@ async function initializeMessageProcessor() {
           isActive: customer.isActive
         };
       },
-      isAgentDisabled
+      isAgentDisabled,
+      findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient)
     });
 
     const toExportedCustomer = (customer: {
@@ -554,7 +562,15 @@ async function initializeMessageProcessor() {
         params: Parameters<ToolExecutorDependencies["sendWhatsAppMessage"]>[0]
       ) => {
         return sendWhatsAppMessage(params);
-      }
+      },
+      // José intake tools
+      joseGetApplicationState: createGetApplicationState(prisma as unknown as DbClient),
+      joseSaveAnswer: createSaveAnswer(prisma as unknown as DbClient, upsertApplication),
+      joseFinalizeApplication: createFinalizeApplication(
+        prisma as unknown as DbClient,
+        upsertApplication,
+        sendWhatsAppMessage
+      )
     });
 
     // Generic ack messages sent before slow tool execution (no LLM involved)
@@ -672,6 +688,7 @@ async function initializeMessageProcessor() {
       getChatHistoryForUser,
       addMessageForUser,
       getAgent: (name: AgentName) => getAgent(agents, name),
+      joseAgent: getAgent(agents, AGENT_JOSE),
       submitApplicationFromFlow,
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };

@@ -3,6 +3,7 @@
  */
 export { createUpsertApplication } from "./createUpsertApplication.js";
 export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
+export { createGetApplicationByPhone } from "./createGetApplicationByPhone.js";
 export { createSubmitApplicationFromFlow } from "./createSubmitApplicationFromFlow.js";
 export { createSendApplicationPromo, type PromoResult } from "./createSendApplicationPromo.js";
 export { createListApplications } from "./createListApplications.js";

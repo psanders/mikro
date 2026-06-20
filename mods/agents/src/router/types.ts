@@ -10,6 +10,7 @@ import type { AgentName } from "../constants.js";
 export type RouteResult =
   | { type: "user"; userId: string; name: string; role: Role; phone: string }
   | { type: "customer"; customerId: string; phone: string }
+  | { type: "prospect"; sessionId: string; partial: boolean; phone: string }
   | { type: "ignored"; reason: string; phone: string };
 
 /**
@@ -43,4 +44,8 @@ export interface RouterDependencies {
   getCustomerByPhone: (params: { phone: string }) => Promise<CustomerLookupResult | null>;
   /** Check if an agent is disabled */
   isAgentDisabled: (agentName: AgentName) => boolean;
+  /** Optional: look up the most recent loan application for a phone (for prospect routing). */
+  findApplicationByPhone?: (
+    phone: string
+  ) => Promise<{ sessionId: string; partial: boolean } | null>;
 }

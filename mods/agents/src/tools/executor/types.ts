@@ -215,6 +215,22 @@ export interface ToolExecutorDependencies {
   /** Render customers report (grouped by payment health) to PNG buffer. Used for simplified format. */
   renderCustomersReportToPng: (customers: ExportedCustomer[]) => Promise<Buffer>;
 
+  // ── José prospect intake tools (optional — only wired in apiserver) ──────
+  /** José: fetch current prospect application state + score simulation */
+  joseGetApplicationState?: (
+    context?: Record<string, unknown>
+  ) => Promise<import("../../llm/types.js").ToolResult>;
+  /** José: save validated field answers to the prospect application */
+  joseSaveAnswer?: (
+    args: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ) => Promise<import("../../llm/types.js").ToolResult>;
+  /** José: finalize prospect application and send closing WhatsApp message */
+  joseFinalizeApplication?: (
+    args: Record<string, unknown>,
+    context?: Record<string, unknown>
+  ) => Promise<import("../../llm/types.js").ToolResult>;
+
   /** Upload media to WhatsApp and get media ID */
   uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;
 

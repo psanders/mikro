@@ -151,6 +151,8 @@ export interface ConversationTurn {
   expectedAI: string;
   /** Optional tool calls expected in this turn */
   tools?: ExpectedToolCall[];
+  /** Skip response similarity check for this turn (tools check still runs). Use when pre-tool text is non-deterministic. */
+  skipResponseCheck?: boolean;
 }
 
 /**

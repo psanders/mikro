@@ -55,11 +55,14 @@ Treat as EQUIVALENT (similar: true, high confidence):
 - Same meaning with different wording or minor typos (e.g. "refiero" vs "refirió", "que" vs "qué").
 - Same information in a slightly different order or phrasing.
 - Same tone and intent (e.g. both are a greeting, both ask the same question, both give the same instruction).
+- Both responses END by asking the SAME question in Spanish, even if the preamble before the question differs. For example: "No cobramos comisión. ¿En qué provincia está tu negocio?" and "Nuestros asesores te explicarán los costos. ¿En qué provincia está tu negocio?" are EQUIVALENT because both ask "¿En qué provincia está tu negocio?". The preamble is conversational context that does not affect the core assertion.
+- One response echoes/confirms context from the prior turn (e.g. "Muy bien, casa propia.") before asking the same next question, while the other uses a shorter affirmation (e.g. "Muy bien.") — if both ask the same next question, treat them as equivalent.
 
 Treat as NOT EQUIVALENT (similar: false):
-- Missing or wrong key information (e.g. different name, number, or instruction).
-- Different intent (e.g. one asks a question and the other does not).
-- Substantially different tone or message.`;
+- They ask DIFFERENT questions (e.g. one asks about province, the other asks about monthly sales).
+- One asks a question and the other does not ask any question.
+- Missing or wrong key information when no question is involved (e.g. different name, number, or instruction in a statement).
+- Substantially different tone or message with no shared question.`;
 
   const userPrompt = `Expected response:
 ${expected}

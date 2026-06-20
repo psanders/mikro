@@ -130,9 +130,25 @@ export function createMessageRouter(deps: RouterDependencies) {
       };
     }
 
-    // Step 3: Unknown phone — a prospect. We do not auto-respond over WhatsApp;
-    // outreach is outbound-only (the promo) and replies are handled manually
-    // via an external application.
+    // Step 3: Unknown phone — check for a prospect loan application.
+    if (deps.findApplicationByPhone) {
+      const app = await deps.findApplicationByPhone(normalizedPhone);
+      if (app) {
+        logger.verbose("phone matched prospect loan application", {
+          phone: normalizedPhone,
+          sessionId: app.sessionId,
+          partial: app.partial
+        });
+        return {
+          type: "prospect",
+          sessionId: app.sessionId,
+          partial: app.partial,
+          phone: normalizedPhone
+        };
+      }
+    }
+
+    // Step 4: Truly unknown — ignore.
     logger.verbose("phone is unknown, ignoring (no automated response)", {
       phone: normalizedPhone
     });

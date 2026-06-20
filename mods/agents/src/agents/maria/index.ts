@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { Agent } from "@mikro/agents";
+import type { Agent } from "../../llm/types.js";
 
 export const maria: Agent = {
   name: "maria",

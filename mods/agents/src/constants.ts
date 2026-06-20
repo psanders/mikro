@@ -8,11 +8,12 @@
  * Agent name constants for easy reference.
  */
 export const AGENT_MARIA = "maria" as const;
+export const AGENT_JOSE = "jose" as const;
 
 /**
  * Available agent names.
  */
-export const AGENT_NAMES = [AGENT_MARIA] as const;
+export const AGENT_NAMES = [AGENT_MARIA, AGENT_JOSE] as const;
 
 /**
  * Type for agent names.
