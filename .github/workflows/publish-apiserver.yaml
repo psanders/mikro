@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
+    paths:
+      - "mods/apiserver/**"
+      - "mods/common/**"
+      - "lerna.json"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch:
     inputs:
       version:
