@@ -6,10 +6,14 @@ import { Logo } from "./Logo";
 import { FacebookIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from "./SocialIcons";
 
 const SOCIAL = [
-  { icon: InstagramIcon, label: "Instagram" },
-  { icon: FacebookIcon, label: "Facebook" },
-  { icon: LinkedinIcon, label: "LinkedIn" },
-  { icon: YoutubeIcon, label: "YouTube" }
+  { icon: InstagramIcon, label: "Instagram", href: "https://www.instagram.com/mikro.do/" },
+  {
+    icon: FacebookIcon,
+    label: "Facebook",
+    href: "https://www.facebook.com/profile.php?id=61590218048106"
+  },
+  { icon: LinkedinIcon, label: "LinkedIn", href: "#" },
+  { icon: YoutubeIcon, label: "YouTube", href: "#" }
 ] as const;
 
 const PRODUCT_LINKS = [
@@ -38,11 +42,13 @@ export function Footer() {
               Crédito rápido, evaluado con inteligencia y aprobado por personas reales.
             </p>
             <div className="mt-[18px] flex gap-2.5">
-              {SOCIAL.map(({ icon: Icon, label }) => (
+              {SOCIAL.map(({ icon: Icon, label, href }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
                   aria-label={label}
+                  target={href === "#" ? undefined : "_blank"}
+                  rel={href === "#" ? undefined : "noopener noreferrer"}
                   className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#1A2D58] text-white transition-colors hover:bg-[#243a6e]"
                 >
                   <Icon className="h-4 w-4" />
@@ -99,11 +105,13 @@ export function Footer() {
               <Logo inverted compact />
             </Link>
             <div className="flex gap-2.5">
-              {SOCIAL.map(({ icon: Icon, label }) => (
+              {SOCIAL.map(({ icon: Icon, label, href }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
                   aria-label={label}
+                  target={href === "#" ? undefined : "_blank"}
+                  rel={href === "#" ? undefined : "noopener noreferrer"}
                   className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#1A2D58] text-white"
                 >
                   <Icon className="h-4 w-4" />
