@@ -52,10 +52,12 @@ describe("handleWhatsAppMessage", () => {
     downloadMedia: sinon.stub().resolves("data:image/png;base64,mock"),
     getChatHistoryForUser: sinon.stub().resolves([]),
     addMessageForUser: sinon.stub().resolves(),
-    getAgent: sinon.stub().returns({
+    getAgentForProfile: sinon.stub().returns({
       name: "maria",
+      profile: "ADMIN",
+      enabled: true,
       systemPrompt: "You are Maria",
-      tools: []
+      allowedTools: []
     }),
     submitApplicationFromFlow: sinon.stub().resolves()
   };
@@ -71,10 +73,12 @@ describe("handleWhatsAppMessage", () => {
     mockMessageProcessor.downloadMedia = sinon.stub().resolves("data:image/png;base64,mock");
     mockMessageProcessor.getChatHistoryForUser = sinon.stub().resolves([]);
     mockMessageProcessor.addMessageForUser = sinon.stub().resolves();
-    mockMessageProcessor.getAgent = sinon.stub().returns({
+    mockMessageProcessor.getAgentForProfile = sinon.stub().returns({
       name: "maria",
+      profile: "ADMIN",
+      enabled: true,
       systemPrompt: "You are Maria",
-      tools: []
+      allowedTools: []
     });
     mockMessageProcessor.submitApplicationFromFlow = sinon.stub().resolves();
 

@@ -10,7 +10,7 @@
   "assetsPath": "/app/mods/apiserver/assets",
   "messageMaxAgeSeconds": 60,
   "sessionTimeoutSeconds": 1800,
-  "disabledAgents": [],
+  "agentsFile": "agents.yaml",
   "llm": {
     "text": {
       "vendor": "openai",

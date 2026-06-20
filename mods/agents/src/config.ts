@@ -151,12 +151,3 @@ export function getDeepgramApiKey(): string | undefined {
 export function getEvalSimilarityThreshold(): number {
   return getConfig().evals.similarityThreshold;
 }
-
-/**
- * Get disabled agents from config.
- *
- * @returns A Set of disabled agent names
- */
-export function getDisabledAgents(): Set<string> {
-  return new Set(getConfig().disabledAgents);
-}

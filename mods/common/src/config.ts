@@ -6,6 +6,7 @@
  */
 import { readFileSync, existsSync } from "fs";
 import path from "path";
+import { parse as parseYaml } from "yaml";
 import { z } from "zod/v4";
 
 /** Supported LLM vendors. */
@@ -19,10 +20,6 @@ export const llmConfigSchema = z.object({
   model: z.string().min(1, "Model name is required")
 });
 export type LLMConfig = z.infer<typeof llmConfigSchema>;
-
-/** Valid agent names for disabledAgents. */
-export const AGENT_NAMES_CONFIG = ["joan", "maria"] as const;
-const agentNameSchema = z.enum(AGENT_NAMES_CONFIG);
 
 const llmPurposesSchema = z.object({
   text: llmConfigSchema,
@@ -270,7 +267,10 @@ export const mikroConfigSchema = z
     assetsPath: z.string().default("/app/mods/apiserver/assets"),
     messageMaxAgeSeconds: z.number().default(60),
     sessionTimeoutSeconds: z.number().default(1800),
-    disabledAgents: z.array(agentNameSchema).default([]),
+    // Path to the agents YAML file. Relative paths resolve against the
+    // mikro.json directory. Agents enable/disable themselves in that file, so
+    // there is no disable list here.
+    agentsFile: z.string().default("agents.yaml"),
     llm: llmPurposesSchema,
     whatsapp: whatsappSchema,
     voiceNotes: voiceNotesSchema.default(() => ({
@@ -311,6 +311,48 @@ export type ResolvedMikroConfig = Omit<
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";
+
+/**
+ * Resolve the path to the agents YAML file. The path comes from `mikro.json`'s
+ * `agentsFile` (default `agents.yaml`); relative paths resolve against the
+ * mikro.json directory. Agents live in this file so their prompts/tools/copy
+ * can be edited without rebuilding the apiserver image.
+ *
+ * @param override - Explicit path that wins over the configured value
+ */
+export function getAgentsConfigFilePath(override?: string): string {
+  if (override) return resolvePathFromConfigDir(override);
+  return resolvePathFromConfigDir(getConfig().agentsFile);
+}
+
+/**
+ * Read and parse the agents YAML file as a raw array. YAML is chosen for its
+ * readability with the large prompts and eval scenarios agents carry.
+ * Validation of each entry (schema + tool existence) is the caller's
+ * responsibility, done in @mikro/agents, which owns the Agent shape and the
+ * tool registry.
+ *
+ * @throws Error if the file is missing, unreadable, or not an array
+ */
+export function loadRawAgentsConfig(override?: string): unknown[] {
+  const filePath = getAgentsConfigFilePath(override);
+  if (!existsSync(filePath)) {
+    throw new Error(
+      `Agents config file not found at ${filePath}. Create one from agents.yaml.example.`
+    );
+  }
+  let raw: unknown;
+  try {
+    raw = parseYaml(readFileSync(filePath, "utf-8"));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to read or parse ${filePath}: ${message}`);
+  }
+  if (!Array.isArray(raw)) {
+    throw new Error(`Invalid agents config at ${filePath}: expected a top-level array of agents.`);
+  }
+  return raw;
+}
 
 /** Default database URL (container path). Must match mikroConfigSchema default. */
 export const DEFAULT_DATABASE_URL = "file:/app/data/mikro.db";

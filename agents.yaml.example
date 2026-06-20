@@ -1,0 +1,70 @@
+# Agent definitions — reference example.
+#
+# Agents are identified ONLY by `profile`; one agent per profile. Valid profiles:
+#   ADMIN, COLLECTOR, REVIEWER  (DB user roles)
+#   PROSPECT                    (unknown phone with a partial loan application)
+#   GUEST                       (unknown phone, no application)
+# A profile with no agent here simply gets no automated reply.
+#
+# Path to this file is set in mikro.json -> "agentsFile" (default: agents.yaml).
+
+# Minimal agent: only the required fields. `enabled` defaults to true,
+# `model` is optional, `evaluations` is optional.
+- name: María
+  profile: ADMIN
+  systemPrompt: |-
+    Eres María, la asistente administrativa. Responde en español, texto plano.
+    Llama herramientas para datos reales; nunca inventes.
+  allowedTools:
+    - getLoanByLoanId
+    - createPayment
+    - sendReceiptViaWhatsApp
+  temperature: 0.4
+
+# Full agent: every optional field shown.
+- name: José
+  profile: PROSPECT
+  enabled: true # set false to leave this profile unserved (disabled in place)
+  model: claude-opus-4-8 # optional; omit to use the configured default
+  systemPrompt: |-
+    Eres José. Ayudas a prospectos a completar su solicitud por WhatsApp.
+    Llama getApplicationState al inicio; guarda respuestas con saveAnswer;
+    finaliza con finalizeApplication.
+  allowedTools:
+    - getApplicationState
+    - saveAnswer
+    - finalizeApplication
+  temperature: 0.3
+  # Optional eval suite (used by the eval CLI only; ignored at runtime).
+  evaluations:
+    context:
+      sessionId: session-test-001
+      phone: "+18091234567"
+    scenarios:
+      - id: happy-path
+        description: Prospect answers a question; José saves it and asks the next.
+        turns:
+          - human: Hola
+            expectedAI: ¡Hola! Soy José. Déjame revisar tu solicitud.
+            tools:
+              - name: getApplicationState
+                mockResponse:
+                  success: true
+                  message: ok
+                  data:
+                    missingFields: [monthlySales]
+                    simulatedIsc: 40
+                    isOutOfZone: false
+                    isCriticalBusiness: false
+          - human: Vendo como 80 mil al mes
+            expectedAI: Perfecto. ¿Cuánto tiempo llevas con tu negocio?
+            skipResponseCheck: true # pre-tool text is non-deterministic
+            tools:
+              - name: saveAnswer
+                mockResponse:
+                  success: true
+                  message: "Campos guardados: monthlySales"
+                  data:
+                    saved: [monthlySales]
+                    missingFields: [businessAge]
+                    simulatedIsc: 65

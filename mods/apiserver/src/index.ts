@@ -46,13 +46,12 @@ import {
   createSendWhatsAppMessage,
   createWhatsAppClient,
   allTools,
-  getDisabledAgents,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
   initializeLLM,
-  AGENT_JOSE,
+  getAgentByProfile,
   type Message,
-  type AgentName,
+  type Profile,
   type ToolExecutorDependencies,
   type ExportedCustomer
 } from "@mikro/agents";
@@ -102,7 +101,7 @@ import {
   createSaveAnswer,
   createFinalizeApplication
 } from "./api/jose/index.js";
-import { loadAgents, getAgent } from "./agents/index.js";
+import { loadAgents } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
 
 // Re-export AppRouter type for clients
@@ -324,13 +323,11 @@ async function initializeMessageProcessor() {
       uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
     });
 
-    // Get disabled agents from config
-    const disabledAgents = getDisabledAgents();
-    logger.verbose("disabled agents loaded", { disabledAgents: Array.from(disabledAgents) });
-
-    // Create function to check if an agent is disabled
-    const isAgentDisabled = (agentName: AgentName): boolean => {
-      return disabledAgents.has(agentName);
+    // Resolve the agent serving a profile, treating a disabled agent
+    // (enabled: false in agents.yaml) as unserved.
+    const getAgentForProfile = (profile: Profile) => {
+      const agent = getAgentByProfile(agents, profile);
+      return agent?.enabled ? agent : undefined;
     };
 
     // Create router
@@ -356,7 +353,7 @@ async function initializeMessageProcessor() {
           isActive: customer.isActive
         };
       },
-      isAgentDisabled,
+      getAgentForProfile,
       findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient)
     });
 
@@ -687,8 +684,7 @@ async function initializeMessageProcessor() {
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,
-      getAgent: (name: AgentName) => getAgent(agents, name),
-      joseAgent: getAgent(agents, AGENT_JOSE),
+      getAgentForProfile,
       submitApplicationFromFlow,
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };

@@ -14,7 +14,8 @@ import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
 import { getMessageMaxAgeSeconds } from "../config.js";
 import { logger } from "../logger.js";
-import { ROLE_TO_AGENT, type AgentName } from "../constants.js";
+import type { Profile } from "../constants.js";
+import { getGuestConversation, addGuestMessage } from "../conversations/index.js";
 import {
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
@@ -60,10 +61,8 @@ export interface MessageProcessorDependencies {
     content: string;
     tools?: string[];
   }) => Promise<void>;
-  /** Get agent by name */
-  getAgent: (name: AgentName) => Agent;
-  /** José prospect intake agent. When set, activates WhatsApp intake for prospects. */
-  joseAgent?: Agent;
+  /** Resolve the agent assigned to a profile (undefined when none is assigned). */
+  getAgentForProfile: (profile: Profile) => Agent | undefined;
   /** Optional: transcribe voice note (audio data URL) to text. When set, voice notes are processed as text. */
   transcribeVoiceNote?: (audioDataUrl: string) => Promise<string>;
   /**
@@ -157,7 +156,7 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     !processor.downloadMedia ||
     !processor.getChatHistoryForUser ||
     !processor.addMessageForUser ||
-    !processor.getAgent
+    !processor.getAgentForProfile
   ) {
     const missing = [];
     if (!processor.routeMessage) missing.push("routeMessage");
@@ -166,7 +165,7 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     if (!processor.downloadMedia) missing.push("downloadMedia");
     if (!processor.getChatHistoryForUser) missing.push("getChatHistoryForUser");
     if (!processor.addMessageForUser) missing.push("addMessageForUser");
-    if (!processor.getAgent) missing.push("getAgent");
+    if (!processor.getAgentForProfile) missing.push("getAgentForProfile");
     logger.error("setMessageProcessor called with missing dependencies", { missing });
     throw new Error(`Message processor missing required dependencies: ${missing.join(", ")}`);
   }
@@ -335,8 +334,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     downloadMedia,
     getChatHistoryForUser,
     addMessageForUser,
-    getAgent,
-    joseAgent,
+    getAgentForProfile,
     transcribeVoiceNote,
     submitApplicationFromFlow
   } = messageProcessor;
@@ -457,7 +455,33 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // Prospect: partial application → José; completed → hold message.
+    // Guest: unknown phone, no application. Respond only if a GUEST agent is
+    // assigned in config; otherwise ignore (preserves the no-auto-reply default).
+    if (route.type === "guest") {
+      const guestAgent = getAgentForProfile("GUEST");
+      if (!guestAgent) {
+        logger.verbose("no agent assigned to GUEST profile, ignoring", { phone });
+        return;
+      }
+      const history = getGuestConversation(phone);
+      const newGuestSession = isNewSession(phone);
+      const guestResult = await invokeLLM(
+        guestAgent,
+        history,
+        userMessage,
+        imageUrl,
+        { phone },
+        newGuestSession
+      );
+      touchSession(phone);
+      const guestText = typeof guestResult === "string" ? guestResult : guestResult.text;
+      addGuestMessage(phone, { role: "user", content: userMessage });
+      addGuestMessage(phone, { role: "assistant", content: guestText });
+      if (guestText) await sendWhatsAppMessage({ phone, message: guestText });
+      return;
+    }
+
+    // Prospect: partial application → PROSPECT agent (José); completed → hold message.
     if (route.type === "prospect") {
       if (!route.partial) {
         logger.verbose("prospect application already complete, sending hold message", { phone });
@@ -467,13 +491,16 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
         });
         return;
       }
-      if (!joseAgent) {
-        logger.verbose("jose agent not configured, ignoring prospect message", { phone });
+      const prospectAgent = getAgentForProfile("PROSPECT");
+      if (!prospectAgent) {
+        logger.verbose("no agent assigned to PROSPECT profile, ignoring prospect message", {
+          phone
+        });
         return;
       }
       const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
         invokeLLM,
-        joseAgent
+        joseAgent: prospectAgent
       });
       if (result.text) {
         await sendWhatsAppMessage({ phone, message: result.text });
@@ -481,13 +508,12 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // Only known users (e.g. ADMIN -> Maria) reach an agent.
-    const targetAgent = ROLE_TO_AGENT[route.role];
-    if (!targetAgent) {
-      logger.verbose("no agent for user role", { phone, role: route.role });
+    // Known users (ADMIN/COLLECTOR) reach the agent assigned to their role profile.
+    const agent = getAgentForProfile(route.role);
+    if (!agent) {
+      logger.verbose("no agent assigned to user role profile", { phone, role: route.role });
       return;
     }
-    const agent: Agent = getAgent(targetAgent);
     const chatHistory: Message[] = await getChatHistoryForUser(route.userId);
     const context: Record<string, unknown> = {
       userId: route.userId,

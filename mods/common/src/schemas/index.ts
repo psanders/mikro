@@ -94,7 +94,10 @@ export {
   type GetUserInput,
   type GetUserByPhoneInput,
   type ListUsersInput,
-  type Role
+  type Role,
+  profileEnum,
+  AGENT_PROFILES,
+  type Profile
 } from "./user.js";
 
 export {

@@ -10,6 +10,21 @@ import { validatePhone } from "../utils/validatePhone.js";
 export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REVIEWER"]);
 
 /**
+ * Audience profiles an agent can serve. A superset of the DB `Role` (so a
+ * user's role is always a valid profile) plus the router-derived PROSPECT
+ * (unknown phone with a partial application) and GUEST (unknown phone, no
+ * application). Profiles — not agent names — are the only agent identity in
+ * code; routing resolves the serving agent by profile.
+ */
+export const profileEnum = z.enum([...roleEnum.options, "PROSPECT", "GUEST"]);
+
+/** Audience profile an agent serves. */
+export type Profile = z.infer<typeof profileEnum>;
+
+/** All valid agent profiles. */
+export const AGENT_PROFILES = profileEnum.options;
+
+/**
  * Schema for login (phone + password).
  */
 export const loginSchema = z.object({

@@ -99,7 +99,7 @@ export function printScenarioStart(
 }
 
 /**
- * Print a single turn (streaming): Human, AI (AgentName), Tools lines. Call after each turn.
+ * Print a single turn (streaming): Human, AI (agent label), Tools lines. Call after each turn.
  * Wraps Human and AI text to CONVERSATION_WIDTH.
  */
 export function printTurnResult(

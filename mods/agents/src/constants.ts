@@ -1,34 +1,15 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Agent name constants and utilities.
+ * Agent identity constants. Agents are identified by audience profile only —
+ * there are no agent names in code. Profile is the canonical domain type and
+ * lives in @mikro/common (alongside Role); re-exported here for agent code.
  */
+import { AGENT_PROFILES } from "@mikro/common";
+
+export { AGENT_PROFILES, type Profile } from "@mikro/common";
 
 /**
- * Agent name constants for easy reference.
+ * Set of valid profiles for validation.
  */
-export const AGENT_MARIA = "maria" as const;
-export const AGENT_JOSE = "jose" as const;
-
-/**
- * Available agent names.
- */
-export const AGENT_NAMES = [AGENT_MARIA, AGENT_JOSE] as const;
-
-/**
- * Type for agent names.
- */
-export type AgentName = (typeof AGENT_NAMES)[number];
-
-/**
- * Set of valid agent names for validation.
- */
-export const VALID_AGENT_NAMES = new Set(AGENT_NAMES);
-
-/**
- * Mapping of user roles to agent names.
- * Only ADMIN has an agent — collectors and referrers use the mobile app.
- */
-export const ROLE_TO_AGENT: Partial<Record<string, AgentName>> = {
-  ADMIN: AGENT_MARIA
-} as const;
+export const VALID_AGENT_PROFILES = new Set<string>(AGENT_PROFILES);

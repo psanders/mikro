@@ -9,6 +9,8 @@ export {
   loadConfig,
   getConfig,
   getConfigFilePath,
+  getAgentsConfigFilePath,
+  loadRawAgentsConfig,
   getDatabaseUrlFromFile,
   resolveDatabaseUrl,
   getResolvedDatabaseUrl,
@@ -204,6 +206,9 @@ export {
   type GetUserByPhoneInput,
   type ListUsersInput,
   type Role,
+  profileEnum,
+  AGENT_PROFILES,
+  type Profile,
   // Message schemas
   messageRoleEnum,
   attachmentTypeEnum,

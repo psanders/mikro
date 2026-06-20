@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import type { Profile } from "../constants.js";
 
 /**
  * Model settings for LLM inference.
@@ -18,8 +19,16 @@ export interface ModelSettings {
  * Agent configuration loaded from JSON.
  */
 export interface Agent {
-  /** Agent name (e.g., "joan", "maria") */
+  /**
+   * Human-friendly display label for logs and eval output only. NOT an
+   * identity — agents are keyed and routed by `profile`. Code never branches on
+   * this value.
+   */
   name: string;
+  /** Audience profile this agent serves — the sole agent identity in code. */
+  profile: Profile;
+  /** Whether the agent serves its profile. Defaults to true; a disabled agent leaves its profile unserved. */
+  enabled: boolean;
   /** System prompt that defines the agent's behavior */
   systemPrompt: string;
   /** List of tool names the agent is allowed to use */

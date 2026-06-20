@@ -83,7 +83,6 @@ export {
   getPublicUrl,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
-  getDisabledAgents,
   getLLMConfig,
   validateAllLLMConfigs,
   clearLLMConfigCache,
@@ -113,15 +112,13 @@ export {
  */
 export { validateAllLLMConfigs as initializeLLM } from "./config.js";
 
-// Constants
-export {
-  AGENT_NAMES,
-  AGENT_MARIA,
-  AGENT_JOSE,
-  VALID_AGENT_NAMES,
-  ROLE_TO_AGENT,
-  type AgentName
-} from "./constants.js";
+// Constants — agents are identified by profile only; no agent names in code
+export { AGENT_PROFILES, VALID_AGENT_PROFILES, type Profile } from "./constants.js";
 
-// Agent definitions
-export { jose, maria, loadAgents, JOSE_SYSTEM_PROMPT } from "./agents/index.js";
+// Agent definitions (loaded from the agents YAML file; nothing hardcoded)
+export {
+  loadAgents,
+  getAgentByProfile,
+  agentConfigSchema,
+  type AgentConfigInput
+} from "./agents/index.js";

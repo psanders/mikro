@@ -1,74 +1,23 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Agents are loaded from the agents YAML file by @mikro/agents (which
+ * owns the schema and tool registry), keyed by the profile each serves. The
+ * apiserver just re-exports the loader.
  */
-import type { Agent, AgentName } from "@mikro/agents";
-import { AGENT_NAMES, jose, maria } from "@mikro/agents";
+import type { Agent, Profile } from "@mikro/agents";
+import { loadAgents as loadAgentsFromConfig } from "@mikro/agents";
 import { logger } from "../logger.js";
-import { agentConfigSchema } from "./agentSchema.js";
 
 /**
- * Load a single agent configuration from TypeScript module.
- * Uses Zod validation following the same pattern as API functions.
+ * Load all agent configurations from agents.yaml, keyed by profile.
  *
- * @param agent - The agent configuration object
- * @param name - The agent name (for validation and logging)
- * @returns The validated agent configuration
+ * @returns A Map of profile to Agent configuration
+ * @throws Error if the config is missing or any entry is invalid
  */
-function validateAgentConfig(agent: unknown, name: AgentName): Agent {
-  // Validate using Zod schema (same validation approach as withErrorHandlingAndValidation)
-  const result = agentConfigSchema.safeParse(agent);
-  if (!result.success) {
-    const errorMessages = result.error.issues
-      .map((e) => `${e.path.map(String).join(".")}: ${e.message}`)
-      .join(", ");
-    throw new Error(`Invalid agent configuration for ${name}: ${errorMessages}`);
-  }
-
-  return result.data as Agent;
-}
-
-/**
- * Load all agent configurations.
- *
- * @returns A Map of agent name to Agent configuration
- */
-export function loadAgents(): Map<AgentName, Agent> {
+export function loadAgents(): Map<Profile, Agent> {
   logger.verbose("loading agent configurations");
-
-  const agents = new Map<AgentName, Agent>();
-  const agentConfigs: Array<{ name: AgentName; config: unknown }> = [
-    { name: AGENT_NAMES[0], config: maria },
-    { name: AGENT_NAMES[1], config: jose }
-  ];
-
-  for (const { name, config } of agentConfigs) {
-    try {
-      const agent = validateAgentConfig(config, name);
-      agents.set(name, agent);
-      logger.verbose("agent loaded", { name, tools: agent.allowedTools.length });
-    } catch (error) {
-      const err = error as Error;
-      logger.error("failed to load agent", { name, error: err.message });
-      throw error;
-    }
-  }
-
-  logger.verbose("all agents loaded", { count: agents.size });
+  const agents = loadAgentsFromConfig();
+  logger.verbose("all agents loaded", { count: agents.size, profiles: [...agents.keys()] });
   return agents;
-}
-
-/**
- * Get a specific agent by name.
- *
- * @param agents - The agents map
- * @param name - The agent name to get
- * @returns The agent configuration
- * @throws Error if agent not found
- */
-export function getAgent(agents: Map<AgentName, Agent>, name: AgentName): Agent {
-  const agent = agents.get(name);
-  if (!agent) {
-    throw new Error(`Agent not found: ${name}`);
-  }
-  return agent;
 }

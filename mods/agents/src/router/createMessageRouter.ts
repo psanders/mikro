@@ -7,17 +7,17 @@
 import type { RouteResult, RouterDependencies } from "./types.js";
 import { logger } from "../logger.js";
 import { validatePhone } from "@mikro/common";
-import { ROLE_TO_AGENT } from "../constants.js";
 
 /**
  * Creates a message router that determines routing based on phone number lookup.
  *
- * Routing rules:
+ * Routing rules (the agent that serves each profile is assigned in agents.yaml;
+ * a route resolves to an agent only if one is assigned to that profile):
  * 1. Customer → Log and ignore (customers don't use agents)
- * 2. User (COLLECTOR role) → Ignored (collectors use the mobile app)
- * 3. User (ADMIN role) → Route to Maria agent
- * 4. Unknown phone (prospect) → ignored (no automated WhatsApp response;
- *    outreach is outbound-only and replies are handled manually)
+ * 2. User → resolve the agent for the user's role profile (ADMIN/COLLECTOR);
+ *    ignored when no agent is assigned to that profile
+ * 3. Unknown phone with a partial application → prospect (PROSPECT profile)
+ * 4. Unknown phone with no application → guest (GUEST profile)
  *
  * @param deps - Dependencies for database lookups
  * @returns A function that routes messages based on phone number
@@ -35,7 +35,7 @@ import { ROLE_TO_AGENT } from "../constants.js";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getCustomerByPhone, isAgentDisabled } = deps;
+  const { getUserByPhone, getCustomerByPhone, getAgentForProfile } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
@@ -83,35 +83,16 @@ export function createMessageRouter(deps: RouterDependencies) {
         primaryRole = "COLLECTOR";
       }
 
-      // Determine which agent would handle this user
-      const targetAgent = ROLE_TO_AGENT[primaryRole];
-
-      // No agent configured for this role (e.g. collectors use the mobile app)
-      if (!targetAgent) {
-        logger.verbose("no agent configured for role, ignoring", {
+      // No agent serving this profile (none assigned, or the profile is
+      // disabled — getAgentForProfile collapses both to undefined).
+      if (!getAgentForProfile(primaryRole)) {
+        logger.verbose("no agent serving profile, ignoring", {
           phone: normalizedPhone,
-          role: primaryRole
+          profile: primaryRole
         });
         return {
           type: "ignored",
-          reason: "no agent for this role",
-          phone: normalizedPhone
-        };
-      }
-
-      // Check if the target agent is disabled
-      if (isAgentDisabled(targetAgent)) {
-        logger.info("agent is disabled, ignoring request", {
-          phone: normalizedPhone,
-          agentName: targetAgent,
-          routeType: "user",
-          userId: user.id,
-          role: primaryRole,
-          reason: "agent is disabled"
-        });
-        return {
-          type: "ignored",
-          reason: "agent is disabled",
+          reason: "no agent for this profile",
           phone: normalizedPhone
         };
       }
@@ -148,14 +129,9 @@ export function createMessageRouter(deps: RouterDependencies) {
       }
     }
 
-    // Step 4: Truly unknown — ignore.
-    logger.verbose("phone is unknown, ignoring (no automated response)", {
-      phone: normalizedPhone
-    });
-    return {
-      type: "ignored",
-      reason: "unknown phone — no automated WhatsApp response",
-      phone: normalizedPhone
-    };
+    // Step 4: Unknown phone, no application — guest. The handler responds only
+    // if an agent is assigned to the GUEST profile; otherwise it ignores.
+    logger.verbose("phone is unknown — routing as guest", { phone: normalizedPhone });
+    return { type: "guest", phone: normalizedPhone };
   };
 }
