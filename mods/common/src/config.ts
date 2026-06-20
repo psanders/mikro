@@ -338,7 +338,7 @@ export function loadRawAgentsConfig(override?: string): unknown[] {
   const filePath = getAgentsConfigFilePath(override);
   if (!existsSync(filePath)) {
     throw new Error(
-      `Agents config file not found at ${filePath}. Create one from agents.yaml.example.`
+      `Agents config file not found at ${filePath}. Provide the tracked agents.yaml (repo root) at this path.`
     );
   }
   let raw: unknown;
