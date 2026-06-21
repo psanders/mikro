@@ -49,6 +49,7 @@ describe("handleWhatsAppMessage", () => {
     routeMessage: sinon.stub().resolves(adminRoute),
     invokeLLM: sinon.stub().resolves("AI response"),
     sendWhatsAppMessage: sinon.stub().resolves({ messages: [{ id: "response-123" }] }),
+    sendTemplateMessage: sinon.stub().resolves({ messages: [{ id: "tpl-123" }] }),
     downloadMedia: sinon.stub().resolves("data:image/png;base64,mock"),
     getChatHistoryForUser: sinon.stub().resolves([]),
     addMessageForUser: sinon.stub().resolves(),
@@ -70,6 +71,9 @@ describe("handleWhatsAppMessage", () => {
     mockMessageProcessor.sendWhatsAppMessage = sinon
       .stub()
       .resolves({ messages: [{ id: "response-123" }] });
+    mockMessageProcessor.sendTemplateMessage = sinon
+      .stub()
+      .resolves({ messages: [{ id: "tpl-123" }] });
     mockMessageProcessor.downloadMedia = sinon.stub().resolves("data:image/png;base64,mock");
     mockMessageProcessor.getChatHistoryForUser = sinon.stub().resolves([]);
     mockMessageProcessor.addMessageForUser = sinon.stub().resolves();

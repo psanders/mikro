@@ -83,9 +83,10 @@ export function createMessageRouter(deps: RouterDependencies) {
         primaryRole = "COLLECTOR";
       }
 
-      // No agent serving this profile (none assigned, or the profile is
-      // disabled — getAgentForProfile collapses both to undefined).
-      if (!getAgentForProfile(primaryRole)) {
+      // COLLECTOR has a deterministic handler (not an LLM agent), so it
+      // always routes as a user regardless of agent assignment in agents.yaml.
+      // For all other roles, require an assigned agent before routing.
+      if (primaryRole !== "COLLECTOR" && !getAgentForProfile(primaryRole)) {
         logger.verbose("no agent serving profile, ignoring", {
           phone: normalizedPhone,
           profile: primaryRole

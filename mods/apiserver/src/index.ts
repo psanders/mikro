@@ -680,6 +680,7 @@ async function initializeMessageProcessor() {
       routeMessage,
       invokeLLM,
       sendWhatsAppMessage,
+      sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,

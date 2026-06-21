@@ -77,8 +77,33 @@ export async function sendMessage(
 ): Promise<WhatsAppSendResponse> {
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
 
-  // Interactive Flow message takes precedence: an entirely different request
-  // body (a button that opens a native in-chat form). Text/media are ignored.
+  // Interactive reply-button message: up to 3 tappable reply buttons.
+  if (params.replyButtons) {
+    const rb = params.replyButtons;
+    const requestBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: params.phone,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: { text: rb.bodyText },
+        action: {
+          buttons: rb.buttons.map((b) => ({
+            type: "reply",
+            reply: { id: b.id, title: b.title }
+          }))
+        }
+      }
+    };
+    logger.verbose("sending whatsapp reply-button message", {
+      phone: params.phone,
+      buttonCount: rb.buttons.length
+    });
+    return sendRequest(url, accessToken, params.phone, "interactive-button", requestBody);
+  }
+
+  // Interactive Flow message: a button that opens a native in-chat form. Text/media are ignored.
   if (params.flow) {
     const f = params.flow;
     const requestBody = {

@@ -597,4 +597,43 @@
                   message: Solicitud marcada como abandonada
                   data:
                     finalized: true
-                    outcome: abandoned
+- name: collector
+  profile: COLLECTOR
+  enabled: true
+  systemPrompt: |-
+    Eres un extractor de números de teléfono. El usuario te muestra una foto de un negocio.
+    Extrae el PRIMER número de teléfono que veas.
+    Devuelve SOLO los dígitos de ese número — sin guiones, espacios, paréntesis ni ningún otro carácter.
+    Si hay varios números, devuelve solo el primero.
+    Si no hay ningún número de teléfono visible, devuelve exactamente: NONE
+  allowedTools: []
+  temperature: 0
+  replyMode: final
+  evaluations:
+    context:
+      phone: "+18095550001"
+    scenarios:
+      - id: extract-single-phone
+        description: Single phone number in input; extractor returns digits only, no punctuation
+        turns:
+          - human: "809-555-1234"
+            expectedAI: "8095551234"
+            tools: []
+      - id: extract-first-of-multiple
+        description: Multiple numbers present; extractor returns only the first one
+        turns:
+          - human: "809-555-1234 y también 829-000-5678"
+            expectedAI: "8095551234"
+            tools: []
+      - id: no-phone-visible
+        description: No phone number in input; extractor returns NONE
+        turns:
+          - human: "Restaurante El Buen Sabor, abierto de 8am a 10pm"
+            expectedAI: NONE
+            tools: []
+      - id: international-format
+        description: Phone in full international format; extractor returns all digits
+        turns:
+          - human: "+1-809-555-9876"
+            expectedAI: "18095559876"
+            tools: []

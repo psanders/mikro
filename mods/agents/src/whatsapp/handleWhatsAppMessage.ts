@@ -6,7 +6,9 @@ import {
   whatsappWebhookSchema,
   type WhatsAppWebhookBody,
   type WhatsAppMessage,
-  type SendWhatsAppMessageInput
+  type SendWhatsAppMessageInput,
+  type SendWhatsAppTemplateInput,
+  type WhatsAppSendResponse
 } from "@mikro/common";
 import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
@@ -21,6 +23,7 @@ import {
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
 import { handleProspectMessage } from "./handleProspectMessage.js";
+import { handleCollectorMessage } from "./handleCollectorMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -63,6 +66,8 @@ export interface MessageProcessorDependencies {
   }) => Promise<void>;
   /** Resolve the agent assigned to a profile (undefined when none is assigned). */
   getAgentForProfile: (profile: Profile) => Agent | undefined;
+  /** Send an approved WhatsApp template message (used by the collector promo flow). */
+  sendTemplateMessage: (params: SendWhatsAppTemplateInput) => Promise<WhatsAppSendResponse>;
   /** Optional: transcribe voice note (audio data URL) to text. When set, voice notes are processed as text. */
   transcribeVoiceNote?: (audioDataUrl: string) => Promise<string>;
   /**
@@ -156,7 +161,8 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     !processor.downloadMedia ||
     !processor.getChatHistoryForUser ||
     !processor.addMessageForUser ||
-    !processor.getAgentForProfile
+    !processor.getAgentForProfile ||
+    !processor.sendTemplateMessage
   ) {
     const missing = [];
     if (!processor.routeMessage) missing.push("routeMessage");
@@ -166,6 +172,7 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     if (!processor.getChatHistoryForUser) missing.push("getChatHistoryForUser");
     if (!processor.addMessageForUser) missing.push("addMessageForUser");
     if (!processor.getAgentForProfile) missing.push("getAgentForProfile");
+    if (!processor.sendTemplateMessage) missing.push("sendTemplateMessage");
     logger.error("setMessageProcessor called with missing dependencies", { missing });
     throw new Error(`Message processor missing required dependencies: ${missing.join(", ")}`);
   }
@@ -331,6 +338,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     routeMessage,
     invokeLLM,
     sendWhatsAppMessage,
+    sendTemplateMessage,
     downloadMedia,
     getChatHistoryForUser,
     addMessageForUser,
@@ -508,7 +516,21 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // Known users (ADMIN/COLLECTOR) reach the agent assigned to their role profile.
+    // COLLECTOR: handled by the deterministic collector handler.
+    // Pass the configured agent if one is defined in agents.yaml; handler falls
+    // back to the inline PHONE_EXTRACTOR_AGENT constant when absent.
+    if (route.role === "COLLECTOR") {
+      const buttonReplyId = message.interactive?.button_reply?.id;
+      await handleCollectorMessage(phone, type, imageUrl, buttonReplyId, {
+        invokeLLM,
+        sendWhatsAppMessage,
+        sendTemplateMessage,
+        collectorAgent: getAgentForProfile("COLLECTOR")
+      });
+      return;
+    }
+
+    // Known users with an LLM agent (e.g. ADMIN → María).
     const agent = getAgentForProfile(route.role);
     if (!agent) {
       logger.verbose("no agent assigned to user role profile", { phone, role: route.role });

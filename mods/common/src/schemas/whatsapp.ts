@@ -37,12 +37,22 @@ export const whatsappNfmReplySchema = z.object({
 });
 
 /**
- * Schema for the `interactive` content of an incoming message. Only the Flow
- * reply (`nfm_reply`) is consumed today.
+ * Schema for a WhatsApp reply-button tap (`interactive.button_reply`). When a
+ * user taps a reply button, the chosen button id and title arrive here.
+ */
+export const whatsappButtonReplySchema = z.object({
+  id: z.string(),
+  title: z.string()
+});
+
+/**
+ * Schema for the `interactive` content of an incoming message.
+ * Handles Flow completion replies (`nfm_reply`) and reply-button taps (`button_reply`).
  */
 export const whatsappInteractiveSchema = z.object({
   type: z.string(),
-  nfm_reply: whatsappNfmReplySchema.optional()
+  nfm_reply: whatsappNfmReplySchema.optional(),
+  button_reply: whatsappButtonReplySchema.optional()
 });
 
 /**
@@ -235,7 +245,27 @@ export const sendWhatsAppMessageSchema = z
      * in-chat form. When set, the message is sent as an `interactive` flow and
      * all text/media fields are ignored.
      */
-    flow: whatsappFlowMessageSchema.optional()
+    flow: whatsappFlowMessageSchema.optional(),
+
+    /**
+     * Interactive reply-button message: shows up to 3 tappable buttons.
+     * When set, the message is sent as an `interactive/button` and all
+     * text/media/flow fields are ignored.
+     */
+    replyButtons: z
+      .object({
+        bodyText: z.string().min(1),
+        buttons: z
+          .array(
+            z.object({
+              id: z.string().max(256),
+              title: z.string().max(20)
+            })
+          )
+          .min(1)
+          .max(3)
+      })
+      .optional()
   })
   .refine(
     (data) =>
@@ -248,10 +278,11 @@ export const sendWhatsAppMessageSchema = z
       data.videoId ||
       data.audioUrl ||
       data.audioId ||
-      data.flow,
+      data.flow ||
+      data.replyButtons,
     {
       message:
-        "Either message, imageUrl, mediaId, documentUrl, documentId, videoUrl, videoId, audioUrl, audioId, or flow must be provided"
+        "Either message, imageUrl, mediaId, documentUrl, documentId, videoUrl, videoId, audioUrl, audioId, flow, or replyButtons must be provided"
     }
   );
 
@@ -274,6 +305,11 @@ export type WhatsAppAudio = z.infer<typeof whatsappAudioSchema>;
  * Type for a WhatsApp Flow completion reply.
  */
 export type WhatsAppNfmReply = z.infer<typeof whatsappNfmReplySchema>;
+
+/**
+ * Type for a WhatsApp reply-button tap.
+ */
+export type WhatsAppButtonReply = z.infer<typeof whatsappButtonReplySchema>;
 
 /**
  * Type for the interactive content of an incoming message.
