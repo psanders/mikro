@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.12.0](https://github.com/psanders/mikro/compare/v1.11.0...v1.12.0) (2026-06-21)
+
+### Bug Fixes
+
+- **agents:** restore BUSINESS_PHONE constant in collector test ([dbc69dd](https://github.com/psanders/mikro/commit/dbc69dd751e6f4d1ff7e8e0f3f1cab340286e75e))
+
+### Features
+
+- **agents:** add collector photo-prospecting WhatsApp agent ([b62dd04](https://github.com/psanders/mikro/commit/b62dd044bff420bee383c2ce88768d3a60d4cf47))
+
 # [1.11.0](https://github.com/psanders/mikro/compare/v1.10.2...v1.11.0) (2026-06-21)
 
 ### Features
