@@ -1,6 +1,6 @@
 {
   "name": "@mikro/agents",
-  "version": "1.10.2",
+  "version": "1.11.0",
   "description": "Mikro AI Agents",
   "type": "module",
   "main": "dist/index.js",
@@ -20,7 +20,7 @@
     "@langchain/core": "^1.1.17",
     "@langchain/google-genai": "^2.1.13",
     "@langchain/openai": "^1.2.3",
-    "@mikro/common": "^1.10.2",
+    "@mikro/common": "^1.11.0",
     "ansis": "^3.17.0",
     "cli-table3": "^0.6.5",
     "exceljs": "^4.4.0",
