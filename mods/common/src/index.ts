@@ -149,6 +149,8 @@ export {
   APPLICATION_STABLE_KEYS,
   APPLICATION_RAW_ONLY_KEYS,
   APPLICATION_CONTENT_KEYS,
+  FIELD_PRIORITY,
+  sortByFieldPriority,
   type ApplicationPayload,
   type NormalizedApplication,
   type NormalizedApplicationFields,

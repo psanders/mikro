@@ -565,8 +565,7 @@ async function initializeMessageProcessor() {
       joseSaveAnswer: createSaveAnswer(prisma as unknown as DbClient, upsertApplication),
       joseFinalizeApplication: createFinalizeApplication(
         prisma as unknown as DbClient,
-        upsertApplication,
-        sendWhatsAppMessage
+        upsertApplication
       )
     });
 

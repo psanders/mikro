@@ -140,6 +140,7 @@ enum ApplicationStatus {
   REJECTED // Human rejected (terminal)
   SIGNED // Signed contract uploaded
   CONVERTED // Converted to Customer + Loan (terminal)
+  ABANDONED // Prospect declined intake or went silent (terminal)
 
   @@map("application_statuses")
 }
