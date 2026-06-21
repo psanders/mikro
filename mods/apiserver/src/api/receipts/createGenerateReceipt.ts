@@ -7,6 +7,7 @@ import {
   withErrorHandlingAndValidation,
   generateReceiptSchema,
   renderReceiptToImage,
+  renderReceiptCardToImage,
   formatMoney,
   amountToNumber,
   type GenerateReceiptInput,
@@ -35,6 +36,12 @@ export interface ReceiptDependencies {
   db: DbClient;
   keysDir?: string;
   assetsDir?: string;
+  /**
+   * Layout to render. "thermal" (default) is the 384px printer slip sent to the
+   * collector; "card" is the 1125×600 landscape image used as the WhatsApp
+   * payment-confirmation template header.
+   */
+  variant?: "thermal" | "card";
 }
 
 /**
@@ -46,6 +53,7 @@ export interface ReceiptDependencies {
 export function createGenerateReceipt(deps: ReceiptDependencies) {
   const keysDir = deps.keysDir ?? getKeysDir();
   const assetsDir = deps.assetsDir ?? getAssetsDir();
+  const variant = deps.variant ?? "thermal";
 
   const fn = async (params: GenerateReceiptInput) => {
     logger.verbose("generating receipt", { paymentId: params.paymentId });
@@ -119,7 +127,9 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
           : undefined
     };
 
-    return renderReceiptToImage(receiptData, keysDir, assetsDir, logger);
+    return variant === "card"
+      ? renderReceiptCardToImage(receiptData, keysDir, logger)
+      : renderReceiptToImage(receiptData, keysDir, assetsDir, logger);
   };
 
   return withErrorHandlingAndValidation(fn, generateReceiptSchema);

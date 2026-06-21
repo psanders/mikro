@@ -381,6 +381,16 @@ export async function sendTemplateMessage(
       ]
     });
   }
+  // Dynamic URL button (index 0): the template defines the base URL with a `{{1}}`
+  // suffix; this carries the per-send value WhatsApp appends to it.
+  if (params.urlButtonParameter) {
+    components.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [{ type: "text", text: params.urlButtonParameter }]
+    });
+  }
   const requestBody = {
     messaging_product: "whatsapp",
     recipient_type: "individual",

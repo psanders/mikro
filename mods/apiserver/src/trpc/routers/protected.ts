@@ -38,6 +38,7 @@ import {
   generateReceiptSchema,
   receiptDataSchema,
   sendReceiptViaWhatsAppSchema,
+  sendPaymentConfirmationSchema,
   // Report schemas
   generatePortfolioMetricsSchema,
   generatePerformanceReportSchema,
@@ -137,6 +138,7 @@ import { createPreviewLateFee } from "../../api/payments/createPreviewLateFee.js
 import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.js";
 import { createGenerateReceiptFromDataApi } from "../../api/receipts/createGenerateReceiptFromData.js";
 import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendReceiptViaWhatsApp.js";
+import { createSendPaymentConfirmation } from "../../api/receipts/createSendPaymentConfirmation.js";
 // Report API functions
 import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
@@ -166,7 +168,9 @@ import {
   reverseTransactionSchema,
   listTransactionsSchema,
   getTransactionSchema,
-  getTransactionAttachmentSchema
+  getTransactionAttachmentSchema,
+  getWhatsAppPaymentConfirmationTemplate,
+  getReceiptImageUrl
 } from "@mikro/common";
 // Accounting API functions
 import {
@@ -752,6 +756,31 @@ export const protectedRouter = router({
         generateReceipt,
         sendWhatsAppMessage,
         uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
+      });
+
+      return fn(input);
+    }),
+
+  /**
+   * Send the customer-facing payment confirmation: an approved WhatsApp template
+   * with the landscape receipt card as the image header and a "Descargar recibo"
+   * URL button to the public /r/:token verify page. Best-effort.
+   */
+  sendPaymentConfirmation: protectedProcedure
+    .input(sendPaymentConfirmationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const whatsAppClient = createWhatsAppClient();
+      const { templateName, languageCode } = getWhatsAppPaymentConfirmationTemplate();
+
+      // Card variant: the 1125×600 landscape receipt used as the template header.
+      const generateReceiptCard = createGenerateReceipt({ db: ctx.db, variant: "card" });
+
+      const fn = createSendPaymentConfirmation({
+        generateReceiptCard,
+        sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
+        templateName,
+        languageCode,
+        buildImageUrl: getReceiptImageUrl
       });
 
       return fn(input);

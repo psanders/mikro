@@ -4,11 +4,9 @@
 import type { DbClient } from "@mikro/common";
 import { logger } from "../logger.js";
 
-const NUDGE_DELAY_MS = 10 * 60 * 1000; // 10 minutes
-
-export function createScheduleFollowUpJob(client: DbClient) {
+export function createScheduleFollowUpJob(client: DbClient, nudgeDelayMs: number) {
   return async (applicationId: string): Promise<void> => {
-    const scheduledFor = new Date(Date.now() + NUDGE_DELAY_MS);
+    const scheduledFor = new Date(Date.now() + nudgeDelayMs);
     await client.followUpJob.create({
       data: { applicationId, type: "NUDGE", scheduledFor }
     });

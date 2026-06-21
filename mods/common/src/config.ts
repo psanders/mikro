@@ -27,26 +27,22 @@ const llmPurposesSchema = z.object({
   evals: llmConfigSchema
 });
 
+// All templates are registered under the single shared `whatsapp.languageCode`
+// (es_DO). There are intentionally no per-template language overrides.
 const whatsappTemplatesSchema = z.object({
+  // Approved template sent to the borrower after a payment: landscape receipt
+  // card as the image header, "Descargar recibo" URL button.
   paymentConfirmation: z.string().default("payment_receipt"),
   // Approved Flow template whose CTA opens the loan-application intake Flow.
   // Sent as the "promoción" when a reviewer opts in on manual creation.
   loanApplicationPromo: z.string().default("loan_application"),
-  // TEMPORARY: the currently approved `loan_application` template is English, so
-  // its send language is pinned here independently of the shared `languageCode`.
-  // When set, it overrides the language for the promo send only; leave empty to
-  // fall back to `whatsapp.languageCode`. Remove the default once a Spanish
-  // (es_DO) template is approved.
-  loanApplicationPromoLanguage: z.string().default("en"),
   // The promo template has an IMAGE header, which WhatsApp requires as a
   // per-send parameter (the sample set in the template is not reused). Point this
   // at a publicly reachable JPEG/PNG of the promo banner.
   loanApplicationPromoImageUrl: z.string().default(""),
   // Follow-up nudge template: text-only, no image header, no flow button.
   // Sent 10 min after a RECEIVED application if still unattended.
-  // Register `loan_application_follow_up` on Meta before changing this default.
-  loanApplicationFollowUp: z.string().default("loan_application"),
-  loanApplicationFollowUpLanguage: z.string().default("es_DO")
+  loanApplicationFollowUp: z.string().default("loan_application")
 });
 
 const whatsappSchema = z.object({
@@ -57,8 +53,8 @@ const whatsappSchema = z.object({
   templates: whatsappTemplatesSchema.default(() => ({
     paymentConfirmation: "payment_receipt",
     loanApplicationPromo: "loan_application",
-    loanApplicationPromoLanguage: "en",
-    loanApplicationPromoImageUrl: ""
+    loanApplicationPromoImageUrl: "",
+    loanApplicationFollowUp: "loan_application"
   }))
 });
 
@@ -104,6 +100,15 @@ const accountingSchema = z
     attachmentsPath: z.string().default("./data/attachments/accounting")
   })
   .default(() => ({ attachmentsPath: "./data/attachments/accounting" }));
+
+const followUpSchema = z
+  .object({
+    /** Minutes after a RECEIVED application arrives before the nudge WhatsApp message is sent. */
+    nudgeDelayMinutes: z.number().int().min(1).default(10),
+    /** Hours after the nudge is sent before an unresponsive application is marked ABANDONED. */
+    abandonDelayHours: z.number().int().min(1).default(8)
+  })
+  .default(() => ({ nudgeDelayMinutes: 10, abandonDelayHours: 8 }));
 
 /** Past-due (mora) fee policy. See README "Past-due fee". */
 export const loansSchema = z.object({
@@ -291,7 +296,8 @@ export const mikroConfigSchema = z
       attachmentsPath: "./data/attachments/accounting"
     })),
     loans: loansSchema.default(defaultLoansConfig),
-    contract: contractSchema
+    contract: contractSchema,
+    followUp: followUpSchema
   })
   .strict();
 
@@ -467,6 +473,37 @@ export function getPromoBannerPath(): string {
 }
 
 /**
+ * Public, UNAUTHENTICATED route prefix for receipt images. A signed token is
+ * appended as the path segment: `GET /r/:token` verifies the token and returns
+ * the landscape receipt card as a PNG. The payment-confirmation WhatsApp template
+ * uses this both as its image header (fetched by URL at send time) and as its
+ * "Descargar recibo" button target (the recipient opens the full receipt).
+ */
+export const RECEIPT_ROUTE_PREFIX = "/r";
+
+/** Public image URL for a signed receipt token (`{publicUrl}/r/:token`). */
+export function getReceiptImageUrl(token: string): string {
+  const publicBase = getConfig().publicUrl.replace(/\/+$/, "");
+  return `${publicBase}${RECEIPT_ROUTE_PREFIX}/${token}`;
+}
+
+/**
+ * Payment-confirmation template config: the approved template sent to the
+ * borrower after a payment (image header = receipt card, URL button = download).
+ * Sent under the shared `whatsapp.languageCode`.
+ */
+export function getWhatsAppPaymentConfirmationTemplate(): {
+  templateName: string;
+  languageCode: string;
+} {
+  const cfg = getConfig();
+  return {
+    templateName: cfg.whatsapp.templates.paymentConfirmation,
+    languageCode: cfg.whatsapp.languageCode
+  };
+}
+
+/**
  * Fixed legal-entity data for the loan contract (creditor, payment account,
  * notary). Sourced from mikro.json, not hardcoded — it is real PII.
  */
@@ -474,12 +511,21 @@ export function getContractConfig(): ContractConfig {
   return getConfig().contract;
 }
 
+/** Delay values for the two-stage follow-up timer, converted to milliseconds. */
+export function getFollowUpTimerConfig(): { nudgeDelayMs: number; abandonDelayMs: number } {
+  const cfg = getConfig();
+  return {
+    nudgeDelayMs: cfg.followUp.nudgeDelayMinutes * 60 * 1000,
+    abandonDelayMs: cfg.followUp.abandonDelayHours * 60 * 60 * 1000
+  };
+}
+
 /** Template name + language for the follow-up nudge send. */
 export function getWhatsAppFollowUpTemplate(): { templateName: string; languageCode: string } {
   const cfg = getConfig();
   return {
     templateName: cfg.whatsapp.templates.loanApplicationFollowUp,
-    languageCode: cfg.whatsapp.templates.loanApplicationFollowUpLanguage
+    languageCode: cfg.whatsapp.languageCode
   };
 }
 

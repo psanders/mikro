@@ -149,7 +149,13 @@ export const sendWhatsAppTemplateSchema = z.object({
    * button. Optional `flowActionData` seeds the Flow's first screen if it needs input.
    */
   flowToken: z.string().min(1).optional(),
-  flowActionData: z.record(z.string(), z.unknown()).optional()
+  flowActionData: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * Dynamic suffix for a URL button (button index 0). Required when the template
+   * was created with a dynamic URL button (base URL + `{{1}}`); the value is
+   * appended to that base by WhatsApp. Omit for templates without a URL button.
+   */
+  urlButtonParameter: z.string().min(1).optional()
 });
 
 /**

@@ -5,14 +5,13 @@ import type { DbClient, FollowUpJob } from "@mikro/common";
 import type { NudgeResult } from "./createSendFollowUpNudge.js";
 import { logger } from "../logger.js";
 
-const ABANDON_DELAY_MS = 8 * 60 * 60 * 1000; // 8 hours
-
 interface Deps {
   client: DbClient;
-  sendFollowUpNudge: (phone: string) => Promise<NudgeResult>;
+  sendFollowUpNudge: (phone: string, firstName?: string | null) => Promise<NudgeResult>;
+  abandonDelayMs: number;
 }
 
-export function createHandleNudgeJob({ client, sendFollowUpNudge }: Deps) {
+export function createHandleNudgeJob({ client, sendFollowUpNudge, abandonDelayMs }: Deps) {
   return async (job: FollowUpJob): Promise<void> => {
     const app = await client.loanApplication.findUnique({ where: { id: job.applicationId } });
 
@@ -27,14 +26,14 @@ export function createHandleNudgeJob({ client, sendFollowUpNudge }: Deps) {
     }
 
     if (app.phone) {
-      await sendFollowUpNudge(app.phone);
+      await sendFollowUpNudge(app.phone, app.firstName);
     } else {
       logger.verbose("NUDGE skipped — no phone; scheduling immediate ABANDON", {
         applicationId: app.id
       });
     }
 
-    const abandonDelay = app.phone ? ABANDON_DELAY_MS : 0;
+    const abandonDelay = app.phone ? abandonDelayMs : 0;
     const scheduledFor = new Date(Date.now() + abandonDelay);
     await client.followUpJob.create({
       data: { applicationId: app.id, type: "ABANDON", scheduledFor }

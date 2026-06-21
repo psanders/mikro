@@ -10,6 +10,7 @@ import { loadPrivateKey, createSignedToken, type ReceiptData } from "./jwt.js";
 import { generateQRCode } from "./qrcode.js";
 import { loadFonts } from "./fonts.js";
 import { createReceiptLayout, RECEIPT_WIDTH } from "./receipt-layout.js";
+import { createReceiptCardLayout, CARD_WIDTH, CARD_HEIGHT } from "./receipt-card-layout.js";
 
 /**
  * Response from receipt generation.
@@ -85,6 +86,64 @@ export async function renderReceiptToImage(
     compressedSize: compressedBuffer.length
   });
   return { image, token, receiptData };
+}
+
+/**
+ * Render the landscape receipt card (1125×600) for a GIVEN token. The QR encodes
+ * the provided token, so this never signs a new one — use it to re-render a
+ * receipt from a token received over the wire (e.g. the public /r/:token route)
+ * with no database access.
+ *
+ * @param receiptData - Fields to render (typically decoded from the token)
+ * @param token - The signed token to encode in the QR; pass null to render unsigned
+ */
+export async function renderReceiptCardWithToken(
+  receiptData: ReceiptData,
+  token: string | null,
+  logger?: ReceiptLogger
+): Promise<Buffer> {
+  const qrCodeDataUrl = token ? await generateQRCode(token) : null;
+  const fonts = await loadFonts();
+
+  const layout = createReceiptCardLayout(receiptData, qrCodeDataUrl);
+
+  const svg = await satori(layout as Parameters<typeof satori>[0], {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    fonts: fonts as Parameters<typeof satori>[1]["fonts"]
+  });
+
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: "width", value: CARD_WIDTH * 2 }
+  });
+  const pngBuffer = resvg.render().asPng();
+
+  const compressedBuffer = await sharp(pngBuffer)
+    .png({ compressionLevel: 9, adaptiveFiltering: true })
+    .toBuffer();
+
+  logger?.verbose("receipt card rendered", {
+    loanNumber: receiptData.loanNumber,
+    originalSize: pngBuffer.length,
+    compressedSize: compressedBuffer.length
+  });
+  return compressedBuffer;
+}
+
+/**
+ * Render the landscape receipt card and sign a fresh verification token.
+ * Mirrors {@link renderReceiptToImage} but produces the WhatsApp-template-sized
+ * card (1125×600) instead of the thermal layout.
+ */
+export async function renderReceiptCardToImage(
+  receiptData: ReceiptData,
+  keysDir: string,
+  logger?: ReceiptLogger
+): Promise<GenerateReceiptResponse> {
+  const privateKey = loadPrivateKey(keysDir);
+  const token = createSignedToken(receiptData, privateKey);
+  const compressedBuffer = await renderReceiptCardWithToken(receiptData, token, logger);
+  return { image: compressedBuffer.toString("base64"), token, receiptData };
 }
 
 /**

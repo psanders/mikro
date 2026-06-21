@@ -34,11 +34,10 @@
     "verifyToken": "mikro_webhook_token",
     "languageCode": "es_DO",
     "templates": {
-      "paymentConfirmation": "payment_receipt",
+      "paymentConfirmation": "payment_confirmation",
       "loanApplicationPromo": "loan_application",
-      "loanApplicationPromoLanguage": "en",
-      "loanApplicationPromoImageUrl": ""
-    }
+      "loanApplicationFollowUp": "loan_request_followup"
+    },
   },
   "voiceNotes": {
     "enabled": false,

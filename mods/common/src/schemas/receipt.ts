@@ -50,3 +50,19 @@ export const sendReceiptViaWhatsAppSchema = z.object({
  * Input type for sending a receipt via WhatsApp.
  */
 export type SendReceiptViaWhatsAppInput = z.infer<typeof sendReceiptViaWhatsAppSchema>;
+
+/**
+ * Schema for sending the customer-facing payment confirmation. Unlike
+ * {@link sendReceiptViaWhatsAppSchema} (a plain media message to the collector),
+ * this sends an approved WhatsApp template with the landscape receipt card as the
+ * image header and a "Descargar recibo" URL button to the borrower's phone.
+ */
+export const sendPaymentConfirmationSchema = z.object({
+  paymentId: z.uuid({ error: "Invalid payment ID" }),
+  phone: z.string().min(1, "Phone number is required")
+});
+
+/**
+ * Input type for sending a payment confirmation template.
+ */
+export type SendPaymentConfirmationInput = z.infer<typeof sendPaymentConfirmationSchema>;

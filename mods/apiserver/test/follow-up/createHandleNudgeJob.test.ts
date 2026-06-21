@@ -40,7 +40,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: true, messageId: "mid-1" });
-    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
+    const handler = createHandleNudgeJob({
+      client,
+      sendFollowUpNudge,
+      abandonDelayMs: 8 * 60 * 60 * 1000
+    });
 
     await handler(makeJob());
 
@@ -60,7 +64,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false });
-    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
+    const handler = createHandleNudgeJob({
+      client,
+      sendFollowUpNudge,
+      abandonDelayMs: 8 * 60 * 60 * 1000
+    });
 
     await handler(makeJob());
 
@@ -81,7 +89,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false });
-    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
+    const handler = createHandleNudgeJob({
+      client,
+      sendFollowUpNudge,
+      abandonDelayMs: 8 * 60 * 60 * 1000
+    });
 
     await handler(makeJob());
 
@@ -100,7 +112,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub();
-    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
+    const handler = createHandleNudgeJob({
+      client,
+      sendFollowUpNudge,
+      abandonDelayMs: 8 * 60 * 60 * 1000
+    });
 
     await handler(makeJob());
 
@@ -118,7 +134,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false, error: "API error" });
-    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
+    const handler = createHandleNudgeJob({
+      client,
+      sendFollowUpNudge,
+      abandonDelayMs: 8 * 60 * 60 * 1000
+    });
 
     await handler(makeJob());
 

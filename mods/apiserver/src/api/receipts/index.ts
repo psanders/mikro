@@ -12,3 +12,9 @@ export {
   type SendReceiptViaWhatsAppResponse,
   type SendReceiptViaWhatsAppDependencies
 } from "./createSendReceiptViaWhatsApp.js";
+
+export {
+  createSendPaymentConfirmation,
+  type SendPaymentConfirmationResponse,
+  type SendPaymentConfirmationDependencies
+} from "./createSendPaymentConfirmation.js";

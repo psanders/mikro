@@ -18,6 +18,18 @@ export function loadPrivateKey(keysDir: string): string {
 }
 
 /**
+ * Load public key for verification from the keys directory.
+ */
+export function loadPublicKey(keysDir: string): string {
+  const keyPath = join(keysDir, "public.pem");
+  if (!existsSync(keyPath)) {
+    throw new Error(`Public key not found at ${keyPath}. Run the key generation command first.`);
+  }
+
+  return readFileSync(keyPath, "utf-8");
+}
+
+/**
  * Receipt data for JWT payload.
  */
 export interface ReceiptData {
@@ -51,4 +63,24 @@ export function createSignedToken(receiptData: ReceiptData, privateKey: string):
     algorithm: "RS256",
     expiresIn: "1y" // Token valid for 1 year
   });
+}
+
+/**
+ * Verify a signed receipt token and return its receipt data. Throws if the
+ * signature is invalid or the token is expired. The signed payload is
+ * self-contained, so callers can render a receipt straight from the token
+ * without any database access.
+ */
+export function verifyReceiptToken(token: string, publicKey: string): ReceiptData {
+  const payload = jwt.verify(token, publicKey, { algorithms: ["RS256"] }) as Record<
+    string,
+    unknown
+  >;
+  // Strip JWT envelope claims; the rest is the ReceiptData we signed.
+  const data = { ...payload };
+  delete data.iat;
+  delete data.iss;
+  delete data.exp;
+  delete data.nbf;
+  return data as unknown as ReceiptData;
 }

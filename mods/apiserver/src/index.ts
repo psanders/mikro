@@ -3,8 +3,9 @@
  */
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
-import { readFileSync } from "fs";
+import { dirname, resolve, join } from "path";
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
+import { createHash } from "crypto";
 
 // Load .env so MIKRO_CONFIG_FILE can point to mikro.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,8 +21,14 @@ import {
   getConfig,
   getLogoPath,
   getPromoBannerPath,
+  getFollowUpTimerConfig,
   getWhatsAppFollowUpTemplate,
-  LOAN_APPLICATION_PROMO_ASSET_ROUTE
+  LOAN_APPLICATION_PROMO_ASSET_ROUTE,
+  RECEIPT_ROUTE_PREFIX,
+  resolvePathFromConfigDir,
+  loadPublicKey,
+  verifyReceiptToken,
+  renderReceiptCardWithToken
 } from "@mikro/common";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -169,6 +176,48 @@ app.get(LOAN_APPLICATION_PROMO_ASSET_ROUTE, (_req, res) => {
   });
 });
 
+// Public verifiable receipt image — UNAUTHENTICATED. The payment-confirmation
+// WhatsApp template uses this as its image header (fetched by URL at send time)
+// and as its "Descargar recibo" button target. The signed token is self-
+// contained, so we verify + render the landscape card with no DB lookup.
+// Rendered cards are cached on disk (keyed by token hash) so repeat fetches —
+// WhatsApp's header fetch plus every recipient open — don't re-render.
+const receiptPublicKey = loadPublicKey(resolvePathFromConfigDir(getConfig().keysPath));
+const receiptCardCacheDir = resolvePathFromConfigDir(join(getConfig().receiptsPath, "cards"));
+
+app.get(`${RECEIPT_ROUTE_PREFIX}/:token`, async (req, res) => {
+  const { token } = req.params;
+
+  let receiptData;
+  try {
+    receiptData = verifyReceiptToken(token, receiptPublicKey);
+  } catch {
+    // Invalid signature or expired token — don't reveal which.
+    res.status(404).end();
+    return;
+  }
+
+  try {
+    const cacheKey = createHash("sha256").update(token).digest("hex");
+    const cachePath = join(receiptCardCacheDir, `${cacheKey}.png`);
+    let png: Buffer;
+    if (existsSync(cachePath)) {
+      png = readFileSync(cachePath);
+    } else {
+      png = await renderReceiptCardWithToken(receiptData, token, logger);
+      mkdirSync(receiptCardCacheDir, { recursive: true });
+      writeFileSync(cachePath, png);
+    }
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", `inline; filename="recibo-${receiptData.loanNumber}.png"`);
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.end(png);
+  } catch (err) {
+    logger.error("failed to render receipt card", { error: (err as Error).message });
+    if (!res.headersSent) res.status(500).end();
+  }
+});
+
 // Public loan application (solicitud) intake — UNAUTHENTICATED. The public
 // website form posts here (partial autosaves + a final submit), all keyed by a
 // client-generated `sessionId`. We normalize and upsert by session. We always
@@ -176,7 +225,8 @@ app.get(LOAN_APPLICATION_PROMO_ASSET_ROUTE, (_req, res) => {
 // leak schema details; only a genuine DB failure returns 500 so the form can
 // show its connection-error message.
 const dbClient = prisma as unknown as DbClient;
-const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient);
+const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
+const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
 const upsertApplication = createUpsertApplication(dbClient, { scheduleFollowUpJob });
 const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
 
@@ -781,7 +831,11 @@ initializeMessageProcessor()
         templateName: followUpTemplate.templateName,
         languageCode: followUpTemplate.languageCode
       });
-      stopFollowUpWorker = createFollowUpWorker({ client: dbClient, sendFollowUpNudge });
+      stopFollowUpWorker = createFollowUpWorker({
+        client: dbClient,
+        sendFollowUpNudge,
+        abandonDelayMs
+      });
     });
   })
   .catch((error) => {

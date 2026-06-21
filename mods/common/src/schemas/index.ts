@@ -208,9 +208,11 @@ export {
   generateReceiptSchema,
   receiptDataSchema,
   sendReceiptViaWhatsAppSchema,
+  sendPaymentConfirmationSchema,
   type GenerateReceiptInput,
   type ReceiptDataInput,
-  type SendReceiptViaWhatsAppInput
+  type SendReceiptViaWhatsAppInput,
+  type SendPaymentConfirmationInput
 } from "./receipt.js";
 
 export {

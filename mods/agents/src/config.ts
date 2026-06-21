@@ -94,9 +94,7 @@ export function getWhatsAppPromoTemplate(): {
   const publicBase = cfg.publicUrl.replace(/\/+$/, "");
   return {
     templateName: templates.loanApplicationPromo,
-    // Temporary per-template language pin (the approved template is English).
-    // Falls back to the shared WhatsApp language when left empty.
-    languageCode: templates.loanApplicationPromoLanguage || languageCode,
+    languageCode,
     imageUrl:
       templates.loanApplicationPromoImageUrl || `${publicBase}${LOAN_APPLICATION_PROMO_ASSET_ROUTE}`
   };

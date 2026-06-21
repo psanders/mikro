@@ -12,10 +12,15 @@ const POLL_INTERVAL_MS = 30_000;
 interface Deps {
   client: DbClient;
   sendFollowUpNudge: (phone: string) => Promise<NudgeResult>;
+  abandonDelayMs: number;
 }
 
-export function createFollowUpWorker({ client, sendFollowUpNudge }: Deps): () => void {
-  const handleNudgeJob = createHandleNudgeJob({ client, sendFollowUpNudge });
+export function createFollowUpWorker({
+  client,
+  sendFollowUpNudge,
+  abandonDelayMs
+}: Deps): () => void {
+  const handleNudgeJob = createHandleNudgeJob({ client, sendFollowUpNudge, abandonDelayMs });
   const handleAbandonJob = createHandleAbandonJob(client);
 
   async function tick(): Promise<void> {

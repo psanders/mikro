@@ -19,14 +19,15 @@ interface Deps {
 /** Send the follow-up nudge template to a phone. Text-only, no image, no flow button.
  *  Best-effort: never throws; returns { sent: false, error } on failure. */
 export function createSendFollowUpNudge(deps: Deps) {
-  return async (phone: string): Promise<NudgeResult> => {
+  return async (phone: string, firstName?: string | null): Promise<NudgeResult> => {
+    const bodyParameters = firstName ? [{ parameter_name: "name", text: firstName }] : [];
     try {
       const res = await deps.sendTemplateMessage({
         phone,
         templateName: deps.templateName,
         languageCode: deps.languageCode,
         headerParameters: [],
-        bodyParameters: []
+        bodyParameters
       });
       const messageId = res.messages?.[0]?.id;
       logger.info("follow-up nudge sent", { phone, messageId });
