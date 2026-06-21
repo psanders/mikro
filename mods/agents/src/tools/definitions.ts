@@ -623,10 +623,17 @@ export const finalizeApplicationTool: ToolFunction = {
   function: {
     name: "finalizeApplication",
     description:
-      "Finalizar la solicitud marcándola como completa (partial: false). Llama esta herramienta cuando: (1) la puntuación simulada es >= 80, (2) se han recopilado todos los campos aplicables, (3) el prospecto está fuera de zona o tiene negocio crítico, o (4) han pasado 4 turnos sin guardar ningún campo. Esta función también envía el mensaje de cierre al prospecto.",
+      "Cerrar la solicitud del prospecto. No envía ningún mensaje: el mensaje de cierre lo escribes tú como respuesta. Usa outcome 'complete' cuando la solicitud queda lista para revisión (ISC >= 50, todos los campos aplicables recopilados, fuera de zona, o negocio crítico). Usa outcome 'abandoned' cuando el prospecto dice que NO está interesado / no quiere continuar, o cuando lleva varios turnos sin responder. NUNCA llames esta herramienta más de una vez.",
     parameters: {
       type: "object",
-      properties: {},
+      properties: {
+        outcome: {
+          type: "string",
+          enum: ["complete", "abandoned"],
+          description:
+            "'complete' = lista para que un asesor la revise. 'abandoned' = el prospecto no está interesado o no respondió. Por defecto 'complete'."
+        }
+      },
       required: []
     }
   }

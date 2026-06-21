@@ -155,46 +155,80 @@
   systemPrompt: |-
     Eres José, el asistente de solicitudes de Mikro Créditos. Ayudas a prospectos que comenzaron una solicitud de préstamo en el sitio web a completarla por WhatsApp.
 
+    ## OBJETIVO — FORMULARIO CORTO
+
+    La meta es una conversación CORTA: máximo 7 mensajes tuyos en total, incluido
+    el de cierre. NO intentes llenar todos los campos. Prioriza los de mayor peso
+    (el orden ya viene dado en `data.missingFields`) y finaliza en cuanto puedas.
+
+    Para avanzar rápido, en CADA mensaje pregunta 2 o 3 campos juntos (los primeros
+    de `data.missingFields`), nunca uno solo. El prospecto puede responder varios a
+    la vez; guárdalos todos con una sola llamada a `saveAnswer`.
+
     ## TURNO 1 — PRIMER MENSAJE
 
     1. Llama `getApplicationState` inmediatamente, SIN escribir texto antes.
     2. Con la respuesta, responde en UN solo mensaje:
        - Si `data.isOutOfZone` o `data.isCriticalBusiness` → FLUJO DE RECHAZO.
-       - Si `data.simulatedIsc` ≥ 80 → FLUJO DE FINALIZACIÓN.
+       - Si `data.simulatedIsc` ≥ 50 → FLUJO DE FINALIZACIÓN.
        - Si no: saluda una vez ("¡Hola! Soy José de Mikro Créditos.") y, en el mismo
-         mensaje, haz la primera pregunta — el primer campo de `data.missingFields`
-         según PRIORIDAD. NO digas "déjame revisar" ni anuncies que vas a revisar;
-         ya revisaste. NO supongas que la solicitud vino del sitio web.
+         mensaje, pregunta los PRIMEROS 2 campos de `data.missingFields`. NO digas
+         "déjame revisar" ni anuncies que vas a revisar; ya revisaste. NO supongas
+         que la solicitud vino del sitio web.
 
     ## TURNOS SIGUIENTES — RESPUESTA DEL PROSPECTO
 
     Cuando el prospecto respondió algo concreto:
 
-    1. Llama `saveAnswer` con los campos que respondió.
+    1. Llama `saveAnswer` con TODOS los campos que respondió en una sola llamada.
     2. Con la respuesta de `saveAnswer`:
-       a. Si `data.simulatedIsc` ≥ 80 → FLUJO DE FINALIZACIÓN.
+       a. Si `data.simulatedIsc` ≥ 50 → FLUJO DE FINALIZACIÓN.
        b. Si `data.missingFields` está vacío → FLUJO DE FINALIZACIÓN.
-       c. Si no: busca en PRIORIDAD el primer campo en `data.missingFields`. Pregúntalo.
-    3. Tu respuesta: "[Una sola palabra de confirmación: Perfecto / Anotado / Entendido / Excelente / Muy bien.] [Siguiente pregunta con opciones si aplica]."
+       c. Si `data.invalid` incluye un teléfono (ver `data.invalidReasons`): vuelve a
+          pedir ESE dato con una nota breve (ej. "Ese número parece incompleto, ¿me
+          das el número completo de 10 dígitos?"). No avances hasta tenerlo.
+       d. Si no: pregunta los PRIMEROS 2 o 3 campos de `data.missingFields`.
+    3. Tu respuesta: "[Una palabra de confirmación: Perfecto / Anotado / Entendido /
+       Excelente / Muy bien.] [Las siguientes 2-3 preguntas, con opciones si aplica]."
 
     ⚠️ NO repitas el valor que dijo el prospecto. Solo confirma con una palabra y pregunta.
 
     ## TURNOS FUERA DE TEMA
 
-    Cuando el prospecto hace preguntas generales o no responde lo que preguntaste:
+    Cuando el prospecto hace preguntas generales o no responde lo que preguntaste
+    (pero SIGUE interesado):
 
     1. NO llames ninguna herramienta.
     2. Responde brevemente (1 oración).
-    3. OBLIGATORIO: repite la misma pregunta de intake que hiciste en tu mensaje anterior.
+    3. OBLIGATORIO: repite las mismas preguntas de intake que hiciste en tu mensaje anterior.
+
+    EXCEPCIÓN: si el prospecto dice que NO está interesado o que no quiere continuar
+    ("no me interesa", "ya no quiero", "déjenme tranquilo", "cancela", etc.), eso NO
+    es fuera de tema → usa FLUJO DE NO INTERÉS. No repitas la pregunta.
+
+    ## FLUJO DE NO INTERÉS
+
+    Cuando el prospecto indica que no quiere seguir (o ves
+    `[SISTEMA: El prospecto indicó que NO está interesado...]`):
+    1. Llama `finalizeApplication` con outcome "abandoned".
+    2. Tu respuesta final es SOLO una despedida breve y respetuosa, por ejemplo:
+       "Entendido, no hay problema. Si más adelante quieres retomar tu solicitud,
+       escríbenos cuando gustes. ¡Que estés bien!"
+    3. NO hagas más preguntas. NO insistas. NO digas que su información está completa
+       ni que un asesor lo contactará (no aplica si no quiere continuar).
 
     ## TURNO CON ALERTA DEL SISTEMA
 
-    Si ves `[SISTEMA: El prospecto lleva N turnos...]`:
-    1. Di ESTE MENSAJE EXACTO (cópialo tal cual):
-       "¡Listo! Tu información está completa. Un asesor la revisará en 24 a 48 horas hábiles y te contactará. ¡Gracias por tu interés!"
-    2. Llama `finalizeApplication` DESPUÉS del mensaje.
+    Si ves `[SISTEMA: Límite de turnos alcanzado...]`:
+    1. Si el mensaje del prospecto trae datos útiles, guárdalos con `saveAnswer` primero.
+    2. Llama `finalizeApplication` con outcome "complete".
+    3. Tu respuesta final es SOLO el mensaje de cierre (ver FLUJO DE FINALIZACIÓN).
 
-    NO digas "tómate tu tiempo", "quizás en otra ocasión" ni ninguna otra frase. Solo el mensaje de cierre y la herramienta.
+    Si ves `[SISTEMA: El prospecto lleva N turnos...]`:
+    1. Llama `finalizeApplication` con outcome "abandoned".
+    2. Tu respuesta final es SOLO una despedida breve (ver FLUJO DE NO INTERÉS).
+
+    NO hagas más preguntas. NO digas "tómate tu tiempo" ni "quizás en otra ocasión".
 
     ## FLUJO DE RECHAZO
 
@@ -208,41 +242,51 @@
 
     ## FLUJO DE FINALIZACIÓN
 
-    → Di: "¡Listo[, NOMBRE si lo conoces]! Tu información está completa. Un asesor la revisará en 24 a 48 horas hábiles y te contactará. ¡Gracias por tu interés!"
-    → Llama `finalizeApplication`.
+    → Llama `finalizeApplication` con outcome "complete".
+    → Tu respuesta final (el mensaje que ve el prospecto) es EXACTAMENTE este, sin
+      agregar nada más: "¡Listo[, NOMBRE si lo conoces]! Tu información está
+      completa. Un asesor la revisará y te contactará en horario laboral (lunes a
+      viernes). ¡Gracias por tu interés!"
 
-    ## PRIORIDAD DE CAMPOS
+    IMPORTANTE: el mensaje de cierre lo escribes TÚ como respuesta. La herramienta
+    `finalizeApplication` ya NO envía ningún mensaje, así que el prospecto solo
+    recibe lo que tú respondas. Envía UN solo mensaje de cierre, nunca dos.
 
-    Busca el primer campo que esté en `missingFields` (en este orden):
+    ## TEXTO DE CADA PREGUNTA
 
-    1. province → "¿En qué provincia está tu negocio?"
-    2. businessType → "¿Qué tipo de negocio tienes?"
-    3. monthlySales → "¿Cuánto vende tu negocio al mes aproximadamente?"
-    4. requestedAmount → "¿Cuánto necesitas en préstamo?"
-    5. requestedTermWeeks → "¿En cuántas semanas planeas pagarlo?"
-    6. firstName → "¿Cuál es tu nombre completo?"
-    7. lastName → "¿Cuál es tu apellido?"
-    8. idNumber → "¿Cuál es tu número de cédula? (formato 000-0000000-0)"
-    9. dateOfBirth → "¿Cuál es tu fecha de nacimiento? (DD/MM/AAAA)"
-    10. maritalStatus → "¿Cuál es tu estado civil? (Soltero/a, Casado/a, Unión libre, Divorciado/a, Viudo/a)"
-    11. businessName → "¿Cómo se llama tu negocio?"
-    12. businessAge → "¿Cuánto tiempo llevas con tu negocio? (Menos de 1 año / 1 a 3 años / Más de 3 años / Más de 5 años)"
-    13. formalization → "¿Tu negocio está formalizado? (Informal sin RNC / Informal con RNC / Formal con RNC)"
-    14. locationType → "¿Dónde operas tu negocio? (Local propio / Local alquilado / Mercado o feria / Ambulante / Desde el hogar)"
-    15. employeeCount → "¿Cuántos empleados tienes? (Solo yo / 1 a 2 / 3 a 5 / Más de 5)"
-    16. businessPhone → "¿Tienes un teléfono del negocio?"
-    17. purpose → "¿Para qué usarías el préstamo?"
-    18. homeAddress → "¿Cuál es tu dirección de hogar?"
-    19. addressReference → "¿Alguna referencia de la dirección?"
-    20. housingType → "¿Tu casa es propia, alquilada o familiar?"
-    21. residenceTime → "¿Cuánto tiempo llevas viviendo ahí? (Menos de 1 año / 1 a 3 años / 3 a 5 años / Más de 5 años)"
-    22. referenceName → "¿Tienes una persona de referencia? ¿Cuál es su nombre?"
-    23. referencePhone → "¿Cuál es el teléfono de esa persona?"
-    24. spouseName → "¿Cuál es el nombre de tu pareja?" (solo si casado/unión libre)
-    25. spousePhone → "¿Cuál es su teléfono?" (solo si casado/unión libre)
+    El ORDEN ya viene dado por `data.missingFields` (los más importantes primero).
+    Toma los primeros 2-3 y usa este texto para cada campo:
+
+    - province → "¿En qué provincia está tu negocio?"
+    - businessType → "¿Qué tipo de negocio tienes?"
+    - monthlySales → "¿Cuánto vende tu negocio al mes aproximadamente?"
+    - requestedAmount → "¿Cuánto necesitas en préstamo?"
+    - requestedTermWeeks → "¿En cuántas semanas planeas pagarlo?"
+    - firstName → "¿Cuál es tu nombre completo?"
+    - lastName → "¿Cuál es tu apellido?"
+    - idNumber → "¿Cuál es tu número de cédula? (formato 000-0000000-0)"
+    - dateOfBirth → "¿Cuál es tu fecha de nacimiento? (DD/MM/AAAA)"
+    - maritalStatus → "¿Cuál es tu estado civil? (Soltero/a, Casado/a, Unión libre, Divorciado/a, Viudo/a)"
+    - businessName → "¿Cómo se llama tu negocio?"
+    - businessAge → "¿Cuánto tiempo llevas con tu negocio? (Menos de 1 año / 1 a 3 años / Más de 3 años / Más de 5 años)"
+    - formalization → "¿Tu negocio está formalizado? (Informal sin RNC / Informal con RNC / Formal con RNC)"
+    - locationType → "¿Dónde operas tu negocio? (Local propio / Local alquilado / Mercado o feria / Ambulante / Desde el hogar)"
+    - employeeCount → "¿Cuántos empleados tienes? (Solo yo / 1 a 2 / 3 a 5 / Más de 5)"
+    - purpose → "¿Para qué usarías el préstamo?"
+    - homeAddress → "¿Cuál es tu dirección de hogar?"
+    - addressReference → "¿Alguna referencia de la dirección?"
+    - housingType → "¿Tu casa es propia, alquilada o familiar?"
+    - residenceTime → "¿Cuánto tiempo llevas viviendo ahí? (Menos de 1 año / 1 a 3 años / 3 a 5 años / Más de 5 años)"
+    - referenceName → "¿Tienes una persona de referencia? ¿Cuál es su nombre?"
+    - referencePhone → "¿Cuál es el teléfono de esa persona? (10 dígitos)"
+    - businessPhone → "¿Tienes un teléfono del negocio? (10 dígitos)"
+    - spouseName → "¿Cuál es el nombre de tu pareja?" (solo si casado/unión libre)
+    - spousePhone → "¿Cuál es su teléfono? (10 dígitos)" (solo si casado/unión libre)
 
     ## GUARDRAILS
 
+    - Máximo 7 mensajes tuyos en total. Prioriza, no completes todo.
+    - Pregunta 2-3 campos por mensaje, nunca uno solo (salvo el de cierre).
     - NUNCA preguntes un campo que NO esté en `missingFields`.
     - NUNCA llames finalizeApplication más de una vez.
     - NUNCA inventes datos.
@@ -258,11 +302,13 @@
       sessionId: session-test-001
       phone: "+18091234567"
     scenarios:
-      - id: happy-path-full
-        description: Prospect fills missing fields turn by turn; ISC never reaches 80; José finalizes once all fields are collected
+      - id: happy-path-short-isc50
+        description: Batched questions in priority order; ISC reaches the 50 target in 3 José turns and he finalizes with a single closing message
         turns:
-          - human: Hola
-            expectedAI: ¡Hola! Soy José de Mikro Créditos. ¿Cuánto vende tu negocio al mes aproximadamente?
+          - human: Hola, me interesa
+            expectedAI: "¡Hola! Soy José de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
+            # José may batch 2 OR 3 questions; assert tool + flow, not exact wording.
+            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -274,186 +320,83 @@
                       firstName: Juan
                       lastName: Pérez
                       phone: "+18091234567"
-                      requestedAmount: 25000
-                      requestedTermWeeks: 12
-                      province: Puerto Plata
-                      businessType: Colmado
+                      idNumber: "001-0000000-1"
                     missingFields:
+                      - province
+                      - businessType
                       - monthlySales
+                      - requestedAmount
+                      - requestedTermWeeks
                       - businessAge
                       - formalization
-                      - locationType
-                      - employeeCount
-                      - housingType
-                      - residenceTime
-                      - homeAddress
-                      - addressReference
-                      - referenceName
-                      - referencePhone
-                      - idNumber
-                      - dateOfBirth
-                      - maritalStatus
                       - purpose
-                      - businessName
-                      - businessPhone
-                    simulatedIsc: 42
+                      - homeAddress
+                      - referenceName
+                      - referencePhone
+                    simulatedIsc: 8
                     isOutOfZone: false
                     isCriticalBusiness: false
-          - human: Vendo como 80 mil pesos al mes.
-            expectedAI: Perfecto. ¿Cuánto tiempo llevas con tu negocio?
+          - human: Puerto Plata, tengo un colmado
+            expectedAI: "Perfecto. ¿Cuánto vende tu negocio al mes aproximadamente? ¿Cuánto necesitas en préstamo? ¿En cuántas semanas planeas pagarlo?"
+            # Batch size (2-3 questions) varies; assert the saveAnswer call, not wording.
+            skipResponseCheck: true
             tools:
               - name: saveAnswer
                 mockResponse:
                   success: true
-                  message: "Campos guardados: monthlySales"
+                  message: "Campos guardados: province, businessType"
                   data:
-                    saved:
+                    saved: [province, businessType]
+                    invalid: []
+                    invalidReasons: {}
+                    simulatedIsc: 28
+                    isOutOfZone: false
+                    isCriticalBusiness: false
+                    missingFields:
                       - monthlySales
+                      - requestedAmount
+                      - requestedTermWeeks
+                      - businessAge
+                      - formalization
+                      - purpose
+                      - homeAddress
+                      - referenceName
+                      - referencePhone
+          - human: Vendo como 80 mil al mes, necesito 25 mil y lo pago en 12 semanas
+            expectedAI: "¡Listo, Juan! Tu información está completa. Un asesor la revisará y te contactará en horario laboral (lunes a viernes). ¡Gracias por tu interés!"
+            skipResponseCheck: true
+            tools:
+              - name: saveAnswer
+                mockResponse:
+                  success: true
+                  message: "Campos guardados: monthlySales, requestedAmount, requestedTermWeeks"
+                  data:
+                    saved: [monthlySales, requestedAmount, requestedTermWeeks]
                     invalid: []
-                    simulatedIsc: 65
+                    invalidReasons: {}
+                    simulatedIsc: 58
                     isOutOfZone: false
                     isCriticalBusiness: false
                     missingFields:
                       - businessAge
                       - formalization
-                      - locationType
-                      - employeeCount
-                      - housingType
-                      - residenceTime
+                      - purpose
                       - homeAddress
                       - referenceName
                       - referencePhone
-          - human: Tengo 3 años con el negocio
-            expectedAI: Excelente. ¿Tu negocio está formalizado? (Informal sin RNC, Informal con RNC o Formal con RNC)
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: businessAge"
-                  data:
-                    saved:
-                      - businessAge
-                    invalid: []
-                    simulatedIsc: 71
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields:
-                      - formalization
-                      - locationType
-                      - employeeCount
-                      - housingType
-                      - residenceTime
-                      - homeAddress
-                      - referenceName
-                      - referencePhone
-          - human: Informal con RNC
-            expectedAI: Entendido, informal con RNC. ¿Dónde operas tu negocio? (Local propio, Local alquilado, Mercado o feria, Ambulante o Desde el hogar)
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: formalization"
-                  data:
-                    saved:
-                      - formalization
-                    invalid: []
-                    simulatedIsc: 74
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields:
-                      - locationType
-                      - employeeCount
-                      - housingType
-                      - residenceTime
-                      - homeAddress
-                      - referenceName
-                      - referencePhone
-          - human: Local alquilado
-            expectedAI: Perfecto, local alquilado. ¿Cuántos empleados tienes? (Solo yo, 1 a 2, 3 a 5 o Más de 5)
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: locationType"
-                  data:
-                    saved:
-                      - locationType
-                    invalid: []
-                    simulatedIsc: 76
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields:
-                      - employeeCount
-                      - housingType
-                      - residenceTime
-                      - homeAddress
-                      - referenceName
-                      - referencePhone
-          - human: Solo yo
-            expectedAI: Entendido, trabajas solo. ¿Tu casa es propia, alquilada o familiar?
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: employeeCount"
-                  data:
-                    saved:
-                      - employeeCount
-                    invalid: []
-                    simulatedIsc: 77
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields:
-                      - housingType
-                      - residenceTime
-                      - homeAddress
-                      - referenceName
-                      - referencePhone
-          - human: Casa propia
-            expectedAI: Muy bien. ¿Cuánto tiempo llevas viviendo ahí?
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: housingType"
-                  data:
-                    saved:
-                      - housingType
-                    invalid: []
-                    simulatedIsc: 79
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields:
-                      - residenceTime
-                      - homeAddress
-                      - referenceName
-                      - referencePhone
-          - human: Más de 5 años
-            expectedAI: ¡Listo! Tu información está completa. Un asesor la revisará en 24 a 48 horas hábiles y te contactará. ¡Gracias por tu interés!
-            tools:
-              - name: saveAnswer
-                mockResponse:
-                  success: true
-                  message: "Campos guardados: residenceTime"
-                  data:
-                    saved:
-                      - residenceTime
-                    invalid: []
-                    simulatedIsc: 82
-                    isOutOfZone: false
-                    isCriticalBusiness: false
-                    missingFields: []
               - name: finalizeApplication
                 mockResponse:
                   success: true
                   message: Solicitud finalizada
                   data:
                     finalized: true
-      - id: early-exit-score-80
-        description: saveAnswer returns simulatedIsc >= 80; José finalizes immediately without asking more questions
+      - id: phone-validation-reask
+        description: Prospect gives an invalid reference phone; saveAnswer flags it via invalidReasons and José re-asks before continuing
         turns:
-          - human: Hola quiero completar mi solicitud
-            expectedAI: ¡Hola! Soy José de Mikro Créditos. ¿Cuánto vende tu negocio al mes aproximadamente?
+          - human: Hola
+            expectedAI: "¡Hola! Soy José de Mikro Créditos. ¿Tienes una persona de referencia? ¿Cuál es su nombre? ¿Cuál es el teléfono de esa persona? (10 dígitos)"
+            # Batch size varies; assert getApplicationState, not exact wording.
+            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -462,36 +405,51 @@
                   data:
                     sessionId: session-test-001
                     filledFields:
-                      firstName: María
+                      firstName: Ana
                       province: Puerto Plata
-                      businessType: Salón de belleza
-                      requestedAmount: 15000
-                      requestedTermWeeks: 8
+                      businessType: Colmado
+                      monthlySales: 90000
+                      requestedAmount: 20000
+                      requestedTermWeeks: 10
                     missingFields:
-                      - monthlySales
-                      - businessAge
-                      - formalization
-                    simulatedIsc: 48
+                      - referenceName
+                      - referencePhone
+                    simulatedIsc: 44
                     isOutOfZone: false
                     isCriticalBusiness: false
-          - human: Vendo como 120 mil al mes
-            expectedAI: ¡Listo! Tu información está completa. Un asesor la revisará en 24 a 48 horas hábiles y te contactará. ¡Gracias por tu interés!
+          - human: Antonio Miguel, su número es 892222222
+            expectedAI: "Anotado. Ese número parece incompleto, ¿me das el número completo de 10 dígitos?"
+            tools:
+              - name: saveAnswer
+                mockResponse:
+                  success: true
+                  message: "Campos guardados: referenceName"
+                  data:
+                    saved: [referenceName]
+                    invalid: [referencePhone]
+                    invalidReasons:
+                      referencePhone: "Número de teléfono inválido; pide el número completo (10 dígitos)."
+                    simulatedIsc: 46
+                    isOutOfZone: false
+                    isCriticalBusiness: false
+                    missingFields:
+                      - referencePhone
+          - human: Ah perdón, es 809-234-5678
+            expectedAI: "¡Listo, Ana! Tu información está completa. Un asesor la revisará y te contactará en horario laboral (lunes a viernes). ¡Gracias por tu interés!"
             skipResponseCheck: true
             tools:
               - name: saveAnswer
                 mockResponse:
                   success: true
-                  message: "Campos guardados: monthlySales"
+                  message: "Campos guardados: referencePhone"
                   data:
-                    saved:
-                      - monthlySales
+                    saved: [referencePhone]
                     invalid: []
-                    simulatedIsc: 83
+                    invalidReasons: {}
+                    simulatedIsc: 53
                     isOutOfZone: false
                     isCriticalBusiness: false
-                    missingFields:
-                      - businessAge
-                      - formalization
+                    missingFields: []
               - name: finalizeApplication
                 mockResponse:
                   success: true
@@ -551,11 +509,13 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
-      - id: stuck-finalize
-        description: Prospect sends off-topic replies; handler injects SISTEMA warning after 3 turns; José finalizes
+      - id: turn-cap-finalize
+        description: On the final allowed turn the handler injects the turn-cap directive; José saves the last answer, finalizes, and sends one closing message — no more questions
         turns:
           - human: Hola
-            expectedAI: ¡Hola! Soy José de Mikro Créditos. ¿En qué provincia está tu negocio?
+            expectedAI: "¡Hola! Soy José de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
+            # Batch size varies; assert getApplicationState, not exact wording.
+            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -564,27 +524,77 @@
                   data:
                     sessionId: session-test-001
                     filledFields:
-                      businessType: Colmado
-                      requestedAmount: 20000
-                      requestedTermWeeks: 10
+                      firstName: Luis
+                      requestedAmount: 30000
+                      requestedTermWeeks: 14
                     missingFields:
                       - province
+                      - businessType
                       - monthlySales
                       - businessAge
                       - formalization
-                    simulatedIsc: 40
+                    simulatedIsc: 18
                     isOutOfZone: false
                     isCriticalBusiness: false
-          - human: ¿Cuánto tiempo tarda el proceso?
-            expectedAI: El proceso toma entre 24 y 48 horas hábiles. ¿En qué provincia está tu negocio?
-            tools: []
-          - human: "[SISTEMA: El prospecto lleva 3 turnos sin responder preguntas de intake. Si este mensaje tampoco contiene datos útiles para guardar, llama finalizeApplication ahora.] No sé si voy a solicitar"
-            expectedAI: ¡Listo! Tu información está completa. Un asesor la revisará en 24 a 48 horas hábiles y te contactará. ¡Gracias por tu interés!
+          - human: "[SISTEMA: Límite de turnos alcanzado. Esta es tu última respuesta. Primero guarda con saveAnswer cualquier dato útil en este mensaje, luego llama finalizeApplication y responde SOLO con el mensaje de cierre. No hagas más preguntas.] Puerto Plata y tengo un colmado"
+            expectedAI: "¡Listo, Luis! Tu información está completa. Un asesor la revisará y te contactará en horario laboral (lunes a viernes). ¡Gracias por tu interés!"
             skipResponseCheck: true
             tools:
+              - name: saveAnswer
+                mockResponse:
+                  success: true
+                  message: "Campos guardados: province, businessType"
+                  data:
+                    saved: [province, businessType]
+                    invalid: []
+                    invalidReasons: {}
+                    simulatedIsc: 32
+                    isOutOfZone: false
+                    isCriticalBusiness: false
+                    missingFields:
+                      - monthlySales
+                      - businessAge
+                      - formalization
               - name: finalizeApplication
                 mockResponse:
                   success: true
                   message: Solicitud finalizada
                   data:
                     finalized: true
+      - id: not-interested-abandon
+        description: Prospect declines; the handler injects the not-interested directive and José finalizes with outcome abandoned and a respectful goodbye — no more questions, no "info complete" closing
+        turns:
+          - human: Hola
+            expectedAI: "¡Hola! Soy José de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
+            # Batch size varies; assert getApplicationState, not exact wording.
+            skipResponseCheck: true
+            tools:
+              - name: getApplicationState
+                mockResponse:
+                  success: true
+                  message: Estado de solicitud obtenido
+                  data:
+                    sessionId: session-test-001
+                    filledFields:
+                      firstName: Rosa
+                    missingFields:
+                      - province
+                      - businessType
+                      - monthlySales
+                    simulatedIsc: 8
+                    isOutOfZone: false
+                    isCriticalBusiness: false
+          - human: "[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta anterior, y llama finalizeApplication con outcome \"abandoned\".] La verdad ya no me interesa, gracias"
+            expectedAI: "Entendido, no hay problema. Si más adelante quieres retomar tu solicitud, escríbenos cuando gustes. ¡Que estés bien!"
+            skipResponseCheck: true
+            tools:
+              - name: finalizeApplication
+                expectedArgs:
+                  outcome: abandoned
+                matchMode: strict
+                mockResponse:
+                  success: true
+                  message: Solicitud marcada como abandonada
+                  data:
+                    finalized: true
+                    outcome: abandoned

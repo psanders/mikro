@@ -9,13 +9,35 @@ import type { DbClient, NormalizedApplication } from "@mikro/common";
 import {
   APPLICATION_CONTENT_KEYS,
   applicationPayloadSchema,
-  normalizeApplication
+  normalizeApplication,
+  sortByFieldPriority
 } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { computeSimulatedIsc } from "./computeScore.js";
 
 const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
+
+// Fields that must be valid phone numbers when provided. José re-asks on failure
+// instead of persisting a malformed number that an asesor cannot dial.
+const PHONE_KEYS = new Set<string>(["phone", "businessPhone", "referencePhone", "spousePhone"]);
+
+// Dominican Republic area codes (NANP). A valid local number is 10 digits with
+// one of these area codes, optionally prefixed by the country code 1.
+const DR_AREA_CODES = /^(809|829|849)/;
+
+/**
+ * Accepts Dominican phone numbers in the formats prospects actually type:
+ * "809-234-5678", "8092345678", "1 809 234 5678", "+18092345678". Rejects
+ * short/garbage numbers like "892222222".
+ */
+function isValidPhone(value: string): boolean {
+  let digits = value.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+  return digits.length === 10 && DR_AREA_CODES.test(digits);
+}
 
 export function createSaveAnswer(
   client: DbClient,
@@ -36,6 +58,7 @@ export function createSaveAnswer(
     // Filter to known keys only
     const saved: string[] = [];
     const invalid: string[] = [];
+    const invalidReasons: Record<string, string> = {};
     const patch: Record<string, string> = {};
 
     for (const [key, val] of Object.entries(fields)) {
@@ -47,7 +70,13 @@ export function createSaveAnswer(
         invalid.push(key);
         continue;
       }
-      patch[key] = String(val);
+      const strVal = String(val);
+      if (PHONE_KEYS.has(key) && !isValidPhone(strVal)) {
+        invalid.push(key);
+        invalidReasons[key] = "Número de teléfono inválido; pide el número completo (10 dígitos).";
+        continue;
+      }
+      patch[key] = strVal;
       saved.push(key);
     }
 
@@ -55,7 +84,7 @@ export function createSaveAnswer(
       return {
         success: false,
         message: "No valid fields to save",
-        data: { saved, invalid }
+        data: { saved, invalid, invalidReasons }
       };
     }
 
@@ -140,16 +169,26 @@ export function createSaveAnswer(
         requestedAmount: mergedApp.requestedAmount,
         requestedTermWeeks: mergedApp.requestedTermWeeks
       };
-      const missingFields = APPLICATION_CONTENT_KEYS.filter((key) => {
-        const val = allMerged[key];
-        return val === null || val === undefined || val === "";
-      });
+      const missingFields = sortByFieldPriority(
+        APPLICATION_CONTENT_KEYS.filter((key) => {
+          const val = allMerged[key];
+          return val === null || val === undefined || val === "";
+        })
+      );
 
       logger.verbose("jose saveAnswer: fields saved", { sessionId, saved, simulatedIsc });
       return {
         success: true,
         message: `Campos guardados: ${saved.join(", ")}`,
-        data: { saved, invalid, simulatedIsc, isOutOfZone, isCriticalBusiness, missingFields }
+        data: {
+          saved,
+          invalid,
+          invalidReasons,
+          simulatedIsc,
+          isOutOfZone,
+          isCriticalBusiness,
+          missingFields
+        }
       };
     } catch (err) {
       logger.error("jose saveAnswer failed", { sessionId, error: (err as Error).message });

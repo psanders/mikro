@@ -187,6 +187,69 @@ export const APPLICATION_STABLE_KEYS = STABLE_KEYS;
 export const APPLICATION_RAW_ONLY_KEYS = RAW_ONLY_KEYS;
 export const APPLICATION_CONTENT_KEYS = ALL_CONTENT_KEYS;
 
+/**
+ * Single source of truth for the order in which José asks for missing fields.
+ *
+ * Ordered by knockout + scoring weight so the highest-signal questions are asked
+ * first (fastest path to qualify-or-reject, least wasted back-and-forth):
+ *  1. Knockouts: province (OUT_OF_ZONE), businessType (CRITICAL_BUSINESS).
+ *  2. capacidad_pago (weight 30): monthlySales, requestedAmount, requestedTermWeeks.
+ *  3. Identity required to create + contact the application.
+ *  4. trayectoria_formalizacion (20) → arraigo (15) → red_soporte (10) → proposito (5).
+ *
+ * `sortByFieldPriority` orders any subset of content keys by this list; keys not
+ * present here sort last (stable), so adding a content key never silently drops it.
+ */
+export const FIELD_PRIORITY = [
+  // Knockouts first
+  "province",
+  "businessType",
+  // capacidad_pago (highest scoring weight)
+  "monthlySales",
+  "requestedAmount",
+  "requestedTermWeeks",
+  // Identity (needed to create the application and contact the prospect)
+  "firstName",
+  "lastName",
+  "idNumber",
+  "dateOfBirth",
+  "maritalStatus",
+  "businessName",
+  // trayectoria_formalizacion
+  "businessAge",
+  "formalization",
+  "employeeCount",
+  "locationType",
+  // proposito
+  "purpose",
+  // arraigo_estabilidad
+  "homeAddress",
+  "addressReference",
+  "housingType",
+  "residenceTime",
+  // red_soporte
+  "referenceName",
+  "referencePhone",
+  "businessPhone",
+  "spouseName",
+  "spousePhone",
+  // prospect phone (already known from the WhatsApp channel — ask last)
+  "phone"
+] as const;
+
+const FIELD_PRIORITY_INDEX = new Map<string, number>(
+  FIELD_PRIORITY.map((key, index) => [key, index])
+);
+
+/** Sort content keys by FIELD_PRIORITY; unknown keys keep their relative order at the end. */
+export function sortByFieldPriority(keys: readonly string[]): string[] {
+  return [...keys].sort((a, b) => {
+    const ai = FIELD_PRIORITY_INDEX.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const bi = FIELD_PRIORITY_INDEX.get(b) ?? Number.MAX_SAFE_INTEGER;
+    return ai - bi;
+  });
+}
+
 // ---- internal read-procedure input schemas ----
 
 export const applicationStatusEnum = z.enum([
@@ -196,7 +259,8 @@ export const applicationStatusEnum = z.enum([
   "APPROVED",
   "REJECTED",
   "SIGNED",
-  "CONVERTED"
+  "CONVERTED",
+  "ABANDONED"
 ]);
 
 export const listApplicationsSchema = z.object({
