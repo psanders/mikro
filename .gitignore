@@ -46,3 +46,8 @@ public/
 /contracts/
 mikro.csv
 *.csv
+
+# Generated Prisma client — produced by `npm run db:generate` at build time and
+# copied into the Docker image from the CI runner. Tracking it broke CI when a
+# partial copy was committed (prisma refuses to overwrite an unrecognized dir).
+mods/apiserver/src/generated/prisma/
