@@ -12,6 +12,8 @@ export type ApplicationStatus =
   | "CONVERTED"
   | "ABANDONED";
 
+export type ApplicationSource = "FORM" | "WHATSAPP" | "MANUAL";
+
 /**
  * Loan application (solicitud) entity type — a public form submission stored on
  * a stable schema. `rawData` holds the full normalized payload.
@@ -20,6 +22,7 @@ export interface LoanApplication {
   id: string;
   sessionId: string;
   status: ApplicationStatus;
+  source: ApplicationSource;
   lastSection: string | null;
   firstName: string | null;
   lastName: string | null;

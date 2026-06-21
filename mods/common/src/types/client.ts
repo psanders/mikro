@@ -10,7 +10,7 @@ import type { Customer } from "./customer.js";
 import type { User } from "./user.js";
 import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
-import type { LoanApplication, ApplicationStatus } from "./application.js";
+import type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
 
 /**
  * UserRole entity type.
@@ -354,6 +354,23 @@ export interface DbClient {
     }): Promise<LoanApplication[]>;
   };
 
+  followUpJob: {
+    create(args: {
+      data: { applicationId: string; type: "NUDGE" | "ABANDON"; scheduledFor: Date };
+    }): Promise<FollowUpJob>;
+    findMany(args: {
+      where: { status: "PENDING"; scheduledFor: { lte: Date } };
+    }): Promise<FollowUpJob[]>;
+    updateMany(args: {
+      where: { applicationId: string; status: "PENDING" };
+      data: { status: "CANCELLED" };
+    }): Promise<{ count: number }>;
+    update(args: {
+      where: { id: string };
+      data: { status: "DONE" | "CANCELLED" };
+    }): Promise<FollowUpJob>;
+  };
+
   /** Interactive transaction (Prisma). */
   $transaction: <T>(fn: (tx: DbClient) => Promise<T>) => Promise<T>;
 }
@@ -404,6 +421,17 @@ export interface LoanApplicationWriteData {
   customerId?: string | null;
   loanId?: number | null;
   submittedAt?: Date | null;
+  /** Set only in the `create` block of an upsert; ignored in `update`. */
+  source?: ApplicationSource;
+}
+
+export interface FollowUpJob {
+  id: string;
+  applicationId: string;
+  type: "NUDGE" | "ABANDON";
+  scheduledFor: Date;
+  status: "PENDING" | "DONE" | "CANCELLED";
+  createdAt: Date;
 }
 
 /**

@@ -19,7 +19,8 @@ export function createCreateApplication(client: DbClient) {
     const result = scoreApplication(normalized);
 
     const writeData = {
-      status: "DRAFT" as const,
+      status: "RECEIVED" as const,
+      source: "MANUAL" as const,
       lastSection: null,
       firstName: normalized.firstName,
       lastName: normalized.lastName,
@@ -49,6 +50,8 @@ export function createCreateApplication(client: DbClient) {
     });
     logger.verbose("loan application created manually", {
       id: app.id,
+      status: "RECEIVED",
+      source: "MANUAL",
       score: Math.round(result.isc)
     });
     return app;

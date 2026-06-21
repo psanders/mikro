@@ -15,6 +15,7 @@ import type { DbClient, NormalizedApplication } from "@mikro/common";
 import { normalizeApplication } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
+import { createCancelApplicationJobs } from "../../follow-up/index.js";
 
 export function createFinalizeApplication(
   client: DbClient,
@@ -44,6 +45,13 @@ export function createFinalizeApplication(
         await client.loanApplication.update({
           where: { id: existing.id },
           data: { status: "ABANDONED" }
+        });
+        const cancelJobs = createCancelApplicationJobs(client);
+        cancelJobs(existing.id).catch((err: Error) => {
+          logger.error("jose finalizeApplication: failed to cancel follow-up jobs", {
+            sessionId,
+            error: err.message
+          });
         });
         logger.info("jose finalizeApplication: application abandoned", { sessionId });
         return {

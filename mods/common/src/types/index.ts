@@ -9,9 +9,10 @@ export type {
   UserRole,
   PaymentWithRelations,
   CustomerWithLoans,
-  LoanApplicationWriteData
+  LoanApplicationWriteData,
+  FollowUpJob
 } from "./client.js";
-export type { LoanApplication, ApplicationStatus } from "./application.js";
+export type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

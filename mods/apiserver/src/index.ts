@@ -20,6 +20,7 @@ import {
   getConfig,
   getLogoPath,
   getPromoBannerPath,
+  getWhatsAppFollowUpTemplate,
   LOAN_APPLICATION_PROMO_ASSET_ROUTE
 } from "@mikro/common";
 import express from "express";
@@ -97,6 +98,11 @@ import {
   createSubmitApplicationFromFlow
 } from "./api/index.js";
 import {
+  createScheduleFollowUpJob,
+  createSendFollowUpNudge,
+  createFollowUpWorker
+} from "./follow-up/index.js";
+import {
   createGetApplicationState,
   createSaveAnswer,
   createFinalizeApplication
@@ -169,10 +175,10 @@ app.get(LOAN_APPLICATION_PROMO_ASSET_ROUTE, (_req, res) => {
 // respond `{ result: "ok" }` on success (the form expects that shape) and never
 // leak schema details; only a genuine DB failure returns 500 so the form can
 // show its connection-error message.
-const upsertApplication = createUpsertApplication(prisma as unknown as DbClient);
-const findLatestApplicationByPhone = createFindLatestApplicationByPhone(
-  prisma as unknown as DbClient
-);
+const dbClient = prisma as unknown as DbClient;
+const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient);
+const upsertApplication = createUpsertApplication(dbClient, { scheduleFollowUpJob });
+const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
 
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
 // production hardening (shared store, WAF, captcha) is a follow-up.
@@ -718,6 +724,19 @@ async function initializeMessageProcessor() {
   }
 }
 
+// Follow-up worker — started once Prisma is ready (before initializeMessageProcessor)
+const followUpTemplate = getWhatsAppFollowUpTemplate();
+let stopFollowUpWorker: (() => void) | undefined;
+
+process.on("SIGTERM", () => {
+  stopFollowUpWorker?.();
+  process.exit(0);
+});
+process.on("SIGINT", () => {
+  stopFollowUpWorker?.();
+  process.exit(0);
+});
+
 // Initialize message processor, then start server
 initializeMessageProcessor()
   .then(() => {
@@ -754,6 +773,15 @@ initializeMessageProcessor()
       // Final verification after server starts
       const postStartState = getMessageProcessorState();
       logger.info("processor state after server start", { postStartState });
+
+      // Start follow-up timer worker
+      const whatsAppClient2 = createWhatsAppClient();
+      const sendFollowUpNudge = createSendFollowUpNudge({
+        sendTemplateMessage: whatsAppClient2.sendTemplateMessage.bind(whatsAppClient2),
+        templateName: followUpTemplate.templateName,
+        languageCode: followUpTemplate.languageCode
+      });
+      stopFollowUpWorker = createFollowUpWorker({ client: dbClient, sendFollowUpNudge });
     });
   })
   .catch((error) => {

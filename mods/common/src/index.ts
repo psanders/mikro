@@ -20,6 +20,7 @@ export {
   getPromoBannerPath,
   LOAN_APPLICATION_PROMO_ASSET_ROUTE,
   getContractConfig,
+  getWhatsAppFollowUpTemplate,
   clearConfigCache,
   mikroConfigSchema,
   loansSchema,
@@ -425,9 +426,10 @@ export type {
   UserRole,
   PaymentWithRelations,
   CustomerWithLoans,
-  LoanApplicationWriteData
+  LoanApplicationWriteData,
+  FollowUpJob
 } from "./types/index.js";
-export type { LoanApplication, ApplicationStatus } from "./types/index.js";
+export type { LoanApplication, ApplicationStatus, ApplicationSource } from "./types/index.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

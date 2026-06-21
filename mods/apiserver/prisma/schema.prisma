@@ -145,6 +145,30 @@ enum ApplicationStatus {
   @@map("application_statuses")
 }
 
+// Origin channel of a loan application. Set once at creation; never changed.
+enum ApplicationSource {
+  FORM     // Public website form (POST /v1/applications)
+  WHATSAPP // WhatsApp intake Flow submission
+  MANUAL   // Created by a reviewer from the ops dashboard
+
+  @@map("application_sources")
+}
+
+enum FollowUpJobType {
+  NUDGE   // Stage 1 — remind prospect to complete; fires 10 min after RECEIVED
+  ABANDON // Stage 2 — mark application ABANDONED; fires 8 h after nudge
+
+  @@map("follow_up_job_types")
+}
+
+enum FollowUpJobStatus {
+  PENDING
+  DONE
+  CANCELLED
+
+  @@map("follow_up_job_statuses")
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -417,8 +441,9 @@ model AccountingTransactionAttachment {
 model LoanApplication {
   id          String            @id @default(uuid())
   sessionId   String            @unique @map("session_id")
-  status      ApplicationStatus @default(DRAFT)
-  lastSection String?           @map("last_section")
+  status      ApplicationStatus  @default(DRAFT)
+  source      ApplicationSource  @default(FORM)
+  lastSection String?            @map("last_section")
 
   // Stable extracted fields (subset of the form; everything also lives in rawData)
   firstName         String?   @map("first_name")
@@ -484,7 +509,23 @@ model LoanApplication {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
+  followUpJobs FollowUpJob[]
+
   @@index([status])
   @@index([sessionId])
   @@map("loan_applications")
+}
+
+model FollowUpJob {
+  id            String            @id @default(cuid())
+  applicationId String            @map("application_id")
+  application   LoanApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          FollowUpJobType
+  scheduledFor  DateTime          @map("scheduled_for")
+  status        FollowUpJobStatus @default(PENDING)
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@index([status, scheduledFor])
+  @@index([applicationId])
+  @@map("follow_up_jobs")
 }

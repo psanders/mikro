@@ -41,7 +41,12 @@ const whatsappTemplatesSchema = z.object({
   // The promo template has an IMAGE header, which WhatsApp requires as a
   // per-send parameter (the sample set in the template is not reused). Point this
   // at a publicly reachable JPEG/PNG of the promo banner.
-  loanApplicationPromoImageUrl: z.string().default("")
+  loanApplicationPromoImageUrl: z.string().default(""),
+  // Follow-up nudge template: text-only, no image header, no flow button.
+  // Sent 10 min after a RECEIVED application if still unattended.
+  // Register `loan_application_follow_up` on Meta before changing this default.
+  loanApplicationFollowUp: z.string().default("loan_application"),
+  loanApplicationFollowUpLanguage: z.string().default("es_DO")
 });
 
 const whatsappSchema = z.object({
@@ -467,6 +472,15 @@ export function getPromoBannerPath(): string {
  */
 export function getContractConfig(): ContractConfig {
   return getConfig().contract;
+}
+
+/** Template name + language for the follow-up nudge send. */
+export function getWhatsAppFollowUpTemplate(): { templateName: string; languageCode: string } {
+  const cfg = getConfig();
+  return {
+    templateName: cfg.whatsapp.templates.loanApplicationFollowUp,
+    languageCode: cfg.whatsapp.templates.loanApplicationFollowUpLanguage
+  };
 }
 
 /**

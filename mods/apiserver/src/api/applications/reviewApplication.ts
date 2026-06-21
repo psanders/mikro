@@ -13,6 +13,7 @@ import type {
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import { createCancelApplicationJobs } from "../../follow-up/index.js";
 
 interface ApplicationRef {
   id?: string;
@@ -32,6 +33,7 @@ async function loadByRef(client: DbClient, ref: ApplicationRef): Promise<LoanApp
 /**
  * Apply a review action to an application: validate the current->next transition,
  * then persist the new status + the reviewer decision (who/when/note).
+ * Cancels any pending follow-up jobs when the application moves out of RECEIVED.
  */
 async function applyReview(
   client: DbClient,
@@ -52,6 +54,17 @@ async function applyReview(
     where: { id: app.id },
     data: { status: to, reviewedById: reviewerId, reviewedAt: new Date(), reviewNote: note }
   });
+
+  if (app.status === "RECEIVED") {
+    const cancelJobs = createCancelApplicationJobs(client);
+    cancelJobs(app.id).catch((err: Error) => {
+      logger.error("failed to cancel follow-up jobs on review", {
+        applicationId: app.id,
+        error: err.message
+      });
+    });
+  }
+
   logger.verbose("loan application reviewed", {
     id: app.id,
     action,

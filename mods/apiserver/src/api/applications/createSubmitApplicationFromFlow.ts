@@ -2,12 +2,14 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { applicationPayloadSchema, normalizeApplication } from "@mikro/common";
-import type { LoanApplication, NormalizedApplication } from "@mikro/common";
+import type { ApplicationSource, LoanApplication, NormalizedApplication } from "@mikro/common";
 import { logger } from "../../logger.js";
 
 interface Deps {
   /** Upsert a normalized application by its `sessionId` (shared with the website path). */
-  upsertApplication: (normalized: NormalizedApplication) => Promise<LoanApplication>;
+  upsertApplication: (
+    normalized: NormalizedApplication & { source?: ApplicationSource }
+  ) => Promise<LoanApplication>;
   /** Most-recent application sessionId for a canonical E.164 phone, or null. */
   findLatestApplicationByPhone: (phone: string) => Promise<{ sessionId: string } | null>;
 }
@@ -36,6 +38,6 @@ export function createSubmitApplicationFromFlow(deps: Deps) {
       const existing = await deps.findLatestApplicationByPhone(normalized.phone);
       if (existing) normalized.sessionId = existing.sessionId;
     }
-    await deps.upsertApplication(normalized);
+    await deps.upsertApplication({ ...normalized, source: "WHATSAPP" });
   };
 }
