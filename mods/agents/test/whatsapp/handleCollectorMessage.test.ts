@@ -9,7 +9,7 @@ import {
 } from "../../src/whatsapp/handleCollectorMessage.js";
 
 const COLLECTOR_PHONE = "+18095550001";
-const BUSINESS_PHONE = BUSINESS_PHONE;
+const BUSINESS_PHONE = "+18095551234";
 
 /** Minimal mock LLM result with text only. */
 const llmResult = (text: string) => ({ text, toolsExecuted: [] });
