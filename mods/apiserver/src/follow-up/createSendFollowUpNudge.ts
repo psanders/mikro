@@ -20,7 +20,7 @@ interface Deps {
  *  Best-effort: never throws; returns { sent: false, error } on failure. */
 export function createSendFollowUpNudge(deps: Deps) {
   return async (phone: string, firstName?: string | null): Promise<NudgeResult> => {
-    const bodyParameters = firstName ? [{ parameter_name: "name", text: firstName }] : [];
+    const bodyParameters = [{ parameter_name: "name", text: firstName ?? "Estimado(a)" }];
     try {
       const res = await deps.sendTemplateMessage({
         phone,
