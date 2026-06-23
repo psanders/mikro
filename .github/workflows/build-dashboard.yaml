@@ -73,12 +73,15 @@ jobs:
       # runner's platform binaries fresh — @tauri-apps/cli, rolldown (vite),
       # esbuild, @tailwindcss/oxide, lightningcss — so `tauri build` can run.
       # The deletion is runner-only; the committed lockfile is untouched.
+      # --legacy-peer-deps mirrors how the committed lock was produced: a fresh
+      # resolution otherwise trips an ERESOLVE peer conflict in @mikro/mobile
+      # (react-native-reanimated vs react-native-worklets) that `npm ci` skips.
       - name: Install dependencies
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             rm -f package-lock.json
-            npm install --no-audit --no-fund
+            npm install --no-audit --no-fund --legacy-peer-deps
           else
             npm ci
           fi
