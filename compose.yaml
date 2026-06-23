@@ -12,7 +12,8 @@ services:
       - ./mikro.json:/app/mikro.json:ro
       # Agent definitions
       - ./agents.yaml:/app/agents.yaml:ro
-      # Database persistence
+      # Database + all generated files (receipts, contracts, accounting
+      # attachments all live under data/ — one volume persists everything)
       - ./data:/app/data
       # Signing keys for receipts
       - ./keys:/app/keys
