@@ -264,9 +264,9 @@ export const mikroConfigSchema = z
         "http://tauri.localhost",
         "http://localhost:5173"
       ]),
-    receiptsPath: z.string().default("/app/receipts"),
+    receiptsPath: z.string().default("/app/data/receipts"),
     // Where signed loan-application contract PDFs are stored on disk.
-    contractsPath: z.string().default("/app/contracts"),
+    contractsPath: z.string().default("/app/data/contracts"),
     databaseUrl: z.string().default("file:/app/data/mikro.db"),
     jwtSecret: z
       .string()

@@ -55,8 +55,9 @@ RUN npm install --no-save --include=optional sharp@0.34.5 @resvg/resvg-js@2.6.2
 RUN npm install -g prisma@^7.3.0 && \
     npm cache clean --force
 
-# Create directories for data and receipt images
-RUN mkdir -p /app/data /app/receipts && \
+# Create runtime data dirs (receipts, contracts, accounting attachments all
+# live under /app/data so a single mounted volume persists everything)
+RUN mkdir -p /app/data/receipts /app/data/contracts /app/data/attachments/accounting && \
     chown -R nodejs:nodejs /app
 
 # Switch to non-root user
