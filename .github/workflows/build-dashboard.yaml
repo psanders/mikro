@@ -65,8 +65,20 @@ jobs:
         with:
           workspaces: mods/dashboard/src-tauri -> target
 
+      # macOS installs strictly from the lockfile. Windows uses `npm install`:
+      # npm's lockfile omits optional *platform* binaries for every OS other
+      # than the one it was generated on (here, macOS), so `npm ci` on Windows
+      # can't install the win32 native bindings that @tauri-apps/cli, rolldown
+      # (vite), esbuild, @tailwindcss/oxide and lightningcss need to build.
+      # `npm install` resolves the runner's platform binaries fresh.
       - name: Install dependencies
-        run: npm ci
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            npm install --no-audit --no-fund
+          else
+            npm ci
+          fi
 
       # The dashboard imports @mikro/common (runtime) and the AppRouter *type*
       # from @mikro/apiserver, so both must be built before the frontend build.
