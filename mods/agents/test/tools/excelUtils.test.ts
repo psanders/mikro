@@ -163,9 +163,8 @@ describe("excelUtils", () => {
       expect(headerRow.getCell(5).value).to.equal("Rating");
       expect(headerRow.getCell(6).value).to.equal("Pagos atrasados");
       expect(headerRow.getCell(7).value).to.equal("Tendencia");
-      expect(headerRow.getCell(8).value).to.equal("Afiliado por");
-      expect(headerRow.getCell(9).value).to.equal("Lugar de Cobro");
-      expect(headerRow.getCell(10).value).to.equal("Notas");
+      expect(headerRow.getCell(8).value).to.equal("Lugar de Cobro");
+      expect(headerRow.getCell(9).value).to.equal("Notas");
     });
 
     it("should include customer data in rows", async () => {
@@ -184,7 +183,6 @@ describe("excelUtils", () => {
       expect(dataRow.getCell(3).value).to.equal(10001);
       expect(dataRow.getCell(4).value).to.equal("Semanal");
       expect(dataRow.getCell(5).value).to.match(/^★+$/);
-      expect(dataRow.getCell(8).value).to.equal("John Referrer");
     });
 
     it("should sort rows by rating ascending then missed count descending", async () => {

@@ -184,7 +184,7 @@ export function createDefaultedReportLayout(
         {
           style: { fontSize: "26px", fontWeight: 700, fontFamily: "Inter" }
         },
-        "mikro — Reporte de Cartera en Riesgo"
+        "Mikro Créditos — Reporte de Cartera en Riesgo"
       ),
       el(
         "div",
