@@ -65,16 +65,19 @@ jobs:
         with:
           workspaces: mods/dashboard/src-tauri -> target
 
-      # macOS installs strictly from the lockfile. Windows uses `npm install`:
-      # npm's lockfile omits optional *platform* binaries for every OS other
-      # than the one it was generated on (here, macOS), so `npm ci` on Windows
-      # can't install the win32 native bindings that @tauri-apps/cli, rolldown
-      # (vite), esbuild, @tailwindcss/oxide and lightningcss need to build.
-      # `npm install` resolves the runner's platform binaries fresh.
+      # macOS installs strictly from the lockfile. Windows deletes the lockfile
+      # first, then runs `npm install`. npm only records optional *platform*
+      # binaries for the OS the lock was generated on (macOS here), and with
+      # that lock present neither `npm ci` nor `npm install` will re-add the
+      # pruned win32 bindings (npm/cli#4828). A lockless install resolves the
+      # runner's platform binaries fresh — @tauri-apps/cli, rolldown (vite),
+      # esbuild, @tailwindcss/oxide, lightningcss — so `tauri build` can run.
+      # The deletion is runner-only; the committed lockfile is untouched.
       - name: Install dependencies
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
+            rm -f package-lock.json
             npm install --no-audit --no-fund
           else
             npm ci
