@@ -59464,6 +59464,439 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "WlFOp",
+      "x": 2252,
+      "y": 1100,
+      "name": "IG Ad · Educativo 01 (Dark)",
+      "clip": true,
+      "width": 1080,
+      "height": 1350,
+      "fill": {
+        "type": "gradient",
+        "gradientType": "linear",
+        "enabled": true,
+        "rotation": 160,
+        "size": {
+          "height": 1
+        },
+        "colors": [
+          {
+            "color": "#0B2256",
+            "position": 0
+          },
+          {
+            "color": "#14254A",
+            "position": 1
+          }
+        ]
+      },
+      "layout": "none",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "Y9BxP",
+          "x": -220,
+          "y": -260,
+          "name": "glow-orange",
+          "opacity": 0.28,
+          "fill": "$brand.orange.primary",
+          "width": 900,
+          "height": 900,
+          "effect": {
+            "type": "blur",
+            "radius": 220
+          }
+        },
+        {
+          "type": "ellipse",
+          "id": "pu9LR",
+          "x": 520,
+          "y": 820,
+          "name": "glow-blue",
+          "opacity": 0.32,
+          "fill": "$brand.blue.sky",
+          "width": 1000,
+          "height": 1000,
+          "effect": {
+            "type": "blur",
+            "radius": 240
+          }
+        },
+        {
+          "type": "ellipse",
+          "id": "M84B9",
+          "x": 760,
+          "y": -160,
+          "name": "glow-yellow",
+          "opacity": 0.18,
+          "fill": "$brand.yellow.accent",
+          "width": 520,
+          "height": 520,
+          "effect": {
+            "type": "blur",
+            "radius": 180
+          }
+        },
+        {
+          "type": "frame",
+          "id": "S8IDE",
+          "x": 0,
+          "y": 0,
+          "name": "Shell",
+          "width": 1080,
+          "height": 1350,
+          "layout": "vertical",
+          "gap": 88,
+          "padding": 72,
+          "children": [
+            {
+              "type": "frame",
+              "id": "uFu1x",
+              "name": "Top",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 60,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "uKeuM",
+                  "name": "Header",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "Mq1VE",
+                      "type": "ref",
+                      "ref": "oH672",
+                      "name": "Logo",
+                      "descendants": {
+                        "N0P37": {
+                          "width": 48,
+                          "height": 48,
+                          "cornerRadius": 12,
+                          "padding": [
+                            0,
+                            0,
+                            5,
+                            0
+                          ]
+                        },
+                        "cRztl": {
+                          "fontSize": 28,
+                          "fill": "$brand.white"
+                        },
+                        "ed938": {
+                          "fontSize": 36,
+                          "fill": "$brand.white"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ol4VO",
+                      "name": "SeriesChip",
+                      "fill": "#FFFFFF1A",
+                      "cornerRadius": 9999,
+                      "stroke": "#FFFFFF26",
+                      "strokeWidth": 1,
+                      "gap": 10,
+                      "padding": [
+                        10,
+                        18
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "H3kIVO",
+                          "name": "icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "graduation-cap",
+                          "library": "lucide",
+                          "fill": "$brand.yellow.accent"
+                        },
+                        {
+                          "type": "text",
+                          "id": "jzsCp",
+                          "name": "label",
+                          "fill": "$brand.white",
+                          "content": "Educación financiera · 01",
+                          "fontFamily": "Geist",
+                          "fontSize": 18,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "N0WwqL",
+                  "name": "Headline",
+                  "fill": "$brand.white",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "¿Qué es el micro financiamiento?",
+                  "lineHeight": 1,
+                  "fontFamily": "Geist",
+                  "fontSize": 112,
+                  "fontWeight": "700",
+                  "letterSpacing": -3.2
+                },
+                {
+                  "type": "frame",
+                  "id": "ArQ8J",
+                  "name": "divider-bar",
+                  "width": 160,
+                  "height": 10,
+                  "fill": {
+                    "type": "gradient",
+                    "gradientType": "linear",
+                    "enabled": true,
+                    "rotation": 90,
+                    "size": {
+                      "height": 1
+                    },
+                    "colors": [
+                      {
+                        "color": "$brand.orange.primary",
+                        "position": 0
+                      },
+                      {
+                        "color": "$brand.yellow.accent",
+                        "position": 1
+                      }
+                    ]
+                  },
+                  "cornerRadius": 5
+                },
+                {
+                  "type": "text",
+                  "id": "T38POt",
+                  "name": "Eyebrow",
+                  "fill": "#FFD447",
+                  "content": "APRENDE CON MIKRO",
+                  "fontFamily": "Geist",
+                  "fontSize": 28,
+                  "fontWeight": "700",
+                  "letterSpacing": 6
+                },
+                {
+                  "type": "text",
+                  "id": "MY4QN",
+                  "name": "Body",
+                  "fill": "#D9E2F2",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Crédito ágil, en montos pequeños, pensado para emprendedores que la banca tradicional deja fuera.",
+                  "lineHeight": 1.3,
+                  "fontFamily": "Geist",
+                  "fontSize": 54,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BUoYD",
+              "name": "Facts",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "O7Xlml",
+                  "name": "Desde montos pequeños",
+                  "width": "fill_container",
+                  "gap": 24,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "O8Xlp",
+                      "name": "icon-chip",
+                      "width": 76,
+                      "height": 76,
+                      "fill": {
+                        "type": "gradient",
+                        "gradientType": "linear",
+                        "enabled": true,
+                        "rotation": 135,
+                        "size": {
+                          "height": 1
+                        },
+                        "colors": [
+                          {
+                            "color": "$brand.orange.primary",
+                            "position": 0
+                          },
+                          {
+                            "color": "$brand.orange.deep",
+                            "position": 1
+                          }
+                        ]
+                      },
+                      "cornerRadius": 18,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "uXjlY",
+                          "name": "icon",
+                          "width": 40,
+                          "height": 40,
+                          "icon": "coins",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "jnMyi",
+                      "name": "label",
+                      "fill": "$brand.white",
+                      "content": "Desde montos pequeños",
+                      "fontFamily": "Geist",
+                      "fontSize": 40,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M8Ukh",
+                  "name": "100% desde tu celular",
+                  "width": "fill_container",
+                  "gap": 24,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "GNXYj",
+                      "name": "icon-chip",
+                      "width": 76,
+                      "height": 76,
+                      "fill": {
+                        "type": "gradient",
+                        "gradientType": "linear",
+                        "enabled": true,
+                        "rotation": 135,
+                        "size": {
+                          "height": 1
+                        },
+                        "colors": [
+                          {
+                            "color": "$brand.orange.primary",
+                            "position": 0
+                          },
+                          {
+                            "color": "$brand.orange.deep",
+                            "position": 1
+                          }
+                        ]
+                      },
+                      "cornerRadius": 18,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "nDCMs",
+                          "name": "icon",
+                          "width": 40,
+                          "height": 40,
+                          "icon": "smartphone",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "rZ9aN",
+                      "name": "label",
+                      "fill": "$brand.white",
+                      "content": "100% desde tu celular",
+                      "fontFamily": "Geist",
+                      "fontSize": 40,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "egtco",
+                  "name": "Decisión en minutos",
+                  "width": "fill_container",
+                  "gap": 24,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "gyjvt",
+                      "name": "icon-chip",
+                      "width": 76,
+                      "height": 76,
+                      "fill": {
+                        "type": "gradient",
+                        "gradientType": "linear",
+                        "enabled": true,
+                        "rotation": 135,
+                        "size": {
+                          "height": 1
+                        },
+                        "colors": [
+                          {
+                            "color": "$brand.orange.primary",
+                            "position": 0
+                          },
+                          {
+                            "color": "$brand.orange.deep",
+                            "position": 1
+                          }
+                        ]
+                      },
+                      "cornerRadius": 18,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Q4P4h",
+                          "name": "icon",
+                          "width": 40,
+                          "height": 40,
+                          "icon": "zap",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "WOyuQ",
+                      "name": "label",
+                      "fill": "$brand.white",
+                      "content": "Decisión en minutos",
+                      "fontFamily": "Geist",
+                      "fontSize": 40,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
