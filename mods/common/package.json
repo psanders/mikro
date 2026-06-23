@@ -45,6 +45,9 @@
     "yaml": "^2.9.0",
     "zod": "^4.3.5"
   },
+  "optionalDependencies": {
+    "@resvg/resvg-js-win32-x64-msvc": "2.6.2"
+  },
   "devDependencies": {
     "@types/chai": "^5.2.3",
     "@types/jsonwebtoken": "^9.0.10",

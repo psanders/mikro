@@ -1,6 +1,6 @@
 name: Build Dashboard (Tauri)
 
-# Builds the Mikro Operaciones desktop app (Tauri 2) for macOS,
+# Builds the Mikro Operaciones desktop app (Tauri 2) for macOS + Windows,
 # pointed at the production API. On a v* tag (pushed by release.yaml) the
 # installers are attached to that GitHub Release; on manual dispatch they are
 # uploaded as workflow artifacts.
@@ -37,6 +37,9 @@ jobs:
           - platform: macos-latest
             args: "--target universal-apple-darwin"
             rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+          - platform: windows-latest
+            args: ""
+            rust-targets: ""
 
     runs-on: ${{ matrix.platform }}
 
@@ -112,7 +115,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mikro-dashboard-${{ matrix.platform }}
-          # macOS universal target
-          # (target/universal-apple-darwin/release/bundle): .dmg/.app.
+          # Covers native (target/release/bundle) and the macOS universal
+          # target (target/universal-apple-darwin/release/bundle): .dmg/.app,
+          # .msi, and the NSIS .exe.
           path: mods/dashboard/src-tauri/target/**/release/bundle/**
           if-no-files-found: error
