@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.14.2](https://github.com/psanders/mikro/compare/v1.14.1...v1.14.2) (2026-06-23)
+
+### Bug Fixes
+
+- default receipts/contracts paths under data volume ([06103cd](https://github.com/psanders/mikro/commit/06103cd4f2bc91c9195feef6a9eb6174a2337c86))
+- persist receipts and contracts under data volume ([f05b3d0](https://github.com/psanders/mikro/commit/f05b3d092138a047b98cfe14c876eca5cef9c732))
+- replace deprecated llm model for the autopilot ([01021da](https://github.com/psanders/mikro/commit/01021dabea4b0361b5cc874ffa69ae84ee3b97d7))
+
 ## [1.14.1](https://github.com/psanders/mikro/compare/v1.14.0...v1.14.1) (2026-06-23)
 
 **Note:** Version bump only for package mikro
