@@ -149,7 +149,7 @@ intelligence:
 
     languageModel:
       provider: "google"
-      model: "gemini-2.0-flash"
+      model: "gemini-2.5-flash"
       maxTokens: 380
       temperature: 0.4
     testCases:
