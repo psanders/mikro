@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.15.0](https://github.com/psanders/mikro/compare/v1.14.3...v1.15.0) (2026-06-28)
+
+### Features
+
+- **dashboard:** desktop auto-update via apiserver-served manifest ([#49](https://github.com/psanders/mikro/issues/49)) ([a9a7a41](https://github.com/psanders/mikro/commit/a9a7a410d40a23e2e4484596292a7078b07a7340)), closes [npm/cli#4828](https://github.com/npm/cli/issues/4828)
+
 ## [1.14.3](https://github.com/psanders/mikro/compare/v1.14.2...v1.14.3) (2026-06-23)
 
 **Note:** Version bump only for package mikro
