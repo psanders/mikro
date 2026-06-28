@@ -19,3 +19,12 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# Auto-update: the updater plugin checks the apiserver manifest endpoint and
+# installs signed releases; the process plugin relaunches the app afterwards.
+# Desktop-only — gated on the OS triple (Cargo dependency tables can't use
+# Tauri's `cfg(desktop)`, which only exists for code). lib.rs registers them
+# under `#[cfg(desktop)]`, which Tauri's build script does set for code.
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"

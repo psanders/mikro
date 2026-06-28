@@ -86,5 +86,10 @@
       "office": "Notary office address, City, República Dominicana",
       "municipality": "Your City"
     }
+  },
+  "updates": {
+    "enabled": true,
+    "path": "./data/updates",
+    "manifestFilename": "latest.json"
   }
 }

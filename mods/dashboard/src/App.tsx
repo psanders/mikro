@@ -7,6 +7,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import { trpc, createTrpcClient } from "./lib/trpc";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
+import { AppUpdater } from "./components/AppUpdater";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
@@ -69,6 +70,7 @@ export function App() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <AuthProvider>
           <ToastProvider>
+            <AppUpdater />
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>

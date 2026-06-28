@@ -25,11 +25,15 @@ import {
   getWhatsAppFollowUpTemplate,
   LOAN_APPLICATION_PROMO_ASSET_ROUTE,
   RECEIPT_ROUTE_PREFIX,
+  UPDATES_MANIFEST_ROUTE,
+  UPDATES_ASSET_ROUTE_PREFIX,
+  getUpdatesConfig,
   resolvePathFromConfigDir,
   loadPublicKey,
   verifyReceiptToken,
   renderReceiptCardWithToken
 } from "@mikro/common";
+import { createGetManifestPath, createResolveAssetPath } from "./updates/index.js";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
@@ -217,6 +221,50 @@ app.get(`${RECEIPT_ROUTE_PREFIX}/:token`, async (req, res) => {
     if (!res.headersSent) res.status(500).end();
   }
 });
+
+// Desktop auto-update endpoints — UNAUTHENTICATED (the updater runs before
+// login). The manifest route serves the signed latest.json from the deploy-
+// populated updates folder; the asset route serves a named installer from the
+// same folder. Off unless `updates.enabled` is set. Safety rests on the signed
+// manifest + client-side pubkey check, not the transport.
+if (getUpdatesConfig().enabled) {
+  const updatesCfg = getUpdatesConfig();
+  const updatesDir = resolvePathFromConfigDir(updatesCfg.path);
+  const updateServiceConfig = {
+    updatesDir,
+    manifestFilename: updatesCfg.manifestFilename
+  };
+  const getManifestPath = createGetManifestPath(updateServiceConfig);
+  const resolveAssetPath = createResolveAssetPath(updateServiceConfig);
+
+  app.get(UPDATES_MANIFEST_ROUTE, (_req, res) => {
+    const manifestPath = getManifestPath();
+    // 204 is the Tauri updater's "no update available" signal.
+    if (!manifestPath) {
+      res.status(204).end();
+      return;
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.sendFile(manifestPath, (err) => {
+      if (err && !res.headersSent) res.status(404).end();
+    });
+  });
+
+  app.get(`${UPDATES_ASSET_ROUTE_PREFIX}/:name`, (req, res) => {
+    const assetPath = resolveAssetPath(req.params.name);
+    if (!assetPath) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.sendFile(assetPath, (err) => {
+      if (err && !res.headersSent) res.status(404).end();
+    });
+  });
+
+  logger.info("desktop auto-update endpoints enabled", { updatesDir });
+}
 
 // Public loan application (solicitud) intake — UNAUTHENTICATED. The public
 // website form posts here (partial autosaves + a final submit), all keyed by a

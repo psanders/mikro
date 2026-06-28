@@ -97,7 +97,10 @@ jobs:
       # Stamp the real version into tauri.conf.json so installers aren't named
       # 0.0.0. On a v* tag use the tag (v1.2.0 -> 1.2.0); on manual dispatch
       # fall back to lerna.json. node keeps this runner-agnostic.
-      - name: Set app version
+      # Stamp the real version into tauri.conf.json so installers aren't named
+      # 0.0.0, and point the updater endpoint at the production API so the
+      # bundled app polls the right server (the value is baked into the binary).
+      - name: Set app version + updater endpoint
         shell: bash
         run: |
           ref="${{ github.ref_name }}"
@@ -106,8 +109,8 @@ jobs:
           else
             version="$(node -p "require('./lerna.json').version")"
           fi
-          echo "Stamping dashboard version $version"
-          node -e "const f='mods/dashboard/src-tauri/tauri.conf.json';const c=require('./'+f);c.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(c,null,2)+'\n')" "$version"
+          echo "Stamping dashboard version $version; updater endpoint ${VITE_API_URL}/v1/updates/manifest"
+          node -e "const f='mods/dashboard/src-tauri/tauri.conf.json';const c=require('./'+f);c.version=process.argv[1];c.plugins=c.plugins||{};c.plugins.updater=c.plugins.updater||{};c.plugins.updater.endpoints=[process.argv[2]+'/v1/updates/manifest'];require('fs').writeFileSync(f,JSON.stringify(c,null,2)+'\n')" "$version" "$VITE_API_URL"
 
       - name: Build Tauri app
         id: tauri
@@ -115,6 +118,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_API_URL: ${{ env.VITE_API_URL }}
+          # Sign the updater artifacts so clients can verify them against the
+          # bundled pubkey. Without these, the build still produces installers
+          # but no .sig files / updater manifest.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: mods/dashboard
           args: ${{ matrix.args }}
@@ -125,6 +133,10 @@ jobs:
           releaseBody: "Desktop builds for ${{ github.ref_name }}. API: ${{ env.VITE_API_URL }}"
           releaseDraft: false
           prerelease: false
+          # Generate + upload the signed updater manifest (latest.json) to the
+          # Release. Each matrix job merges its platform into the shared file, so
+          # by the time both finish the Release holds a cross-platform manifest.
+          includeUpdaterJson: true
 
       # Manual-dispatch runs have no release to attach to — keep the installers
       # as downloadable artifacts instead.
@@ -138,3 +150,74 @@ jobs:
           # .msi, and the NSIS .exe.
           path: mods/dashboard/src-tauri/target/**/release/bundle/**
           if-no-files-found: error
+
+  # Publish the signed updater files to the apiserver's updates folder. The
+  # desktop app's updater polls {API}/v1/updates/manifest, which the apiserver
+  # serves from this folder — so updates never depend on GitHub at runtime (the
+  # repo can go private). Both matrix builds must finish first so the Release
+  # holds the cross-platform latest.json. Tag pushes only.
+  #
+  # Reuses the deploy secrets/vars:
+  #   secrets.DEPLOY_SSH_HOST / DEPLOY_SSH_USER / DEPLOY_SSH_KEY
+  #   vars.DEPLOY_COMPOSE_DIR  (compose dir; ./data is the mounted volume)
+  publish-updates:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      BASE_URL: ${{ vars.VITE_API_URL || 'https://mikro.ngrok-free.dev' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Download signed updater files from the Release
+        run: |
+          mkdir -p updates
+          # The manifest plus the two updater bundles it references.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" -D updates \
+            -p 'latest.json' -p '*.app.tar.gz' -p '*.nsis.zip'
+          ls -la updates
+
+      - name: Rewrite manifest URLs to the apiserver and normalize filenames
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const dir = "updates";
+            const base = process.env.BASE_URL.replace(/\/+$/, "");
+            const manifestPath = path.join(dir, "latest.json");
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+            const renamed = new Map();
+            for (const [key, platform] of Object.entries(manifest.platforms)) {
+              const orig = decodeURIComponent(platform.url.split("/").pop());
+              // Strip spaces so the served filename is URL/rsync-safe.
+              const safe = orig.replace(/\s+/g, "-");
+              if (orig !== safe && !renamed.has(orig) && fs.existsSync(path.join(dir, orig))) {
+                fs.renameSync(path.join(dir, orig), path.join(dir, safe));
+              }
+              renamed.set(orig, safe);
+              platform.url = base + "/v1/updates/asset/" + encodeURIComponent(safe);
+            }
+            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+            console.log(JSON.stringify(manifest, null, 2));
+          '
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rsync updater files to the droplet
+        env:
+          SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          COMPOSE_DIR: ${{ vars.DEPLOY_COMPOSE_DIR }}
+        run: |
+          dest="${COMPOSE_DIR}/data/updates"
+          # --rsync-path creates the folder on first publish; no --delete so a
+          # client mid-download of an older build isn't cut off.
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+            --rsync-path="mkdir -p '${dest}' && rsync" \
+            updates/ "${SSH_USER}@${SSH_HOST}:${dest}/"
+          echo "Published $(ls updates | tr '\n' ' ') to ${dest}" >> "$GITHUB_STEP_SUMMARY"
