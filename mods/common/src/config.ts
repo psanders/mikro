@@ -110,6 +110,33 @@ const followUpSchema = z
   })
   .default(() => ({ nudgeDelayMinutes: 10, abandonDelayHours: 8 }));
 
+/**
+ * Desktop auto-update settings. The Tauri dashboard points its updater at the
+ * apiserver (`/v1/updates/manifest`), which serves a folder populated at deploy
+ * time: the release CI signs the installers, rewrites the manifest's download
+ * URLs to this server, and rsyncs both into `path`. The apiserver only serves
+ * those static files — no GitHub access at runtime — so updates keep working
+ * unchanged once the repo goes private.
+ */
+const updatesSchema = z
+  .object({
+    /** Enable the /v1/updates/* endpoints. Off by default. */
+    enabled: z.boolean().default(false),
+    /**
+     * Directory holding the signed manifest + installers, populated by the
+     * release workflow. Relative paths resolve against the mikro.json dir; the
+     * default sits under the mounted data volume so it survives redeploys.
+     */
+    path: z.string().default("./data/updates"),
+    /** Manifest filename within `path` (tauri-action emits `latest.json`). */
+    manifestFilename: z.string().default("latest.json")
+  })
+  .default(() => ({
+    enabled: false,
+    path: "./data/updates",
+    manifestFilename: "latest.json"
+  }));
+
 /** Past-due (mora) fee policy. See README "Past-due fee". */
 export const loansSchema = z.object({
   /** Annualized-style rate applied as `rate * (daysLate/30) * cuota` (e.g. 0.10 = 10%). */
@@ -297,7 +324,8 @@ export const mikroConfigSchema = z
     })),
     loans: loansSchema.default(defaultLoansConfig),
     contract: contractSchema,
-    followUp: followUpSchema
+    followUp: followUpSchema,
+    updates: updatesSchema
   })
   .strict();
 
@@ -306,7 +334,7 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans" | "contract"
+  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans" | "contract" | "updates"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -319,6 +347,7 @@ export type ResolvedMikroConfig = Omit<
   accounting: NonNullable<MikroConfig["accounting"]>;
   loans: LoansConfig;
   contract: ContractConfig;
+  updates: NonNullable<MikroConfig["updates"]>;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";
@@ -485,6 +514,28 @@ export const RECEIPT_ROUTE_PREFIX = "/r";
 export function getReceiptImageUrl(token: string): string {
   const publicBase = getConfig().publicUrl.replace(/\/+$/, "");
   return `${publicBase}${RECEIPT_ROUTE_PREFIX}/${token}`;
+}
+
+/**
+ * Public, UNAUTHENTICATED route the Tauri desktop updater polls for a release
+ * manifest. The apiserver serves the signed `latest.json` from the configured
+ * updates folder, or 204 when none is present. Authentication isn't possible
+ * here — the updater runs before login — so safety rests on the signed manifest
+ * + client-side pubkey verification, not on the transport.
+ */
+export const UPDATES_MANIFEST_ROUTE = "/v1/updates/manifest";
+
+/**
+ * Public, UNAUTHENTICATED route prefix the updater downloads installer bytes
+ * from: `GET /v1/updates/asset/:name`. The apiserver streams the matching file
+ * from the configured updates folder. The bytes are verified against the
+ * bundled pubkey before installing.
+ */
+export const UPDATES_ASSET_ROUTE_PREFIX = "/v1/updates/asset";
+
+/** Desktop auto-update settings (GitHub repo, optional token, cache TTL). */
+export function getUpdatesConfig(): ResolvedMikroConfig["updates"] {
+  return getConfig().updates;
 }
 
 /**

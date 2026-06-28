@@ -23,6 +23,10 @@ mikro-prod.json
 
 # Keys
 .keys/*.pem
+# Tauri updater signing key (private key MUST never be committed; the .pub is
+# safe but kept out of git too — the pubkey lives in tauri.conf.json).
+.keys/tauri-updater.key
+.keys/tauri-updater.key.pub
 
 # Evaluation results
 eval-results/
