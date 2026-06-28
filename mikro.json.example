@@ -37,7 +37,7 @@
       "paymentConfirmation": "payment_confirmation",
       "loanApplicationPromo": "loan_application",
       "loanApplicationFollowUp": "loan_request_followup"
-    },
+    }
   },
   "voiceNotes": {
     "enabled": false,
