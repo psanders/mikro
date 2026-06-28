@@ -81,7 +81,9 @@ jobs:
         run: |
           mkdir -p ci-smoke/keys
           cp mikro.json.example ci-smoke/mikro.json
-          cp agents.yaml.example ci-smoke/agents.yaml
+          # agents.yaml is tracked and secret-free, so use it directly. (The old
+          # agents.yaml.example was removed in 72ce4d8 as redundant.)
+          cp agents.yaml ci-smoke/agents.yaml
           docker run -d --name mikro-smoke -p 4000:4000 \
             -v "$PWD/ci-smoke/mikro.json:/app/mikro.json:ro" \
             -v "$PWD/ci-smoke/agents.yaml:/app/agents.yaml:ro" \
