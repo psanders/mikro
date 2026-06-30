@@ -28,17 +28,24 @@ export {
   getUpdatesConfig,
   UPDATES_MANIFEST_ROUTE,
   UPDATES_ASSET_ROUTE_PREFIX,
+  getQCobroConfig,
   clearConfigCache,
   mikroConfigSchema,
   loansSchema,
   llmConfigSchema,
   LLM_VENDORS,
   DEFAULT_NEAR_COMPLETION_THRESHOLDS,
+  QCOBRO_SYNC_MODES,
+  QCOBRO_BALANCE_BASES,
   type MikroConfig,
   type ResolvedMikroConfig,
   type LoansConfig,
   type LLMConfig,
-  type LLMVendor
+  type LLMVendor,
+  type QCobroConfig,
+  type QCobroSyncMode,
+  type QCobroBalanceBasis,
+  type QCobroPortfolioRule
 } from "./config.js";
 
 // Errors
@@ -377,7 +384,25 @@ export {
   type ReverseTransactionInternalInput,
   type ListTransactionsInput,
   type GetTransactionInput,
-  type GetTransactionAttachmentInput
+  type GetTransactionAttachmentInput,
+  // Customer tag schemas
+  tagSourceEnum,
+  tagShapeSchema,
+  STATUS_TAGS,
+  DPD_TAGS,
+  RISK_TAGS,
+  ALL_TAGS,
+  setCustomerTagSchema,
+  clearCustomerTagSchema,
+  listCustomerTagsSchema,
+  type TagSource,
+  type StatusTag,
+  type DpdTag,
+  type RiskTag,
+  type CustomerTagValue,
+  type SetCustomerTagInput,
+  type ClearCustomerTagInput,
+  type ListCustomerTagsInput
 } from "./schemas/index.js";
 
 // Report types and helpers
@@ -453,6 +478,7 @@ export type {
   AccountingTransactionWithRelations,
   AccountingTransactionAttachmentPayload
 } from "./types/index.js";
+export type { CustomerTag } from "./types/index.js";
 
 // Loan application scoring (deterministic Mikro Score engine)
 export {

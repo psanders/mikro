@@ -52,6 +52,7 @@ CREATE TABLE "customers" (
     "id_card_on_record" BOOLEAN NOT NULL DEFAULT false,
     "notes" TEXT,
     "preferred_payment_day" TEXT,
+    "last_synced_portfolios" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "created_by_id" TEXT,
@@ -165,7 +166,19 @@ CREATE TABLE "loan_notes" (
     CONSTRAINT "loan_notes_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
+-- Customer tags table (QCobro integration)
+CREATE TABLE "customer_tags" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "tag" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    "set_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "customer_tags_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 -- Indexes
+CREATE UNIQUE INDEX "customer_tags_customer_id_tag_key" ON "customer_tags"("customer_id", "tag");
+CREATE INDEX "customer_tags_tag_idx" ON "customer_tags"("tag");
 CREATE INDEX "loan_notes_loan_id_idx" ON "loan_notes"("loan_id");
 CREATE INDEX "loan_notes_created_at_idx" ON "loan_notes"("created_at");
 CREATE INDEX "user_roles_user_id_idx" ON "user_roles"("user_id");

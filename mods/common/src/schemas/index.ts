@@ -275,3 +275,23 @@ export {
 } from "./accounting.js";
 
 export { getCollectorDashboardSchema, type GetCollectorDashboardInput } from "./dashboard.js";
+
+export {
+  tagSourceEnum,
+  tagShapeSchema,
+  STATUS_TAGS,
+  DPD_TAGS,
+  RISK_TAGS,
+  ALL_TAGS,
+  setCustomerTagSchema,
+  clearCustomerTagSchema,
+  listCustomerTagsSchema,
+  type TagSource,
+  type StatusTag,
+  type DpdTag,
+  type RiskTag,
+  type CustomerTagValue,
+  type SetCustomerTagInput,
+  type ClearCustomerTagInput,
+  type ListCustomerTagsInput
+} from "./customerTag.js";
