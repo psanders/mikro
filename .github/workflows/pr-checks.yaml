@@ -34,3 +34,45 @@ jobs:
             echo "Run 'npm install' locally and commit the updated lock file."
             exit 1
           fi
+
+      - name: Check lock file platform coverage
+        run: node .scripts/check-lockfile-platforms.mjs
+
+  # The iOS half of mobile CI. There is deliberately NO GitHub Actions job
+  # that compiles iOS: macOS runners burn a 10x minutes multiplier and
+  # device-installable IPAs need Apple signing that EAS already manages.
+  # Real iOS binaries come from `eas build`; JS-only changes ship over the
+  # air via `eas update`. What CI can catch cheaply on Linux is everything
+  # in front of the native compile: types, unit tests, and `expo prebuild`,
+  # which resolves every config plugin and fails on broken native config
+  # (this exact class of bug shipped once: expo-print listed as a plugin).
+  mobile-checks:
+    name: Mobile typecheck, tests, native config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Mobile imports router types from @mikro/apiserver dist.
+      - name: Build apiserver types
+        run: npm run build -w @mikro/apiserver
+
+      - name: Typecheck
+        run: npm run typecheck -w @mikro/mobile
+
+      - name: Unit tests
+        run: npm test -w @mikro/mobile
+
+      - name: Validate native config (expo prebuild, both platforms)
+        working-directory: mods/mobile
+        run: npx expo prebuild --platform all --no-install

@@ -22,7 +22,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky && npm run build -w @mikro/common --if-present",
+    "prepare": "(husky || true) && npm run build -w @mikro/common --if-present",
     "db:generate": "npm run db:generate -w @mikro/apiserver",
     "db:migrate": "npm run db:migrate -w @mikro/apiserver",
     "db:migrate:deploy": "npm run db:migrate:deploy -w @mikro/apiserver",
@@ -76,7 +76,7 @@
     "typescript-eslint": "^8.53.1"
   },
   "dependencies": {
-    "expo": "~56.0.4",
+    "expo": "~56.0.13",
     "react": "19.2.3",
     "react-native": "0.85.3"
   },

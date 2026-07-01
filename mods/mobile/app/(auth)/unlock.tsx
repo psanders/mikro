@@ -9,7 +9,15 @@ import { colors } from "../../lib/theme";
 import { Avatar } from "../../components/ui/Avatar";
 import { PinInput } from "../../components/ui/PinInput";
 import { PinKeypad } from "../../components/ui/PinKeypad";
-import { getPin, clearToken, clearPin, getUserName, clearUserName } from "../../lib/auth";
+import {
+  getPin,
+  clearToken,
+  clearPin,
+  getUserName,
+  clearUserName,
+  clearNavMode
+} from "../../lib/auth";
+import { resolveHomeRoute } from "../../lib/navigation";
 
 const PIN_LENGTH = 4;
 
@@ -48,7 +56,7 @@ export default function UnlockScreen() {
       if (isResume) {
         router.back();
       } else {
-        router.replace("/(tabs)");
+        router.replace(await resolveHomeRoute());
       }
     } else {
       setError(true);
@@ -60,6 +68,7 @@ export default function UnlockScreen() {
     await clearToken();
     await clearPin();
     await clearUserName();
+    await clearNavMode();
     router.replace("/(auth)/login");
   }
 

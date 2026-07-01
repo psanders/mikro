@@ -1,0 +1,55 @@
+# Evaluator golden path — HONEST PARTIAL COVERAGE, read before extending.
+#
+# What this actually verifies: a REVIEWER-role session lands on the evaluator
+# tab group (not the collector one) and the Inicio -> Cola -> Buscar screens
+# mount their static chrome without crashing, on a real device/simulator.
+#
+# What this does NOT cover, and why:
+#   - Claiming a RECEIVED application, approving it, generating/uploading a
+#     signed contract, and converting to a loan. There is no mock tRPC server
+#     in this repo anymore (removed in 9d6c923 — it never passed in CI) and no
+#     seeded backend fixtures wired into Maestro, so there is no RECEIVED
+#     application to act on. Faking the mutation calls themselves would test
+#     nothing real; asserting against a live, seeded apiserver is a follow-up
+#     that needs real test-data infra, not something to fake here.
+#   - The camera-capture step for uploading a signed contract
+#     (expo-image-picker). Maestro cannot drive the native camera/photo-picker
+#     UI reliably in CI; this would need to be stubbed at the app level (e.g.
+#     an E2E-only bypass) which doesn't exist today.
+#
+# How role-gating is exercised without a real login/backend: `app/index.tsx`'s
+# EXPO_PUBLIC_E2E fake-login bridge now bakes a well-formed (but real-shaped)
+# fake JWT with a `roles` claim, selected via EXPO_PUBLIC_E2E_ROLE, and routes
+# through the real `resolveHomeRoute()` — so this flow is actually exercising
+# production role-gating logic, just with a fake token instead of a real
+# login call. EXPO_PUBLIC_E2E vars are inlined at JS-bundle build time (Expo
+# public env convention), so they must be set BEFORE building the app, e.g.:
+#
+#   EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_E2E_ROLE=REVIEWER npx expo run:ios
+#   maestro test .maestro/evaluator-golden-path.yaml
+#
+# This is why it is not part of the CI release-APK sweep today (that profile
+# never bakes EXPO_PUBLIC_E2E) — see .github/workflows/mobile-e2e.yaml.
+appId: do.mikro.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+- assertVisible: "Más prometedoras"
+- assertNotVisible:
+    id: "tab-ruta" # collector-only tab must not be present for a REVIEWER session
+
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+- assertVisible:
+    id: "filter-all"
+- assertVisible:
+    id: "filter-urgent"
+
+- tapOn:
+    id: "tab-buscar"
+- assertVisible:
+    id: "search-input"

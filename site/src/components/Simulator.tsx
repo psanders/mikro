@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, UserCheck, ArrowRight } from "lucide-react";
 import { clsx } from "clsx";
@@ -311,13 +312,13 @@ function SimulatorCardBody({
         </div>
       </div>
 
-      <button
-        type="button"
+      <Link
+        to="/solicitud"
         className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-brand-blue-deep py-4 text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-brand-blue-primary active:bg-[#0d3278]"
       >
         Continuar solicitud
         <ArrowRight className="h-4 w-4" strokeWidth={2} />
-      </button>
+      </Link>
     </>
   );
 }

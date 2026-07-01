@@ -12,6 +12,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/icon.png",
   scheme: "mikro",
   userInterfaceStyle: "light",
+  runtimeVersion: {
+    policy: "fingerprint"
+  },
+  updates: {
+    url: "https://u.expo.dev/6b8784e8-d267-4d11-924b-2dbd9a388abd"
+  },
   ios: {
     supportsTablet: false,
     bundleIdentifier: "do.mikro.app",
@@ -20,7 +26,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSBluetoothAlwaysUsageDescription:
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
       NSBluetoothPeripheralUsageDescription:
-        "Mikro necesita Bluetooth para conectarse a la impresora térmica."
+        "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
+      NSCameraUsageDescription: "Mikro necesita la cámara para fotografiar el contrato firmado."
     }
   },
   android: {
@@ -30,7 +37,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/android-icon-foreground.png",
       monochromeImage: "./assets/android-icon-monochrome.png"
     },
-    permissions: ["android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_SCAN"]
+    permissions: [
+      "android.permission.BLUETOOTH_CONNECT",
+      "android.permission.BLUETOOTH_SCAN",
+      "android.permission.CAMERA"
+    ]
   },
   plugins: [
     "expo-router",
@@ -38,6 +49,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-local-authentication",
     "expo-sqlite",
     "expo-sharing",
+    "expo-updates",
+    [
+      "expo-image-picker",
+      {
+        cameraPermission: "Mikro necesita la cámara para fotografiar el contrato firmado."
+      }
+    ],
     ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }]
   ],
   extra: {

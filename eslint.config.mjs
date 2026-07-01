@@ -16,6 +16,7 @@ export default tseslint.config(
       "**/coverage/**",
       "**/generated/**",
       "mods/mobile/metro.config.js",
+      "mods/mobile/jest.config.js",
       "mods/mobile/.storybook/storybook.requires.ts"
     ]
   },
@@ -39,6 +40,15 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-explicit-any": "off"
+    }
+  },
+  {
+    files: [".scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly"
+      }
     }
   }
 );

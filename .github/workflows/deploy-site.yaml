@@ -58,6 +58,12 @@ jobs:
           VITE_APPLICATIONS_URL: ${{ secrets.VITE_APPLICATIONS_URL }}
         run: npm run build --workspace=site
 
+      # Static check over the JSX source: dead CTAs (buttons with no
+      # onClick/submit) and internal <Route>/external link targets that no
+      # longer resolve. Blocks deploy if it finds any.
+      - name: Check for broken links and dead CTAs
+        run: npm run check-links --workspace=site
+
       - name: Prepare deploy
         run: |
           cp -r site/dist /tmp/deploy

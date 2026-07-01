@@ -1,0 +1,40 @@
+# Evaluator reject path — HONEST PARTIAL COVERAGE, read before extending.
+#
+# What this actually verifies: a REVIEWER-role session can reach Cola and
+# Historial (the queue and the post-decision list a rejected application
+# would land in) and both screens mount their static chrome without crashing.
+#
+# What this does NOT cover, and why:
+#   - Actually claiming a RECEIVED application and rejecting it with a note
+#     (`rejectApplication`). Same reason as evaluator-golden-path.yaml: no
+#     mock tRPC server and no seeded RECEIVED application exists in this
+#     environment/CI to claim and reject. The 04b Rechazar screen's
+#     `reject-comment` testID is documented here for whoever wires up a
+#     seeded-backend follow-up:
+#       tapOn -> solicitud row (long-press to claim) -> tapOn "Rechazar" on
+#       the detail screen -> inputText on id "reject-comment" -> tapOn
+#       submit -> assertVisible the application now under Historial.
+#
+# Build/run requirements are the same as evaluator-golden-path.yaml — see
+# that file's header for the EXPO_PUBLIC_E2E / EXPO_PUBLIC_E2E_ROLE build-time
+# env vars this flow depends on, and why it isn't part of the CI release-APK
+# sweep yet.
+appId: do.mikro.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+- assertVisible:
+    id: "filter-review"
+
+- tapOn:
+    id: "tab-historial"
+- assertVisible: "Historial"
+- assertVisible:
+    id: "filter-all"

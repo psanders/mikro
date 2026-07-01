@@ -192,9 +192,14 @@ export default function PagoConfirmadoScreen() {
               try {
                 let fileUri: string | undefined;
 
-                if (isOnline) {
+                // Mora-only receipts have no amountPaid; the API schema
+                // requires it, so those always render via local capture.
+                if (isOnline && receiptViewData.amountPaid !== undefined) {
                   try {
-                    const result = await api.generateReceiptFromData.mutate(receiptViewData);
+                    const result = await api.generateReceiptFromData.mutate({
+                      ...receiptViewData,
+                      amountPaid: receiptViewData.amountPaid
+                    });
                     const file = new File(Paths.cache, `recibo-${loanId}.png`);
                     file.write(result.image, { encoding: "base64" });
                     fileUri = file.uri;
