@@ -74,12 +74,14 @@ jobs:
           fi
           echo "APK_PATH=$apk_path" >> "$GITHUB_ENV"
 
+      # Key includes -v2 to evict a stale cached CLI whose env handling
+      # shadowed -e parameters with flow-header env values.
       - name: Cache Maestro CLI
         id: maestro-cache
         uses: actions/cache@v5
         with:
           path: ${{ env.HOME }}/.maestro
-          key: maestro-${{ runner.os }}
+          key: maestro-${{ runner.os }}-v2
 
       - name: Install Maestro
         if: steps.maestro-cache.outputs.cache-hit != 'true'

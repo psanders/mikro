@@ -3,12 +3,12 @@
 # rebuilding from the smallest thing that works. Do not set EXPO_PUBLIC_E2E
 # when running this: that flag injects a fake token and skips login entirely.
 #
-# APP_ID defaults to the iOS bundle id for local simulator runs. Android's
-# applicationId is do_.mikro.app ("do" is a Java keyword, so Expo prebuild
-# sanitizes the first segment) — CI passes -e APP_ID=do_.mikro.app.
+# APP_ID must be passed explicitly (-e APP_ID=...): the iOS bundle id is
+# do.mikro.app, Android's applicationId is do_.mikro.app ("do" is a Java
+# keyword, so Expo prebuild sanitizes the first segment). No env default
+# here on purpose — a flow-header env SHADOWS the CLI -e parameter in
+# Maestro, which silently launched the wrong id on Android CI.
 appId: ${APP_ID}
-env:
-  APP_ID: do.mikro.app
 ---
 - launchApp:
     clearState: true
