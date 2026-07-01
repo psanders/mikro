@@ -21,8 +21,8 @@
     "update:prod": "eas update --branch production --message",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:e2e": "maestro test .maestro/login-screen.yaml",
-    "test:e2e:login": "maestro test .maestro/login-screen.yaml",
+    "test:e2e": "maestro test -e APP_ID=do.mikro.app .maestro/login-screen.yaml",
+    "test:e2e:login": "maestro test -e APP_ID=do.mikro.app .maestro/login-screen.yaml",
     "test:e2e:evaluator-golden": "maestro test .maestro/evaluator-golden-path.yaml",
     "test:e2e:evaluator-reject": "maestro test .maestro/evaluator-reject-path.yaml"
   },
