@@ -2,7 +2,13 @@
 # entire e2e suite for now — the previous suite never passed in CI, so we are
 # rebuilding from the smallest thing that works. Do not set EXPO_PUBLIC_E2E
 # when running this: that flag injects a fake token and skips login entirely.
-appId: do.mikro.app
+#
+# APP_ID defaults to the iOS bundle id for local simulator runs. Android's
+# applicationId is do_.mikro.app ("do" is a Java keyword, so Expo prebuild
+# sanitizes the first segment) — CI passes -e APP_ID=do_.mikro.app.
+appId: ${APP_ID}
+env:
+  APP_ID: do.mikro.app
 ---
 - launchApp:
     clearState: true

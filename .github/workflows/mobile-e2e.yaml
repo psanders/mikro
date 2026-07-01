@@ -126,7 +126,9 @@ jobs:
           disable-animations: true
           script: |
             adb install "$APK_PATH"
-            maestro test mods/mobile/.maestro/login-screen.yaml
+            # Android applicationId is do_.mikro.app (expo prebuild sanitizes
+            # the "do" segment — Java keyword); the flow defaults to the iOS id.
+            maestro test -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml
 
       - name: Upload Maestro artifacts
         if: failure()
