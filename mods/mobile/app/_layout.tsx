@@ -15,7 +15,7 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient, queryClient } from "../lib/api";
 import { SyncProvider } from "../lib/offline/SyncProvider";
-import { getPin, clearToken } from "../lib/auth";
+import { getPin, getToken, clearToken } from "../lib/auth";
 import { setSessionExpiredHandler } from "../lib/session";
 
 const E2E = process.env.EXPO_PUBLIC_E2E === "1";
@@ -33,16 +33,22 @@ function useSessionExpiry() {
   useEffect(() => {
     if (E2E) return;
     setSessionExpiredHandler(() => {
-      const authScreens = ["/", "/(auth)/login", "/(auth)/unlock"];
-      void clearToken().finally(() => {
-        if (!authScreens.includes(pathRef.current)) {
-          Alert.alert(
-            "Sesión expirada",
-            "Tu sesión venció. Inicia sesión de nuevo para continuar."
-          );
-        }
-        router.replace("/(auth)/login");
-      });
+      // usePathname() strips route groups: "/(auth)/login" is "/login".
+      const authScreens = ["/", "/login", "/unlock"];
+      void getToken().then((token) =>
+        clearToken().finally(() => {
+          // Only announce an expiry when a session actually existed and the
+          // user was past the auth screens — a fresh install firing an
+          // unauthenticated request must not see "Sesión expirada".
+          if (token && !authScreens.includes(pathRef.current)) {
+            Alert.alert(
+              "Sesión expirada",
+              "Tu sesión venció. Inicia sesión de nuevo para continuar."
+            );
+          }
+          router.replace("/(auth)/login");
+        })
+      );
     });
     return () => setSessionExpiredHandler(null);
   }, [router]);
@@ -56,7 +62,8 @@ function useAppLock() {
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (nextState) => {
       if (appState.current.match(/background/) && nextState === "active") {
-        const authScreens = ["/", "/(auth)/login", "/(auth)/unlock", "/cambiar-pin"];
+        // usePathname() strips route groups: "/(auth)/login" is "/login".
+        const authScreens = ["/", "/login", "/unlock", "/cambiar-pin"];
         if (!authScreens.includes(pathname)) {
           const pin = await getPin();
           if (pin) {
