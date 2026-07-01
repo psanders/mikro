@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.16.1](https://github.com/psanders/mikro/compare/v1.16.0...v1.16.1) (2026-07-01)
+
+### Bug Fixes
+
+- **ci:** repair apiserver smoke test, schema drift, and corrupt lockfile subtrees ([#59](https://github.com/psanders/mikro/issues/59)) ([96f208b](https://github.com/psanders/mikro/commit/96f208b35d105e26ca6c39ea19f8629af0822204))
+- **config:** remove trailing comma breaking mikro.json.example as JSON ([#57](https://github.com/psanders/mikro/issues/57)) ([f9ac92b](https://github.com/psanders/mikro/commit/f9ac92b12b717cc7e575fe28e1448ce030030dff))
+- **config:** remove trailing comma in mikro.json.example ([#53](https://github.com/psanders/mikro/issues/53)) ([694dd65](https://github.com/psanders/mikro/commit/694dd65d99c90df9fb9a1afcdf122241c19214af)), closes [#52](https://github.com/psanders/mikro/issues/52)
+
+### Features
+
+- **mobile:** add evaluator role to the collector app ([#58](https://github.com/psanders/mikro/issues/58)) ([dc1fbc2](https://github.com/psanders/mikro/commit/dc1fbc207c0fdf5ac8f0929f62ea7c52307b3db3)), closes [npm/cli#4828](https://github.com/npm/cli/issues/4828)
+
 # [1.16.0](https://github.com/psanders/mikro/compare/v1.15.0...v1.16.0) (2026-07-01)
 
 ### Bug Fixes

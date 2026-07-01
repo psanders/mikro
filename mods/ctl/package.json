@@ -1,6 +1,6 @@
 {
   "name": "@mikro/ctl",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "Mikro CLI tool",
   "type": "module",
   "main": "dist/index.js",
@@ -35,7 +35,7 @@
     "moment": "^2.30.1"
   },
   "devDependencies": {
-    "@mikro/apiserver": "^1.16.0",
+    "@mikro/apiserver": "^1.16.1",
     "@types/figlet": "^1.7.0",
     "@types/node": "^25.0.10",
     "typescript": "^5.9.3"

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.16.1](https://github.com/psanders/mikro/compare/v1.16.0...v1.16.1) (2026-07-01)
+
+### Bug Fixes
+
+- **ci:** repair apiserver smoke test, schema drift, and corrupt lockfile subtrees ([#59](https://github.com/psanders/mikro/issues/59)) ([96f208b](https://github.com/psanders/mikro/commit/96f208b35d105e26ca6c39ea19f8629af0822204))
+
 # [1.16.0](https://github.com/psanders/mikro/compare/v1.15.0...v1.16.0) (2026-07-01)
 
 ### Features
