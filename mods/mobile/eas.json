@@ -10,19 +10,24 @@
       "channel": "development",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "SHARP_IGNORE_GLOBAL_LIBVIPS": "1"
       }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://mikro.ngrok-free.dev"
+        "EXPO_PUBLIC_API_URL": "https://mikro.ngrok-free.dev",
+        "SHARP_IGNORE_GLOBAL_LIBVIPS": "1"
       }
     },
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://mikro.ngrok-free.dev"
+        "EXPO_PUBLIC_API_URL": "https://mikro.ngrok-free.dev",
+        "SHARP_IGNORE_GLOBAL_LIBVIPS": "1"
       }
     }
   },

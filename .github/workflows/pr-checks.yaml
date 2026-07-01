@@ -34,3 +34,6 @@ jobs:
             echo "Run 'npm install' locally and commit the updated lock file."
             exit 1
           fi
+
+      - name: Check lock file platform coverage
+        run: node .scripts/check-lockfile-platforms.mjs
