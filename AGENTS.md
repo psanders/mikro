@@ -15,9 +15,12 @@ or a build. Keep entries short; link the enforcing check when one exists.
   packages like sharp, esbuild, rolldown, oxc, @tailwindcss/oxide,
   @tauri-apps/cli — and Linux/EAS CI breaks at install or build time.
   Enforced by the "Check lock file platform coverage" PR step
-  (`.scripts/check-lockfile-platforms.mjs`). To repair: delete the narrowed
-  package's entries (parent + platform children) from `package-lock.json`,
-  then `npm install --package-lock-only --ignore-scripts`.
+  (`.scripts/check-lockfile-platforms.mjs`). To repair:
+  `rm -rf node_modules && npm install` (fresh resolution records all
+  platforms). Do NOT hand-delete lock entries and re-resolve with
+  `--package-lock-only` — npm trusts the remaining state and can drop
+  whole subtrees (this once removed rolldown/esbuild and broke the site
+  build on CI).
 - **Never regenerate the lockfile from scratch** (`rm package-lock.json &&
 npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   the actual change in thousands of diff lines.
