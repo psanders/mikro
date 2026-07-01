@@ -92,7 +92,20 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(evaluator)" />
             <Stack.Screen name="cliente/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="solicitud/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="solicitud/[id]/datos" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen
+              name="solicitud/[id]/editar-negocio"
+              options={{ presentation: "modal" }}
+            />
+            <Stack.Screen name="solicitud/[id]/rechazar" options={{ presentation: "modal" }} />
+            <Stack.Screen
+              name="solicitud/[id]/generar-contrato"
+              options={{ presentation: "modal" }}
+            />
+            <Stack.Screen name="solicitud/[id]/convertir" options={{ presentation: "modal" }} />
             <Stack.Screen name="prestamo/[loanId]" options={{ animation: "slide_from_right" }} />
             <Stack.Screen name="cobrar/[loanId]" options={{ presentation: "modal" }} />
             <Stack.Screen name="pago-confirmado" options={{ animation: "fade" }} />

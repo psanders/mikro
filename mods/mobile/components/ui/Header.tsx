@@ -14,6 +14,8 @@ interface HeaderProps {
   backMode?: "back" | "close";
   rightIcon?: LucideIcon;
   onRightPress?: () => void;
+  /** Route to replace to when there's no back history (e.g. a tab root). Defaults to the collector tabs. */
+  fallbackRoute?: string;
 }
 
 export function Header({
@@ -21,7 +23,8 @@ export function Header({
   subtitle,
   backMode = "back",
   rightIcon: RightIcon,
-  onRightPress
+  onRightPress,
+  fallbackRoute = "/(tabs)"
 }: HeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -31,7 +34,7 @@ export function Header({
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/(tabs)");
+      router.replace(fallbackRoute as never);
     }
   }
 

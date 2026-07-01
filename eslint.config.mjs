@@ -16,6 +16,7 @@ export default tseslint.config(
       "**/coverage/**",
       "**/generated/**",
       "mods/mobile/metro.config.js",
+      "mods/mobile/jest.config.js",
       "mods/mobile/.storybook/storybook.requires.ts"
     ]
   },

@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
@@ -11,7 +12,19 @@ import { Avatar } from "../components/ui/Avatar";
 import { StatCard } from "../components/ui/StatCard";
 import { ListTile } from "../components/ui/ListTile";
 import { SectionLabel } from "../components/ui/SectionLabel";
-import { clearToken, clearPin, clearUserName } from "../lib/auth";
+import { OptionRow } from "../components/ui/OptionRow";
+import {
+  clearToken,
+  clearPin,
+  clearUserName,
+  clearNavMode,
+  getRoles,
+  getNavMode,
+  isDualRole,
+  setNavMode,
+  type NavMode
+} from "../lib/auth";
+import { EVALUATOR_HOME, COLLECTOR_HOME } from "../lib/navigation";
 import { trpc } from "../lib/api";
 
 function formatRD(amount: number): string {
@@ -22,6 +35,23 @@ function formatRD(amount: number): string {
 export default function PerfilScreen() {
   const router = useRouter();
   const dashboard = trpc.getCollectorDashboard.useQuery();
+  const [dualRole, setDualRole] = useState(false);
+  const [navMode, setNavModeState] = useState<NavMode>("evaluator");
+
+  useEffect(() => {
+    (async () => {
+      const roles = await getRoles();
+      const dual = isDualRole(roles);
+      setDualRole(dual);
+      if (dual) setNavModeState(await getNavMode());
+    })();
+  }, []);
+
+  async function handleSwitchMode(mode: NavMode) {
+    setNavModeState(mode);
+    await setNavMode(mode);
+    router.replace(mode === "evaluator" ? EVALUATOR_HOME : COLLECTOR_HOME);
+  }
 
   const appVersion = Constants.expoConfig?.version ?? "0.1.0";
   const data = dashboard.data;
@@ -48,6 +78,24 @@ export default function PerfilScreen() {
             <StatCard value={String(data?.visitsPending ?? 0)} label="Pendientes" />
           </View>
 
+          {dualRole && (
+            <>
+              <SectionLabel>MODO</SectionLabel>
+              <View style={styles.modeGroup}>
+                <OptionRow
+                  label="Evaluador"
+                  selected={navMode === "evaluator"}
+                  onPress={() => handleSwitchMode("evaluator")}
+                />
+                <OptionRow
+                  label="Cobrador"
+                  selected={navMode === "collector"}
+                  onPress={() => handleSwitchMode("collector")}
+                />
+              </View>
+            </>
+          )}
+
           <SectionLabel>AJUSTES</SectionLabel>
           <View style={styles.settingsGroup}>
             <ListTile icon={Bell} label="Notificaciones" />
@@ -65,6 +113,7 @@ export default function PerfilScreen() {
               await clearToken();
               await clearPin();
               await clearUserName();
+              await clearNavMode();
               router.replace("/(auth)/login");
             }}
           >
@@ -94,6 +143,7 @@ const styles = StyleSheet.create({
   profileName: { fontFamily: "Geist_700Bold", fontSize: 18, color: colors.brand.white },
   profileRole: { fontFamily: "Geist_500Medium", fontSize: 12, color: "#9DB9F0" },
   statsRow: { flexDirection: "row", gap: 10 },
+  modeGroup: { gap: 8 },
   settingsGroup: {
     borderRadius: radii.card,
     overflow: "hidden",

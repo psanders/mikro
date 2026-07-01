@@ -11,6 +11,15 @@ name: Mobile E2E Tests
 # never passed in CI; grow from green rather than fixing flows that never
 # worked. The release APK bakes EXPO_PUBLIC_API_URL at build time, which is
 # fine: the login screen renders without any backend.
+#
+# .maestro/evaluator-golden-path.yaml and evaluator-reject-path.yaml are
+# intentionally NOT run here. They rely on the EXPO_PUBLIC_E2E fake-login
+# bridge (see app/index.tsx), which must be baked in at JS-bundle build time —
+# this "preview" release profile never sets it (eas.json), so those flows
+# would just hit the real, unauthenticated login screen and fail. Run them
+# locally against an EXPO_PUBLIC_E2E=1 dev-client build instead (see each
+# flow file's header comment). Wiring a seeded-backend dev-client build into
+# this job is a follow-up, not done here.
 
 on:
   workflow_run:
@@ -117,7 +126,7 @@ jobs:
           disable-animations: true
           script: |
             adb install "$APK_PATH"
-            maestro test mods/mobile/.maestro/
+            maestro test mods/mobile/.maestro/login-screen.yaml
 
       - name: Upload Maestro artifacts
         if: failure()

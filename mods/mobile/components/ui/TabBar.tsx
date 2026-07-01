@@ -3,18 +3,34 @@
  */
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { LucideIcon } from "lucide-react-native";
 import { House, Map, Search, Calculator } from "lucide-react-native";
 import { colors } from "../../lib/theme";
 
-const TAB_ICONS = {
+export const COLLECTOR_TAB_ICONS: Record<string, LucideIcon> = {
   index: House,
   ruta: Map,
   buscar: Search,
   cuadre: Calculator
-} as const;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function TabBar({ state, descriptors, navigation }: any) {
+interface TabBarProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  state: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  descriptors: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  navigation: any;
+  /** Route name -> icon. Defaults to the collector tab bar's icon set. */
+  icons?: Record<string, LucideIcon>;
+}
+
+export function TabBar({
+  state,
+  descriptors,
+  navigation,
+  icons = COLLECTOR_TAB_ICONS
+}: TabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -23,7 +39,7 @@ export function TabBar({ state, descriptors, navigation }: any) {
         const { options } = descriptors[route.key];
         const label = options.title ?? route.name;
         const isFocused = state.index === index;
-        const Icon = TAB_ICONS[route.name as keyof typeof TAB_ICONS] ?? House;
+        const Icon = icons[route.name] ?? House;
         const tint = isFocused ? colors.brand.blue.deep : "#7888A8";
 
         return (
