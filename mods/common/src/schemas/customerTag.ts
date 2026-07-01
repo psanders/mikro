@@ -54,7 +54,7 @@ export type CustomerTagValue = StatusTag | DpdTag | RiskTag;
 /** A loose `namespace:value` shape check, used by config (qcobro.portfolios[] rules). */
 export const tagShapeSchema = z
   .string()
-  .regex(/^(status|dpd|risk):[a-z_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
+  .regex(/^(status|dpd|risk):[a-z0-9_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
 
 const riskTagEnum = z.enum(RISK_TAGS);
 

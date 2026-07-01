@@ -26,15 +26,23 @@ export type LoanForTagEngine = Loan & {
 export interface ComputedCustomerTags {
   statusTag: StatusTag | null;
   dpdTag: DpdTag | null;
+  /** Calendar days past due on the worst loan (0 when not delinquent). For QCobro's `daysPastDue`. */
+  daysPastDue: number;
+  /** Missed cycles on the worst loan (0 when current). For QCobro's `missedInstallments`. */
+  missedInstallments: number;
+  /** The loan that drove this result, or null when no eligible loan exists. */
+  worstLoanId: string | null;
 }
 
 interface LoanSeverity {
+  loanId: string;
   statusTag: StatusTag;
   dpdTag: DpdTag | null;
   /** Higher = more severe. See design.md decision 2 for the ordering. */
   severity: number;
   /** Tie-break within past_due/written_off: higher days-late wins. */
   daysLate: number;
+  missedCycles: number;
 }
 
 const SEVERITY: Record<StatusTag, number> = {
@@ -66,36 +74,68 @@ function computeLoanSeverity(
   loansPolicy: LoansConfig,
   asOf: Date
 ): LoanSeverity {
-  if (loan.status === "DEFAULTED") {
-    return {
-      statusTag: "status:defaulted",
-      dpdTag: null,
-      severity: SEVERITY["status:defaulted"],
-      daysLate: 0
-    };
-  }
   if (loan.status === "COMPLETED") {
     return {
+      loanId: loan.id,
       statusTag: "status:completed",
       dpdTag: null,
       severity: SEVERITY["status:completed"],
-      daysLate: 0
+      daysLate: 0,
+      missedCycles: 0
+    };
+  }
+
+  // ACTIVE or DEFAULTED: always compute real cycle metrics — even when
+  // DEFAULTED trusts the status tag verbatim from ops, daysPastDue/
+  // missedInstallments are informational fields QCobro's account row wants
+  // regardless of which status tag won (see design.md decision 3).
+  const loanData = toLoanPaymentData(loan);
+  const { cyclesElapsed, missedCycles } = getCycleMetrics(loanData, asOf);
+
+  if (loan.status === "DEFAULTED") {
+    // moraRate forced non-zero — see note below; only daysLate is consumed here.
+    const accrued = computeAccruedMora({
+      loanData,
+      moraRate: 1,
+      paymentAmount: amountToNumber(loan.paymentAmount),
+      paymentFrequency: loan.paymentFrequency,
+      preferredPaymentDay: loan.customer.preferredPaymentDay ?? null,
+      loanStart: new Date(loan.startingDate ?? loan.createdAt),
+      asOfDate: asOf,
+      loanStatus: loan.status,
+      loanUpdatedAt: new Date(loan.updatedAt),
+      policy: loansPolicy,
+      collectedLateFeePayments: toCollectedLateFeePayments(loan)
+    });
+    return {
+      loanId: loan.id,
+      statusTag: "status:defaulted",
+      dpdTag: null,
+      severity: SEVERITY["status:defaulted"],
+      daysLate: accrued.daysLate,
+      missedCycles
     };
   }
 
   // ACTIVE
-  const loanData = toLoanPaymentData(loan);
-  const { cyclesElapsed, missedCycles } = getCycleMetrics(loanData, asOf);
-
   if (cyclesElapsed === 0) {
-    return { statusTag: "status:new", dpdTag: null, severity: SEVERITY["status:new"], daysLate: 0 };
+    return {
+      loanId: loan.id,
+      statusTag: "status:new",
+      dpdTag: null,
+      severity: SEVERITY["status:new"],
+      daysLate: 0,
+      missedCycles: 0
+    };
   }
   if (missedCycles <= 0) {
     return {
+      loanId: loan.id,
       statusTag: "status:current",
       dpdTag: null,
       severity: SEVERITY["status:current"],
-      daysLate: 0
+      daysLate: 0,
+      missedCycles: 0
     };
   }
 
@@ -119,25 +159,31 @@ function computeLoanSeverity(
 
   if (accrued.graceApplied) {
     return {
+      loanId: loan.id,
       statusTag: "status:pre_mora",
       dpdTag: null,
       severity: SEVERITY["status:pre_mora"],
-      daysLate: accrued.daysLate
+      daysLate: accrued.daysLate,
+      missedCycles
     };
   }
   if (accrued.daysLate >= 180) {
     return {
+      loanId: loan.id,
       statusTag: "status:written_off",
       dpdTag: "dpd:180_plus",
       severity: SEVERITY["status:written_off"],
-      daysLate: accrued.daysLate
+      daysLate: accrued.daysLate,
+      missedCycles
     };
   }
   return {
+    loanId: loan.id,
     statusTag: "status:past_due",
     dpdTag: dpdBucket(accrued.daysLate),
     severity: SEVERITY["status:past_due"],
-    daysLate: accrued.daysLate
+    daysLate: accrued.daysLate,
+    missedCycles
   };
 }
 
@@ -166,6 +212,20 @@ export function computeCustomerTags(
     }
   }
 
-  if (!best) return { statusTag: null, dpdTag: null };
-  return { statusTag: best.statusTag, dpdTag: best.dpdTag };
+  if (!best) {
+    return {
+      statusTag: null,
+      dpdTag: null,
+      daysPastDue: 0,
+      missedInstallments: 0,
+      worstLoanId: null
+    };
+  }
+  return {
+    statusTag: best.statusTag,
+    dpdTag: best.dpdTag,
+    daysPastDue: best.daysLate,
+    missedInstallments: best.missedCycles,
+    worstLoanId: best.loanId
+  };
 }

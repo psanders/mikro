@@ -137,7 +137,7 @@ import { createDeleteApplicationContract } from "../../api/applications/createDe
 import { createGenerateApplicationSummary } from "../../api/applications/createGenerateApplicationSummary.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
-import { createSyncCustomerToQCobro } from "../../qcobro/index.js";
+import { createSyncAllPortfolios } from "../../qcobro/index.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
 import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByCustomer } from "../../api/payments/createListPaymentsByCustomer.js";
@@ -706,11 +706,13 @@ export const protectedRouter = router({
     const dedupWindowMs = isCollector && !isAdmin ? 5 * 60 * 1000 : undefined;
     // Payments only ever cure an account, so resync QCobro immediately rather
     // than waiting for the cron's deterioration pass. Best-effort: never throws.
-    const syncCustomerToQCobro = createSyncCustomerToQCobro(ctx.db);
+    // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
+    // for why a single-customer push isn't safe against the real API.
+    const syncAllPortfolios = createSyncAllPortfolios(ctx.db);
     const fn = createCreatePayment(ctx.db, {
       dedupWindowMs,
-      onPaymentCreated: (_paymentId, customerId) => {
-        void syncCustomerToQCobro(customerId);
+      onPaymentCreated: () => {
+        void syncAllPortfolios();
       }
     });
     return fn(input);

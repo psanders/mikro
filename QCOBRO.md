@@ -1,11 +1,13 @@
 # QCobro Integration
 
-> **Status: implemented (v1).** This document describes the shipped Mikro ↔ QCobro integration:
-> the configuration surface, the tag/portfolio model, and how a push actually happens. Code:
-> `mods/apiserver/src/tags/` (tag engine), `mods/apiserver/src/qcobro/` (sync service, cron worker,
-> client), `mods/apiserver/src/api/tags/` (MANUAL tag API), `mods/ctl/src/commands/customers/tags/`
-> (CLI). Out of scope for v1: dashboard UI for tags, ingesting QCobro interaction outcomes back into
-> Mikro, multiple simultaneous balance figures per account — see "Open items" below.
+> **Status: implemented (v1), pushing for real via `@qcobro/sdk`.** This document describes the
+> shipped Mikro ↔ QCobro integration: the configuration surface, the tag/portfolio model, and how a
+> push actually happens. Code: `mods/apiserver/src/tags/` (tag engine), `mods/apiserver/src/qcobro/`
+> (sync service, cron worker, client), `mods/apiserver/src/api/tags/` (MANUAL tag API),
+> `mods/ctl/src/commands/customers/tags/` (CLI). `createQCobroClient.ts` uses the real, published
+> `@qcobro/sdk` — end-to-end tested against a live QCobro workspace. Out of scope for v1: dashboard
+> UI for tags, ingesting QCobro interaction outcomes back into Mikro, multiple simultaneous balance
+> figures per account — see "Open items" below.
 
 ## What QCobro is
 
@@ -30,28 +32,29 @@ never writes back into Mikro through this path (its interaction outcomes, if eve
 separate concern).
 
 ```
-┌─────────────────────────── MIKRO ────────────────────────────┐
-│  ON PAYMENT ──────────┐          CRON (schedule) ─────────┐  │
-│  (cure, immediate)    ▼          (decay, scheduled)       ▼  │
-│                  ┌───────────────────────────────────────┐   │
-│   reads:         │           TAG ENGINE                  │   │
-│   Loan.status ──▶│  worst-loan rule across customer loans│   │
-│   due dates ────▶│  status:*  (one, AUTO)                │   │
-│   moraGraceDays ▶│  dpd:*     (one, AUTO, if past_due)   │   │
-│   MANUAL tags ──▶│  risk:*    (many, untouched)          │   │
-│                  └───────────────────┬───────────────────┘   │
-│                                      ▼                       │
-│                   evaluate portfolios[] rules (all/any/none) │
-│                                      ▼                       │
-│                   target portfolio set  vs  last-synced set  │
-│                                      ▼ diff                  │
-│                   @qcobro/sdk: upsert account                │
-│                   (externalId = Mikro customerId),           │
-│                   add/remove portfolios, push balance        │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────── MIKRO ────────────────────────────────┐
+│  ON PAYMENT ──────────┐              CRON (schedule) ─────────────┐  │
+│  (cure, immediate)    ▼              (decay, scheduled)           ▼  │
+│           ┌─────────────────────────────────────────────────────┐    │
+│  for every│                  TAG ENGINE (per customer)           │   │
+│  active   │  worst-loan rule across customer loans               │   │
+│  customer:│  status:*  (one, AUTO)   dpd:* (one, AUTO if past_due)│  │
+│           │  risk:*    (many, untouched, MANUAL)                 │   │
+│           └────────────────────────┬────────────────────────────┘    │
+│                                    ▼                                 │
+│                evaluate portfolios[] rules (all/any/none) per        │
+│                customer → bucket into a per-portfolio account-row    │
+│                list (every matching customer, not just the payer)    │
+│                                    ▼                                 │
+│        for each portfolio WITH matching customers (≥1 row):          │
+│          syncAccounts({ portfolioId, mode, rows: [...] })            │
+│          ── ONE BATCH CALL per portfolio, never per customer ──      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-Two forces move an account between portfolios, and they map onto the two triggers:
+Two forces move an account between portfolios, and they map onto the two triggers — both run the
+**same full pass** (every active customer, every portfolio); a payment just runs it on demand
+instead of waiting for the clock:
 
 | Force             | Direction                                                       | Trigger                           |
 | ----------------- | --------------------------------------------------------------- | --------------------------------- |
@@ -62,6 +65,12 @@ Payments only ever improve standing, so they are handled inline the moment a pay
 Nothing improves merely by waiting, so the forward (deteriorating) direction is the cron's job:
 it recomputes days-past-due from due dates and re-syncs. Ops actions (e.g. marking a loan
 `DEFAULTED`) are reflected on the next cron tick.
+
+**Why a full pass, not just the paying customer:** QCobro's real `portfolios.syncAccounts` call
+pushes a portfolio's **entire** account list in one batch (`mode: REPLACE` replaces the whole set
+with whatever is in that call). Pushing just the one customer who paid would, under `REPLACE`, wipe
+every other account out of that portfolio. So every sync — cron or on-payment — re-evaluates every
+active customer against every portfolio rule and pushes one complete batch per portfolio.
 
 ## Concept mapping
 
@@ -169,14 +178,16 @@ zod schema in `mods/common/src/config.ts`). Secrets are placeholders until provi
 
 ### Field reference
 
-| Field                  | Meaning                                                                                                                                                                                            |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apiKey` / `apiSecret` | QCobro credentials for server-to-server auth (used by `@qcobro/sdk`)                                                                                                                               |
-| `workspace`            | QCobro workspace id; isolates portfolios/campaigns/accounts                                                                                                                                        |
-| `syncMode`             | How the push reconciles with QCobro-side data. `UPDATE_EXISTING` upserts Mikro-managed accounts without disturbing accounts QCobro added elsewhere; `APPEND_ONLY` only adds; `REPLACE` overwrites  |
-| `balanceBasis`         | Which Mikro money figure becomes the QCobro account `balance` (see below)                                                                                                                          |
-| `schedule`             | Cron expression for the periodic recompute + sync. Evaluated in the config `timezone`. Adds a cron evaluator (e.g. `croner`) — Mikro's existing follow-up worker is interval-based, not cron-based |
-| `portfolios[]`         | Ordered list of mapping rules. Each entry assigns matching customers to a QCobro portfolio                                                                                                         |
+| Field                  | Meaning                                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apiKey` / `apiSecret` | QCobro credentials for server-to-server auth                                                                                                                                                            |
+| `workspace`            | QCobro workspace id; isolates portfolios/campaigns/accounts                                                                                                                                             |
+| `apiUrl`               | QCobro API base (default `https://api.qcobro.com`)                                                                                                                                                      |
+| `syncMode`             | Passed through to every `syncAccounts` call as `mode`. `REPLACE` replaces a portfolio's entire account set each push; `UPDATE_EXISTING` upserts rows without touching the rest; `APPEND_ONLY` only adds |
+| `balanceBasis`         | Which Mikro money figure becomes each row's `outstandingBalance` (see below)                                                                                                                            |
+| `schedule`             | Cron expression for the periodic recompute + sync. Evaluated in the config `timezone` via `croner` — Mikro's existing follow-up worker is interval-based, not cron-based                                |
+| `dryRun`               | Default `false`. When `true`, `createQCobroClient` logs the `syncAccounts` batch it would send instead of calling `@qcobro/sdk` — safe for iterating on tags/portfolio rules without touching QCobro    |
+| `portfolios[]`         | Ordered list of mapping rules. Each entry's matching customers become one `syncAccounts` batch for that portfolio id                                                                                    |
 
 ### Portfolio match rules
 
@@ -225,15 +236,28 @@ attribute) or account metadata. v1 ships a single basis.
 
 ## Sync mechanics
 
-1. Recompute the customer's tags (idempotent): worst-loan `status:`/`dpd:` + existing `risk:`.
-2. Evaluate every `portfolios[]` rule → the customer's **target** portfolio set.
-3. Diff target set against the **last-synced** set for that customer.
-4. Apply the diff via `@qcobro/sdk`: upsert the account (`externalId = customerId`), add/remove
-   portfolio memberships, and push `balance` per `balanceBasis`.
+Every sync (cron or on-payment) is a **full pass** over every active customer:
 
-Idempotency: the Mikro `customerId` is the QCobro account `externalId`, so repeated syncs upsert the
-same account. `syncMode: UPDATE_EXISTING` keeps Mikro from clobbering accounts QCobro manages
-independently.
+1. For each active customer: recompute tags (idempotent upsert/delete of `status:`/`dpd:`,
+   `risk:` untouched), then evaluate every `portfolios[]` rule against the customer's current tag
+   set.
+2. Bucket each matching customer into that portfolio's row list for this pass (a customer can land
+   in more than one portfolio's list). Each row carries: `externalId` (= Mikro `customerId`),
+   `fullName`, `phone`, `principalAmount`/`termsAmount`/`termsFrequency`/`termsLength` (from the
+   customer's worst loan — the same one driving `status:`/`dpd:`), `outstandingBalance` (per
+   `balanceBasis`, summed across relevant loans), `daysPastDue`/`missedInstallments` (the worst
+   loan's real numbers, tracked even when `status:defaulted` trusts ops over DPD), and
+   `lastPaymentDate`/`lastPaymentAmount` (most recent completed installment, if any).
+3. For each `portfolios[]` entry with at least one matching customer, push **one** batch:
+   `syncAccounts({ portfolioId, mode: syncMode, rows })`. A portfolio with zero matching customers
+   this pass is **skipped** — the real API has no "clear this portfolio" call, so it's left as-is.
+4. Persist each customer's current target-portfolio set (`Customer.lastSyncedPortfolios`) for
+   bookkeeping, regardless of whether step 3 actually pushed (audit trail of intent even when the
+   API couldn't express it).
+
+This is a portfolio-batch design, not a per-customer one, because the real `syncAccounts` call
+pushes a whole portfolio's account list at once — see the diagram above. The Mikro `customerId` is
+the QCobro account `externalId`, so repeated pushes are idempotent per row.
 
 ## Setting MANUAL tags
 
@@ -247,14 +271,18 @@ never modifies them.
 
 ## Open items
 
-- **`@qcobro/sdk` is not a real published package.** `mods/apiserver/src/qcobro/createQCobroClient.ts`
-  is a thin internal `fetch`-based client with the shape the sync service needs (`upsertAccount`,
-  `setPortfolios`), using best-effort REST conventions that are **not confirmed** against QCobro's
-  actual API. Swap its implementation once real docs/credentials are available — the sync service
-  only depends on the `QCobroClient` interface. While `qcobro.apiKey`/`apiSecret`/`workspace` are
-  still the documented `_PLACEHOLDER` values, the client is a logging no-op: AUTO tags still
-  recompute on schedule, but nothing is pushed.
-- **Recompute at scale** — the cron worker walks every active customer sequentially and re-fetches
-  loans twice per customer (once for tag reconcile, once for balance). Fine at current volume;
-  daily-loan growth may need batching or only-recompute-changed.
-- **Single vs multiple balances** — see the balance-basis section above; v1 pushes one figure.
+- **A portfolio with zero matching customers can't be cleared.** `syncAccounts` requires a
+  non-empty `rows` array (`accountRowSchema`/`syncAccountsInputSchema` in `@qcobro/common`), so
+  there's no way to express "this portfolio now has nobody in it" through this call. If every
+  customer cures out of a portfolio, that portfolio is silently skipped and left as whatever it
+  last successfully synced to.
+- **Full pass on every payment.** The on-payment trigger re-runs the same full-base sync as the
+  cron (see "Sync mechanics") rather than a narrower per-customer push, because the real API's
+  batch/`REPLACE` semantics make a single-customer push unsafe. Fine at current volume; revisit
+  if payment volume makes a full-base recompute per payment too expensive (track alongside
+  "recompute at scale" below).
+- **Recompute at scale** — every sync pass walks every active customer sequentially, fetching
+  loans/last-payment per matching customer. Fine at current volume; daily-loan growth may need
+  batching or only-recompute-changed.
+- **Single vs multiple balances** — see the balance-basis section above; v1 pushes one
+  `outstandingBalance` figure per `balanceBasis`.

@@ -3,17 +3,18 @@
  */
 export { evaluatePortfolioRules } from "./createEvaluatePortfolioRules.js";
 export { computeCustomerBalance, type LoanForBalance } from "./createComputeBalance.js";
+export { buildAccountRow, type CustomerForAccountRow } from "./createBuildAccountRow.js";
 export {
   createQCobroClient,
   createNoopQCobroClient,
   isQCobroConfigured,
   type QCobroClient,
-  type UpsertAccountInput,
-  type SetPortfoliosInput
+  type AccountRow,
+  type SyncAccountsInput
 } from "./createQCobroClient.js";
 export {
-  createSyncCustomerToQCobro,
-  type SyncCustomerToQCobroOptions,
-  type SyncCustomerToQCobroResult
-} from "./createSyncCustomerToQCobro.js";
+  createSyncAllPortfolios,
+  type SyncAllPortfoliosOptions,
+  type SyncAllPortfoliosResult
+} from "./createSyncAllPortfolios.js";
 export { createQCobroWorker, type CreateQCobroWorkerOptions } from "./createQCobroWorker.js";

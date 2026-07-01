@@ -9,7 +9,7 @@
  */
 import { Cron } from "croner";
 import { getConfig, type DbClient, type ResolvedMikroConfig } from "@mikro/common";
-import { createSyncCustomerToQCobro } from "./createSyncCustomerToQCobro.js";
+import { createSyncAllPortfolios } from "./createSyncAllPortfolios.js";
 import { isQCobroConfigured } from "./createQCobroClient.js";
 import { logger } from "../logger.js";
 
@@ -29,29 +29,14 @@ export function createQCobroWorker(
 ): () => void {
   const resolveConfig = options?.getConfigFn ?? getConfig;
   const cfg = resolveConfig();
-  const syncCustomerToQCobro = createSyncCustomerToQCobro(client, { getConfigFn: resolveConfig });
+  const syncAllPortfolios = createSyncAllPortfolios(client, { getConfigFn: resolveConfig });
 
   async function tick(): Promise<void> {
-    const startedAt = Date.now();
-    let customers;
     try {
-      customers = await client.customer.findMany({ where: { isActive: true } });
+      await syncAllPortfolios();
     } catch (err) {
-      logger.error("qcobro worker: failed to list customers", { error: (err as Error).message });
-      return;
+      logger.error("qcobro worker: tick failed", { error: (err as Error).message });
     }
-
-    let synced = 0;
-    for (const customer of customers) {
-      const result = await syncCustomerToQCobro(customer.id);
-      if (result) synced += 1;
-    }
-
-    logger.info("qcobro worker: tick complete", {
-      customers: customers.length,
-      synced,
-      durationMs: Date.now() - startedAt
-    });
   }
 
   const job = new Cron(cfg.qcobro.schedule, { timezone: cfg.timezone }, () => {

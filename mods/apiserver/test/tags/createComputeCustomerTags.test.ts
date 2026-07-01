@@ -67,6 +67,9 @@ describe("computeCustomerTags", () => {
     const result = computeCustomerTags([], defaultPolicy);
     expect(result.statusTag).to.be.null;
     expect(result.dpdTag).to.be.null;
+    expect(result.daysPastDue).to.equal(0);
+    expect(result.missedInstallments).to.equal(0);
+    expect(result.worstLoanId).to.be.null;
   });
 
   it("excludes CANCELLED loans entirely", () => {
@@ -75,6 +78,7 @@ describe("computeCustomerTags", () => {
     const result = computeCustomerTags([cancelled], defaultPolicy);
     expect(result.statusTag).to.be.null;
     expect(result.dpdTag).to.be.null;
+    expect(result.worstLoanId).to.be.null;
   });
 
   it("tags a loan with no due cycle yet as status:new", () => {
@@ -112,6 +116,9 @@ describe("computeCustomerTags", () => {
     const result = computeCustomerTags([loan], defaultPolicy, asOf);
     expect(result.statusTag).to.equal("status:past_due");
     expect(result.dpdTag).to.equal("dpd:8_30");
+    expect(result.daysPastDue).to.equal(8);
+    expect(result.missedInstallments).to.equal(2);
+    expect(result.worstLoanId).to.equal("loan-1");
   });
 
   it("tags >=180 days past due as status:written_off with dpd:180_plus", () => {
@@ -130,6 +137,10 @@ describe("computeCustomerTags", () => {
     const result = computeCustomerTags([loan], defaultPolicy, asOf);
     expect(result.statusTag).to.equal("status:defaulted");
     expect(result.dpdTag).to.be.null;
+    // daysPastDue/missedInstallments stay real/informational even though the
+    // status tag is ops-trusted rather than derived.
+    expect(result.daysPastDue).to.equal(5);
+    expect(result.missedInstallments).to.equal(1);
   });
 
   it("does not infer status:defaulted from a large DPD alone", () => {

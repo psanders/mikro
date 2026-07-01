@@ -1,7 +1,5 @@
 # Accounting at Mikro
 
-_Spanish:_ [ACCOUNTING.es.md](./ACCOUNTING.es.md)
-
 This note is a high-level picture of how money is represented in the product:
 what lives in the **loan system**, what lives in the **general accounting module**,
 and how they fit together. It is not a bookkeeping manual for day-to-day data entry.

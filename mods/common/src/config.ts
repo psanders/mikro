@@ -153,7 +153,7 @@ export type QCobroBalanceBasis = (typeof QCOBRO_BALANCE_BASES)[number];
 /** `namespace:value` tag, e.g. `status:past_due`, `dpd:8_30`, `risk:premium`. */
 const qcobroTagSchema = z
   .string()
-  .regex(/^(status|dpd|risk):[a-z_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
+  .regex(/^(status|dpd|risk):[a-z0-9_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
 
 /** A `portfolios[]` entry: tag predicate (all/any/none, ANDed) -> target QCobro portfolio id. */
 const qcobroPortfolioMatchSchema = z
@@ -203,7 +203,13 @@ const qcobroSchema = z
     /** Cron expression for the periodic recompute + sync job. Evaluated in `timezone`. */
     schedule: cronExpressionSchema.default("0 6 * * *"),
     /** Declarative tag-predicate -> QCobro portfolio mapping rules. */
-    portfolios: z.array(qcobroPortfolioRuleSchema).default([])
+    portfolios: z.array(qcobroPortfolioRuleSchema).default([]),
+    /**
+     * When true, the sync service logs the `syncAccounts` batch it
+     * would print instead of calling the network — safe to leave on while
+     * iterating on tags/portfolio rules. Set false to push for real.
+     */
+    dryRun: z.boolean().default(false)
   })
   .strict()
   .default(() => ({
@@ -214,7 +220,8 @@ const qcobroSchema = z
     syncMode: "UPDATE_EXISTING" as const,
     balanceBasis: "past_due_amount" as const,
     schedule: "0 6 * * *",
-    portfolios: []
+    portfolios: [],
+    dryRun: false
   }));
 
 export type QCobroConfig = z.infer<typeof qcobroSchema>;

@@ -113,7 +113,7 @@ import {
   createSendFollowUpNudge,
   createFollowUpWorker
 } from "./follow-up/index.js";
-import { createSyncCustomerToQCobro, createQCobroWorker } from "./qcobro/index.js";
+import { createSyncAllPortfolios, createQCobroWorker } from "./qcobro/index.js";
 import {
   createGetApplicationState,
   createSaveAnswer,
@@ -401,10 +401,12 @@ async function initializeMessageProcessor() {
     const createCustomer = createCreateCustomer(dbClient);
     // Payments only ever cure an account, so resync QCobro immediately rather
     // than waiting for the cron's deterioration pass. Best-effort: never throws.
-    const syncCustomerToQCobroOnPayment = createSyncCustomerToQCobro(dbClient);
+    // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
+    // for why a single-customer push isn't safe against the real API.
+    const syncAllPortfoliosOnPayment = createSyncAllPortfolios(dbClient);
     const createPayment = createCreatePayment(dbClient, {
-      onPaymentCreated: (_paymentId, customerId) => {
-        void syncCustomerToQCobroOnPayment(customerId);
+      onPaymentCreated: () => {
+        void syncAllPortfoliosOnPayment();
       }
     });
     const generateReceipt = createGenerateReceipt({ db: dbClient });
