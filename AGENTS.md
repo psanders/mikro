@@ -15,9 +15,12 @@ or a build. Keep entries short; link the enforcing check when one exists.
   packages like sharp, esbuild, rolldown, oxc, @tailwindcss/oxide,
   @tauri-apps/cli — and Linux/EAS CI breaks at install or build time.
   Enforced by the "Check lock file platform coverage" PR step
-  (`.scripts/check-lockfile-platforms.mjs`). To repair: delete the narrowed
-  package's entries (parent + platform children) from `package-lock.json`,
-  then `npm install --package-lock-only --ignore-scripts`.
+  (`.scripts/check-lockfile-platforms.mjs`). To repair:
+  `rm -rf node_modules && npm install` (fresh resolution records all
+  platforms). Do NOT hand-delete lock entries and re-resolve with
+  `--package-lock-only` — npm trusts the remaining state and can drop
+  whole subtrees (this once removed rolldown/esbuild and broke the site
+  build on CI).
 - **Never regenerate the lockfile from scratch** (`rm package-lock.json &&
 npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   the actual change in thousands of diff lines.
@@ -75,3 +78,10 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   with `secrets.DEPLOY_SSH_KEY` as `secrets.DEPLOY_SSH_USER`. If auth fails
   (`Permission denied (publickey)`), the fix is on the droplet
   (`~/.ssh/authorized_keys`) or in the repo secret — not in the workflow.
+- **Every schema change ships a migration.** The container boots with
+  `prisma migrate deploy`, which only runs committed migrations — schema
+  changes applied with `prisma db push` exist only on the DB you pushed to,
+  and every fresh database (CI smoke test, new environment) breaks at
+  runtime. If a database already received the change via `db push`, mark
+  the reconciling migration as applied there with
+  `prisma migrate resolve --applied <migration>` instead of running it.

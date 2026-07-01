@@ -84,6 +84,13 @@ jobs:
           # agents.yaml is tracked and secret-free, so use it directly. (The old
           # agents.yaml.example was removed in 72ce4d8 as redundant.)
           cp agents.yaml ci-smoke/agents.yaml
+          # The apiserver requires the receipt-signing keypair at boot
+          # (mods/common receipts/jwt loads keys/{private,public}.pem).
+          # Generate a throwaway RSA-2048 pair for the smoke container.
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+            -out ci-smoke/keys/private.pem 2>/dev/null
+          openssl rsa -in ci-smoke/keys/private.pem -pubout \
+            -out ci-smoke/keys/public.pem 2>/dev/null
           docker run -d --name mikro-smoke -p 4000:4000 \
             -v "$PWD/ci-smoke/mikro.json:/app/mikro.json:ro" \
             -v "$PWD/ci-smoke/agents.yaml:/app/agents.yaml:ro" \
