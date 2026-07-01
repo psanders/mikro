@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.16.0](https://github.com/psanders/mikro/compare/v1.15.0...v1.16.0) (2026-07-01)
+
+### Bug Fixes
+
+- **ci:** copy tracked agents.yaml in deploy smoke test ([#52](https://github.com/psanders/mikro/issues/52)) ([cd4204f](https://github.com/psanders/mikro/commit/cd4204f63f743d1957189c0686e529c47b4c71ea))
+
+### Features
+
+- **qcobro:** Mikro <-> QCobro collections integration ([#56](https://github.com/psanders/mikro/issues/56)) ([800ee5d](https://github.com/psanders/mikro/commit/800ee5da738aa0813c9e1bba1cbacf0ab1a7d331)), closes [psanders/mikro#55](https://github.com/psanders/mikro/issues/55)
+
 # [1.15.0](https://github.com/psanders/mikro/compare/v1.14.3...v1.15.0) (2026-06-28)
 
 ### Features
