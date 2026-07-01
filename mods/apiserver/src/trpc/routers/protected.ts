@@ -69,7 +69,11 @@ import {
   deleteIdImageSchema,
   deleteApplicationContractSchema,
   generateApplicationSummarySchema,
-  sendPromoSchema
+  sendPromoSchema,
+  // Customer tag schemas
+  setCustomerTagSchema,
+  clearCustomerTagSchema,
+  listCustomerTagsSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
@@ -92,6 +96,10 @@ import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
 import { createGetCollectorDashboard } from "../../api/dashboard/createGetCollectorDashboard.js";
 // Sync API functions
 import { createCollectorSync } from "../../api/sync/createCollectorSync.js";
+// Customer tag API functions
+import { createSetCustomerTag } from "../../api/tags/createSetCustomerTag.js";
+import { createClearCustomerTag } from "../../api/tags/createClearCustomerTag.js";
+import { createListCustomerTags } from "../../api/tags/createListCustomerTags.js";
 // Loan API functions
 import { createCreateLoan } from "../../api/loans/createCreateLoan.js";
 import { createUpdateLoanStatus } from "../../api/loans/createUpdateLoanStatus.js";
@@ -129,6 +137,7 @@ import { createDeleteApplicationContract } from "../../api/applications/createDe
 import { createGenerateApplicationSummary } from "../../api/applications/createGenerateApplicationSummary.js";
 // Payment API functions
 import { createCreatePayment } from "../../api/payments/createCreatePayment.js";
+import { createSyncAllPortfolios } from "../../qcobro/index.js";
 import { createReversePayment } from "../../api/payments/createReversePayment.js";
 import { createListPayments } from "../../api/payments/createListPayments.js";
 import { createListPaymentsByCustomer } from "../../api/payments/createListPaymentsByCustomer.js";
@@ -270,6 +279,40 @@ export const protectedRouter = router({
     const fn = createExportAllCustomers(ctx.db);
     return fn({});
   }),
+
+  // ==================== Customer tag procedures ====================
+  // MANUAL risk: tags only — status:/dpd: are AUTO and owned by the tag engine.
+  // No dashboard UI in v1; this API + the mikro CLI are the only way to set them.
+
+  /**
+   * Set (create or refresh) a MANUAL risk: tag on a customer.
+   */
+  setCustomerTag: protectedProcedure
+    .input(setCustomerTagSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createSetCustomerTag(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Clear a MANUAL risk: tag from a customer.
+   */
+  clearCustomerTag: protectedProcedure
+    .input(clearCustomerTagSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createClearCustomerTag(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List every tag (AUTO + MANUAL) currently on a customer.
+   */
+  listCustomerTags: protectedProcedure
+    .input(listCustomerTagsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListCustomerTags(ctx.db);
+      return fn(input);
+    }),
 
   // ==================== User procedures ====================
 
@@ -661,7 +704,17 @@ export const protectedRouter = router({
     const isAdmin = ctx.roles.includes("ADMIN");
     const isCollector = ctx.roles.includes("COLLECTOR");
     const dedupWindowMs = isCollector && !isAdmin ? 5 * 60 * 1000 : undefined;
-    const fn = createCreatePayment(ctx.db, { dedupWindowMs });
+    // Payments only ever cure an account, so resync QCobro immediately rather
+    // than waiting for the cron's deterioration pass. Best-effort: never throws.
+    // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
+    // for why a single-customer push isn't safe against the real API.
+    const syncAllPortfolios = createSyncAllPortfolios(ctx.db);
+    const fn = createCreatePayment(ctx.db, {
+      dedupWindowMs,
+      onPaymentCreated: () => {
+        void syncAllPortfolios();
+      }
+    });
     return fn(input);
   }),
 

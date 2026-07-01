@@ -91,5 +91,23 @@
     "enabled": true,
     "path": "./data/updates",
     "manifestFilename": "latest.json"
+  },
+  "qcobro": {
+    "apiKey": "qc_PLACEHOLDER",
+    "apiSecret": "qcs_PLACEHOLDER",
+    "workspace": "ws_PLACEHOLDER",
+    "apiUrl": "https://api.qcobro.com",
+    "syncMode": "UPDATE_EXISTING",
+    "balanceBasis": "past_due_amount",
+    "schedule": "0 6 * * *",
+    "portfolios": [
+      {
+        "id": "ptf_123",
+        "match": {
+          "any": ["dpd:8_30", "dpd:31_60"],
+          "none": ["risk:premium", "risk:do_not_contact"]
+        }
+      }
+    ]
   }
 }

@@ -169,6 +169,15 @@ enum FollowUpJobStatus {
   @@map("follow_up_job_statuses")
 }
 
+// Who owns a CustomerTag: AUTO (the tag engine, recomputed every trigger) or
+// MANUAL (a human, via tRPC API / mikro CLI only — never touched by the engine).
+enum TagSource {
+  AUTO
+  MANUAL
+
+  @@map("tag_sources")
+}
+
 // =============================================================================
 // Models
 // =============================================================================
@@ -220,6 +229,10 @@ model Customer {
   idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
   notes               String?  @map("notes")
   preferredPaymentDay DayOfWeek? @map("preferred_payment_day")
+  // QCobro portfolio ids this customer was assigned to as of the last successful
+  // sync (JSON string array). Diffed against the freshly-evaluated target set so
+  // the sync only pushes membership deltas. Null/empty = never synced.
+  lastSyncedPortfolios String? @map("last_synced_portfolios")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -231,10 +244,29 @@ model Customer {
 
   loans               Loan[]
   messages            Message[]
+  tags                CustomerTag[]
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
   @@map("customers")
+}
+
+// A tag on a customer (not a loan — QCobro contacts a person, not a loan). Three
+// namespaces: status: (one, AUTO), dpd: (one, AUTO, only when delinquent), risk:
+// (many, MANUAL). See QCOBRO.md for the full taxonomy and worst-loan derivation.
+model CustomerTag {
+  id     String    @id @default(uuid())
+  tag    String
+  source TagSource
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+
+  setAt DateTime @default(now()) @map("set_at")
+
+  @@unique([customerId, tag])
+  @@index([tag])
+  @@map("customer_tags")
 }
 
 model Loan {

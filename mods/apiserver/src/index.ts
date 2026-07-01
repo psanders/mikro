@@ -113,6 +113,7 @@ import {
   createSendFollowUpNudge,
   createFollowUpWorker
 } from "./follow-up/index.js";
+import { createSyncAllPortfolios, createQCobroWorker } from "./qcobro/index.js";
 import {
   createGetApplicationState,
   createSaveAnswer,
@@ -398,7 +399,16 @@ async function initializeMessageProcessor() {
     const getCustomerByPhone = createGetCustomerByPhone(dbClient);
     const addMessageToChatHistory = createAddMessageToChatHistory(dbClient);
     const createCustomer = createCreateCustomer(dbClient);
-    const createPayment = createCreatePayment(dbClient);
+    // Payments only ever cure an account, so resync QCobro immediately rather
+    // than waiting for the cron's deterioration pass. Best-effort: never throws.
+    // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
+    // for why a single-customer push isn't safe against the real API.
+    const syncAllPortfoliosOnPayment = createSyncAllPortfolios(dbClient);
+    const createPayment = createCreatePayment(dbClient, {
+      onPaymentCreated: () => {
+        void syncAllPortfoliosOnPayment();
+      }
+    });
     const generateReceipt = createGenerateReceipt({ db: dbClient });
     const listLoansByCollector = createListLoansByCollector(dbClient);
     const listLoansByCustomer = createListLoansByCustomer(dbClient);
@@ -825,13 +835,16 @@ async function initializeMessageProcessor() {
 // Follow-up worker — started once Prisma is ready (before initializeMessageProcessor)
 const followUpTemplate = getWhatsAppFollowUpTemplate();
 let stopFollowUpWorker: (() => void) | undefined;
+let stopQCobroWorker: (() => void) | undefined;
 
 process.on("SIGTERM", () => {
   stopFollowUpWorker?.();
+  stopQCobroWorker?.();
   process.exit(0);
 });
 process.on("SIGINT", () => {
   stopFollowUpWorker?.();
+  stopQCobroWorker?.();
   process.exit(0);
 });
 
@@ -884,6 +897,9 @@ initializeMessageProcessor()
         sendFollowUpNudge,
         abandonDelayMs
       });
+
+      // Start QCobro cron worker (recompute + sync deterioration on qcobro.schedule)
+      stopQCobroWorker = createQCobroWorker(dbClient);
     });
   })
   .catch((error) => {

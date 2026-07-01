@@ -11,6 +11,8 @@ import type { User } from "./user.js";
 import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
 import type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
+import type { CustomerTag } from "./customerTag.js";
+import type { TagSource } from "../schemas/customerTag.js";
 
 /**
  * UserRole entity type.
@@ -60,6 +62,11 @@ export interface DbClient {
     update(args: {
       where: { id: string };
       data: Omit<UpdateCustomerInput, "id">;
+    }): Promise<Customer>;
+    /** Persist the QCobro sync diff baseline (tag engine / sync service only). */
+    update(args: {
+      where: { id: string };
+      data: { lastSyncedPortfolios?: string | null };
     }): Promise<Customer>;
     delete(args: { where: { id: string } }): Promise<Customer>;
     findUnique(args: {
@@ -369,6 +376,18 @@ export interface DbClient {
       where: { id: string };
       data: { status: "DONE" | "CANCELLED" };
     }): Promise<FollowUpJob>;
+  };
+
+  customerTag: {
+    findMany(args: { where: { customerId: string } }): Promise<CustomerTag[]>;
+    upsert(args: {
+      where: { customerId_tag: { customerId: string; tag: string } };
+      create: { customerId: string; tag: string; source: TagSource };
+      update: { source: TagSource; setAt: Date };
+    }): Promise<CustomerTag>;
+    deleteMany(args: {
+      where: { customerId: string; tag?: string | { in: string[] }; source?: TagSource };
+    }): Promise<{ count: number }>;
   };
 
   /** Interactive transaction (Prisma). */

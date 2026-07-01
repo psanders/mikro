@@ -29,7 +29,8 @@ export interface CreatePaymentResult {
 }
 
 export interface CreateCreatePaymentOptions {
-  onPaymentCreated?: (paymentId: string) => void;
+  /** Fires after a payment is created (e.g. WhatsApp receipt, QCobro resync — payments only ever cure an account). */
+  onPaymentCreated?: (paymentId: string, customerId: string) => void;
   getConfigFn?: () => ResolvedMikroConfig;
   /**
    * When set (> 0), reject a payment if the same collector already recorded a
@@ -213,7 +214,7 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
     if (onPaymentCreated) {
       const primaryId = result.installment?.id ?? result.lateFee?.id;
       if (primaryId) {
-        setImmediate(() => onPaymentCreated(primaryId));
+        setImmediate(() => onPaymentCreated(primaryId, loan.customerId));
       }
     }
 

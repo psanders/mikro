@@ -20,6 +20,8 @@ export interface Customer {
   idCardOnRecord: boolean;
   notes?: string | null;
   preferredPaymentDay?: string | null;
+  /** QCobro portfolio ids this customer was assigned to as of the last successful sync (JSON array string). */
+  lastSyncedPortfolios?: string | null;
   createdById?: string | null;
   assignedCollectorId: string;
   createdAt: Date;

@@ -137,6 +137,96 @@ const updatesSchema = z
     manifestFilename: "latest.json"
   }));
 
+/** QCobro sync mode: how the push reconciles with QCobro-side data. */
+export const QCOBRO_SYNC_MODES = ["APPEND_ONLY", "UPDATE_EXISTING", "REPLACE"] as const;
+export type QCobroSyncMode = (typeof QCOBRO_SYNC_MODES)[number];
+
+/** Which Mikro money figure becomes the QCobro account balance. See QCOBRO.md. */
+export const QCOBRO_BALANCE_BASES = [
+  "outstanding_with_mora",
+  "outstanding_principal",
+  "past_due_amount",
+  "next_installment"
+] as const;
+export type QCobroBalanceBasis = (typeof QCOBRO_BALANCE_BASES)[number];
+
+/** `namespace:value` tag, e.g. `status:past_due`, `dpd:8_30`, `risk:premium`. */
+const qcobroTagSchema = z
+  .string()
+  .regex(/^(status|dpd|risk):[a-z0-9_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
+
+/** A `portfolios[]` entry: tag predicate (all/any/none, ANDed) -> target QCobro portfolio id. */
+const qcobroPortfolioMatchSchema = z
+  .object({
+    all: z.array(qcobroTagSchema).optional(),
+    any: z.array(qcobroTagSchema).optional(),
+    none: z.array(qcobroTagSchema).optional()
+  })
+  .strict();
+
+const qcobroPortfolioRuleSchema = z
+  .object({
+    id: z.string().min(1, "Portfolio id is required"),
+    match: qcobroPortfolioMatchSchema
+  })
+  .strict();
+
+/**
+ * Minimal cron-expression shape check (5 whitespace-separated fields). Full
+ * semantic validation happens at parse time via `croner` when the worker
+ * starts; this only rejects obviously malformed strings at config-load time.
+ */
+const cronExpressionSchema = z.string().refine((v) => v.trim().split(/\s+/).length === 5, {
+  message: "schedule must be a 5-field cron expression (e.g. '0 6 * * *')"
+});
+
+/**
+ * QCobro (https://docs.qcobro.com) collections integration. Mikro is the source of
+ * truth for portfolio membership: it derives tags from loan/payment state plus
+ * manual `risk:` assertions, evaluates `portfolios[]` rules, and pushes the result
+ * one direction into QCobro. See QCOBRO.md at the repo root for the full model.
+ */
+const qcobroSchema = z
+  .object({
+    /** QCobro server-to-server API key. Placeholder until provided. */
+    apiKey: z.string().default("qc_PLACEHOLDER"),
+    /** QCobro API secret. Placeholder until provided. */
+    apiSecret: z.string().default("qcs_PLACEHOLDER"),
+    /** QCobro workspace id (isolation container for portfolios/campaigns/accounts). */
+    workspace: z.string().default("ws_PLACEHOLDER"),
+    /** Base URL for the QCobro API. Override for staging/self-hosted. */
+    apiUrl: z.string().default("https://api.qcobro.com"),
+    /** How account/portfolio pushes reconcile with QCobro-side data. */
+    syncMode: z.enum(QCOBRO_SYNC_MODES).default("UPDATE_EXISTING"),
+    /** Which Mikro money figure is pushed as the QCobro account balance. */
+    balanceBasis: z.enum(QCOBRO_BALANCE_BASES).default("past_due_amount"),
+    /** Cron expression for the periodic recompute + sync job. Evaluated in `timezone`. */
+    schedule: cronExpressionSchema.default("0 6 * * *"),
+    /** Declarative tag-predicate -> QCobro portfolio mapping rules. */
+    portfolios: z.array(qcobroPortfolioRuleSchema).default([]),
+    /**
+     * When true, the sync service logs the `syncAccounts` batch it
+     * would print instead of calling the network — safe to leave on while
+     * iterating on tags/portfolio rules. Set false to push for real.
+     */
+    dryRun: z.boolean().default(false)
+  })
+  .strict()
+  .default(() => ({
+    apiKey: "qc_PLACEHOLDER",
+    apiSecret: "qcs_PLACEHOLDER",
+    workspace: "ws_PLACEHOLDER",
+    apiUrl: "https://api.qcobro.com",
+    syncMode: "UPDATE_EXISTING" as const,
+    balanceBasis: "past_due_amount" as const,
+    schedule: "0 6 * * *",
+    portfolios: [],
+    dryRun: false
+  }));
+
+export type QCobroConfig = z.infer<typeof qcobroSchema>;
+export type QCobroPortfolioRule = z.infer<typeof qcobroPortfolioRuleSchema>;
+
 /** Past-due (mora) fee policy. See README "Past-due fee". */
 export const loansSchema = z.object({
   /** Annualized-style rate applied as `rate * (daysLate/30) * cuota` (e.g. 0.10 = 10%). */
@@ -325,7 +415,8 @@ export const mikroConfigSchema = z
     loans: loansSchema.default(defaultLoansConfig),
     contract: contractSchema,
     followUp: followUpSchema,
-    updates: updatesSchema
+    updates: updatesSchema,
+    qcobro: qcobroSchema
   })
   .strict();
 
@@ -334,7 +425,15 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "voiceNotes" | "evals" | "reports" | "accounting" | "loans" | "contract" | "updates"
+  | "whatsapp"
+  | "voiceNotes"
+  | "evals"
+  | "reports"
+  | "accounting"
+  | "loans"
+  | "contract"
+  | "updates"
+  | "qcobro"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -348,6 +447,7 @@ export type ResolvedMikroConfig = Omit<
   loans: LoansConfig;
   contract: ContractConfig;
   updates: NonNullable<MikroConfig["updates"]>;
+  qcobro: QCobroConfig;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";
@@ -536,6 +636,11 @@ export const UPDATES_ASSET_ROUTE_PREFIX = "/v1/updates/asset";
 /** Desktop auto-update settings (GitHub repo, optional token, cache TTL). */
 export function getUpdatesConfig(): ResolvedMikroConfig["updates"] {
   return getConfig().updates;
+}
+
+/** QCobro integration settings (credentials, syncMode, balanceBasis, schedule, portfolios[]). */
+export function getQCobroConfig(): ResolvedMikroConfig["qcobro"] {
+  return getConfig().qcobro;
 }
 
 /**
