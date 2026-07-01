@@ -75,3 +75,10 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   with `secrets.DEPLOY_SSH_KEY` as `secrets.DEPLOY_SSH_USER`. If auth fails
   (`Permission denied (publickey)`), the fix is on the droplet
   (`~/.ssh/authorized_keys`) or in the repo secret — not in the workflow.
+- **Every schema change ships a migration.** The container boots with
+  `prisma migrate deploy`, which only runs committed migrations — schema
+  changes applied with `prisma db push` exist only on the DB you pushed to,
+  and every fresh database (CI smoke test, new environment) breaks at
+  runtime. If a database already received the change via `db push`, mark
+  the reconciling migration as applied there with
+  `prisma migrate resolve --applied <migration>` instead of running it.
