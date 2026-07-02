@@ -14,6 +14,8 @@ const extFor = (mimeType: string): string => {
       return "png";
     case "image/webp":
       return "webp";
+    case "text/csv":
+      return "csv";
     default:
       return "bin";
   }

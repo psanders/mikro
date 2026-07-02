@@ -76,7 +76,7 @@ import {
   listCustomerTagsSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure, reviewerProcedure } from "../trpc.js";
+import { router, protectedProcedure, reviewerProcedure, adminProcedure } from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
 import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
@@ -181,6 +181,38 @@ import {
   getWhatsAppPaymentConfirmationTemplate,
   getReceiptImageUrl
 } from "@mikro/common";
+// Founder feed / event-log schemas
+import {
+  listFeedEventsSchema,
+  restoreApplicationSchema,
+  searchAllSchema,
+  exportAuditLogSchema
+} from "@mikro/common";
+// Founder feed / event-log API functions
+import {
+  createListFeedEvents,
+  createRestoreApplication,
+  createSearchAll,
+  createExportAuditLog
+} from "../../api/events/index.js";
+// Founder copilot schemas
+import {
+  copilotChatSchema,
+  copilotActionDecisionSchema,
+  getCopilotHistorySchema,
+  listWatchRulesSchema,
+  setWatchRuleEnabledSchema
+} from "@mikro/common";
+// Founder copilot API functions
+import {
+  createCopilotChat,
+  createConfirmCopilotAction,
+  createRejectCopilotAction,
+  createGetCopilotHistory,
+  listWatchRules as listWatchRulesFn,
+  setWatchRuleEnabled as setWatchRuleEnabledFn,
+  getCopilotDeps
+} from "../../api/copilot/index.js";
 // Accounting API functions
 import {
   createCreateAccount,
@@ -218,6 +250,7 @@ export const protectedRouter = router({
    * Create a new customer.
    */
   createCustomer: protectedProcedure
+    .meta({ event: "customer.created" })
     .input(createCustomerSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createCreateCustomer(ctx.db);
@@ -430,6 +463,7 @@ export const protectedRouter = router({
    * Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED.
    */
   updateLoanStatus: protectedProcedure
+    .meta({ event: "loan.status_changed" })
     .input(updateLoanStatusSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createUpdateLoanStatus(ctx.db);
@@ -503,6 +537,7 @@ export const protectedRouter = router({
    * Approve an application (RECEIVED|IN_REVIEW -> APPROVED). ADMIN/REVIEWER only.
    */
   approveApplication: reviewerProcedure
+    .meta({ event: "application.approved" })
     .input(approveApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createApproveApplication(ctx.db);
@@ -513,6 +548,7 @@ export const protectedRouter = router({
    * Reject an application with a reason (RECEIVED|IN_REVIEW -> REJECTED). ADMIN/REVIEWER only.
    */
   rejectApplication: reviewerProcedure
+    .meta({ event: "application.rejected" })
     .input(rejectApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createRejectApplication(ctx.db);
@@ -543,6 +579,7 @@ export const protectedRouter = router({
    * Upload a signed contract PDF (APPROVED -> SIGNED). ADMIN/REVIEWER only.
    */
   uploadSignedContract: reviewerProcedure
+    .meta({ event: "application.signed" })
     .input(uploadSignedContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createUploadSignedContract(ctx.db);
@@ -574,6 +611,7 @@ export const protectedRouter = router({
    * Convert a SIGNED application into a Customer + Loan (-> CONVERTED). ADMIN/REVIEWER only.
    */
   convertApplication: reviewerProcedure
+    .meta({ event: "application.converted" })
     .input(convertApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createConvertApplication(ctx.db);
@@ -624,6 +662,7 @@ export const protectedRouter = router({
    * Manually purge (hard delete) an application. Irreversible. ADMIN/REVIEWER only.
    */
   deleteApplication: reviewerProcedure
+    .meta({ event: "application.deleted" })
     .input(deleteApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createDeleteApplication(ctx.db);
@@ -698,25 +737,28 @@ export const protectedRouter = router({
   /**
    * Create a new payment for a loan.
    */
-  createPayment: protectedProcedure.input(createPaymentSchema).mutation(async ({ ctx, input }) => {
-    // Block collectors from double-charging the same customer within 5 minutes.
-    // Admins (e.g. CTL back-office) bypass the guard.
-    const isAdmin = ctx.roles.includes("ADMIN");
-    const isCollector = ctx.roles.includes("COLLECTOR");
-    const dedupWindowMs = isCollector && !isAdmin ? 5 * 60 * 1000 : undefined;
-    // Payments only ever cure an account, so resync QCobro immediately rather
-    // than waiting for the cron's deterioration pass. Best-effort: never throws.
-    // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
-    // for why a single-customer push isn't safe against the real API.
-    const syncAllPortfolios = createSyncAllPortfolios(ctx.db);
-    const fn = createCreatePayment(ctx.db, {
-      dedupWindowMs,
-      onPaymentCreated: () => {
-        void syncAllPortfolios();
-      }
-    });
-    return fn(input);
-  }),
+  createPayment: protectedProcedure
+    .meta({ event: "payment.collected" })
+    .input(createPaymentSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Block collectors from double-charging the same customer within 5 minutes.
+      // Admins (e.g. CTL back-office) bypass the guard.
+      const isAdmin = ctx.roles.includes("ADMIN");
+      const isCollector = ctx.roles.includes("COLLECTOR");
+      const dedupWindowMs = isCollector && !isAdmin ? 5 * 60 * 1000 : undefined;
+      // Payments only ever cure an account, so resync QCobro immediately rather
+      // than waiting for the cron's deterioration pass. Best-effort: never throws.
+      // A full-base pass (not just this customer) — see createSyncAllPortfolios.ts
+      // for why a single-customer push isn't safe against the real API.
+      const syncAllPortfolios = createSyncAllPortfolios(ctx.db);
+      const fn = createCreatePayment(ctx.db, {
+        dedupWindowMs,
+        onPaymentCreated: () => {
+          void syncAllPortfolios();
+        }
+      });
+      return fn(input);
+    }),
 
   /**
    * Preview accrued mora (past-due fee) for a loan without recording a payment.
@@ -730,6 +772,7 @@ export const protectedRouter = router({
    * Reverse a payment.
    */
   reversePayment: protectedProcedure
+    .meta({ event: "payment.reversed" })
     .input(reversePaymentSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createReversePayment(ctx.db);
@@ -894,6 +937,103 @@ export const protectedRouter = router({
       const fn = createGenerateRenewalCandidatesReport(ctx.db);
       const result = await fn(input);
       return { image: result.image };
+    }),
+
+  // ==================== Events / Feed procedures ====================
+  //
+  // Founder Dashboard surfaces: an append-only business-event feed, universal
+  // search, deletion-snapshot restore, and month-scoped audit export. All
+  // gated to ADMIN (founder === admin in v1). The feed deliberately uses
+  // cursor pagination (see listFeedEventsSchema) rather than the repo's
+  // offset/limit convention; search and export keep offset/limit.
+
+  /**
+   * Reverse-chronological business-event feed with opaque (occurredAt, id)
+   * cursor pagination and optional type/date filters. ADMIN only.
+   */
+  listFeedEvents: adminProcedure.input(listFeedEventsSchema).query(async ({ ctx, input }) => {
+    const fn = createListFeedEvents(ctx.db as unknown as PrismaClient);
+    return fn(input);
+  }),
+
+  /**
+   * Restore a hard-deleted application from its deletion-event snapshot within
+   * the 30-day window; records an application.restored event. ADMIN only.
+   */
+  restoreApplication: adminProcedure
+    .input(restoreApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createRestoreApplication(ctx.db as unknown as PrismaClient, ctx.userId);
+      return fn(input);
+    }),
+
+  /**
+   * Universal search across customers, loans, and feed events. ADMIN only.
+   */
+  searchAll: adminProcedure.input(searchAllSchema).query(async ({ ctx, input }) => {
+    const fn = createSearchAll(ctx.db as unknown as PrismaClient);
+    return fn(input);
+  }),
+
+  /**
+   * Month-scoped CSV export of the event log (headers-only when empty). ADMIN only.
+   */
+  exportAuditLog: adminProcedure.input(exportAuditLogSchema).query(async ({ ctx, input }) => {
+    const fn = createExportAuditLog(ctx.db as unknown as PrismaClient);
+    return fn(input);
+  }),
+
+  // ==================== Copilot procedures ====================
+  //
+  // The founder copilot (design.md add-founder-copilot). All ADMIN-only. The
+  // chat loop and confirm flow need the LLM model factory + tool executor built
+  // at startup; those come from the copilot deps registry (setCopilotDeps),
+  // keeping the static router thin and the model injectable for tests.
+
+  /** Look up the caller's display name for provenance/event attribution. */
+  copilotChat: adminProcedure.input(copilotChatSchema).mutation(async ({ ctx, input }) => {
+    const db = ctx.db as unknown as PrismaClient;
+    const { toolExecutor, createModel } = getCopilotDeps();
+    const user = await db.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
+    const fn = createCopilotChat({ db, toolExecutor, createModel });
+    return fn({ userId: ctx.userId, actorName: user?.name, message: input.message });
+  }),
+
+  /** Confirm a pending copilot write: executes it and records copilot.action. */
+  copilotConfirmAction: adminProcedure
+    .input(copilotActionDecisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const db = ctx.db as unknown as PrismaClient;
+      const { toolExecutor } = getCopilotDeps();
+      const user = await db.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
+      const fn = createConfirmCopilotAction({ db, toolExecutor });
+      return fn({ userId: ctx.userId, actorName: user?.name, actionId: input.actionId });
+    }),
+
+  /** Reject a pending copilot write: nothing executes. */
+  copilotRejectAction: adminProcedure
+    .input(copilotActionDecisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createRejectCopilotAction({ db: ctx.db as unknown as PrismaClient });
+      return fn({ userId: ctx.userId, actionId: input.actionId });
+    }),
+
+  /** Copilot conversation history for the caller (copilot channel only). */
+  getCopilotHistory: adminProcedure.input(getCopilotHistorySchema).query(async ({ ctx, input }) => {
+    const fn = createGetCopilotHistory(ctx.db as unknown as PrismaClient);
+    return fn({ userId: ctx.userId, limit: input.limit });
+  }),
+
+  /** List watch rules (active by default). */
+  listWatchRules: adminProcedure.input(listWatchRulesSchema).query(async ({ ctx, input }) => {
+    return listWatchRulesFn(ctx.db as unknown as PrismaClient, input);
+  }),
+
+  /** Enable or disable a watch rule. */
+  setWatchRuleEnabled: adminProcedure
+    .input(setWatchRuleEnabledSchema)
+    .mutation(async ({ ctx, input }) => {
+      return setWatchRuleEnabledFn(ctx.db as unknown as PrismaClient, input);
     }),
 
   // ==================== Accounting procedures ====================

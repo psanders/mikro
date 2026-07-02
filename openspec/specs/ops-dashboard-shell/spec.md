@@ -45,47 +45,32 @@ The dashboard SHALL read its API base URL from environment-based configuration r
 
 ### Requirement: Application chrome and navigation
 
-The dashboard SHALL provide a top-level application layout with navigation, and SHALL route between an authenticated area and an unauthenticated (login) area based on session state. The navigation structure MUST be extensible so additional feature areas can be added as later changes without restructuring the shell. The "Solicitudes" navigation item SHALL route to the applications list (`/solicitudes`) and show the active highlight when on a Solicitudes route. The Inicio "Solicitudes recientes" section SHALL show recent loan applications (from `listApplications`), with rows linking to the application detail. The "Clientes" navigation item SHALL route to the customers list (`/clientes`) and show the active highlight when on a Clientes route, and the authenticated area SHALL include routes for `/clientes` and `/clientes/:id` under the auth guard. The "Contabilidad" navigation item SHALL route to the accounting ledger (`/contabilidad`) and show the active highlight when on a Contabilidad route, and the authenticated area SHALL include routes for `/contabilidad` and `/contabilidad/:id` under the auth guard.
+The dashboard SHALL route between an unauthenticated (login) area and the authenticated founder app based on session state. The founder app (`/founder`, `/founder/buscar`, `/founder/reportes`, rendered in the founder shell) is the only authenticated UI: after login an ADMIN user SHALL land on `/founder`, and unknown routes SHALL redirect there for admins. Non-admin authenticated users (COLLECTOR/REVIEWER) SHALL see an access screen explaining that the desktop app is the founder dashboard and directing them to the Mikro mobile app; they SHALL NOT reach founder routes. The retired operations navigation and its routes (`/solicitudes`, `/clientes`, `/contabilidad`, `/modelo`, Inicio) SHALL no longer exist.
 
 #### Scenario: Unauthenticated user is routed to login
 
 - **WHEN** an unauthenticated user opens the dashboard
-- **THEN** the login view is shown and the authenticated application area is not accessible
+- **THEN** the login view is shown and no authenticated area is accessible
 
-#### Scenario: Authenticated user sees the application shell
+#### Scenario: Admin lands on the founder app
 
-- **WHEN** an authenticated user opens the dashboard
-- **THEN** the top-level layout with navigation is shown and authenticated views are reachable
+- **WHEN** an ADMIN user logs in
+- **THEN** the app navigates to `/founder` and the founder shell is shown
 
-#### Scenario: Solicitudes nav routes to the list
+#### Scenario: Non-admin sees the access screen
 
-- **WHEN** an authenticated user clicks the "Solicitudes" nav item
-- **THEN** the app navigates to `/solicitudes` and the item shows the active highlight
+- **WHEN** a COLLECTOR or REVIEWER logs in or opens any authenticated route
+- **THEN** an access screen is shown pointing to the mobile app, and founder routes are not reachable
 
-#### Scenario: Inicio shows recent applications
+#### Scenario: Ops routes are gone
 
-- **WHEN** an authenticated reviewer views Inicio
-- **THEN** the "Solicitudes recientes" section lists recent loan applications and a row opens its detail
+- **WHEN** any user navigates to `/solicitudes`, `/clientes`, `/contabilidad`, or `/modelo`
+- **THEN** no operations view renders (admins are redirected to `/founder`; non-admins see the access screen)
 
-#### Scenario: Clientes nav routes to the list
+#### Scenario: Founder routes are guarded
 
-- **WHEN** an authenticated user clicks the "Clientes" nav item
-- **THEN** the app navigates to `/clientes` and the item shows the active highlight
-
-#### Scenario: Clientes routes are guarded
-
-- **WHEN** an unauthenticated user attempts to open `/clientes` or `/clientes/:id`
-- **THEN** the auth guard redirects to login and the customer views are not accessible
-
-#### Scenario: Contabilidad nav routes to the ledger
-
-- **WHEN** an authenticated user clicks the "Contabilidad" nav item
-- **THEN** the app navigates to `/contabilidad` and the item shows the active highlight
-
-#### Scenario: Contabilidad routes are guarded
-
-- **WHEN** an unauthenticated user attempts to open `/contabilidad` or `/contabilidad/:id`
-- **THEN** the auth guard redirects to login and the accounting views are not accessible
+- **WHEN** an unauthenticated user attempts to open a `/founder` route
+- **THEN** the auth guard redirects to login
 
 ### Requirement: Authenticated end-to-end data path
 

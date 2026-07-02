@@ -402,7 +402,37 @@ export {
   type CustomerTagValue,
   type SetCustomerTagInput,
   type ClearCustomerTagInput,
-  type ListCustomerTagsInput
+  type ListCustomerTagsInput,
+  // Business event log schemas
+  businessEventTypeEnum,
+  businessEventPayloadSchemas,
+  recordBusinessEventSchema,
+  listFeedEventsSchema,
+  restoreApplicationSchema,
+  searchAllSchema,
+  exportAuditLogSchema,
+  RESTORE_WINDOW_DAYS,
+  type BusinessEventType,
+  type RecordBusinessEventInput,
+  // Copilot schemas
+  watchRuleMetricEnum,
+  watchRuleComparatorEnum,
+  createWatchRuleSchema,
+  listWatchRulesSchema,
+  setWatchRuleEnabledSchema,
+  copilotChatSchema,
+  copilotActionDecisionSchema,
+  getCopilotHistorySchema,
+  copilotPendingActionStatusEnum,
+  copilotPendingActionSchema,
+  copilotProvenanceSchema,
+  copilotChatReplySchema,
+  COPILOT_ACTION_EXPIRY_MINUTES,
+  type WatchRuleMetric,
+  type CreateWatchRuleInput,
+  type CopilotPendingAction,
+  type CopilotProvenance,
+  type CopilotChatReply
 } from "./schemas/index.js";
 
 // Report types and helpers

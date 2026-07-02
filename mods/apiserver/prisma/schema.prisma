@@ -304,6 +304,9 @@ model Message {
   role      MessageRole
   content   String
   tools     String? // JSON array of tool names, e.g. ["search", "calculate"] - only for AI
+  // Surface the message belongs to: "whatsapp" (default, the bot) or "copilot"
+  // (the founder dashboard dock). Default keeps every existing row/behavior intact.
+  channel   String      @default("whatsapp") @map("channel")
   createdAt DateTime    @default(now()) @map("created_at")
 
   // Relations - message belongs to either a Customer OR a User
@@ -560,4 +563,81 @@ model FollowUpJob {
   @@index([status, scheduledFor])
   @@index([applicationId])
   @@map("follow_up_jobs")
+}
+
+// =============================================================================
+// Business event log (Founder Feed)
+// =============================================================================
+
+// Append-only record of every business mutation in the v1 event catalog. Written
+// inside the SAME transaction as its mutation, so an event can never exist
+// without its mutation (or vice versa). Deliberately carries NO foreign keys to
+// other models: denormalized names/refs let a card render without joins and keep
+// the event meaningful even after its subject is hard-deleted. Corrections are
+// new events — there is no update/delete surface. `payload` is JSON stored as a
+// String (SQLite has no Json type), validated per-type via @mikro/common.
+model BusinessEvent {
+  id            String   @id @default(uuid())
+  type          String
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  actorId       String?  @map("actor_id")
+  actorName     String   @map("actor_name")
+  customerId    String?  @map("customer_id")
+  customerName  String?  @map("customer_name")
+  loanId        String?  @map("loan_id")
+  applicationId String?  @map("application_id")
+  amount        Decimal?
+  summary       String
+  payload       String
+
+  @@index([occurredAt, id])
+  @@index([type])
+  @@index([customerId])
+  @@map("business_events")
+}
+
+// =============================================================================
+// Copilot & watch rules (Founder Copilot)
+// =============================================================================
+
+// A founder-defined alert: "watch metric M and tell me when it crosses T". The
+// evaluator recomputes each enabled rule's metric on an interval and records a
+// `rule.alert` business event only on an ok→breached transition. `lastState`
+// ("ok"/"breached") is the anti-spam latch. `metric` is a value of the v1
+// watchRuleMetricEnum; `comparator` is "gt"/"lt". `collectorId` scopes
+// collector-level metrics (mora_pct_collector).
+model WatchRule {
+  id              String    @id @default(uuid())
+  name            String
+  metric          String
+  comparator      String
+  threshold       Float
+  collectorId     String?   @map("collector_id")
+  enabled         Boolean   @default(true)
+  createdById     String    @map("created_by_id")
+  lastState       String?   @map("last_state")
+  lastEvaluatedAt DateTime? @map("last_evaluated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([enabled])
+  @@map("watch_rules")
+}
+
+// A write the copilot proposed and is waiting for the founder to confirm. Nothing
+// executes until confirmed: `argsJson` is the serialized tool arguments shown
+// verbatim on the confirm card, `summary` the human Spanish one-liner. `status`
+// is PENDING/CONFIRMED/REJECTED/EXPIRED.
+model CopilotPendingAction {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  toolName   String    @map("tool_name")
+  argsJson   String    @map("args_json")
+  summary    String
+  status     String    @default("PENDING")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  @@index([userId, status])
+  @@map("copilot_pending_actions")
 }

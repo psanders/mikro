@@ -1,0 +1,399 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Integration tests for the founder copilot (tasks 5.1). The LLM is always
+ * stubbed — a fake model factory drives the tool loop deterministically, so no
+ * live model is ever called. Covers: tool-policy binding, the write-tool →
+ * pending-action short-circuit (no mutation), confirm (executes + records
+ * copilot.action), reject and expiry (execute nothing), foreign-user refusal,
+ * channel-filtered history, and admin-only authorization on all six procedures.
+ */
+import { expect } from "chai";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import {
+  createTestDb,
+  createAuthenticatedCaller,
+  applySchema,
+  type TestDb,
+  type AuthenticatedCaller
+} from "./setup.js";
+import { appRouter } from "../../src/trpc/index.js";
+import {
+  setCopilotDeps,
+  clearCopilotDeps,
+  getBoundToolNames
+} from "../../src/api/copilot/index.js";
+import type { ToolResult, ToolExecutor } from "@mikro/agents";
+
+/** A fake AI turn: text plus optional tool calls. */
+interface FakeTurn {
+  content: string;
+  tool_calls?: Array<{ id: string; name: string; args: Record<string, unknown> }>;
+}
+
+/**
+ * Build a fake model factory that replays `turns` one per invoke, and records
+ * the tools bound to it. Casts through unknown — createCopilotChat only uses
+ * bindTools + invoke.
+ */
+function makeFakeModel(turns: FakeTurn[]) {
+  const record: { boundTools: string[] } = { boundTools: [] };
+  let i = 0;
+  const factory = (): BaseChatModel =>
+    ({
+      bindTools(tools: Array<{ function: { name: string } }>) {
+        record.boundTools = tools.map((t) => t.function.name);
+        return {
+          invoke: async () => turns[Math.min(i++, turns.length - 1)]
+        };
+      }
+    }) as unknown as BaseChatModel;
+  return { factory, record };
+}
+
+/** A tool executor that records calls and returns a canned result. */
+function makeRecordingExecutor(result: ToolResult = { success: true, message: "OK" }) {
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  const executor: ToolExecutor = async (name, args) => {
+    calls.push({ name, args });
+    return result;
+  };
+  return { executor, calls };
+}
+
+describe("Founder Copilot Integration", () => {
+  let db: TestDb;
+  let caller: AuthenticatedCaller;
+  let phoneSeq = 0;
+  const uniquePhone = () => {
+    phoneSeq += 1;
+    return `+1809${String(10_000_000 + phoneSeq).slice(1)}`;
+  };
+
+  const nonAdminCaller = () =>
+    appRouter.createCaller({
+      db: db as any,
+      isAuthenticated: true,
+      userId: "11111111-1111-4111-8111-111111111111",
+      roles: ["COLLECTOR"]
+    });
+
+  /** Create an ADMIN user and a caller acting as that user (real FK for messages). */
+  async function makeAdmin() {
+    const admin = await caller.createUser({
+      name: "Founder",
+      phone: uniquePhone(),
+      role: "ADMIN"
+    });
+    const adminCaller = appRouter.createCaller({
+      db: db as any,
+      isAuthenticated: true,
+      userId: admin.id,
+      roles: ["ADMIN"]
+    });
+    return { admin, adminCaller };
+  }
+
+  before(async () => {
+    db = createTestDb();
+    await applySchema(db);
+  });
+
+  beforeEach(async () => {
+    await db.copilotPendingAction.deleteMany();
+    await db.watchRule.deleteMany();
+    await db.businessEvent.deleteMany();
+    await db.message.deleteMany();
+    await db.userRole.deleteMany();
+    await db.user.deleteMany();
+    caller = createAuthenticatedCaller(db);
+  });
+
+  afterEach(() => {
+    clearCopilotDeps();
+  });
+
+  after(async () => {
+    await db.$disconnect();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Tool policy
+  // ---------------------------------------------------------------------------
+
+  describe("tool policy", () => {
+    it("binds only read/write/direct tools and nothing else", () => {
+      const bound = getBoundToolNames();
+      // A representative bound tool from each list.
+      expect(bound).to.include("queryFeedEvents"); // read
+      expect(bound).to.include("createPayment"); // write
+      expect(bound).to.include("createWatchRule"); // direct
+      // Tools that exist in the agents registry but are NOT in any list.
+      expect(bound).to.not.include("sendReceiptViaWhatsApp");
+      expect(bound).to.not.include("saveAnswer");
+      expect(bound).to.not.include("finalizeApplication");
+      expect(bound).to.not.include("getApplicationState");
+    });
+
+    it("binds to the model exactly the policy tool set", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([{ content: "Hola, ¿en qué puedo ayudarte?" }]);
+      const { executor } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      await adminCaller.copilotChat({ message: "hola" });
+
+      expect(fake.record.boundTools.sort()).to.deep.equal(getBoundToolNames().sort());
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Read answers
+  // ---------------------------------------------------------------------------
+
+  describe("read answers", () => {
+    it("executes a read tool inline and returns provenance", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "queryFeedEvents", args: {} }] },
+        { content: "No hubo eventos recientes." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "¿qué pasó hoy?" });
+
+      // queryFeedEvents is copilot-local — the shared executor is NOT used for it.
+      expect(calls).to.have.lengthOf(0);
+      expect(reply.reply).to.equal("No hubo eventos recientes.");
+      expect(reply.provenance?.tools).to.include("queryFeedEvents");
+      expect(reply.pendingAction).to.equal(undefined);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Write short-circuit + confirm/reject lifecycle
+  // ---------------------------------------------------------------------------
+
+  describe("write short-circuit", () => {
+    it("persists a PENDING action and executes nothing", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "Voy a registrar el pago.",
+          tool_calls: [
+            { id: "c1", name: "createPayment", args: { loanId: "10000", amount: "650" } }
+          ]
+        }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "registra 650 en el 10000" });
+
+      expect(calls, "no tool executed inline").to.have.lengthOf(0);
+      expect(reply.pendingAction).to.not.equal(undefined);
+      expect(reply.pendingAction?.toolName).to.equal("createPayment");
+      expect(reply.pendingAction?.status).to.equal("PENDING");
+
+      const rows = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(rows).to.have.lengthOf(1);
+      expect(rows[0].status).to.equal("PENDING");
+      // No business event yet.
+      expect(await db.businessEvent.count()).to.equal(0);
+    });
+  });
+
+  describe("confirm / reject lifecycle", () => {
+    it("confirm executes the tool and records copilot.action", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor({
+        success: true,
+        message: "Pago registrado."
+      });
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago de RD$650 en el préstamo #10000.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
+      expect(res.status).to.equal("CONFIRMED");
+
+      expect(calls).to.have.lengthOf(1);
+      expect(calls[0].name).to.equal("createPayment");
+
+      const events = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
+      expect(events).to.have.lengthOf(1);
+      expect(events[0].actorId).to.equal(admin.id);
+      const payload = JSON.parse(events[0].payload);
+      expect(payload.toolName).to.equal("createPayment");
+      expect(payload.resultSummary).to.equal("Pago registrado.");
+
+      const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
+      expect(refreshed?.status).to.equal("CONFIRMED");
+    });
+
+    it("reject executes nothing and records no event", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotRejectAction({ actionId: action.id });
+      expect(res.status).to.equal("REJECTED");
+      expect(calls).to.have.lengthOf(0);
+      expect(await db.businessEvent.count()).to.equal(0);
+
+      const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
+      expect(refreshed?.status).to.equal("REJECTED");
+    });
+
+    it("refuses an expired action, marks it EXPIRED, executes nothing", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const stale = new Date(Date.now() - 20 * 60 * 1000); // 20 min ago (> 15)
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "PENDING",
+          createdAt: stale
+        }
+      });
+
+      let threw = false;
+      try {
+        await adminCaller.copilotConfirmAction({ actionId: action.id });
+      } catch (err) {
+        threw = true;
+        expect((err as Error).message).to.match(/expir/i);
+      }
+      expect(threw, "confirm should throw").to.equal(true);
+      expect(calls).to.have.lengthOf(0);
+
+      const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
+      expect(refreshed?.status).to.equal("EXPIRED");
+    });
+
+    it("refuses to confirm another user's action", async () => {
+      const { adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      // Action owned by a different user id.
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: "22222222-2222-4222-8222-222222222222",
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "PENDING"
+        }
+      });
+
+      let threw = false;
+      try {
+        await adminCaller.copilotConfirmAction({ actionId: action.id });
+      } catch (err) {
+        threw = true;
+        expect((err as any).code === "FORBIDDEN" || /otro usuario/i.test((err as Error).message)).to
+          .be.true;
+      }
+      expect(threw).to.equal(true);
+      expect(calls).to.have.lengthOf(0);
+
+      const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
+      expect(refreshed?.status).to.equal("PENDING");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // History
+  // ---------------------------------------------------------------------------
+
+  describe("getCopilotHistory", () => {
+    it("returns only copilot-channel messages for the caller", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      await db.message.create({
+        data: { role: "HUMAN", content: "copiloto hola", userId: admin.id, channel: "copilot" }
+      });
+      await db.message.create({
+        data: { role: "AI", content: "hola founder", userId: admin.id, channel: "copilot" }
+      });
+      // A WhatsApp-channel message for the same user must be excluded.
+      await db.message.create({
+        data: { role: "HUMAN", content: "whatsapp msg", userId: admin.id, channel: "whatsapp" }
+      });
+
+      const history = await adminCaller.getCopilotHistory({});
+      expect(history.messages).to.have.lengthOf(2);
+      expect(history.messages.map((m) => m.content)).to.not.include("whatsapp msg");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Authorization
+  // ---------------------------------------------------------------------------
+
+  describe("authorization", () => {
+    beforeEach(() => {
+      setCopilotDeps({
+        toolExecutor: makeRecordingExecutor().executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+    });
+
+    it("rejects non-admins on all six procedures", async () => {
+      const c = nonAdminCaller();
+      const id = "33333333-3333-4333-8333-333333333333";
+      const attempts: Array<Promise<unknown>> = [
+        c.copilotChat({ message: "hi" }),
+        c.copilotConfirmAction({ actionId: id }),
+        c.copilotRejectAction({ actionId: id }),
+        c.getCopilotHistory({}),
+        c.listWatchRules({}),
+        c.setWatchRuleEnabled({ id, enabled: false })
+      ];
+
+      const results = await Promise.allSettled(attempts);
+      for (const r of results) {
+        expect(r.status).to.equal("rejected");
+        if (r.status === "rejected") {
+          expect(r.reason.code).to.equal("FORBIDDEN");
+        }
+      }
+    });
+  });
+});

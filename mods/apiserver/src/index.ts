@@ -62,11 +62,14 @@ import {
   getDeepgramApiKey,
   initializeLLM,
   getAgentByProfile,
+  createChatModel,
+  getLLMConfig,
   type Message,
   type Profile,
   type ToolExecutorDependencies,
   type ExportedCustomer
 } from "@mikro/agents";
+import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
 
@@ -683,6 +686,13 @@ async function initializeMessageProcessor() {
       )
     });
 
+    // Wire the founder copilot: it reuses the same tool executor as the WhatsApp
+    // path and a text-model factory (injectable, kept out of the static router).
+    setCopilotDeps({
+      toolExecutor,
+      createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 })
+    });
+
     // Generic ack messages sent before slow tool execution (no LLM involved)
     const QUICK_ACK_MESSAGES = [
       "Claro que sí, un momento.",
@@ -836,15 +846,18 @@ async function initializeMessageProcessor() {
 const followUpTemplate = getWhatsAppFollowUpTemplate();
 let stopFollowUpWorker: (() => void) | undefined;
 let stopQCobroWorker: (() => void) | undefined;
+let stopWatchRuleEvaluator: (() => void) | undefined;
 
 process.on("SIGTERM", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
+  stopWatchRuleEvaluator?.();
   process.exit(0);
 });
 process.on("SIGINT", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
+  stopWatchRuleEvaluator?.();
   process.exit(0);
 });
 
@@ -900,6 +913,11 @@ initializeMessageProcessor()
 
       // Start QCobro cron worker (recompute + sync deterioration on qcobro.schedule)
       stopQCobroWorker = createQCobroWorker(dbClient);
+
+      // Start the watch-rule evaluator (founder copilot alerts on state change)
+      stopWatchRuleEvaluator = createWatchRuleEvaluator(
+        prisma as unknown as Parameters<typeof createWatchRuleEvaluator>[0]
+      );
     });
   })
   .catch((error) => {

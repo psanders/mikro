@@ -43,7 +43,7 @@ CREATE TABLE "customers" (
     "nickname" TEXT,
     "phone" TEXT NOT NULL,
     "id_number" TEXT NOT NULL,
-    "collection_point" TEXT NOT NULL,
+    "collection_point" TEXT,
     "home_address" TEXT NOT NULL,
     "job_position" TEXT,
     "income" DECIMAL,
@@ -119,6 +119,7 @@ CREATE TABLE "messages" (
     "role" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "tools" TEXT,
+    "channel" TEXT NOT NULL DEFAULT 'whatsapp',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "customer_id" TEXT,
     "user_id" TEXT,
@@ -201,6 +202,124 @@ CREATE INDEX "attachments_message_id_idx" ON "attachments"("message_id");
 CREATE INDEX "collection_attempts_customer_id_idx" ON "collection_attempts"("customer_id");
 CREATE INDEX "collection_attempts_loan_id_idx" ON "collection_attempts"("loan_id");
 CREATE INDEX "collection_attempts_created_at_idx" ON "collection_attempts"("created_at");
+
+-- Loan applications table (origination pipeline)
+CREATE TABLE "loan_applications" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "session_id" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "source" TEXT NOT NULL DEFAULT 'FORM',
+    "last_section" TEXT,
+    "first_name" TEXT,
+    "last_name" TEXT,
+    "phone" TEXT,
+    "id_number" TEXT,
+    "date_of_birth" DATETIME,
+    "marital_status" TEXT,
+    "business_type" TEXT,
+    "business_name" TEXT,
+    "requested_amount" DECIMAL,
+    "purpose" TEXT,
+    "requested_term_weeks" INTEGER,
+    "province" TEXT,
+    "home_address" TEXT,
+    "raw_data" JSONB NOT NULL,
+    "score_data" JSONB,
+    "score" INTEGER,
+    "risk_band" TEXT,
+    "recommendation" TEXT,
+    "scored_at" DATETIME,
+    "reviewed_by_id" TEXT,
+    "reviewed_at" DATETIME,
+    "review_note" TEXT,
+    "contract_filename" TEXT,
+    "contract_original_name" TEXT,
+    "contract_mime_type" TEXT,
+    "contract_size" INTEGER,
+    "contract_sha256" TEXT,
+    "signed_by_id" TEXT,
+    "signed_at" DATETIME,
+    "id_front_filename" TEXT,
+    "id_front_original_name" TEXT,
+    "id_front_mime_type" TEXT,
+    "id_front_size" INTEGER,
+    "id_back_filename" TEXT,
+    "id_back_original_name" TEXT,
+    "id_back_mime_type" TEXT,
+    "id_back_size" INTEGER,
+    "id_uploaded_by_id" TEXT,
+    "id_uploaded_at" DATETIME,
+    "customer_id" TEXT,
+    "loan_id" INTEGER,
+    "submitted_at" DATETIME,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX "loan_applications_session_id_key" ON "loan_applications"("session_id");
+CREATE INDEX "loan_applications_status_idx" ON "loan_applications"("status");
+CREATE INDEX "loan_applications_session_id_idx" ON "loan_applications"("session_id");
+
+-- Follow-up jobs table
+CREATE TABLE "follow_up_jobs" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "application_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "scheduled_for" DATETIME NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "follow_up_jobs_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "loan_applications" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX "follow_up_jobs_status_scheduled_for_idx" ON "follow_up_jobs"("status", "scheduled_for");
+CREATE INDEX "follow_up_jobs_application_id_idx" ON "follow_up_jobs"("application_id");
+
+-- Business events table (founder feed, append-only)
+CREATE TABLE "business_events" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "type" TEXT NOT NULL,
+    "occurred_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actor_id" TEXT,
+    "actor_name" TEXT NOT NULL,
+    "customer_id" TEXT,
+    "customer_name" TEXT,
+    "loan_id" TEXT,
+    "application_id" TEXT,
+    "amount" DECIMAL,
+    "summary" TEXT NOT NULL,
+    "payload" TEXT NOT NULL
+);
+CREATE INDEX "business_events_occurred_at_id_idx" ON "business_events"("occurred_at", "id");
+CREATE INDEX "business_events_type_idx" ON "business_events"("type");
+CREATE INDEX "business_events_customer_id_idx" ON "business_events"("customer_id");
+
+-- Watch rules (founder copilot)
+CREATE TABLE "watch_rules" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "metric" TEXT NOT NULL,
+    "comparator" TEXT NOT NULL,
+    "threshold" REAL NOT NULL,
+    "collector_id" TEXT,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "created_by_id" TEXT NOT NULL,
+    "last_state" TEXT,
+    "last_evaluated_at" DATETIME,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL
+);
+CREATE INDEX "watch_rules_enabled_idx" ON "watch_rules"("enabled");
+
+-- Copilot pending actions (founder copilot)
+CREATE TABLE "copilot_pending_actions" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "user_id" TEXT NOT NULL,
+    "tool_name" TEXT NOT NULL,
+    "args_json" TEXT NOT NULL,
+    "summary" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "resolved_at" DATETIME
+);
+CREATE INDEX "copilot_pending_actions_user_id_status_idx" ON "copilot_pending_actions"("user_id", "status");
 `;
 
 /**

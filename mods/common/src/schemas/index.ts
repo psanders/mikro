@@ -295,3 +295,37 @@ export {
   type ClearCustomerTagInput,
   type ListCustomerTagsInput
 } from "./customerTag.js";
+
+export {
+  businessEventTypeEnum,
+  businessEventPayloadSchemas,
+  recordBusinessEventSchema,
+  listFeedEventsSchema,
+  restoreApplicationSchema,
+  searchAllSchema,
+  exportAuditLogSchema,
+  RESTORE_WINDOW_DAYS,
+  type BusinessEventType,
+  type RecordBusinessEventInput
+} from "./businessEvent.js";
+
+export {
+  watchRuleMetricEnum,
+  watchRuleComparatorEnum,
+  createWatchRuleSchema,
+  listWatchRulesSchema,
+  setWatchRuleEnabledSchema,
+  copilotChatSchema,
+  copilotActionDecisionSchema,
+  getCopilotHistorySchema,
+  copilotPendingActionStatusEnum,
+  copilotPendingActionSchema,
+  copilotProvenanceSchema,
+  copilotChatReplySchema,
+  COPILOT_ACTION_EXPIRY_MINUTES,
+  type WatchRuleMetric,
+  type CreateWatchRuleInput,
+  type CopilotPendingAction,
+  type CopilotProvenance,
+  type CopilotChatReply
+} from "./copilot.js";

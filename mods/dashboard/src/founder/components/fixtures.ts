@@ -1,0 +1,203 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Sample `FeedEvent`s for Storybook — one v1 catalog type each, plus the
+ * amber policy-exception and red deletion variants. Not wired to any real
+ * data; pages map tRPC output onto `FeedEvent` separately.
+ */
+import type { FeedEvent } from "./types";
+
+function minutesAgo(minutes: number): string {
+  return new Date(Date.now() - minutes * 60_000).toISOString();
+}
+
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60_000).toISOString();
+}
+
+export const paymentCollectedEvent: FeedEvent = {
+  id: "evt-payment-collected",
+  type: "payment.collected",
+  occurredAt: minutesAgo(5),
+  actorName: "Rosa Méndez",
+  customerName: "Juan Pérez",
+  loanId: "loan-10001",
+  amount: 2500,
+  summary: "Rosa Méndez registró un pago de Juan Pérez",
+  payload: { paymentId: "pay-001", method: "cash", kind: "installment" }
+};
+
+export const paymentCollectedWithLateFeeEvent: FeedEvent = {
+  id: "evt-payment-collected-late-fee",
+  type: "payment.collected",
+  occurredAt: minutesAgo(40),
+  actorName: "Carlos Díaz",
+  customerName: "Ana Cruz",
+  loanId: "loan-10004",
+  amount: 3200,
+  summary: "Carlos Díaz registró un pago de Ana Cruz",
+  payload: { paymentId: "pay-004", method: "transfer", kind: "installment", lateFeeAmount: 150 }
+};
+
+export const paymentReversedEvent: FeedEvent = {
+  id: "evt-payment-reversed",
+  type: "payment.reversed",
+  occurredAt: minutesAgo(120),
+  actorName: "Rosa Méndez",
+  customerName: "Juan Pérez",
+  loanId: "loan-10001",
+  amount: 2500,
+  summary: "Rosa Méndez reversó un pago de Juan Pérez",
+  payload: { paymentId: "pay-001", reason: "Monto duplicado por error de captura" }
+};
+
+export const applicationApprovedEvent: FeedEvent = {
+  id: "evt-application-approved",
+  type: "application.approved",
+  occurredAt: minutesAgo(200),
+  actorName: "Miguel Torres",
+  customerName: "Elena Ramírez",
+  applicationId: "app-2001",
+  summary: "Miguel Torres aprobó la solicitud de Elena Ramírez",
+  payload: { applicationId: "app-2001", policyException: false }
+};
+
+export const applicationApprovedExceptionEvent: FeedEvent = {
+  id: "evt-application-approved-exception",
+  type: "application.approved",
+  occurredAt: minutesAgo(15),
+  actorName: "Miguel Torres",
+  customerName: "Pedro Vásquez",
+  applicationId: "app-2002",
+  summary: "Miguel Torres aprobó la solicitud de Pedro Vásquez con excepción de política",
+  payload: {
+    applicationId: "app-2002",
+    policyException: true,
+    note: "Score bajo el mínimo; aprobado por historial de pago en préstamos anteriores"
+  }
+};
+
+export const applicationRejectedEvent: FeedEvent = {
+  id: "evt-application-rejected",
+  type: "application.rejected",
+  occurredAt: daysAgo(1),
+  actorName: "Miguel Torres",
+  customerName: "Luis Fernández",
+  applicationId: "app-2003",
+  summary: "Miguel Torres rechazó la solicitud de Luis Fernández",
+  payload: { applicationId: "app-2003", note: "Ingresos no verificables" }
+};
+
+export const applicationSignedEvent: FeedEvent = {
+  id: "evt-application-signed",
+  type: "application.signed",
+  occurredAt: daysAgo(1),
+  actorName: "Elena Ramírez",
+  customerName: "Elena Ramírez",
+  applicationId: "app-2001",
+  summary: "Elena Ramírez firmó el contrato de su solicitud",
+  payload: { applicationId: "app-2001" }
+};
+
+export const applicationConvertedEvent: FeedEvent = {
+  id: "evt-application-converted",
+  type: "application.converted",
+  occurredAt: daysAgo(1),
+  actorName: "Rosa Méndez",
+  customerName: "Elena Ramírez",
+  loanId: "loan-10010",
+  applicationId: "app-2001",
+  amount: 25000,
+  summary: "Rosa Méndez convirtió la solicitud de Elena Ramírez en el préstamo #10010",
+  payload: { applicationId: "app-2001", loanId: "loan-10010", loanNumber: 10010, principal: 25000 }
+};
+
+export const applicationDeletedRestorableEvent: FeedEvent = {
+  id: "evt-application-deleted-restorable",
+  type: "application.deleted",
+  occurredAt: minutesAgo(30),
+  actorName: "Miguel Torres",
+  customerName: "Sofía Jiménez",
+  applicationId: "app-2004",
+  summary: "Miguel Torres eliminó la solicitud de Sofía Jiménez",
+  payload: {
+    applicationId: "app-2004",
+    snapshot: {
+      firstName: "Sofía",
+      lastName: "Jiménez",
+      businessName: "Colmado La Bendición",
+      requestedAmount: 15000,
+      requestedTermWeeks: 12,
+      province: "Santiago",
+      status: "DRAFT"
+    }
+  }
+};
+
+export const applicationDeletedExpiredEvent: FeedEvent = {
+  id: "evt-application-deleted-expired",
+  type: "application.deleted",
+  occurredAt: daysAgo(45),
+  actorName: "Miguel Torres",
+  customerName: "Hector Guzmán",
+  applicationId: "app-1980",
+  summary: "Miguel Torres eliminó la solicitud de Hector Guzmán",
+  payload: {
+    applicationId: "app-1980",
+    snapshot: {
+      firstName: "Hector",
+      lastName: "Guzmán",
+      businessName: "Salón Estrella",
+      requestedAmount: 8000,
+      status: "rejected"
+    }
+  }
+};
+
+export const applicationRestoredEvent: FeedEvent = {
+  id: "evt-application-restored",
+  type: "application.restored",
+  occurredAt: minutesAgo(2),
+  actorName: "Miguel Torres",
+  customerName: "Sofía Jiménez",
+  applicationId: "app-2004",
+  summary: "Miguel Torres restauró la solicitud de Sofía Jiménez",
+  payload: { applicationId: "app-2004", deletionEventId: "evt-application-deleted-restorable" }
+};
+
+export const loanStatusChangedEvent: FeedEvent = {
+  id: "evt-loan-status-changed",
+  type: "loan.status_changed",
+  occurredAt: daysAgo(2),
+  actorName: "Sistema",
+  customerName: "Juan Pérez",
+  loanId: "loan-10001",
+  summary: "El préstamo #10001 de Juan Pérez cambió de estado",
+  payload: { loanId: "loan-10001", from: "current", to: "overdue" }
+};
+
+export const customerCreatedEvent: FeedEvent = {
+  id: "evt-customer-created",
+  type: "customer.created",
+  occurredAt: daysAgo(2),
+  actorName: "Rosa Méndez",
+  customerName: "Karina Solís",
+  summary: "Rosa Méndez creó el cliente Karina Solís",
+  payload: { customerId: "cust-3001" }
+};
+
+/** All twelve catalog specimens, in a stable order — used by the Feed composite story. */
+export const allFeedEvents: FeedEvent[] = [
+  applicationApprovedExceptionEvent,
+  applicationDeletedRestorableEvent,
+  paymentCollectedEvent,
+  applicationRestoredEvent,
+  paymentCollectedWithLateFeeEvent,
+  paymentReversedEvent,
+  applicationApprovedEvent,
+  applicationSignedEvent,
+  applicationConvertedEvent,
+  applicationRejectedEvent,
+  loanStatusChangedEvent,
+  customerCreatedEvent
+];

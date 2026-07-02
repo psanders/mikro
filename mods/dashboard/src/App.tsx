@@ -8,21 +8,34 @@ import { trpc, createTrpcClient } from "./lib/trpc";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { AppUpdater } from "./components/AppUpdater";
-import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/LoginPage";
-import { OverviewPage } from "./pages/OverviewPage";
-import { SolicitudesPage } from "./pages/SolicitudesPage";
-import { SolicitudDetailPage } from "./pages/SolicitudDetailPage";
-import { ClientesPage } from "./pages/ClientesPage";
-import { ClienteDetailPage } from "./pages/ClienteDetailPage";
-import { ContabilidadPage } from "./pages/ContabilidadPage";
-import { TransaccionDetailPage } from "./pages/TransaccionDetailPage";
-import { ModeloPage } from "./pages/ModeloPage";
+import { AccessScreen } from "./founder/AccessScreen";
+import { FounderShell } from "./founder/FounderShell";
+import { FeedScreen } from "./founder/FeedScreen";
+import { BusquedaScreen } from "./founder/BusquedaScreen";
+import { ReportesScreen } from "./founder/ReportesScreen";
 
-/** Renders the authenticated shell, or bounces to login when unauthenticated. */
+function FullscreenLoading() {
+  return (
+    <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-500">
+      Cargando…
+    </div>
+  );
+}
+
+/**
+ * Guards every authenticated route. Unauthenticated users bounce to login.
+ * ADMIN users fall through (via `<Outlet />`) to the founder app; every other
+ * role (COLLECTOR/REVIEWER) sees the access screen instead — the operations UI
+ * is retired, so there is no other authenticated surface for them to reach.
+ */
 function RequireAuth() {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Layout /> : <Navigate to="/login" replace />;
+  const whoami = trpc.whoami.useQuery(undefined, { enabled: isAuthenticated });
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (whoami.isPending) return <FullscreenLoading />;
+  const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
+  return isAdmin ? <Outlet /> : <AccessScreen />;
 }
 
 function AppRoutes() {
@@ -40,21 +53,19 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to="/founder" replace /> : <LoginPage />}
       />
       <Route element={<RequireAuth />}>
-        <Route path="/" element={<Outlet />}>
-          <Route index element={<OverviewPage />} />
-          <Route path="solicitudes" element={<SolicitudesPage />} />
-          <Route path="solicitudes/:id" element={<SolicitudDetailPage />} />
-          <Route path="clientes" element={<ClientesPage />} />
-          <Route path="clientes/:id" element={<ClienteDetailPage />} />
-          <Route path="contabilidad" element={<ContabilidadPage />} />
-          <Route path="contabilidad/:id" element={<TransaccionDetailPage />} />
-          <Route path="modelo" element={<ModeloPage />} />
+        <Route path="/founder" element={<FounderShell />}>
+          <Route index element={<FeedScreen />} />
+          <Route path="buscar" element={<BusquedaScreen />} />
+          <Route path="reportes" element={<ReportesScreen />} />
         </Route>
+        {/* Unknown paths (including any retired operations route) redirect
+            admins to the founder app; the access screen already caught
+            non-admins above. */}
+        <Route path="*" element={<Navigate to="/founder" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
