@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Banknote, NotebookPen, EllipsisVertical } from "lucide-react-native";
 import { colors } from "../../lib/theme";
@@ -18,6 +18,7 @@ import {
   useLocalLateFeePreview,
   useLocalLoanVisit
 } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -83,6 +84,7 @@ export default function PrestamoDetalleScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
   const router = useRouter();
+  const { isPulling, pull } = useSyncContext();
 
   // REVIEWER-only accounts must not see payment/collection data (mikro/#73).
   // Defaults to false (hidden) until roles resolve, so nothing sensitive
@@ -172,7 +174,10 @@ export default function PrestamoDetalleScreen() {
     <View style={styles.screen}>
       <Header title={`Préstamo #${loanId}`} subtitle={subtitle} rightIcon={EllipsisVertical} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         <View style={styles.metaPills}>
           {pills.map((t) => (
             <View key={t} style={styles.metaPill}>

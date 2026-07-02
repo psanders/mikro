@@ -6,7 +6,7 @@
  * `listApplicationEvents` (reviewerProcedure, scoped to one applicationId) —
  * never the business-wide founder feed, and never payment data.
  */
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Clock } from "lucide-react-native";
 import { colors, radii } from "../../../lib/theme";
@@ -38,7 +38,15 @@ export default function SolicitudActividadScreen() {
   return (
     <View style={styles.screen}>
       <Header title="Actividad" subtitle={subtitle} fallbackRoute="/(evaluator)" />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={
+          <RefreshControl
+            refreshing={eventsQuery.isRefetching}
+            onRefresh={() => eventsQuery.refetch()}
+          />
+        }
+      >
         {(appQuery.isPending || eventsQuery.isPending) && (
           <Text style={styles.centerText}>Cargando...</Text>
         )}

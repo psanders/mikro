@@ -14,7 +14,7 @@
  * upload/replace/remove for the cédula sides and the signed contract.
  */
 import { useState, type ReactNode } from "react";
-import { Alert, View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { Alert, View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CreditCard, FileText, Info, Pencil, Clock, ChevronRight } from "lucide-react-native";
 import type { ApplicationScore } from "@mikro/common";
@@ -190,7 +190,18 @@ export default function SolicitudDatosScreen() {
         subtitle={`${name} · ${st.label}`}
         fallbackRoute="/(evaluator)"
       />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={
+          <RefreshControl
+            refreshing={q.isRefetching || eventsQuery.isRefetching}
+            onRefresh={() => {
+              void q.refetch();
+              void eventsQuery.refetch();
+            }}
+          />
+        }
+      >
         <Section
           label="SOLICITANTE"
           onEdit={editHandler("editar-solicitante")}

@@ -16,7 +16,16 @@
  * `deleteApplication`.
  */
 import { useState } from "react";
-import { Alert, View, Text, ScrollView, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+  Alert,
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  RefreshControl
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   CircleCheckBig,
@@ -171,7 +180,12 @@ export default function SolicitudDetailScreen() {
         subtitle={`${name} · ${st.label}`}
         fallbackRoute="/(evaluator)"
       />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={
+          <RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} />
+        }
+      >
         <RailCard label="MIKRO SCORE">
           {app.score != null ? (
             <>

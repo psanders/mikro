@@ -2,7 +2,15 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useMemo } from "react";
-import { View, Text, ScrollView, Pressable, Linking, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Linking,
+  StyleSheet,
+  RefreshControl
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Phone,
@@ -23,6 +31,7 @@ import {
   useLocalCustomerLoans,
   useLocalPaymentsByCustomer
 } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -41,6 +50,7 @@ function formatPaymentDate(d: string | Date): string {
 export default function ClienteDetalleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { isPulling, pull } = useSyncContext();
 
   const { data: c } = useLocalCustomer(id);
   const loansQuery = useLocalCustomerLoans(id);
@@ -67,7 +77,10 @@ export default function ClienteDetalleScreen() {
   return (
     <View style={styles.screen}>
       <Header title="Cliente" rightIcon={Phone} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         <View style={styles.profileCard}>
           <Avatar name={c?.nickname ?? c?.name ?? "..."} size={72} />
           <Text style={styles.profileName}>{c?.nickname ?? c?.name ?? "..."}</Text>

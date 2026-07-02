@@ -2,11 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TextInput, StyleSheet, RefreshControl } from "react-native";
 import { colors } from "../../lib/theme";
 import { Header } from "../../components/ui/Header";
 import { KvRow } from "../../components/ui/KvRow";
 import { useLocalDashboard, useLocalPayments } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -22,6 +23,7 @@ function formatToday(): string {
 
 export default function CuadreScreen() {
   const [countedInput, setCountedInput] = useState("");
+  const { isPulling, pull } = useSyncContext();
 
   const dashboard = useLocalDashboard();
 
@@ -77,7 +79,10 @@ export default function CuadreScreen() {
     <View style={styles.screen}>
       <Header title="Cuadre del día" subtitle={`${formatToday()} · ${collectorName}`} />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>EFECTIVO ESPERADO</Text>
           <View style={styles.summaryAmountRow}>

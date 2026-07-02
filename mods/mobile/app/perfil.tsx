@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Bell, ShieldCheck, LifeBuoy, LogOut } from "lucide-react-native";
@@ -65,7 +65,15 @@ export default function PerfilScreen() {
   return (
     <View style={styles.screen}>
       <Header title="Mi cuenta" />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={dashboard.isRefetching}
+            onRefresh={() => dashboard.refetch()}
+          />
+        }
+      >
         <View style={styles.body}>
           <View style={styles.profileCard}>
             <Avatar name={name} size={60} />

@@ -2,7 +2,15 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  RefreshControl
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Search, History, X, ChevronRight } from "lucide-react-native";
@@ -10,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { colors } from "../../lib/theme";
 import { Avatar } from "../../components/ui/Avatar";
 import { useLocalCustomerSearch } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 const RECENT_KEY = "mikro:recent_searches";
 const MAX_RECENT = 4;
@@ -52,6 +61,7 @@ export default function BuscarScreen() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
   const { recents, add, remove } = useRecentSearches();
+  const { isPulling, pull } = useSyncContext();
 
   const trimmed = query.trim();
   const searchEnabled = trimmed.length >= 2;
@@ -102,7 +112,11 @@ export default function BuscarScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         {!trimmed && recents.length > 0 && (
           <>
             <Text style={styles.sectionLabel}>BÚSQUEDAS RECIENTES</Text>
