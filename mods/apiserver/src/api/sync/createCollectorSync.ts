@@ -77,7 +77,18 @@ export interface CollectorSyncResult {
 }
 
 export function createCollectorSync(client: DbClient) {
-  return async (params: { collectorId: string }): Promise<CollectorSyncResult> => {
+  return async (params: {
+    collectorId: string;
+    /**
+     * Whether the caller may see payment history. False for REVIEWER-only
+     * callers: the local offline cache this snapshot feeds is shared by the
+     * evaluator screens (`cliente/[id]`, `prestamo/[loanId]`), and those must
+     * not surface collected-payment data or balances to Review-only accounts
+     * (mikro/#73). Loan terms (principal, cuota amount, status) still sync —
+     * only the `payments` history is stripped.
+     */
+    includePayments: boolean;
+  }): Promise<CollectorSyncResult> => {
     logger.verbose("collector sync started", { collectorId: params.collectorId });
 
     const [collector, allCustomers] = await Promise.all([
@@ -95,9 +106,7 @@ export function createCollectorSync(client: DbClient) {
             preferredPaymentDay: true
           }
         },
-        payments: {
-          where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } }
-        }
+        payments: { where: { status: { in: ["COMPLETED", "PARTIAL", "PENDING"] } } }
       }
     });
 
@@ -170,19 +179,21 @@ export function createCollectorSync(client: DbClient) {
         customerId: l.customerId,
         createdAt: l.createdAt.toISOString(),
         updatedAt: l.updatedAt.toISOString(),
-        payments: l.payments.map((p) => ({
-          id: p.id,
-          amount: amountToNumber(p.amount),
-          paidAt: p.paidAt.toISOString(),
-          method: p.method,
-          status: p.status,
-          kind: p.kind,
-          linkedPaymentId: p.linkedPaymentId,
-          notes: p.notes,
-          loanId: p.loanId,
-          collectedById: p.collectedById,
-          createdAt: p.createdAt.toISOString()
-        }))
+        payments: params.includePayments
+          ? l.payments.map((p) => ({
+              id: p.id,
+              amount: amountToNumber(p.amount),
+              paidAt: p.paidAt.toISOString(),
+              method: p.method,
+              status: p.status,
+              kind: p.kind,
+              linkedPaymentId: p.linkedPaymentId,
+              notes: p.notes,
+              loanId: p.loanId,
+              collectedById: p.collectedById,
+              createdAt: p.createdAt.toISOString()
+            }))
+          : []
       })),
       loanNotes: loanNoteResults,
       moraConfig: {

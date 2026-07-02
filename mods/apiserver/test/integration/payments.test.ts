@@ -12,6 +12,7 @@ import {
   type TestDb,
   type AuthenticatedCaller
 } from "./setup.js";
+import { appRouter } from "../../src/trpc/index.js";
 
 describe("Payments Integration", () => {
   let db: TestDb;
@@ -489,6 +490,57 @@ describe("Payments Integration", () => {
 
       expect(payments).to.be.an("array");
       expect(payments).to.have.lengthOf(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Authorization — REVIEWER must not see or trigger payment collection
+  // (mikro/#73: createPayment previously used protectedProcedure with no role
+  // guard, so a REVIEWER-only caller could reach it directly).
+  // ---------------------------------------------------------------------------
+
+  describe("collector-only authorization", () => {
+    /** A REVIEWER (non-collector, non-admin) caller for authorization tests. */
+    const reviewerCaller = () =>
+      appRouter.createCaller({
+        db: db as any,
+        isAuthenticated: true,
+        userId: "22222222-2222-4222-8222-222222222222",
+        roles: ["REVIEWER"]
+      });
+
+    async function expectForbidden(promise: Promise<unknown>) {
+      let thrown: { code?: string } | undefined;
+      try {
+        await promise;
+      } catch (err) {
+        thrown = err as { code?: string };
+      }
+      expect(thrown, "expected a rejection").to.not.equal(undefined);
+      expect(thrown!.code).to.equal("FORBIDDEN");
+    }
+
+    it("rejects REVIEWER-only callers on payment collection and reads", async () => {
+      const { customer, loan } = await createCustomerWithLoan();
+      const c = reviewerCaller();
+
+      await expectForbidden(
+        c.createPayment({ loanId: loan.loanId, amount: 650, paidAt: new Date("2026-01-05") })
+      );
+      await expectForbidden(
+        c.previewLateFee({ loanId: loan.loanId, asOf: new Date("2026-01-05") })
+      );
+      await expectForbidden(
+        c.listPayments({ startDate: new Date("2026-01-01"), endDate: new Date("2026-01-31") })
+      );
+      await expectForbidden(
+        c.listPaymentsByCustomer({
+          customerId: customer.id,
+          startDate: new Date("2026-01-01"),
+          endDate: new Date("2026-01-31")
+        })
+      );
+      await expectForbidden(c.listPaymentsByLoanId({ loanId: loan.loanId }));
     });
   });
 });

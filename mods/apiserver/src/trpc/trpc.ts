@@ -122,3 +122,17 @@ export const reviewerProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next();
 });
+
+/**
+ * Collector procedure - requires a valid JWT whose user has the ADMIN or
+ * COLLECTOR role. Use this for payment-collection actions and reads (payment
+ * amounts, balances, receipts): the REVIEWER role must not see or trigger
+ * these — a REVIEWER-only caller was previously able to reach `createPayment`
+ * because it only used `protectedProcedure` (see mikro/#73).
+ */
+export const collectorProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.roles.includes("ADMIN") && !ctx.roles.includes("COLLECTOR")) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Collector or admin role required" });
+  }
+  return next();
+});

@@ -69,7 +69,11 @@ describe("Chat Integration", () => {
   async function createTestUser(name = "Chat Test User") {
     return caller.createUser({
       name,
-      phone: `+${Date.now()}`,
+      // `Date.now()` collides when called twice in the same millisecond (e.g.
+      // back-to-back `createTestUser("User 1")` / `createTestUser("User 2")`
+      // calls), causing a flaky unique-phone constraint failure — use the
+      // same monotonic NANP helper as `createTestCustomer` instead.
+      phone: chatNanp(),
       role: "ADMIN"
     });
   }

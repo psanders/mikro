@@ -76,7 +76,13 @@ import {
   listCustomerTagsSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure, reviewerProcedure, adminProcedure } from "../trpc.js";
+import {
+  router,
+  protectedProcedure,
+  reviewerProcedure,
+  adminProcedure,
+  collectorProcedure
+} from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
 import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
@@ -241,7 +247,8 @@ export const protectedRouter = router({
 
   collectorSync: protectedProcedure.query(async ({ ctx }) => {
     const fn = createCollectorSync(ctx.db);
-    return fn({ collectorId: ctx.userId });
+    const includePayments = ctx.roles.includes("ADMIN") || ctx.roles.includes("COLLECTOR");
+    return fn({ collectorId: ctx.userId, includePayments });
   }),
 
   // ==================== Customer procedures ====================
@@ -735,9 +742,10 @@ export const protectedRouter = router({
   // ==================== Payment procedures ====================
 
   /**
-   * Create a new payment for a loan.
+   * Create a new payment for a loan. Collector/admin only — REVIEWER must
+   * not be able to trigger collections (mikro/#73).
    */
-  createPayment: protectedProcedure
+  createPayment: collectorProcedure
     .meta({ event: "payment.collected" })
     .input(createPaymentSchema)
     .mutation(async ({ ctx, input }) => {
@@ -762,16 +770,17 @@ export const protectedRouter = router({
 
   /**
    * Preview accrued mora (past-due fee) for a loan without recording a payment.
+   * Collector/admin only (mikro/#73).
    */
-  previewLateFee: protectedProcedure.input(previewLateFeeSchema).query(async ({ ctx, input }) => {
+  previewLateFee: collectorProcedure.input(previewLateFeeSchema).query(async ({ ctx, input }) => {
     const fn = createPreviewLateFee(ctx.db);
     return fn(input);
   }),
 
   /**
-   * Reverse a payment.
+   * Reverse a payment. Collector/admin only (mikro/#73).
    */
-  reversePayment: protectedProcedure
+  reversePayment: collectorProcedure
     .meta({ event: "payment.reversed" })
     .input(reversePaymentSchema)
     .mutation(async ({ ctx, input }) => {
@@ -780,17 +789,19 @@ export const protectedRouter = router({
     }),
 
   /**
-   * List all payments within a date range.
+   * List all payments within a date range. Collector/admin only (mikro/#73).
    */
-  listPayments: protectedProcedure.input(listPaymentsSchema).query(async ({ ctx, input }) => {
+  listPayments: collectorProcedure.input(listPaymentsSchema).query(async ({ ctx, input }) => {
     const fn = createListPayments(ctx.db);
     return fn(input);
   }),
 
   /**
    * List payments for a specific customer's loans within a date range.
+   * Collector/admin only — payment data must not be visible to REVIEWER
+   * (mikro/#73).
    */
-  listPaymentsByCustomer: protectedProcedure
+  listPaymentsByCustomer: collectorProcedure
     .input(listPaymentsByCustomerSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByCustomer(ctx.db);
@@ -800,8 +811,9 @@ export const protectedRouter = router({
   /**
    * List payments for a specific loan by numeric loan ID (e.g., 10000, 10001).
    * By default only shows COMPLETED payments unless showReversed is true.
+   * Collector/admin only (mikro/#73).
    */
-  listPaymentsByLoanId: protectedProcedure
+  listPaymentsByLoanId: collectorProcedure
     .input(listPaymentsByLoanIdSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByLoanId(ctx.db);
@@ -813,8 +825,9 @@ export const protectedRouter = router({
   /**
    * Generate a receipt for a payment as a PNG image.
    * Returns base64-encoded PNG, JWT token, and receipt metadata.
+   * Collector/admin only (mikro/#73).
    */
-  generateReceipt: protectedProcedure
+  generateReceipt: collectorProcedure
     .input(generateReceiptSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateReceipt({ db: ctx.db });
