@@ -593,7 +593,49 @@ describe("Founder Feed Integration", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 6.4 listApplicationEvents (mikro/#67) — reviewer-scoped, single-application
+  // 6.4 promoteApplication (mikro/#72) — the mobile "Borradores" queue's
+  // promote action. The transition/scoring logic itself predates this issue;
+  // this covers the mobile-facing entry point end to end for the first time.
+  // ---------------------------------------------------------------------------
+
+  describe("promoteApplication", () => {
+    it("promotes a DRAFT to RECEIVED and scores it", async () => {
+      const app = await makeApplication({ status: "DRAFT" });
+
+      const promoted = await caller.promoteApplication({ id: app.id });
+
+      expect(promoted.status).to.equal("RECEIVED");
+      expect(promoted.score).to.be.a("number");
+      expect(promoted.submittedAt).to.not.equal(null);
+    });
+
+    it("rejects promoting a non-DRAFT application", async () => {
+      const app = await makeApplication({ status: "RECEIVED" });
+      let thrown: { code?: string } | undefined;
+      try {
+        await caller.promoteApplication({ id: app.id });
+      } catch (err) {
+        thrown = err as { code?: string };
+      }
+      expect(thrown, "expected a rejection").to.not.equal(undefined);
+      expect(thrown!.code).to.equal("CONFLICT");
+    });
+
+    it("rejects COLLECTOR-only callers", async () => {
+      const app = await makeApplication({ status: "DRAFT" });
+      let thrown: { code?: string } | undefined;
+      try {
+        await nonAdminCaller().promoteApplication({ id: app.id });
+      } catch (err) {
+        thrown = err as { code?: string };
+      }
+      expect(thrown, "expected a rejection").to.not.equal(undefined);
+      expect(thrown!.code).to.equal("FORBIDDEN");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // 6.5 listApplicationEvents (mikro/#67) — reviewer-scoped, single-application
   // activity feed, distinct from the admin-only business-wide feed above.
   // ---------------------------------------------------------------------------
 

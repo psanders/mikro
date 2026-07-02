@@ -102,9 +102,18 @@ export default function SolicitudDetailScreen() {
     onSuccess: noteRefresh,
     onError: (err) => Alert.alert("Error", `No se pudo reabrir la solicitud. ${err.message}`)
   });
+  const promote = trpc.promoteApplication.useMutation({
+    onSuccess: refresh,
+    onError: (err) => Alert.alert("Error", `No se pudo promover el borrador. ${err.message}`)
+  });
   const upload = trpc.uploadSignedContract.useMutation({ onSuccess: refresh });
   const busy =
-    claim.isPending || approve.isPending || reopen.isPending || upload.isPending || capturing;
+    claim.isPending ||
+    approve.isPending ||
+    reopen.isPending ||
+    promote.isPending ||
+    upload.isPending ||
+    capturing;
 
   async function handleUploadSignedContract() {
     setCapturing(true);
@@ -267,6 +276,22 @@ export default function SolicitudDetailScreen() {
             </>
           )}
         </RailCard>
+
+        {actions.canPromote && (
+          <RailCard label="BORRADOR">
+            <Text style={styles.mutedText}>
+              Esta solicitud está incompleta. Complétala con el solicitante y promuévela a la cola
+              de evaluación para poder revisarla.
+            </Text>
+            <BtnCta
+              label="Promover a cola"
+              icon={ArrowRight}
+              color={colors.brand.blue.primary}
+              disabled={busy}
+              onPress={() => promote.mutate({ id })}
+            />
+          </RailCard>
+        )}
 
         {(actions.canApprove || actions.canReject || actions.canClaim) && (
           <RailCard label="REVISIÓN">
