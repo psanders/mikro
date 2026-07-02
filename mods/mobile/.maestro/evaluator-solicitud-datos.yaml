@@ -1,0 +1,88 @@
+# Evaluator — Datos de la solicitud: flat sections + per-section edit (#63, #66)
+#
+# Covers: opening a solicitud from the queue, that "Datos de la solicitud"
+# renders all five sections flat/always-expanded (body content visible without
+# expanding — #63), that sections expose "Editar" links top and bottom (#66),
+# and that a section edit round-trips through updateApplication and the datos
+# screen reflects the change.
+#
+# REQUIRES an e2e build: EXPO_PUBLIC_E2E bakes the fake-login bridge
+# (app/index.tsx), the in-memory tRPC fixture (lib/e2eMockLink.ts, seeded with
+# one IN_REVIEW application id "e2e-app-0001"), and the camera stub. Public env
+# is inlined at build time, so build BEFORE running:
+#
+#   EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_E2E_ROLE=REVIEWER npx expo run:ios --port 8082
+#   maestro test .maestro/evaluator-solicitud-datos.yaml
+appId: do.mikro.app
+---
+# Dev-client build: load the e2e bundle directly via the dev-launcher deep link.
+# (clearState would drop the saved packager URL and strand the app on the
+# dev-client server picker.) A fresh load re-runs fake login and re-seeds the
+# in-memory fixture, so no clearState is needed for isolation. Assumes the e2e
+# Metro is on :8082 per the build command in this header.
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+# A dev build shows the expo-dev-client onboarding sheet on first launch — dismiss if present.
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+
+# Open the seeded application from the queue.
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+- tapOn:
+    id: "solicitud-e2e-app-0001"
+- extendedWaitUntil:
+    visible: "MIKRO SCORE"
+    timeout: 15000
+
+# Into the full-data screen (a bottom ListTile — scroll to it).
+- scrollUntilVisible:
+    element:
+      text: "Ver datos de la solicitud"
+    direction: DOWN
+- tapOn: "Ver datos de la solicitud"
+
+# #63: sections render, and body content is visible without expanding.
+- extendedWaitUntil:
+    visible: "SOLICITANTE"
+    timeout: 15000
+- assertVisible: "Tipo de negocio" # a NEGOCIO body row — proves it's expanded, no collapse control
+# #66: the first section carries an "Editar" affordance...
+- assertVisible:
+    id: "edit-solicitante"
+# ...and so does the last one (scroll down to it).
+- scrollUntilVisible:
+    element:
+      id: "edit-vivienda"
+    direction: DOWN
+- assertVisible: "VIVIENDA"
+
+# #66: edit the Solicitante section (shared SolicitudSectionEdit screen), save,
+# and confirm the datos screen reflects the change.
+- scrollUntilVisible:
+    element:
+      id: "edit-solicitante"
+    direction: UP
+- tapOn:
+    id: "edit-solicitante"
+- extendedWaitUntil:
+    visible: "Editar · Solicitante"
+    timeout: 15000
+- tapOn:
+    id: "field-firstName"
+- eraseText
+- inputText: "Ramona"
+- hideKeyboard
+- tapOn: "Guardar cambios"
+- extendedWaitUntil:
+    visible: "Datos de la solicitud"
+    timeout: 15000
+# The datos query refetches after the edit — wait for the new name to render.
+- extendedWaitUntil:
+    visible: "Ramona Objío"
+    timeout: 15000

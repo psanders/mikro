@@ -7,6 +7,8 @@ import type { AppRouter } from "@mikro/apiserver";
 import { QueryClient } from "@tanstack/react-query";
 import { getToken } from "./auth";
 import { authErrorLink } from "./authErrorLink";
+import { IS_E2E } from "./e2e";
+import { e2eMockLink } from "./e2eMockLink";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -24,14 +26,16 @@ export const queryClient = new QueryClient({
 });
 
 export const trpcClient = trpc.createClient({
-  links: [
-    authErrorLink,
-    httpBatchLink({
-      url: `${API_URL}/trpc`,
-      async headers() {
-        const token = await getToken();
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      }
-    })
-  ]
+  links: IS_E2E
+    ? [e2eMockLink]
+    : [
+        authErrorLink,
+        httpBatchLink({
+          url: `${API_URL}/trpc`,
+          async headers() {
+            const token = await getToken();
+            return token ? { Authorization: `Bearer ${token}` } : {};
+          }
+        })
+      ]
 });

@@ -1,0 +1,54 @@
+# Evaluator — Descartar solicitud (#64)
+#
+# Covers: the "Descartar solicitud" row opens the 04j confirm screen, confirming
+# calls deleteApplication (mocked), and the app returns to the evaluator home
+# with the application gone from the queue.
+#
+# REQUIRES an e2e build (see evaluator-solicitud-datos.yaml header):
+#   EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_E2E_ROLE=REVIEWER npx expo run:ios --port 8082
+#   maestro test .maestro/evaluator-descartar.yaml
+appId: do.mikro.app
+---
+# Dev-client build: load the e2e bundle directly via the dev-launcher deep link
+# (see evaluator-solicitud-datos.yaml header). Assumes Metro on :8082.
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+# A dev build shows the expo-dev-client onboarding sheet on first launch — dismiss if present.
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+- tapOn:
+    id: "solicitud-e2e-app-0001"
+- extendedWaitUntil:
+    visible: "MIKRO SCORE"
+    timeout: 15000
+
+# The discard row is at the bottom of the detail screen — scroll to it, then
+# open the confirm screen and confirm.
+- scrollUntilVisible:
+    element:
+      id: "discard-solicitud"
+    direction: DOWN
+- tapOn:
+    id: "discard-solicitud"
+- extendedWaitUntil:
+    visible: "Se elimina de forma permanente. No se puede deshacer."
+    timeout: 15000
+- tapOn: "Eliminar"
+
+# Back on the evaluator home; the application is gone from the queue.
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 15000
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+- assertNotVisible:
+    id: "solicitud-e2e-app-0001"
