@@ -7,7 +7,7 @@
  * operations Layout: an admin on any `/founder` route sees only this chrome.
  */
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FileText, House, Landmark, Search, TriangleAlert } from "lucide-react";
+import { FileText, House, ShipWheel, Search, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
@@ -67,7 +67,7 @@ export function FounderShell() {
       <div className="flex h-dvh w-full bg-white text-[#14254A]">
         <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-white py-[18px]">
           <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#1F4AA8] text-white">
-            <Landmark size={16} strokeWidth={2} />
+            <ShipWheel size={16} strokeWidth={2} />
           </div>
           <div className="h-[10px]" />
           <RailItem

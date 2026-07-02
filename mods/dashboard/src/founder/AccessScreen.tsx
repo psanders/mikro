@@ -7,7 +7,7 @@
  * FeedEmptyState/FeedErrorState's centered-card idiom) rather than the old ops
  * chrome.
  */
-import { Landmark, LogOut, Smartphone } from "lucide-react";
+import { ShipWheel, LogOut, Smartphone } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export function AccessScreen() {
@@ -18,7 +18,7 @@ export function AccessScreen() {
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
         <div className="flex items-center gap-3">
           <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#1F4AA8] text-white">
-            <Landmark size={16} strokeWidth={2} />
+            <ShipWheel size={16} strokeWidth={2} />
           </div>
           <span className="text-[15px] font-bold tracking-[-0.3px]">mikro</span>
         </div>
