@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { formatMoney } from "@mikro/common";
+import { formatMoney, type ApplicationStatus } from "@mikro/common";
 import { input, password, select, number } from "@inquirer/prompts";
 
 /**
@@ -361,6 +361,53 @@ export async function promptCustomerSelectIfMissing(
     choices: customers.map((c) => ({
       name: `${c.name}${c.nickname ? ` (${c.nickname})` : ""} — ${c.phone} (${c.id})`,
       value: c.id
+    }))
+  });
+  return choice;
+}
+
+type ListApplicationsClient = {
+  listApplications: {
+    query: (input: { status?: ApplicationStatus; limit?: number }) => Promise<
+      Array<{
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+        status: string;
+      }>
+    >;
+  };
+};
+
+/**
+ * Helper to prompt for loan-application selection if a positional arg is
+ * missing. `listApplications` only accepts one status per call, so this
+ * shows every status by default; pass `status` to narrow the picker (e.g.
+ * "RECEIVED" for `claim`, "DRAFT" for a promote-style flow).
+ */
+export async function promptApplicationSelectIfMissing(
+  client: ListApplicationsClient,
+  value: string | undefined,
+  message: string,
+  argName: string,
+  options?: { status?: ApplicationStatus }
+): Promise<string> {
+  if (value !== undefined && value !== "") {
+    return value;
+  }
+  if (!process.stdout.isTTY) {
+    throw new Error(`Missing required argument: ${argName}`);
+  }
+  const apps = await client.listApplications.query({ status: options?.status, limit: 100 });
+  if (apps.length === 0) {
+    throw new Error("No applications found. Cannot prompt for selection.");
+  }
+  const choice = await select({
+    message,
+    choices: apps.map((a) => ({
+      name: `${[a.firstName, a.lastName].filter(Boolean).join(" ") || "(no name)"} — ${a.phone ?? "no phone"} [${a.status}] (${a.id})`,
+      value: a.id
     }))
   });
   return choice;
