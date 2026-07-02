@@ -1,0 +1,44 @@
+# Admin — role label + Collector/Reviewer switch (#70)
+#
+# Covers: an ADMIN-only account (no explicit COLLECTOR row) lands on the
+# evaluator surface by default, Perfil shows the actual role ("Administrador")
+# instead of a hardcoded "Cobrador", the mode switch is present (isDualRole
+# now treats ADMIN as dual-role), and switching to "Cobrador" routes to the
+# collector tabs and updates the label to match.
+#
+# REQUIRES an e2e build with the ADMIN fake token:
+#   EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_E2E_ROLE=ADMIN npx expo run:ios --port 8082
+#   maestro test .maestro/admin-role-switch.yaml
+appId: do.mikro.app
+---
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+- tapOn:
+    text: "Continue"
+    optional: true
+# ADMIN-only defaults to the evaluator home (dual-role, "evaluator" nav mode by default).
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+
+- tapOn:
+    id: "avatar-perfil"
+- extendedWaitUntil:
+    visible: "Mi cuenta"
+    timeout: 15000
+- assertVisible: "Administrador"
+- assertVisible: "MODO"
+- assertVisible: "Evaluador"
+- assertVisible: "Cobrador"
+
+# Switch to Cobrador — routes to the collector tabs and the label follows the active mode.
+- tapOn: "Cobrador"
+- extendedWaitUntil:
+    visible: "Próximas visitas"
+    timeout: 15000
+- tapOn:
+    id: "avatar-perfil"
+- extendedWaitUntil:
+    visible: "Mi cuenta"
+    timeout: 15000
+- assertVisible: "Cobrador"

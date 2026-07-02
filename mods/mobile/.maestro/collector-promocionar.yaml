@@ -1,0 +1,37 @@
+# Collector — Enviar promoción (#68)
+#
+# Covers: the native "Promocionar" quick action on the collector Home screen
+# (replacing the retired WhatsApp photo -> vision -> button-reply flow),
+# entering a phone number, and sending — the sendPromo mutation round trip
+# and success confirmation, no photo capture or computer vision involved.
+#
+# REQUIRES an e2e build (default role is COLLECTOR, so no EXPO_PUBLIC_E2E_ROLE
+# override is needed — see evaluator-solicitud-datos.yaml header):
+#   EXPO_PUBLIC_E2E=1 npx expo run:ios --port 8082
+#   maestro test .maestro/collector-promocionar.yaml
+appId: do.mikro.app
+---
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: "Próximas visitas"
+    timeout: 30000
+
+- tapOn: "Promocionar"
+- extendedWaitUntil:
+    visible: "Nueva promoción"
+    timeout: 15000
+
+- tapOn:
+    id: "promo-phone-input"
+- inputText: "8095551234"
+- hideKeyboard
+- tapOn: "Enviar promoción"
+
+- extendedWaitUntil:
+    visible: "Promoción enviada"
+    timeout: 15000
+- tapOn: "OK"

@@ -7,18 +7,27 @@ import { getToken, getPin, setToken, setUserName } from "../lib/auth";
 import { resolveHomeRoute } from "../lib/navigation";
 
 const E2E = process.env.EXPO_PUBLIC_E2E === "1";
-// Two well-formed (header.payload.sig) fake JWTs, distinguished only by their
-// `roles` claim, so `decodeRolesFromToken`/`resolveHomeRoute` route exactly as
-// they would for a real token — no backend call. EXPO_PUBLIC_E2E_ROLE picks
-// which one a Maestro flow lands on (defaults to COLLECTOR, preserving the
-// pre-existing e2e login-skip behavior). See .maestro/*.yaml.
+// Three well-formed (header.payload.sig) fake JWTs, distinguished only by
+// their `roles` claim, so `decodeRolesFromToken`/`resolveHomeRoute` route
+// exactly as they would for a real token — no backend call. EXPO_PUBLIC_E2E_ROLE
+// picks which one a Maestro flow lands on (defaults to COLLECTOR, preserving
+// the pre-existing e2e login-skip behavior). ADMIN exercises the dual-role
+// switch (mikro/#70) without needing a COLLECTOR+REVIEWER combo token. See
+// .maestro/*.yaml.
 const FAKE_TOKENS = {
   COLLECTOR:
     "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LWNvbGxlY3RvciIsInJvbGVzIjpbIkNPTExFQ1RPUiJdfQ.e2e",
   REVIEWER:
-    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LXJldmlld2VyIiwicm9sZXMiOlsiUkVWSUVXRVIiXX0.e2e"
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LXJldmlld2VyIiwicm9sZXMiOlsiUkVWSUVXRVIiXX0.e2e",
+  ADMIN:
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0LWFkbWluIiwicm9sZXMiOlsiQURNSU4iXX0.e2e"
 } as const;
-const E2E_ROLE = process.env.EXPO_PUBLIC_E2E_ROLE === "REVIEWER" ? "REVIEWER" : "COLLECTOR";
+const E2E_ROLE =
+  process.env.EXPO_PUBLIC_E2E_ROLE === "REVIEWER"
+    ? "REVIEWER"
+    : process.env.EXPO_PUBLIC_E2E_ROLE === "ADMIN"
+      ? "ADMIN"
+      : "COLLECTOR";
 const FAKE_TOKEN = FAKE_TOKENS[E2E_ROLE];
 
 export default function Index() {

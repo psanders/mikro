@@ -46,7 +46,7 @@ export default function PromocionarScreen() {
 
   return (
     <View style={styles.screen}>
-      <Header title="Enviar promoción" backMode="close" />
+      <Header title="Nueva promoción" backMode="close" />
       <ScrollView contentContainerStyle={styles.body}>
         <Text style={styles.hint}>
           Envía la promoción de solicitud de préstamo directamente al teléfono de un cliente nuevo —

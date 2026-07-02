@@ -116,7 +116,11 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.greeting}>Hola, {firstName}.</Text>
         </View>
-        <Pressable style={styles.avatarCircle} onPress={() => router.push("/perfil")}>
+        <Pressable
+          style={styles.avatarCircle}
+          onPress={() => router.push("/perfil")}
+          testID="avatar-perfil"
+        >
           <Text style={styles.avatarText}>
             {data?.collector.name
               .split(" ")
