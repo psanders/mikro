@@ -146,6 +146,20 @@ export const listFeedEventsSchema = z.object({
   to: z.coerce.date().optional()
 });
 
+/**
+ * Reviewer-scoped activity query for a single application (mikro/#67):
+ * unlike `listFeedEvents` (admin-only, business-wide), this filters to one
+ * `applicationId` so REVIEWER can see that application's own history —
+ * approve/reject/sign/convert/delete/restore — without the broader founder
+ * feed. Application-lifecycle events never carry payment data (payment.*
+ * events key off `loanId`, not `applicationId`), so this stays payment-safe
+ * for the Reviewer role by construction (see mikro/#73).
+ */
+export const listApplicationEventsSchema = z.object({
+  applicationId: z.uuid(),
+  limit: z.number().int().positive().max(50).optional()
+});
+
 export const restoreApplicationSchema = z.object({
   // The application.deleted event to restore from.
   deletionEventId: z.uuid()
