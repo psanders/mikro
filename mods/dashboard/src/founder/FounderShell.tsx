@@ -11,6 +11,7 @@ import { FileText, House, ShipWheel, Search, TriangleAlert } from "lucide-react"
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
+import { BugReportButton } from "../components/BugReportButton";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 
@@ -90,6 +91,7 @@ export function FounderShell() {
             onClick={() => navigate("/founder/reportes")}
           />
           <div className="flex-1" />
+          <BugReportButton />
           <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8]">
             {initials}
           </div>

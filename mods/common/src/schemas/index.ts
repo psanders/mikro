@@ -216,6 +216,14 @@ export {
 } from "./receipt.js";
 
 export {
+  submitBugReportSchema,
+  MAX_BUG_REPORT_VIDEO_BYTES,
+  MAX_BUG_REPORT_SCREENSHOT_BYTES,
+  type SubmitBugReportInput,
+  type SubmitBugReportResult
+} from "./bugReport.js";
+
+export {
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
   generateDefaultedReportSchema,

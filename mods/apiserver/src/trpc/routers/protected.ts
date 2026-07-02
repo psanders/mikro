@@ -168,7 +168,10 @@ import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNot
 import {
   createSendWhatsAppMessage,
   createWhatsAppClient,
-  getWhatsAppPromoTemplate
+  getWhatsAppPromoTemplate,
+  getDeepgramApiKey,
+  createChatModel,
+  getLLMConfig
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
@@ -221,6 +224,11 @@ import {
   setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
 } from "../../api/copilot/index.js";
+// Bug report schema + API function
+import { submitBugReportSchema, getConfig } from "@mikro/common";
+import { createSubmitBugReport } from "../../api/bugReports/createSubmitBugReport.js";
+import { createTranscribeVoiceNote } from "../../voice/createTranscribeVoiceNote.js";
+import { Octokit } from "@octokit/rest";
 // Accounting API functions
 import {
   createCreateAccount,
@@ -235,6 +243,12 @@ import {
   createGetTransaction,
   createGetTransactionAttachment
 } from "../../api/accounting/index.js";
+
+// In-memory per-user cooldown for submitBugReport (mikro/#69) — keeps a
+// stuck client from spamming the target repo with issues. Not persisted:
+// a server restart resets it, which is fine for a spam guard, not a hard limit.
+const bugReportRateLimit = new Map<string, number>();
+const BUG_REPORT_RATE_LIMIT_MS = 60 * 1000;
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -753,6 +767,49 @@ export const protectedRouter = router({
           : null;
     return sendFn({ phone: e164, flowToken: randomUUID() });
   }),
+
+  /**
+   * File a bug report from an in-app screen+mic recording (mikro/#69).
+   * Available to any authenticated user, rate-limited per user to keep a
+   * stuck client (or a mis-click loop) from spamming the target repo with
+   * issues — one report per user per BUG_REPORT_RATE_LIMIT_MS.
+   */
+  submitBugReport: protectedProcedure
+    .input(submitBugReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const last = bugReportRateLimit.get(ctx.userId);
+      if (last && Date.now() - last < BUG_REPORT_RATE_LIMIT_MS) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Espera un momento antes de enviar otro reporte."
+        });
+      }
+      bugReportRateLimit.set(ctx.userId, Date.now());
+
+      const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
+      const cfg = getConfig();
+      const deepgramApiKey = getDeepgramApiKey();
+      if (!deepgramApiKey) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Bug reporting is not configured (voiceNotes.deepgramApiKey is empty)."
+        });
+      }
+      if (!cfg.githubBugReport.token) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Bug reporting is not configured (githubBugReport.token is empty)."
+        });
+      }
+
+      const fn = createSubmitBugReport({
+        transcribe: createTranscribeVoiceNote(deepgramApiKey),
+        createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+        octokit: new Octokit({ auth: cfg.githubBugReport.token }),
+        repo: cfg.githubBugReport.repo
+      });
+      return fn(input, { userId: ctx.userId, name: user?.name ?? "Usuario Mikro" });
+    }),
 
   // ==================== Payment procedures ====================
 
