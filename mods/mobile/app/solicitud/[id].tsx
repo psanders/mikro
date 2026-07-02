@@ -11,9 +11,9 @@
  * cards render.
  *
  * Claim/Approve/Reject-navigation/contract-generate-navigation/camera-upload/
- * convert-navigation/reopen are wired here (task groups 6-8). The "Descartar
- * solicitud" discard flow isn't scoped to any task group yet, so it's still a
- * stub (does not call `deleteApplication`).
+ * convert-navigation/reopen are wired here (task groups 6-8). "Descartar
+ * solicitud" routes to the `04j` confirm screen (`descartar.tsx`), which calls
+ * `deleteApplication`.
  */
 import { useState } from "react";
 import { Alert, View, Text, ScrollView, TextInput, Pressable, StyleSheet } from "react-native";
@@ -96,13 +96,6 @@ export default function SolicitudDetailScreen() {
   const upload = trpc.uploadSignedContract.useMutation({ onSuccess: refresh });
   const busy =
     claim.isPending || approve.isPending || reopen.isPending || upload.isPending || capturing;
-
-  function handleDiscard() {
-    // TODO: no discard/delete task group exists yet. `deleteApplication`
-    // already exists on the backend (used by the desktop rail's "Descartar
-    // solicitud"), but per this pass's scope we don't call it here.
-    Alert.alert("Próximamente", "Esta acción aún no está disponible en la app móvil.");
-  }
 
   async function handleUploadSignedContract() {
     setCapturing(true);
@@ -389,7 +382,11 @@ export default function SolicitudDetailScreen() {
         )}
 
         {app.status !== "CONVERTED" && (
-          <Pressable style={styles.discard} onPress={handleDiscard} testID="discard-solicitud">
+          <Pressable
+            style={styles.discard}
+            onPress={() => router.push(`/solicitud/${id}/descartar`)}
+            testID="discard-solicitud"
+          >
             <Trash2 size={15} color={colors.text.secondary} strokeWidth={2} />
             <Text style={styles.discardText}>Descartar solicitud</Text>
           </Pressable>

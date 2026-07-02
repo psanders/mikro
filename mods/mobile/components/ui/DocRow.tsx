@@ -14,6 +14,8 @@ interface DocRowProps {
   onPress?: () => void;
   onRemove?: () => void;
   testID?: string;
+  actionTestID?: string;
+  removeTestID?: string;
 }
 
 export function DocRow({
@@ -23,7 +25,9 @@ export function DocRow({
   uploaded,
   onPress,
   onRemove,
-  testID
+  testID,
+  actionTestID,
+  removeTestID
 }: DocRowProps) {
   return (
     <View style={styles.container} testID={testID}>
@@ -31,11 +35,11 @@ export function DocRow({
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
-      <Pressable onPress={onPress} hitSlop={8}>
+      <Pressable onPress={onPress} hitSlop={8} testID={actionTestID}>
         <Text style={styles.action}>{actionLabel}</Text>
       </Pressable>
       {uploaded && (
-        <Pressable onPress={onRemove} hitSlop={8}>
+        <Pressable onPress={onRemove} hitSlop={8} testID={removeTestID}>
           <X size={14} color="#697A93" strokeWidth={2} />
         </Pressable>
       )}

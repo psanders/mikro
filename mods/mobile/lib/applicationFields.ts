@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Mobile port of the "Negocio" section of the editable field config used by
- * the desktop edit modal (`mods/dashboard/src/lib/applicationFields.ts`).
- * Only the Negocio section is ported: "tap-a-section-to-edit" (task 5.1) is
- * scoped to the Negocio section per the locked Pencil node `o1Cx54`. Option
- * values/labels are copied verbatim from the desktop file so patches sent to
- * `updateApplication` keep matching the deterministic scoring engine's inputs.
+ * Mobile port of the editable field config used by the desktop edit modal
+ * (`mods/dashboard/src/lib/applicationFields.ts`). Each "tap-a-section-to-edit"
+ * screen (Solicitante, Negocio, Crédito, Referencias, Vivienda) renders its
+ * field array here. Option values/labels are copied verbatim from the desktop
+ * file so patches sent to `updateApplication` keep matching the deterministic
+ * scoring engine's inputs.
  */
 export interface FieldOption {
   value: string;
@@ -16,10 +16,10 @@ export interface FieldOption {
 export interface FieldDef {
   key: string;
   label: string;
-  type: "text" | "select";
+  type: "text" | "date" | "select";
   options?: FieldOption[];
-  /** Masked/validated input (not used by the Negocio section beyond a plain phone field). */
-  format?: "phone";
+  /** Masked/validated input (Dominican cédula or phone). */
+  format?: "phone" | "cedula";
 }
 
 const opt = (xs: string[]): FieldOption[] => xs.map((x) => ({ value: x, label: x }));
@@ -82,6 +82,99 @@ export const TIPO_NEGOCIO: FieldOption[] = [
   { value: "PESCA_ARTESANAL", label: "Pesca artesanal" },
   { value: "CONSTRUCCION_PEQUENA", label: "Construcción independiente pequeña" },
   { value: "OTRO", label: "Otro" }
+];
+
+const ESTADO_CIVIL = opt(["Soltero(a)", "Casado(a)", "Unión libre", "Divorciado(a)", "Viudo(a)"]);
+const PLAZO = opt(["10 semanas", "12 semanas", "15 semanas", "18 semanas"]);
+const PROPOSITO = opt([
+  "Capital de trabajo",
+  "Compra de inventario / mercancía",
+  "Compra de equipos / maquinaria",
+  "Remodelación / ampliación del local",
+  "Compra o reparación de vehículo de trabajo",
+  "Pago a proveedores",
+  "Expansión / nueva sucursal",
+  "Consolidación de deudas del negocio",
+  "Otro"
+]);
+const TIPO_VIVIENDA = opt(["Propia", "Alquilada", "Familiar", "Otra"]);
+const TIEMPO_RESIDIENDO = opt([
+  "Menos de 1 año",
+  "1 a 3 años",
+  "3 a 5 años",
+  "5 a 10 años",
+  "Más de 10 años"
+]);
+
+const PROVINCIA: FieldOption[] = (
+  [
+    ["AZUA", "Azua"],
+    ["BAHORUCO", "Bahoruco"],
+    ["BARAHONA", "Barahona"],
+    ["DAJABON", "Dajabón"],
+    ["DISTRITO_NACIONAL", "Distrito Nacional"],
+    ["DUARTE", "Duarte"],
+    ["ELIAS_PINA", "Elías Piña"],
+    ["EL_SEIBO", "El Seibo"],
+    ["ESPAILLAT", "Espaillat"],
+    ["HATO_MAYOR", "Hato Mayor"],
+    ["HERMANAS_MIRABAL", "Hermanas Mirabal"],
+    ["INDEPENDENCIA", "Independencia"],
+    ["LA_ALTAGRACIA", "La Altagracia"],
+    ["LA_ROMANA", "La Romana"],
+    ["LA_VEGA", "La Vega"],
+    ["MARIA_TRINIDAD_SANCHEZ", "María Trinidad Sánchez"],
+    ["MONSENOR_NOUEL", "Monseñor Nouel"],
+    ["MONTE_CRISTI", "Monte Cristi"],
+    ["MONTE_PLATA", "Monte Plata"],
+    ["PEDERNALES", "Pedernales"],
+    ["PERAVIA", "Peravia"],
+    ["PUERTO_PLATA", "Puerto Plata"],
+    ["SAMANA", "Samaná"],
+    ["SAN_CRISTOBAL", "San Cristóbal"],
+    ["SAN_JOSE_DE_OCOA", "San José de Ocoa"],
+    ["SAN_JUAN", "San Juan"],
+    ["SAN_PEDRO_DE_MACORIS", "San Pedro de Macorís"],
+    ["SANCHEZ_RAMIREZ", "Sánchez Ramírez"],
+    ["SANTIAGO", "Santiago"],
+    ["SANTIAGO_RODRIGUEZ", "Santiago Rodríguez"],
+    ["SANTO_DOMINGO", "Santo Domingo"],
+    ["VALVERDE", "Valverde"]
+  ] as const
+).map(([value, label]) => ({ value, label }));
+
+/** Fields for the "Editar · Solicitante" screen (Pencil `Il9kN`). */
+export const SOLICITANTE_FIELDS: FieldDef[] = [
+  { key: "firstName", label: "Nombre(s)", type: "text" },
+  { key: "lastName", label: "Apellido(s)", type: "text" },
+  { key: "phone", label: "Teléfono", type: "text", format: "phone" },
+  { key: "idNumber", label: "Cédula", type: "text", format: "cedula" },
+  { key: "dateOfBirth", label: "Fecha de nacimiento", type: "date" },
+  { key: "maritalStatus", label: "Estado civil", type: "select", options: ESTADO_CIVIL }
+];
+
+/** Fields for the "Editar · Crédito" screen (Pencil `B1vT4`). */
+export const CREDITO_FIELDS: FieldDef[] = [
+  { key: "requestedAmount", label: "Monto solicitado", type: "text" },
+  { key: "purpose", label: "Propósito", type: "select", options: PROPOSITO },
+  { key: "requestedTermWeeks", label: "Plazo", type: "select", options: PLAZO }
+];
+
+/** Fields for the "Editar · Referencias" screen (Pencil `FC6R3`). */
+export const REFERENCIAS_FIELDS: FieldDef[] = [
+  { key: "spouseName", label: "Nombre del cónyuge", type: "text" },
+  { key: "spousePhone", label: "Teléfono del cónyuge", type: "text", format: "phone" },
+  { key: "referenceName", label: "Nombre de referencia", type: "text" },
+  { key: "referencePhone", label: "Teléfono de referencia", type: "text", format: "phone" }
+];
+
+/** Fields for the "Editar · Vivienda" screen (Pencil `udAwm`). */
+export const VIVIENDA_FIELDS: FieldDef[] = [
+  { key: "housingType", label: "Tipo de vivienda", type: "select", options: TIPO_VIVIENDA },
+  { key: "residenceTime", label: "Tiempo residiendo", type: "select", options: TIEMPO_RESIDIENDO },
+  { key: "homeAddress", label: "Dirección", type: "text" },
+  { key: "province", label: "Provincia", type: "select", options: PROVINCIA },
+  { key: "addressReference", label: "Referencia de dirección", type: "text" }
 ];
 
 /** Fields for the "Editar · Negocio" screen, in display order (Pencil `o1Cx54`). */
