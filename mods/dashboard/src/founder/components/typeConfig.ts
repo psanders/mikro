@@ -424,3 +424,19 @@ export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
       return null;
   }
 }
+
+/**
+ * Spanish copilot question for a subject-link target. Feed/search "Ver
+ * solicitud/préstamo/cliente" actions open the copilot dock prefilled with
+ * this instead of navigating to a retired ops detail page.
+ */
+export function subjectQuestion(target: NavigateTarget, customerName?: string): string {
+  switch (target.kind) {
+    case "application":
+      return `Muéstrame los detalles de la solicitud ${target.id}`;
+    case "loan":
+      return `Muéstrame los detalles del préstamo ${target.id}`;
+    case "customer":
+      return `Muéstrame al cliente ${customerName ?? target.id}`;
+  }
+}

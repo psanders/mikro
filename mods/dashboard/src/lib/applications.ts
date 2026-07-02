@@ -5,8 +5,6 @@
  * mirroring the backend lifecycle and review transition map.
  */
 import type { BadgeTone } from "../components/ui/Badge";
-import { BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "@mikro/common/schemas";
-import { ALL_EDIT_FIELDS } from "./applicationFields";
 
 export type ApplicationStatus =
   | "DRAFT"
@@ -126,28 +124,6 @@ export function formatDate(value: string | Date | null | undefined): string {
     : new Intl.DateTimeFormat("es-DO", { day: "numeric", month: "short", year: "numeric" }).format(
         d
       );
-}
-
-// Build a lookup map from ALL_EDIT_FIELDS select options, overriding the two
-// fields that use enum values (businessType, province) with the canonical maps.
-const SELECT_LABELS: Map<string, Map<string, string>> = new Map(
-  ALL_EDIT_FIELDS.filter((f) => f.type === "select" && f.options).map((f) => [
-    f.key,
-    new Map(f.options!.map((o) => [o.value, o.label]))
-  ])
-);
-// Patch in the authoritative enum → label maps from @mikro/common
-SELECT_LABELS.set("businessType", new Map(Object.entries(BUSINESS_TYPE_LABELS)));
-SELECT_LABELS.set("province", new Map(Object.entries(PROVINCE_LABELS)));
-
-/**
- * Resolve a human-readable display label for a field's stored value.
- * For select fields, looks up the option label. Falls back to the raw value.
- */
-export function fieldDisplayLabel(key: string, value: unknown): string {
-  if (value == null || value === "") return "";
-  const s = String(value);
-  return SELECT_LABELS.get(key)?.get(s) ?? s;
 }
 
 /** Detect a tRPC FORBIDDEN error (non-reviewer) for a friendly access message. */

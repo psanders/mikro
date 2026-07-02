@@ -8,7 +8,6 @@
  * copilot sparkles button ships inert (a later change owns the dock).
  */
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
 import { cn } from "../lib/cn";
@@ -21,6 +20,7 @@ import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
 import { formatDayLabel } from "./components/format";
+import { subjectQuestion } from "./components/typeConfig";
 import type { FeedEvent, NavigateTarget } from "./components/types";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -87,7 +87,6 @@ function groupByDay(events: FeedEvent[]): DayGroup[] {
 }
 
 export function FeedScreen() {
-  const navigate = useNavigate();
   const toast = useToast();
   const utils = trpc.useUtils();
   const copilot = useCopilot();
@@ -110,16 +109,9 @@ export function FeedScreen() {
     }
   });
 
-  // Flatten pages, keeping a side map of each event's customerId so loan events
-  // can route to the loan's customer page (no standalone loan detail exists).
-  const { events, customerIdByEventId } = useMemo(() => {
+  const events = useMemo(() => {
     const raw = feed.data?.pages.flatMap((p) => p.items) ?? [];
-    const map = new Map<string, string | null>();
-    const list = raw.map((item) => {
-      map.set(item.id, item.customerId);
-      return toFeedEvent(item);
-    });
-    return { events: list, customerIdByEventId: map };
+    return raw.map(toFeedEvent);
   }, [feed.data]);
 
   const groups = useMemo(() => groupByDay(events), [events]);
@@ -129,29 +121,16 @@ export function FeedScreen() {
     return Date.now() - new Date(event.occurredAt).getTime() <= RESTORE_WINDOW_MS;
   }
 
+  // Retired ops detail pages no longer exist: "Ver X" opens the copilot dock
+  // prefilled with a question about the event's subject instead of navigating.
   function handleNavigate(event: FeedEvent, target: NavigateTarget) {
-    if (target.kind === "application") {
-      navigate(`/solicitudes/${target.id}`, { viewTransition: true });
-      return;
-    }
-    if (target.kind === "customer") {
-      navigate(`/clientes/${target.id}`, { viewTransition: true });
-      return;
-    }
-    const customerId = customerIdByEventId.get(event.id);
-    if (customerId) navigate(`/clientes/${customerId}`, { viewTransition: true });
+    copilot.openWith(subjectQuestion(target, event.customerName));
   }
 
   return (
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
-        <div className="flex items-center gap-3">
-          <h1 className="text-[19px] font-bold tracking-[-0.3px] text-[#14254A]">Hoy</h1>
-          <span className="flex items-center gap-[6px] rounded-full bg-[#E8F7EE] px-[10px] py-1">
-            <span className="h-[7px] w-[7px] rounded-full bg-[#16A34A]" />
-            <span className="text-[10px] font-bold tracking-[0.6px] text-[#16A34A]">EN VIVO</span>
-          </span>
-        </div>
+        <h1 className="text-[19px] font-bold tracking-[-0.3px] text-[#14254A]">Feed</h1>
         <button
           type="button"
           onClick={() => copilot.openWith()}
@@ -160,7 +139,6 @@ export function FeedScreen() {
           className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
         >
           <Sparkles size={17} />
-          <span className="absolute right-[3px] top-[3px] h-[9px] w-[9px] rounded-full border-2 border-white bg-[#16A34A]" />
         </button>
       </header>
 

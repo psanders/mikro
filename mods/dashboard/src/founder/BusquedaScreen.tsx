@@ -7,15 +7,15 @@
  * row is inert (a later change owns the copilot).
  */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowRight, Search as SearchIcon, Sparkles } from "lucide-react";
 import { trpc, type RouterOutputs } from "../lib/trpc";
 import { loanStatusMeta } from "../lib/customers";
 import { isForbidden } from "../lib/applications";
+import { useCopilot } from "./copilot/CopilotContext";
 import { SearchResultRow } from "./components/SearchResultRow";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
-import { resolveSubjectLink } from "./components/typeConfig";
+import { resolveSubjectLink, subjectQuestion } from "./components/typeConfig";
 import type { FeedEvent } from "./components/types";
 
 type SearchEventItem = RouterOutputs["searchAll"]["events"][number];
@@ -59,36 +59,32 @@ function GroupLabel({ children }: { children: string }) {
 }
 
 export function BusquedaScreen() {
-  const navigate = useNavigate();
+  const copilot = useCopilot();
   const [term, setTerm] = useState("");
   const debounced = useDebouncedValue(term.trim(), 300);
   const hasQuery = debounced.length > 0;
 
   const search = trpc.searchAll.useQuery({ query: debounced }, { enabled: hasQuery });
 
-  const { events, customerIdByEventId } = useMemo(() => {
+  const events = useMemo(() => {
     const raw = search.data?.events ?? [];
-    const map = new Map<string, string | null>();
-    const list = raw.map((item) => {
-      map.set(item.id, item.customerId);
-      return toFeedEvent(item);
-    });
-    return { events: list, customerIdByEventId: map };
+    return raw.map(toFeedEvent);
   }, [search.data]);
 
+  // Retired ops detail pages no longer exist: selecting an event opens the
+  // copilot dock prefilled with a question about its subject instead of
+  // navigating there.
   function handleEventSelect(event: FeedEvent) {
     const link = resolveSubjectLink(event);
-    if (!link) return;
-    if (link.target.kind === "application") {
-      navigate(`/solicitudes/${link.target.id}`, { viewTransition: true });
+    if (link) {
+      copilot.openWith(subjectQuestion(link.target, event.customerName));
       return;
     }
-    if (link.target.kind === "customer") {
-      navigate(`/clientes/${link.target.id}`, { viewTransition: true });
+    if (event.customerName) {
+      copilot.openWith(`Muéstrame al cliente ${event.customerName}`);
       return;
     }
-    const customerId = customerIdByEventId.get(event.id);
-    if (customerId) navigate(`/clientes/${customerId}`, { viewTransition: true });
+    copilot.openWith(`Cuéntame más sobre: ${event.summary}`);
   }
 
   const customers = search.data?.customers ?? [];
@@ -174,7 +170,7 @@ export function BusquedaScreen() {
                     name={c.name}
                     phone={c.phone || undefined}
                     idNumber={c.idNumber || undefined}
-                    onSelect={() => navigate(`/clientes/${c.id}`, { viewTransition: true })}
+                    onSelect={() => copilot.openWith(`Muéstrame al cliente ${c.name}`)}
                   />
                 ))}
               </div>
@@ -194,7 +190,7 @@ export function BusquedaScreen() {
                       statusLabel={meta.label}
                       statusTone={meta.tone}
                       onSelect={() =>
-                        navigate(`/clientes/${l.customerId}`, { viewTransition: true })
+                        copilot.openWith(`Muéstrame los detalles del préstamo ${l.loanId}`)
                       }
                     />
                   );

@@ -20,27 +20,6 @@ The dashboard SHALL define the Pencil design tokens as a single source of stylin
 - **WHEN** a design-system component or a re-implemented screen needs a color or radius defined as a token
 - **THEN** it references the token, not an inline hex literal
 
-### Requirement: Component library matching Pencil
-
-The dashboard SHALL provide a React + Tailwind component library that mirrors the Pencil `cp/*` components, including: button (primary / secondary / success), field/input, search, tab, status badge, stat-card, summary-card, section-card, kv-row, page-header, nav-sidebar, progress-bar, and icon-chip. Each component MUST be faithful to its Pencil counterpart in color, spacing, typography, and structure. The `section-card` (accordion) MUST use comfortable, consistent padding so a collapsed section reads as a proper card (not a thin strip) and open bodies share a consistent inset; it MAY be collapsible via an `onToggle` affordance.
-
-The `nav-sidebar` component MUST match Pencil `cp/nav-sidebar-v2` (`mMLqu`): a 248px white rail with a right border; a logo mark (46×46px, `rounded-[13px]`, brand-blue-deep background) containing an `m` letterform and a small white badge (17×17, gauge icon, bottom-right absolute) — followed by a hairline divider — followed by nav items. The `MENÚ` section label is removed. The wordmark reads `mikro` (19px/700) / `ops` (10px/500, tracked). In v2 lists, status renders as plain text via the `StatusText` component (not a pill): muted by default, with color reserved for meaningful signals — green for application "Nueva" (new/actionable) and red for loan `DEFAULTED` ("En mora"). All other workflow statuses (application, transaction, customer active/inactive) render muted. The `iconTone` prop on `StatCard` is removed; the icon chip is always blue.
-
-#### Scenario: Component renders per design
-
-- **WHEN** a library component is rendered with representative props
-- **THEN** its appearance matches the corresponding Pencil component within the token system (colors, radii, spacing, type)
-
-#### Scenario: Screens compose the library
-
-- **WHEN** a dashboard screen needs a design-system element (button, field, card, badge, nav, header, etc.)
-- **THEN** it composes the library component rather than re-implementing the markup inline
-
-#### Scenario: Collapsible section card is well-padded
-
-- **WHEN** a `section-card` is rendered collapsed and expanded
-- **THEN** the collapsed header has comfortable vertical padding and the expanded body uses a consistent inset
-
 ### Requirement: Storybook coverage
 
 The dashboard SHALL include Storybook (`@storybook/react-vite`) with at least one story per library component, and provide scripts to run and build it.
@@ -63,20 +42,6 @@ The login view SHALL match Pencil frame `RRbG1` ("Operations / 01 Inicio de sesi
 
 - **WHEN** the operator submits valid credentials on the re-implemented login screen
 - **THEN** the same login mutation runs, the token is stored, and the operator enters the authenticated area exactly as before
-
-### Requirement: Dashboard "Inicio" screen matches the Pencil design
-
-The first authenticated screen SHALL match Pencil frame `IDIY8` ("Operations / 02 Inicio (Dashboard)"): the nav sidebar, a page header with a "Nueva solicitud" call-to-action, four stat cards (Cartera total, Solicitudes nuevas, Cobrado hoy, Tasa de mora), and a "Solicitudes recientes" table — all built from the component library. Where a backing procedure exists (e.g. `whoami`, `listLoans`), the screen MUST show real data with loading and error states; other figures MAY be placeholders pending their procedures.
-
-#### Scenario: Inicio renders to design
-
-- **WHEN** an authenticated operator opens the dashboard
-- **THEN** the "Inicio" screen renders the nav sidebar, page header with CTA, four stat cards, and the recent-requests table matching the Pencil design
-
-#### Scenario: Live data where available
-
-- **WHEN** the Inicio screen mounts and a backing procedure exists for a region
-- **THEN** that region fetches via the authenticated tRPC client and shows loading and error states (online-only), rather than a static placeholder
 
 ### Requirement: Pointer affordance on interactive elements
 

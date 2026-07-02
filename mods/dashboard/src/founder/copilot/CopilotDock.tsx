@@ -3,7 +3,7 @@
  *
  * Presentational dock frame — Pencil `copilotDock` (copilot.html /
  * feed-dock-open.html): a ~430px right panel with a header (sparkles mark,
- * "Copiloto", "en línea" status, close control), a scrollable thread area
+ * "Copiloto", close control), a scrollable thread area
  * (children), and a composer (auto-submitting textarea + send button). Open /
  * close and thread contents are owned by the parent; the composer is controlled
  * via value/onChange so ask-chips can prefill it. `busy` disables sending and
@@ -25,8 +25,6 @@ export interface CopilotDockProps {
   onClose: () => void;
   /** Request in flight: disables sending and shows the typing indicator. */
   busy?: boolean;
-  /** Presence label next to the status dot. Default "en línea". */
-  statusLabel?: string;
   className?: string;
 }
 
@@ -37,7 +35,6 @@ export function CopilotDock({
   onSend,
   onClose,
   busy = false,
-  statusLabel = "en línea",
   className
 }: CopilotDockProps) {
   const trimmed = value.trim();
@@ -70,10 +67,6 @@ export function CopilotDock({
           <span className="text-[15px] font-bold text-[#14254A]">Copiloto</span>
         </div>
         <div className="flex items-center gap-[12px]">
-          <div className="flex items-center gap-[6px]">
-            <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#16A34A]" />
-            <span className="text-[11px] font-medium text-[#697A93]">{statusLabel}</span>
-          </div>
           <button
             type="button"
             onClick={onClose}
