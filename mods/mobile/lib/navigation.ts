@@ -10,10 +10,11 @@ export const COLLECTOR_HOME = "/(tabs)";
  * Resolves which tab group a logged-in, unlocked user should land on, based
  * on their decoded roles (cached alongside the token, see lib/auth.ts):
  * - COLLECTOR-only -> collector tabs (unchanged).
- * - REVIEWER/ADMIN only -> evaluator tabs.
- * - Dual-role (COLLECTOR + REVIEWER/ADMIN) -> evaluator tabs by default,
- *   unless the user manually switched to collector via the Perfil switcher
- *   (persisted nav mode preference).
+ * - REVIEWER-only -> evaluator tabs.
+ * - Dual-role (per `isDualRole`: COLLECTOR + evaluator role, OR plain ADMIN,
+ *   who has server-side access to both surfaces) -> evaluator tabs by
+ *   default, unless the user manually switched to collector via the Perfil
+ *   switcher (persisted nav mode preference).
  */
 export async function resolveHomeRoute(): Promise<string> {
   const roles = await getRoles();
