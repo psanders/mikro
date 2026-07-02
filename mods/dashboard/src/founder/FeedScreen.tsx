@@ -15,6 +15,7 @@ import { cn } from "../lib/cn";
 import { trpc, type RouterOutputs } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
 import { isForbidden } from "../lib/applications";
+import { useCopilot } from "./copilot/CopilotContext";
 import { FeedCard } from "./components/FeedCard";
 import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
@@ -89,6 +90,7 @@ export function FeedScreen() {
   const navigate = useNavigate();
   const toast = useToast();
   const utils = trpc.useUtils();
+  const copilot = useCopilot();
   const [filterId, setFilterId] = useState("todo");
 
   const activeFilter = FILTERS.find((f) => f.id === filterId) ?? FILTERS[0]!;
@@ -152,10 +154,10 @@ export function FeedScreen() {
         </div>
         <button
           type="button"
-          disabled
-          title="Próximamente"
+          onClick={() => copilot.openWith()}
+          title="Copiloto"
           aria-label="Copiloto"
-          className="relative flex h-[34px] w-[34px] cursor-not-allowed items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8]"
+          className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
         >
           <Sparkles size={17} />
           <span className="absolute right-[3px] top-[3px] h-[9px] w-[9px] rounded-full border-2 border-white bg-[#16A34A]" />
@@ -215,6 +217,7 @@ export function FeedScreen() {
                 canRestore={canRestore(event)}
                 onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
                 onNavigate={(target) => handleNavigate(event, target)}
+                onAskCopilot={(question) => copilot.openWith(question)}
               />
             ))}
           </div>

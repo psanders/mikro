@@ -195,6 +195,24 @@ import {
   createSearchAll,
   createExportAuditLog
 } from "../../api/events/index.js";
+// Founder copilot schemas
+import {
+  copilotChatSchema,
+  copilotActionDecisionSchema,
+  getCopilotHistorySchema,
+  listWatchRulesSchema,
+  setWatchRuleEnabledSchema
+} from "@mikro/common";
+// Founder copilot API functions
+import {
+  createCopilotChat,
+  createConfirmCopilotAction,
+  createRejectCopilotAction,
+  createGetCopilotHistory,
+  listWatchRules as listWatchRulesFn,
+  setWatchRuleEnabled as setWatchRuleEnabledFn,
+  getCopilotDeps
+} from "../../api/copilot/index.js";
 // Accounting API functions
 import {
   createCreateAccount,
@@ -964,6 +982,59 @@ export const protectedRouter = router({
     const fn = createExportAuditLog(ctx.db as unknown as PrismaClient);
     return fn(input);
   }),
+
+  // ==================== Copilot procedures ====================
+  //
+  // The founder copilot (design.md add-founder-copilot). All ADMIN-only. The
+  // chat loop and confirm flow need the LLM model factory + tool executor built
+  // at startup; those come from the copilot deps registry (setCopilotDeps),
+  // keeping the static router thin and the model injectable for tests.
+
+  /** Look up the caller's display name for provenance/event attribution. */
+  copilotChat: adminProcedure.input(copilotChatSchema).mutation(async ({ ctx, input }) => {
+    const db = ctx.db as unknown as PrismaClient;
+    const { toolExecutor, createModel } = getCopilotDeps();
+    const user = await db.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
+    const fn = createCopilotChat({ db, toolExecutor, createModel });
+    return fn({ userId: ctx.userId, actorName: user?.name, message: input.message });
+  }),
+
+  /** Confirm a pending copilot write: executes it and records copilot.action. */
+  copilotConfirmAction: adminProcedure
+    .input(copilotActionDecisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const db = ctx.db as unknown as PrismaClient;
+      const { toolExecutor } = getCopilotDeps();
+      const user = await db.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
+      const fn = createConfirmCopilotAction({ db, toolExecutor });
+      return fn({ userId: ctx.userId, actorName: user?.name, actionId: input.actionId });
+    }),
+
+  /** Reject a pending copilot write: nothing executes. */
+  copilotRejectAction: adminProcedure
+    .input(copilotActionDecisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createRejectCopilotAction({ db: ctx.db as unknown as PrismaClient });
+      return fn({ userId: ctx.userId, actionId: input.actionId });
+    }),
+
+  /** Copilot conversation history for the caller (copilot channel only). */
+  getCopilotHistory: adminProcedure.input(getCopilotHistorySchema).query(async ({ ctx, input }) => {
+    const fn = createGetCopilotHistory(ctx.db as unknown as PrismaClient);
+    return fn({ userId: ctx.userId, limit: input.limit });
+  }),
+
+  /** List watch rules (active by default). */
+  listWatchRules: adminProcedure.input(listWatchRulesSchema).query(async ({ ctx, input }) => {
+    return listWatchRulesFn(ctx.db as unknown as PrismaClient, input);
+  }),
+
+  /** Enable or disable a watch rule. */
+  setWatchRuleEnabled: adminProcedure
+    .input(setWatchRuleEnabledSchema)
+    .mutation(async ({ ctx, input }) => {
+      return setWatchRuleEnabledFn(ctx.db as unknown as PrismaClient, input);
+    }),
 
   // ==================== Accounting procedures ====================
   //

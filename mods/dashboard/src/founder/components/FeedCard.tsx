@@ -36,7 +36,15 @@ export interface FeedCardProps {
   canRestore?: boolean;
   onRestore?: (event: FeedEvent) => void;
   onNavigate?: (target: NavigateTarget) => void;
+  /** Opens the copilot dock prefilled with the chip's question. Chip is inert when omitted. */
+  onAskCopilot?: (question: string) => void;
   className?: string;
+}
+
+/** The ask-copilot chip question offered on a given card (null = no chip). */
+function askCopilotQuestion(event: FeedEvent): string | null {
+  if (event.type === "application.deleted") return "¿Qué se borró esta semana?";
+  return null;
 }
 
 // Full-card tint per Pencil: deletions on a faint red wash, policy exceptions
@@ -65,6 +73,7 @@ export function FeedCard({
   canRestore = false,
   onRestore,
   onNavigate,
+  onAskCopilot,
   className
 }: FeedCardProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
@@ -85,6 +94,7 @@ export function FeedCard({
   const { lead, rest } = splitSummary(event.summary, event.actorName);
   const ChevronIcon = isExpanded ? ChevronUp : ChevronDown;
 
+  const askQuestion = askCopilotQuestion(event);
   const metaText = deletion && !canRestore ? "Ventana de restauración vencida" : meta.text;
   const metaClass =
     meta.tone === "red" && !(deletion && !canRestore)
@@ -144,14 +154,26 @@ export function FeedCard({
                     <button type="button" onClick={() => onRestore?.(event)} className={ACT_BUTTON}>
                       Restaurar
                     </button>
-                    <span
-                      title="Próximamente"
-                      aria-disabled="true"
-                      className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] opacity-80"
-                    >
-                      <Sparkles size={13} />
-                      ¿Qué se borró esta semana?
-                    </span>
+                    {askQuestion &&
+                      (onAskCopilot ? (
+                        <button
+                          type="button"
+                          onClick={() => onAskCopilot(askQuestion)}
+                          className="inline-flex items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+                        >
+                          <Sparkles size={13} />
+                          {askQuestion}
+                        </button>
+                      ) : (
+                        <span
+                          title="Próximamente"
+                          aria-disabled="true"
+                          className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] opacity-80"
+                        >
+                          <Sparkles size={13} />
+                          {askQuestion}
+                        </span>
+                      ))}
                   </>
                 ) : (
                   <span className="text-[13px] font-medium text-[#697A93]">

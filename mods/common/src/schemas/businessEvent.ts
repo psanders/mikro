@@ -17,7 +17,9 @@ export const businessEventTypeEnum = z.enum([
   "application.deleted",
   "application.restored",
   "loan.status_changed",
-  "customer.created"
+  "customer.created",
+  "copilot.action",
+  "rule.alert"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -80,6 +82,22 @@ const customerCreatedPayloadSchema = z.object({
   customerId: z.uuid()
 });
 
+// Written intrinsically by the copilot confirm flow (not an annotated procedure).
+const copilotActionPayloadSchema = z.object({
+  toolName: z.string(),
+  args: z.record(z.string(), z.unknown()),
+  resultSummary: z.string().optional()
+});
+
+// Written intrinsically by the watch-rule evaluator on a state change.
+const ruleAlertPayloadSchema = z.object({
+  ruleId: z.uuid(),
+  ruleName: z.string(),
+  metric: z.string(),
+  value: z.number(),
+  threshold: z.number()
+});
+
 /** Per-type payload schema. Producers MUST validate through this map. */
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
@@ -91,7 +109,9 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "application.deleted": applicationDeletedPayloadSchema,
   "application.restored": applicationRestoredPayloadSchema,
   "loan.status_changed": loanStatusChangedPayloadSchema,
-  "customer.created": customerCreatedPayloadSchema
+  "customer.created": customerCreatedPayloadSchema,
+  "copilot.action": copilotActionPayloadSchema,
+  "rule.alert": ruleAlertPayloadSchema
 };
 
 /**

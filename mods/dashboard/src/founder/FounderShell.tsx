@@ -11,6 +11,8 @@ import { FileText, House, Landmark, Search, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
+import { CopilotProvider } from "./copilot/CopilotContext";
+import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 
 interface RailItemProps {
   icon: LucideIcon;
@@ -61,40 +63,44 @@ export function FounderShell() {
   const initials = initialsOf(whoami.data?.name ?? "");
 
   return (
-    <div className="flex h-dvh w-full bg-white text-[#14254A]">
-      <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-white py-[18px]">
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#1F4AA8] text-white">
-          <Landmark size={16} strokeWidth={2} />
-        </div>
-        <div className="h-[10px]" />
-        <RailItem
-          icon={House}
-          label="Feed"
-          active={path === "/founder"}
-          onClick={() => navigate("/founder")}
-        />
-        <RailItem icon={TriangleAlert} label="Excepciones" inert badge />
-        <RailItem
-          icon={Search}
-          label="Búsqueda"
-          active={path.startsWith("/founder/buscar")}
-          onClick={() => navigate("/founder/buscar")}
-        />
-        <RailItem
-          icon={FileText}
-          label="Reportes"
-          active={path.startsWith("/founder/reportes")}
-          onClick={() => navigate("/founder/reportes")}
-        />
-        <div className="flex-1" />
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8]">
-          {initials}
-        </div>
-      </nav>
+    <CopilotProvider>
+      <div className="flex h-dvh w-full bg-white text-[#14254A]">
+        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-white py-[18px]">
+          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#1F4AA8] text-white">
+            <Landmark size={16} strokeWidth={2} />
+          </div>
+          <div className="h-[10px]" />
+          <RailItem
+            icon={House}
+            label="Feed"
+            active={path === "/founder"}
+            onClick={() => navigate("/founder")}
+          />
+          <RailItem icon={TriangleAlert} label="Excepciones" inert badge />
+          <RailItem
+            icon={Search}
+            label="Búsqueda"
+            active={path.startsWith("/founder/buscar")}
+            onClick={() => navigate("/founder/buscar")}
+          />
+          <RailItem
+            icon={FileText}
+            label="Reportes"
+            active={path.startsWith("/founder/reportes")}
+            onClick={() => navigate("/founder/reportes")}
+          />
+          <div className="flex-1" />
+          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8]">
+            {initials}
+          </div>
+        </nav>
 
-      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-white">
-        <Outlet />
+        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-white">
+          <Outlet />
+        </div>
+
+        <CopilotDockContainer />
       </div>
-    </div>
+    </CopilotProvider>
   );
 }

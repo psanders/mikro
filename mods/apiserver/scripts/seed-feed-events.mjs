@@ -14,6 +14,8 @@
 /* global console, process */
 import { appRouter } from "../dist/trpc/routers/index.js";
 import { prisma } from "../dist/db.js";
+import { recordEvent } from "../dist/api/events/recordEvent.js";
+import { evaluateWatchRules } from "../dist/api/copilot/index.js";
 
 const results = [];
 const step = async (label, fn) => {
@@ -115,6 +117,59 @@ const toComplete = await prisma.loan.findFirst({
 if (toComplete) {
   await step(`complete loan #${toComplete.loanId}`, () =>
     adminCaller.updateLoanStatus({ loanId: toComplete.loanId, status: "COMPLETED" })
+  );
+}
+
+// --- Watch rule + evaluation (rule.alert card) ---
+// Create a portfolio-mora rule and evaluate it. If today's data doesn't breach
+// the initial threshold, lower it until the evaluator emits an alert — this is a
+// demo seed, so we want the rule.alert card to appear regardless of the dataset.
+await step("watch rule 'Mora de la cartera > 5%' + evaluation", async () => {
+  const rule = await prisma.watchRule.create({
+    data: {
+      name: "Mora de la cartera > 5%",
+      metric: "mora_pct_portfolio",
+      comparator: "gt",
+      threshold: 5,
+      createdById: admin.id
+    }
+  });
+
+  let res = await evaluateWatchRules(prisma);
+  const candidates = [3, 1, 0.5, 0.1, 0, -0.01];
+  let i = 0;
+  while (res.alerts === 0 && i < candidates.length) {
+    await prisma.watchRule.update({
+      where: { id: rule.id },
+      data: { threshold: candidates[i], lastState: null }
+    });
+    i += 1;
+    res = await evaluateWatchRules(prisma);
+  }
+  const finalRule = await prisma.watchRule.findUnique({ where: { id: rule.id } });
+  return `evaluated=${res.evaluated} alerts=${res.alerts} threshold=${finalRule?.threshold}`;
+});
+
+// --- Confirmed copilot action (copilot.action card) ---
+const actionLoan = loans[0];
+if (actionLoan) {
+  await step(`copilot action on loan #${actionLoan.loanId}`, () =>
+    recordEvent(prisma, {
+      type: "copilot.action",
+      actorId: admin.id,
+      actorName: admin.name ?? "Fundador",
+      summary: `${admin.name ?? "Fundador"} confirmó un pago de RD$2,000 (préstamo #${actionLoan.loanId}) desde el copiloto.`,
+      payload: {
+        toolName: "createPayment",
+        args: {
+          loanId: actionLoan.loanId,
+          monto: 2000,
+          metodo: "efectivo",
+          cliente: actionLoan.customer.name
+        },
+        resultSummary: `Pago de RD$2,000 registrado en el préstamo #${actionLoan.loanId}.`
+      }
+    })
   );
 }
 

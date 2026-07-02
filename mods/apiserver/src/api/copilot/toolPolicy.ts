@@ -1,0 +1,226 @@
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * The copilot tool policy — the security model for the founder copilot
+ * (design Decision 2). Three explicit lists partition every tool the model may
+ * see:
+ *
+ *  - READ_TOOLS  execute inline during the loop and their result feeds back to
+ *    the model (queries, reports, event-log queries, rule listing).
+ *  - WRITE_TOOLS are NEVER executed inline: the loop intercepts the call,
+ *    persists a CopilotPendingAction, and returns it for the founder to confirm.
+ *  - DIRECT_TOOLS execute inline by design (low-risk, reversible watch-rule
+ *    management), matching the Pencil flow where the rule card appears at once.
+ *
+ * A tool in none of the three lists is never bound to the model at all.
+ */
+import type { ToolFunction } from "@mikro/agents";
+import { getToolByName } from "@mikro/agents";
+
+/**
+ * Query the append-only business-event log (the founder feed). A read tool: the
+ * copilot uses it to answer "what happened" questions ("¿qué se borró esta
+ * semana?").
+ */
+export const queryFeedEventsTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "queryFeedEvents",
+    description:
+      "Consultar el registro de eventos de negocio (el feed). Devuelve los eventos más recientes con filtros opcionales por tipo, rango de fechas y límite. Útil para responder qué ha pasado (pagos, aprobaciones, borrados, alertas, etc.).",
+    parameters: {
+      type: "object",
+      properties: {
+        types: {
+          type: "string",
+          description:
+            "Lista de tipos de evento separados por coma para filtrar (ej: 'payment.collected,application.deleted'). Opcional."
+        },
+        from: {
+          type: "string",
+          description: "Fecha de inicio del rango en formato YYYY-MM-DD. Opcional."
+        },
+        to: {
+          type: "string",
+          description: "Fecha de fin del rango en formato YYYY-MM-DD. Opcional."
+        },
+        limit: {
+          type: "string",
+          description: "Número máximo de eventos a devolver (por defecto 20, máximo 100). Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
+ * Create a watch rule directly (design Decision 5). A DIRECT tool — executes
+ * inline; the dock renders the rule card immediately.
+ */
+export const createWatchRuleTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "createWatchRule",
+    description:
+      "Crear una regla de vigilancia que avisa cuando una métrica cruza un umbral. Se ejecuta directamente (sin confirmación) porque es reversible con Desactivar. La métrica DEBE ser una de: mora_pct_portfolio (% de préstamos activos con atraso), mora_pct_collector (igual pero por cobrador, requiere collectorId), cobranza_diaria (total cobrado hoy).",
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Nombre corto y descriptivo de la regla (ej: 'Mora de la ruta de Juan')."
+        },
+        metric: {
+          type: "string",
+          description: "Métrica a vigilar.",
+          enum: ["mora_pct_portfolio", "mora_pct_collector", "cobranza_diaria"]
+        },
+        comparator: {
+          type: "string",
+          description: "Comparador: 'gt' (mayor que el umbral) o 'lt' (menor que el umbral).",
+          enum: ["gt", "lt"]
+        },
+        threshold: {
+          type: "string",
+          description:
+            "Umbral numérico. Para métricas de porcentaje usa el número directo (ej: 9 para 9%)."
+        },
+        collectorId: {
+          type: "string",
+          description:
+            "ID (UUID) del cobrador a vigilar. Obligatorio solo para la métrica mora_pct_collector."
+        }
+      },
+      required: ["name", "metric", "comparator", "threshold"]
+    }
+  }
+};
+
+/**
+ * List the founder's watch rules. A read tool.
+ */
+export const listWatchRulesTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listWatchRules",
+    description:
+      "Listar las reglas de vigilancia existentes. Por defecto solo las activas; usa includeDisabled='true' para incluir las desactivadas.",
+    parameters: {
+      type: "object",
+      properties: {
+        includeDisabled: {
+          type: "string",
+          description: "Si es 'true', incluye también las reglas desactivadas. Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
+ * Disable a watch rule. A DIRECT tool.
+ */
+export const disableWatchRuleTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "disableWatchRule",
+    description:
+      "Desactivar una regla de vigilancia por su ID (UUID). Una regla desactivada deja de evaluarse y no produce más alertas.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la regla a desactivar."
+        }
+      },
+      required: ["id"]
+    }
+  }
+};
+
+/**
+ * Tool definitions owned by the copilot module (not by the WhatsApp agents).
+ * Handled inline by createCopilotChat rather than the shared tool executor.
+ */
+export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
+  queryFeedEventsTool,
+  createWatchRuleTool,
+  listWatchRulesTool,
+  disableWatchRuleTool
+];
+
+/**
+ * Read tools: execute inline, result feeds back to the model. A curated subset
+ * of the existing list/get/report tools plus the copilot's own read tools.
+ */
+export const READ_TOOLS: readonly string[] = [
+  "getCustomer",
+  "getCustomerByPhone",
+  "listLoansByCustomer",
+  "listPaymentsByLoanId",
+  "getLoanByLoanId",
+  "listUsers",
+  "calculateLoan",
+  "previewLateFee",
+  "exportAllCustomers",
+  "generatePerformanceReport",
+  "generateDefaultedReport",
+  "generateRenewalCandidatesReport",
+  "queryFeedEvents",
+  "listWatchRules"
+];
+
+/**
+ * Write tools: business writes. NEVER executed inline — a call short-circuits
+ * the loop into a pending action the founder must confirm.
+ */
+export const WRITE_TOOLS: readonly string[] = [
+  "createPayment",
+  "createCustomer",
+  "createLoan",
+  "updateLoanStatus"
+];
+
+/** Direct tools: reversible watch-rule management, executed inline. */
+export const DIRECT_TOOLS: readonly string[] = ["createWatchRule", "disableWatchRule"];
+
+/** Copilot-local tool names — handled by createCopilotChat, not the executor. */
+export const LOCAL_TOOL_NAMES: readonly string[] = COPILOT_LOCAL_TOOLS.map((t) => t.function.name);
+
+export function isReadTool(name: string): boolean {
+  return READ_TOOLS.includes(name);
+}
+
+export function isWriteTool(name: string): boolean {
+  return WRITE_TOOLS.includes(name);
+}
+
+export function isDirectTool(name: string): boolean {
+  return DIRECT_TOOLS.includes(name);
+}
+
+export function isLocalTool(name: string): boolean {
+  return LOCAL_TOOL_NAMES.includes(name);
+}
+
+/**
+ * The exact set of tool definitions bound to the copilot model: read + write +
+ * direct. Any tool outside these lists is never bound and therefore uncallable.
+ * Definitions come from the copilot-local set first, then the shared agents
+ * registry.
+ */
+export function getCopilotToolDefinitions(): ToolFunction[] {
+  const local = new Map(COPILOT_LOCAL_TOOLS.map((t) => [t.function.name, t]));
+  const names = [...READ_TOOLS, ...WRITE_TOOLS, ...DIRECT_TOOLS];
+  return names
+    .map((name) => local.get(name) ?? getToolByName(name))
+    .filter((tool): tool is ToolFunction => tool !== undefined);
+}
+
+/** Names of every tool bound to the model (the union of the three lists). */
+export function getBoundToolNames(): string[] {
+  return getCopilotToolDefinitions().map((t) => t.function.name);
+}

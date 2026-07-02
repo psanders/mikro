@@ -12,11 +12,26 @@ import {
   Trash2,
   RotateCcw,
   Repeat,
-  UserPlus
+  UserPlus,
+  Sparkles,
+  BellRing
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
 import { formatAmount, humanizeKey, humanizeValue } from "./format";
+import { METRIC_LABELS, formatThreshold } from "../copilot/ruleLabels";
+import type { WatchRuleMetric } from "../copilot/types";
+
+/** Spanish metric label + metric-aware value formatting for `rule.alert` cards. */
+function ruleMetricLabel(metric: string): string {
+  return METRIC_LABELS[metric as WatchRuleMetric] ?? metric;
+}
+
+function ruleMetricValue(metric: string, value: number): string {
+  return metric in METRIC_LABELS
+    ? formatThreshold(metric as WatchRuleMetric, value)
+    : String(value);
+}
 
 export type FeedAccent = "green" | "amber" | "red" | "blue" | "neutral";
 
@@ -57,7 +72,9 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.deleted": { icon: Trash2, accent: "red" },
   "application.restored": { icon: RotateCcw, accent: "green" },
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
-  "customer.created": { icon: UserPlus, accent: "blue" }
+  "customer.created": { icon: UserPlus, accent: "blue" },
+  "copilot.action": { icon: Sparkles, accent: "blue" },
+  "rule.alert": { icon: BellRing, accent: "amber" }
 };
 
 /** `application.approved` with `payload.policyException === true`. */
@@ -156,6 +173,20 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
     }
     case "customer.created":
       return { text: "Nuevo cliente registrado", tone: "muted" };
+    case "copilot.action": {
+      const tool = typeof payload.toolName === "string" ? payload.toolName : "";
+      return { text: tool ? `Copiloto · ${tool}` : "Copiloto", tone: "muted" };
+    }
+    case "rule.alert": {
+      const name = typeof payload.ruleName === "string" ? payload.ruleName : "Regla";
+      const metric = typeof payload.metric === "string" ? payload.metric : "";
+      if (typeof payload.value === "number" && typeof payload.threshold === "number") {
+        const value = ruleMetricValue(metric, payload.value);
+        const threshold = ruleMetricValue(metric, payload.threshold);
+        return { text: `${name} · valor ${value} vs umbral ${threshold}`, tone: "muted" };
+      }
+      return { text: name, tone: "muted" };
+    }
     default:
       return { text: "", tone: "muted" };
   }
@@ -177,7 +208,9 @@ const HANDLED_KEYS: Record<BusinessEventType, string[]> = {
   "application.deleted": ["applicationId", "snapshot"],
   "application.restored": ["applicationId", "deletionEventId"],
   "loan.status_changed": ["loanId", "from", "to"],
-  "customer.created": ["customerId"]
+  "customer.created": ["customerId"],
+  "copilot.action": ["toolName", "args", "resultSummary"],
+  "rule.alert": ["ruleId", "ruleName", "metric", "value", "threshold"]
 };
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -301,6 +334,38 @@ export function resolveDetailRows(event: FeedEvent): DetailRow[] {
             ? translate(LOAN_STATUS_LABELS, payload.from)
             : "";
         rows.push({ label: "Estado", value: from ? `${from} → ${to}` : to });
+      }
+      break;
+    }
+    case "copilot.action": {
+      if (typeof payload.toolName === "string") {
+        rows.push({ label: "Herramienta", value: payload.toolName });
+      }
+      const args = payload.args;
+      if (args && typeof args === "object" && !Array.isArray(args)) {
+        for (const [key, value] of Object.entries(args as Record<string, unknown>)) {
+          if (value === null || value === undefined || typeof value === "object") continue;
+          rows.push({ label: humanizeKey(key), value: humanizeValue(value) });
+        }
+      }
+      if (typeof payload.resultSummary === "string" && payload.resultSummary) {
+        rows.push({ label: "Resultado", value: payload.resultSummary });
+      }
+      break;
+    }
+    case "rule.alert": {
+      if (typeof payload.ruleName === "string") {
+        rows.push({ label: "Regla", value: payload.ruleName });
+      }
+      if (typeof payload.metric === "string") {
+        rows.push({ label: "Métrica", value: ruleMetricLabel(payload.metric) });
+      }
+      const metric = typeof payload.metric === "string" ? payload.metric : "";
+      if (typeof payload.value === "number") {
+        rows.push({ label: "Valor", value: ruleMetricValue(metric, payload.value) });
+      }
+      if (typeof payload.threshold === "number") {
+        rows.push({ label: "Umbral", value: ruleMetricValue(metric, payload.threshold) });
       }
       break;
     }

@@ -119,6 +119,7 @@ CREATE TABLE "messages" (
     "role" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "tools" TEXT,
+    "channel" TEXT NOT NULL DEFAULT 'whatsapp',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "customer_id" TEXT,
     "user_id" TEXT,
@@ -289,6 +290,36 @@ CREATE TABLE "business_events" (
 CREATE INDEX "business_events_occurred_at_id_idx" ON "business_events"("occurred_at", "id");
 CREATE INDEX "business_events_type_idx" ON "business_events"("type");
 CREATE INDEX "business_events_customer_id_idx" ON "business_events"("customer_id");
+
+-- Watch rules (founder copilot)
+CREATE TABLE "watch_rules" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "metric" TEXT NOT NULL,
+    "comparator" TEXT NOT NULL,
+    "threshold" REAL NOT NULL,
+    "collector_id" TEXT,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "created_by_id" TEXT NOT NULL,
+    "last_state" TEXT,
+    "last_evaluated_at" DATETIME,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL
+);
+CREATE INDEX "watch_rules_enabled_idx" ON "watch_rules"("enabled");
+
+-- Copilot pending actions (founder copilot)
+CREATE TABLE "copilot_pending_actions" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "user_id" TEXT NOT NULL,
+    "tool_name" TEXT NOT NULL,
+    "args_json" TEXT NOT NULL,
+    "summary" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "resolved_at" DATETIME
+);
+CREATE INDEX "copilot_pending_actions_user_id_status_idx" ON "copilot_pending_actions"("user_id", "status");
 `;
 
 /**
