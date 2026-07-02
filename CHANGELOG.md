@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
+
+### Bug Fixes
+
+- **ci:** raise Gradle JVM memory for Android APK builds ([#60](https://github.com/psanders/mikro/issues/60)) ([c6ed9dd](https://github.com/psanders/mikro/commit/c6ed9ddf84a99a9e853771e767006562b3e22613))
+- **e2e:** pass APP_ID explicitly — flow-header env shadows CLI -e in Maestro ([#61](https://github.com/psanders/mikro/issues/61)) ([28d6ced](https://github.com/psanders/mikro/commit/28d6ced2600079f3b6802a82103648aba099bca7))
+- **mobile:** don't show 'Sesión expirada' on fresh installs ([#62](https://github.com/psanders/mikro/issues/62)) ([a7efe58](https://github.com/psanders/mikro/commit/a7efe5865efb98be069c503f8f1e7aba6f94f316))
+
+- feat(founder)!: retire the operations dashboard UI — founder path is the app ([c8c1ffc](https://github.com/psanders/mikro/commit/c8c1ffcb9e3fc739f1f545bc43c41344317d775a))
+
+### Features
+
+- **founder:** business event log + Pencil-faithful founder feed app ([c279c21](https://github.com/psanders/mikro/commit/c279c214b88b49af1a2ed6cc06310159db078576))
+- **founder:** copilot dock with confirm-first writes and watch rules ([7aeddfb](https://github.com/psanders/mikro/commit/7aeddfbed848fd13bbe6d17fe8a04116ffde65c5))
+- **mobile:** edit, discard, and document actions on Evaluador Datos ([ec833dc](https://github.com/psanders/mikro/commit/ec833dce3143d21b1330153483b33cf5f63905d4)), closes [#63](https://github.com/psanders/mikro/issues/63) [#66](https://github.com/psanders/mikro/issues/66) [#65](https://github.com/psanders/mikro/issues/65) [#64](https://github.com/psanders/mikro/issues/64) [#67](https://github.com/psanders/mikro/issues/67)
+
+### BREAKING CHANGES
+
+- desktop review/ops screens removed; review lives in the
+  mobile evaluator app and via the copilot.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01QTH1LxUpnpfzM1dsTWETRG
+
 ## [1.16.1](https://github.com/psanders/mikro/compare/v1.16.0...v1.16.1) (2026-07-01)
 
 ### Bug Fixes
