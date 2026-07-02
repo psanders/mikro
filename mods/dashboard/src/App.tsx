@@ -18,11 +18,45 @@ import { ClienteDetailPage } from "./pages/ClienteDetailPage";
 import { ContabilidadPage } from "./pages/ContabilidadPage";
 import { TransaccionDetailPage } from "./pages/TransaccionDetailPage";
 import { ModeloPage } from "./pages/ModeloPage";
+import { FounderShell } from "./founder/FounderShell";
+import { FeedScreen } from "./founder/FeedScreen";
+import { BusquedaScreen } from "./founder/BusquedaScreen";
+import { ReportesScreen } from "./founder/ReportesScreen";
 
-/** Renders the authenticated shell, or bounces to login when unauthenticated. */
+function FullscreenLoading() {
+  return (
+    <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-500">
+      Cargando…
+    </div>
+  );
+}
+
+/** Renders the authenticated ops shell, or bounces to login when unauthenticated. */
 function RequireAuth() {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Layout /> : <Navigate to="/login" replace />;
+}
+
+/**
+ * Guards the self-contained founder app: authenticated + ADMIN only. Renders
+ * the founder shell OUTSIDE the ops Layout. Non-admins bounce to their normal
+ * landing ("/"); unauthenticated users bounce to login.
+ */
+function RequireFounder() {
+  const { isAuthenticated } = useAuth();
+  const whoami = trpc.whoami.useQuery(undefined, { enabled: isAuthenticated });
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (whoami.isPending) return <FullscreenLoading />;
+  const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
+  return isAdmin ? <FounderShell /> : <Navigate to="/" replace />;
+}
+
+/** ADMIN's default landing is the founder app; every other role keeps Inicio. */
+function IndexRoute() {
+  const whoami = trpc.whoami.useQuery();
+  if (whoami.isPending) return null;
+  const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
+  return isAdmin ? <Navigate to="/founder" replace /> : <OverviewPage />;
 }
 
 function AppRoutes() {
@@ -44,7 +78,7 @@ function AppRoutes() {
       />
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Outlet />}>
-          <Route index element={<OverviewPage />} />
+          <Route index element={<IndexRoute />} />
           <Route path="solicitudes" element={<SolicitudesPage />} />
           <Route path="solicitudes/:id" element={<SolicitudDetailPage />} />
           <Route path="clientes" element={<ClientesPage />} />
@@ -53,6 +87,11 @@ function AppRoutes() {
           <Route path="contabilidad/:id" element={<TransaccionDetailPage />} />
           <Route path="modelo" element={<ModeloPage />} />
         </Route>
+      </Route>
+      <Route path="/founder" element={<RequireFounder />}>
+        <Route index element={<FeedScreen />} />
+        <Route path="buscar" element={<BusquedaScreen />} />
+        <Route path="reportes" element={<ReportesScreen />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

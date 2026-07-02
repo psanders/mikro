@@ -402,7 +402,18 @@ export {
   type CustomerTagValue,
   type SetCustomerTagInput,
   type ClearCustomerTagInput,
-  type ListCustomerTagsInput
+  type ListCustomerTagsInput,
+  // Business event log schemas
+  businessEventTypeEnum,
+  businessEventPayloadSchemas,
+  recordBusinessEventSchema,
+  listFeedEventsSchema,
+  restoreApplicationSchema,
+  searchAllSchema,
+  exportAuditLogSchema,
+  RESTORE_WINDOW_DAYS,
+  type BusinessEventType,
+  type RecordBusinessEventInput
 } from "./schemas/index.js";
 
 // Report types and helpers

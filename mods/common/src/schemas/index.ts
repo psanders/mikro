@@ -295,3 +295,16 @@ export {
   type ClearCustomerTagInput,
   type ListCustomerTagsInput
 } from "./customerTag.js";
+
+export {
+  businessEventTypeEnum,
+  businessEventPayloadSchemas,
+  recordBusinessEventSchema,
+  listFeedEventsSchema,
+  restoreApplicationSchema,
+  searchAllSchema,
+  exportAuditLogSchema,
+  RESTORE_WINDOW_DAYS,
+  type BusinessEventType,
+  type RecordBusinessEventInput
+} from "./businessEvent.js";

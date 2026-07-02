@@ -3,9 +3,13 @@
  */
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@mikro/apiserver";
 import { getToken } from "./auth";
 import { authErrorLink } from "./authErrorLink";
+
+/** Inferred tRPC output types, e.g. `RouterOutputs["listFeedEvents"]`. */
+export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 const API_URL = import.meta.env.VITE_API_URL;
 

@@ -23,7 +23,10 @@ async function loadByRef(
  * it owns a real Customer + Loan, so deleting it would orphan downstream records.
  */
 export function createDeleteApplication(client: DbClient) {
-  return async (input: DeleteApplicationInput, reviewerId: string): Promise<{ id: string }> => {
+  // Returns the full deleted row (not just its id) so the event-capture layer can
+  // snapshot it into the application.deleted event for later restore. Callers that
+  // only read `.id` are unaffected.
+  return async (input: DeleteApplicationInput, reviewerId: string): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
     if (app.status === "CONVERTED") {
       throw new TRPCError({
@@ -54,6 +57,6 @@ export function createDeleteApplication(client: DbClient) {
     }
 
     logger.info("loan application purged", { id: app.id, status: app.status, reviewerId });
-    return { id: app.id };
+    return app;
   };
 }

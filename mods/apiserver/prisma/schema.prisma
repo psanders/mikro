@@ -561,3 +561,34 @@ model FollowUpJob {
   @@index([applicationId])
   @@map("follow_up_jobs")
 }
+
+// =============================================================================
+// Business event log (Founder Feed)
+// =============================================================================
+
+// Append-only record of every business mutation in the v1 event catalog. Written
+// inside the SAME transaction as its mutation, so an event can never exist
+// without its mutation (or vice versa). Deliberately carries NO foreign keys to
+// other models: denormalized names/refs let a card render without joins and keep
+// the event meaningful even after its subject is hard-deleted. Corrections are
+// new events — there is no update/delete surface. `payload` is JSON stored as a
+// String (SQLite has no Json type), validated per-type via @mikro/common.
+model BusinessEvent {
+  id            String   @id @default(uuid())
+  type          String
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  actorId       String?  @map("actor_id")
+  actorName     String   @map("actor_name")
+  customerId    String?  @map("customer_id")
+  customerName  String?  @map("customer_name")
+  loanId        String?  @map("loan_id")
+  applicationId String?  @map("application_id")
+  amount        Decimal?
+  summary       String
+  payload       String
+
+  @@index([occurredAt, id])
+  @@index([type])
+  @@index([customerId])
+  @@map("business_events")
+}
