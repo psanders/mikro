@@ -23,7 +23,9 @@ export function QuickAction({
       <View style={styles.iconWrap}>
         <Icon size={18} color={iconColor} strokeWidth={2} />
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -34,7 +36,8 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: colors.brand.white,
     borderRadius: radii.card,
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     flex: 1
   },
   iconWrap: {
@@ -45,5 +48,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
-  label: { fontFamily: "Geist_600SemiBold", fontSize: 13, color: colors.brand.ink }
+  label: { fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.ink }
 });
