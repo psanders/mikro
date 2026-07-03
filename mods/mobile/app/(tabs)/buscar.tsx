@@ -115,6 +115,7 @@ export default function BuscarScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        alwaysBounceVertical
         refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
       >
         {!trimmed && recents.length > 0 && (

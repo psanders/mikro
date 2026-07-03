@@ -111,7 +111,17 @@ export default function EvaluadorColaScreen() {
   ];
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      alwaysBounceVertical
+      refreshControl={
+        <RefreshControl
+          refreshing={receivedQ.isRefetching || inReviewQ.isRefetching || draftQ.isRefetching}
+          onRefresh={refresh}
+          tintColor={colors.brand.blue.primary}
+        />
+      }
+    >
       <Header
         title="Solicitudes"
         subtitle={`${counts.all} pendientes de evaluar`}
@@ -136,17 +146,7 @@ export default function EvaluadorColaScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={receivedQ.isRefetching || inReviewQ.isRefetching || draftQ.isRefetching}
-            onRefresh={refresh}
-            tintColor={colors.brand.blue.primary}
-          />
-        }
-      >
+      <View style={styles.listContent}>
         {isLoading && <Text style={styles.emptyText}>Cargando...</Text>}
         {!isLoading && isError && (
           <Text style={styles.errorText}>
@@ -172,8 +172,8 @@ export default function EvaluadorColaScreen() {
             onLongPress={() => handleLongPress(a.id, applicantName(a), a.status)}
           />
         ))}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -181,7 +181,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg.screen },
   chipRow: { height: 44 },
   chips: { paddingHorizontal: 20, paddingVertical: 6, gap: 8, alignItems: "center" },
-  list: { flex: 1 },
   listContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 20, gap: 12 },
   emptyText: {
     fontFamily: "Geist_500Medium",

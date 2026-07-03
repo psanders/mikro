@@ -103,6 +103,7 @@ export default function RutaScreen() {
       <ScrollView
         style={styles.list}
         contentContainerStyle={styles.listContent}
+        alwaysBounceVertical
         refreshControl={
           <RefreshControl
             refreshing={isPulling}

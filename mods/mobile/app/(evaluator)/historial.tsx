@@ -68,7 +68,17 @@ export default function EvaluadorHistorialScreen() {
   ];
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      alwaysBounceVertical
+      refreshControl={
+        <RefreshControl
+          refreshing={rejectedQ.isRefetching || convertedQ.isRefetching}
+          onRefresh={refresh}
+          tintColor={colors.brand.blue.primary}
+        />
+      }
+    >
       <Header
         title="Historial"
         subtitle={`${counts.all} solicitudes resueltas`}
@@ -93,17 +103,7 @@ export default function EvaluadorHistorialScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={rejectedQ.isRefetching || convertedQ.isRefetching}
-            onRefresh={refresh}
-            tintColor={colors.brand.blue.primary}
-          />
-        }
-      >
+      <View style={styles.listContent}>
         {isLoading && <Text style={styles.emptyText}>Cargando...</Text>}
         {!isLoading && isError && (
           <Text style={styles.errorText}>
@@ -132,8 +132,8 @@ export default function EvaluadorHistorialScreen() {
             />
           );
         })}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg.screen },
   chipRow: { height: 44 },
   chips: { paddingHorizontal: 20, paddingVertical: 6, gap: 8, alignItems: "center" },
-  list: { flex: 1 },
   listContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 20, gap: 12 },
   emptyText: {
     fontFamily: "Geist_500Medium",

@@ -63,6 +63,7 @@ export default function HomeScreen() {
     <ScrollView
       style={styles.screen}
       contentContainerStyle={{ paddingBottom: 20 }}
+      alwaysBounceVertical
       refreshControl={
         <RefreshControl
           refreshing={isPulling}
