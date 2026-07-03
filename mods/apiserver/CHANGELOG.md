@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.19.3](https://github.com/psanders/mikro/compare/v1.19.2...v1.19.3) (2026-07-03)
+
+### Reverts
+
+- **mobile:** remove Activity/history feature from reviewer app ([#67](https://github.com/psanders/mikro/issues/67)) ([8e1eae8](https://github.com/psanders/mikro/commit/8e1eae8c3f983da95e907fbc008e1750d334eaaa)), closes [#75](https://github.com/psanders/mikro/issues/75)
+
 ## [1.19.2](https://github.com/psanders/mikro/compare/v1.19.1...v1.19.2) (2026-07-03)
 
 **Note:** Version bump only for package @mikro/apiserver
