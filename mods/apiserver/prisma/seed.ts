@@ -61,7 +61,8 @@ const ID = {
   users: {
     admin: "11111111-1111-4111-a111-111111111111",
     collector1: "22222222-2222-4222-a222-222222222221",
-    collector2: "22222222-2222-4222-a222-222222222222"
+    collector2: "22222222-2222-4222-a222-222222222222",
+    reviewer1: "33333333-3333-4333-a333-333333333331"
   },
   customers: [
     "44444444-4444-4444-a444-444444444401",
@@ -204,8 +205,22 @@ async function main() {
     }
   });
 
+  // Pure REVIEWER (no ADMIN/COLLECTOR) — needed to test role-scoped mobile
+  // fixes (mikro/#73 etc.) since Admin always bypasses those restrictions.
+  await prisma.user.upsert({
+    where: { id: ID.users.reviewer1 },
+    update: { password: devPasswordHash, phone: "+18093334455" },
+    create: {
+      id: ID.users.reviewer1,
+      name: "Rosa Reviewer",
+      phone: "+18093334455",
+      password: devPasswordHash,
+      roles: { create: [{ role: "REVIEWER" }] }
+    }
+  });
+
   const collectors = [collector1, collector2];
-  console.log("Created 3 users");
+  console.log("Created 4 users");
 
   // ---------------------------------------------------------------------------
   // Customers (10)
