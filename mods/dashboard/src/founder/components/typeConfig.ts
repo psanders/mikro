@@ -18,15 +18,11 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
-import { formatAmount, humanizeKey, humanizeValue } from "./format";
+import { formatAmount } from "./format";
 import { METRIC_LABELS, formatThreshold } from "../copilot/ruleLabels";
 import type { WatchRuleMetric } from "../copilot/types";
 
-/** Spanish metric label + metric-aware value formatting for `rule.alert` cards. */
-function ruleMetricLabel(metric: string): string {
-  return METRIC_LABELS[metric as WatchRuleMetric] ?? metric;
-}
-
+/** Metric-aware value formatting for `rule.alert` cards. */
 function ruleMetricValue(metric: string, value: number): string {
   return metric in METRIC_LABELS
     ? formatThreshold(metric as WatchRuleMetric, value)
@@ -192,27 +188,6 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
   }
 }
 
-interface DetailRow {
-  label: string;
-  value: string;
-}
-
-/** Payload keys already surfaced by a dedicated field/label — skip in the generic fallback. */
-const HANDLED_KEYS: Record<BusinessEventType, string[]> = {
-  "payment.collected": ["paymentId", "method", "kind", "lateFeeAmount"],
-  "payment.reversed": ["paymentId", "reason"],
-  "application.approved": ["applicationId", "policyException", "note"],
-  "application.rejected": ["applicationId", "note"],
-  "application.signed": ["applicationId"],
-  "application.converted": ["applicationId", "loanId", "loanNumber", "principal"],
-  "application.deleted": ["applicationId", "snapshot"],
-  "application.restored": ["applicationId", "deletionEventId"],
-  "loan.status_changed": ["loanId", "from", "to"],
-  "customer.created": ["customerId"],
-  "copilot.action": ["toolName", "args", "resultSummary"],
-  "rule.alert": ["ruleId", "ruleName", "metric", "value", "threshold"]
-};
-
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Efectivo",
   transfer: "Transferencia",
@@ -222,17 +197,6 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 const PAYMENT_KIND_LABELS: Record<string, string> = {
   installment: "Cuota",
   late_fee: "Mora"
-};
-
-const APPLICATION_STATUS_LABELS: Record<string, string> = {
-  draft: "Borrador",
-  submitted: "Enviada",
-  in_review: "En revisión",
-  approved: "Aprobada",
-  rejected: "Rechazada",
-  signed: "Firmada",
-  converted: "Convertida",
-  pending: "Pendiente"
 };
 
 const LOAN_STATUS_LABELS: Record<string, string> = {
@@ -246,145 +210,109 @@ const LOAN_STATUS_LABELS: Record<string, string> = {
 const translate = (map: Record<string, string>, value: string) => map[value.toLowerCase()] ?? value;
 
 /**
- * Curated Spanish rows from an application.deleted snapshot — the raw row has
- * dozens of technical columns (ids, session, raw JSON); the card shows only
- * what a founder needs to recognize the deleted solicitud.
+ * Narrative sentence for a deleted application, built from the deletion
+ * snapshot (the row has dozens of technical columns; only what a founder
+ * needs to recognize the deleted solicitud is used). No deletion reason is
+ * included — `deleteApplicationSchema` doesn't capture one today.
  */
-function snapshotDetailRows(snapshot: Record<string, unknown>): DetailRow[] {
-  const str = (k: string) => (typeof snapshot[k] === "string" ? (snapshot[k] as string) : "");
-  const num = (k: string) => (typeof snapshot[k] === "number" ? (snapshot[k] as number) : null);
-  const rows: DetailRow[] = [];
-  const name = `${str("firstName")} ${str("lastName")}`.trim();
-  if (name) rows.push({ label: "Cliente", value: name });
+function deletionNarrative(event: FeedEvent): string | null {
+  const snapshot = event.payload.snapshot;
+  if (!snapshot || typeof snapshot !== "object") return null;
+  const s = snapshot as Record<string, unknown>;
+  const str = (k: string) => (typeof s[k] === "string" ? (s[k] as string) : "");
+  const num = (k: string) => (typeof s[k] === "number" ? (s[k] as number) : null);
+
+  const name =
+    `${str("firstName")} ${str("lastName")}`.trim() || event.customerName || "El cliente";
   const negocio = str("businessName") || str("businessType");
-  if (negocio) rows.push({ label: "Negocio", value: negocio });
-  const monto = num("requestedAmount");
-  if (monto !== null) rows.push({ label: "Monto solicitado", value: formatAmount(monto) });
-  const plazo = num("requestedTermWeeks");
-  if (plazo !== null) rows.push({ label: "Plazo", value: `${plazo} semanas` });
-  if (str("province")) rows.push({ label: "Provincia", value: str("province") });
-  if (str("status")) {
-    rows.push({ label: "Estado", value: translate(APPLICATION_STATUS_LABELS, str("status")) });
-  }
-  return rows;
+  const province = str("province");
+  const amount = num("requestedAmount");
+  const weeks = num("requestedTermWeeks");
+
+  const ask = amount !== null ? ` ${formatAmount(amount)}` : "";
+  const term = weeks !== null ? ` a ${weeks} semanas` : "";
+  const negocioClause = negocio ? ` para ${negocio}` : "";
+  const provinceClause = province ? ` en ${province}` : "";
+
+  return `${name} solicitó${ask}${term}${negocioClause}${provinceClause}; ${event.actorName} la eliminó.`;
 }
 
-/** Key-value detail rows for the expanded card, per event type + generic fallback. */
-export function resolveDetailRows(event: FeedEvent): DetailRow[] {
-  const { type, payload } = event;
-  const rows: DetailRow[] = [];
+/**
+ * Per-type narrative sentence for the expanded card, template-composed from
+ * fields already on the event — no LLM call, no network request. Returns
+ * `null` when the compact `summary` line already says everything there is
+ * to say for that type, so the card doesn't repeat itself.
+ */
+export function resolveNarrative(event: FeedEvent): string | null {
+  const { type, payload, actorName, customerName } = event;
 
   switch (type) {
     case "payment.collected": {
-      const method = payload.method;
-      const kind = payload.kind;
-      if (typeof method === "string") {
-        rows.push({ label: "Método", value: translate(PAYMENT_METHOD_LABELS, method) });
-      }
-      if (typeof kind === "string") {
-        rows.push({ label: "Tipo", value: translate(PAYMENT_KIND_LABELS, kind) });
-      }
-      if (typeof payload.lateFeeAmount === "number") {
-        rows.push({ label: "Recargo por mora", value: formatAmount(payload.lateFeeAmount) });
-      }
-      break;
+      const method =
+        typeof payload.method === "string"
+          ? translate(PAYMENT_METHOD_LABELS, payload.method).toLowerCase()
+          : "";
+      const kind =
+        typeof payload.kind === "string"
+          ? translate(PAYMENT_KIND_LABELS, payload.kind).toLowerCase()
+          : "";
+      const lateFee = typeof payload.lateFeeAmount === "number" ? payload.lateFeeAmount : null;
+      const sentence = `Pago${method ? ` ${method}` : ""} registrado${kind ? ` como ${kind}` : ""}.`;
+      return lateFee !== null
+        ? `${sentence} Incluye recargo por mora de ${formatAmount(lateFee)}.`
+        : sentence;
     }
     case "payment.reversed": {
-      if (typeof payload.reason === "string" && payload.reason) {
-        rows.push({ label: "Motivo", value: payload.reason });
-      }
-      break;
+      const reason = typeof payload.reason === "string" && payload.reason ? payload.reason : "";
+      const who = customerName ? ` de ${customerName}` : "";
+      return `${actorName} revirtió el pago${who}.${reason ? ` Motivo: ${reason}.` : ""}`;
     }
     case "application.approved": {
-      if (payload.policyException === true) {
-        rows.push({ label: "Excepción de política", value: "Sí" });
-      }
-      if (typeof payload.note === "string" && payload.note) {
-        rows.push({ label: "Nota", value: payload.note });
-      }
-      break;
+      const exception = payload.policyException === true;
+      const note = typeof payload.note === "string" && payload.note ? payload.note : "";
+      return `Solicitud de ${customerName ?? "cliente"} aprobada por ${actorName}${exception ? ", con excepción de política" : ""}.${note ? ` Nota: ${note}.` : ""}`;
     }
     case "application.rejected": {
-      if (typeof payload.note === "string" && payload.note) {
-        rows.push({ label: "Nota", value: payload.note });
-      }
-      break;
-    }
-    case "application.converted": {
-      if (typeof payload.loanNumber === "number") {
-        rows.push({ label: "Préstamo", value: `#${payload.loanNumber}` });
-      }
-      if (typeof payload.principal === "number") {
-        rows.push({ label: "Principal", value: formatAmount(payload.principal) });
-      }
-      break;
-    }
-    case "application.deleted": {
-      const snapshot = payload.snapshot;
-      if (snapshot && typeof snapshot === "object") {
-        rows.push(...snapshotDetailRows(snapshot as Record<string, unknown>));
-      }
-      break;
-    }
-    case "loan.status_changed": {
-      if (typeof payload.to === "string") {
-        const to = translate(LOAN_STATUS_LABELS, payload.to);
-        const from =
-          typeof payload.from === "string" && payload.from
-            ? translate(LOAN_STATUS_LABELS, payload.from)
-            : "";
-        rows.push({ label: "Estado", value: from ? `${from} → ${to}` : to });
-      }
-      break;
-    }
-    case "copilot.action": {
-      if (typeof payload.toolName === "string") {
-        rows.push({ label: "Herramienta", value: payload.toolName });
-      }
-      const args = payload.args;
-      if (args && typeof args === "object" && !Array.isArray(args)) {
-        for (const [key, value] of Object.entries(args as Record<string, unknown>)) {
-          if (value === null || value === undefined || typeof value === "object") continue;
-          rows.push({ label: humanizeKey(key), value: humanizeValue(value) });
-        }
-      }
-      if (typeof payload.resultSummary === "string" && payload.resultSummary) {
-        rows.push({ label: "Resultado", value: payload.resultSummary });
-      }
-      break;
-    }
-    case "rule.alert": {
-      if (typeof payload.ruleName === "string") {
-        rows.push({ label: "Regla", value: payload.ruleName });
-      }
-      if (typeof payload.metric === "string") {
-        rows.push({ label: "Métrica", value: ruleMetricLabel(payload.metric) });
-      }
-      const metric = typeof payload.metric === "string" ? payload.metric : "";
-      if (typeof payload.value === "number") {
-        rows.push({ label: "Valor", value: ruleMetricValue(metric, payload.value) });
-      }
-      if (typeof payload.threshold === "number") {
-        rows.push({ label: "Umbral", value: ruleMetricValue(metric, payload.threshold) });
-      }
-      break;
+      const note = typeof payload.note === "string" && payload.note ? payload.note : "";
+      return `Solicitud de ${customerName ?? "cliente"} rechazada por ${actorName}.${note ? ` Motivo: ${note}.` : ""}`;
     }
     case "application.signed":
+      return null;
+    case "application.converted": {
+      const loanNumber = typeof payload.loanNumber === "number" ? payload.loanNumber : null;
+      const principal = typeof payload.principal === "number" ? payload.principal : null;
+      return `Solicitud de ${customerName ?? "cliente"} convertida${loanNumber !== null ? ` en el préstamo #${loanNumber}` : ""}${principal !== null ? ` por ${formatAmount(principal)}` : ""}.`;
+    }
+    case "application.deleted":
+      return deletionNarrative(event);
     case "application.restored":
+      return null;
+    case "loan.status_changed": {
+      const to =
+        typeof payload.to === "string" && payload.to
+          ? translate(LOAN_STATUS_LABELS, payload.to)
+          : "";
+      if (!to) return null;
+      const from =
+        typeof payload.from === "string" && payload.from
+          ? translate(LOAN_STATUS_LABELS, payload.from)
+          : "";
+      return `Préstamo actualizado${from ? ` de ${from}` : ""} a ${to}.`;
+    }
     case "customer.created":
-      break;
+      return null;
+    case "copilot.action": {
+      const resultSummary =
+        typeof payload.resultSummary === "string" && payload.resultSummary
+          ? payload.resultSummary
+          : "";
+      if (resultSummary) return resultSummary;
+      const toolName = typeof payload.toolName === "string" ? payload.toolName : "";
+      return toolName ? `Herramienta ejecutada: ${toolName}.` : null;
+    }
+    case "rule.alert":
+      return null;
   }
-
-  // Generic fallback for anything the per-type mapping above didn't consume —
-  // keeps future/unknown payload fields visible instead of silently dropped.
-  const handled = new Set(HANDLED_KEYS[type]);
-  for (const [key, value] of Object.entries(payload)) {
-    if (handled.has(key)) continue;
-    if (value === null || value === undefined || typeof value === "object") continue;
-    rows.push({ label: humanizeKey(key), value: humanizeValue(value) });
-  }
-
-  return rows;
 }
 
 interface SubjectLink {
@@ -438,5 +366,37 @@ export function subjectQuestion(target: NavigateTarget, customerName?: string): 
       return `Muéstrame los detalles del préstamo ${target.id}`;
     case "customer":
       return `Muéstrame al cliente ${customerName ?? target.id}`;
+  }
+}
+
+/**
+ * Spanish question prefilled into the copilot dock by a card's "IA insights"
+ * link — deeper, record-specific synthesis, distinct from the (deletion-only)
+ * ask-copilot chip's broader weekly question. Reuses `subjectQuestion` for
+ * every type that already resolves a subject link; type-specific fallbacks
+ * otherwise (deletions, loan status changes, copilot actions, rule alerts).
+ */
+export function resolveInsightsQuestion(event: FeedEvent): string {
+  const subject = resolveSubjectLink(event);
+  if (subject) return subjectQuestion(subject.target, event.customerName);
+
+  switch (event.type) {
+    case "payment.collected":
+    case "payment.reversed":
+      return `Cuéntame más sobre este pago${event.customerName ? ` de ${event.customerName}` : ""}.`;
+    case "application.deleted":
+      return `Cuéntame más sobre la solicitud eliminada${event.customerName ? ` de ${event.customerName}` : ""}.`;
+    case "loan.status_changed":
+      return "Cuéntame más sobre este cambio de estado del préstamo.";
+    case "copilot.action":
+      return "Cuéntame más sobre esta acción del copiloto.";
+    case "rule.alert": {
+      const ruleName = typeof event.payload.ruleName === "string" ? event.payload.ruleName : "";
+      return ruleName
+        ? `Cuéntame más sobre esta alerta: ${ruleName}.`
+        : "Cuéntame más sobre esta alerta.";
+    }
+    default:
+      return "Cuéntame más sobre este evento.";
   }
 }

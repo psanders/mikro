@@ -176,6 +176,23 @@ export const loanStatusChangedEvent: FeedEvent = {
   payload: { loanId: "loan-10001", from: "current", to: "overdue" }
 };
 
+/**
+ * The real mapper (`loanStatusChanged` in `mods/apiserver/.../mappers.ts`)
+ * always writes `from: ""` — the prior status isn't observable at the tRPC
+ * boundary post-commit. This fixture exercises that degrade path (narrative
+ * names only the resulting status), unlike `loanStatusChangedEvent` above.
+ */
+export const loanStatusChangedNoFromEvent: FeedEvent = {
+  id: "evt-loan-status-changed-no-from",
+  type: "loan.status_changed",
+  occurredAt: daysAgo(3),
+  actorName: "Sistema",
+  customerName: "Ana Cruz",
+  loanId: "loan-10004",
+  summary: "El préstamo #10004 de Ana Cruz cambió de estado",
+  payload: { loanId: "loan-10004", from: "", to: "completed" }
+};
+
 export const customerCreatedEvent: FeedEvent = {
   id: "evt-customer-created",
   type: "customer.created",
@@ -184,6 +201,34 @@ export const customerCreatedEvent: FeedEvent = {
   customerName: "Karina Solís",
   summary: "Rosa Méndez creó el cliente Karina Solís",
   payload: { customerId: "cust-3001" }
+};
+
+export const copilotActionEvent: FeedEvent = {
+  id: "evt-copilot-action",
+  type: "copilot.action",
+  occurredAt: minutesAgo(10),
+  actorName: "Fundador",
+  summary: "Reasignar la ruta Villa Consuelo",
+  payload: {
+    toolName: "reassignRoute",
+    args: { routeId: "route-vc-1", newCollectorId: "user-9002" },
+    resultSummary: "Ruta Villa Consuelo reasignada a Miguel Torres."
+  }
+};
+
+export const ruleAlertEvent: FeedEvent = {
+  id: "evt-rule-alert",
+  type: "rule.alert",
+  occurredAt: minutesAgo(25),
+  actorName: "Sistema",
+  summary: 'La regla "Mora alta" se activó: mora de la cartera = 18% (umbral > 15%).',
+  payload: {
+    ruleId: "rule-001",
+    ruleName: "Mora alta",
+    metric: "mora_pct_portfolio",
+    value: 18,
+    threshold: 15
+  }
 };
 
 /** All twelve catalog specimens, in a stable order — used by the Feed composite story. */
@@ -199,5 +244,7 @@ export const allFeedEvents: FeedEvent[] = [
   applicationConvertedEvent,
   applicationRejectedEvent,
   loanStatusChangedEvent,
-  customerCreatedEvent
+  customerCreatedEvent,
+  copilotActionEvent,
+  ruleAlertEvent
 ];
