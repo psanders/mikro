@@ -5,10 +5,6 @@ export { recordEvent, type EventClient } from "./recordEvent.js";
 export { canRecordEvents } from "./helpers.js";
 export { eventMappers, type EventMapper, type EventMapperArgs } from "./mappers.js";
 export { createListFeedEvents, type FeedEventItem } from "./createListFeedEvents.js";
-export {
-  createListApplicationEvents,
-  type ApplicationEventItem
-} from "./createListApplicationEvents.js";
 export { createRestoreApplication } from "./createRestoreApplication.js";
 export { createSearchAll } from "./createSearchAll.js";
 export { createExportAuditLog } from "./createExportAuditLog.js";

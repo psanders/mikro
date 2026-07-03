@@ -193,7 +193,6 @@ import {
 // Founder feed / event-log schemas
 import {
   listFeedEventsSchema,
-  listApplicationEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
   exportAuditLogSchema
@@ -201,7 +200,6 @@ import {
 // Founder feed / event-log API functions
 import {
   createListFeedEvents,
-  createListApplicationEvents,
   createRestoreApplication,
   createSearchAll,
   createExportAuditLog
@@ -545,19 +543,6 @@ export const protectedRouter = router({
     const fn = createGetApplication(ctx.db);
     return fn(input);
   }),
-
-  /**
-   * Activity history for a single application (approve/reject/sign/convert/
-   * delete/restore) — the mobile "Ver actividad" list. Reviewers (ADMIN/
-   * REVIEWER) only, scoped to one applicationId; never surfaces payment data
-   * (mikro/#67, mikro/#73).
-   */
-  listApplicationEvents: reviewerProcedure
-    .input(listApplicationEventsSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createListApplicationEvents(ctx.db as unknown as PrismaClient);
-      return fn(input);
-    }),
 
   /**
    * Claim a RECEIVED application for review (-> IN_REVIEW), or — ADMIN only —

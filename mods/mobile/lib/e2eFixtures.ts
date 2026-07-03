@@ -255,37 +255,6 @@ export function e2eSetStatus(
   return { ...app };
 }
 
-/** Fixed activity history for the seeded IN_REVIEW app — mikro/#67 ("Ver actividad"). */
-export function e2eListApplicationEvents(): {
-  items: Array<{
-    id: string;
-    type: string;
-    occurredAt: string;
-    actorName: string;
-    summary: string;
-  }>;
-} {
-  const base = Date.now();
-  return {
-    items: [
-      {
-        id: "e2e-event-2",
-        type: "application.approved",
-        occurredAt: new Date(base - 60_000).toISOString(),
-        actorName: "Pedro Test",
-        summary: "Solicitud de Ramón Objío tomada para revisión"
-      },
-      {
-        id: "e2e-event-1",
-        type: "application.received",
-        occurredAt: new Date(base - 3_600_000).toISOString(),
-        actorName: "Sistema",
-        summary: "Solicitud de Ramón Objío recibida"
-      }
-    ]
-  };
-}
-
 /** Send-promo stub (mikro/#68) — always succeeds so the mobile "Enviar promoción" flow round-trips. */
 export function e2eSendPromo(): { sent: true; messageId: string } {
   return { sent: true, messageId: "e2e-promo-msg-1" };

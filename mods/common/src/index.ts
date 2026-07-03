@@ -414,7 +414,6 @@ export {
   businessEventPayloadSchemas,
   recordBusinessEventSchema,
   listFeedEventsSchema,
-  listApplicationEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
   exportAuditLogSchema,
