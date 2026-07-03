@@ -291,7 +291,14 @@ const applicationRef = {
 const requireRef = (v: { id?: string; sessionId?: string }) => Boolean(v.id || v.sessionId);
 const refMessage = { message: "Provide either id or sessionId" };
 
-export const claimApplicationSchema = z.object(applicationRef).refine(requireRef, refMessage);
+/**
+ * Claim a RECEIVED application for review. `assigneeId` defaults to the caller
+ * (self-claim); an admin may pass a different reviewer's id to hand the
+ * application to them directly instead of claiming it themselves first.
+ */
+export const claimApplicationSchema = z
+  .object({ ...applicationRef, assigneeId: z.uuid().optional() })
+  .refine(requireRef, refMessage);
 
 export const approveApplicationSchema = z
   .object({ ...applicationRef, note: z.string().max(2000).optional() })

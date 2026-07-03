@@ -524,13 +524,34 @@ export const protectedRouter = router({
   }),
 
   /**
-   * Claim a RECEIVED application for review (-> IN_REVIEW). ADMIN/REVIEWER only.
+   * Claim a RECEIVED application for review (-> IN_REVIEW), or — ADMIN only —
+   * assign it directly to another reviewer via `assigneeId`. ADMIN/REVIEWER only.
    */
   claimApplication: reviewerProcedure
     .input(claimApplicationSchema)
     .mutation(async ({ ctx, input }) => {
+      const assigneeId = input.assigneeId ?? ctx.userId;
+      if (assigneeId !== ctx.userId) {
+        if (!ctx.roles.includes("ADMIN")) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only admins can assign an application to another reviewer."
+          });
+        }
+        const assignee = await ctx.db.user.findUnique({
+          where: { id: assigneeId },
+          include: { roles: { select: { role: true } } }
+        });
+        const assigneeRoles = assignee?.roles?.map((r) => r.role) ?? [];
+        if (!assignee || !(assigneeRoles.includes("ADMIN") || assigneeRoles.includes("REVIEWER"))) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Assignee must be an existing admin or reviewer."
+          });
+        }
+      }
       const fn = createClaimApplication(ctx.db);
-      return fn(input, ctx.userId);
+      return fn(input, assigneeId);
     }),
 
   /**

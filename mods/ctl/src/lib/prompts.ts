@@ -243,14 +243,15 @@ type ListUsersClient = {
 
 /**
  * Helper to prompt for user selection (dropdown) if value is missing.
- * Fetches users from the API and optionally filters by role.
+ * Fetches users from the API and optionally filters by role (`role` for a
+ * single role, `roles` for "any of").
  */
 export async function promptUserSelectIfMissing(
   client: ListUsersClient,
   value: string | undefined,
   message: string,
   flagName: string,
-  options?: { role?: UserRole }
+  options?: { role?: UserRole; roles?: UserRole[] }
 ): Promise<string> {
   if (value !== undefined && value !== "") {
     return value;
@@ -261,9 +262,10 @@ export async function promptUserSelectIfMissing(
   }
 
   const users = await client.listUsers.query({ showDisabled: true });
+  const allowedRoles = options?.roles ?? (options?.role ? [options.role] : undefined);
   let filtered = users;
-  if (options?.role) {
-    filtered = users.filter((u) => u.roles?.some((r) => r.role === options!.role));
+  if (allowedRoles) {
+    filtered = users.filter((u) => u.roles?.some((r) => allowedRoles.includes(r.role as UserRole)));
   }
 
   if (filtered.length === 0) {
