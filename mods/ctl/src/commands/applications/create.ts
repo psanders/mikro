@@ -1,7 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { Flags } from "@oclif/core";
 import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import {
@@ -15,16 +14,12 @@ export default class Create extends MutationCommand<typeof Create> {
   static override readonly description = "create a new loan application";
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --first-name Juan --last-name Perez --phone +18095551234 --send-promo",
+    "<%= config.bin %> <%= command.id %> --first-name Juan --last-name Perez --phone +18095551234",
     "<%= config.bin %> <%= command.id %> --business-type COLMADO --field monthlySales='RD$50,000 – RD$100,000'"
   ];
   static override readonly flags = {
     ...applicationStableFlags,
-    ...applicationFieldFlag,
-    "send-promo": Flags.boolean({
-      description: "Also send the promo template to the application's phone after creation",
-      default: false
-    })
+    ...applicationFieldFlag
   };
 
   public async run(): Promise<void> {
@@ -47,20 +42,10 @@ export default class Create extends MutationCommand<typeof Create> {
     if (!ready) return;
 
     try {
-      const app = await client.createApplication.mutate({
-        patch,
-        sendPromo: flags["send-promo"]
-      });
+      const app = await client.createApplication.mutate({ patch });
 
       this.log("Done!");
       this.log(`Application ID: ${app.id}`);
-      if (flags["send-promo"]) {
-        if (app.promo?.sent) {
-          this.log(`Promo sent. Message ID: ${app.promo.messageId}`);
-        } else {
-          this.log(`Promo not sent: ${app.promo?.error ?? "unknown error"}`);
-        }
-      }
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }
