@@ -17,17 +17,29 @@ import { Input } from "../components/ui/Input";
 import { BtnCta } from "../components/ui/BtnCta";
 import { trpc } from "../lib/api";
 
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export default function PromocionarScreen() {
   const [phone, setPhone] = useState("");
   const sendPromo = trpc.sendPromo.useMutation();
 
   const digits = phone.replace(/\D/g, "");
-  const isValid = digits.length === 10 || (digits.length === 11 && digits.startsWith("1"));
+  const isValid = digits.length === 10;
+
+  function handlePhoneChange(text: string) {
+    setPhone(formatPhone(text));
+  }
 
   function handleSend() {
     if (!isValid || sendPromo.isPending) return;
+    const e164 = digits.startsWith("1") ? `+${digits}` : `+1${digits}`;
     sendPromo.mutate(
-      { phone },
+      { phone: e164 },
       {
         onSuccess: (result) => {
           if (result.sent) {
@@ -56,8 +68,8 @@ export default function PromocionarScreen() {
         <Input
           label="Teléfono del cliente nuevo"
           value={phone}
-          onChangeText={setPhone}
-          placeholder="809 555 1234"
+          onChangeText={handlePhoneChange}
+          placeholder="809-555-0100"
           icon={Phone}
           keyboardType="phone-pad"
           testID="promo-phone-input"

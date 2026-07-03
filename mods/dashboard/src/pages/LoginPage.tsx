@@ -12,6 +12,13 @@ import { Button } from "../components/ui/Button";
 // brand panel beside a white centered form. Auth wiring (login mutation, token,
 // session) is unchanged from the foundation. Note: the mockup shows an email
 // field, but Mikro auth is phone-based (E.164), so the first field is Teléfono.
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export function LoginPage() {
   const { completeLogin } = useAuth();
   const [phone, setPhone] = useState("");
@@ -25,7 +32,9 @@ export function LoginPage() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    login.mutate({ phone, password });
+    const digits = phone.replace(/\D/g, "");
+    const e164 = digits.startsWith("1") ? `+${digits}` : `+1${digits}`;
+    login.mutate({ phone: e164, password });
   }
 
   return (
@@ -77,9 +86,9 @@ export function LoginPage() {
               icon={Phone}
               type="tel"
               autoComplete="username"
-              placeholder="+18091234567"
+              placeholder="809-555-0100"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
               required
             />
             <Field
