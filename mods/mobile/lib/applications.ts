@@ -168,13 +168,16 @@ export function riskVariantForBand(band: string | null | undefined): RiskVariant
  * from RISK_BAND_META's labels (used on the detail score card), matching the
  * exact copy already verified against Pencil in the group 2 Storybook stories
  * ("Bajo riesgo" / "Riesgo medio" / "Riesgo alto"). Unscored applications show
- * "Nueva" — SolicitudRow has no dedicated neutral/pending pill color, so those
- * rows fall back to the "medium" (amber) variant.
+ * "Nueva", except DRAFT rows (mikro/#72) which show "Borrador" — SolicitudRow
+ * has no dedicated neutral/pending pill color, so both fall back to the
+ * "medium" (amber) variant.
  */
 export function riskRowLabel(
   band: string | null | undefined,
-  score: number | null | undefined
+  score: number | null | undefined,
+  status?: string | null
 ): string {
+  if (status === "DRAFT") return "Borrador";
   if (score == null) return "Nueva";
   switch (riskVariantForBand(band)) {
     case "low":

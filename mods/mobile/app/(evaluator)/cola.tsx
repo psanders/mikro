@@ -165,7 +165,7 @@ export default function EvaluadorColaScreen() {
             name={applicantName(a)}
             business={[a.businessName, a.province].filter(Boolean).join(" · ")}
             meta={`Enviada hace ${timeAgo(a.createdAt)}`}
-            riskLabel={riskRowLabel(a.riskBand, a.score)}
+            riskLabel={riskRowLabel(a.riskBand, a.score, a.status)}
             riskVariant={riskRowVariant(a.riskBand, a.score)}
             score={a.score ?? 0}
             onPress={() => router.push(`/solicitud/${a.id}`)}
