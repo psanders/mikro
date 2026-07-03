@@ -41,6 +41,10 @@ export function summarizeAction(toolName: string, args: Record<string, unknown>)
         status ? ` a ${status}` : ""
       }.`;
     }
+    case "sendPromo": {
+      const phone = str(args, "phone");
+      return `Enviar la promoción por WhatsApp${phone ? ` al ${phone}` : ""} (sin crear solicitud).`;
+    }
     default:
       return `Ejecutar ${toolName} con los datos: ${JSON.stringify(args)}.`;
   }

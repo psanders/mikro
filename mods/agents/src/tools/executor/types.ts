@@ -137,6 +137,15 @@ export interface ToolExecutorDependencies {
     status: "COMPLETED" | "DEFAULTED" | "CANCELLED";
   }) => Promise<{ id: string; loanId: number; status: string }>;
 
+  /**
+   * Send the approved promo template to a phone, no application created.
+   * Best-effort: a bad phone or WhatsApp error resolves to `{ sent: false, error }`
+   * rather than throwing.
+   */
+  sendPromo: (params: {
+    phone: string;
+  }) => Promise<{ sent: boolean; messageId?: string; error?: string }>;
+
   /** Get customer by phone number */
   getCustomerByPhone: (params: {
     phone: string;

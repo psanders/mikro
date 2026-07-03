@@ -181,7 +181,8 @@ export const WRITE_TOOLS: readonly string[] = [
   "createPayment",
   "createCustomer",
   "createLoan",
-  "updateLoanStatus"
+  "updateLoanStatus",
+  "sendPromo"
 ];
 
 /** Direct tools: reversible watch-rule management, executed inline. */

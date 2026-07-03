@@ -5,7 +5,7 @@ import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve, join } from "path";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 // Load .env so MIKRO_CONFIG_FILE can point to mikro.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,12 +64,14 @@ import {
   getAgentByProfile,
   createChatModel,
   getLLMConfig,
+  getWhatsAppPromoTemplate,
   type Message,
   type Profile,
   type ToolExecutorDependencies,
   type ExportedCustomer
 } from "@mikro/agents";
 import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
+import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
 
@@ -611,6 +613,26 @@ async function initializeMessageProcessor() {
         params: Parameters<ToolExecutorDependencies["updateLoanStatus"]>[0]
       ) => {
         return updateLoanStatus(params);
+      },
+      // Founder copilot: send the promo template to a phone, no application
+      // created. Same normalization + template lookup as the `sendPromo` tRPC
+      // procedure (trpc/routers/protected.ts), reusing the shared WhatsApp client.
+      sendPromo: async (params: Parameters<ToolExecutorDependencies["sendPromo"]>[0]) => {
+        const { templateName, languageCode, imageUrl } = getWhatsAppPromoTemplate();
+        const sendFn = createSendApplicationPromo({
+          sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
+          templateName,
+          languageCode,
+          imageUrl
+        });
+        const digits = params.phone.replace(/\D/g, "");
+        const e164 =
+          digits.length === 10
+            ? `+1${digits}`
+            : digits.length === 11 && digits.startsWith("1")
+              ? `+${digits}`
+              : null;
+        return sendFn({ phone: e164, flowToken: randomUUID() });
       },
       getLoanByLoanId: async (params: { loanId: number }) => {
         const loan = await getLoanByLoanId(params);

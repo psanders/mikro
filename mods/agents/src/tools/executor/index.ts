@@ -14,6 +14,7 @@ import { handleListLoansByCollector } from "./listLoansByCollector.js";
 import { handleGetCustomer } from "./getCustomer.js";
 import { handleCreateLoan } from "./createLoan.js";
 import { handleUpdateLoanStatus } from "./updateLoanStatus.js";
+import { handleSendPromo } from "./sendPromo.js";
 import { handleCalculateLoan } from "./calculateLoan.js";
 import { handleGetCustomerByPhone } from "./getCustomerByPhone.js";
 import { handleListLoansByCustomer } from "./listLoansByCustomer.js";
@@ -62,6 +63,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     createLoan: handleCreateLoan,
     calculateLoan: handleCalculateLoan,
     updateLoanStatus: handleUpdateLoanStatus,
+    sendPromo: handleSendPromo,
     getCustomerByPhone: handleGetCustomerByPhone,
     listLoansByCustomer: handleListLoansByCustomer,
     listCustomerLoansByPhone: handleListCustomerLoansByPhone,

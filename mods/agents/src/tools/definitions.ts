@@ -287,6 +287,30 @@ export const updateLoanStatusTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for sending the loan-application promo template to a phone,
+ * no application created. Used by the founder copilot as a customer-acquisition
+ * tool (WRITE_TOOL — the founder confirms via the pending-action card before it runs).
+ */
+export const sendPromoTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "sendPromo",
+    description:
+      "Enviar la plantilla promocional de solicitud de préstamo a un número de teléfono, sin crear ninguna solicitud. Útil para captación de clientes (ej: 'envía la promo al +1809...').",
+    parameters: {
+      type: "object",
+      properties: {
+        phone: {
+          type: "string",
+          description: "Número de teléfono al que enviar la promoción (con o sin código de país)."
+        }
+      },
+      required: ["phone"]
+    }
+  }
+};
+
+/**
  * Tool definition for getting a customer by phone number.
  * Used by Juan (collector).
  */
@@ -652,6 +676,7 @@ export const allTools: ToolFunction[] = [
   createLoanTool,
   calculateLoanTool,
   updateLoanStatusTool,
+  sendPromoTool,
   getCustomerByPhoneTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,
