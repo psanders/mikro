@@ -1,6 +1,6 @@
 name: Build Dashboard (Tauri)
 
-# Builds the Mikro Operaciones desktop app (Tauri 2) for macOS + Windows,
+# Builds the Mikro desktop app (Tauri 2) for macOS + Windows,
 # pointed at the production API. On a v* tag (pushed by release.yaml) the
 # installers are attached to that GitHub Release; on manual dispatch they are
 # uploaded as workflow artifacts.
@@ -129,7 +129,7 @@ jobs:
           # On a tag, create/append to the matching GitHub Release; on manual
           # dispatch tagName is empty, so tauri-action only builds (no release).
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: "Mikro Operaciones ${{ github.ref_name }}"
+          releaseName: "Mikro ${{ github.ref_name }}"
           releaseBody: "Desktop builds for ${{ github.ref_name }}. API: ${{ env.VITE_API_URL }}"
           releaseDraft: false
           prerelease: false

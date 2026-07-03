@@ -1,7 +1,7 @@
 [package]
 name = "mikro-dashboard"
 version = "0.0.0"
-description = "Mikro operations dashboard"
+description = "Mikro founder dashboard"
 edition = "2021"
 rust-version = "1.77.2"
 

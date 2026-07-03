@@ -35,9 +35,18 @@ describe("resolveHomeRoute", () => {
     await expect(resolveHomeRoute()).resolves.toBe(EVALUATOR_HOME);
   });
 
-  it("routes ADMIN-only users to the evaluator home", async () => {
+  it("routes ADMIN-only users to the evaluator home by default", async () => {
     mockGetRoles.mockResolvedValue(["ADMIN"]);
+    mockGetNavMode.mockResolvedValue("evaluator");
     await expect(resolveHomeRoute()).resolves.toBe(EVALUATOR_HOME);
+  });
+
+  // mikro/#70: ADMIN-only counts as dual-role (server-side access to both
+  // surfaces), so the Perfil switcher's stored preference must route them too.
+  it("respects a stored 'collector' nav mode override for ADMIN-only users", async () => {
+    mockGetRoles.mockResolvedValue(["ADMIN"]);
+    mockGetNavMode.mockResolvedValue("collector");
+    await expect(resolveHomeRoute()).resolves.toBe(COLLECTOR_HOME);
   });
 
   it("routes dual-role (COLLECTOR + REVIEWER) users to the evaluator home by default", async () => {

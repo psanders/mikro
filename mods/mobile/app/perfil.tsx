@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Bell, ShieldCheck, LifeBuoy, LogOut } from "lucide-react-native";
@@ -22,8 +22,10 @@ import {
   getNavMode,
   isDualRole,
   setNavMode,
+  activeRoleLabel,
   type NavMode
 } from "../lib/auth";
+import type { Role } from "@mikro/common/schemas";
 import { EVALUATOR_HOME, COLLECTOR_HOME } from "../lib/navigation";
 import { trpc } from "../lib/api";
 
@@ -35,13 +37,15 @@ function formatRD(amount: number): string {
 export default function PerfilScreen() {
   const router = useRouter();
   const dashboard = trpc.getCollectorDashboard.useQuery();
+  const [roles, setRoles] = useState<Role[]>([]);
   const [dualRole, setDualRole] = useState(false);
   const [navMode, setNavModeState] = useState<NavMode>("evaluator");
 
   useEffect(() => {
     (async () => {
-      const roles = await getRoles();
-      const dual = isDualRole(roles);
+      const userRoles = await getRoles();
+      setRoles(userRoles);
+      const dual = isDualRole(userRoles);
       setDualRole(dual);
       if (dual) setNavModeState(await getNavMode());
     })();
@@ -61,13 +65,23 @@ export default function PerfilScreen() {
   return (
     <View style={styles.screen}>
       <Header title="Mi cuenta" />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={dashboard.isRefetching}
+            onRefresh={() => dashboard.refetch()}
+          />
+        }
+      >
         <View style={styles.body}>
           <View style={styles.profileCard}>
             <Avatar name={name} size={60} />
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{name}</Text>
-              <Text style={styles.profileRole}>Cobrador · {activeLoans} préstamos activos</Text>
+              <Text style={styles.profileRole}>
+                {activeRoleLabel(roles, navMode, dualRole)} · {activeLoans} préstamos activos
+              </Text>
             </View>
           </View>
 

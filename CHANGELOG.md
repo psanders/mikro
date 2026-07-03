@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.18.0](https://github.com/psanders/mikro/compare/v1.17.1...v1.18.0) (2026-07-03)
+
+### Bug Fixes
+
+- **mobile,apiserver:** stop Reviewer role from seeing or collecting payments ([9b4fb3c](https://github.com/psanders/mikro/commit/9b4fb3c43bfcf38c6ecb97fcac200a7bc5f669c6)), closes [#73](https://github.com/psanders/mikro/issues/73)
+- **mobile:** show actual role and Collector/Reviewer switch for Admin users ([6c71b66](https://github.com/psanders/mikro/commit/6c71b66a5984b28685e7937f5e2a74e564263527)), closes [#70](https://github.com/psanders/mikro/issues/70)
+
+### Features
+
+- **dashboard,apiserver:** in-app bug report — record, transcribe, file issue ([f595df1](https://github.com/psanders/mikro/commit/f595df19fd74ccb2e9a059681b71d72e67cad0f8)), closes [#69](https://github.com/psanders/mikro/issues/69)
+- **mobile,agents:** move new-customer promotion off WhatsApp into the app ([2e21ab4](https://github.com/psanders/mikro/commit/2e21ab45e66ae78884e91927f11cb7c97e92db62)), closes [#68](https://github.com/psanders/mikro/issues/68)
+- **mobile,apiserver:** add reviewer-scoped activity history to Datos ([403fe5a](https://github.com/psanders/mikro/commit/403fe5a163da0e0da836485032c9c6f74a962502)), closes [#67](https://github.com/psanders/mikro/issues/67) [#73](https://github.com/psanders/mikro/issues/73) [#67](https://github.com/psanders/mikro/issues/67)
+- **mobile:** add pull-to-refresh to remaining data-backed screens ([0b9b3ce](https://github.com/psanders/mikro/commit/0b9b3ce95a72b13c9eccdd8469c7da0eefcea606)), closes [#71](https://github.com/psanders/mikro/issues/71)
+- **mobile:** surface draft/incomplete applications with a promote action ([4fdafe5](https://github.com/psanders/mikro/commit/4fdafe5121eb56eef3533128a4ea3daf9b79c2cf)), closes [#72](https://github.com/psanders/mikro/issues/72)
+
+## [1.17.1](https://github.com/psanders/mikro/compare/v1.17.0...v1.17.1) (2026-07-03)
+
+### Bug Fixes
+
+- **founder:** remove leftover "ops" terminology ([fc00689](https://github.com/psanders/mikro/commit/fc00689c6885c7cb4d7c934d4e40fd2e409083a4))
+- **founder:** render copilot markdown, discourage bold/bullet overuse ([ea4b9b8](https://github.com/psanders/mikro/commit/ea4b9b84639041fef0c80d595eec308d819a304a))
+- restore peer:true lockfile metadata dropped by a macOS npm install ([db93a57](https://github.com/psanders/mikro/commit/db93a5772faf4b410131808d91356a53344028bf)), closes [#77](https://github.com/psanders/mikro/issues/77)
+
+### Features
+
+- **founder:** replace feed card KV-grid with per-type narratives ([06cb945](https://github.com/psanders/mikro/commit/06cb945f888587bd7dd629809d3238d849b41ed7))
+- **founder:** wire the rail avatar to a real profile menu ([db6f68c](https://github.com/psanders/mikro/commit/db6f68cd95ead7655d6a7410dccb296421f1e9e4))
+
 # [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
 
 ### Bug Fixes

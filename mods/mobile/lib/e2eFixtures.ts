@@ -101,11 +101,67 @@ function makeApplication(): LoanApplication {
   };
 }
 
-let applications: LoanApplication[] = [makeApplication()];
+/** A second, minimal seeded application in DRAFT status — mikro/#72 (Borradores chip + promote). */
+function makeDraftApplication(): LoanApplication {
+  const now = new Date();
+  return {
+    id: "e2e-app-draft-0001",
+    sessionId: "e2e-session-draft-0001",
+    status: "DRAFT",
+    source: "FORM",
+    lastSection: "solicitante",
+    firstName: "Yolanda",
+    lastName: "Fermín",
+    phone: "+18095550199",
+    idNumber: null,
+    dateOfBirth: null,
+    maritalStatus: null,
+    businessType: null,
+    businessName: null,
+    requestedAmount: null,
+    purpose: null,
+    requestedTermWeeks: null,
+    province: null,
+    homeAddress: null,
+    rawData: { firstName: "Yolanda", lastName: "Fermín", phone: "(809) 555-0199" },
+    scoreData: null,
+    score: null,
+    riskBand: null,
+    recommendation: null,
+    scoredAt: null,
+    reviewedById: null,
+    reviewedAt: null,
+    reviewNote: null,
+    contractFilename: null,
+    contractOriginalName: null,
+    contractMimeType: null,
+    contractSize: null,
+    contractSha256: null,
+    signedById: null,
+    signedAt: null,
+    idFrontFilename: null,
+    idFrontOriginalName: null,
+    idFrontMimeType: null,
+    idFrontSize: null,
+    idBackFilename: null,
+    idBackOriginalName: null,
+    idBackMimeType: null,
+    idBackSize: null,
+    idUploadedById: null,
+    idUploadedAt: null,
+    customerId: null,
+    loanId: null,
+    submittedAt: null,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+let applications: LoanApplication[] = [makeApplication(), makeDraftApplication()];
 
 /** Rebuild the store (fresh app process should start clean). */
 export function e2eResetStore(): void {
-  applications = [makeApplication()];
+  applications = [makeApplication(), makeDraftApplication()];
 }
 
 /**
@@ -197,4 +253,40 @@ export function e2eSetStatus(
   app.status = status;
   app.reviewedById = REVIEWER_ID;
   return { ...app };
+}
+
+/** Fixed activity history for the seeded IN_REVIEW app — mikro/#67 ("Ver actividad"). */
+export function e2eListApplicationEvents(): {
+  items: Array<{
+    id: string;
+    type: string;
+    occurredAt: string;
+    actorName: string;
+    summary: string;
+  }>;
+} {
+  const base = Date.now();
+  return {
+    items: [
+      {
+        id: "e2e-event-2",
+        type: "application.approved",
+        occurredAt: new Date(base - 60_000).toISOString(),
+        actorName: "Pedro Test",
+        summary: "Solicitud de Ramón Objío tomada para revisión"
+      },
+      {
+        id: "e2e-event-1",
+        type: "application.received",
+        occurredAt: new Date(base - 3_600_000).toISOString(),
+        actorName: "Sistema",
+        summary: "Solicitud de Ramón Objío recibida"
+      }
+    ]
+  };
+}
+
+/** Send-promo stub (mikro/#68) — always succeeds so the mobile "Enviar promoción" flow round-trips. */
+export function e2eSendPromo(): { sent: true; messageId: string } {
+  return { sent: true, messageId: "e2e-promo-msg-1" };
 }

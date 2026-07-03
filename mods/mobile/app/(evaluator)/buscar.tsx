@@ -10,7 +10,15 @@
  * separate evaluator-scoped storage key.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  RefreshControl
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Search, History, X } from "lucide-react-native";
@@ -113,7 +121,13 @@ export default function EvaluadorBuscarScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={listQ.isRefetching} onRefresh={() => listQ.refetch()} />
+        }
+      >
         {!trimmed && recents.length > 0 && (
           <>
             <Text style={styles.sectionLabel}>BÚSQUEDAS RECIENTES</Text>

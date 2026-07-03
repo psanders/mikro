@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.18.0](https://github.com/psanders/mikro/compare/v1.17.1...v1.18.0) (2026-07-03)
+
+### Features
+
+- **mobile,agents:** move new-customer promotion off WhatsApp into the app ([2e21ab4](https://github.com/psanders/mikro/commit/2e21ab45e66ae78884e91927f11cb7c97e92db62)), closes [#68](https://github.com/psanders/mikro/issues/68)
+
 # [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
 
 **Note:** Version bump only for package @mikro/agents
