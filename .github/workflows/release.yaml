@@ -62,3 +62,46 @@ jobs:
 
       - name: Version and tag
         run: npx lerna version --conventional-commits --yes
+
+      # Consolidated release page. Every build a release produces reports into
+      # this one GitHub Release, so nothing has to be chased across workflow
+      # runs:
+      #   - Desktop installers + updater files: attached by build-dashboard
+      #     (tauri-action appends to an existing release)
+      #   - Android APK: attached by build-android (it fires on the release
+      #     commit because lerna bumps package-lock.json)
+      #   - Docker image and iOS EAS links are deterministic, so written here
+      # GITHUB_TOKEN is fine for creating it: no workflow listens to release
+      # events (downstream workflows trigger on the tag push, which used
+      # RELEASE_TOKEN).
+      - name: Create consolidated release page
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="$(git tag --points-at HEAD | grep '^v' | head -1 || true)"
+          if [ -z "$tag" ]; then
+            echo "No release tag on HEAD (lerna released nothing); skipping"
+            exit 0
+          fi
+          # The release commit push re-triggers this workflow; lerna no-ops
+          # but HEAD still carries the tag — don't recreate the release.
+          if gh release view "$tag" --json name >/dev/null 2>&1; then
+            echo "Release $tag already exists; skipping"
+            exit 0
+          fi
+          version="${tag#v}"
+          workflows="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows"
+          cat > /tmp/build-outputs.md <<EOF
+          ## 📦 Build outputs
+
+          Everything $tag produces, in one place. Files attach below as their
+          workflows finish (desktop installers and the Android APK take a few
+          minutes after the tag).
+
+          - **Desktop** (macOS \`.dmg\`, Windows \`.msi\`/\`.exe\`, updater files) — attached below by [Build Dashboard]($workflows/build-dashboard.yaml)
+          - **Android APK** — attached below by [Build Android APK]($workflows/build-android.yaml)
+          - **iOS** (\`.ipa\`, App Store distribution) — attached below by [Build iOS (EAS)]($workflows/build-ios.yaml); submit with \`eas submit --platform ios\` → [EAS builds page](https://expo.dev/accounts/psanders/projects/mikro/builds)
+          - **API server** — \`docker pull psanders/mikro:$version\` → [Docker Hub](https://hub.docker.com/r/psanders/mikro/tags)
+          EOF
+          gh release create "$tag" --verify-tag --title "Mikro $tag" \
+            --generate-notes --notes-file /tmp/build-outputs.md
