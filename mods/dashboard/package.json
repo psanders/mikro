@@ -1,7 +1,7 @@
 {
   "name": "@mikro/dashboard",
   "version": "0.0.0",
-  "description": "Mikro operations dashboard - internal back-office app (desktop via Tauri + web)",
+  "description": "Mikro founder dashboard - internal back-office app (desktop via Tauri + web)",
   "type": "module",
   "private": true,
   "scripts": {

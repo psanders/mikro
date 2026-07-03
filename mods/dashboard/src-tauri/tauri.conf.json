@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Mikro Operaciones",
+  "productName": "Mikro",
   "version": "0.0.0",
   "identifier": "do.mikro.dashboard",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Mikro · Operaciones",
+        "title": "Mikro",
         "width": 1200,
         "height": 800,
         "minWidth": 900,
