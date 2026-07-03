@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.17.1](https://github.com/psanders/mikro/compare/v1.17.0...v1.17.1) (2026-07-03)
+
+### Bug Fixes
+
+- **founder:** render copilot markdown, discourage bold/bullet overuse ([ea4b9b8](https://github.com/psanders/mikro/commit/ea4b9b84639041fef0c80d595eec308d819a304a))
+
+# [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
+
+### Features
+
+- **founder:** business event log + Pencil-faithful founder feed app ([c279c21](https://github.com/psanders/mikro/commit/c279c214b88b49af1a2ed6cc06310159db078576))
+- **founder:** copilot dock with confirm-first writes and watch rules ([7aeddfb](https://github.com/psanders/mikro/commit/7aeddfbed848fd13bbe6d17fe8a04116ffde65c5))
+
 ## [1.16.1](https://github.com/psanders/mikro/compare/v1.16.0...v1.16.1) (2026-07-01)
 
 ### Bug Fixes

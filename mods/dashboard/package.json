@@ -1,7 +1,7 @@
 {
   "name": "@mikro/dashboard",
   "version": "0.0.0",
-  "description": "Mikro operations dashboard - internal back-office app (desktop via Tauri + web)",
+  "description": "Mikro founder dashboard - internal back-office app (desktop via Tauri + web)",
   "type": "module",
   "private": true,
   "scripts": {
@@ -28,6 +28,7 @@
     "@trpc/client": "^11.17.0",
     "@trpc/react-query": "^11.17.0",
     "lucide-react": "^1.16.0",
+    "markdown-to-jsx": "^9.8.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.15.1"

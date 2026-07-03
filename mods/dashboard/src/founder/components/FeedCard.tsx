@@ -2,22 +2,25 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * A single feed row, Pencil "Feed en vivo" board `zmif2`. Compact by default
- * (icon chip · summary · meta · clock · chevron); expands in place to a KV
- * detail grid plus type-specific actions. Expansion is per-card and, when
- * uncontrolled, owned here. `application.deleted` renders with the red
- * treatment and a "Restaurar" action while the 30-day window is open; the
- * policy-exception approval renders amber.
+ * (icon chip · summary · meta · clock · chevron); expands in place to a
+ * per-type narrative sentence, small "Metadata"/"IA insights" links, and
+ * type-specific actions (Pencil `EzobQ` row `VIflA`). Expansion is per-card
+ * and, when uncontrolled, owned here. `application.deleted` renders with the
+ * red treatment and a "Restaurar" action while the 30-day window is open;
+ * the policy-exception approval renders amber.
  */
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Braces, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "../../lib/cn";
+import { EventMetadataPanel } from "./EventMetadataPanel";
 import { FeedTypeIcon } from "./FeedTypeIcon";
 import { formatClockTime } from "./format";
 import {
   isDeletion,
   resolveCardTint,
   resolveCompactMeta,
-  resolveDetailRows,
+  resolveInsightsQuestion,
+  resolveNarrative,
   resolveSubjectLink
 } from "./typeConfig";
 import type { FeedEvent, NavigateTarget } from "./types";
@@ -57,6 +60,8 @@ const CARD_TINT: Record<"amber" | "red", string> = {
 const ACT_BUTTON =
   "inline-flex items-center gap-[7px] rounded-[9px] border border-[#E5EAF1] bg-white px-4 py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]";
 
+const LINK_BUTTON = "inline-flex items-center gap-[5px] text-[11px] font-semibold";
+
 /** Splits "Actor did X" into a bold actor + the medium-weight remainder. */
 function splitSummary(summary: string, actorName: string): { lead?: string; rest: string } {
   if (actorName && summary.startsWith(`${actorName} `)) {
@@ -77,6 +82,7 @@ export function FeedCard({
   className
 }: FeedCardProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
+  const [metadataOpen, setMetadataOpen] = useState(false);
   const isControlled = expanded !== undefined;
   const isExpanded = isControlled ? expanded : internalExpanded;
 
@@ -89,7 +95,8 @@ export function FeedCard({
   const tint = resolveCardTint(event);
   const deletion = isDeletion(event);
   const subjectLink = resolveSubjectLink(event);
-  const detailRows = resolveDetailRows(event);
+  const narrative = resolveNarrative(event);
+  const insightsQuestion = resolveInsightsQuestion(event);
   const meta = resolveCompactMeta(event);
   const { lead, rest } = splitSummary(event.summary, event.actorName);
   const ChevronIcon = isExpanded ? ChevronUp : ChevronDown;
@@ -133,18 +140,33 @@ export function FeedCard({
 
         {isExpanded && (
           <div className="flex flex-col gap-[10px] pl-[50px]">
-            {detailRows.length > 0 && (
-              <div className="flex w-full flex-wrap rounded-[10px] border border-[#E5EAF1] bg-white px-[14px]">
-                {detailRows.map((row, i) => (
-                  <div
-                    key={`${row.label}-${i}`}
-                    className="flex min-w-[120px] flex-1 flex-col gap-[1px] py-2"
-                  >
-                    <span className="text-[11px] font-medium text-[#697A93]">{row.label}</span>
-                    <span className="text-[13px] font-semibold text-[#14254A]">{row.value}</span>
-                  </div>
-                ))}
-              </div>
+            {narrative && (
+              <p className="text-[13px] font-medium leading-[1.4] text-[#14254A]">{narrative}</p>
+            )}
+
+            <div className="flex items-center gap-[14px]">
+              <button
+                type="button"
+                onClick={() => setMetadataOpen((v) => !v)}
+                className={cn(LINK_BUTTON, "text-[#697A93] hover:text-[#14254A]")}
+              >
+                <Braces size={11} />
+                Metadata
+              </button>
+              {onAskCopilot && (
+                <button
+                  type="button"
+                  onClick={() => onAskCopilot(insightsQuestion)}
+                  className={cn(LINK_BUTTON, "text-[#1F4AA8] hover:text-[#14356e]")}
+                >
+                  <Sparkles size={11} />
+                  IA insights
+                </button>
+              )}
+            </div>
+
+            {metadataOpen && (
+              <EventMetadataPanel event={event} onClose={() => setMetadataOpen(false)} />
             )}
 
             <div className="flex flex-wrap items-center gap-[10px]">
