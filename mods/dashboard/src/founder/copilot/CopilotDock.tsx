@@ -55,7 +55,7 @@ export function CopilotDock({
   return (
     <div
       className={cn(
-        "flex h-full w-[430px] shrink-0 flex-col border-l border-[#E5EAF1] bg-white",
+        "flex h-full w-[430px] shrink-0 flex-col border-l border-t border-[#E5EAF1] bg-white",
         className
       )}
     >

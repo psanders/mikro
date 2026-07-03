@@ -115,7 +115,7 @@ export function FeedCard({
           <FeedTypeIcon event={event} />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <p className="truncate text-[14px] leading-tight text-[#14254A]">
-              {lead && <span className="font-bold">{lead} </span>}
+              {lead && <span className="font-semibold">{lead} </span>}
               <span className="font-medium">{rest}</span>
             </p>
             {metaText && (
