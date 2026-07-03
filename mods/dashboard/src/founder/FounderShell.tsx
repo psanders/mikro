@@ -38,8 +38,8 @@ function RailItem({ icon: Icon, label, active, onClick, inert, badge }: RailItem
       title={inert ? "Próximamente" : label}
       className={cn(
         "relative flex h-10 w-10 items-center justify-center rounded-[11px] transition",
-        active ? "bg-[#EAF1FB] text-[#1F4AA8]" : "text-[#697A93]",
-        inert ? "cursor-not-allowed" : "hover:bg-[#EEF3F9]"
+        active ? "bg-white text-[#1F4AA8] shadow-sm" : "text-[#697A93]",
+        inert ? "cursor-not-allowed" : "hover:bg-[#DBE8FB]"
       )}
     >
       <Icon size={19} strokeWidth={2} />
@@ -120,9 +120,9 @@ export function FounderShell() {
   return (
     <CopilotProvider>
       <div className="flex h-dvh w-full bg-white text-[#14254A]">
-        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-white py-[18px]">
-          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#1F4AA8] text-white">
-            <ShipWheel size={16} strokeWidth={2} />
+        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-[#E9F2FF] py-[18px]">
+          <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
+            <ShipWheel size={24} strokeWidth={2} />
           </div>
           <div className="h-[10px]" />
           <RailItem

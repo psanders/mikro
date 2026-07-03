@@ -19,6 +19,15 @@ on:
       - "package-lock.json"
       - "lerna.json"
   workflow_dispatch:
+    inputs:
+      # Lerna only cuts a version when commits touch a lerna package
+      # (mods/common|agents|apiserver|ctl). Dashboard/mobile/CI-only changes
+      # never trigger one on their own — this forces a release that includes
+      # them (version bump still derived from conventional commits).
+      force_release:
+        description: "Force a release even if no lerna package changed"
+        type: boolean
+        default: false
 
 # Never run two releases at once; don't cancel an in-flight one mid-push.
 concurrency:
@@ -61,7 +70,7 @@ jobs:
         run: git pull --rebase origin main
 
       - name: Version and tag
-        run: npx lerna version --conventional-commits --yes
+        run: npx lerna version --conventional-commits --yes ${{ inputs.force_release && '--force-publish' || '' }}
 
       # Consolidated release page. Every build a release produces reports into
       # this one GitHub Release, so nothing has to be chased across workflow
