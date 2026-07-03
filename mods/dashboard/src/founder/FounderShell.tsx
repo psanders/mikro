@@ -38,8 +38,8 @@ function RailItem({ icon: Icon, label, active, onClick, inert, badge }: RailItem
       title={inert ? "Próximamente" : label}
       className={cn(
         "relative flex h-10 w-10 items-center justify-center rounded-[11px] transition",
-        active ? "bg-white text-[#1F4AA8] shadow-sm" : "text-[#697A93]",
-        inert ? "cursor-not-allowed" : "hover:bg-[#DBE8FB]"
+        active ? "bg-[#EAF1FB] text-[#1F4AA8]" : "text-[#697A93]",
+        inert ? "cursor-not-allowed" : "hover:bg-[#EEF3F9]"
       )}
     >
       <Icon size={19} strokeWidth={2} />
@@ -120,7 +120,7 @@ export function FounderShell() {
   return (
     <CopilotProvider>
       <div className="flex h-dvh w-full bg-white text-[#14254A]">
-        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-[#E5EAF1] bg-[#E9F2FF] py-[18px]">
+        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
           <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
             <ShipWheel size={24} strokeWidth={2} />
           </div>
@@ -149,7 +149,7 @@ export function FounderShell() {
           <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
         </nav>
 
-        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-white">
+        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
           <Outlet />
         </div>
 
