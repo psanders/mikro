@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.20.0](https://github.com/psanders/mikro/compare/v1.19.3...v1.20.0) (2026-07-03)
+
+### Features
+
+- **apiserver,agents:** wire sendPromo as a founder-copilot WRITE_TOOL ([6ea964c](https://github.com/psanders/mikro/commit/6ea964c2e12648de63c900641e149b6fd6584438)), closes [#78](https://github.com/psanders/mikro/issues/78)
+
 ## [1.19.3](https://github.com/psanders/mikro/compare/v1.19.2...v1.19.3) (2026-07-03)
 
 ### Reverts

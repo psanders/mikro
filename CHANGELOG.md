@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.20.0](https://github.com/psanders/mikro/compare/v1.19.3...v1.20.0) (2026-07-03)
+
+### Bug Fixes
+
+- **mobile,dashboard:** format phone as-you-type and normalize to E.164 ([0b03eda](https://github.com/psanders/mikro/commit/0b03edad8c09a6b1f9b7f2c8760764fa2df9bb0b)), closes [#84](https://github.com/psanders/mikro/issues/84)
+- **mobile:** keep quick-action labels on one line ([aa66983](https://github.com/psanders/mikro/commit/aa669831fdb8180ac84c09ee5fd635feeec5b945)), closes [#83](https://github.com/psanders/mikro/issues/83)
+- **mobile:** remove Cuadre quick action from home dashboard ([85426d0](https://github.com/psanders/mikro/commit/85426d0d50b5ba72a5a10b784ee8a14e9dea4bd3)), closes [#83](https://github.com/psanders/mikro/issues/83) [#83](https://github.com/psanders/mikro/issues/83)
+
+### Features
+
+- **apiserver,agents:** wire sendPromo as a founder-copilot WRITE_TOOL ([6ea964c](https://github.com/psanders/mikro/commit/6ea964c2e12648de63c900641e149b6fd6584438)), closes [#78](https://github.com/psanders/mikro/issues/78)
+
 ## [1.19.3](https://github.com/psanders/mikro/compare/v1.19.2...v1.19.3) (2026-07-03)
 
 ### Bug Fixes
