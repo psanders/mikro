@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.19.1](https://github.com/psanders/mikro/compare/v1.19.0...v1.19.1) (2026-07-03)
+
+### Bug Fixes
+
+- **dashboard:** light window theme and larger uncontained rail logo ([62607c5](https://github.com/psanders/mikro/commit/62607c554bbe7ed6528e89fea95ddd8e8fd79bd2))
+
+### Features
+
+- **release:** consolidate all build outputs on the GitHub Release page ([2969cbd](https://github.com/psanders/mikro/commit/2969cbd49fb70e063d74a400a14b31d564c03961))
+- **release:** force_release option on manual dispatch ([2246571](https://github.com/psanders/mikro/commit/2246571b5fc87f8ddc9d25df0b06e56dcd0cb843))
+
 # [1.19.0](https://github.com/psanders/mikro/compare/v1.18.0...v1.19.0) (2026-07-03)
 
 ### Bug Fixes
