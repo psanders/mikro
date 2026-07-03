@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.19.2](https://github.com/psanders/mikro/compare/v1.19.1...v1.19.2) (2026-07-03)
+
+### Bug Fixes
+
+- **dashboard:** white window bg, panel separation borders, tone down feed bold ([2b801f8](https://github.com/psanders/mikro/commit/2b801f894fb1638c76f51b38044bf4ca36435e3f)), closes [#F4F7](https://github.com/psanders/mikro/issues/F4F7)
+
 ## [1.19.1](https://github.com/psanders/mikro/compare/v1.19.0...v1.19.1) (2026-07-03)
 
 ### Bug Fixes
