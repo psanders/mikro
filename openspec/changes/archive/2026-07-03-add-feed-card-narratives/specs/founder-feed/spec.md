@@ -1,52 +1,6 @@
-# founder-feed Specification
+# founder-feed — delta
 
-## Purpose
-
-Founder-facing home of the desktop app: a reverse-chronological feed of business events with expandable, type-specific cards, rendered in the founder shell per the Pencil board EzobQ.
-
-## Requirements
-
-### Requirement: Founder shell matches the Pencil design
-
-The founder app SHALL render inside its own shell — the only shell in the app now that the operations layout is retired — that visually matches the Pencil board `EzobQ` screens: a slim dark icon rail on the left (feed home, búsqueda, reportes, profile at the bottom), the feed column layout titled "Feed", and the copilot affordance (plain sparkles button, no presence dot; the feed header carries no "EN VIVO"/online indicator). Colors, spacing, typography (Geist), radii, and copy SHALL follow the Pencil screens.
-
-#### Scenario: Founder shell is independent of the ops layout
-
-- **WHEN** an admin is on any `/founder` route
-- **THEN** the founder shell (icon rail + founder chrome) renders and no operations navigation is visible
-
-#### Scenario: Rail navigation
-
-- **WHEN** an admin clicks the búsqueda or reportes rail icon
-- **THEN** the app navigates to `/founder/buscar` or `/founder/reportes` and the icon shows the active state
-
-#### Scenario: Feed header without live indicator
-
-- **WHEN** an admin views the feed
-- **THEN** the header reads "Feed" with no EN VIVO chip; day groups inside the list keep their Hoy/Ayer labels
-
-### Requirement: Feed home shows business events reverse-chronologically
-
-The founder app SHALL provide the feed view at `/founder`, available to ADMIN users, that renders business events newest-first, grouped by day, loading further pages on demand via the feed query's cursor. When the feed is empty it SHALL show an empty state; when loading fails it SHALL surface an error state (per the dashboard's online-only behavior).
-
-#### Scenario: Feed renders events newest-first
-
-- **WHEN** an admin opens `/founder` and events exist
-- **THEN** event cards render newest-first with day group headers, and scrolling to the end loads the next page
-
-#### Scenario: Empty feed
-
-- **WHEN** an admin opens `/founder` and no events exist yet
-- **THEN** an empty state is shown instead of cards
-
-### Requirement: Cards are compact and manually expandable
-
-Each event SHALL render as a compact card (icon, summary line, actor, relative time, amount when present). A card SHALL expand and collapse only via its own chevron control — there is no global expand switch. Expansion state is per-card and client-side only.
-
-#### Scenario: Expand and collapse one card
-
-- **WHEN** an admin clicks a card's chevron
-- **THEN** that card alone expands to show its type-specific detail, and clicking again collapses it
+## MODIFIED Requirements
 
 ### Requirement: Card content and actions are event-type specific
 

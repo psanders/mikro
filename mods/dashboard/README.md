@@ -1,16 +1,19 @@
 # @mikro/dashboard
 
-Internal **operations dashboard** for Mikro ops staff. One React (Vite + Tailwind)
-SPA that is a typed tRPC client of `@mikro/apiserver`, delivered two ways from the
+Internal **founder dashboard** for Mikro. One React (Vite + Tailwind) SPA that
+is a typed tRPC client of `@mikro/apiserver`, delivered two ways from the
 **same build**:
 
 - **Desktop** (Windows + macOS) via a thin [Tauri 2](https://tauri.app) shell.
 - **Web** — the same `dist/` served as static assets.
 
 The shell does almost nothing: it hosts the webview and the login session. All
-business logic stays behind the tRPC API. This package is the _foundation_ —
-feature screens (accounting, user management, loan management) land as later
-changes; see `openspec/changes/add-ops-dashboard-shell/`.
+business logic stays behind the tRPC API. Authenticated admins land on the
+founder app (feed, búsqueda, reportes, copilot); collectors/reviewers get a
+pointer to the mobile app instead — day-to-day collection and review work
+lives there, not in this dashboard. See
+`openspec/changes/archive/2026-07-04-retire-ops-dashboard-ui/` for how that
+split came to be.
 
 ## Configuration
 

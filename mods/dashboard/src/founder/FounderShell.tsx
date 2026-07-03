@@ -6,11 +6,13 @@
  * profile) on the left, the active screen on the right. Rendered OUTSIDE the
  * operations Layout: an admin on any `/founder` route sees only this chrome.
  */
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FileText, House, ShipWheel, Search, TriangleAlert } from "lucide-react";
+import { FileText, House, LogOut, ShipWheel, Search, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
+import { useAuth } from "../context/AuthContext";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 
@@ -54,6 +56,58 @@ function initialsOf(name: string): string {
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }
 
+interface ProfileMenuProps {
+  initials: string;
+  name: string;
+}
+
+/** Rail-bottom avatar — click opens a small menu (name + Cerrar sesión), closes on outside click. */
+function ProfileMenu({ initials, name }: ProfileMenuProps) {
+  const { logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Perfil"
+        aria-expanded={open}
+        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8] transition hover:bg-[#DBE8FB]"
+      >
+        {initials}
+      </button>
+      {open && (
+        <div className="absolute bottom-0 left-[46px] z-20 flex w-[200px] flex-col gap-[2px] rounded-[12px] border border-[#E5EAF1] bg-white p-[6px] shadow-[0_8px_24px_rgba(20,37,74,0.14)]">
+          <p className="truncate px-[10px] py-[8px] text-[13px] font-bold text-[#14254A]">{name}</p>
+          <div className="h-px bg-[#E5EAF1]" />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              void logout();
+            }}
+            className="flex items-center gap-[8px] rounded-[8px] px-[10px] py-[8px] text-left text-[13px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]"
+          >
+            <LogOut size={15} />
+            Cerrar sesión
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function FounderShell() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,9 +144,7 @@ export function FounderShell() {
             onClick={() => navigate("/founder/reportes")}
           />
           <div className="flex-1" />
-          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8]">
-            {initials}
-          </div>
+          <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
         </nav>
 
         <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-white">
