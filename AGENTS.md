@@ -46,11 +46,15 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
 - **Android APK (internal):** GitHub Actions `build-android.yaml` on every
   main push touching mobile — Linux, expo prebuild + Gradle, signed with
   the debug keystore. Free and sufficient for internal distribution.
-- **iOS:** there is deliberately NO GitHub Actions iOS build. macOS runners
-  cost a 10x minutes multiplier and installable IPAs need Apple signing
-  that EAS already manages. Native iOS binaries: `eas build --platform ios`
-  (TestFlight after Apple approval). JS-only changes: `eas update` (OTA,
-  `runtimeVersion.policy: fingerprint` gates native compatibility).
+- **iOS:** NO macOS runner ever compiles iOS — they cost a 10x minutes
+  multiplier and installable IPAs need Apple signing that EAS already
+  manages. `build-ios.yaml` triggers an EAS *cloud* build from an ubuntu
+  runner: manual dispatch (profile choice, default preview) or a v* tag
+  (production; IPA attached to the Release). Unlike build-android it does
+  NOT run on every main push — each run spends EAS build credits. Native
+  binaries otherwise: `eas build --platform ios` (TestFlight after Apple
+  approval). JS-only changes: `eas update` (OTA, `runtimeVersion.policy:
+  fingerprint` gates native compatibility).
 - **What PRs check instead** (`pr-checks.yaml` → mobile-checks): mobile
   typecheck, Jest, and `expo prebuild --platform all --no-install`, which
   resolves every config plugin on Linux and catches broken native config
@@ -73,6 +77,15 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   prebuild and gitignored — a local edit never reaches CI. The
   build-android workflow bumps it after prebuild; new build environments
   must do the same (≈`-Xmx5g -XX:MaxMetaspaceSize=1g`).
+
+- **The GitHub Release is the consolidated build-outputs page.**
+  release.yaml creates it (title + "Build outputs" body) right after lerna
+  pushes the tag; downstream workflows only ATTACH assets to it —
+  build-dashboard via tauri-action, build-android via `gh release upload`
+  (it detects release commits by the v* tag on HEAD). Deterministic links
+  (Docker image, EAS builds page) live in the body release.yaml writes.
+  Don't add another workflow that creates or rewrites the Release body, and
+  keep new build outputs reporting into that Release.
 
 ## Deploy & smoke-test contracts
 

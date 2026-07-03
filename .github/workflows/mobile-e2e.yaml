@@ -168,3 +168,10 @@ jobs:
       - name: Build Android (internal distribution)
         working-directory: mods/mobile
         run: eas build --platform android --profile preview --non-interactive
+
+      # Same note the local npm build scripts print: build page + direct
+      # artifact URL on the run's Summary page. EXPO_TOKEN is exported by
+      # expo-github-action above, so eas build:list authenticates.
+      - name: Add build links to job summary
+        working-directory: mods/mobile
+        run: node .scripts/print-build-link.mjs android >> "$GITHUB_STEP_SUMMARY"

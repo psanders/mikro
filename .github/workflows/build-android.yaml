@@ -10,6 +10,11 @@ on:
       - "package.json"
       - "package-lock.json"
 
+# contents: write lets the job attach the APK to the consolidated GitHub
+# Release on release commits (see the attach step below).
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -79,9 +84,50 @@ jobs:
         working-directory: mods/mobile/android
         run: ./gradlew assembleRelease --no-daemon
 
+      # Release commits (pushed by release.yaml) carry a vX.Y.Z tag on HEAD.
+      # Attach the APK to that tag's GitHub Release so it lands on the
+      # consolidated release page permanently, instead of expiring with the
+      # 30-day workflow artifact. release.yaml creates the Release seconds
+      # after pushing the tag — long before Gradle finishes here — but the
+      # retry loop covers any gap. Non-release pushes skip this step.
+      - name: Attach APK to GitHub Release (release commits only)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags --quiet
+          tag="$(git tag --points-at HEAD | grep '^v' | head -1 || true)"
+          if [ -z "$tag" ]; then
+            echo "HEAD is not a release commit; keeping the workflow artifact only"
+            exit 0
+          fi
+          cp mods/mobile/android/app/build/outputs/apk/release/app-release.apk "mikro-$tag-android.apk"
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$tag" "mikro-$tag-android.apk" --clobber; then
+              echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            echo "Release $tag not ready yet (attempt $attempt); retrying in 60s"
+            sleep 60
+          done
+          echo "::warning::Could not attach APK to release $tag"
+
       - name: Upload APK
+        id: upload-apk
         uses: actions/upload-artifact@v7
         with:
           name: mikro-android-${{ github.run_number }}-${{ github.sha }}
           path: mods/mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+
+      # One-stop note on the run's Summary page so nobody digs through the
+      # Artifacts section (or the logs) to find the APK.
+      - name: Add build links to job summary
+        run: |
+          {
+            echo "### 📦 Android APK"
+            echo "- Download: [mikro-android-${{ github.run_number }}-${{ github.sha }}](${{ steps.upload-apk.outputs.artifact-url }})"
+            echo "- Retention: 30 days"
+            if [ -n "$RELEASE_TAG" ]; then
+              echo "- Release: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
