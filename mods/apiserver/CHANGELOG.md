@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.18.0](https://github.com/psanders/mikro/compare/v1.17.1...v1.18.0) (2026-07-03)
+
+### Bug Fixes
+
+- **mobile,apiserver:** stop Reviewer role from seeing or collecting payments ([9b4fb3c](https://github.com/psanders/mikro/commit/9b4fb3c43bfcf38c6ecb97fcac200a7bc5f669c6)), closes [#73](https://github.com/psanders/mikro/issues/73)
+
+### Features
+
+- **dashboard,apiserver:** in-app bug report — record, transcribe, file issue ([f595df1](https://github.com/psanders/mikro/commit/f595df19fd74ccb2e9a059681b71d72e67cad0f8)), closes [#69](https://github.com/psanders/mikro/issues/69)
+- **mobile,apiserver:** add reviewer-scoped activity history to Datos ([403fe5a](https://github.com/psanders/mikro/commit/403fe5a163da0e0da836485032c9c6f74a962502)), closes [#67](https://github.com/psanders/mikro/issues/67) [#73](https://github.com/psanders/mikro/issues/73) [#67](https://github.com/psanders/mikro/issues/67)
+- **mobile:** surface draft/incomplete applications with a promote action ([4fdafe5](https://github.com/psanders/mikro/commit/4fdafe5121eb56eef3533128a4ea3daf9b79c2cf)), closes [#72](https://github.com/psanders/mikro/issues/72)
+
 ## [1.17.1](https://github.com/psanders/mikro/compare/v1.17.0...v1.17.1) (2026-07-03)
 
 ### Bug Fixes

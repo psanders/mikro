@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.18.0](https://github.com/psanders/mikro/compare/v1.17.1...v1.18.0) (2026-07-03)
+
+### Features
+
+- **dashboard,apiserver:** in-app bug report — record, transcribe, file issue ([f595df1](https://github.com/psanders/mikro/commit/f595df19fd74ccb2e9a059681b71d72e67cad0f8)), closes [#69](https://github.com/psanders/mikro/issues/69)
+- **mobile,apiserver:** add reviewer-scoped activity history to Datos ([403fe5a](https://github.com/psanders/mikro/commit/403fe5a163da0e0da836485032c9c6f74a962502)), closes [#67](https://github.com/psanders/mikro/issues/67) [#73](https://github.com/psanders/mikro/issues/73) [#67](https://github.com/psanders/mikro/issues/67)
+
 # [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
 
 ### Features
