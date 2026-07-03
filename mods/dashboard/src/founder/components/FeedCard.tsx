@@ -111,7 +111,19 @@ export function FeedCard({
   return (
     <div className={cn("w-full border-b border-[#E5EAF1]", tint && CARD_TINT[tint], className)}>
       <div className={cn("flex flex-col gap-3 px-6", isExpanded ? "pt-3 pb-4" : "py-3")}>
-        <div className="flex items-center gap-[14px]">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleToggle}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleToggle();
+            }
+          }}
+          aria-expanded={isExpanded}
+          className="flex cursor-pointer items-center gap-[14px]"
+        >
           <FeedTypeIcon event={event} />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <p className="truncate text-[14px] leading-tight text-[#14254A]">
@@ -128,7 +140,10 @@ export function FeedCard({
             </span>
             <button
               type="button"
-              onClick={handleToggle}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggle();
+              }}
               aria-expanded={isExpanded}
               aria-label={isExpanded ? "Contraer" : "Expandir"}
               className="flex items-center justify-center text-[#697A93]"
