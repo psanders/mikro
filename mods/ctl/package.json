@@ -1,6 +1,6 @@
 {
   "name": "@mikro/ctl",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Mikro CLI tool",
   "type": "module",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.1.0",
-    "@mikro/common": "^1.18.0",
+    "@mikro/common": "^1.19.0",
     "@oclif/core": "^4.8.0",
     "@trpc/client": "^11.8.1",
     "cliui": "^8.0.1",
@@ -35,7 +35,7 @@
     "moment": "^2.30.1"
   },
   "devDependencies": {
-    "@mikro/apiserver": "^1.18.0",
+    "@mikro/apiserver": "^1.19.0",
     "@types/figlet": "^1.7.0",
     "@types/node": "^25.0.10",
     "typescript": "^5.9.3"

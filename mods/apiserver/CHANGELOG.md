@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.19.0](https://github.com/psanders/mikro/compare/v1.18.0...v1.19.0) (2026-07-03)
+
+### Features
+
+- **ctl:** reframe applications:claim as applications:assign ([d672dd8](https://github.com/psanders/mikro/commit/d672dd8fd1b696998250b4b7823f7f7cd0a4b680))
+
 # [1.18.0](https://github.com/psanders/mikro/compare/v1.17.1...v1.18.0) (2026-07-03)
 
 ### Bug Fixes
