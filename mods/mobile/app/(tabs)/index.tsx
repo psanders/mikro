@@ -5,15 +5,7 @@ import { useMemo } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  MapPin,
-  Search,
-  Calculator,
-  UserPlus,
-  CircleCheck,
-  WifiOff,
-  RefreshCw
-} from "lucide-react-native";
+import { MapPin, Search, UserPlus, CircleCheck, WifiOff, RefreshCw } from "lucide-react-native";
 import { colors } from "../../lib/theme";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { QuickAction } from "../../components/ui/QuickAction";
@@ -167,12 +159,6 @@ export default function HomeScreen() {
             label="Buscar"
             iconColor={colors.brand.blue.primary}
             onPress={() => router.push("/(tabs)/buscar")}
-          />
-          <QuickAction
-            icon={Calculator}
-            label="Cuadre"
-            iconColor={colors.brand.blue.primary}
-            onPress={() => router.push("/(tabs)/cuadre")}
           />
           <QuickAction
             icon={UserPlus}

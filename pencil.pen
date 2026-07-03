@@ -18258,6 +18258,7 @@
                                   "id": "F8XWUc",
                                   "type": "ref",
                                   "ref": "oczKz",
+                                  "width": "fill_container",
                                   "descendants": {
                                     "lXyCH": {
                                       "fill": "$brand.orange.deep",
@@ -18272,6 +18273,7 @@
                                   "id": "J9Xfz",
                                   "type": "ref",
                                   "ref": "oczKz",
+                                  "width": "fill_container",
                                   "descendants": {
                                     "lXyCH": {
                                       "fill": "$brand.blue.primary",
@@ -18283,16 +18285,18 @@
                                   }
                                 },
                                 {
-                                  "id": "w4cML5",
+                                  "id": "KhZWF",
                                   "type": "ref",
                                   "ref": "oczKz",
+                                  "name": "Promocionar",
+                                  "width": "fill_container",
                                   "descendants": {
                                     "lXyCH": {
-                                      "fill": "$brand.blue.primary",
-                                      "icon": "calculator"
+                                      "fill": "$brand.orange.deep",
+                                      "icon": "user-plus"
                                     },
                                     "EYt03": {
-                                      "content": "Cuadre"
+                                      "content": "Promocionar"
                                     }
                                   }
                                 }
@@ -22873,6 +22877,139 @@
                           "type": "ref",
                           "ref": "A2ggWj",
                           "width": "fill_container"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "JmbXb",
+                  "name": "arrow",
+                  "width": 64,
+                  "height": 64,
+                  "icon": "arrow-right",
+                  "library": "lucide",
+                  "fill": "#3F86E0"
+                },
+                {
+                  "type": "frame",
+                  "id": "SrkPB",
+                  "name": "wrap-10-promocionar",
+                  "cornerRadius": 40,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#103A8A1A",
+                    "offset": {
+                      "x": 0,
+                      "y": 16
+                    },
+                    "blur": 40
+                  },
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "H5IsXB",
+                      "name": "10 Promocionar",
+                      "clip": true,
+                      "width": 390,
+                      "height": 844,
+                      "fill": "#F4F8FF",
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "id": "TUKhy",
+                          "type": "ref",
+                          "ref": "g8L0O",
+                          "name": "statusbar",
+                          "width": "fill_container"
+                        },
+                        {
+                          "id": "wGoGQ",
+                          "type": "ref",
+                          "ref": "AFMnH",
+                          "name": "header",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Ct4uZ": {
+                              "icon": "x"
+                            },
+                            "XlCal": {
+                              "content": "Nueva promoción",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            "OJ3eJ": {
+                              "enabled": false
+                            },
+                            "zF54G": {
+                              "enabled": false
+                            }
+                          }
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZDpuD",
+                          "name": "body",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 16,
+                          "padding": [
+                            12,
+                            20,
+                            24,
+                            20
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qkjnq",
+                              "name": "hint",
+                              "fill": "#7888A8",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Envía la promoción de solicitud de préstamo directamente al teléfono de un cliente nuevo — sin foto, sin pasos extra.",
+                              "lineHeight": 1.4,
+                              "fontFamily": "Geist",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            },
+                            {
+                              "id": "e9B48O",
+                              "type": "ref",
+                              "ref": "XHaAT",
+                              "name": "phoneInput",
+                              "width": "fill_container",
+                              "descendants": {
+                                "flbLp": {
+                                  "content": "Teléfono del cliente nuevo"
+                                },
+                                "lPkAM": {
+                                  "icon": "phone"
+                                },
+                                "iaYYl": {
+                                  "content": "809 555 1234"
+                                }
+                              }
+                            },
+                            {
+                              "id": "d7oe2",
+                              "type": "ref",
+                              "ref": "CeOUI",
+                              "name": "sendBtn",
+                              "width": "fill_container",
+                              "descendants": {
+                                "hLf7V": {
+                                  "content": "Enviar promoción"
+                                },
+                                "U86FH": {
+                                  "icon": "send"
+                                }
+                              }
+                            }
+                          ]
                         }
                       ]
                     }
@@ -60320,50 +60457,6 @@
                                   ]
                                 }
                               }
-                            },
-                            {
-                              "type": "frame",
-                              "id": "j3fnSn",
-                              "name": "actividad",
-                              "width": "fill_container",
-                              "gap": 8,
-                              "padding": [
-                                6,
-                                4
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "hV8SY",
-                                  "name": "actI",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "history",
-                                  "library": "lucide",
-                                  "fill": "#1F4AA8"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "K8XCtv",
-                                  "name": "actT",
-                                  "fill": "#1F4AA8",
-                                  "content": "Actividad",
-                                  "fontFamily": "Geist",
-                                  "fontSize": 13,
-                                  "fontWeight": "500"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "oheGn",
-                                  "name": "actM",
-                                  "fill": "#697A93",
-                                  "content": "· última 6 may 2026",
-                                  "fontFamily": "Geist",
-                                  "fontSize": 13,
-                                  "fontWeight": "500"
-                                }
-                              ]
                             }
                           ]
                         }
