@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.17.1](https://github.com/psanders/mikro/compare/v1.17.0...v1.17.1) (2026-07-03)
+
+### Bug Fixes
+
+- **founder:** render copilot markdown, discourage bold/bullet overuse ([ea4b9b8](https://github.com/psanders/mikro/commit/ea4b9b84639041fef0c80d595eec308d819a304a))
+
 # [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
 
 ### Features

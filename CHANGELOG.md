@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.17.1](https://github.com/psanders/mikro/compare/v1.17.0...v1.17.1) (2026-07-03)
+
+### Bug Fixes
+
+- **founder:** remove leftover "ops" terminology ([fc00689](https://github.com/psanders/mikro/commit/fc00689c6885c7cb4d7c934d4e40fd2e409083a4))
+- **founder:** render copilot markdown, discourage bold/bullet overuse ([ea4b9b8](https://github.com/psanders/mikro/commit/ea4b9b84639041fef0c80d595eec308d819a304a))
+- restore peer:true lockfile metadata dropped by a macOS npm install ([db93a57](https://github.com/psanders/mikro/commit/db93a5772faf4b410131808d91356a53344028bf)), closes [#77](https://github.com/psanders/mikro/issues/77)
+
+### Features
+
+- **founder:** replace feed card KV-grid with per-type narratives ([06cb945](https://github.com/psanders/mikro/commit/06cb945f888587bd7dd629809d3238d849b41ed7))
+- **founder:** wire the rail avatar to a real profile menu ([db6f68c](https://github.com/psanders/mikro/commit/db6f68cd95ead7655d6a7410dccb296421f1e9e4))
+
 # [1.17.0](https://github.com/psanders/mikro/compare/v1.16.1...v1.17.0) (2026-07-02)
 
 ### Bug Fixes
