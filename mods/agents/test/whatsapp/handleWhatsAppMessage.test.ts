@@ -492,6 +492,74 @@ describe("handleWhatsAppMessage", () => {
     });
   });
 
+  // mikro/#68: the photo → vision → WhatsApp-button promo flow was retired in
+  // favor of a native mobile action (app/promocionar.tsx). A COLLECTOR with no
+  // agent assigned in agents.yaml now gets a one-time redirect instead of the
+  // old deterministic handler; a COLLECTOR WITH an agent assigned falls
+  // through to the normal LLM agent path like any other role.
+  describe("collector routing (mikro/#68)", () => {
+    const collectorPhone = "+18095550001";
+    const collectorRoute = {
+      type: "user" as const,
+      userId: "collector-1",
+      name: "Cobrador",
+      role: "COLLECTOR" as const,
+      phone: collectorPhone
+    };
+
+    const collectorWebhook = (id: string) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: collectorPhone,
+                    type: "text",
+                    id,
+                    timestamp: recentTs(),
+                    text: { body: "hola" }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    it("redirects a COLLECTOR with no agent assigned to the mobile app, without invoking an LLM", async () => {
+      mockMessageProcessor.routeMessage.withArgs(collectorPhone).resolves(collectorRoute);
+      mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
+
+      await handleWhatsAppMessage(collectorWebhook("msg-col1"));
+
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].phone).to.equal(
+        collectorPhone
+      );
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.contain("app");
+      expect(mockMessageProcessor.invokeLLM.called).to.be.false;
+    });
+
+    it("falls through to the normal agent path when a COLLECTOR profile has an agent assigned", async () => {
+      mockMessageProcessor.routeMessage.withArgs(collectorPhone).resolves(collectorRoute);
+      mockMessageProcessor.getAgentForProfile = sinon.stub().returns({
+        name: "collector-bot",
+        profile: "COLLECTOR",
+        enabled: true,
+        systemPrompt: "You help collectors",
+        allowedTools: []
+      });
+
+      await handleWhatsAppMessage(collectorWebhook("msg-col2"));
+
+      expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
+    });
+  });
+
   describe("when message processor is not configured", () => {
     it("should not process messages when processor is missing", async () => {
       // Arrange - Reset processor

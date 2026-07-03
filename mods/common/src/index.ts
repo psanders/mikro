@@ -327,6 +327,12 @@ export {
   type ReceiptDataInput,
   type SendReceiptViaWhatsAppInput,
   type SendPaymentConfirmationInput,
+  // Bug report schema
+  submitBugReportSchema,
+  MAX_BUG_REPORT_VIDEO_BYTES,
+  MAX_BUG_REPORT_SCREENSHOT_BYTES,
+  type SubmitBugReportInput,
+  type SubmitBugReportResult,
   // Report schemas
   generatePerformanceReportSchema,
   generatePortfolioMetricsSchema,
@@ -408,6 +414,7 @@ export {
   businessEventPayloadSchemas,
   recordBusinessEventSchema,
   listFeedEventsSchema,
+  listApplicationEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
   exportAuditLogSchema,

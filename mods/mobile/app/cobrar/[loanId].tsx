@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
 import { getLastCustomerPaymentAt } from "../../lib/offline/queries";
 import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
+import { getRoles, canManagePayments } from "../../lib/auth";
 
 // Collectors are blocked from charging the same customer twice within this
 // window to prevent duplicate payments. Mirrors the server-side guard.
@@ -51,6 +52,14 @@ export default function CobrarPagoScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [customAmountText, setCustomAmountText] = useState("");
   const customInputRef = useRef<TextInput>(null);
+
+  // REVIEWER-only accounts must not reach the collection flow, even via a
+  // direct deep link with the Cobrar CTA hidden elsewhere (mikro/#73).
+  // Defaults to blocked until roles resolve.
+  const [canPay, setCanPay] = useState(false);
+  useEffect(() => {
+    getRoles().then((roles) => setCanPay(canManagePayments(roles)));
+  }, []);
 
   const loanQuery = useLocalLoan(numericId);
   const lateFeeQuery = useLocalLateFeePreview(numericId);
@@ -253,6 +262,17 @@ export default function CobrarPagoScreen() {
     }
   };
 
+  if (!canPay) {
+    return (
+      <View style={styles.screen}>
+        <Header title="Registrar cobro" backMode="close" />
+        <Text style={styles.forbiddenText}>
+          Tu rol de Evaluador no incluye cobrar pagos. Contacta a un cobrador o administrador.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <Header title="Registrar cobro" backMode="close" />
@@ -361,6 +381,14 @@ export default function CobrarPagoScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg.screen },
+  forbiddenText: {
+    fontFamily: "Geist_500Medium",
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20
+  },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 20, gap: 18 },
   amountCard: {
     backgroundColor: colors.brand.white,

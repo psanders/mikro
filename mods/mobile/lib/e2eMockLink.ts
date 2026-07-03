@@ -15,6 +15,8 @@ import {
   e2eDeleteApplication,
   e2eGetApplication,
   e2eListApplications,
+  e2eListApplicationEvents,
+  e2eSendPromo,
   e2eSetContract,
   e2eSetIdImage,
   e2eSetStatus,
@@ -37,6 +39,12 @@ function resolve(path: string, input: unknown): unknown {
       return e2eSetStatus(input as { id?: string }, "IN_REVIEW");
     case "rejectApplication":
       return e2eSetStatus(input as { id?: string }, "REJECTED");
+    case "promoteApplication":
+      return e2eSetStatus(input as { id?: string }, "RECEIVED");
+    case "listApplicationEvents":
+      return e2eListApplicationEvents();
+    case "sendPromo":
+      return e2eSendPromo();
     case "updateApplication":
       return e2eUpdateApplication(input as { id?: string; patch: Record<string, string> });
     case "deleteApplication":

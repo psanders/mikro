@@ -137,9 +137,38 @@ export function hasEvaluatorRole(roles: Role[]): boolean {
   return roles.includes("REVIEWER") || roles.includes("ADMIN");
 }
 
-/** True when roles include both COLLECTOR and an evaluator role (REVIEWER/ADMIN). */
+/**
+ * True when a user may see payment data (balances, collection history) or
+ * trigger a collection (the "Cobrar" flow). REVIEWER-only accounts must not:
+ * client-side check for UI purposes, mirrored server-side by
+ * `collectorProcedure` on the payment endpoints and by `collectorSync`
+ * stripping payment history from the offline snapshot (mikro/#73).
+ */
+export function canManagePayments(roles: Role[]): boolean {
+  return roles.includes("COLLECTOR") || roles.includes("ADMIN");
+}
+
+/**
+ * True when a user should see the Collector/Reviewer mode switch: either
+ * they hold both COLLECTOR and an evaluator role, or they're ADMIN (who has
+ * server-side access to both surfaces — `getCollectorDashboard` uses
+ * `protectedProcedure`, not a role guard — even without an explicit
+ * COLLECTOR row). See mikro/#70.
+ */
 export function isDualRole(roles: Role[]): boolean {
-  return roles.includes("COLLECTOR") && hasEvaluatorRole(roles);
+  return (roles.includes("COLLECTOR") || roles.includes("ADMIN")) && hasEvaluatorRole(roles);
+}
+
+/**
+ * Human label for the role currently active on screen. For dual-role users
+ * this tracks `navMode` so the label matches whichever screens are actually
+ * rendered (see mikro/#70); ADMIN outranks REVIEWER when both are present.
+ */
+export function activeRoleLabel(roles: Role[], navMode: NavMode, dual: boolean): string {
+  if (dual && navMode === "collector") return "Cobrador";
+  if (roles.includes("ADMIN")) return "Administrador";
+  if (roles.includes("REVIEWER")) return "Evaluador";
+  return "Cobrador";
 }
 
 export async function getPin(): Promise<string | null> {

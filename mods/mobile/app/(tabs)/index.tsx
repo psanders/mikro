@@ -5,7 +5,15 @@ import { useMemo } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MapPin, Search, Calculator, CircleCheck, WifiOff, RefreshCw } from "lucide-react-native";
+import {
+  MapPin,
+  Search,
+  Calculator,
+  UserPlus,
+  CircleCheck,
+  WifiOff,
+  RefreshCw
+} from "lucide-react-native";
 import { colors } from "../../lib/theme";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { QuickAction } from "../../components/ui/QuickAction";
@@ -108,7 +116,11 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.greeting}>Hola, {firstName}.</Text>
         </View>
-        <Pressable style={styles.avatarCircle} onPress={() => router.push("/perfil")}>
+        <Pressable
+          style={styles.avatarCircle}
+          onPress={() => router.push("/perfil")}
+          testID="avatar-perfil"
+        >
           <Text style={styles.avatarText}>
             {data?.collector.name
               .split(" ")
@@ -161,6 +173,12 @@ export default function HomeScreen() {
             label="Cuadre"
             iconColor={colors.brand.blue.primary}
             onPress={() => router.push("/(tabs)/cuadre")}
+          />
+          <QuickAction
+            icon={UserPlus}
+            label="Promocionar"
+            iconColor={colors.brand.orange.deep}
+            onPress={() => router.push("/promocionar")}
           />
         </View>
 

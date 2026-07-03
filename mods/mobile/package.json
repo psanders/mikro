@@ -27,7 +27,11 @@
     "test:e2e:evaluator-reject": "maestro test .maestro/evaluator-reject-path.yaml",
     "test:e2e:evaluator-datos": "maestro test .maestro/evaluator-solicitud-datos.yaml",
     "test:e2e:evaluator-descartar": "maestro test .maestro/evaluator-descartar.yaml",
-    "test:e2e:evaluator-documentos": "maestro test .maestro/evaluator-documentos.yaml"
+    "test:e2e:evaluator-documentos": "maestro test .maestro/evaluator-documentos.yaml",
+    "test:e2e:evaluator-actividad": "maestro test .maestro/evaluator-actividad.yaml",
+    "test:e2e:evaluator-borradores": "maestro test .maestro/evaluator-borradores.yaml",
+    "test:e2e:admin-role-switch": "maestro test .maestro/admin-role-switch.yaml",
+    "test:e2e:collector-promocionar": "maestro test .maestro/collector-promocionar.yaml"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",

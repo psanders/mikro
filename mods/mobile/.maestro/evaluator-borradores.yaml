@@ -1,0 +1,53 @@
+# Evaluator — Borradores chip + promote (#72)
+#
+# Covers: the "Borradores" (DRAFT) filter chip on Cola shows the seeded draft
+# application (previously scoped out — see cola.tsx header comment), opening
+# it shows the "BORRADOR" card with a "Promover a cola" action, and tapping
+# it round-trips through promoteApplication (DRAFT -> RECEIVED): the card
+# disappears and the normal REVISIÓN actions (Tomar solicitud) appear.
+#
+# REQUIRES an e2e build (see evaluator-solicitud-datos.yaml header):
+#   EXPO_PUBLIC_E2E=1 EXPO_PUBLIC_E2E_ROLE=REVIEWER npx expo run:ios --port 8082
+#   maestro test .maestro/evaluator-borradores.yaml
+appId: do.mikro.app
+---
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: "EVALUACIONES DE HOY"
+    timeout: 30000
+
+- tapOn:
+    id: "tab-cola"
+- assertVisible: "Solicitudes"
+# The seeded draft doesn't show under the default "Todas" filter (RECEIVED +
+# IN_REVIEW only — unchanged semantics, see cola.tsx header comment).
+- assertNotVisible:
+    id: "solicitud-e2e-app-draft-0001"
+
+- tapOn:
+    id: "filter-draft"
+- extendedWaitUntil:
+    visible:
+      id: "solicitud-e2e-app-draft-0001"
+    timeout: 15000
+- assertVisible: "Yolanda Fermín"
+
+- tapOn:
+    id: "solicitud-e2e-app-draft-0001"
+- extendedWaitUntil:
+    visible: "BORRADOR"
+    timeout: 15000
+- assertVisible: "Promover a cola"
+# Not yet a reviewable application — no claim/approve/reject rail.
+- assertNotVisible: "Tomar solicitud"
+
+- tapOn: "Promover a cola"
+# promoteApplication resolves -> status RECEIVED -> canPromote false, canClaim true.
+- extendedWaitUntil:
+    visible: "Tomar solicitud"
+    timeout: 15000
+- assertNotVisible: "Promover a cola"

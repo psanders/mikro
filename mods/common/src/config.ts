@@ -79,6 +79,18 @@ const voiceNotesSchema = z.object({
   deepgramApiKey: z.string().default("")
 });
 
+/**
+ * Target for the in-app bug-report button (mikro/#69): a GitHub PAT with
+ * `repo` scope (or fine-grained Issues: write + Contents: write) and the
+ * "owner/repo" the button files issues against. Both empty by default —
+ * `createSubmitBugReport` fails fast with a clear error rather than a
+ * confusing GitHub 401/404 when unconfigured.
+ */
+const githubBugReportSchema = z.object({
+  token: z.string().default(""),
+  repo: z.string().default("")
+});
+
 /** Default max remaining installments by frequency to consider a loan "near completion" for renewal report. */
 export const DEFAULT_NEAR_COMPLETION_THRESHOLDS: Record<string, number> = {
   DAILY: 7,
@@ -416,7 +428,8 @@ export const mikroConfigSchema = z
     contract: contractSchema,
     followUp: followUpSchema,
     updates: updatesSchema,
-    qcobro: qcobroSchema
+    qcobro: qcobroSchema,
+    githubBugReport: githubBugReportSchema.default(() => ({ token: "", repo: "" }))
   })
   .strict();
 

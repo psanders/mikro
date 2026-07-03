@@ -93,7 +93,7 @@ export default function EvaluadorInicioScreen() {
           <Text style={styles.dateLine}>{formatDate()}</Text>
           <Text style={styles.greeting}>Buenos días, {firstName || "..."}.</Text>
         </View>
-        <Pressable onPress={() => router.push("/perfil")}>
+        <Pressable onPress={() => router.push("/perfil")} testID="avatar-perfil">
           <Avatar name={name || "?"} size={40} />
         </Pressable>
       </View>

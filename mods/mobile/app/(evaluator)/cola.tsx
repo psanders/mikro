@@ -3,12 +3,16 @@
  *
  * Pencil `Evaluador / 02 Cola` (BiMvn): RECEIVED/IN_REVIEW queue with filter
  * chips. `listApplications` only takes one status at a time (backend), so we
- * issue two parallel queries and merge client-side (mirrors desktop's
- * per-status querying in SolicitudesPage.tsx).
+ * issue parallel queries and merge client-side (mirrors desktop's per-status
+ * querying in SolicitudesPage.tsx).
  *
- * The Pencil chip row also shows a "Borradores" (DRAFT) chip, but `spec.md`
- * ("mobile-evaluator-review-flow") scopes Cola to RECEIVED/IN_REVIEW only —
- * dropped that chip rather than add a third query outside spec.
+ * The Pencil chip row also shows a "Borradores" (DRAFT) chip; `spec.md`
+ * ("mobile-evaluator-review-flow") originally scoped Cola to RECEIVED/
+ * IN_REVIEW only and dropped that chip. mikro/#72 restores it: DRAFT stays
+ * out of "Todas"/"Urgentes" (those keep their original RECEIVED+IN_REVIEW
+ * semantics) and gets its own chip + query instead, so existing counts don't
+ * shift. Promoting a draft (-> RECEIVED) happens on the detail screen
+ * (`solicitud/[id].tsx`, `actions.canPromote`).
  */
 import { useMemo, useState } from "react";
 import { Alert, View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
@@ -27,7 +31,7 @@ import {
   timeAgo
 } from "../../lib/applications";
 
-type FilterKey = "all" | "new" | "review" | "urgent";
+type FilterKey = "all" | "new" | "review" | "urgent" | "draft";
 
 export default function EvaluadorColaScreen() {
   const router = useRouter();
@@ -36,6 +40,7 @@ export default function EvaluadorColaScreen() {
 
   const receivedQ = trpc.listApplications.useQuery({ status: "RECEIVED", limit: 100 });
   const inReviewQ = trpc.listApplications.useQuery({ status: "IN_REVIEW", limit: 100 });
+  const draftQ = trpc.listApplications.useQuery({ status: "DRAFT", limit: 100 });
 
   const claim = trpc.claimApplication.useMutation({
     onSuccess: () => {
@@ -43,23 +48,31 @@ export default function EvaluadorColaScreen() {
     }
   });
 
-  const isLoading = receivedQ.isPending || inReviewQ.isPending;
-  const isError = receivedQ.isError || inReviewQ.isError;
-  const forbidden = isForbidden(receivedQ.error) || isForbidden(inReviewQ.error);
+  const isLoading = receivedQ.isPending || inReviewQ.isPending || draftQ.isPending;
+  const isError = receivedQ.isError || inReviewQ.isError || draftQ.isError;
+  const forbidden =
+    isForbidden(receivedQ.error) || isForbidden(inReviewQ.error) || isForbidden(draftQ.error);
 
   const merged = useMemo(() => {
     const list = [...(receivedQ.data ?? []), ...(inReviewQ.data ?? [])];
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [receivedQ.data, inReviewQ.data]);
 
+  const drafts = useMemo(() => {
+    return [...(draftQ.data ?? [])].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [draftQ.data]);
+
   const counts = useMemo(
     () => ({
       all: merged.length,
       new: receivedQ.data?.length ?? 0,
       review: inReviewQ.data?.length ?? 0,
-      urgent: merged.filter((a) => isUrgent(a.createdAt)).length
+      urgent: merged.filter((a) => isUrgent(a.createdAt)).length,
+      draft: drafts.length
     }),
-    [merged, receivedQ.data, inReviewQ.data]
+    [merged, receivedQ.data, inReviewQ.data, drafts]
   );
 
   const filtered = useMemo(() => {
@@ -70,13 +83,15 @@ export default function EvaluadorColaScreen() {
         return merged.filter((a) => a.status === "IN_REVIEW");
       case "urgent":
         return merged.filter((a) => isUrgent(a.createdAt));
+      case "draft":
+        return drafts;
       default:
         return merged;
     }
-  }, [merged, filter]);
+  }, [merged, drafts, filter]);
 
   async function refresh() {
-    await Promise.all([receivedQ.refetch(), inReviewQ.refetch()]);
+    await Promise.all([receivedQ.refetch(), inReviewQ.refetch(), draftQ.refetch()]);
   }
 
   function handleLongPress(id: string, name: string, status: string) {
@@ -91,7 +106,8 @@ export default function EvaluadorColaScreen() {
     { key: "all", label: `Todas · ${counts.all}` },
     { key: "new", label: `Nuevas · ${counts.new}` },
     { key: "review", label: `Revisión · ${counts.review}` },
-    { key: "urgent", label: `Urgentes · ${counts.urgent}` }
+    { key: "urgent", label: `Urgentes · ${counts.urgent}` },
+    { key: "draft", label: `Borradores · ${counts.draft}` }
   ];
 
   return (
@@ -125,7 +141,7 @@ export default function EvaluadorColaScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={receivedQ.isRefetching || inReviewQ.isRefetching}
+            refreshing={receivedQ.isRefetching || inReviewQ.isRefetching || draftQ.isRefetching}
             onRefresh={refresh}
             tintColor={colors.brand.blue.primary}
           />

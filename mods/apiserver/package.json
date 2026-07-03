@@ -23,6 +23,7 @@
   "dependencies": {
     "@deepgram/sdk": "^4.0.0",
     "@fonoster/logger": "^0.9.23",
+    "@octokit/rest": "^22.0.0",
     "@mikro/agents": "^1.17.0",
     "@mikro/common": "^1.17.0",
     "@prisma/adapter-better-sqlite3": "^7.3.0",

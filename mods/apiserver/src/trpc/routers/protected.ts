@@ -76,7 +76,13 @@ import {
   listCustomerTagsSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure, reviewerProcedure, adminProcedure } from "../trpc.js";
+import {
+  router,
+  protectedProcedure,
+  reviewerProcedure,
+  adminProcedure,
+  collectorProcedure
+} from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
 import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
@@ -162,7 +168,10 @@ import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNot
 import {
   createSendWhatsAppMessage,
   createWhatsAppClient,
-  getWhatsAppPromoTemplate
+  getWhatsAppPromoTemplate,
+  getDeepgramApiKey,
+  createChatModel,
+  getLLMConfig
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
@@ -184,6 +193,7 @@ import {
 // Founder feed / event-log schemas
 import {
   listFeedEventsSchema,
+  listApplicationEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
   exportAuditLogSchema
@@ -191,6 +201,7 @@ import {
 // Founder feed / event-log API functions
 import {
   createListFeedEvents,
+  createListApplicationEvents,
   createRestoreApplication,
   createSearchAll,
   createExportAuditLog
@@ -213,6 +224,11 @@ import {
   setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
 } from "../../api/copilot/index.js";
+// Bug report schema + API function
+import { submitBugReportSchema, getConfig } from "@mikro/common";
+import { createSubmitBugReport } from "../../api/bugReports/createSubmitBugReport.js";
+import { createTranscribeVoiceNote } from "../../voice/createTranscribeVoiceNote.js";
+import { Octokit } from "@octokit/rest";
 // Accounting API functions
 import {
   createCreateAccount,
@@ -228,6 +244,12 @@ import {
   createGetTransactionAttachment
 } from "../../api/accounting/index.js";
 
+// In-memory per-user cooldown for submitBugReport (mikro/#69) — keeps a
+// stuck client from spamming the target repo with issues. Not persisted:
+// a server restart resets it, which is fine for a spam guard, not a hard limit.
+const bugReportRateLimit = new Map<string, number>();
+const BUG_REPORT_RATE_LIMIT_MS = 60 * 1000;
+
 /**
  * Protected router - procedures that require Basic Auth.
  */
@@ -241,7 +263,8 @@ export const protectedRouter = router({
 
   collectorSync: protectedProcedure.query(async ({ ctx }) => {
     const fn = createCollectorSync(ctx.db);
-    return fn({ collectorId: ctx.userId });
+    const includePayments = ctx.roles.includes("ADMIN") || ctx.roles.includes("COLLECTOR");
+    return fn({ collectorId: ctx.userId, includePayments });
   }),
 
   // ==================== Customer procedures ====================
@@ -524,6 +547,19 @@ export const protectedRouter = router({
   }),
 
   /**
+   * Activity history for a single application (approve/reject/sign/convert/
+   * delete/restore) — the mobile "Ver actividad" list. Reviewers (ADMIN/
+   * REVIEWER) only, scoped to one applicationId; never surfaces payment data
+   * (mikro/#67, mikro/#73).
+   */
+  listApplicationEvents: reviewerProcedure
+    .input(listApplicationEventsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListApplicationEvents(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
+
+  /**
    * Claim a RECEIVED application for review (-> IN_REVIEW). ADMIN/REVIEWER only.
    */
   claimApplication: reviewerProcedure
@@ -732,12 +768,56 @@ export const protectedRouter = router({
     return sendFn({ phone: e164, flowToken: randomUUID() });
   }),
 
+  /**
+   * File a bug report from an in-app screen+mic recording (mikro/#69).
+   * Available to any authenticated user, rate-limited per user to keep a
+   * stuck client (or a mis-click loop) from spamming the target repo with
+   * issues — one report per user per BUG_REPORT_RATE_LIMIT_MS.
+   */
+  submitBugReport: protectedProcedure
+    .input(submitBugReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const last = bugReportRateLimit.get(ctx.userId);
+      if (last && Date.now() - last < BUG_REPORT_RATE_LIMIT_MS) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Espera un momento antes de enviar otro reporte."
+        });
+      }
+      bugReportRateLimit.set(ctx.userId, Date.now());
+
+      const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
+      const cfg = getConfig();
+      const deepgramApiKey = getDeepgramApiKey();
+      if (!deepgramApiKey) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Bug reporting is not configured (voiceNotes.deepgramApiKey is empty)."
+        });
+      }
+      if (!cfg.githubBugReport.token) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Bug reporting is not configured (githubBugReport.token is empty)."
+        });
+      }
+
+      const fn = createSubmitBugReport({
+        transcribe: createTranscribeVoiceNote(deepgramApiKey),
+        createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+        octokit: new Octokit({ auth: cfg.githubBugReport.token }),
+        repo: cfg.githubBugReport.repo
+      });
+      return fn(input, { userId: ctx.userId, name: user?.name ?? "Usuario Mikro" });
+    }),
+
   // ==================== Payment procedures ====================
 
   /**
-   * Create a new payment for a loan.
+   * Create a new payment for a loan. Collector/admin only — REVIEWER must
+   * not be able to trigger collections (mikro/#73).
    */
-  createPayment: protectedProcedure
+  createPayment: collectorProcedure
     .meta({ event: "payment.collected" })
     .input(createPaymentSchema)
     .mutation(async ({ ctx, input }) => {
@@ -762,16 +842,17 @@ export const protectedRouter = router({
 
   /**
    * Preview accrued mora (past-due fee) for a loan without recording a payment.
+   * Collector/admin only (mikro/#73).
    */
-  previewLateFee: protectedProcedure.input(previewLateFeeSchema).query(async ({ ctx, input }) => {
+  previewLateFee: collectorProcedure.input(previewLateFeeSchema).query(async ({ ctx, input }) => {
     const fn = createPreviewLateFee(ctx.db);
     return fn(input);
   }),
 
   /**
-   * Reverse a payment.
+   * Reverse a payment. Collector/admin only (mikro/#73).
    */
-  reversePayment: protectedProcedure
+  reversePayment: collectorProcedure
     .meta({ event: "payment.reversed" })
     .input(reversePaymentSchema)
     .mutation(async ({ ctx, input }) => {
@@ -780,17 +861,19 @@ export const protectedRouter = router({
     }),
 
   /**
-   * List all payments within a date range.
+   * List all payments within a date range. Collector/admin only (mikro/#73).
    */
-  listPayments: protectedProcedure.input(listPaymentsSchema).query(async ({ ctx, input }) => {
+  listPayments: collectorProcedure.input(listPaymentsSchema).query(async ({ ctx, input }) => {
     const fn = createListPayments(ctx.db);
     return fn(input);
   }),
 
   /**
    * List payments for a specific customer's loans within a date range.
+   * Collector/admin only — payment data must not be visible to REVIEWER
+   * (mikro/#73).
    */
-  listPaymentsByCustomer: protectedProcedure
+  listPaymentsByCustomer: collectorProcedure
     .input(listPaymentsByCustomerSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByCustomer(ctx.db);
@@ -800,8 +883,9 @@ export const protectedRouter = router({
   /**
    * List payments for a specific loan by numeric loan ID (e.g., 10000, 10001).
    * By default only shows COMPLETED payments unless showReversed is true.
+   * Collector/admin only (mikro/#73).
    */
-  listPaymentsByLoanId: protectedProcedure
+  listPaymentsByLoanId: collectorProcedure
     .input(listPaymentsByLoanIdSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListPaymentsByLoanId(ctx.db);
@@ -813,8 +897,9 @@ export const protectedRouter = router({
   /**
    * Generate a receipt for a payment as a PNG image.
    * Returns base64-encoded PNG, JWT token, and receipt metadata.
+   * Collector/admin only (mikro/#73).
    */
-  generateReceipt: protectedProcedure
+  generateReceipt: collectorProcedure
     .input(generateReceiptSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateReceipt({ db: ctx.db });

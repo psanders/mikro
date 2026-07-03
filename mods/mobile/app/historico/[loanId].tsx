@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Printer } from "lucide-react-native";
 import { colors } from "../../lib/theme";
@@ -10,6 +10,7 @@ import { Header } from "../../components/ui/Header";
 import { PaymentRow } from "../../components/ui/PaymentRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { useLocalLoanVisit, useLocalPaymentsByLoan } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -20,6 +21,7 @@ const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "
 export default function HistoricoPagosScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
+  const { isPulling, pull } = useSyncContext();
 
   const visitQuery = useLocalLoanVisit(numericId);
   const paymentsQuery = useLocalPaymentsByLoan(numericId);
@@ -46,7 +48,10 @@ export default function HistoricoPagosScreen() {
     <View style={styles.screen}>
       <Header title="Histórico de pagos" subtitle={subtitle} rightIcon={Printer} />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>TOTAL COBRADO</Text>
           <View style={styles.summaryAmountRow}>

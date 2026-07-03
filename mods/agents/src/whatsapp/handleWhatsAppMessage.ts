@@ -23,7 +23,6 @@ import {
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
 import { handleProspectMessage } from "./handleProspectMessage.js";
-import { handleCollectorMessage } from "./handleCollectorMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -338,7 +337,6 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     routeMessage,
     invokeLLM,
     sendWhatsAppMessage,
-    sendTemplateMessage,
     downloadMedia,
     getChatHistoryForUser,
     addMessageForUser,
@@ -516,16 +514,18 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // COLLECTOR: handled by the deterministic collector handler.
-    // Pass the configured agent if one is defined in agents.yaml; handler falls
-    // back to the inline PHONE_EXTRACTOR_AGENT constant when absent.
-    if (route.role === "COLLECTOR") {
-      const buttonReplyId = message.interactive?.button_reply?.id;
-      await handleCollectorMessage(phone, type, imageUrl, buttonReplyId, {
-        invokeLLM,
-        sendWhatsAppMessage,
-        sendTemplateMessage,
-        collectorAgent: getAgentForProfile("COLLECTOR")
+    // COLLECTOR: the photo → vision → WhatsApp-button promo flow was retired
+    // in favor of a native mobile action (mods/mobile app/promocionar.tsx,
+    // mikro/#68) — no photo capture, no computer-vision extraction step. A
+    // COLLECTOR profile can still be assigned an LLM agent in agents.yaml for
+    // other purposes, so fall through to the generic agent path below rather
+    // than special-casing the role; only reply here when nothing is assigned,
+    // so collectors who still text a photo out of habit get redirected
+    // instead of silence.
+    if (route.role === "COLLECTOR" && !getAgentForProfile("COLLECTOR")) {
+      await sendWhatsAppMessage({
+        phone,
+        message: "Ahora puedes enviar promociones directamente desde la app Mikro Cobradores."
       });
       return;
     }

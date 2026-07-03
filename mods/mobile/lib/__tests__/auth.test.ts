@@ -1,7 +1,14 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { decodeJwtPayload, decodeRolesFromToken, hasEvaluatorRole, isDualRole } from "../auth";
+import {
+  decodeJwtPayload,
+  decodeRolesFromToken,
+  hasEvaluatorRole,
+  isDualRole,
+  activeRoleLabel,
+  canManagePayments
+} from "../auth";
 
 /** Builds a JWT-shaped string (header.payload.signature) without a real signature, for decode tests. */
 function makeToken(payload: unknown): string {
@@ -113,5 +120,51 @@ describe("isDualRole", () => {
 
   it("is false for REVIEWER-only (no COLLECTOR)", () => {
     expect(isDualRole(["REVIEWER"])).toBe(false);
+  });
+
+  // mikro/#70: ADMIN has server-side access to both surfaces even without an
+  // explicit COLLECTOR row, so ADMIN-only must also show the mode switch.
+  it("is true for ADMIN-only (no explicit COLLECTOR row)", () => {
+    expect(isDualRole(["ADMIN"])).toBe(true);
+  });
+});
+
+describe("activeRoleLabel", () => {
+  it("labels ADMIN as Administrador when in evaluator mode", () => {
+    expect(activeRoleLabel(["ADMIN"], "evaluator", true)).toBe("Administrador");
+  });
+
+  it("labels ADMIN as Cobrador when switched to collector mode (dual-role)", () => {
+    expect(activeRoleLabel(["ADMIN"], "collector", true)).toBe("Cobrador");
+  });
+
+  it("labels REVIEWER-only as Evaluador", () => {
+    expect(activeRoleLabel(["REVIEWER"], "evaluator", false)).toBe("Evaluador");
+  });
+
+  it("labels COLLECTOR-only as Cobrador", () => {
+    expect(activeRoleLabel(["COLLECTOR"], "evaluator", false)).toBe("Cobrador");
+  });
+
+  it("prefers Administrador over Evaluador when both ADMIN and REVIEWER are present", () => {
+    expect(activeRoleLabel(["ADMIN", "REVIEWER"], "evaluator", false)).toBe("Administrador");
+  });
+});
+
+describe("canManagePayments", () => {
+  it("is true for COLLECTOR", () => {
+    expect(canManagePayments(["COLLECTOR"])).toBe(true);
+  });
+
+  it("is true for ADMIN", () => {
+    expect(canManagePayments(["ADMIN"])).toBe(true);
+  });
+
+  it("is false for REVIEWER-only — must not see payment data (mikro/#73)", () => {
+    expect(canManagePayments(["REVIEWER"])).toBe(false);
+  });
+
+  it("is false for an empty role list", () => {
+    expect(canManagePayments([])).toBe(false);
   });
 });

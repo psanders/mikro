@@ -14,9 +14,9 @@
  * upload/replace/remove for the cédula sides and the signed contract.
  */
 import { useState, type ReactNode } from "react";
-import { Alert, View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { Alert, View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CreditCard, FileText, Info, Pencil } from "lucide-react-native";
+import { CreditCard, FileText, Info, Pencil, Clock, ChevronRight } from "lucide-react-native";
 import type { ApplicationScore } from "@mikro/common";
 import { colors, radii } from "../../../lib/theme";
 import { trpc } from "../../../lib/api";
@@ -72,6 +72,10 @@ export default function SolicitudDatosScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const q = trpc.getApplication.useQuery({ id });
+  const eventsQuery = trpc.listApplicationEvents.useQuery(
+    { applicationId: q.data?.id ?? "" },
+    { enabled: !!q.data?.id }
+  );
   const [capturing, setCapturing] = useState(false);
 
   const refresh = () => {
@@ -186,7 +190,18 @@ export default function SolicitudDatosScreen() {
         subtitle={`${name} · ${st.label}`}
         fallbackRoute="/(evaluator)"
       />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={
+          <RefreshControl
+            refreshing={q.isRefetching || eventsQuery.isRefetching}
+            onRefresh={() => {
+              void q.refetch();
+              void eventsQuery.refetch();
+            }}
+          />
+        }
+      >
         <Section
           label="SOLICITANTE"
           onEdit={editHandler("editar-solicitante")}
@@ -284,6 +299,22 @@ export default function SolicitudDatosScreen() {
           />
         </RailCard>
 
+        <RailCard label="ACTIVIDAD">
+          <Pressable
+            style={styles.activityRow}
+            onPress={() => router.push(`/solicitud/${id}/actividad`)}
+            testID="view-activity"
+          >
+            <Clock size={16} color="#697A93" strokeWidth={2} />
+            <Text style={styles.activityText}>
+              {eventsQuery.isPending
+                ? "Cargando actividad..."
+                : `Ver actividad · ${eventsQuery.data?.items.length ?? 0} eventos`}
+            </Text>
+            <ChevronRight size={16} color="#697A93" strokeWidth={2} />
+          </Pressable>
+        </RailCard>
+
         {notes.length > 0 && (
           <RailCard label="PREGUNTAS SUGERIDAS">
             {notes.map((n, i) => (
@@ -347,6 +378,13 @@ const styles = StyleSheet.create({
     color: colors.brand.blue.primary
   },
   cardBody: { paddingHorizontal: 18, paddingBottom: 18, gap: 14 },
+  activityRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  activityText: {
+    flex: 1,
+    fontFamily: "Geist_600SemiBold",
+    fontSize: 13,
+    color: colors.brand.blue.primary
+  },
   question: { flexDirection: "row", gap: 10 },
   questionBody: { flex: 1, gap: 2 },
   questionTopic: {

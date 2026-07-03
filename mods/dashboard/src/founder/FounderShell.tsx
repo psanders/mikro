@@ -12,6 +12,7 @@ import { FileText, House, LogOut, ShipWheel, Search, TriangleAlert } from "lucid
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
+import { BugReportButton } from "../components/BugReportButton";
 import { useAuth } from "../context/AuthContext";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
@@ -144,6 +145,7 @@ export function FounderShell() {
             onClick={() => navigate("/founder/reportes")}
           />
           <div className="flex-1" />
+          <BugReportButton />
           <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
         </nav>
 

@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { useMemo } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Banknote, NotebookPen, EllipsisVertical } from "lucide-react-native";
 import { colors } from "../../lib/theme";
@@ -11,12 +11,14 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
+import { getRoles, canManagePayments } from "../../lib/auth";
 import {
   useLocalLoan,
   useLocalPaymentsByLoan,
   useLocalLateFeePreview,
   useLocalLoanVisit
 } from "../../lib/offline/hooks";
+import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -82,6 +84,15 @@ export default function PrestamoDetalleScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
   const router = useRouter();
+  const { isPulling, pull } = useSyncContext();
+
+  // REVIEWER-only accounts must not see payment/collection data (mikro/#73).
+  // Defaults to false (hidden) until roles resolve, so nothing sensitive
+  // flashes on screen for a split second.
+  const [canPay, setCanPay] = useState(false);
+  useEffect(() => {
+    getRoles().then((roles) => setCanPay(canManagePayments(roles)));
+  }, []);
 
   const loanQuery = useLocalLoan(numericId);
   const paymentsQuery = useLocalPaymentsByLoan(numericId);
@@ -163,7 +174,10 @@ export default function PrestamoDetalleScreen() {
     <View style={styles.screen}>
       <Header title={`Préstamo #${loanId}`} subtitle={subtitle} rightIcon={EllipsisVertical} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
+      >
         <View style={styles.metaPills}>
           {pills.map((t) => (
             <View key={t} style={styles.metaPill}>
@@ -172,72 +186,86 @@ export default function PrestamoDetalleScreen() {
           ))}
         </View>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>BALANCE PENDIENTE</Text>
-          <Text style={styles.summaryNumber}>{formatRD(Math.max(0, balance))}</Text>
-          <ProgressBar progress={progress} color={colors.brand.white} />
-          <View style={styles.summaryGrid}>
-            <View>
-              <Text style={styles.gridLabel}>Pagado</Text>
-              <Text style={styles.gridValue}>{formatRD(totalPaid)}</Text>
+        {canPay ? (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>BALANCE PENDIENTE</Text>
+              <Text style={styles.summaryNumber}>{formatRD(Math.max(0, balance))}</Text>
+              <ProgressBar progress={progress} color={colors.brand.white} />
+              <View style={styles.summaryGrid}>
+                <View>
+                  <Text style={styles.gridLabel}>Pagado</Text>
+                  <Text style={styles.gridValue}>{formatRD(totalPaid)}</Text>
+                </View>
+                <View>
+                  <Text style={styles.gridLabel}>Cuota</Text>
+                  <Text style={styles.gridValue}>
+                    {paidCount} / {termLength}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.gridLabel}>Próxima</Text>
+                  <Text style={styles.gridValue}>
+                    {nextDueDate ? formatShortDate(nextDueDate) : "—"}
+                  </Text>
+                </View>
+              </View>
             </View>
-            <View>
-              <Text style={styles.gridLabel}>Cuota</Text>
-              <Text style={styles.gridValue}>
-                {paidCount} / {termLength}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.gridLabel}>Próxima</Text>
-              <Text style={styles.gridValue}>
-                {nextDueDate ? formatShortDate(nextDueDate) : "—"}
-              </Text>
-            </View>
-          </View>
-        </View>
 
-        {paymentAmount > 0 && (
-          <View style={styles.totalCard}>
-            <View style={styles.totalHeader}>
-              <View style={{ gap: 2 }}>
-                <Text style={styles.totalLabel}>TOTAL A PAGAR HOY</Text>
-                <Text style={styles.totalSub}>Lo que el cliente debe entregar ahora</Text>
+            {paymentAmount > 0 && (
+              <View style={styles.totalCard}>
+                <View style={styles.totalHeader}>
+                  <View style={{ gap: 2 }}>
+                    <Text style={styles.totalLabel}>TOTAL A PAGAR HOY</Text>
+                    <Text style={styles.totalSub}>Lo que el cliente debe entregar ahora</Text>
+                  </View>
+                  <View style={styles.totalAmountRow}>
+                    <Text style={styles.totalCurrency}>RD$</Text>
+                    <Text style={styles.totalAmount}>{todayTotal.toLocaleString("es-DO")}</Text>
+                  </View>
+                </View>
+                <View style={styles.totalDivider} />
+                <KvRow label="Cuota pendiente" value={formatRD(paymentAmount)} />
+                {moraAmount > 0 && <KvRow label="Cargo por mora" value={formatRD(moraAmount)} />}
               </View>
-              <View style={styles.totalAmountRow}>
-                <Text style={styles.totalCurrency}>RD$</Text>
-                <Text style={styles.totalAmount}>{todayTotal.toLocaleString("es-DO")}</Text>
-              </View>
+            )}
+
+            <View style={styles.planHeader}>
+              <SectionLabel>PLAN DE PAGOS</SectionLabel>
+              <Pressable onPress={() => router.push(`/historico/${loanId}`)}>
+                <Text style={styles.planLink}>Ver historial ›</Text>
+              </Pressable>
             </View>
-            <View style={styles.totalDivider} />
-            <KvRow label="Cuota pendiente" value={formatRD(paymentAmount)} />
-            {moraAmount > 0 && <KvRow label="Cargo por mora" value={formatRD(moraAmount)} />}
+
+            <View style={styles.cuotaList}>
+              {cuotas.map((c) => (
+                <CuotaRow key={c.name} {...c} />
+              ))}
+            </View>
+          </>
+        ) : (
+          <View style={styles.totalCard}>
+            <Text style={styles.totalLabel}>SIN ACCESO A PAGOS</Text>
+            <Text style={styles.totalSub}>
+              Tu rol de Evaluador no incluye ver balances ni cobrar. Contacta a un cobrador o
+              administrador para gestionar pagos de este préstamo.
+            </Text>
           </View>
         )}
-
-        <View style={styles.planHeader}>
-          <SectionLabel>PLAN DE PAGOS</SectionLabel>
-          <Pressable onPress={() => router.push(`/historico/${loanId}`)}>
-            <Text style={styles.planLink}>Ver historial ›</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.cuotaList}>
-          {cuotas.map((c) => (
-            <CuotaRow key={c.name} {...c} />
-          ))}
-        </View>
       </ScrollView>
 
-      <View style={styles.ctaBar}>
-        <Pressable style={styles.ctaSecondary} onPress={() => router.push(`/visita/${loanId}`)}>
-          <NotebookPen size={16} color={colors.brand.blue.deep} strokeWidth={2} />
-          <Text style={styles.ctaSecondaryText}>Anotar visita</Text>
-        </Pressable>
-        <Pressable style={styles.ctaPrimary} onPress={() => router.push(`/cobrar/${loanId}`)}>
-          <Banknote size={16} color={colors.brand.white} strokeWidth={2} />
-          <Text style={styles.ctaPrimaryText}>Cobrar</Text>
-        </Pressable>
-      </View>
+      {canPay && (
+        <View style={styles.ctaBar}>
+          <Pressable style={styles.ctaSecondary} onPress={() => router.push(`/visita/${loanId}`)}>
+            <NotebookPen size={16} color={colors.brand.blue.deep} strokeWidth={2} />
+            <Text style={styles.ctaSecondaryText}>Anotar visita</Text>
+          </Pressable>
+          <Pressable style={styles.ctaPrimary} onPress={() => router.push(`/cobrar/${loanId}`)}>
+            <Banknote size={16} color={colors.brand.white} strokeWidth={2} />
+            <Text style={styles.ctaPrimaryText}>Cobrar</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
