@@ -3,11 +3,13 @@
  *
  * In-app bug report (mikro/#69): click the bug icon → consent → record →
  * click the floating pill's stop button → upload. The apiserver transcribes
- * (when there's audio), structures, and files a GitHub issue with the
- * screenshot and video attached — see createSubmitBugReport.ts. The result
- * screen doesn't show the issue link: the target repos are going private, so
- * reporters (who won't have repo access) just get a "the team will review
- * it" message instead.
+ * (when there's audio), structures, and files a GitHub issue with the video
+ * attached — see createSubmitBugReport.ts. No screenshot is captured at all
+ * anymore: the video is strictly more useful (it's the whole reason we did
+ * the native-capture work), so it's the default and only visual now. The
+ * result screen doesn't show the issue link either: the target repos are
+ * going private, so reporters (who won't have repo access) just get a "the
+ * team will review it" message instead.
  *
  * Capture source (extend-bug-report-native-capture): WKWebView on macOS
  * doesn't implement `getDisplayMedia`, so the Tauri build can't grab a live
@@ -16,12 +18,11 @@
  * `hasDisplayMedia()` true covers web AND Windows Tauri (real screen+mic
  * video, muxed by the browser's own MediaRecorder); false means the Tauri
  * native path — a silent screen-only video via ScreenCaptureKit
- * (`start_bug_report_recording`/`stop_bug_report_recording`) plus a native
- * screenshot (`capture_bug_report_screenshot`), no microphone at all.
- * ScreenCaptureKit can't capture the mic (only system/app audio output), and
- * muxing a separate mic track in would need a bundled/signed ffmpeg — real
- * distribution scope for a video whose point is "show what happened," not
- * narration.
+ * (`start_bug_report_recording`/`stop_bug_report_recording`), no microphone
+ * at all. ScreenCaptureKit can't capture the mic (only system/app audio
+ * output), and muxing a separate mic track in would need a bundled/signed
+ * ffmpeg — real distribution scope for a video whose point is "show what
+ * happened," not narration.
  *
  * The "recording" stage renders a floating, non-blocking pill (not a
  * full-screen modal) so the user can navigate the dashboard while recording
@@ -75,9 +76,7 @@ export function BugReportButton() {
   const micStreamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const captureModeRef = useRef<CaptureMode | null>(null);
-  const nativeScreenshotRef = useRef<{ base64: string; mimeType: string } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const submit = trpc.submitBugReport.useMutation();
@@ -104,7 +103,6 @@ export function BugReportButton() {
     clearTimer();
     chunksRef.current = [];
     captureModeRef.current = null;
-    nativeScreenshotRef.current = null;
     setElapsedSeconds(0);
     setErrorMessage(null);
     setStage("idle");
@@ -118,14 +116,6 @@ export function BugReportButton() {
     const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     displayStreamRef.current = displayStream;
     micStreamRef.current = micStream;
-
-    // Hidden preview element so we can grab a still frame from the live
-    // screen track when recording stops (no ImageCapture dependency).
-    const video = document.createElement("video");
-    video.srcObject = displayStream;
-    video.muted = true;
-    await video.play();
-    previewVideoRef.current = video;
 
     const combined = new MediaStream([
       ...displayStream.getVideoTracks(),
@@ -146,15 +136,11 @@ export function BugReportButton() {
     });
   }, []);
 
-  // Tauri build only (WKWebView has no `getDisplayMedia`): a native
-  // screenshot up front, then a silent screen-only video recording via
-  // ScreenCaptureKit. No mic — see this file's header for why.
+  // Tauri build only (WKWebView has no `getDisplayMedia`): a silent
+  // screen-only video recording via ScreenCaptureKit. No mic — see this
+  // file's header for why.
   const startTauriRecording = useCallback(async () => {
     const { invoke } = await import("@tauri-apps/api/core");
-    const screenshot = await invoke<{ base64: string; mimeType: string }>(
-      "capture_bug_report_screenshot"
-    );
-    nativeScreenshotRef.current = screenshot;
     await invoke("start_bug_report_recording");
   }, []);
 
@@ -184,15 +170,10 @@ export function BugReportButton() {
   }, [cleanupStreams, startBrowserRecording, startTauriRecording]);
 
   const finishSubmit = useCallback(
-    async (
-      recording: { base64: string; mimeType: string },
-      screenshot: { base64: string; mimeType: string } | null
-    ) => {
+    async (recording: { base64: string; mimeType: string }) => {
       const result = await submit.mutateAsync({
         videoBase64: recording.base64,
         videoMimeType: recording.mimeType,
-        screenshotBase64: screenshot?.base64 ?? "",
-        screenshotMimeType: screenshot?.mimeType ?? "image/png",
         pageUrl: window.location.href,
         userAgent: navigator.userAgent
       });
@@ -210,25 +191,9 @@ export function BugReportButton() {
       recorder.onstop = async () => {
         try {
           const recordingBlob = new Blob(chunksRef.current, { type: "video/webm" });
-
-          // Grab a still frame before tearing down the tracks.
-          let screenshot: { base64: string; mimeType: string } | null = null;
-          const video = previewVideoRef.current;
-          if (video && video.videoWidth > 0) {
-            const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const screenshotBlob = await new Promise<Blob | null>((res) =>
-              canvas.toBlob(res, "image/png")
-            );
-            if (screenshotBlob) screenshot = await blobToBase64(screenshotBlob);
-          }
-
           cleanupStreams();
           const recording64 = await blobToBase64(recordingBlob);
-          await finishSubmit(recording64, screenshot);
+          await finishSubmit(recording64);
           resolve();
         } catch (err) {
           reject(err instanceof Error ? err : new Error("No se pudo enviar el reporte."));
@@ -243,7 +208,7 @@ export function BugReportButton() {
     const recording = await invoke<{ base64: string; mimeType: string }>(
       "stop_bug_report_recording"
     );
-    await finishSubmit(recording, nativeScreenshotRef.current);
+    await finishSubmit(recording);
   }, [finishSubmit]);
 
   const stopRecording = useCallback(async () => {

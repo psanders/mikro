@@ -811,7 +811,14 @@ export const protectedRouter = router({
       const fn = createSubmitBugReport({
         transcribe: createTranscribeVoiceNote(deepgramApiKey),
         createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
-        octokit: new Octokit({ auth: cfg.githubBugReport.token }),
+        // Without an explicit API version, GitHub routes the request through
+        // an implicit legacy version and returns a deprecation warning
+        // ("scheduled to be removed" — seen for real on the issues.create
+        // call). Pin the current stable version explicitly.
+        octokit: new Octokit({
+          auth: cfg.githubBugReport.token,
+          request: { headers: { "x-github-api-version": "2022-11-28" } }
+        }),
         repo: cfg.githubBugReport.repo
       });
       return fn(input, { userId: ctx.userId, name: user?.name ?? "Usuario Mikro" });

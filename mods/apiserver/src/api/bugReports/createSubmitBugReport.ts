@@ -142,26 +142,11 @@ export function createSubmitBugReport(deps: SubmitBugReportDeps) {
       }
     }
 
-    // Commit the screenshot and the video so they each have a stable URL —
-    // the Issues REST API has no endpoint to attach a binary directly. Both
-    // are best-effort uploads: a GitHub hiccup on either one shouldn't lose
-    // the whole report, since the structured write-up (or at least the
-    // transcript/screenshot fallback) is still useful on its own.
-    const screenshotPath = `bug-reports/${Date.now()}-${reporter.userId.slice(0, 8)}.${extFromMimeType(input.screenshotMimeType)}`;
-    let screenshotUrl: string | null = null;
-    try {
-      const upload = await deps.octokit.repos.createOrUpdateFileContents({
-        owner,
-        repo: repoName,
-        path: screenshotPath,
-        message: `Bug report screenshot: ${screenshotPath}`,
-        content: input.screenshotBase64
-      });
-      screenshotUrl = (upload.data.content?.download_url as string | undefined) ?? null;
-    } catch (err) {
-      logger.error("bug report screenshot upload failed", { error: (err as Error).message });
-    }
-
+    // Commit the video (the default, primary visual artifact — see
+    // bugReport.ts) and, only if a client actually sent one, the legacy
+    // screenshot. Both are best-effort uploads: a GitHub hiccup on either one
+    // shouldn't lose the whole report, since the structured write-up (or at
+    // least the transcript fallback) is still useful on its own.
     const videoPath = `bug-reports/${Date.now()}-${reporter.userId.slice(0, 8)}.${extFromMimeType(input.videoMimeType)}`;
     let videoUrl: string | null = null;
     try {
@@ -177,13 +162,30 @@ export function createSubmitBugReport(deps: SubmitBugReportDeps) {
       logger.error("bug report video upload failed", { error: (err as Error).message });
     }
 
+    let screenshotUrl: string | null = null;
+    if (input.screenshotBase64) {
+      const screenshotPath = `bug-reports/${Date.now()}-${reporter.userId.slice(0, 8)}.${extFromMimeType(input.screenshotMimeType ?? "image/png")}`;
+      try {
+        const upload = await deps.octokit.repos.createOrUpdateFileContents({
+          owner,
+          repo: repoName,
+          path: screenshotPath,
+          message: `Bug report screenshot: ${screenshotPath}`,
+          content: input.screenshotBase64
+        });
+        screenshotUrl = (upload.data.content?.download_url as string | undefined) ?? null;
+      } catch (err) {
+        logger.error("bug report screenshot upload failed", { error: (err as Error).message });
+      }
+    }
+
     const title = structured?.title?.slice(0, 120) || "Reporte de bug (sin transcripción)";
     const bodySections = [
       structured
         ? `## Pasos para reproducir\n${structured.repro}\n\n## Comportamiento esperado\n${structured.expected}\n\n## Comportamiento actual\n${structured.actual}`
-        : "## Descripción\nNo se pudo generar un resumen automático. Ver la transcripción y la captura de pantalla a continuación.",
-      screenshotUrl ? `## Captura de pantalla\n![captura](${screenshotUrl})` : null,
+        : "## Descripción\nNo se pudo generar un resumen automático. Ver la transcripción y la grabación a continuación.",
       videoUrl ? `## Grabación\n[Ver grabación de pantalla](${videoUrl})` : null,
+      screenshotUrl ? `## Captura de pantalla\n![captura](${screenshotUrl})` : null,
       transcript.trim()
         ? `<details><summary>Transcripción completa</summary>\n\n${transcript.trim()}\n\n</details>`
         : null,

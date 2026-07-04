@@ -2,23 +2,22 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Pure recording-to-submission logic pulled out of BugReportContext so it's
- * testable without mocking React/native modules — file reading, screenshot
- * extraction, and the tRPC mutation are all injected.
+ * testable without mocking React/native modules — file reading and the tRPC
+ * mutation are injected. No screenshot: the video is the default/only visual
+ * now (strictly more useful, and it's the whole reason native capture was
+ * built), so nothing extracts a still frame anymore.
  */
 import type { ScreenRecordingFile } from "react-native-nitro-screen-recorder";
 
 export interface BugReportSubmissionInput {
   videoBase64: string;
   videoMimeType: string;
-  screenshotBase64: string;
-  screenshotMimeType: string;
   pageUrl?: string;
   userAgent?: string;
 }
 
 export interface FinishBugReportRecordingDeps {
   readBase64: (path: string) => Promise<string>;
-  extractScreenshot: (path: string) => Promise<{ base64: string; mimeType: string }>;
   submit: (input: BugReportSubmissionInput) => Promise<{ issueUrl: string }>;
   platform: string;
 }
@@ -36,16 +35,11 @@ export async function finishBugReportRecording(
     throw new Error("No se generó ningún archivo de grabación.");
   }
 
-  const [videoBase64, screenshot] = await Promise.all([
-    deps.readBase64(file.path),
-    deps.extractScreenshot(file.path)
-  ]);
+  const videoBase64 = await deps.readBase64(file.path);
 
   return deps.submit({
     videoBase64,
     videoMimeType: "video/mp4",
-    screenshotBase64: screenshot.base64,
-    screenshotMimeType: screenshot.mimeType,
     pageUrl: "mikro://perfil",
     userAgent: `Mikro Mobile/${deps.platform}`
   });

@@ -11,7 +11,6 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .manage(commands::BugReportCaptureState::default())
         .invoke_handler(tauri::generate_handler![
-            commands::capture_bug_report_screenshot,
             commands::start_bug_report_recording,
             commands::stop_bug_report_recording
         ]);

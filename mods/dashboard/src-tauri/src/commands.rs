@@ -1,14 +1,15 @@
-// Native screen capture for the bug-report feature (mikro/#69,
+// Native screen video capture for the bug-report feature (mikro/#69,
 // extend-bug-report-native-capture). WKWebView on macOS doesn't implement
-// `getDisplayMedia`, so this captures a screenshot AND a short silent screen
-// video natively via ScreenCaptureKit instead. No microphone/audio track:
-// ScreenCaptureKit can't capture the mic (only system/app audio output), and
-// muxing a separately-recorded mic track in would require bundling and
-// code-signing an ffmpeg binary — real distribution scope for a video whose
-// entire point is "show what the user did," not narration. Windows Tauri
-// builds keep using `getDisplayMedia` (WebView2 supports it), so these
-// commands only do real work on macOS and return a clear error everywhere
-// else.
+// `getDisplayMedia`, so this records a short silent screen video natively
+// via ScreenCaptureKit instead. No microphone/audio track: ScreenCaptureKit
+// can't capture the mic (only system/app audio output), and muxing a
+// separately-recorded mic track in would require bundling and code-signing
+// an ffmpeg binary — real distribution scope for a video whose entire point
+// is "show what the user did," not narration. There's no screenshot capture
+// anymore either — the video is strictly more useful and is now the
+// default/only visual artifact. Windows Tauri builds keep using
+// `getDisplayMedia` (WebView2 supports it), so these commands only do real
+// work on macOS and return a clear error everywhere else.
 
 use std::sync::Mutex;
 
@@ -20,7 +21,6 @@ mod mac {
         SCRecordingOutput, SCRecordingOutputCodec, SCRecordingOutputConfiguration,
         SCRecordingOutputFileType,
     };
-    use screencapturekit::screenshot_manager::{CGImageExt, ImageFormat, SCScreenshotManager};
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -36,7 +36,7 @@ mod mac {
     // same reason.
     unsafe impl Send for Session {}
 
-    fn filter_and_display() -> Result<(SCContentFilter, screencapturekit::shareable_content::SCDisplay), String> {
+    pub fn start_recording() -> Result<Session, String> {
         let content = SCShareableContent::get().map_err(describe_error)?;
         let display = content
             .displays()
@@ -47,32 +47,6 @@ mod mac {
             .with_display(&display)
             .with_excluding_windows(&[])
             .build();
-        Ok((filter, display))
-    }
-
-    pub fn capture_screenshot() -> Result<(String, String), String> {
-        let (filter, display) = filter_and_display()?;
-        let config = SCStreamConfiguration::new()
-            .with_width(display.width())
-            .with_height(display.height());
-
-        let image =
-            SCScreenshotManager::capture_image(&filter, &config).map_err(describe_error)?;
-
-        let path = std::env::temp_dir().join(format!("mikro-bug-report-{}.png", token()));
-        image
-            .save(path.to_string_lossy().as_ref(), ImageFormat::Png)
-            .map_err(describe_error)?;
-
-        let bytes =
-            std::fs::read(&path).map_err(|e| format!("No se pudo leer la captura: {e}"))?;
-        let _ = std::fs::remove_file(&path);
-
-        Ok((STANDARD.encode(bytes), "image/png".to_string()))
-    }
-
-    pub fn start_recording() -> Result<Session, String> {
-        let (filter, display) = filter_and_display()?;
         let config = SCStreamConfiguration::new()
             .with_width(display.width())
             .with_height(display.height());
@@ -144,32 +118,9 @@ pub struct BugReportCaptureState(Mutex<Option<Session>>);
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CapturedScreenshot {
-    pub base64: String,
-    pub mime_type: String,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CapturedRecording {
     pub base64: String,
     pub mime_type: String,
-}
-
-/// Captures a single screenshot natively via ScreenCaptureKit, in place of
-/// grabbing a frame from a live `getDisplayMedia` stream (which WKWebView
-/// doesn't support).
-#[tauri::command]
-pub fn capture_bug_report_screenshot() -> Result<CapturedScreenshot, String> {
-    #[cfg(target_os = "macos")]
-    {
-        let (base64, mime_type) = mac::capture_screenshot()?;
-        Ok(CapturedScreenshot { base64, mime_type })
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        Err("La captura nativa de pantalla solo está disponible en macOS.".to_string())
-    }
 }
 
 /// Starts a silent screen video recording via ScreenCaptureKit, in place of

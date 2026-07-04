@@ -18,7 +18,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { Platform } from "react-native";
 import { File } from "expo-file-system";
-import * as VideoThumbnails from "expo-video-thumbnails";
 import {
   startInAppRecording,
   stopInAppRecording,
@@ -48,15 +47,6 @@ interface BugReportContextValue {
 }
 
 const BugReportContext = createContext<BugReportContextValue | null>(null);
-
-/** Falls back to a real screenshot the server schema requires — the video's
- * own first frame, since mobile has no equivalent to a native OS screenshot
- * API the way the Tauri build does. */
-async function extractScreenshot(videoPath: string): Promise<{ base64: string; mimeType: string }> {
-  const { uri } = await VideoThumbnails.getThumbnailAsync(videoPath, { time: 0, quality: 0.8 });
-  const base64 = await new File(uri).base64();
-  return { base64, mimeType: "image/jpeg" };
-}
 
 export function BugReportProvider({ children }: { children: ReactNode }) {
   const [stage, setStage] = useState<BugReportStage>("idle");
@@ -142,7 +132,6 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
 
       const result = await finishBugReportRecording(file, {
         readBase64: (path) => new File(path).base64(),
-        extractScreenshot,
         submit: (input) => submit.mutateAsync(input),
         platform: Platform.OS
       });
