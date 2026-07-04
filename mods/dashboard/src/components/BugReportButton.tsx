@@ -6,6 +6,15 @@
  * structures, and files a GitHub issue; nothing is stored on our side (see
  * createSubmitBugReport.ts) — the recording lives only in this component's
  * memory for the few seconds it takes to stop, screenshot, and upload it.
+ *
+ * Capture source (extend-bug-report-native-capture): WKWebView on macOS
+ * doesn't implement `getDisplayMedia`, so the Tauri build can't grab a live
+ * screen stream the way a real browser (or Windows Tauri, via WebView2) can.
+ * Selection is by feature detection, not a Tauri/OS check — `hasDisplayMedia()`
+ * true covers web AND Windows Tauri; false means the Tauri native path (mic
+ * audio + a single native screenshot via the `capture_bug_report_screenshot`
+ * command) if we're actually inside Tauri, otherwise the browser just doesn't
+ * support this feature at all.
  */
 import { useCallback, useRef, useState } from "react";
 import { Bug, Circle, Square, X, ExternalLink } from "lucide-react";
@@ -13,6 +22,12 @@ import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
 
 type Stage = "idle" | "consent" | "recording" | "processing" | "result" | "error";
+type CaptureMode = "browser" | "tauri-native";
+
+const hasDisplayMedia = (): boolean =>
+  typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
+
+const isTauri = (): boolean => typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 function blobToBase64(blob: Blob): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
@@ -42,6 +57,8 @@ export function BugReportButton() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
+  const captureModeRef = useRef<CaptureMode | null>(null);
+  const nativeScreenshotRef = useRef<{ base64: string; mimeType: string } | null>(null);
 
   const submit = trpc.submitBugReport.useMutation();
 
@@ -56,47 +73,86 @@ export function BugReportButton() {
   const reset = useCallback(() => {
     cleanupStreams();
     chunksRef.current = [];
+    captureModeRef.current = null;
+    nativeScreenshotRef.current = null;
     setIssueUrl(null);
     setErrorMessage(null);
     setStage("idle");
   }, [cleanupStreams]);
 
+  const startBrowserRecording = useCallback(async () => {
+    const displayStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: false
+    });
+    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    displayStreamRef.current = displayStream;
+    micStreamRef.current = micStream;
+
+    // Hidden preview element so we can grab a still frame from the live
+    // screen track when recording stops (no ImageCapture dependency).
+    const video = document.createElement("video");
+    video.srcObject = displayStream;
+    video.muted = true;
+    await video.play();
+    previewVideoRef.current = video;
+
+    const combined = new MediaStream([
+      ...displayStream.getVideoTracks(),
+      ...micStream.getAudioTracks()
+    ]);
+    const recorder = new MediaRecorder(combined, { mimeType: "video/webm" });
+    chunksRef.current = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorderRef.current = recorder;
+    recorder.start();
+
+    // If the user stops sharing from the browser's own "Stop sharing" UI
+    // instead of our button, wind down the same way.
+    displayStream.getVideoTracks()[0]?.addEventListener("ended", () => {
+      if (recorderRef.current?.state === "recording") stopRecording();
+    });
+  }, []);
+
+  // Tauri build only (WKWebView has no `getDisplayMedia`): grab one native
+  // screenshot up front instead of a live screen stream, then record mic
+  // audio only. The screenshot + audio go through the same submitBugReport
+  // shape the browser path uses — see BugReportButton.tsx's file header and
+  // design.md (extend-bug-report-native-capture) for why this isn't a full
+  // muxed screen+audio video today.
+  const startTauriRecording = useCallback(async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const screenshot = await invoke<{ base64: string; mimeType: string }>(
+      "capture_bug_report_screenshot"
+    );
+    nativeScreenshotRef.current = screenshot;
+
+    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStreamRef.current = micStream;
+
+    const recorder = new MediaRecorder(micStream, { mimeType: "audio/webm" });
+    chunksRef.current = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorderRef.current = recorder;
+    recorder.start();
+  }, []);
+
   const startRecording = useCallback(async () => {
     try {
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false
-      });
-      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      displayStreamRef.current = displayStream;
-      micStreamRef.current = micStream;
-
-      // Hidden preview element so we can grab a still frame from the live
-      // screen track when recording stops (no ImageCapture dependency).
-      const video = document.createElement("video");
-      video.srcObject = displayStream;
-      video.muted = true;
-      await video.play();
-      previewVideoRef.current = video;
-
-      const combined = new MediaStream([
-        ...displayStream.getVideoTracks(),
-        ...micStream.getAudioTracks()
-      ]);
-      const recorder = new MediaRecorder(combined, { mimeType: "video/webm" });
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorderRef.current = recorder;
-      recorder.start();
+      if (hasDisplayMedia()) {
+        captureModeRef.current = "browser";
+        await startBrowserRecording();
+      } else if (isTauri()) {
+        captureModeRef.current = "tauri-native";
+        await startTauriRecording();
+      } else {
+        throw new Error("La grabación no está disponible en este navegador.");
+      }
       setStage("recording");
-
-      // If the user stops sharing from the browser's own "Stop sharing" UI
-      // instead of our button, wind down the same way.
-      displayStream.getVideoTracks()[0]?.addEventListener("ended", () => {
-        if (recorderRef.current?.state === "recording") stopRecording();
-      });
     } catch (err) {
       cleanupStreams();
       setErrorMessage(
@@ -106,7 +162,7 @@ export function BugReportButton() {
       );
       setStage("error");
     }
-  }, [cleanupStreams]);
+  }, [cleanupStreams, startBrowserRecording, startTauriRecording]);
 
   const stopRecording = useCallback(() => {
     const recorder = recorderRef.current;
@@ -115,29 +171,38 @@ export function BugReportButton() {
 
     recorder.onstop = async () => {
       try {
-        const videoBlob = new Blob(chunksRef.current, { type: "video/webm" });
-
-        // Grab a still frame before tearing down the tracks.
-        const video = previewVideoRef.current;
         let screenshot: { base64: string; mimeType: string } | null = null;
-        if (video && video.videoWidth > 0) {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const screenshotBlob = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, "image/png")
-          );
-          if (screenshotBlob) screenshot = await blobToBase64(screenshotBlob);
+        let recordingBlob: Blob;
+
+        if (captureModeRef.current === "tauri-native") {
+          // Screenshot was already captured natively when recording started;
+          // the recorder here only ever held mic audio.
+          screenshot = nativeScreenshotRef.current;
+          recordingBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+        } else {
+          recordingBlob = new Blob(chunksRef.current, { type: "video/webm" });
+
+          // Grab a still frame before tearing down the tracks.
+          const video = previewVideoRef.current;
+          if (video && video.videoWidth > 0) {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const screenshotBlob = await new Promise<Blob | null>((resolve) =>
+              canvas.toBlob(resolve, "image/png")
+            );
+            if (screenshotBlob) screenshot = await blobToBase64(screenshotBlob);
+          }
         }
 
         cleanupStreams();
 
-        const video64 = await blobToBase64(videoBlob);
+        const recording64 = await blobToBase64(recordingBlob);
         const result = await submit.mutateAsync({
-          videoBase64: video64.base64,
-          videoMimeType: video64.mimeType,
+          videoBase64: recording64.base64,
+          videoMimeType: recording64.mimeType,
           screenshotBase64: screenshot?.base64 ?? "",
           screenshotMimeType: screenshot?.mimeType ?? "image/png",
           pageUrl: window.location.href,

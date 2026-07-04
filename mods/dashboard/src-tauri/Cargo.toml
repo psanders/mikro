@@ -28,3 +28,14 @@ serde_json = "1"
 [target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+
+# Native screenshot capture for the bug-report feature (mikro/#69): WKWebView
+# on macOS doesn't implement `getDisplayMedia`, so there's no live screen
+# video stream to grab a still frame from like the web build does. This
+# captures one screenshot natively via ScreenCaptureKit instead (see
+# src/commands.rs). macOS-only — Windows Tauri builds use WebView2, which
+# already supports `getDisplayMedia` natively, so no native fallback is
+# needed there.
+[target.'cfg(target_os = "macos")'.dependencies]
+screencapturekit = { version = "8", features = ["macos_14_0"] }
+base64 = "0.22"

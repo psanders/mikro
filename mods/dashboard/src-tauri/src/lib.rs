@@ -1,10 +1,18 @@
 // The desktop shell is intentionally thin: it only hosts the webview that loads
 // the same SPA served on the web. All business logic lives behind the tRPC API.
+// The one exception is `commands`: native screenshot capture for the
+// bug-report feature, which has to live here because WKWebView can't do it
+// itself.
+mod commands;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init());
+        .plugin(tauri_plugin_fs::init())
+        .invoke_handler(tauri::generate_handler![
+            commands::capture_bug_report_screenshot
+        ]);
 
     // Auto-update is desktop-only: the updater fetches/installs signed releases
     // from the apiserver manifest endpoint, and the process plugin relaunches

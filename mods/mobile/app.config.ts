@@ -27,7 +27,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
       NSBluetoothPeripheralUsageDescription:
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
-      NSCameraUsageDescription: "Mikro necesita la cámara para fotografiar el contrato firmado."
+      NSCameraUsageDescription: "Mikro necesita la cámara para fotografiar el contrato firmado.",
+      NSMicrophoneUsageDescription:
+        "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app."
     }
   },
   android: {
@@ -40,7 +42,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     permissions: [
       "android.permission.BLUETOOTH_CONNECT",
       "android.permission.BLUETOOTH_SCAN",
-      "android.permission.CAMERA"
+      "android.permission.CAMERA",
+      "android.permission.RECORD_AUDIO",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+      "android.permission.POST_NOTIFICATIONS"
     ]
   },
   plugins: [
@@ -56,7 +62,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         cameraPermission: "Mikro necesita la cámara para fotografiar el contrato firmado."
       }
     ],
-    ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }]
+    ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }],
+    // Bug-report screen recording (mikro/#69, extend-bug-report-native-capture).
+    // No camera overlay needed, so camera permission stays off. iOS uses
+    // in-app-only recording (no broadcast extension config needed); Android
+    // only supports system-wide ("global") recording via this library — see
+    // design.md's platform-asymmetry note.
+    [
+      "react-native-nitro-screen-recorder",
+      {
+        enableCameraPermission: false,
+        enableMicrophonePermission: true,
+        microphonePermissionText:
+          "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app.",
+        showPluginLogs: false
+      }
+    ]
   ],
   extra: {
     storybookEnabled: process.env.STORYBOOK_ENABLED === "true",
