@@ -5,17 +5,18 @@ name: Deploy API Server
 #
 # After publish-apiserver.yaml pushes a release image, this workflow
 # automatically smoke-tests that exact image in CI (boot + health + the public
-# solicitud intake happy path). The deploy itself only runs from the manual
-# "Run workflow" button — that click is the approval gate. (GitHub environment
-# required-reviewer gates need a paid plan on private repos; if the repo ever
-# moves to one, add reviewers to the `production` environment and a
-# workflow_run deploy path can replace the dispatch-only rule.)
+# solicitud intake happy path), then the deploy job runs — but the `production`
+# environment has a required-reviewer rule (psanders), so GitHub pauses it
+# pending approval in the Actions run's "Review deployments" button. Approve
+# there instead of using workflow_dispatch as the gate.
 #
-# A manual run re-smoke-tests the requested version, then SSHes into the
-# droplet, pins MIKRO_IMAGE in the compose directory's .env, and runs
-# `docker compose up -d`. If the new container doesn't come up healthy, it
-# rolls back to the previously pinned image. Dispatch an older version to roll
-# back manually.
+# workflow_dispatch still exists for manual redeploys and rollbacks (dispatch
+# an older version); it re-smoke-tests the requested version and goes through
+# the same approval gate before touching the droplet.
+#
+# The deploy job SSHes into the droplet, pins MIKRO_IMAGE in the compose
+# directory's .env, and runs `docker compose up -d`. If the new container
+# doesn't come up healthy, it rolls back to the previously pinned image.
 #
 # Required repo configuration:
 #   secrets.DEPLOY_SSH_HOST   droplet IP or hostname
@@ -167,11 +168,11 @@ jobs:
         run: |
           v="${{ needs.resolve.outputs.version }}"
           echo "Image psanders/mikro:$v passed the smoke test." >> "$GITHUB_STEP_SUMMARY"
-          echo "To deploy it, run this workflow manually (Actions → Deploy API Server → Run workflow)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy is now waiting for approval in the production environment (Actions → this run → Review deployments)." >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
-    # Manual dispatch only — the "Run workflow" click is the approval.
-    if: github.event_name == 'workflow_dispatch'
+    # Runs after resolve+smoke-test succeed, for either trigger. The
+    # `production` environment's required-reviewer rule is the approval gate.
     needs: [resolve, smoke-test]
     runs-on: ubuntu-latest
     environment: production
