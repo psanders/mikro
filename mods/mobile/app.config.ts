@@ -2,6 +2,27 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { ExpoConfig, ConfigContext } from "expo/config";
+// Deep import: react-native-nitro-screen-recorder's `app.plugin.js` only
+// wires its main `withScreenRecorder` plugin, NOT this one — despite the
+// library needing it. Without this, EAS Build's managed credentials never
+// register the `group.do.mikro.app.screen-recorder` App Group for the
+// BroadcastExtension target, and the build fails with "Provisioning profile
+// ... doesn't support the group.do.mikro.app.screen-recorder App Group"
+// (hit for real on an EAS iOS build, 2026-07-04). Pinned to an exact package
+// version (see package.json) since this path isn't part of the package's
+// public API and could move on a routine bump.
+import { withEasManagedCredentials } from "react-native-nitro-screen-recorder/lib/typescript/expo-plugin/ios/withEasManagedCredentials";
+
+// Shared between the main plugin entry and withEasManagedCredentials below —
+// both need the exact same props to derive the same App Group / extension
+// bundle identifier (see the library's iosConstants.js defaults).
+const screenRecorderPluginProps = {
+  enableCameraPermission: false,
+  enableMicrophonePermission: true,
+  microphonePermissionText:
+    "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app.",
+  showPluginLogs: false
+};
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -65,19 +86,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }],
     // Bug-report screen recording (mikro/#69, extend-bug-report-native-capture).
     // No camera overlay needed, so camera permission stays off. iOS uses
-    // in-app-only recording (no broadcast extension config needed); Android
-    // only supports system-wide ("global") recording via this library — see
-    // design.md's platform-asymmetry note.
-    [
-      "react-native-nitro-screen-recorder",
-      {
-        enableCameraPermission: false,
-        enableMicrophonePermission: true,
-        microphonePermissionText:
-          "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app.",
-        showPluginLogs: false
-      }
-    ]
+    // in-app-only recording at runtime (no broadcast extension APIs called),
+    // but the plugin unconditionally sets up a BroadcastExtension target and
+    // App Group entitlement on iOS regardless — hence withEasManagedCredentials
+    // below, so EAS Build actually provisions for it. Android only supports
+    // system-wide ("global") recording via this library — see design.md's
+    // platform-asymmetry note.
+    ["react-native-nitro-screen-recorder", screenRecorderPluginProps],
+    // @expo/config-types' `plugins` type only declares `string | [string, any]`
+    // entries, even though Expo's actual runtime resolver (@expo/config-plugins)
+    // supports passing a plugin function directly — a known gap between the
+    // types and reality, not a mistake here.
+    [withEasManagedCredentials, screenRecorderPluginProps] as unknown as [string, object]
   ],
   extra: {
     storybookEnabled: process.env.STORYBOOK_ENABLED === "true",

@@ -1,23 +1,36 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * In-app bug report (mikro/#69): click the bug icon → consent → record
- * screen + mic → click again to stop → upload. The apiserver transcribes,
- * structures, and files a GitHub issue; nothing is stored on our side (see
- * createSubmitBugReport.ts) — the recording lives only in this component's
- * memory for the few seconds it takes to stop, screenshot, and upload it.
+ * In-app bug report (mikro/#69): click the bug icon → consent → record →
+ * click the floating pill's stop button → upload. The apiserver transcribes
+ * (when there's audio), structures, and files a GitHub issue with the
+ * screenshot and video attached — see createSubmitBugReport.ts. The result
+ * screen doesn't show the issue link: the target repos are going private, so
+ * reporters (who won't have repo access) just get a "the team will review
+ * it" message instead.
  *
  * Capture source (extend-bug-report-native-capture): WKWebView on macOS
  * doesn't implement `getDisplayMedia`, so the Tauri build can't grab a live
  * screen stream the way a real browser (or Windows Tauri, via WebView2) can.
- * Selection is by feature detection, not a Tauri/OS check — `hasDisplayMedia()`
- * true covers web AND Windows Tauri; false means the Tauri native path (mic
- * audio + a single native screenshot via the `capture_bug_report_screenshot`
- * command) if we're actually inside Tauri, otherwise the browser just doesn't
- * support this feature at all.
+ * Selection is by feature detection, not a Tauri/OS check —
+ * `hasDisplayMedia()` true covers web AND Windows Tauri (real screen+mic
+ * video, muxed by the browser's own MediaRecorder); false means the Tauri
+ * native path — a silent screen-only video via ScreenCaptureKit
+ * (`start_bug_report_recording`/`stop_bug_report_recording`) plus a native
+ * screenshot (`capture_bug_report_screenshot`), no microphone at all.
+ * ScreenCaptureKit can't capture the mic (only system/app audio output), and
+ * muxing a separate mic track in would need a bundled/signed ffmpeg — real
+ * distribution scope for a video whose point is "show what happened," not
+ * narration.
+ *
+ * The "recording" stage renders a floating, non-blocking pill (not a
+ * full-screen modal) so the user can navigate the dashboard while recording
+ * to demonstrate a multi-page bug — matching the mobile app's pill, and
+ * fixing a real limitation the original full-screen-modal design had even on
+ * web.
  */
-import { useCallback, useRef, useState } from "react";
-import { Bug, Circle, Square, X, ExternalLink } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Bug, Circle, Square, Check } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
 
@@ -46,11 +59,17 @@ function blobToBase64(blob: Blob): Promise<{ base64: string; mimeType: string }>
   });
 }
 
+function formatElapsed(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 /** RailItem-shaped button so it drops into FounderShell's nav rail without a new pattern. */
 export function BugReportButton() {
   const [stage, setStage] = useState<Stage>("idle");
-  const [issueUrl, setIssueUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const displayStreamRef = useRef<MediaStream | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
@@ -59,8 +78,18 @@ export function BugReportButton() {
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const captureModeRef = useRef<CaptureMode | null>(null);
   const nativeScreenshotRef = useRef<{ base64: string; mimeType: string } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const submit = trpc.submitBugReport.useMutation();
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => clearTimer, [clearTimer]);
 
   const cleanupStreams = useCallback(() => {
     displayStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -72,13 +101,14 @@ export function BugReportButton() {
 
   const reset = useCallback(() => {
     cleanupStreams();
+    clearTimer();
     chunksRef.current = [];
     captureModeRef.current = null;
     nativeScreenshotRef.current = null;
-    setIssueUrl(null);
+    setElapsedSeconds(0);
     setErrorMessage(null);
     setStage("idle");
-  }, [cleanupStreams]);
+  }, [cleanupStreams, clearTimer]);
 
   const startBrowserRecording = useCallback(async () => {
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
@@ -110,35 +140,22 @@ export function BugReportButton() {
     recorder.start();
 
     // If the user stops sharing from the browser's own "Stop sharing" UI
-    // instead of our button, wind down the same way.
+    // instead of our pill, wind down the same way.
     displayStream.getVideoTracks()[0]?.addEventListener("ended", () => {
-      if (recorderRef.current?.state === "recording") stopRecording();
+      if (recorderRef.current?.state === "recording") void stopRecording();
     });
   }, []);
 
-  // Tauri build only (WKWebView has no `getDisplayMedia`): grab one native
-  // screenshot up front instead of a live screen stream, then record mic
-  // audio only. The screenshot + audio go through the same submitBugReport
-  // shape the browser path uses — see BugReportButton.tsx's file header and
-  // design.md (extend-bug-report-native-capture) for why this isn't a full
-  // muxed screen+audio video today.
+  // Tauri build only (WKWebView has no `getDisplayMedia`): a native
+  // screenshot up front, then a silent screen-only video recording via
+  // ScreenCaptureKit. No mic — see this file's header for why.
   const startTauriRecording = useCallback(async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     const screenshot = await invoke<{ base64: string; mimeType: string }>(
       "capture_bug_report_screenshot"
     );
     nativeScreenshotRef.current = screenshot;
-
-    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    micStreamRef.current = micStream;
-
-    const recorder = new MediaRecorder(micStream, { mimeType: "audio/webm" });
-    chunksRef.current = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-    recorderRef.current = recorder;
-    recorder.start();
+    await invoke("start_bug_report_recording");
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -152,6 +169,8 @@ export function BugReportButton() {
       } else {
         throw new Error("La grabación no está disponible en este navegador.");
       }
+      setElapsedSeconds(0);
+      timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
       setStage("recording");
     } catch (err) {
       cleanupStreams();
@@ -164,25 +183,36 @@ export function BugReportButton() {
     }
   }, [cleanupStreams, startBrowserRecording, startTauriRecording]);
 
-  const stopRecording = useCallback(() => {
+  const finishSubmit = useCallback(
+    async (
+      recording: { base64: string; mimeType: string },
+      screenshot: { base64: string; mimeType: string } | null
+    ) => {
+      const result = await submit.mutateAsync({
+        videoBase64: recording.base64,
+        videoMimeType: recording.mimeType,
+        screenshotBase64: screenshot?.base64 ?? "",
+        screenshotMimeType: screenshot?.mimeType ?? "image/png",
+        pageUrl: window.location.href,
+        userAgent: navigator.userAgent
+      });
+      void result;
+      setStage("result");
+    },
+    [submit]
+  );
+
+  const stopBrowserRecording = useCallback(async () => {
     const recorder = recorderRef.current;
     if (!recorder || recorder.state !== "recording") return;
-    setStage("processing");
 
-    recorder.onstop = async () => {
-      try {
-        let screenshot: { base64: string; mimeType: string } | null = null;
-        let recordingBlob: Blob;
-
-        if (captureModeRef.current === "tauri-native") {
-          // Screenshot was already captured natively when recording started;
-          // the recorder here only ever held mic audio.
-          screenshot = nativeScreenshotRef.current;
-          recordingBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-        } else {
-          recordingBlob = new Blob(chunksRef.current, { type: "video/webm" });
+    await new Promise<void>((resolve, reject) => {
+      recorder.onstop = async () => {
+        try {
+          const recordingBlob = new Blob(chunksRef.current, { type: "video/webm" });
 
           // Grab a still frame before tearing down the tracks.
+          let screenshot: { base64: string; mimeType: string } | null = null;
           const video = previewVideoRef.current;
           if (video && video.videoWidth > 0) {
             const canvas = document.createElement("canvas");
@@ -190,35 +220,47 @@ export function BugReportButton() {
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext("2d");
             ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const screenshotBlob = await new Promise<Blob | null>((resolve) =>
-              canvas.toBlob(resolve, "image/png")
+            const screenshotBlob = await new Promise<Blob | null>((res) =>
+              canvas.toBlob(res, "image/png")
             );
             if (screenshotBlob) screenshot = await blobToBase64(screenshotBlob);
           }
+
+          cleanupStreams();
+          const recording64 = await blobToBase64(recordingBlob);
+          await finishSubmit(recording64, screenshot);
+          resolve();
+        } catch (err) {
+          reject(err instanceof Error ? err : new Error("No se pudo enviar el reporte."));
         }
+      };
+      recorder.stop();
+    });
+  }, [cleanupStreams, finishSubmit]);
 
-        cleanupStreams();
+  const stopTauriRecording = useCallback(async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const recording = await invoke<{ base64: string; mimeType: string }>(
+      "stop_bug_report_recording"
+    );
+    await finishSubmit(recording, nativeScreenshotRef.current);
+  }, [finishSubmit]);
 
-        const recording64 = await blobToBase64(recordingBlob);
-        const result = await submit.mutateAsync({
-          videoBase64: recording64.base64,
-          videoMimeType: recording64.mimeType,
-          screenshotBase64: screenshot?.base64 ?? "",
-          screenshotMimeType: screenshot?.mimeType ?? "image/png",
-          pageUrl: window.location.href,
-          userAgent: navigator.userAgent
-        });
-
-        setIssueUrl(result.issueUrl);
-        setStage("result");
-      } catch (err) {
-        cleanupStreams();
-        setErrorMessage(err instanceof Error ? err.message : "No se pudo enviar el reporte.");
-        setStage("error");
+  const stopRecording = useCallback(async () => {
+    clearTimer();
+    setStage("processing");
+    try {
+      if (captureModeRef.current === "tauri-native") {
+        await stopTauriRecording();
+      } else {
+        await stopBrowserRecording();
       }
-    };
-    recorder.stop();
-  }, [cleanupStreams, submit]);
+    } catch (err) {
+      cleanupStreams();
+      setErrorMessage(err instanceof Error ? err.message : "No se pudo enviar el reporte.");
+      setStage("error");
+    }
+  }, [clearTimer, cleanupStreams, stopBrowserRecording, stopTauriRecording]);
 
   return (
     <>
@@ -232,44 +274,43 @@ export function BugReportButton() {
         <Bug size={19} strokeWidth={2} />
       </button>
 
-      {stage !== "idle" && (
+      {stage === "recording" && (
+        <div className="fixed inset-x-0 bottom-6 z-50 flex justify-end px-6 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#14254A] py-2.5 pl-5 pr-2.5 shadow-lg">
+            <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
+            <span className="text-[14px] font-bold text-white">
+              Grabando reporte · {formatElapsed(elapsedSeconds)}
+            </span>
+            <button
+              type="button"
+              onClick={() => void stopRecording()}
+              aria-label="Detener y enviar"
+              title="Detener y enviar"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DC2626] text-white transition hover:bg-[#B91C1C]"
+            >
+              <Square size={14} fill="currentColor" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stage !== "idle" && stage !== "recording" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-xl">
             {stage === "consent" && (
               <>
                 <h2 className="text-[16px] font-bold text-[#14254A]">Reportar un problema</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Esto va a grabar tu pantalla y tu voz mientras describes el problema. La grabación
-                  se transcribe automáticamente y se usa solo para crear el reporte — no se guarda
-                  en nuestros servidores. Evita mostrar datos sensibles de clientes si es posible.
+                  Esto va a grabar tu pantalla mientras muestras el problema. La grabación se usa
+                  solo para crear el reporte — no se guarda de forma permanente. Evita mostrar datos
+                  sensibles de clientes si es posible.
                 </p>
                 <div className="mt-5 flex justify-end gap-2">
                   <Button variant="secondary" onClick={reset}>
                     Cancelar
                   </Button>
-                  <Button variant="primary" icon={Circle} onClick={startRecording}>
+                  <Button variant="primary" icon={Circle} onClick={() => void startRecording()}>
                     Empezar a grabar
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {stage === "recording" && (
-              <>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#DC2626]" />
-                  <h2 className="text-[16px] font-bold text-[#14254A]">Grabando…</h2>
-                </div>
-                <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Describe el problema en voz alta mientras lo muestras en pantalla. Toca "Detener y
-                  enviar" cuando termines.
-                </p>
-                <div className="mt-5 flex justify-end gap-2">
-                  <Button variant="secondary" icon={X} onClick={reset}>
-                    Descartar
-                  </Button>
-                  <Button variant="primary" icon={Square} onClick={stopRecording}>
-                    Detener y enviar
                   </Button>
                 </div>
               </>
@@ -279,26 +320,20 @@ export function BugReportButton() {
               <>
                 <h2 className="text-[16px] font-bold text-[#14254A]">Enviando reporte…</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Transcribiendo y creando el reporte en GitHub. Esto puede tardar un momento.
+                  Creando el reporte en GitHub. Esto puede tardar un momento.
                 </p>
               </>
             )}
 
-            {stage === "result" && issueUrl && (
+            {stage === "result" && (
               <>
-                <h2 className="text-[16px] font-bold text-[#14254A]">Reporte enviado</h2>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D6F3E5]">
+                  <Check size={26} className="text-[#0E7C5F]" strokeWidth={2.5} />
+                </div>
+                <h2 className="mt-3 text-[16px] font-bold text-[#14254A]">Reporte enviado</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Se creó el reporte. Puedes darle seguimiento en el enlace de abajo.
+                  Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.
                 </p>
-                <a
-                  href={issueUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#1F4AA8] hover:underline"
-                >
-                  {issueUrl}
-                  <ExternalLink size={14} />
-                </a>
                 <div className="mt-5 flex justify-end">
                   <Button variant="primary" onClick={reset}>
                     Cerrar

@@ -1,14 +1,19 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * In-app bug report (mikro/#69): a short screen+mic recording is transcribed,
- * the transcript is structured into a bug write-up by an LLM, and a GitHub
- * issue is filed with the still-frame screenshot embedded inline. Nothing is
- * persisted on our side — the recording lives only in memory for the
- * duration of this call and is discarded once transcribed; the screenshot's
- * only home is the GitHub issue itself (committed to the target repo so it
- * has a stable URL to embed, since the REST API has no direct "attach a
- * binary to an issue" endpoint).
+ * In-app bug report (mikro/#69): a short screen recording is transcribed
+ * (best-effort — some clients, like the Tauri desktop build, send a silent
+ * video with no audio track, see extend-bug-report-native-capture), the
+ * transcript is structured into a bug write-up by an LLM, and a GitHub issue
+ * is filed with the still-frame screenshot embedded inline and the recording
+ * linked (mikro/#87). Both the screenshot and the video are committed to the
+ * target repo so they have stable URLs — the REST API has no direct "attach
+ * a binary to an issue" endpoint. This is temporary/lightweight storage (the
+ * same tier as the screenshot, not a managed archive): the point is letting
+ * the team see where the reporter was and what they did, not long-term
+ * retention. The result returned to the client never surfaces the issue URL
+ * to the UI — the target repos are private, so the reporter has no access to
+ * view it anyway (see BugReportButton.tsx / BugReportStatusModal.tsx).
  */
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -110,8 +115,8 @@ export function createSubmitBugReport(deps: SubmitBugReportDeps) {
 
     // Transcribe. Best-effort: a Deepgram outage shouldn't block filing the
     // issue — the reporter's screen recording plus screenshot still tell most
-    // of the story. The video itself is never written anywhere; it exists
-    // only as this in-memory data URL for the duration of the transcribe call.
+    // of the story. Some clients (Tauri desktop) send a silent video, so an
+    // empty/near-empty transcript here is expected, not an error.
     let transcript = "";
     try {
       const videoDataUrl = `data:${input.videoMimeType};base64,${input.videoBase64}`;
@@ -137,8 +142,11 @@ export function createSubmitBugReport(deps: SubmitBugReportDeps) {
       }
     }
 
-    // Commit the screenshot so it has a stable URL to embed — the Issues
-    // REST API has no endpoint to attach a binary directly.
+    // Commit the screenshot and the video so they each have a stable URL —
+    // the Issues REST API has no endpoint to attach a binary directly. Both
+    // are best-effort uploads: a GitHub hiccup on either one shouldn't lose
+    // the whole report, since the structured write-up (or at least the
+    // transcript/screenshot fallback) is still useful on its own.
     const screenshotPath = `bug-reports/${Date.now()}-${reporter.userId.slice(0, 8)}.${extFromMimeType(input.screenshotMimeType)}`;
     let screenshotUrl: string | null = null;
     try {
@@ -154,12 +162,28 @@ export function createSubmitBugReport(deps: SubmitBugReportDeps) {
       logger.error("bug report screenshot upload failed", { error: (err as Error).message });
     }
 
+    const videoPath = `bug-reports/${Date.now()}-${reporter.userId.slice(0, 8)}.${extFromMimeType(input.videoMimeType)}`;
+    let videoUrl: string | null = null;
+    try {
+      const upload = await deps.octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo: repoName,
+        path: videoPath,
+        message: `Bug report recording: ${videoPath}`,
+        content: input.videoBase64
+      });
+      videoUrl = (upload.data.content?.download_url as string | undefined) ?? null;
+    } catch (err) {
+      logger.error("bug report video upload failed", { error: (err as Error).message });
+    }
+
     const title = structured?.title?.slice(0, 120) || "Reporte de bug (sin transcripción)";
     const bodySections = [
       structured
         ? `## Pasos para reproducir\n${structured.repro}\n\n## Comportamiento esperado\n${structured.expected}\n\n## Comportamiento actual\n${structured.actual}`
         : "## Descripción\nNo se pudo generar un resumen automático. Ver la transcripción y la captura de pantalla a continuación.",
       screenshotUrl ? `## Captura de pantalla\n![captura](${screenshotUrl})` : null,
+      videoUrl ? `## Grabación\n[Ver grabación de pantalla](${videoUrl})` : null,
       transcript.trim()
         ? `<details><summary>Transcripción completa</summary>\n\n${transcript.trim()}\n\n</details>`
         : null,

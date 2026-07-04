@@ -4,10 +4,13 @@
 import { z } from "zod/v4";
 
 /**
- * A short screen+mic recording, not a document — generous relative to
- * MAX_ATTACHMENT_SIZE_BYTES (10MB, tuned for a single photo/PDF). Nothing is
- * persisted server-side: the video is transcribed in memory and discarded
- * (mikro/#69); this cap only bounds the request payload.
+ * A short screen recording, not a document — generous relative to
+ * MAX_ATTACHMENT_SIZE_BYTES (10MB, tuned for a single photo/PDF). Transcribed
+ * for its audio track (when present — the Tauri desktop client sends a
+ * silent video, see extend-bug-report-native-capture) and then committed to
+ * the target repo alongside the screenshot so the team can review what the
+ * reporter actually did (mikro/#69, mikro/#87) — this cap bounds both the
+ * request payload and the committed file size.
  */
 export const MAX_BUG_REPORT_VIDEO_BYTES = 50 * 1024 * 1024;
 
@@ -17,7 +20,7 @@ export const MAX_BUG_REPORT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 const base64SizeCheck = (max: number) => (b: string) => Math.ceil((b.length * 3) / 4) <= max;
 
 export const submitBugReportSchema = z.object({
-  /** Base64-encoded screen+mic recording (no data: prefix). Transcribed then discarded. */
+  /** Base64-encoded screen recording (no data: prefix), with or without audio. Transcribed (best-effort) then committed to the target repo. */
   videoBase64: z
     .string()
     .min(1, "Recording is required")

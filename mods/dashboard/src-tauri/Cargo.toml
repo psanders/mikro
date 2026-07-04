@@ -37,5 +37,5 @@ tauri-plugin-process = "2"
 # already supports `getDisplayMedia` natively, so no native fallback is
 # needed there.
 [target.'cfg(target_os = "macos")'.dependencies]
-screencapturekit = { version = "8", features = ["macos_14_0"] }
+screencapturekit = { version = "8", features = ["macos_15_0"] }
 base64 = "0.22"

@@ -6,14 +6,14 @@
  * navigated away from Perfil by the time the recording is stopped and
  * processed.
  */
-import { Modal, View, Text, Pressable, StyleSheet, Linking } from "react-native";
-import { Check, TriangleAlert, RefreshCw, ExternalLink } from "lucide-react-native";
+import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
+import { Check, TriangleAlert, RefreshCw } from "lucide-react-native";
 import { colors, radii } from "../../lib/theme";
 import { useBugReport } from "../../lib/bugReport/BugReportContext";
 import { BtnCta } from "../ui/BtnCta";
 
 export function BugReportStatusModal() {
-  const { stage, issueUrl, errorMessage, reset, startRecording } = useBugReport();
+  const { stage, errorMessage, reset, startRecording } = useBugReport();
 
   if (stage !== "processing" && stage !== "result" && stage !== "error") return null;
 
@@ -37,16 +37,8 @@ export function BugReportStatusModal() {
               </View>
               <Text style={styles.title}>Reporte enviado</Text>
               <Text style={styles.body}>
-                Se creó el reporte. Puedes darle seguimiento en el enlace de abajo.
+                Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.
               </Text>
-              {issueUrl && (
-                <Pressable style={styles.linkRow} onPress={() => Linking.openURL(issueUrl)}>
-                  <Text style={styles.link} numberOfLines={1}>
-                    {issueUrl}
-                  </Text>
-                  <ExternalLink size={14} color={colors.brand.blue.primary} strokeWidth={2} />
-                </Pressable>
-              )}
               <View style={styles.actions}>
                 <BtnCta label="Cerrar" onPress={reset} />
               </View>
@@ -113,8 +105,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18
   },
-  linkRow: { flexDirection: "row", alignItems: "center", gap: 6, maxWidth: "100%" },
-  link: { fontFamily: "Geist_600SemiBold", fontSize: 13, color: colors.brand.blue.primary },
   actions: { width: "100%", gap: 10, marginTop: 4 },
   closeLink: { alignItems: "center", padding: 4 },
   closeLinkText: { fontFamily: "Geist_600SemiBold", fontSize: 13, color: colors.text.secondary }

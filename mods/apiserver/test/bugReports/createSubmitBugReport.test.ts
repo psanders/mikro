@@ -34,9 +34,11 @@ function stubOctokit(overrides?: {
 }): Octokit {
   const createOrUpdateFileContents =
     overrides?.createOrUpdateFileContents ??
-    sinon.stub().resolves({
-      data: { content: { download_url: "https://raw.githubusercontent.com/o/r/main/shot.png" } }
-    });
+    sinon.stub().callsFake(({ path }: { path: string }) =>
+      Promise.resolve({
+        data: { content: { download_url: `https://raw.githubusercontent.com/o/r/main/${path}` } }
+      })
+    );
   const issuesCreate =
     overrides?.issuesCreate ??
     sinon.stub().resolves({ data: { html_url: "https://github.com/o/r/issues/1" } });
@@ -44,6 +46,20 @@ function stubOctokit(overrides?: {
     repos: { createOrUpdateFileContents },
     issues: { create: issuesCreate }
   } as unknown as Octokit;
+}
+
+/** Rejects uploads whose path ends with the given extension, resolves the rest — for testing one-of-two-uploads-fails scenarios. */
+function stubOctokitFailingExt(ext: string): Octokit {
+  const createOrUpdateFileContents = sinon.stub().callsFake(({ path }: { path: string }) =>
+    path.endsWith(`.${ext}`)
+      ? Promise.reject(new Error("403"))
+      : Promise.resolve({
+          data: {
+            content: { download_url: `https://raw.githubusercontent.com/o/r/main/${path}` }
+          }
+        })
+  );
+  return stubOctokit({ createOrUpdateFileContents });
 }
 
 describe("createSubmitBugReport", () => {
@@ -73,9 +89,23 @@ describe("createSubmitBugReport", () => {
     expect(issueArgs.repo).to.equal("mikro");
     expect(issueArgs.title).to.equal("El botón de guardar no responde");
     expect(issueArgs.body).to.contain("No pasa nada");
-    expect(issueArgs.body).to.contain("raw.githubusercontent.com/o/r/main/shot.png");
+    expect(issueArgs.body).to.contain("## Captura de pantalla");
+    expect(issueArgs.body).to.match(
+      /raw\.githubusercontent\.com\/o\/r\/main\/bug-reports\/.*\.png/
+    );
+    expect(issueArgs.body).to.contain("## Grabación");
+    expect(issueArgs.body).to.match(
+      /raw\.githubusercontent\.com\/o\/r\/main\/bug-reports\/.*\.webm/
+    );
     expect(issueArgs.body).to.contain("Ana Reviewer");
     expect(issueArgs.body).to.contain("https://app.mikro.do/founder");
+
+    // Both the screenshot and the video get committed (mikro/#87) — not just
+    // the screenshot, and the video is never discarded.
+    const uploadCalls = (
+      octokit.repos.createOrUpdateFileContents as unknown as sinon.SinonStub
+    ).getCalls();
+    expect(uploadCalls).to.have.length(2);
   });
 
   it("still files an issue when transcription fails (best-effort)", async () => {
@@ -107,7 +137,7 @@ describe("createSubmitBugReport", () => {
     expect(issueArgs.body).to.contain("algo pasó pero no sé qué");
   });
 
-  it("still files an issue when the screenshot upload fails (best-effort)", async () => {
+  it("still files an issue when both uploads fail (best-effort)", async () => {
     const transcribe = sinon.stub().resolves("narración de prueba");
     const createModel = stubModel(
       JSON.stringify({ title: "T", repro: "R", expected: "E", actual: "A" })
@@ -121,6 +151,56 @@ describe("createSubmitBugReport", () => {
     expect(result.issueUrl).to.equal("https://github.com/o/r/issues/1");
     const issueArgs = (octokit.issues.create as unknown as sinon.SinonStub).firstCall.args[0];
     expect(issueArgs.body).to.not.contain("Captura de pantalla");
+    expect(issueArgs.body).to.not.contain("## Grabación");
+  });
+
+  it("still files an issue when only the screenshot upload fails (best-effort)", async () => {
+    const transcribe = sinon.stub().resolves("narración de prueba");
+    const createModel = stubModel(
+      JSON.stringify({ title: "T", repro: "R", expected: "E", actual: "A" })
+    );
+    const octokit = stubOctokitFailingExt("png");
+
+    const fn = createSubmitBugReport({ transcribe, createModel, octokit, repo: "psanders/mikro" });
+    const result = await fn(BASE_INPUT, REPORTER);
+
+    expect(result.issueUrl).to.equal("https://github.com/o/r/issues/1");
+    const issueArgs = (octokit.issues.create as unknown as sinon.SinonStub).firstCall.args[0];
+    expect(issueArgs.body).to.not.contain("## Captura de pantalla");
+    expect(issueArgs.body).to.contain("## Grabación");
+  });
+
+  it("still files an issue when only the video upload fails (best-effort)", async () => {
+    const transcribe = sinon.stub().resolves("narración de prueba");
+    const createModel = stubModel(
+      JSON.stringify({ title: "T", repro: "R", expected: "E", actual: "A" })
+    );
+    const octokit = stubOctokitFailingExt("webm");
+
+    const fn = createSubmitBugReport({ transcribe, createModel, octokit, repo: "psanders/mikro" });
+    const result = await fn(BASE_INPUT, REPORTER);
+
+    expect(result.issueUrl).to.equal("https://github.com/o/r/issues/1");
+    const issueArgs = (octokit.issues.create as unknown as sinon.SinonStub).firstCall.args[0];
+    expect(issueArgs.body).to.contain("## Captura de pantalla");
+    expect(issueArgs.body).to.not.contain("## Grabación");
+  });
+
+  it("never surfaces the issue URL as something for the reporter to visit (private repos)", async () => {
+    // Regression guard for the UX change: reporters don't have repo access
+    // once the target repos go private, so the client deliberately never
+    // renders `issueUrl` — this just documents that the field still exists
+    // for internal/server-side consumers even though the UI ignores it.
+    const transcribe = sinon.stub().resolves("narración de prueba");
+    const createModel = stubModel(
+      JSON.stringify({ title: "T", repro: "R", expected: "E", actual: "A" })
+    );
+    const octokit = stubOctokit();
+
+    const fn = createSubmitBugReport({ transcribe, createModel, octokit, repo: "psanders/mikro" });
+    const result = await fn(BASE_INPUT, REPORTER);
+
+    expect(Object.keys(result)).to.deep.equal(["issueUrl"]);
   });
 
   it("throws PRECONDITION_FAILED when repo is not configured", async () => {
