@@ -16,7 +16,7 @@
  * on Android specifically. See design.md (Decision 3) for the full rationale.
  */
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-import { Platform } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 import { File } from "expo-file-system";
 import {
   startInAppRecording,
@@ -170,9 +170,15 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
         reset
       }}
     >
-      {children}
-      <BugReportPill />
-      <BugReportStatusModal />
+      {/* Explicit full-screen View (not a bare Fragment) so BugReportPill's
+          `position: "absolute"` always has a definite, full-screen
+          containing block to resolve against, regardless of what any
+          ancestor provider does. */}
+      <View style={styles.root}>
+        {children}
+        <BugReportPill />
+        <BugReportStatusModal />
+      </View>
     </BugReportContext.Provider>
   );
 }
@@ -182,3 +188,7 @@ export function useBugReport(): BugReportContextValue {
   if (!ctx) throw new Error("useBugReport must be used within a BugReportProvider");
   return ctx;
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 }
+});
