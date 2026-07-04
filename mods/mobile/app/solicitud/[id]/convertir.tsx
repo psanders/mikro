@@ -21,8 +21,15 @@ import { Header } from "../../../components/ui/Header";
 import { Input } from "../../../components/ui/Input";
 import { SelectField } from "../../../components/ui/SelectField";
 import { PickerModal } from "../../../components/ui/PickerModal";
+import { CalendarPicker } from "../../../components/ui/CalendarPicker";
 import { BtnCta } from "../../../components/ui/BtnCta";
-import { applicantName, formatDate } from "../../../lib/applications";
+import {
+  addPaymentPeriod,
+  applicantName,
+  formatDate,
+  startOfToday,
+  subtractPaymentPeriod
+} from "../../../lib/applications";
 
 type Frequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 
@@ -32,22 +39,6 @@ const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
   { value: "BIWEEKLY", label: "Quincenal" },
   { value: "MONTHLY", label: "Mensual" }
 ];
-
-// Preset start-date picker (hoy / +7 / +15 / +30 días), mirroring the "Primera
-// cuota" field on the contract screen — no native calendar dependency in the
-// app. Defaults to today so the loan always starts on a sensible date, but the
-// reviewer can push it out to match the negotiated first-payment date.
-function dateOptions(): { value: string; label: string }[] {
-  const today = new Date();
-  return [0, 7, 15, 30].map((n) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + n);
-    return {
-      value: d.toISOString().slice(0, 10),
-      label: n === 0 ? `Hoy · ${formatDate(d)}` : `En ${n} días · ${formatDate(d)}`
-    };
-  });
-}
 
 export default function ConvertirScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,11 +56,21 @@ export default function ConvertirScreen() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentFrequency, setPaymentFrequency] = useState<Frequency>("WEEKLY");
   const [assignedCollectorId, setAssignedCollectorId] = useState<string | undefined>();
-  const dOpts = dateOptions();
-  const [startingDate, setStartingDate] = useState(dOpts[0].value);
+  const [firstPayment, setFirstPayment] = useState<Date>(() =>
+    addPaymentPeriod(startOfToday(), "WEEKLY")
+  );
   const [openFrequency, setOpenFrequency] = useState(false);
   const [openCollector, setOpenCollector] = useState(false);
-  const [openStartDate, setOpenStartDate] = useState(false);
+  const [openFirstPayment, setOpenFirstPayment] = useState(false);
+
+  // Earliest sensible first cuota: one payment period out. Also the default —
+  // whenever the frequency changes, snap the first cuota back to it so the date
+  // always makes sense for the cadence (weekly can't be today, biweekly can't
+  // be next week, etc.).
+  const minFirstPayment = addPaymentPeriod(startOfToday(), paymentFrequency);
+  useEffect(() => {
+    setFirstPayment(addPaymentPeriod(startOfToday(), paymentFrequency));
+  }, [paymentFrequency]);
 
   useEffect(() => {
     if (!app) return;
@@ -144,10 +145,10 @@ export default function ConvertirScreen() {
         </View>
 
         <SelectField
-          label="Fecha de inicio"
-          value={dOpts.find((o) => o.value === startingDate)?.label}
-          onPress={() => setOpenStartDate(true)}
-          testID="field-starting-date"
+          label="Primera cuota"
+          value={formatDate(firstPayment)}
+          onPress={() => setOpenFirstPayment(true)}
+          testID="field-first-payment"
         />
 
         <SelectField
@@ -171,7 +172,7 @@ export default function ConvertirScreen() {
               termLength: Number(termLength),
               paymentAmount: Number(paymentAmount),
               paymentFrequency,
-              startingDate: new Date(`${startingDate}T12:00:00`),
+              startingDate: subtractPaymentPeriod(firstPayment, paymentFrequency),
               assignedCollectorId: assignedCollectorId!
             })
           }
@@ -190,13 +191,13 @@ export default function ConvertirScreen() {
         onClose={() => setOpenFrequency(false)}
       />
 
-      <PickerModal
-        visible={openStartDate}
-        title="Fecha de inicio"
-        options={dOpts}
-        value={startingDate}
-        onSelect={setStartingDate}
-        onClose={() => setOpenStartDate(false)}
+      <CalendarPicker
+        visible={openFirstPayment}
+        title="Primera cuota"
+        value={firstPayment}
+        minDate={minFirstPayment}
+        onSelect={setFirstPayment}
+        onClose={() => setOpenFirstPayment(false)}
       />
 
       <PickerModal

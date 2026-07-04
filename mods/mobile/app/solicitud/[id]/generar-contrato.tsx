@@ -6,9 +6,10 @@
  * change status (only `uploadSignedContract`, wired on the detail screen's
  * "Firmada" flow, does). Shares/downloads the rendered PDF on success (task 7.1).
  *
- * There's no date-picker dependency in the app yet; the "Primera cuota" field
- * uses a small preset picker (hoy / +7 / +15 / +30 días) instead of a native
- * calendar widget, to stay within already-installed dependencies.
+ * The "Primera cuota" field is a frequency-aware calendar (shared
+ * `CalendarPicker`): its minimum and default are one payment period out, so a
+ * weekly contract can't print a first cuota of today, a biweekly one next
+ * week, etc. Matches the convert screen's picker exactly.
  */
 import { useEffect, useState } from "react";
 import { Alert, View, Text, ScrollView, StyleSheet } from "react-native";
@@ -20,8 +21,14 @@ import { Header } from "../../../components/ui/Header";
 import { Input } from "../../../components/ui/Input";
 import { SelectField } from "../../../components/ui/SelectField";
 import { PickerModal } from "../../../components/ui/PickerModal";
+import { CalendarPicker } from "../../../components/ui/CalendarPicker";
 import { BtnCta } from "../../../components/ui/BtnCta";
-import { applicantName, formatDate } from "../../../lib/applications";
+import {
+  addPaymentPeriod,
+  applicantName,
+  formatDate,
+  startOfToday
+} from "../../../lib/applications";
 import { shareContractPdf } from "../../../lib/shareContract";
 
 type Frequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
@@ -38,18 +45,6 @@ const GENDER_OPTIONS = [
   { value: "M", label: "Masculino" }
 ];
 
-function dateOptions(): { value: string; label: string }[] {
-  const today = new Date();
-  return [0, 7, 15, 30].map((n) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + n);
-    return {
-      value: d.toISOString().slice(0, 10),
-      label: n === 0 ? `Hoy · ${formatDate(d)}` : `En ${n} días · ${formatDate(d)}`
-    };
-  });
-}
-
 export default function GenerarContratoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -60,9 +55,18 @@ export default function GenerarContratoScreen() {
   const [installments, setInstallments] = useState("");
   const [installmentAmount, setInstallmentAmount] = useState("");
   const [frequency, setFrequency] = useState<Frequency>("WEEKLY");
-  const dOpts = dateOptions();
-  const [startDate, setStartDate] = useState(dOpts[0].value);
+  const [startDate, setStartDate] = useState<Date>(() =>
+    addPaymentPeriod(startOfToday(), "WEEKLY")
+  );
   const [openPicker, setOpenPicker] = useState<"gender" | "frequency" | "date" | null>(null);
+
+  // First cuota can't be sooner than one payment period out; default to it, and
+  // snap back whenever the frequency changes (see convert screen for the same
+  // rule and CalendarPicker for the gating).
+  const minStartDate = addPaymentPeriod(startOfToday(), frequency);
+  useEffect(() => {
+    setStartDate(addPaymentPeriod(startOfToday(), frequency));
+  }, [frequency]);
 
   useEffect(() => {
     if (app?.requestedTermWeeks && !installments) setInstallments(String(app.requestedTermWeeks));
@@ -79,7 +83,7 @@ export default function GenerarContratoScreen() {
     onError: (err) => Alert.alert("Error", `No se pudo generar el contrato. ${err.message}`)
   });
 
-  const valid = Number(installments) > 0 && Number(installmentAmount) > 0 && !!startDate;
+  const valid = Number(installments) > 0 && Number(installmentAmount) > 0;
   const name = app ? applicantName(app) : "";
 
   return (
@@ -130,7 +134,7 @@ export default function GenerarContratoScreen() {
           <View style={styles.half}>
             <SelectField
               label="Primera cuota"
-              value={dOpts.find((o) => o.value === startDate)?.label}
+              value={formatDate(startDate)}
               onPress={() => setOpenPicker("date")}
               testID="field-start-date"
             />
@@ -151,7 +155,12 @@ export default function GenerarContratoScreen() {
               installments: Number(installments),
               installmentAmount: Number(installmentAmount),
               frequency,
-              startDate: new Date(`${startDate}T12:00:00`).toISOString()
+              startDate: new Date(
+                startDate.getFullYear(),
+                startDate.getMonth(),
+                startDate.getDate(),
+                12
+              ).toISOString()
             })
           }
         />
@@ -176,11 +185,11 @@ export default function GenerarContratoScreen() {
         onSelect={(v) => setFrequency(v as Frequency)}
         onClose={() => setOpenPicker(null)}
       />
-      <PickerModal
+      <CalendarPicker
         visible={openPicker === "date"}
         title="Primera cuota"
-        options={dOpts}
         value={startDate}
+        minDate={minStartDate}
         onSelect={setStartDate}
         onClose={() => setOpenPicker(null)}
       />

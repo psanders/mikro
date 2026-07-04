@@ -111,6 +111,54 @@ export function reopenActionLabel(status: string): string {
   return status === "APPROVED" ? "Regresar a evaluaciones" : "Reabrir solicitud";
 }
 
+// ---- payment-period date math (convert screen "Primera cuota" picker) ----
+//
+// The loan schedule (see app/prestamo/[loanId].tsx `getDueDateForCycle`) treats
+// `startingDate` as the disbursement date and computes cuota #1 as
+// startingDate + one payment period. So when the reviewer picks a *first
+// payment* date on convert, we store startingDate = firstPayment − one period,
+// which makes the schedule's first due date land exactly on the chosen date.
+// This also drives a frequency-aware minimum: a weekly loan can't have its
+// first cuota today, a biweekly one can't have it next week, etc.
+
+export type PaymentPeriod = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+
+function shiftByPeriod(date: Date, freq: string, sign: 1 | -1): Date {
+  const d = new Date(date);
+  switch (freq) {
+    case "DAILY":
+      d.setDate(d.getDate() + sign);
+      break;
+    case "WEEKLY":
+      d.setDate(d.getDate() + sign * 7);
+      break;
+    case "BIWEEKLY":
+      d.setDate(d.getDate() + sign * 14);
+      break;
+    case "MONTHLY":
+      d.setMonth(d.getMonth() + sign);
+      break;
+  }
+  return d;
+}
+
+/** One payment period after `date` (e.g. the earliest sensible first cuota). */
+export function addPaymentPeriod(date: Date, freq: string): Date {
+  return shiftByPeriod(date, freq, 1);
+}
+
+/** One payment period before `date` — first-cuota date back to the loan start. */
+export function subtractPaymentPeriod(date: Date, freq: string): Date {
+  return shiftByPeriod(date, freq, -1);
+}
+
+/** Local date with the time zeroed — safe base for day-granular date math. */
+export function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export function formatDop(value: unknown): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return "";
