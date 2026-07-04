@@ -2,9 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * The Actuar confirm card — Pencil "Acción del copiloto" specimen: a sparkles
- * header (Copiloto · summary), a key-value grid of the exact arguments that
- * would execute, and Confirmar / Cancelar controls. Nothing runs until the
- * founder confirms. Renders four states:
+ * header (Copiloto · summary), a narrative line spelling out the exact
+ * arguments that would execute (same prose pattern as the feed's narrative
+ * sentences — see founder/components/typeConfig.ts — but every value stays
+ * verbatim, unrounded and untranslated, since this is a pre-write safety
+ * check, not a historical record), and Confirmar / Cancelar controls.
+ * Nothing runs until the founder confirms. Renders four states:
  *   - pending   → active Confirmar (primary) / Cancelar
  *   - confirmed → green check, no controls
  *   - rejected  → muted, "Rechazada"
@@ -13,6 +16,7 @@
 import { CircleCheck, Sparkles } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { humanizeKey, humanizeValue } from "../components/format";
+import { ASSISTANT_TEXT_CLASS } from "./AssistantMessage";
 import type { CopilotPendingAction, PendingActionState } from "./types";
 
 export interface PendingActionCardProps {
@@ -36,6 +40,18 @@ function resolveState(props: PendingActionCardProps): PendingActionState {
     default:
       return "pending";
   }
+}
+
+/**
+ * Flowing "key valor, key valor" prose for the confirm card — narrative
+ * style like the feed, but every value is shown exactly as-is (no rounding,
+ * no per-type phrasing) because the founder is verifying what will execute,
+ * not reading a summary of what already happened.
+ */
+function argsNarrative(args: Record<string, unknown>): string {
+  return Object.entries(args)
+    .map(([key, value]) => `${humanizeKey(key).toLowerCase()} ${humanizeValue(value)}`)
+    .join(", ");
 }
 
 export function PendingActionCard(props: PendingActionCardProps) {
@@ -69,8 +85,8 @@ export function PendingActionCard(props: PendingActionCardProps) {
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-          <p className="text-[14px] leading-tight text-[#14254A]">
-            <span className="font-bold">Copiloto </span>
+          <p className={cn(ASSISTANT_TEXT_CLASS, "break-words")}>
+            <span className="font-semibold">Copiloto </span>
             <span className="font-medium">{action.summary}</span>
           </p>
           <p
@@ -91,16 +107,9 @@ export function PendingActionCard(props: PendingActionCardProps) {
       </div>
 
       {argEntries.length > 0 && (
-        <div className="flex w-full flex-wrap rounded-[10px] border border-[#E5EAF1] bg-[#F4F7FB] px-[12px]">
-          {argEntries.map(([key, value]) => (
-            <div key={key} className="flex min-w-[120px] flex-1 flex-col gap-[1px] py-2">
-              <span className="text-[10px] font-medium text-[#697A93]">{humanizeKey(key)}</span>
-              <span className="text-[12px] font-semibold text-[#14254A]">
-                {humanizeValue(value)}
-              </span>
-            </div>
-          ))}
-        </div>
+        <p className="break-words rounded-[10px] border border-[#E5EAF1] bg-[#F4F7FB] px-[12px] py-[10px] text-[12px] leading-[18px] text-[#697A93]">
+          {argsNarrative(action.args)}
+        </p>
       )}
 
       {state !== "confirmed" && state !== "rejected" && (

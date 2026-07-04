@@ -12,9 +12,9 @@ interface RailCardProps {
 
 /**
  * Labeled white card wrapper for the evaluator detail screens' rail sections
- * (score, progress, review, documents, suggested questions...). Visually
- * matches `ActionCard`'s container, but accepts arbitrary children instead of
- * a single body string — those sections hold rich nested content.
+ * (score, progress, review, documents, suggested questions...). Accepts
+ * arbitrary children instead of a single body string — those sections hold
+ * rich nested content.
  */
 export function RailCard({ label, children }: RailCardProps) {
   return (
