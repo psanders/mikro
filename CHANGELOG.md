@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.21.0](https://github.com/psanders/mikro/compare/v1.20.1...v1.21.0) (2026-07-04)
+
+### Bug Fixes
+
+- **apiserver,common,mobile,agents:** require assigned collector for every customer ([7b96568](https://github.com/psanders/mikro/commit/7b965681e27dd9ff0468332f85afc4c95bc99b27)), closes [#41](https://github.com/psanders/mikro/issues/41)
+- **dashboard,mobile,apiserver:** drop screenshot in favor of video, pin GitHub API version ([b23e8c1](https://github.com/psanders/mikro/commit/b23e8c1cbf739b2b3eee0c061f422d94d186de31))
+- **dashboard:** bake Swift runtime rpath into the Tauri binary for screencapturekit ([73a06c2](https://github.com/psanders/mikro/commit/73a06c244b50365abbbdeb3be229ed6ef8df36d2))
+- **mobile:** patch out iOS BroadcastExtension entirely instead of fighting EAS credentials ([afffa36](https://github.com/psanders/mikro/commit/afffa360054a58355c00f27b12c3e63ca1014b4f)), closes [expo/expo#40851](https://github.com/expo/expo/issues/40851)
+
+### Features
+
+- **dashboard,mobile,apiserver:** real video capture, floating pill parity, and no-link result copy for bug reports ([e9ff1c5](https://github.com/psanders/mikro/commit/e9ff1c5b08db7beee4e883e3f363dfce079675a4)), closes [mikro#87](https://github.com/mikro/issues/87)
+- **dashboard,mobile:** extend bug-report capture to Tauri desktop and mobile ([c9933b5](https://github.com/psanders/mikro/commit/c9933b5258d385e653826b41194ce90ae81f8a78)), closes [mikro/#69](https://github.com/psanders/mikro/issues/69) [mikro#87](https://github.com/mikro/issues/87)
+
 ## [1.20.1](https://github.com/psanders/mikro/compare/v1.20.0...v1.20.1) (2026-07-03)
 
 ### Bug Fixes

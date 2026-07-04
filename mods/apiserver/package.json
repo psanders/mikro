@@ -1,6 +1,6 @@
 {
   "name": "@mikro/apiserver",
-  "version": "1.20.1",
+  "version": "1.21.0",
   "description": "Mikro API Server - REST APIs, webhooks, and admin functionality",
   "type": "module",
   "main": "dist/index.js",
@@ -23,8 +23,8 @@
   "dependencies": {
     "@deepgram/sdk": "^4.0.0",
     "@fonoster/logger": "^0.9.23",
-    "@mikro/agents": "^1.20.1",
-    "@mikro/common": "^1.20.1",
+    "@mikro/agents": "^1.21.0",
+    "@mikro/common": "^1.21.0",
     "@octokit/rest": "^22.0.0",
     "@prisma/adapter-better-sqlite3": "^7.3.0",
     "@prisma/client": "^7.3.0",
