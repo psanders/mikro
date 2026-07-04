@@ -31,9 +31,10 @@
  * web.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bug, Circle, Square, Check } from "lucide-react";
+import { Bug, Circle, Check } from "lucide-react";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
+import { RecordingPill } from "./RecordingPill";
 
 type Stage = "idle" | "consent" | "recording" | "processing" | "result" | "error";
 type CaptureMode = "browser" | "tauri-native";
@@ -58,12 +59,6 @@ function blobToBase64(blob: Blob): Promise<{ base64: string; mimeType: string }>
     };
     reader.readAsDataURL(blob);
   });
-}
-
-function formatElapsed(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 /** RailItem-shaped button so it drops into FounderShell's nav rail without a new pattern. */
@@ -227,6 +222,35 @@ export function BugReportButton() {
     }
   }, [clearTimer, cleanupStreams, stopBrowserRecording, stopTauriRecording]);
 
+  // Abandon the in-progress recording without submitting anything. Stops the
+  // recorder/streams (or the native ScreenCaptureKit session) and throws the
+  // captured bytes away, landing straight back at idle. Kept inside the pill so
+  // there's no extra confirm modal — a mis-tap just means re-recording.
+  const discardRecording = useCallback(async () => {
+    clearTimer();
+    try {
+      if (captureModeRef.current === "tauri-native") {
+        // Stop the native session so ScreenCaptureKit releases the screen, but
+        // ignore the returned recording — nothing is submitted.
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("stop_bug_report_recording");
+      } else {
+        const recorder = recorderRef.current;
+        if (recorder && recorder.state !== "inactive") {
+          // Detach the submit-on-stop handler before stopping so cleanup below
+          // is the only thing that runs.
+          recorder.onstop = null;
+          recorder.ondataavailable = null;
+          recorder.stop();
+        }
+      }
+    } catch {
+      // Best-effort: discarding must always return the UI to idle.
+    } finally {
+      reset();
+    }
+  }, [clearTimer, reset]);
+
   return (
     <>
       <button
@@ -241,21 +265,11 @@ export function BugReportButton() {
 
       {stage === "recording" && (
         <div className="fixed inset-x-0 bottom-6 z-50 flex justify-end px-6 pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#14254A] py-2.5 pl-5 pr-2.5 shadow-lg">
-            <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
-            <span className="text-[14px] font-medium text-white">
-              Grabando reporte · {formatElapsed(elapsedSeconds)}
-            </span>
-            <button
-              type="button"
-              onClick={() => void stopRecording()}
-              aria-label="Detener y enviar"
-              title="Detener y enviar"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DC2626] text-white transition hover:bg-[#B91C1C]"
-            >
-              <Square size={14} fill="currentColor" />
-            </button>
-          </div>
+          <RecordingPill
+            elapsedSeconds={elapsedSeconds}
+            onStop={() => void stopRecording()}
+            onDiscard={() => void discardRecording()}
+          />
         </div>
       )}
 
