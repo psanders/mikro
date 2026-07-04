@@ -121,6 +121,7 @@ CREATE TABLE "messages" (
     "tools" TEXT,
     "channel" TEXT NOT NULL DEFAULT 'whatsapp',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" DATETIME,
     "customer_id" TEXT,
     "user_id" TEXT,
     CONSTRAINT "messages_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE,

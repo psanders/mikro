@@ -51,6 +51,12 @@ export {
   type GetCopilotHistoryParams,
   type CopilotHistoryResult
 } from "./createGetCopilotHistory.js";
+export {
+  createClearCopilotHistory,
+  type ClearCopilotHistoryDeps,
+  type ClearCopilotHistoryParams,
+  type ClearCopilotHistoryResult
+} from "./createClearCopilotHistory.js";
 export { setCopilotDeps, getCopilotDeps, clearCopilotDeps, type CopilotDeps } from "./deps.js";
 export { summarizeAction } from "./summarizeAction.js";
 export { COPILOT_SYSTEM_PROMPT } from "./systemPrompt.js";

@@ -10,8 +10,8 @@
  * shows the typing indicator at the foot of the thread.
  */
 import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useRef } from "react";
-import { ArrowUp, PanelRightClose, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUp, Eraser, PanelRightClose, Sparkles } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { TypingIndicator } from "./TypingIndicator";
 
@@ -30,6 +30,12 @@ export interface CopilotDockProps {
   onClose: () => void;
   /** Request in flight: disables sending and shows the typing indicator. */
   busy?: boolean;
+  /** Clears the thread (soft-deletes history) after the inline confirm. Omit to hide the control. */
+  onClearHistory?: () => void;
+  /** Clear request in flight: disables the confirm button. */
+  clearing?: boolean;
+  /** Seeds the inline confirm state open. Storybook-only; real usage always starts closed. */
+  initialConfirmingClear?: boolean;
   className?: string;
 }
 
@@ -40,12 +46,16 @@ export function CopilotDock({
   onSend,
   onClose,
   busy = false,
+  onClearHistory,
+  clearing = false,
+  initialConfirmingClear = false,
   className
 }: CopilotDockProps) {
   const trimmed = value.trim();
   const canSend = trimmed.length > 0 && !busy;
   const threadRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [confirmingClear, setConfirmingClear] = useState(initialConfirmingClear);
 
   // Scroll the thread to the newest message whenever it changes (send, reply,
   // typing indicator toggling) so the answer never lands below the fold.
@@ -82,22 +92,63 @@ export function CopilotDock({
       )}
     >
       <div className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-[18px] py-[16px]">
-        <div className="flex items-center gap-[9px]">
-          <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
-            <Sparkles size={14} strokeWidth={2} className="text-white" />
-          </div>
-          <span className="text-[15px] font-semibold text-[#14254A]">Copiloto</span>
-        </div>
-        <div className="flex items-center gap-[12px]">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar copiloto"
-            className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] bg-[#EEF3F9] text-[#697A93] transition hover:bg-[#E1E9F3]"
-          >
-            <PanelRightClose size={15} strokeWidth={2} />
-          </button>
-        </div>
+        {confirmingClear ? (
+          <>
+            <span className="text-[13px] font-medium text-[#14254A]">¿Borrar conversación?</span>
+            <div className="flex items-center gap-[10px]">
+              <button
+                type="button"
+                onClick={() => setConfirmingClear(false)}
+                className="text-[13px] font-medium text-[#697A93] transition hover:text-[#14254A]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={clearing}
+                onClick={() => {
+                  setConfirmingClear(false);
+                  onClearHistory?.();
+                }}
+                className={cn(
+                  "text-[13px] font-semibold text-[#B42121] transition hover:text-[#8F1A1A]",
+                  clearing && "cursor-not-allowed opacity-50"
+                )}
+              >
+                Borrar
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-[9px]">
+              <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
+                <Sparkles size={14} strokeWidth={2} className="text-white" />
+              </div>
+              <span className="text-[15px] font-semibold text-[#14254A]">Copiloto</span>
+            </div>
+            <div className="flex items-center gap-[12px]">
+              {onClearHistory && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingClear(true)}
+                  aria-label="Borrar conversación"
+                  className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] bg-[#EEF3F9] text-[#697A93] transition hover:bg-[#E1E9F3]"
+                >
+                  <Eraser size={15} strokeWidth={2} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar copiloto"
+                className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] bg-[#EEF3F9] text-[#697A93] transition hover:bg-[#E1E9F3]"
+              >
+                <PanelRightClose size={15} strokeWidth={2} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <div

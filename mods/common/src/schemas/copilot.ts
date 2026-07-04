@@ -49,6 +49,14 @@ export const getCopilotHistorySchema = z.object({
   limit: z.number().int().positive().max(100).optional()
 });
 
+export const clearCopilotHistorySchema = z.object({});
+
+export const clearCopilotHistoryResultSchema = z.object({
+  cleared: z.number().int().nonnegative()
+});
+
+export type ClearCopilotHistoryResult = z.infer<typeof clearCopilotHistoryResultSchema>;
+
 /** Minutes a pending copilot action stays confirmable. */
 export const COPILOT_ACTION_EXPIRY_MINUTES = 15;
 

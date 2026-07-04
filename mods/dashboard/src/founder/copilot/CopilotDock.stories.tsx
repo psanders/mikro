@@ -18,11 +18,17 @@ import { activeRule, activeRuleNote, ruleProvenance } from "./fixtures";
 function DockFrame({
   children,
   busy,
-  initialValue = ""
+  initialValue = "",
+  onClearHistory,
+  clearing,
+  initialConfirmingClear
 }: {
   children?: ReactNode;
   busy?: boolean;
   initialValue?: string;
+  onClearHistory?: () => void;
+  clearing?: boolean;
+  initialConfirmingClear?: boolean;
 }) {
   const [value, setValue] = useState(initialValue);
   return (
@@ -35,6 +41,9 @@ function DockFrame({
         onSend={() => setValue("")}
         onClose={() => {}}
         busy={busy}
+        onClearHistory={onClearHistory}
+        clearing={clearing}
+        initialConfirmingClear={initialConfirmingClear}
       >
         {children}
       </CopilotDock>
@@ -83,6 +92,42 @@ export const BusyWithPrefill: Story = {
   render: () => (
     <DockFrame busy initialValue="¿Cómo cerró la cobranza?">
       <UserBubble text="Mora por ruta" />
+    </DockFrame>
+  )
+};
+
+/** Default header: the eraser (clear-history) control sits left of close. */
+export const WithClearHistoryButton: Story = {
+  render: () => (
+    <DockFrame onClearHistory={() => {}}>
+      <UserBubble text="Avísame si la mora de una ruta pasa de 9%" />
+      <AssistantMessage provenance={ruleProvenance}>
+        <RuleCard rule={activeRule} note={activeRuleNote} />
+      </AssistantMessage>
+    </DockFrame>
+  )
+};
+
+/** Clicking the eraser swaps the header for the inline "¿Borrar conversación?" confirm. */
+export const ClearHistoryConfirm: Story = {
+  render: () => (
+    <DockFrame onClearHistory={() => {}} initialConfirmingClear>
+      <UserBubble text="Avísame si la mora de una ruta pasa de 9%" />
+      <AssistantMessage provenance={ruleProvenance}>
+        <RuleCard rule={activeRule} note={activeRuleNote} />
+      </AssistantMessage>
+    </DockFrame>
+  )
+};
+
+/** Blocked by an unresolved pending action: the container renders the refusal as an inline error bubble, same treatment as a failed confirm/reject. */
+export const ClearHistoryBlocked: Story = {
+  render: () => (
+    <DockFrame onClearHistory={() => {}}>
+      <UserBubble text="Registra 650 en el préstamo 10000"></UserBubble>
+      <div className="w-full break-words rounded-[12px] border border-[#F3D2D2] bg-[#FEF6F6] px-[14px] py-[11px] text-[13px] font-medium leading-[20px] text-[#B42121]">
+        Resuelve la acción pendiente antes de borrar el historial.
+      </div>
     </DockFrame>
   )
 };

@@ -206,7 +206,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
 
     // Rebuild the context window from the last N copilot messages (chronological).
     const historyRows = await db.message.findMany({
-      where: { userId, channel: "copilot" },
+      where: { userId, channel: "copilot", deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: HISTORY_WINDOW
     });

@@ -43,7 +43,7 @@ export function createGetCopilotHistory(db: PrismaClient) {
     const limit = params.limit ?? DEFAULT_LIMIT;
 
     const rows = await db.message.findMany({
-      where: { userId: params.userId, channel: "copilot" },
+      where: { userId: params.userId, channel: "copilot", deletedAt: null },
       orderBy: { createdAt: "asc" },
       take: limit
     });

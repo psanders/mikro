@@ -209,6 +209,7 @@ import {
   copilotChatSchema,
   copilotActionDecisionSchema,
   getCopilotHistorySchema,
+  clearCopilotHistorySchema,
   listWatchRulesSchema,
   setWatchRuleEnabledSchema
 } from "@mikro/common";
@@ -218,6 +219,7 @@ import {
   createConfirmCopilotAction,
   createRejectCopilotAction,
   createGetCopilotHistory,
+  createClearCopilotHistory,
   listWatchRules as listWatchRulesFn,
   setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
@@ -1120,6 +1122,12 @@ export const protectedRouter = router({
   getCopilotHistory: adminProcedure.input(getCopilotHistorySchema).query(async ({ ctx, input }) => {
     const fn = createGetCopilotHistory(ctx.db as unknown as PrismaClient);
     return fn({ userId: ctx.userId, limit: input.limit });
+  }),
+
+  /** Clear the caller's copilot history (soft delete). Refused while a pending action is unresolved. */
+  clearCopilotHistory: adminProcedure.input(clearCopilotHistorySchema).mutation(async ({ ctx }) => {
+    const fn = createClearCopilotHistory({ db: ctx.db as unknown as PrismaClient });
+    return fn({ userId: ctx.userId });
   }),
 
   /** List watch rules (active by default). */

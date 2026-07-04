@@ -143,6 +143,7 @@ export function CopilotDockContainer() {
   const confirmAction = trpc.copilotConfirmAction.useMutation();
   const rejectAction = trpc.copilotRejectAction.useMutation();
   const setRuleEnabled = trpc.setWatchRuleEnabled.useMutation();
+  const clearHistory = trpc.clearCopilotHistory.useMutation();
 
   const appendReply = useCallback((res: ChatReply) => {
     setThread((prev) => {
@@ -261,13 +262,35 @@ export function CopilotDockContainer() {
     setInput(`Edita la regla ${rule.name}: `);
   }, []);
 
+  const handleClearHistory = useCallback(() => {
+    clearHistory.mutate(
+      {},
+      {
+        onSuccess: () => {
+          setThread([]);
+          void utils.getCopilotHistory.invalidate();
+        },
+        onError: (err) =>
+          appendError(err.message || "No se pudo borrar el historial. Inténtalo de nuevo.")
+      }
+    );
+  }, [clearHistory, appendError, utils]);
+
   if (!open) return null;
 
   const busy = chat.isPending;
   const showChips = seededRef.current && thread.length === 0 && !busy;
 
   return (
-    <CopilotDock value={input} onChange={setInput} onSend={handleSend} onClose={close} busy={busy}>
+    <CopilotDock
+      value={input}
+      onChange={setInput}
+      onSend={handleSend}
+      onClose={close}
+      busy={busy}
+      onClearHistory={handleClearHistory}
+      clearing={clearHistory.isPending}
+    >
       {showChips && <CapabilityChips onPick={setInput} />}
       {thread.map((item) => {
         switch (item.kind) {

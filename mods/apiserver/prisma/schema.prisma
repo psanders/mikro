@@ -308,6 +308,9 @@ model Message {
   // (the founder dashboard dock). Default keeps every existing row/behavior intact.
   channel   String      @default("whatsapp") @map("channel")
   createdAt DateTime    @default(now()) @map("created_at")
+  // Soft-delete marker for a bulk "clear history" action (copilot channel only
+  // today). Never hard-deleted; excluded from history reads once set.
+  deletedAt DateTime?   @map("deleted_at")
 
   // Relations - message belongs to either a Customer OR a User
   customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)

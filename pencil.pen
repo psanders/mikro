@@ -66779,6 +66779,29 @@
                                   "children": [
                                     {
                                       "type": "frame",
+                                      "id": "qeR2T",
+                                      "name": "clearBtn",
+                                      "width": 28,
+                                      "height": 28,
+                                      "fill": "$ds.subtle",
+                                      "cornerRadius": 8,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "h51xv1",
+                                          "name": "i",
+                                          "width": 15,
+                                          "height": 15,
+                                          "icon": "eraser",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
                                       "id": "NhBSX",
                                       "name": "closeBtn",
                                       "width": 28,
@@ -70114,24 +70137,56 @@
                             },
                             {
                               "type": "frame",
-                              "id": "zrH1r",
-                              "name": "pillStopBtn",
-                              "width": 36,
-                              "height": 36,
-                              "fill": "$ds.red",
-                              "cornerRadius": 18,
-                              "justifyContent": "center",
+                              "id": "W5chWX",
+                              "name": "pillActions",
+                              "gap": 8,
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon",
-                                  "id": "alQNy",
-                                  "name": "stopIcon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "square",
-                                  "library": "lucide",
-                                  "fill": "$brand.white"
+                                  "type": "frame",
+                                  "id": "fLjdK",
+                                  "name": "pillDiscardBtn",
+                                  "width": 36,
+                                  "height": 36,
+                                  "fill": "#FFFFFF1A",
+                                  "cornerRadius": 18,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "qrjAk",
+                                      "name": "discardIcon",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "trash-2",
+                                      "library": "lucide",
+                                      "fill": "$brand.white"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "zrH1r",
+                                  "name": "pillStopBtn",
+                                  "width": 36,
+                                  "height": 36,
+                                  "fill": "$ds.red",
+                                  "cornerRadius": 18,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "alQNy",
+                                      "name": "stopIcon",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "square",
+                                      "library": "lucide",
+                                      "fill": "$brand.white"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -78695,6 +78750,29 @@
                               "children": [
                                 {
                                   "type": "frame",
+                                  "id": "HLs3u",
+                                  "name": "clearBtn",
+                                  "width": 28,
+                                  "height": 28,
+                                  "fill": "$ds.subtle",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "V7r8V",
+                                      "name": "i",
+                                      "width": 15,
+                                      "height": 15,
+                                      "icon": "eraser",
+                                      "library": "lucide",
+                                      "fill": "$ds.muted"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
                                   "id": "t0V39g",
                                   "name": "closeBtn",
                                   "width": 28,
@@ -86510,24 +86588,56 @@
                     },
                     {
                       "type": "frame",
-                      "id": "C7DhDx",
-                      "name": "pillStopBtn",
-                      "width": 32,
-                      "height": 32,
-                      "fill": "#DC2626",
-                      "cornerRadius": 16,
-                      "justifyContent": "center",
+                      "id": "E9m2WE",
+                      "name": "pillActions",
+                      "gap": 8,
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon",
-                          "id": "Y9e2PC",
-                          "name": "stopIcon",
-                          "width": 14,
-                          "height": 14,
-                          "icon": "square",
-                          "library": "lucide",
-                          "fill": "#FFFFFF"
+                          "type": "frame",
+                          "id": "b9Fkq",
+                          "name": "pillDiscardBtn",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "#FFFFFF24",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "OXIvu",
+                              "name": "discardIcon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "trash-2",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C7DhDx",
+                          "name": "pillStopBtn",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "#DC2626",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Y9e2PC",
+                              "name": "stopIcon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "square",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -86569,6 +86679,16 @@
           ]
         }
       ]
+    },
+    {
+      "type": "note",
+      "id": "oxOeM",
+      "x": 0,
+      "y": 908,
+      "name": "note: clear-history interaction states",
+      "width": 420,
+      "height": 0,
+      "content": "Clear-history button (eraser, header, left of close): present on BOTH copilotDock instances — Uljd6 (Copiloto screen, header z0zC6) and YrWVt (Feed + copiloto abierto, header jkdcd) — kept in sync for design consistency (2026-07-04). Click -> header title row briefly swaps for an inline confirm: \"¿Borrar conversación? Cancelar · Borrar\" (text buttons, no modal). Confirm -> thread empties, capability chips reappear (same empty state as intro). If a pending action is awaiting confirm/reject, clicking clear instead shows an inline error bubble in the thread: \"Resuelve la acción pendiente antes de borrar el historial.\" and nothing is cleared. States implemented in Storybook, not separately mocked here."
     }
   ],
   "variables": {

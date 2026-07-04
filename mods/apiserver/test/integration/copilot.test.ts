@@ -6,7 +6,8 @@
  * live model is ever called. Covers: tool-policy binding, the write-tool →
  * pending-action short-circuit (no mutation), confirm (executes + records
  * copilot.action), reject and expiry (execute nothing), foreign-user refusal,
- * channel-filtered history, and admin-only authorization on all six procedures.
+ * channel-filtered history, clear-history (soft delete, blocked by a pending
+ * action), and admin-only authorization on all seven procedures.
  */
 import { expect } from "chai";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -23,6 +24,7 @@ import {
   clearCopilotDeps,
   getBoundToolNames
 } from "../../src/api/copilot/index.js";
+import { COPILOT_ACTION_EXPIRY_MINUTES } from "@mikro/common";
 import type { ToolResult, ToolExecutor } from "@mikro/agents";
 
 /** A fake AI turn: text plus optional tool calls. */
@@ -364,6 +366,112 @@ describe("Founder Copilot Integration", () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Clear history (soft delete)
+  // ---------------------------------------------------------------------------
+
+  describe("clearCopilotHistory", () => {
+    it("soft-deletes the caller's copilot messages only", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { admin: otherAdmin } = await makeAdmin();
+
+      await db.message.create({
+        data: { role: "HUMAN", content: "mío copilot", userId: admin.id, channel: "copilot" }
+      });
+      await db.message.create({
+        data: { role: "AI", content: "respuesta", userId: admin.id, channel: "copilot" }
+      });
+      await db.message.create({
+        data: { role: "HUMAN", content: "mío whatsapp", userId: admin.id, channel: "whatsapp" }
+      });
+      await db.message.create({
+        data: {
+          role: "HUMAN",
+          content: "de otro founder",
+          userId: otherAdmin.id,
+          channel: "copilot"
+        }
+      });
+
+      const res = await adminCaller.clearCopilotHistory({});
+      expect(res.cleared).to.equal(2);
+
+      const mine = await db.message.findMany({ where: { userId: admin.id } });
+      const mineCopilot = mine.filter((m) => m.channel === "copilot");
+      const mineWhatsapp = mine.filter((m) => m.channel === "whatsapp");
+      expect(mineCopilot.every((m) => m.deletedAt !== null)).to.equal(true);
+      expect(mineWhatsapp.every((m) => m.deletedAt === null)).to.equal(true);
+
+      const others = await db.message.findMany({ where: { userId: otherAdmin.id } });
+      expect(others.every((m) => m.deletedAt === null)).to.equal(true);
+    });
+
+    it("refuses to clear while a pending unexpired action exists, clears nothing", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      await db.message.create({
+        data: { role: "HUMAN", content: "hola", userId: admin.id, channel: "copilot" }
+      });
+      await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "PENDING"
+        }
+      });
+
+      let threw = false;
+      try {
+        await adminCaller.clearCopilotHistory({});
+      } catch (err) {
+        threw = true;
+        expect((err as any).code).to.equal("PRECONDITION_FAILED");
+      }
+      expect(threw, "clear should throw while pending").to.equal(true);
+
+      const rows = await db.message.findMany({ where: { userId: admin.id, channel: "copilot" } });
+      expect(rows.every((m) => m.deletedAt === null)).to.equal(true);
+    });
+
+    it("allows clearing when the only pending action is expired", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      await db.message.create({
+        data: { role: "HUMAN", content: "hola", userId: admin.id, channel: "copilot" }
+      });
+      const stale = new Date(Date.now() - (COPILOT_ACTION_EXPIRY_MINUTES + 5) * 60 * 1000);
+      await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "PENDING",
+          createdAt: stale
+        }
+      });
+
+      const res = await adminCaller.clearCopilotHistory({});
+      expect(res.cleared).to.equal(1);
+    });
+
+    it("excludes soft-deleted rows from getCopilotHistory", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      await db.message.create({
+        data: { role: "HUMAN", content: "antes de borrar", userId: admin.id, channel: "copilot" }
+      });
+
+      await adminCaller.clearCopilotHistory({});
+      await db.message.create({
+        data: { role: "HUMAN", content: "después de borrar", userId: admin.id, channel: "copilot" }
+      });
+
+      const history = await adminCaller.getCopilotHistory({});
+      expect(history.messages).to.have.lengthOf(1);
+      expect(history.messages[0].content).to.equal("después de borrar");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Authorization
   // ---------------------------------------------------------------------------
 
@@ -375,7 +483,7 @@ describe("Founder Copilot Integration", () => {
       });
     });
 
-    it("rejects non-admins on all six procedures", async () => {
+    it("rejects non-admins on all seven procedures", async () => {
       const c = nonAdminCaller();
       const id = "33333333-3333-4333-8333-333333333333";
       const attempts: Array<Promise<unknown>> = [
@@ -383,6 +491,7 @@ describe("Founder Copilot Integration", () => {
         c.copilotConfirmAction({ actionId: id }),
         c.copilotRejectAction({ actionId: id }),
         c.getCopilotHistory({}),
+        c.clearCopilotHistory({}),
         c.listWatchRules({}),
         c.setWatchRuleEnabled({ id, enabled: false })
       ];

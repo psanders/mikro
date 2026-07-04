@@ -326,6 +326,8 @@ export {
   copilotChatSchema,
   copilotActionDecisionSchema,
   getCopilotHistorySchema,
+  clearCopilotHistorySchema,
+  clearCopilotHistoryResultSchema,
   copilotPendingActionStatusEnum,
   copilotPendingActionSchema,
   copilotProvenanceSchema,
@@ -335,5 +337,6 @@ export {
   type CreateWatchRuleInput,
   type CopilotPendingAction,
   type CopilotProvenance,
-  type CopilotChatReply
+  type CopilotChatReply,
+  type ClearCopilotHistoryResult
 } from "./copilot.js";
