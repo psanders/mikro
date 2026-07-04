@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.21.1](https://github.com/psanders/mikro/compare/v1.21.0...v1.21.1) (2026-07-04)
+
+### Bug Fixes
+
+- **dashboard:** grant dialog:allow-ask capability for the desktop updater prompt ([4fbdb24](https://github.com/psanders/mikro/commit/4fbdb2401bc787bfdbe5b31320378de9257e52a4)), closes [#99](https://github.com/psanders/mikro/issues/99)
+- **mobile:** stop the recording pill from blocking touches on iOS ([098df9a](https://github.com/psanders/mikro/commit/098df9a0ec1f3e65bf60e100e97e882adedda386))
+
 # [1.21.0](https://github.com/psanders/mikro/compare/v1.20.1...v1.21.0) (2026-07-04)
 
 ### Bug Fixes
