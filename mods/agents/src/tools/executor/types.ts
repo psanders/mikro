@@ -42,7 +42,7 @@ export interface ToolExecutorDependencies {
     idNumber: string;
     collectionPoint?: string;
     homeAddress: string;
-    assignedCollectorId?: string;
+    assignedCollectorId: string;
     jobPosition?: string;
     income?: number;
     isBusinessOwner?: boolean;
@@ -184,7 +184,7 @@ export interface ToolExecutorDependencies {
       name: string;
       nickname: string | null;
       phone: string;
-      assignedCollectorId: string | null; // Required for validation
+      assignedCollectorId: string; // Always present; mikro/#41
     };
   } | null>;
 

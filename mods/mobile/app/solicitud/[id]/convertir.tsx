@@ -5,8 +5,11 @@
  * form, separate from the contract flow, reached from the "Firmada" state's
  * collapsed "Convertir en cliente" button (task 8.1). Wires
  * `convertApplication` (principal, termLength, paymentAmount,
- * paymentFrequency — `convertApplicationSchema` in
- * `mods/common/src/schemas/application.ts`).
+ * paymentFrequency, assignedCollectorId — `convertApplicationSchema` in
+ * `mods/common/src/schemas/application.ts`). Collector assignment is
+ * REQUIRED (mikro/#41: every customer must have a collector, enforced at the
+ * DB, Zod, and UI layers) — the submit button stays disabled until one is
+ * picked.
  */
 import { useEffect, useState } from "react";
 import { Alert, View, Text, ScrollView, StyleSheet } from "react-native";
@@ -36,12 +39,18 @@ export default function ConvertirScreen() {
   const utils = trpc.useUtils();
   const q = trpc.getApplication.useQuery({ id });
   const app = q.data;
+  const usersQuery = trpc.listUsers.useQuery({});
+  const collectors = (usersQuery.data ?? []).filter((u) =>
+    u.roles?.some((r) => r.role === "COLLECTOR")
+  );
 
   const [principal, setPrincipal] = useState("");
   const [termLength, setTermLength] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentFrequency, setPaymentFrequency] = useState<Frequency>("WEEKLY");
+  const [assignedCollectorId, setAssignedCollectorId] = useState<string | undefined>();
   const [openFrequency, setOpenFrequency] = useState(false);
+  const [openCollector, setOpenCollector] = useState(false);
 
   useEffect(() => {
     if (!app) return;
@@ -59,7 +68,11 @@ export default function ConvertirScreen() {
     onError: (err) => Alert.alert("Error", `No se pudo convertir la solicitud. ${err.message}`)
   });
 
-  const valid = Number(principal) > 0 && Number(termLength) > 0 && Number(paymentAmount) > 0;
+  const valid =
+    Number(principal) > 0 &&
+    Number(termLength) > 0 &&
+    Number(paymentAmount) > 0 &&
+    Boolean(assignedCollectorId);
   const name = app ? applicantName(app) : "";
 
   return (
@@ -110,6 +123,13 @@ export default function ConvertirScreen() {
             />
           </View>
         </View>
+
+        <SelectField
+          label="Cobrador asignado"
+          value={collectors.find((c) => c.id === assignedCollectorId)?.name}
+          onPress={() => setOpenCollector(true)}
+          testID="field-collector"
+        />
       </ScrollView>
 
       <View style={styles.actionBar}>
@@ -124,7 +144,8 @@ export default function ConvertirScreen() {
               principal: Number(principal),
               termLength: Number(termLength),
               paymentAmount: Number(paymentAmount),
-              paymentFrequency
+              paymentFrequency,
+              assignedCollectorId: assignedCollectorId!
             })
           }
         />
@@ -140,6 +161,15 @@ export default function ConvertirScreen() {
         value={paymentFrequency}
         onSelect={(v) => setPaymentFrequency(v as Frequency)}
         onClose={() => setOpenFrequency(false)}
+      />
+
+      <PickerModal
+        visible={openCollector}
+        title="Cobrador asignado"
+        options={collectors.map((c) => ({ value: c.id, label: c.name }))}
+        value={assignedCollectorId}
+        onSelect={(v) => setAssignedCollectorId(v)}
+        onClose={() => setOpenCollector(false)}
       />
     </View>
   );

@@ -239,8 +239,8 @@ model Customer {
   // Relations
   createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
   createdById         String?  @map("created_by_id")
-  assignedCollector   User?    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
-  assignedCollectorId String?  @map("assigned_collector_id")
+  assignedCollector   User     @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
+  assignedCollectorId String   @map("assigned_collector_id")
 
   loans               Loan[]
   messages            Message[]

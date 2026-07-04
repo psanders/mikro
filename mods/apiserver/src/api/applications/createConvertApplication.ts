@@ -99,6 +99,9 @@ export function createConvertApplication(client: DbClient) {
           preferredPaymentDay: null
         });
       }
+      // A reused customer already carries a required assignedCollectorId
+      // (mikro/#41: collector assignment is mandatory at every level), so no
+      // backfill branch is needed here.
 
       const loan = await createCreateLoan(tx)({
         customerId: customer.id,

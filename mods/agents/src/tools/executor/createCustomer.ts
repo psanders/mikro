@@ -18,6 +18,12 @@ export async function handleCreateCustomer(
       message: "Phone number is required but not available in context"
     };
   }
+  if (!args.assignedCollectorId) {
+    return {
+      success: false,
+      message: "assignedCollectorId is required (every customer must have a collector, mikro/#41)"
+    };
+  }
 
   const customer = await deps.createCustomer({
     name: args.name as string,
@@ -25,6 +31,7 @@ export async function handleCreateCustomer(
     idNumber: args.idNumber as string,
     collectionPoint: args.collectionPoint as string | undefined,
     homeAddress: args.homeAddress as string,
+    assignedCollectorId: args.assignedCollectorId as string,
     jobPosition: args.jobPosition as string | undefined,
     income: args.income ? Number(args.income) : undefined,
     isBusinessOwner: args.isBusinessOwner === "true" || args.isBusinessOwner === true,

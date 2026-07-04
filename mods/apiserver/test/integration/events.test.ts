@@ -179,6 +179,11 @@ describe("Founder Feed Integration", () => {
     });
 
     it("application.converted on convertApplication", async () => {
+      const collector = await caller.createUser({
+        name: "Ana Collector",
+        phone: uniquePhone(),
+        role: "COLLECTOR"
+      });
       const app = await makeApplication({
         status: "SIGNED",
         idNumber: "001-7654321-0",
@@ -189,7 +194,8 @@ describe("Founder Feed Integration", () => {
         principal: 5000,
         termLength: 10,
         paymentAmount: 650,
-        paymentFrequency: "WEEKLY"
+        paymentFrequency: "WEEKLY",
+        assignedCollectorId: collector.id
       });
 
       const converted = await db.businessEvent.findMany({

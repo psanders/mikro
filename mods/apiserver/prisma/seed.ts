@@ -239,7 +239,7 @@ async function main() {
   ];
   const customers: Awaited<ReturnType<typeof prisma.customer.upsert>>[] = [];
   for (let i = 0; i < 10; i++) {
-    const assignedCollector = i < 6 ? collectors[i % 2] : null;
+    const assignedCollector = collectors[i % 2];
     const c = await prisma.customer.upsert({
       where: { id: ID.customers[i] },
       update: {},
@@ -259,7 +259,7 @@ async function main() {
         notes: i === 2 || i === 5 ? "Follow up on payment" : null,
         preferredPaymentDay: i % 2 === 0 ? "FRIDAY" : i % 2 === 1 ? "MONDAY" : null,
         createdById: admin.id,
-        assignedCollectorId: assignedCollector?.id ?? null
+        assignedCollectorId: assignedCollector.id
       }
     });
     customers.push(c);

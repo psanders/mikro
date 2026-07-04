@@ -37,7 +37,7 @@ export const createCustomerSchema = z.object({
   income: z.number().optional(),
   isBusinessOwner: z.boolean().optional(),
   createdById: z.uuid().optional(),
-  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
+  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
   isActive: z.boolean().default(true),
   notes: z.string().optional(),
   preferredPaymentDay: dayOfWeekEnum.nullable().default(null)

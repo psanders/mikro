@@ -8,7 +8,9 @@ import type { ToolFunction } from "../llm/types.js";
 
 /**
  * Tool definition for creating a new customer.
- * Used by Joan (guest onboarding) and Maria (admin).
+ * Not exposed to any WhatsApp agent persona (agents.yaml) today — reachable
+ * only via the founder-copilot chat, which lists it as a WRITE_TOOL (see
+ * `mods/apiserver/src/api/copilot/toolPolicy.ts`).
  */
 export const createCustomerTool: ToolFunction = {
   type: "function",
@@ -58,9 +60,14 @@ export const createCustomerTool: ToolFunction = {
           description:
             "Dia preferido de pago semanal. Opciones: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY. Por defecto: MONDAY.",
           enum: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+        },
+        assignedCollectorId: {
+          type: "string",
+          description:
+            "ID (uuid) del cobrador asignado. Obligatorio: resolver con listUsers (role=COLLECTOR) antes de llamar esta herramienta; todo cliente debe tener un cobrador asignado (mikro/#41)."
         }
       },
-      required: ["name", "idNumber", "homeAddress"]
+      required: ["name", "idNumber", "homeAddress", "assignedCollectorId"]
     }
   }
 };

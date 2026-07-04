@@ -409,7 +409,7 @@ export const convertApplicationSchema = z
     paymentFrequency: paymentFrequencyEnum,
     startingDate: safeOptionalDate,
     moraRate: z.number().min(0).max(1, "moraRate must be between 0 and 1").optional(),
-    assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional()
+    assignedCollectorId: z.uuid({ error: "Invalid collector ID" })
   })
   .refine(requireRef, refMessage);
 
