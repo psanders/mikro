@@ -130,7 +130,7 @@ export function FeedScreen() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
-        <h1 className="text-[19px] font-bold tracking-[-0.3px] text-[#14254A]">Feed</h1>
+        <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Feed</h1>
         <button
           type="button"
           onClick={() => copilot.openWith()}
@@ -164,7 +164,9 @@ export function FeedScreen() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {feed.isPending && <div className="px-6 py-4 text-sm text-[#697A93]">Cargando…</div>}
+        {feed.isPending && (
+          <div className="px-6 py-4 text-sm font-medium text-[#697A93]">Cargando…</div>
+        )}
 
         {feed.isError && (
           <div className="p-6">

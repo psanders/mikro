@@ -53,7 +53,10 @@ export function RuleCard({ rule, note, onEdit, onDisable, className }: RuleCardP
         />
         <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
           <span
-            className={cn("text-[13px] font-bold", enabled ? "text-[#16A34A]" : "text-[#697A93]")}
+            className={cn(
+              "text-[13px] font-semibold",
+              enabled ? "text-[#16A34A]" : "text-[#697A93]"
+            )}
           >
             {enabled ? "Regla activa" : "Regla inactiva"}
           </span>

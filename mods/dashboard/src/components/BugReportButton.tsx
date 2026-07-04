@@ -243,7 +243,7 @@ export function BugReportButton() {
         <div className="fixed inset-x-0 bottom-6 z-50 flex justify-end px-6 pointer-events-none">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#14254A] py-2.5 pl-5 pr-2.5 shadow-lg">
             <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
-            <span className="text-[14px] font-bold text-white">
+            <span className="text-[14px] font-medium text-white">
               Grabando reporte · {formatElapsed(elapsedSeconds)}
             </span>
             <button
@@ -264,7 +264,7 @@ export function BugReportButton() {
           <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-xl">
             {stage === "consent" && (
               <>
-                <h2 className="text-[16px] font-bold text-[#14254A]">Reportar un problema</h2>
+                <h2 className="text-[16px] font-semibold text-[#14254A]">Reportar un problema</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
                   Esto va a grabar tu pantalla mientras muestras el problema. La grabación se usa
                   solo para crear el reporte — no se guarda de forma permanente. Evita mostrar datos
@@ -283,7 +283,7 @@ export function BugReportButton() {
 
             {stage === "processing" && (
               <>
-                <h2 className="text-[16px] font-bold text-[#14254A]">Enviando reporte…</h2>
+                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviando reporte…</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
                   Creando el reporte en GitHub. Esto puede tardar un momento.
                 </p>
@@ -295,7 +295,7 @@ export function BugReportButton() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D6F3E5]">
                   <Check size={26} className="text-[#0E7C5F]" strokeWidth={2.5} />
                 </div>
-                <h2 className="mt-3 text-[16px] font-bold text-[#14254A]">Reporte enviado</h2>
+                <h2 className="mt-3 text-[16px] font-semibold text-[#14254A]">Reporte enviado</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
                   Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.
                 </p>
@@ -309,7 +309,7 @@ export function BugReportButton() {
 
             {stage === "error" && (
               <>
-                <h2 className="text-[16px] font-bold text-[#14254A]">No se pudo enviar</h2>
+                <h2 className="text-[16px] font-semibold text-[#14254A]">No se pudo enviar</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#DC2626]">{errorMessage}</p>
                 <div className="mt-5 flex justify-end gap-2">
                   <Button variant="secondary" onClick={reset}>

@@ -90,7 +90,9 @@ function ProfileMenu({ initials, name }: ProfileMenuProps) {
       </button>
       {open && (
         <div className="absolute bottom-0 left-[46px] z-20 flex w-[200px] flex-col gap-[2px] rounded-[12px] border border-[#E5EAF1] bg-white p-[6px] shadow-[0_8px_24px_rgba(20,37,74,0.14)]">
-          <p className="truncate px-[10px] py-[8px] text-[13px] font-bold text-[#14254A]">{name}</p>
+          <p className="truncate px-[10px] py-[8px] text-[13px] font-semibold text-[#14254A]">
+            {name}
+          </p>
           <div className="h-px bg-[#E5EAF1]" />
           <button
             type="button"

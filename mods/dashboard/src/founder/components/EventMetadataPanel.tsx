@@ -21,7 +21,7 @@ export function EventMetadataPanel({ event, onClose }: EventMetadataPanelProps) 
     <div className="flex flex-col gap-3 rounded-[14px] border border-[#E5EAF1] bg-white p-4">
       <div className="flex items-center gap-2">
         <Braces size={15} className="text-[#697A93]" />
-        <span className="flex-1 text-[13px] font-bold text-[#14254A]">Metadata</span>
+        <span className="flex-1 text-[13px] font-semibold text-[#14254A]">Metadata</span>
         <button
           type="button"
           onClick={onClose}

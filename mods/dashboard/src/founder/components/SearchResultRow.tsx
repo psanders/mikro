@@ -70,7 +70,7 @@ function ClienteRow({ name, phone, idNumber, onSelect, className }: ClienteRowPr
         {initialsOf(name)}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-[16px] font-bold text-[#14254A]">{name}</p>
+        <p className="truncate text-[16px] font-semibold text-[#14254A]">{name}</p>
         {meta && <p className="truncate text-[12px] font-medium text-[#697A93]">{meta}</p>}
       </div>
       <button type="button" onClick={onSelect} className={VER_BUTTON}>

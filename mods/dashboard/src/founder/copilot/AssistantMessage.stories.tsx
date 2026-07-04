@@ -34,6 +34,17 @@ export const WithoutProvenance: Story = {
   }
 };
 
+/**
+ * A short one-line tool-result reply carrying a long unbreakable token (a
+ * WhatsApp message ID). Must wrap inside the dock width — regression guard for
+ * the bug where the paragraph grew wider than the dock and got clipped.
+ */
+export const LongUnbreakableToken: Story = {
+  args: {
+    text: "Hecho. Promoción enviada a +17853178070. ID del mensaje: wamid.HBgLMTc4NTMxNzgwNzAVAgARGBI2NzFCQTAwMEI1NzMzQzlFQkEA"
+  }
+};
+
 /** Markdown must render (bold/lists), not show literal `**`/`-` characters. */
 export const WithMarkdown: Story = {
   args: {

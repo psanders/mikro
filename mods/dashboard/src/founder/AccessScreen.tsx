@@ -38,7 +38,7 @@ export function AccessScreen() {
             <Smartphone size={24} />
           </div>
           <div className="flex flex-col gap-2">
-            <p className="text-[17px] font-bold text-[#14254A]">
+            <p className="text-[17px] font-semibold text-[#14254A]">
               Esta aplicación es el panel de fundadores
             </p>
             <p className="text-[13px] font-medium leading-[1.5] text-[#697A93]">

@@ -10,9 +10,14 @@
  * shows the typing indicator at the foot of the thread.
  */
 import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowUp, PanelRightClose, Sparkles } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { TypingIndicator } from "./TypingIndicator";
+
+// Textarea grows with content instead of clipping it at one row, capping at
+// ~5 lines so a long question can't push the composer to swallow the thread.
+const COMPOSER_MAX_HEIGHT = 110;
 
 export interface CopilotDockProps {
   /** Thread content — bubbles, cards, capability chips. */
@@ -39,6 +44,23 @@ export function CopilotDock({
 }: CopilotDockProps) {
   const trimmed = value.trim();
   const canSend = trimmed.length > 0 && !busy;
+  const threadRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Scroll the thread to the newest message whenever it changes (send, reply,
+  // typing indicator toggling) so the answer never lands below the fold.
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [children, busy]);
+
+  // Grow the composer with its content instead of clipping it at one row.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT)}px`;
+  }, [value]);
 
   function handleSend() {
     if (!canSend) return;
@@ -64,7 +86,7 @@ export function CopilotDock({
           <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
             <Sparkles size={14} strokeWidth={2} className="text-white" />
           </div>
-          <span className="text-[15px] font-bold text-[#14254A]">Copiloto</span>
+          <span className="text-[15px] font-semibold text-[#14254A]">Copiloto</span>
         </div>
         <div className="flex items-center gap-[12px]">
           <button
@@ -78,7 +100,10 @@ export function CopilotDock({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[16px]">
+      <div
+        ref={threadRef}
+        className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto overflow-x-hidden p-[16px]"
+      >
         {children}
         {busy && <TypingIndicator />}
       </div>
@@ -86,12 +111,13 @@ export function CopilotDock({
       <div className="shrink-0 px-[16px] pb-[16px] pt-[12px]">
         <div className="flex items-center gap-[10px] rounded-[12px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[11px]">
           <textarea
+            ref={textareaRef}
             rows={1}
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Pregunta o pide una acción…"
-            className="flex-1 resize-none bg-transparent text-[13px] font-medium text-[#14254A] placeholder:text-[#697A93] focus:outline-none"
+            className="max-h-[110px] flex-1 resize-none overflow-y-auto bg-transparent text-[13px] font-medium leading-[20px] text-[#14254A] placeholder:text-[#697A93] focus:outline-none"
           />
           <button
             type="button"

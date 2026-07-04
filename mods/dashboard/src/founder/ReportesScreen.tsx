@@ -254,7 +254,7 @@ export function ReportesScreen() {
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
         <div className="flex flex-col gap-[2px]">
-          <h1 className="text-[19px] font-bold tracking-[-0.3px] text-[#14254A]">Reportes</h1>
+          <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Reportes</h1>
           <p className="text-[12px] font-medium text-[#697A93]">
             Se generan solos. Descarga y listo.
           </p>

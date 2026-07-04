@@ -279,7 +279,7 @@ export function CopilotDockContainer() {
             return (
               <div
                 key={item.id}
-                className="w-full rounded-[12px] border border-[#F3D2D2] bg-[#FEF6F6] px-[14px] py-[11px] text-[13px] font-medium leading-[20px] text-[#B42121]"
+                className="w-full break-words rounded-[12px] border border-[#F3D2D2] bg-[#FEF6F6] px-[14px] py-[11px] text-[13px] font-medium leading-[20px] text-[#B42121]"
               >
                 {item.text}
               </div>
