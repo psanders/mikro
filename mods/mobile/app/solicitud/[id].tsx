@@ -68,6 +68,7 @@ import {
   nextHint,
   PIPELINE_STEPS,
   recommendationLabel,
+  reopenActionLabel,
   riskBandMeta,
   riskVariantForBand,
   statusMeta
@@ -416,7 +417,7 @@ export default function SolicitudDetailScreen() {
             testID="reopen-solicitud"
           >
             <RotateCcw size={15} color={colors.text.secondary} strokeWidth={2} />
-            <Text style={styles.discardText}>Reabrir solicitud</Text>
+            <Text style={styles.discardText}>{reopenActionLabel(app.status)}</Text>
           </Pressable>
         )}
 

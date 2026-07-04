@@ -101,6 +101,16 @@ export function allowedActions(status: string): {
   };
 }
 
+/**
+ * Label for the "reopen" action, worded for the status it's reopening from.
+ * Both APPROVED and REJECTED reopen to IN_REVIEW, but "Reabrir" only reads
+ * right for a rejected/closed request — undoing an approval is really sending
+ * it *back* into the evaluation queue, so it says "Regresar a evaluaciones".
+ */
+export function reopenActionLabel(status: string): string {
+  return status === "APPROVED" ? "Regresar a evaluaciones" : "Reabrir solicitud";
+}
+
 export function formatDop(value: unknown): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return "";
