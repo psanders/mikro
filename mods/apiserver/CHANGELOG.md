@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.21.0](https://github.com/psanders/mikro/compare/v1.20.1...v1.21.0) (2026-07-04)
+
+### Bug Fixes
+
+- **apiserver,common,mobile,agents:** require assigned collector for every customer ([7b96568](https://github.com/psanders/mikro/commit/7b965681e27dd9ff0468332f85afc4c95bc99b27)), closes [#41](https://github.com/psanders/mikro/issues/41)
+- **dashboard,mobile,apiserver:** drop screenshot in favor of video, pin GitHub API version ([b23e8c1](https://github.com/psanders/mikro/commit/b23e8c1cbf739b2b3eee0c061f422d94d186de31))
+
+### Features
+
+- **dashboard,mobile,apiserver:** real video capture, floating pill parity, and no-link result copy for bug reports ([e9ff1c5](https://github.com/psanders/mikro/commit/e9ff1c5b08db7beee4e883e3f363dfce079675a4)), closes [mikro#87](https://github.com/mikro/issues/87)
+
 ## [1.20.1](https://github.com/psanders/mikro/compare/v1.20.0...v1.20.1) (2026-07-03)
 
 **Note:** Version bump only for package @mikro/apiserver
