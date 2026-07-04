@@ -34,7 +34,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
+          # Pinned to macos-26, not macos-latest: the label is mid-migration
+          # (macOS 15 → 26) and assigns either image per run. apple-metal
+          # (via screencapturekit) needs the macOS 26 SDK's Metal APIs, so
+          # macOS 15 runners fail the Swift bridge compile.
+          - platform: macos-26
             args: "--target universal-apple-darwin"
             rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
           - platform: windows-latest

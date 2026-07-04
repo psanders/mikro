@@ -40,6 +40,13 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   env in any new profile.
 - The Docker image `psanders/mikro` is published linux/amd64 only. On
   Apple Silicon run it with `--platform linux/amd64`.
+- **build-dashboard pins `macos-26`, not `macos-latest`.** The `-latest`
+  label is a lottery during GitHub's macOS 15→26 migration (started
+  2026-06-15), and `screencapturekit` → `apple-metal` needs the macOS 26
+  SDK's Metal APIs — on a macOS 15 runner its Swift bridge fails to
+  compile (`MTLSamplerReductionMode` not in scope). Keep the pin until
+  the migration completes; any new macOS job that builds src-tauri needs
+  the same.
 - **`patch-package`** patches a dependency's shipped code post-install (root
   `postinstall` script, diffs in `patches/`). First and, as of 2026-07-04,
   only use: `react-native-nitro-screen-recorder`'s Expo config plugin
