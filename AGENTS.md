@@ -40,6 +40,18 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   env in any new profile.
 - The Docker image `psanders/mikro` is published linux/amd64 only. On
   Apple Silicon run it with `--platform linux/amd64`.
+- **`patch-package`** patches a dependency's shipped code post-install (root
+  `postinstall` script, diffs in `patches/`). First and, as of 2026-07-04,
+  only use: `react-native-nitro-screen-recorder`'s Expo config plugin
+  unconditionally sets up an iOS BroadcastExtension target this app never
+  needs (it only uses `startInAppRecording` on iOS), and building that
+  extension hit an unresolved upstream EAS managed-credentials bug
+  (expo/expo#40851 — provisioning profile never picks up the App Group, and
+  regenerating credentials didn't fix it for other reporters either). The
+  patch skips the extension entirely rather than fighting EAS to provision
+  something unused. Pin the exact version of any patched package (no `^`/`~`)
+  — patch-package fails loudly on a version mismatch, which is the point, but
+  only if the pin actually stops an unnoticed bump first.
 
 ## Mobile build & release architecture
 
@@ -48,13 +60,13 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   the debug keystore. Free and sufficient for internal distribution.
 - **iOS:** NO macOS runner ever compiles iOS — they cost a 10x minutes
   multiplier and installable IPAs need Apple signing that EAS already
-  manages. `build-ios.yaml` triggers an EAS *cloud* build from an ubuntu
-  runner: manual dispatch (profile choice, default preview) or a v* tag
+  manages. `build-ios.yaml` triggers an EAS _cloud_ build from an ubuntu
+  runner: manual dispatch (profile choice, default preview) or a v\* tag
   (production; IPA attached to the Release). Unlike build-android it does
   NOT run on every main push — each run spends EAS build credits. Native
   binaries otherwise: `eas build --platform ios` (TestFlight after Apple
   approval). JS-only changes: `eas update` (OTA, `runtimeVersion.policy:
-  fingerprint` gates native compatibility).
+fingerprint` gates native compatibility).
 - **What PRs check instead** (`pr-checks.yaml` → mobile-checks): mobile
   typecheck, Jest, and `expo prebuild --platform all --no-install`, which
   resolves every config plugin on Linux and catches broken native config
@@ -82,7 +94,7 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   release.yaml creates it (title + "Build outputs" body) right after lerna
   pushes the tag; downstream workflows only ATTACH assets to it —
   build-dashboard via tauri-action, build-android via `gh release upload`
-  (it detects release commits by the v* tag on HEAD). Deterministic links
+  (it detects release commits by the v\* tag on HEAD). Deterministic links
   (Docker image, EAS builds page) live in the body release.yaml writes.
   Don't add another workflow that creates or rewrites the Release body, and
   keep new build outputs reporting into that Release.

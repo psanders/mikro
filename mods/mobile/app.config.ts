@@ -3,19 +3,20 @@
  */
 import { ExpoConfig, ConfigContext } from "expo/config";
 
-// Props for react-native-nitro-screen-recorder's plugin. Note: the library's
-// own iOS plugin chain (withScreenRecorder -> withBroadcastExtension) already
-// calls its internal withEasManagedCredentials step itself — see
-// node_modules/react-native-nitro-screen-recorder/lib/*/expo-plugin/ios/withBroadcastExtension.js
-// — so `extra.eas.build.experimental.ios.appExtensions` for the
-// BroadcastExtension target (incl. the group.do.mikro.app.screen-recorder App
-// Group) is populated automatically on every prebuild. Do NOT add a second,
-// manual `withEasManagedCredentials` plugin entry here: doing so produces a
-// literal duplicate entry in the resolved appExtensions array (confirmed via
-// `npx expo config --json`) without fixing anything — an EAS iOS build still
-// failed with the same stale-provisioning-profile error after that was tried
-// (2026-07-04). That failure is upstream EAS managed-credentials behavior,
-// not a missing config plugin; see e.g. https://github.com/expo/expo/issues/40851.
+// Props for react-native-nitro-screen-recorder's plugin. On iOS, the plugin
+// is PATCHED (see patches/react-native-nitro-screen-recorder+0.7.0.patch) to
+// skip its BroadcastExtension target entirely — we only ever call
+// `startInAppRecording`/`stopInAppRecording` on iOS (Android is the platform
+// that needs `startGlobalRecording`, since MediaProjection has no in-app-only
+// mode), so the extension, its App Group entitlement, and the EAS
+// managed-credentials wiring the library does for it are all unused weight.
+// Building the extension anyway hit an unresolved upstream EAS bug
+// (expo/expo#40851): the BroadcastExtension target's provisioning profile
+// never picked up the App Group, and neither a manual `withEasManagedCredentials`
+// plugin entry nor credential regeneration fixed it for other reporters
+// either (2026-07-04). Not creating the extension at all sidesteps the bug
+// rather than fighting it. Android is unaffected by any of this — the patch
+// only touches the iOS plugin chain.
 const screenRecorderPluginProps = {
   enableCameraPermission: false,
   enableMicrophonePermission: true,
@@ -85,13 +86,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }],
     // Bug-report screen recording (mikro/#69, extend-bug-report-native-capture).
-    // No camera overlay needed, so camera permission stays off. iOS uses
-    // in-app-only recording at runtime (no broadcast extension APIs called),
-    // but the plugin unconditionally sets up a BroadcastExtension target and
-    // App Group entitlement on iOS regardless (incl. wiring EAS managed
-    // credentials for that target internally — see screenRecorderPluginProps
-    // comment above). Android only supports system-wide ("global") recording
-    // via this library — see design.md's platform-asymmetry note.
+    // No camera overlay needed, so camera permission stays off. See
+    // screenRecorderPluginProps comment above for why iOS's BroadcastExtension
+    // is patched out; Android still gets its full global-recording setup
+    // (permissions, service, MainActivity changes) from this same plugin
+    // entry — see design.md's platform-asymmetry note.
     ["react-native-nitro-screen-recorder", screenRecorderPluginProps]
   ],
   extra: {
