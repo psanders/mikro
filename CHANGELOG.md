@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.21.2](https://github.com/psanders/mikro/compare/v1.21.1...v1.21.2) (2026-07-04)
+
+### Bug Fixes
+
+- **ci:** pin build-dashboard macOS runner to macos-26 ([6b66ff5](https://github.com/psanders/mikro/commit/6b66ff56601018231d1f23dbaa615db6acda6eeb))
+- **dashboard:** founder emphasis pass + copilot composer/scroll UX ([e3fc239](https://github.com/psanders/mikro/commit/e3fc2391dee63aa9ec986902dd1da302f5df4787))
+
 ## [1.21.1](https://github.com/psanders/mikro/compare/v1.21.0...v1.21.1) (2026-07-04)
 
 ### Bug Fixes
