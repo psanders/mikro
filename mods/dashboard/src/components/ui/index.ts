@@ -4,3 +4,4 @@
 export { Button, type ButtonVariant } from "./Button";
 export { Field } from "./Field";
 export { Badge, type BadgeTone } from "./Badge";
+export { Tooltip } from "./Tooltip";

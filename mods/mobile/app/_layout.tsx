@@ -15,7 +15,7 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient, queryClient } from "../lib/api";
 import { SyncProvider } from "../lib/offline/SyncProvider";
-import { BugReportProvider } from "../lib/bugReport/BugReportContext";
+import { FeedbackProvider } from "../lib/feedback/FeedbackContext";
 import { getPin, getToken, clearToken } from "../lib/auth";
 import { setSessionExpiredHandler } from "../lib/session";
 
@@ -95,7 +95,7 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <SyncProvider>
-          <BugReportProvider>
+          <FeedbackProvider>
             <StatusBar style="dark" />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
@@ -126,7 +126,7 @@ export default function RootLayout() {
               <Stack.Screen name="historico/[loanId]" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="perfil" options={{ animation: "slide_from_right" }} />
             </Stack>
-          </BugReportProvider>
+          </FeedbackProvider>
         </SyncProvider>
       </QueryClientProvider>
     </trpc.Provider>

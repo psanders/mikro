@@ -4,7 +4,7 @@
  * Presentational recording pill (Pencil node `Fd5n7` inside `s3PxMk`). Pure —
  * takes the elapsed time and the stop/discard callbacks and renders the pill
  * body only; the floating `fixed` positioning + capture state machine live in
- * `BugReportButton`. Split out so the visual can be exercised in Storybook
+ * `FeedbackButton`. Split out so the visual can be exercised in Storybook
  * without a live MediaRecorder session, and to keep exact parity with the
  * mobile app's `RecordingPill` (same props: elapsedSeconds / onStop /
  * onDiscard).

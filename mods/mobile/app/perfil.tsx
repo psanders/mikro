@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
-import { Bell, ShieldCheck, LifeBuoy, LogOut, Bug } from "lucide-react-native";
+import { Bell, ShieldCheck, LifeBuoy, LogOut, MessageSquare } from "lucide-react-native";
 import { colors, radii } from "../lib/theme";
 import { Header } from "../components/ui/Header";
 import { Avatar } from "../components/ui/Avatar";
@@ -13,8 +13,8 @@ import { StatCard } from "../components/ui/StatCard";
 import { ListTile } from "../components/ui/ListTile";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { OptionRow } from "../components/ui/OptionRow";
-import { BugReportConsentModal } from "../components/bugReport/BugReportConsentModal";
-import { useBugReport } from "../lib/bugReport/BugReportContext";
+import { FeedbackConsentModal } from "../components/feedback/FeedbackConsentModal";
+import { useFeedback } from "../lib/feedback/FeedbackContext";
 import {
   clearToken,
   clearPin,
@@ -42,8 +42,8 @@ export default function PerfilScreen() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [dualRole, setDualRole] = useState(false);
   const [navMode, setNavModeState] = useState<NavMode>("evaluator");
-  const [bugReportConsentVisible, setBugReportConsentVisible] = useState(false);
-  const bugReport = useBugReport();
+  const [feedbackConsentVisible, setFeedbackConsentVisible] = useState(false);
+  const feedback = useFeedback();
 
   useEffect(() => {
     (async () => {
@@ -124,9 +124,9 @@ export default function PerfilScreen() {
             />
             <ListTile icon={LifeBuoy} label="Ayuda y soporte" />
             <ListTile
-              icon={Bug}
-              label="Reportar un problema"
-              onPress={() => setBugReportConsentVisible(true)}
+              icon={MessageSquare}
+              label="Enviar feedback"
+              onPress={() => setFeedbackConsentVisible(true)}
             />
           </View>
 
@@ -148,12 +148,12 @@ export default function PerfilScreen() {
         </View>
       </ScrollView>
 
-      <BugReportConsentModal
-        visible={bugReportConsentVisible}
-        onCancel={() => setBugReportConsentVisible(false)}
+      <FeedbackConsentModal
+        visible={feedbackConsentVisible}
+        onCancel={() => setFeedbackConsentVisible(false)}
         onConfirm={async () => {
-          setBugReportConsentVisible(false);
-          await bugReport.startRecording();
+          setFeedbackConsentVisible(false);
+          await feedback.startRecording();
         }}
       />
     </View>

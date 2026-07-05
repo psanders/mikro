@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Global bug-report recording state (mikro/#69, extend-bug-report-native-capture).
+ * Global feedback recording state (mikro/#69, extend-bug-report-native-capture).
  * Lives at the root layout so the floating recording pill and status modal
  * stay mounted across navigation — the whole point of the pill is that users
  * can move to any other screen while recording continues.
@@ -12,7 +12,7 @@
  * library — `MediaProjection` fundamentally mirrors the whole device screen —
  * so Android uses `startGlobalRecording`/`stopGlobalRecording`, which captures
  * system-wide content (other apps, notifications) if the user switches away
- * while recording. The consent copy in BugReportConsentModal calls this out
+ * while recording. The consent copy in FeedbackConsentModal calls this out
  * on Android specifically. See design.md (Decision 3) for the full rationale.
  */
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
@@ -29,21 +29,18 @@ import {
   type ScreenRecordingFile
 } from "react-native-nitro-screen-recorder";
 import {
-  submitBugReportWithRetry,
-  toSpanishBugReportError
-} from "@mikro/common/utils/bugReportSubmit";
+  submitFeedbackWithRetry,
+  toSpanishFeedbackError
+} from "@mikro/common/utils/feedbackSubmit";
 import { trpc } from "../api";
-import { BugReportPill } from "../../components/bugReport/BugReportPill";
-import { BugReportStatusModal } from "../../components/bugReport/BugReportStatusModal";
-import {
-  finishBugReportRecording,
-  type BugReportSubmissionInput
-} from "./finishBugReportRecording";
+import { FeedbackPill } from "../../components/feedback/FeedbackPill";
+import { FeedbackStatusModal } from "../../components/feedback/FeedbackStatusModal";
+import { finishFeedbackRecording, type FeedbackSubmissionInput } from "./finishFeedbackRecording";
 
-export type BugReportStage = "idle" | "recording" | "processing" | "result" | "error";
+export type FeedbackStage = "idle" | "recording" | "processing" | "result" | "error";
 
-interface BugReportContextValue {
-  stage: BugReportStage;
+interface FeedbackContextValue {
+  stage: FeedbackStage;
   issueUrl: string | null;
   errorMessage: string | null;
   elapsedSeconds: number;
@@ -54,18 +51,18 @@ interface BugReportContextValue {
   reset: () => void;
 }
 
-const BugReportContext = createContext<BugReportContextValue | null>(null);
+const FeedbackContext = createContext<FeedbackContextValue | null>(null);
 
-export function BugReportProvider({ children }: { children: ReactNode }) {
-  const [stage, setStage] = useState<BugReportStage>("idle");
+export function FeedbackProvider({ children }: { children: ReactNode }) {
+  const [stage, setStage] = useState<FeedbackStage>("idle");
   const [issueUrl, setIssueUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // The captured submission is kept after a failure so "Intentar de nuevo"
   // re-sends the same recording instead of forcing a fresh one (mikro/#97).
-  const pendingInputRef = useRef<BugReportSubmissionInput | null>(null);
-  const submit = trpc.submitBugReport.useMutation();
+  const pendingInputRef = useRef<FeedbackSubmissionInput | null>(null);
+  const submit = trpc.submitFeedback.useMutation();
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -88,7 +85,7 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
       if (getMicrophonePermissionStatus() !== "granted") {
         const response = await requestMicrophonePermission();
         if (!response.granted) {
-          throw new Error("Se requiere permiso de micrófono para grabar el reporte.");
+          throw new Error("Se requiere permiso de micrófono para grabar el feedback.");
         }
       }
 
@@ -142,13 +139,13 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
       const file: ScreenRecordingFile | undefined =
         Platform.OS === "ios" ? await stopInAppRecording() : await stopGlobalRecording();
 
-      const result = await finishBugReportRecording(file, {
+      const result = await finishFeedbackRecording(file, {
         readBase64: (path) => new File(path).base64(),
         // Capture the exact submission for a manual retry (no re-record/re-read)
         // and retry transient failures with the same recording (mikro/#97).
         submit: (input) => {
           pendingInputRef.current = input;
-          return submitBugReportWithRetry(() => submit.mutateAsync(input));
+          return submitFeedbackWithRetry(() => submit.mutateAsync(input));
         },
         platform: Platform.OS
       });
@@ -157,7 +154,7 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
       setIssueUrl(result.issueUrl);
       setStage("result");
     } catch (err) {
-      setErrorMessage(toSpanishBugReportError(err));
+      setErrorMessage(toSpanishFeedbackError(err));
       setStage("error");
     }
   }, [clearTimer, submit]);
@@ -173,12 +170,12 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
     }
     setStage("processing");
     try {
-      const result = await submitBugReportWithRetry(() => submit.mutateAsync(input));
+      const result = await submitFeedbackWithRetry(() => submit.mutateAsync(input));
       pendingInputRef.current = null;
       setIssueUrl(result.issueUrl);
       setStage("result");
     } catch (err) {
-      setErrorMessage(toSpanishBugReportError(err));
+      setErrorMessage(toSpanishFeedbackError(err));
       setStage("error");
     }
   }, [startRecording, submit]);
@@ -197,7 +194,7 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
   }, [clearTimer, reset]);
 
   return (
-    <BugReportContext.Provider
+    <FeedbackContext.Provider
       value={{
         stage,
         issueUrl,
@@ -210,22 +207,22 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
         reset
       }}
     >
-      {/* Explicit full-screen View (not a bare Fragment) so BugReportPill's
+      {/* Explicit full-screen View (not a bare Fragment) so FeedbackPill's
           `position: "absolute"` always has a definite, full-screen
           containing block to resolve against, regardless of what any
           ancestor provider does. */}
       <View style={styles.root}>
         {children}
-        <BugReportPill />
-        <BugReportStatusModal />
+        <FeedbackPill />
+        <FeedbackStatusModal />
       </View>
-    </BugReportContext.Provider>
+    </FeedbackContext.Provider>
   );
 }
 
-export function useBugReport(): BugReportContextValue {
-  const ctx = useContext(BugReportContext);
-  if (!ctx) throw new Error("useBugReport must be used within a BugReportProvider");
+export function useFeedback(): FeedbackContextValue {
+  const ctx = useContext(FeedbackContext);
+  if (!ctx) throw new Error("useFeedback must be used within a FeedbackProvider");
   return ctx;
 }
 

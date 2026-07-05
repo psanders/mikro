@@ -1,15 +1,16 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * In-app bug report (mikro/#69): click the bug icon → consent → record →
- * click the floating pill's stop button → upload. The apiserver transcribes
- * (when there's audio), structures, and files a GitHub issue with the video
- * attached — see createSubmitBugReport.ts. No screenshot is captured at all
- * anymore: the video is strictly more useful (it's the whole reason we did
- * the native-capture work), so it's the default and only visual now. The
- * result screen doesn't show the issue link either: the target repos are
- * going private, so reporters (who won't have repo access) just get a "the
- * team will review it" message instead.
+ * In-app feedback (mikro/#69): click the feedback icon → consent → record →
+ * click the floating pill's stop button → upload. Feedback is generic — a bug,
+ * something confusing, or an idea. The apiserver transcribes (when there's
+ * audio), structures, and files a GitHub issue with the video attached — see
+ * createSubmitFeedback.ts. No screenshot is captured at all anymore: the video
+ * is strictly more useful (it's the whole reason we did the native-capture
+ * work), so it's the default and only visual now. The result screen doesn't
+ * show the issue link either: the target repos are going private, so users
+ * (who won't have repo access) just get a "the team will review it" message
+ * instead.
  *
  * Capture source (extend-bug-report-native-capture): WKWebView on macOS
  * doesn't implement `getDisplayMedia`, so the Tauri build can't grab a live
@@ -18,7 +19,7 @@
  * `hasDisplayMedia()` true covers web AND Windows Tauri (real screen+mic
  * video, muxed by the browser's own MediaRecorder); false means the Tauri
  * native path — a silent screen-only video via ScreenCaptureKit
- * (`start_bug_report_recording`/`stop_bug_report_recording`), no microphone
+ * (`start_feedback_recording`/`stop_feedback_recording`), no microphone
  * at all. ScreenCaptureKit can't capture the mic (only system/app audio
  * output), and muxing a separate mic track in would need a bundled/signed
  * ffmpeg — real distribution scope for a video whose point is "show what
@@ -26,18 +27,19 @@
  *
  * The "recording" stage renders a floating, non-blocking pill (not a
  * full-screen modal) so the user can navigate the dashboard while recording
- * to demonstrate a multi-page bug — matching the mobile app's pill, and
+ * to demonstrate a multi-page issue — matching the mobile app's pill, and
  * fixing a real limitation the original full-screen-modal design had even on
  * web.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bug, Circle, Check } from "lucide-react";
+import { MessageSquare, Circle, Check } from "lucide-react";
 import {
-  submitBugReportWithRetry,
-  toSpanishBugReportError
-} from "@mikro/common/utils/bugReportSubmit";
+  submitFeedbackWithRetry,
+  toSpanishFeedbackError
+} from "@mikro/common/utils/feedbackSubmit";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
+import { Tooltip } from "./ui/Tooltip";
 import { RecordingPill } from "./RecordingPill";
 
 type Stage = "idle" | "consent" | "recording" | "processing" | "result" | "error";
@@ -66,7 +68,7 @@ function blobToBase64(blob: Blob): Promise<{ base64: string; mimeType: string }>
 }
 
 /** RailItem-shaped button so it drops into FounderShell's nav rail without a new pattern. */
-export function BugReportButton() {
+export function FeedbackButton() {
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -82,7 +84,7 @@ export function BugReportButton() {
   // (mikro/#97). Null means nothing has been captured (or it already sent).
   const pendingRecordingRef = useRef<{ base64: string; mimeType: string } | null>(null);
 
-  const submit = trpc.submitBugReport.useMutation();
+  const submit = trpc.submitFeedback.useMutation();
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -145,7 +147,7 @@ export function BugReportButton() {
   // file's header for why.
   const startTauriRecording = useCallback(async () => {
     const { invoke } = await import("@tauri-apps/api/core");
-    await invoke("start_bug_report_recording");
+    await invoke("start_feedback_recording");
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -180,7 +182,7 @@ export function BugReportButton() {
   const finishSubmit = useCallback(
     async (recording: { base64: string; mimeType: string }) => {
       pendingRecordingRef.current = recording;
-      await submitBugReportWithRetry(() =>
+      await submitFeedbackWithRetry(() =>
         submit.mutateAsync({
           videoBase64: recording.base64,
           videoMimeType: recording.mimeType,
@@ -207,7 +209,7 @@ export function BugReportButton() {
           await finishSubmit(recording64);
           resolve();
         } catch (err) {
-          reject(err instanceof Error ? err : new Error("No se pudo enviar el reporte."));
+          reject(err instanceof Error ? err : new Error("No se pudo enviar el feedback."));
         }
       };
       recorder.stop();
@@ -216,9 +218,7 @@ export function BugReportButton() {
 
   const stopTauriRecording = useCallback(async () => {
     const { invoke } = await import("@tauri-apps/api/core");
-    const recording = await invoke<{ base64: string; mimeType: string }>(
-      "stop_bug_report_recording"
-    );
+    const recording = await invoke<{ base64: string; mimeType: string }>("stop_feedback_recording");
     await finishSubmit(recording);
   }, [finishSubmit]);
 
@@ -233,7 +233,7 @@ export function BugReportButton() {
       }
     } catch (err) {
       cleanupStreams();
-      setErrorMessage(toSpanishBugReportError(err));
+      setErrorMessage(toSpanishFeedbackError(err));
       setStage("error");
     }
   }, [clearTimer, cleanupStreams, stopBrowserRecording, stopTauriRecording]);
@@ -253,7 +253,7 @@ export function BugReportButton() {
     try {
       await finishSubmit(pending);
     } catch (err) {
-      setErrorMessage(toSpanishBugReportError(err));
+      setErrorMessage(toSpanishFeedbackError(err));
       setStage("error");
     }
   }, [finishSubmit]);
@@ -269,7 +269,7 @@ export function BugReportButton() {
         // Stop the native session so ScreenCaptureKit releases the screen, but
         // ignore the returned recording — nothing is submitted.
         const { invoke } = await import("@tauri-apps/api/core");
-        await invoke("stop_bug_report_recording");
+        await invoke("stop_feedback_recording");
       } else {
         const recorder = recorderRef.current;
         if (recorder && recorder.state !== "inactive") {
@@ -289,15 +289,16 @@ export function BugReportButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => stage === "idle" && setStage("consent")}
-        aria-label="Reportar un problema"
-        title="Reportar un problema"
-        className="relative flex h-10 w-10 items-center justify-center rounded-[11px] text-[#697A93] transition hover:bg-[#EEF3F9]"
-      >
-        <Bug size={19} strokeWidth={2} />
-      </button>
+      <Tooltip label="Enviar feedback">
+        <button
+          type="button"
+          onClick={() => stage === "idle" && setStage("consent")}
+          aria-label="Enviar feedback"
+          className="relative flex h-10 w-10 items-center justify-center rounded-[11px] text-[#697A93] transition hover:bg-[#EEF3F9]"
+        >
+          <MessageSquare size={19} strokeWidth={2} />
+        </button>
+      </Tooltip>
 
       {stage === "recording" && (
         <div className="fixed inset-x-0 bottom-6 z-50 flex justify-end px-6 pointer-events-none">
@@ -314,11 +315,12 @@ export function BugReportButton() {
           <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-xl">
             {stage === "consent" && (
               <>
-                <h2 className="text-[16px] font-semibold text-[#14254A]">Reportar un problema</h2>
+                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviar feedback</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Esto va a grabar tu pantalla mientras muestras el problema. La grabación se usa
-                  solo para crear el reporte — no se guarda de forma permanente. Evita mostrar datos
-                  sensibles de clientes si es posible.
+                  Esto va a grabar tu pantalla mientras muestras lo que quieres compartir — un
+                  problema, algo confuso o una idea. La grabación se usa solo para crear el reporte
+                  y no se guarda de forma permanente. Evita mostrar datos sensibles de clientes si
+                  es posible.
                 </p>
                 <div className="mt-5 flex justify-end gap-2">
                   <Button variant="secondary" onClick={reset}>
@@ -333,9 +335,9 @@ export function BugReportButton() {
 
             {stage === "processing" && (
               <>
-                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviando reporte…</h2>
+                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviando feedback…</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Creando el reporte en GitHub. Esto puede tardar un momento.
+                  Enviando tu feedback al equipo. Esto puede tardar un momento.
                 </p>
               </>
             )}
@@ -345,9 +347,9 @@ export function BugReportButton() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D6F3E5]">
                   <Check size={26} className="text-[#0E7C5F]" strokeWidth={2.5} />
                 </div>
-                <h2 className="mt-3 text-[16px] font-semibold text-[#14254A]">Reporte enviado</h2>
+                <h2 className="mt-3 text-[16px] font-semibold text-[#14254A]">Feedback enviado</h2>
                 <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
-                  Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.
+                  Gracias por tu feedback. Nuestro equipo lo va a revisar y priorizar.
                 </p>
                 <div className="mt-5 flex justify-end">
                   <Button variant="primary" onClick={reset}>

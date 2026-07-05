@@ -20,8 +20,7 @@ import { ExpoConfig, ConfigContext } from "expo/config";
 const screenRecorderPluginProps = {
   enableCameraPermission: false,
   enableMicrophonePermission: true,
-  microphonePermissionText:
-    "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app.",
+  microphonePermissionText: "Mikro necesita el micrófono para grabar feedback dentro de la app.",
   showPluginLogs: false
 };
 
@@ -51,7 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
       NSCameraUsageDescription: "Mikro necesita la cámara para fotografiar el contrato firmado.",
       NSMicrophoneUsageDescription:
-        "Mikro necesita el micrófono para grabar reportes de problemas dentro de la app."
+        "Mikro necesita el micrófono para grabar feedback dentro de la app."
     }
   },
   android: {
@@ -85,7 +84,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       }
     ],
     ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }],
-    // Bug-report screen recording (mikro/#69, extend-bug-report-native-capture).
+    // Feedback screen recording (mikro/#69, extend-bug-report-native-capture).
     // No camera overlay needed, so camera permission stays off. See
     // screenRecorderPluginProps comment above for why iOS's BroadcastExtension
     // is patched out; Android still gets its full global-recording setup

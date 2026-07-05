@@ -12,7 +12,8 @@ import { FileText, House, LogOut, ShipWheel, Search, TriangleAlert } from "lucid
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
-import { BugReportButton } from "../components/BugReportButton";
+import { FeedbackButton } from "../components/FeedbackButton";
+import { Tooltip } from "../components/ui/Tooltip";
 import { useAuth } from "../context/AuthContext";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
@@ -30,23 +31,24 @@ interface RailItemProps {
 
 function RailItem({ icon: Icon, label, active, onClick, inert, badge }: RailItemProps) {
   return (
-    <button
-      type="button"
-      onClick={inert ? undefined : onClick}
-      disabled={inert}
-      aria-label={label}
-      title={inert ? "Próximamente" : label}
-      className={cn(
-        "relative flex h-10 w-10 items-center justify-center rounded-[11px] transition",
-        active ? "bg-[#EAF1FB] text-[#1F4AA8]" : "text-[#697A93]",
-        inert ? "cursor-not-allowed" : "hover:bg-[#EEF3F9]"
-      )}
-    >
-      <Icon size={19} strokeWidth={2} />
-      {badge && (
-        <span className="absolute right-[6px] top-[5px] h-[9px] w-[9px] rounded-full border-2 border-white bg-[#DC2626]" />
-      )}
-    </button>
+    <Tooltip label={inert ? "Próximamente" : label}>
+      <button
+        type="button"
+        onClick={inert ? undefined : onClick}
+        disabled={inert}
+        aria-label={label}
+        className={cn(
+          "relative flex h-10 w-10 items-center justify-center rounded-[11px] transition",
+          active ? "bg-[#EAF1FB] text-[#1F4AA8]" : "text-[#697A93]",
+          inert ? "cursor-not-allowed" : "hover:bg-[#EEF3F9]"
+        )}
+      >
+        <Icon size={19} strokeWidth={2} />
+        {badge && (
+          <span className="absolute right-[6px] top-[5px] h-[9px] w-[9px] rounded-full border-2 border-white bg-[#DC2626]" />
+        )}
+      </button>
+    </Tooltip>
   );
 }
 
@@ -147,7 +149,7 @@ export function FounderShell() {
             onClick={() => navigate("/founder/reportes")}
           />
           <div className="flex-1" />
-          <BugReportButton />
+          <FeedbackButton />
           <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
         </nav>
 

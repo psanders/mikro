@@ -114,7 +114,7 @@ type Session = mac::Session;
 type Session = ();
 
 #[derive(Default)]
-pub struct BugReportCaptureState(Mutex<Option<Session>>);
+pub struct FeedbackCaptureState(Mutex<Option<Session>>);
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -127,8 +127,8 @@ pub struct CapturedRecording {
 /// `getDisplayMedia` (unsupported in WKWebView). No audio track — see this
 /// file's header for why microphone/system audio isn't mixed in.
 #[tauri::command]
-pub fn start_bug_report_recording(
-    state: tauri::State<'_, BugReportCaptureState>,
+pub fn start_feedback_recording(
+    state: tauri::State<'_, FeedbackCaptureState>,
 ) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
@@ -150,11 +150,11 @@ pub fn start_bug_report_recording(
 }
 
 /// Stops the in-progress recording and returns it as base64 video bytes,
-/// ready to hand to the same `submitBugReport` upload path the browser
+/// ready to hand to the same `submitFeedback` upload path the browser
 /// capture path already uses.
 #[tauri::command]
-pub fn stop_bug_report_recording(
-    state: tauri::State<'_, BugReportCaptureState>,
+pub fn stop_feedback_recording(
+    state: tauri::State<'_, FeedbackCaptureState>,
 ) -> Result<CapturedRecording, String> {
     #[cfg(target_os = "macos")]
     {

@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Pure recording-to-submission logic pulled out of BugReportContext so it's
+ * Pure recording-to-submission logic pulled out of FeedbackContext so it's
  * testable without mocking React/native modules — file reading and the tRPC
  * mutation are injected. No screenshot: the video is the default/only visual
  * now (strictly more useful, and it's the whole reason native capture was
@@ -9,16 +9,16 @@
  */
 import type { ScreenRecordingFile } from "react-native-nitro-screen-recorder";
 
-export interface BugReportSubmissionInput {
+export interface FeedbackSubmissionInput {
   videoBase64: string;
   videoMimeType: string;
   pageUrl?: string;
   userAgent?: string;
 }
 
-export interface FinishBugReportRecordingDeps {
+export interface FinishFeedbackRecordingDeps {
   readBase64: (path: string) => Promise<string>;
-  submit: (input: BugReportSubmissionInput) => Promise<{ issueUrl: string }>;
+  submit: (input: FeedbackSubmissionInput) => Promise<{ issueUrl: string }>;
   platform: string;
 }
 
@@ -27,9 +27,9 @@ export interface FinishBugReportRecordingDeps {
  * (without calling `submit`) when there's no file to work with — a failed or
  * cancelled recording must never reach the network.
  */
-export async function finishBugReportRecording(
+export async function finishFeedbackRecording(
   file: ScreenRecordingFile | undefined,
-  deps: FinishBugReportRecordingDeps
+  deps: FinishFeedbackRecordingDeps
 ): Promise<{ issueUrl: string }> {
   if (!file) {
     throw new Error("No se generó ningún archivo de grabación.");

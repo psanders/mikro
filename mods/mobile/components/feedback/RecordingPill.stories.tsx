@@ -6,7 +6,7 @@ import { View } from "react-native";
 import { RecordingPill } from "./RecordingPill";
 
 const meta: Meta<typeof RecordingPill> = {
-  title: "BugReport/RecordingPill",
+  title: "Feedback/RecordingPill",
   component: RecordingPill,
   args: {
     elapsedSeconds: 14,

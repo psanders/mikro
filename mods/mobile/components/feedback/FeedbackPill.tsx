@@ -5,7 +5,7 @@
  * capture). Rendered as a plain absolutely-positioned view (NOT a `<Modal>`)
  * so it floats above whatever screen the user has navigated to while staying
  * fully non-blocking — the whole point is that recording keeps going while
- * they move around the app to show the bug.
+ * they move around the app to show the issue.
  *
  * `<Modal transparent>` was tried first and looked right in review, but real
  * device testing on iOS showed it silently blocks all touches to the
@@ -21,15 +21,15 @@
  *
  * The pill body itself is the presentational `RecordingPill` (stop + discard
  * controls); this component only owns the floating placement and the wiring to
- * the bug-report context.
+ * the feedback context.
  */
 import { View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBugReport } from "../../lib/bugReport/BugReportContext";
+import { useFeedback } from "../../lib/feedback/FeedbackContext";
 import { RecordingPill } from "./RecordingPill";
 
-export function BugReportPill() {
-  const { stage, elapsedSeconds, stopRecording, discardRecording } = useBugReport();
+export function FeedbackPill() {
+  const { stage, elapsedSeconds, stopRecording, discardRecording } = useFeedback();
   const insets = useSafeAreaInsets();
 
   if (stage !== "recording") return null;

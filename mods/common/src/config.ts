@@ -80,13 +80,13 @@ const voiceNotesSchema = z.object({
 });
 
 /**
- * Target for the in-app bug-report button (mikro/#69): a GitHub PAT with
+ * Target for the in-app feedback button (mikro/#69): a GitHub PAT with
  * `repo` scope (or fine-grained Issues: write + Contents: write) and the
  * "owner/repo" the button files issues against. Both empty by default —
- * `createSubmitBugReport` fails fast with a clear error rather than a
+ * `createSubmitFeedback` fails fast with a clear error rather than a
  * confusing GitHub 401/404 when unconfigured.
  */
-const githubBugReportSchema = z.object({
+const githubFeedbackSchema = z.object({
   token: z.string().default(""),
   repo: z.string().default("")
 });
@@ -429,7 +429,7 @@ export const mikroConfigSchema = z
     followUp: followUpSchema,
     updates: updatesSchema,
     qcobro: qcobroSchema,
-    githubBugReport: githubBugReportSchema.default(() => ({ token: "", repo: "" }))
+    githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" }))
   })
   .strict();
 
