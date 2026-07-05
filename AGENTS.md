@@ -65,15 +65,19 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
 - **Android APK (internal):** GitHub Actions `build-android.yaml` on every
   main push touching mobile — Linux, expo prebuild + Gradle, signed with
   the debug keystore. Free and sufficient for internal distribution.
-- **iOS:** NO macOS runner ever compiles iOS — they cost a 10x minutes
-  multiplier and installable IPAs need Apple signing that EAS already
-  manages. `build-ios.yaml` triggers an EAS _cloud_ build from an ubuntu
-  runner: manual dispatch (profile choice, default preview) or a v\* tag
+- **iOS:** `build-ios.yaml` compiles ON a `macos-26` runner with
+  `eas build --local` (since 2026-07-04): EAS _cloud_ builds are rationed
+  by a per-account Free-plan quota (profile choice doesn't matter) and ran
+  dry mid-cycle. Local builds consume zero quota; EAS still owns Apple
+  signing — `--local` pulls the same remote credentials via `EXPO_TOKEN`.
+  macOS runners are free because the repo is PUBLIC; the old "no macOS
+  runner ever compiles iOS" rule (10x minutes multiplier) only applies to
+  private-repo billing — revisit if the repo goes private. Triggers:
+  manual dispatch (profile choice, default preview) or a v\* tag
   (production; IPA attached to the Release). Unlike build-android it does
-  NOT run on every main push — each run spends EAS build credits. Native
-  binaries otherwise: `eas build --platform ios` (TestFlight after Apple
-  approval). JS-only changes: `eas update` (OTA, `runtimeVersion.policy:
-fingerprint` gates native compatibility).
+  NOT run on every main push — each run ties up a macOS runner ~40-60 min.
+  JS-only changes: `eas update` (OTA, `runtimeVersion.policy: fingerprint`
+  gates native compatibility).
 - **What PRs check instead** (`pr-checks.yaml` → mobile-checks): mobile
   typecheck, Jest, and `expo prebuild --platform all --no-install`, which
   resolves every config plugin on Linux and catches broken native config

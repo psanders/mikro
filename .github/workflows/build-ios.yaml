@@ -1,17 +1,24 @@
-name: Build iOS (EAS)
+name: Build iOS (EAS local)
 
-# Triggers an EAS *cloud* build — nothing compiles on a macOS runner (10x
-# minutes multiplier; see AGENTS.md). The ubuntu runner kicks off the build
-# and waits on EAS, which owns the Apple signing credentials.
+# Compiles iOS ON the runner with `eas build --local` — no EAS cloud build,
+# so runs consume ZERO EAS build quota (the Free plan's monthly iOS pool
+# stays untouched; profile choice never mattered, the quota is per account).
+# EAS still owns Apple signing: --local pulls the same remote credentials
+# from the EAS servers via EXPO_TOKEN, so no certs live in this repo.
+#
+# This repo is PUBLIC, so GitHub-hosted macOS runners are free — the 10x
+# minutes multiplier that once banned macOS iOS compiles (see AGENTS.md)
+# only bills private repos. If the repo ever goes private, revisit this.
 #
 # - workflow_dispatch: pick a profile (default preview = internal
 #   distribution, installable on registered devices)
-# - v* tag (pushed by release.yaml): production build; the resulting IPA is
-#   attached to the consolidated GitHub Release (App Store distribution —
-#   submit it with `eas submit --platform ios`)
+# - v* tag (pushed by release.yaml): production build; the IPA is attached
+#   to the consolidated GitHub Release (App Store distribution — submit it
+#   with `eas submit --platform ios --path <ipa>`)
 #
-# Deliberately NOT run on every main push (unlike build-android): each run
-# spends EAS build credits, so iOS builds are on-demand + per-release only.
+# Deliberately NOT run on every main push (unlike build-android): a local
+# iOS build ties up a macOS runner for ~40-60 min, so keep it on-demand +
+# per-release.
 
 on:
   workflow_dispatch:
@@ -25,8 +32,8 @@ on:
     tags:
       - "v*"
 
-# Queue rather than cancel: an in-flight EAS build keeps consuming credits
-# even if the runner that started it dies.
+# Queue rather than cancel: a tag build racing a dispatch build should not
+# kill it — each run's artifact is independent and cheap to wait for.
 concurrency:
   group: build-ios-${{ github.ref }}
   cancel-in-progress: false
@@ -40,8 +47,11 @@ env:
 
 jobs:
   build-ios:
-    runs-on: ubuntu-latest
-    # EAS iOS builds regularly take 20-40 min including queue time.
+    # Pinned macos-26, not -latest: same reasoning as build-dashboard
+    # (AGENTS.md) — the -latest label is a lottery during GitHub's macOS
+    # 15→26 migration. Xcode, fastlane, and CocoaPods ship preinstalled.
+    runs-on: macos-26
+    # Local iOS builds (pod install + xcodebuild) regularly take 40-60 min.
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
@@ -63,7 +73,9 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      # Tag builds are releases → production profile; dispatch uses the input.
+      # Tag builds are releases → production profile; dispatch uses the
+      # input. The development profile builds for the simulator (see
+      # eas.json), which produces a .tar.gz'd .app instead of an .ipa.
       - name: Resolve build profile
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
@@ -71,21 +83,27 @@ jobs:
           else
             echo "PROFILE=${{ inputs.profile }}" >> "$GITHUB_ENV"
           fi
-          echo "Building with profile: $(grep PROFILE "$GITHUB_ENV")"
+          if [ "${{ inputs.profile }}" = "development" ] && [ "${{ github.ref_type }}" != "tag" ]; then
+            echo "ARTIFACT=mikro-ios-simulator.tar.gz" >> "$GITHUB_ENV"
+          else
+            echo "ARTIFACT=mikro-ios.ipa" >> "$GITHUB_ENV"
+          fi
+          grep -E 'PROFILE|ARTIFACT' "$GITHUB_ENV"
 
-      - name: Build iOS on EAS
+      # --local compiles here instead of on EAS. Requirements it inherits
+      # (both hold on a fresh checkout, see AGENTS.md):
+      # - clean git tree, or the expo-updates fingerprint won't match
+      # - SHARP_IGNORE_GLOBAL_LIBVIPS=1 (set in every eas.json profile) so
+      #   sharp uses its prebuilt binary on macOS images with global libvips
+      - name: Build iOS locally
         working-directory: mods/mobile
-        run: eas build --platform ios --profile "$PROFILE" --non-interactive
+        run: |
+          eas build --platform ios --profile "$PROFILE" --local \
+            --non-interactive --output "$PWD/$ARTIFACT"
 
-      # Same note the local npm build scripts print: build page + direct
-      # artifact URL on the run's Summary page.
-      - name: Add build links to job summary
-        working-directory: mods/mobile
-        run: node .scripts/print-build-link.mjs ios >> "$GITHUB_STEP_SUMMARY"
-
-      # Consolidated release page: pull the IPA from EAS and attach it to the
-      # tag's Release next to the desktop installers and Android APK. eas-cli
-      # prints banners on stderr; stdout is clean JSON.
+      # Consolidated release page: attach the IPA next to the desktop
+      # installers and Android APK. release.yaml creates the Release seconds
+      # after pushing the tag — ~an hour before xcodebuild finishes here.
       - name: Attach IPA to GitHub Release (tag builds only)
         if: github.ref_type == 'tag'
         working-directory: mods/mobile
@@ -93,11 +111,26 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
-          url="$(eas build:list --platform ios --limit 1 --non-interactive --json 2>/dev/null \
-            | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8"))[0]?.artifacts?.applicationArchiveUrl ?? ""')"
-          if [ -z "$url" ]; then
-            echo "::warning::No IPA artifact URL on the latest EAS build; skipping release attach"
-            exit 0
-          fi
-          curl -fsSL "$url" -o "mikro-$TAG-ios.ipa"
+          cp "$ARTIFACT" "mikro-$TAG-ios.ipa"
           gh release upload "$TAG" "mikro-$TAG-ios.ipa" --clobber
+
+      # Dispatch builds have no Release to land on; keep the artifact
+      # downloadable from the run for 30 days (same policy as Android).
+      - name: Upload build artifact
+        id: upload-ipa
+        uses: actions/upload-artifact@v7
+        with:
+          name: mikro-ios-${{ github.run_number }}-${{ github.sha }}
+          path: mods/mobile/${{ env.ARTIFACT }}
+          retention-days: 30
+
+      - name: Add build links to job summary
+        run: |
+          {
+            echo "### 📦 iOS build ($PROFILE, local)"
+            echo "- Download: [mikro-ios-${{ github.run_number }}-${{ github.sha }}](${{ steps.upload-ipa.outputs.artifact-url }})"
+            echo "- Retention: 30 days"
+            if [ "${{ github.ref_type }}" = "tag" ]; then
+              echo "- Release: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ github.ref_name }}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
