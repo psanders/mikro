@@ -1,6 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
@@ -9,6 +10,12 @@ import tailwindcss from "@tailwindcss/vite";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const stubPath = path.resolve(dir, "src/server-stub.ts");
+
+// Build-time version for the web build. On desktop the authoritative version is
+// read at runtime from Tauri (getVersion, stamped from the release tag in CI);
+// the web SPA has no such source, so it falls back to the monorepo version here.
+const require = createRequire(import.meta.url);
+const appVersion: string = require("../../lerna.json").version;
 
 // The dashboard runs both as a plain web SPA and, wrapped by Tauri, as a desktop
 // app. The build is identical for both — Tauri only points its webview at the
@@ -24,6 +31,9 @@ export default defineConfig({
   },
   // Only VITE_-prefixed vars are exposed to the client (e.g. VITE_API_URL).
   envPrefix: ["VITE_"],
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion)
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     // Workspaces leave multiple React copies on disk. Pin react/react-dom to the
