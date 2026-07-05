@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.4](https://github.com/psanders/mikro/compare/v1.22.3...v1.22.4) (2026-07-05)
+
+**Note:** Version bump only for package @mikro/agents
+
 ## [1.22.3](https://github.com/psanders/mikro/compare/v1.22.2...v1.22.3) (2026-07-05)
 
 **Note:** Version bump only for package @mikro/agents

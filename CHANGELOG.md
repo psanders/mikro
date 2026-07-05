@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.4](https://github.com/psanders/mikro/compare/v1.22.3...v1.22.4) (2026-07-05)
+
+### Bug Fixes
+
+- **bug-report:** retry transient submit failures and always show Spanish errors ([c0d5479](https://github.com/psanders/mikro/commit/c0d547955ddba7733403372330431d28d7054ea1)), closes [mikro/#97](https://github.com/psanders/mikro/issues/97)
+
 ## [1.22.3](https://github.com/psanders/mikro/compare/v1.22.2...v1.22.3) (2026-07-05)
 
 **Note:** Version bump only for package mikro
