@@ -2,28 +2,28 @@
 
 ## Purpose
 
-Covers screen/screenshot capture for the in-app bug-report feature (mikro/#69) on the dashboard's Tauri desktop build, where WKWebView doesn't implement the browser `getDisplayMedia` API that the web build relies on.
+Covers screen/screenshot capture for the in-app feedback feature (mikro/#69) on the dashboard's Tauri desktop build, where WKWebView doesn't implement the browser `getDisplayMedia` API that the web build relies on.
 
 ## Requirements
 
 ### Requirement: Tauri native screenshot via ScreenCaptureKit
 
-The dashboard Tauri desktop build SHALL capture a screenshot for bug reports using a native plugin backed by ScreenCaptureKit, instead of grabbing a frame from a `getDisplayMedia` stream, which WKWebView doesn't support.
+The dashboard Tauri desktop build SHALL capture a screenshot for feedback using a native plugin backed by ScreenCaptureKit, instead of grabbing a frame from a `getDisplayMedia` stream, which WKWebView doesn't support.
 
 #### Scenario: Starting a recording in the Tauri build
 
-- **WHEN** a user in the Tauri desktop build clicks the bug icon, accepts consent, and clicks "Empezar a grabar"
-- **THEN** the app captures a screenshot via the native `capture_bug_report_screenshot` command and starts a mic-only recording via the existing `getUserMedia` path, without the `undefined is not an object` error previously seen from calling `navigator.mediaDevices.getDisplayMedia`
+- **WHEN** a user in the Tauri desktop build clicks the feedback (message) icon, accepts consent, and clicks "Empezar a grabar"
+- **THEN** the app captures a screenshot via the native `start_feedback_recording` command and starts a mic-only recording via the existing `getUserMedia` path, without the `undefined is not an object` error previously seen from calling `navigator.mediaDevices.getDisplayMedia`
 
-#### Scenario: Submitting a Tauri bug report
+#### Scenario: Submitting a Tauri feedback recording
 
 - **WHEN** a Tauri recording is stopped
-- **THEN** the app submits the mic audio recording and the native screenshot to `submitBugReport`, matching the payload shape the web client uses (the video field carries audio content, since the server only ever uses it for transcription)
+- **THEN** the app submits the mic audio recording and the native screenshot to `submitFeedback`, matching the payload shape the web client uses (the video field carries audio content, since the server only ever uses it for transcription)
 
 #### Scenario: macOS Screen Recording permission not granted
 
 - **WHEN** a user starts a Tauri recording without having granted macOS Screen Recording permission to the app
-- **THEN** the app surfaces a clear error in the existing error stage of the bug-report dialog (not a silent failure or unhandled exception), explaining that Screen Recording permission is required
+- **THEN** the app surfaces a clear error in the existing error stage of the feedback dialog (not a silent failure or unhandled exception), explaining that Screen Recording permission is required
 
 ### Requirement: Web and Windows Tauri capture path unaffected
 

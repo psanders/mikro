@@ -2,26 +2,26 @@
 
 ## Purpose
 
-Covers the in-app bug-report feature (mikro/#69) on the mobile app, which previously had no entry point at all — React Native has no browser-equivalent capture APIs, so screen+mic recording requires a native module.
+Covers the in-app feedback feature (mikro/#69) on the mobile app, which previously had no entry point at all — React Native has no browser-equivalent capture APIs, so screen+mic recording requires a native module.
 
 ## Requirements
 
-### Requirement: Mobile bug-report entry point
+### Requirement: Mobile feedback entry point
 
-The mobile app SHALL provide a bug-report entry point in the profile tab, since no such entry point exists today on mobile.
+The mobile app SHALL provide a feedback entry point in the profile tab, labeled "Feedback" with a square message icon (not a bug icon), consistent with existing account-action patterns.
 
 #### Scenario: Discovering the entry point
 
 - **WHEN** a mobile user opens the profile tab (`perfil.tsx`)
-- **THEN** they see a bug-report row/icon consistent with existing account-action patterns on that screen
+- **THEN** they see a "Feedback" row with a message icon, consistent with existing account-action patterns on that screen
 
 ### Requirement: Native screen and mic recording on mobile
 
-The mobile app SHALL capture screen video and microphone audio natively when a user records a bug report, since React Native has no browser-equivalent capture APIs. On iOS this is in-app-only (`startInAppRecording`); on Android it is system-wide (`startGlobalRecording`), since Android's `MediaProjection` API has no in-app-only capture mode.
+The mobile app SHALL capture screen video and microphone audio natively when a user records feedback, since React Native has no browser-equivalent capture APIs. On iOS this is in-app-only (`startInAppRecording`); on Android it is system-wide (`startGlobalRecording`), since Android's `MediaProjection` API has no in-app-only capture mode.
 
 #### Scenario: Starting a mobile recording
 
-- **WHEN** a mobile user taps the bug-report entry point, sees the consent notice, and confirms
+- **WHEN** a mobile user taps the feedback entry point, sees the consent notice, and confirms
 - **THEN** the app starts screen recording plus microphone capture via the native screen-recorder module (`enableMic: true`), and the consent screen is replaced by a floating recording indicator rather than a blocking screen
 
 #### Scenario: Navigating the app while recording
@@ -37,11 +37,11 @@ The mobile app SHALL capture screen video and microphone audio natively when a u
 #### Scenario: Stopping and submitting a mobile recording
 
 - **WHEN** a mobile user taps the stop control on the floating recording pill, from whichever screen they've navigated to
-- **THEN** the app reads the resulting `ScreenRecordingFile` (a local file path) via `expo-file-system`, base64-encodes it, and submits it plus a still-frame screenshot to the existing `submitBugReport` mutation using the same payload shape the web client uses
+- **THEN** the app reads the resulting `ScreenRecordingFile` (a local file path) via `expo-file-system`, base64-encodes it, and submits it plus a still-frame screenshot to the `submitFeedback` mutation using the same payload shape the web client uses
 
 #### Scenario: Consent required before recording
 
-- **WHEN** a mobile user taps the bug-report entry point
+- **WHEN** a mobile user taps the feedback entry point
 - **THEN** a consent notice is shown before any recording starts, matching the web flow's consent step, with Android showing the additional system-wide-capture notice
 
 ### Requirement: Mobile native module survives prebuild
@@ -55,9 +55,9 @@ The native screen-recorder dependency and its Expo config plugin SHALL be compat
 
 ### Requirement: EAS dev client required for local testing
 
-Testing the mobile bug-report feature SHALL require an EAS custom dev client build, since native screen-recording modules are not available in Expo Go.
+Testing the mobile feedback feature SHALL require an EAS custom dev client build, since native screen-recording modules are not available in Expo Go.
 
 #### Scenario: Attempting to use the feature in Expo Go
 
 - **WHEN** a developer runs the app in Expo Go (not a custom dev client)
-- **THEN** the bug-report feature is not expected to function, and this limitation is documented for the team rather than silently failing without explanation
+- **THEN** the feedback feature is not expected to function, and this limitation is documented for the team rather than silently failing without explanation
