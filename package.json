@@ -49,6 +49,7 @@
     "build:dashboard": "npm run build -w @mikro/dashboard",
     "tauri:dashboard:dev": "npm run tauri:dev -w @mikro/dashboard",
     "tauri:dashboard:build": "npm run tauri:build -w @mikro/dashboard",
+    "tauri:dashboard:build:local": "npm run tauri:build:local -w @mikro/dashboard",
     "export:loan-situation": "npx tsx .scripts/export-loan-situation.ts",
     "lending:cash-position": "npx tsx .scripts/lending-cash-position.ts"
   },

@@ -45,6 +45,39 @@ The web build is the substrate; the desktop build wraps the very same `dist/`
 plain webapp = host `dist/` and point `VITE_API_URL` at the API. No source
 changes.
 
+### Signing the updater artifacts
+
+`bundle.createUpdaterArtifacts` is `true`, so `tauri build` **signs** the
+updater bundle (`.app.tar.gz` / `.sig`) with the minisign key whose public half
+is baked into `plugins.updater.pubkey`. That requires two env vars, or the build
+fails with _"A public key has been found, but no private key"_:
+
+```bash
+cd mods/dashboard
+TAURI_SIGNING_PRIVATE_KEY="$(cat ../../.keys/tauri-updater.key)" \
+TAURI_SIGNING_PRIVATE_KEY_PASSWORD='<password>' \
+npm run tauri:build
+```
+
+- **CI** supplies these from repo secrets `TAURI_SIGNING_PRIVATE_KEY` /
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (see
+  `.github/workflows/build-dashboard.yaml`). This is the path that matters — CI
+  is what produces the releases clients actually update to.
+- **Locally**, the key lives at `.keys/tauri-updater.key` (git-ignored,
+  password-protected — the password is the CI secret, not stored in the repo).
+  If you only need a runnable app and not the update flow, build **without**
+  signing via:
+
+  ```bash
+  npm run tauri:dashboard:build:local
+  ```
+
+  That passes `src-tauri/tauri.local.conf.json`, a partial config Tauri
+  deep-merges over the base to set `createUpdaterArtifacts: false`. The base
+  `tauri.conf.json` stays `true`, so CI is unaffected and there's no flag to
+  remember to revert. The local build produces a runnable, ad-hoc-signed `.app`
+  but no `.sig`/manifest, so it can't exercise the update flow.
+
 ## Prerequisites
 
 - **Web**: Node ≥ 22 only.
@@ -74,3 +107,28 @@ npm run tauri -w @mikro/dashboard icon ../mobile/assets/icon.png
 - **Code signing** — installers are unsigned, so macOS Gatekeeper and Windows
   SmartScreen will warn. Before broad rollout, set up Apple notarization and a
   Windows code-signing certificate.
+
+## Auto-update behaviour
+
+The desktop updater (`src/lib/updater.ts`) is **silent and non-blocking**: on
+launch and hourly it checks the manifest, and if a newer signed build exists it
+downloads + installs it in the background — no prompt interrupts the operator.
+Once staged, a dismissible banner (`UpdateBanner`) reports that the update
+applies on next launch and offers a "Reiniciar ahora" button. Quitting during a
+download is harmless; the next launch re-stages it.
+
+### Known issue: verify the swap on disk, not by the window title
+
+The install swaps the bundle in place; the compiled-in version only takes effect
+on the **next launch**. To confirm an update actually applied, read the bundle
+rather than trusting the running window title (which reflects the version at the
+time that process launched):
+
+```bash
+/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" /Applications/Mikro.app/Contents/Info.plist
+```
+
+On our ad-hoc signed bundles a `relaunch()` can occasionally re-run the
+already-loaded old image rather than cold-launching the swapped binary; a full
+`Cmd+Q` + relaunch always picks up the new version. Cosmetic — it does not affect
+whether the update installed.
