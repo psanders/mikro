@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.2](https://github.com/psanders/mikro/compare/v1.22.1...v1.22.2) (2026-07-05)
+
+### Features
+
+- **dashboard:** silent background auto-update with a "ready" banner ([9de5082](https://github.com/psanders/mikro/commit/9de5082fe9bea1e1f64c5319c904c42411bbde71))
+
 ## [1.22.1](https://github.com/psanders/mikro/compare/v1.22.0...v1.22.1) (2026-07-05)
 
 ### Bug Fixes
