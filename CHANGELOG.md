@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.5](https://github.com/psanders/mikro/compare/v1.22.4...v1.22.5) (2026-07-05)
+
+### Bug Fixes
+
+- **dashboard:** satisfy lint on server-stub.ts ([09205d1](https://github.com/psanders/mikro/commit/09205d1f9912fb0970ab64fb865da53fd8b8c8cb))
+
 ## [1.22.4](https://github.com/psanders/mikro/compare/v1.22.3...v1.22.4) (2026-07-05)
 
 ### Bug Fixes
