@@ -28,10 +28,17 @@ import {
   requestMicrophonePermission,
   type ScreenRecordingFile
 } from "react-native-nitro-screen-recorder";
+import {
+  submitBugReportWithRetry,
+  toSpanishBugReportError
+} from "@mikro/common/utils/bugReportSubmit";
 import { trpc } from "../api";
 import { BugReportPill } from "../../components/bugReport/BugReportPill";
 import { BugReportStatusModal } from "../../components/bugReport/BugReportStatusModal";
-import { finishBugReportRecording } from "./finishBugReportRecording";
+import {
+  finishBugReportRecording,
+  type BugReportSubmissionInput
+} from "./finishBugReportRecording";
 
 export type BugReportStage = "idle" | "recording" | "processing" | "result" | "error";
 
@@ -42,6 +49,7 @@ interface BugReportContextValue {
   elapsedSeconds: number;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<void>;
+  retrySubmit: () => Promise<void>;
   discardRecording: () => Promise<void>;
   reset: () => void;
 }
@@ -54,6 +62,9 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // The captured submission is kept after a failure so "Intentar de nuevo"
+  // re-sends the same recording instead of forcing a fresh one (mikro/#97).
+  const pendingInputRef = useRef<BugReportSubmissionInput | null>(null);
   const submit = trpc.submitBugReport.useMutation();
 
   const clearTimer = useCallback(() => {
@@ -65,6 +76,7 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => {
     clearTimer();
+    pendingInputRef.current = null;
     setElapsedSeconds(0);
     setIssueUrl(null);
     setErrorMessage(null);
@@ -113,11 +125,11 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
       setElapsedSeconds(0);
       timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
       setStage("recording");
-    } catch (err) {
+    } catch {
+      // No raw message: the native recorder / permission APIs throw English
+      // strings, and this is a Spanish-only UI (mikro/#97).
       setErrorMessage(
-        err instanceof Error
-          ? `No se pudo iniciar la grabación: ${err.message}`
-          : "No se pudo iniciar la grabación."
+        "No se pudo iniciar la grabación. Revisa los permisos de pantalla y micrófono."
       );
       setStage("error");
     }
@@ -132,17 +144,44 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
 
       const result = await finishBugReportRecording(file, {
         readBase64: (path) => new File(path).base64(),
-        submit: (input) => submit.mutateAsync(input),
+        // Capture the exact submission for a manual retry (no re-record/re-read)
+        // and retry transient failures with the same recording (mikro/#97).
+        submit: (input) => {
+          pendingInputRef.current = input;
+          return submitBugReportWithRetry(() => submit.mutateAsync(input));
+        },
         platform: Platform.OS
       });
 
+      pendingInputRef.current = null;
       setIssueUrl(result.issueUrl);
       setStage("result");
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "No se pudo enviar el reporte.");
+      setErrorMessage(toSpanishBugReportError(err));
       setStage("error");
     }
   }, [clearTimer, submit]);
+
+  // "Intentar de nuevo" after a submit failure: re-send the recording we still
+  // hold rather than throwing it away and re-recording (mikro/#97). If nothing
+  // was captured (e.g. the recording never produced a file), record fresh.
+  const retrySubmit = useCallback(async () => {
+    const input = pendingInputRef.current;
+    if (!input) {
+      await startRecording();
+      return;
+    }
+    setStage("processing");
+    try {
+      const result = await submitBugReportWithRetry(() => submit.mutateAsync(input));
+      pendingInputRef.current = null;
+      setIssueUrl(result.issueUrl);
+      setStage("result");
+    } catch (err) {
+      setErrorMessage(toSpanishBugReportError(err));
+      setStage("error");
+    }
+  }, [startRecording, submit]);
 
   const discardRecording = useCallback(async () => {
     clearTimer();
@@ -166,6 +205,7 @@ export function BugReportProvider({ children }: { children: ReactNode }) {
         elapsedSeconds,
         startRecording,
         stopRecording,
+        retrySubmit,
         discardRecording,
         reset
       }}

@@ -32,6 +32,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bug, Circle, Check } from "lucide-react";
+import {
+  submitBugReportWithRetry,
+  toSpanishBugReportError
+} from "@mikro/common/utils/bugReportSubmit";
 import { trpc } from "../lib/trpc";
 import { Button } from "./ui/Button";
 import { RecordingPill } from "./RecordingPill";
@@ -73,6 +77,10 @@ export function BugReportButton() {
   const chunksRef = useRef<Blob[]>([]);
   const captureModeRef = useRef<CaptureMode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // The captured recording is kept after a submit failure so "Intentar de
+  // nuevo" re-sends the same bytes instead of forcing a fresh recording
+  // (mikro/#97). Null means nothing has been captured (or it already sent).
+  const pendingRecordingRef = useRef<{ base64: string; mimeType: string } | null>(null);
 
   const submit = trpc.submitBugReport.useMutation();
 
@@ -98,6 +106,7 @@ export function BugReportButton() {
     clearTimer();
     chunksRef.current = [];
     captureModeRef.current = null;
+    pendingRecordingRef.current = null;
     setElapsedSeconds(0);
     setErrorMessage(null);
     setStage("idle");
@@ -153,26 +162,33 @@ export function BugReportButton() {
       setElapsedSeconds(0);
       timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
       setStage("recording");
-    } catch (err) {
+    } catch {
       cleanupStreams();
+      // No raw message: getDisplayMedia/getUserMedia throw English strings,
+      // and this is a Spanish-only UI (mikro/#97).
       setErrorMessage(
-        err instanceof Error
-          ? `No se pudo iniciar la grabación: ${err.message}`
-          : "No se pudo iniciar la grabación."
+        "No se pudo iniciar la grabación. Revisa los permisos de pantalla y micrófono."
       );
       setStage("error");
     }
   }, [cleanupStreams, startBrowserRecording, startTauriRecording]);
 
+  // Submits the captured recording, retrying transient failures (network blip,
+  // rate limit, 5xx) with the same bytes before giving up. Keeps the recording
+  // in `pendingRecordingRef` until it actually lands so a manual retry can
+  // re-send it without re-recording.
   const finishSubmit = useCallback(
     async (recording: { base64: string; mimeType: string }) => {
-      const result = await submit.mutateAsync({
-        videoBase64: recording.base64,
-        videoMimeType: recording.mimeType,
-        pageUrl: window.location.href,
-        userAgent: navigator.userAgent
-      });
-      void result;
+      pendingRecordingRef.current = recording;
+      await submitBugReportWithRetry(() =>
+        submit.mutateAsync({
+          videoBase64: recording.base64,
+          videoMimeType: recording.mimeType,
+          pageUrl: window.location.href,
+          userAgent: navigator.userAgent
+        })
+      );
+      pendingRecordingRef.current = null;
       setStage("result");
     },
     [submit]
@@ -217,10 +233,30 @@ export function BugReportButton() {
       }
     } catch (err) {
       cleanupStreams();
-      setErrorMessage(err instanceof Error ? err.message : "No se pudo enviar el reporte.");
+      setErrorMessage(toSpanishBugReportError(err));
       setStage("error");
     }
   }, [clearTimer, cleanupStreams, stopBrowserRecording, stopTauriRecording]);
+
+  // "Intentar de nuevo" after a submit failure: re-send the recording we still
+  // hold rather than throwing it away and re-recording (mikro/#97). If the
+  // failure happened before anything was captured (e.g. starting the recording
+  // failed), fall back to the consent screen to record fresh.
+  const retrySubmit = useCallback(async () => {
+    const pending = pendingRecordingRef.current;
+    if (!pending) {
+      setErrorMessage(null);
+      setStage("consent");
+      return;
+    }
+    setStage("processing");
+    try {
+      await finishSubmit(pending);
+    } catch (err) {
+      setErrorMessage(toSpanishBugReportError(err));
+      setStage("error");
+    }
+  }, [finishSubmit]);
 
   // Abandon the in-progress recording without submitting anything. Stops the
   // recorder/streams (or the native ScreenCaptureKit session) and throws the
@@ -329,7 +365,7 @@ export function BugReportButton() {
                   <Button variant="secondary" onClick={reset}>
                     Cerrar
                   </Button>
-                  <Button variant="primary" onClick={() => setStage("consent")}>
+                  <Button variant="primary" onClick={() => void retrySubmit()}>
                     Intentar de nuevo
                   </Button>
                 </div>
