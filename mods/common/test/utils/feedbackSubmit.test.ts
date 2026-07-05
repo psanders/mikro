@@ -8,10 +8,10 @@
 import { expect } from "chai";
 import {
   isNetworkError,
-  isRetryableBugReportError,
-  toSpanishBugReportError,
-  submitBugReportWithRetry
-} from "../../src/utils/bugReportSubmit.js";
+  isRetryableFeedbackError,
+  toSpanishFeedbackError,
+  submitFeedbackWithRetry
+} from "../../src/utils/feedbackSubmit.js";
 
 /** Minimal stand-in for a TRPCClientError: the client reads `err.data.code`. */
 function trpcError(code: string, httpStatus?: number): Error & { data: unknown } {
@@ -22,7 +22,7 @@ function trpcError(code: string, httpStatus?: number): Error & { data: unknown }
 
 const noSleep = () => Promise.resolve();
 
-describe("bugReportSubmit — error classification", () => {
+describe("feedbackSubmit — error classification", () => {
   it("recognises web and RN fetch failures as network errors", () => {
     expect(isNetworkError(new TypeError("Failed to fetch"))).to.be.true; // web
     expect(isNetworkError(new TypeError("Network request failed"))).to.be.true; // RN
@@ -36,24 +36,24 @@ describe("bugReportSubmit — error classification", () => {
   });
 
   it("retries transient failures (network, rate limit, 5xx) and not deterministic ones", () => {
-    expect(isRetryableBugReportError(new TypeError("Failed to fetch"))).to.be.true;
-    expect(isRetryableBugReportError(trpcError("TOO_MANY_REQUESTS", 429))).to.be.true;
-    expect(isRetryableBugReportError(trpcError("INTERNAL_SERVER_ERROR", 500))).to.be.true;
-    expect(isRetryableBugReportError(trpcError("BAD_GATEWAY", 502))).to.be.true;
+    expect(isRetryableFeedbackError(new TypeError("Failed to fetch"))).to.be.true;
+    expect(isRetryableFeedbackError(trpcError("TOO_MANY_REQUESTS", 429))).to.be.true;
+    expect(isRetryableFeedbackError(trpcError("INTERNAL_SERVER_ERROR", 500))).to.be.true;
+    expect(isRetryableFeedbackError(trpcError("BAD_GATEWAY", 502))).to.be.true;
 
-    expect(isRetryableBugReportError(trpcError("BAD_REQUEST", 400))).to.be.false;
-    expect(isRetryableBugReportError(trpcError("PRECONDITION_FAILED", 412))).to.be.false;
-    expect(isRetryableBugReportError(trpcError("UNAUTHORIZED", 401))).to.be.false;
+    expect(isRetryableFeedbackError(trpcError("BAD_REQUEST", 400))).to.be.false;
+    expect(isRetryableFeedbackError(trpcError("PRECONDITION_FAILED", 412))).to.be.false;
+    expect(isRetryableFeedbackError(trpcError("UNAUTHORIZED", 401))).to.be.false;
   });
 });
 
-describe("bugReportSubmit — toSpanishBugReportError", () => {
+describe("feedbackSubmit — toSpanishFeedbackError", () => {
   it("never leaks a raw English error message", () => {
     const messages = [
-      toSpanishBugReportError(new TypeError("Failed to fetch")),
-      toSpanishBugReportError(trpcError("TOO_MANY_REQUESTS", 429)),
-      toSpanishBugReportError(trpcError("INTERNAL_SERVER_ERROR", 500)),
-      toSpanishBugReportError(new Error("some raw english detail"))
+      toSpanishFeedbackError(new TypeError("Failed to fetch")),
+      toSpanishFeedbackError(trpcError("TOO_MANY_REQUESTS", 429)),
+      toSpanishFeedbackError(trpcError("INTERNAL_SERVER_ERROR", 500)),
+      toSpanishFeedbackError(new Error("some raw english detail"))
     ];
     for (const msg of messages) {
       expect(msg).to.not.match(/failed to fetch|server said|english|error:/i);
@@ -61,20 +61,20 @@ describe("bugReportSubmit — toSpanishBugReportError", () => {
   });
 
   it("gives distinct, actionable Spanish copy per failure kind", () => {
-    expect(toSpanishBugReportError(trpcError("TOO_MANY_REQUESTS", 429))).to.match(
+    expect(toSpanishFeedbackError(trpcError("TOO_MANY_REQUESTS", 429))).to.match(
       /espera un momento/i
     );
-    expect(toSpanishBugReportError(new TypeError("Failed to fetch"))).to.match(/conexión/i);
-    expect(toSpanishBugReportError(trpcError("PRECONDITION_FAILED", 412))).to.match(
+    expect(toSpanishFeedbackError(new TypeError("Failed to fetch"))).to.match(/conexión/i);
+    expect(toSpanishFeedbackError(trpcError("PRECONDITION_FAILED", 412))).to.match(
       /no se pudo enviar/i
     );
   });
 });
 
-describe("bugReportSubmit — submitBugReportWithRetry", () => {
+describe("feedbackSubmit — submitFeedbackWithRetry", () => {
   it("returns the result without retrying when the first attempt succeeds", async () => {
     let calls = 0;
-    const result = await submitBugReportWithRetry(
+    const result = await submitFeedbackWithRetry(
       async () => {
         calls += 1;
         return { issueUrl: "https://github.com/o/r/issues/1" };
@@ -88,7 +88,7 @@ describe("bugReportSubmit — submitBugReportWithRetry", () => {
   it("retries a transient failure and succeeds on a later attempt", async () => {
     let calls = 0;
     const delays: number[] = [];
-    const result = await submitBugReportWithRetry(
+    const result = await submitFeedbackWithRetry(
       async () => {
         calls += 1;
         if (calls < 3) throw new TypeError("Failed to fetch");
@@ -106,7 +106,7 @@ describe("bugReportSubmit — submitBugReportWithRetry", () => {
     let calls = 0;
     let thrown: unknown;
     try {
-      await submitBugReportWithRetry(
+      await submitFeedbackWithRetry(
         async () => {
           calls += 1;
           throw trpcError("PRECONDITION_FAILED", 412);
@@ -124,7 +124,7 @@ describe("bugReportSubmit — submitBugReportWithRetry", () => {
     let calls = 0;
     let thrown: unknown;
     try {
-      await submitBugReportWithRetry(
+      await submitFeedbackWithRetry(
         async () => {
           calls += 1;
           throw new TypeError("Failed to fetch");
@@ -137,13 +137,13 @@ describe("bugReportSubmit — submitBugReportWithRetry", () => {
     expect(calls).to.equal(4);
     expect(thrown).to.be.instanceOf(TypeError);
     // Still maps to Spanish for display after retries are exhausted.
-    expect(toSpanishBugReportError(thrown)).to.match(/conexión/i);
+    expect(toSpanishFeedbackError(thrown)).to.match(/conexión/i);
   });
 
   it("caps the backoff delay at maxDelayMs", async () => {
     const delays: number[] = [];
     try {
-      await submitBugReportWithRetry(async () => Promise.reject(new TypeError("Failed to fetch")), {
+      await submitFeedbackWithRetry(async () => Promise.reject(new TypeError("Failed to fetch")), {
         sleep: async (ms) => void delays.push(ms),
         maxAttempts: 5,
         baseDelayMs: 2000,

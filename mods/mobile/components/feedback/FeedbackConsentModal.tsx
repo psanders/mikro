@@ -1,40 +1,37 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Consent step for the bug-report flow (Pencil node `v8bmyV`), reusing the
+ * Consent step for the feedback flow (Pencil node `v8bmyV`), reusing the
  * web dialog's copy/tone. Adds an Android-only notice: since that platform
- * has no in-app-only recording mode (see BugReportContext.tsx), anything
+ * has no in-app-only recording mode (see FeedbackContext.tsx), anything
  * visible on screen — other apps, notifications — is captured too if the
  * user switches away while recording.
  */
 import { Modal, View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { Bug, Circle } from "lucide-react-native";
+import { MessageSquare, Circle } from "lucide-react-native";
 import { colors, radii } from "../../lib/theme";
 import { BtnCta } from "../ui/BtnCta";
 
-interface BugReportConsentModalProps {
+interface FeedbackConsentModalProps {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function BugReportConsentModal({
-  visible,
-  onConfirm,
-  onCancel
-}: BugReportConsentModalProps) {
+export function FeedbackConsentModal({ visible, onConfirm, onCancel }: FeedbackConsentModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
-            <Bug size={26} color={colors.brand.blue.deep} strokeWidth={2} />
+            <MessageSquare size={26} color={colors.brand.blue.deep} strokeWidth={2} />
           </View>
-          <Text style={styles.title}>Reportar un problema</Text>
+          <Text style={styles.title}>Enviar feedback</Text>
           <Text style={styles.body}>
-            Esto va a grabar tu pantalla y tu voz mientras describes el problema. La grabación se
-            transcribe automáticamente y se usa solo para crear el reporte — no se guarda en
-            nuestros servidores. Evita mostrar datos sensibles de clientes si es posible.
+            Esto va a grabar tu pantalla y tu voz mientras muestras lo que quieres compartir — un
+            problema, algo confuso o una idea. La grabación se transcribe automáticamente y se usa
+            solo para crear el reporte — no se guarda en nuestros servidores. Evita mostrar datos
+            sensibles de clientes si es posible.
           </Text>
           {Platform.OS === "android" && (
             <Text style={styles.androidNotice}>

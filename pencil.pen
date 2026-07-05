@@ -65354,7 +65354,7 @@
                             {
                               "type": "frame",
                               "id": "nHPqG",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -65367,7 +65367,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -67329,6 +67329,55 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MwMih",
+                          "layoutPosition": "absolute",
+                          "x": 74,
+                          "y": 741,
+                          "name": "tooltip-feedback",
+                          "fill": "$brand.ink",
+                          "cornerRadius": 8,
+                          "effect": {
+                            "type": "shadow",
+                            "shadowType": "outer",
+                            "color": "#14254A55",
+                            "offset": {
+                              "x": 0,
+                              "y": 6
+                            },
+                            "blur": 18
+                          },
+                          "padding": [
+                            7,
+                            11
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "k86Z7",
+                              "name": "label",
+                              "fill": "$brand.white",
+                              "content": "Enviar feedback",
+                              "fontFamily": "Geist",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "Ry05b",
+                          "layoutPosition": "absolute",
+                          "x": 69,
+                          "y": 750,
+                          "name": "tooltip-caret",
+                          "rotation": 45,
+                          "fill": "$brand.ink",
+                          "width": 9,
+                          "height": 9
                         }
                       ]
                     },
@@ -67515,7 +67564,7 @@
                             {
                               "type": "frame",
                               "id": "wUemd",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -67528,7 +67577,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -68725,7 +68774,45 @@
                       "fill": "$brand.white",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Nota de diseño (Founder / Grabando reporte de bug): el pill reemplaza el modal de pantalla completa — el usuario puede seguir navegando el dashboard mientras graba, igual que en mobile.",
+                      "content": "Nota de diseño (Founder / Grabando feedback): el pill reemplaza el modal de pantalla completa — el usuario puede seguir navegando el dashboard mientras graba, igual que en mobile.",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "poEVG",
+                  "name": "Nota — rail feedback + tooltips",
+                  "width": 1440,
+                  "fill": "$brand.ink",
+                  "cornerRadius": 12,
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "EmCaj",
+                      "name": "i",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "message-square",
+                      "library": "lucide",
+                      "fill": "$brand.white"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SYXbj",
+                      "name": "t",
+                      "fill": "$brand.white",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Cambio de nav rail (Founder): el icono de bug pasa a un icono de mensaje cuadrado (message-square) con tooltip «Enviar feedback» al pasar el cursor. Todos los iconos del rail (Inicio, Excepciones, Buscar, Reportes, Feedback) muestran su etiqueta como tooltip en hover — reemplazando el title nativo del navegador.",
                       "fontFamily": "Geist",
                       "fontSize": 13,
                       "fontWeight": "500"
@@ -68735,13 +68822,13 @@
                 {
                   "type": "frame",
                   "id": "mBWYC",
-                  "name": "recording / reportar un problema",
+                  "name": "recording / enviar feedback",
                   "gap": 40,
                   "children": [
                     {
                       "type": "frame",
                       "id": "s3PxMk",
-                      "name": "Founder / Grabando reporte de bug (pill flotante)",
+                      "name": "Founder / Grabando feedback (pill flotante)",
                       "clip": true,
                       "width": 1440,
                       "height": 840,
@@ -68921,7 +69008,7 @@
                             {
                               "type": "frame",
                               "id": "fqw2K",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -68934,7 +69021,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -70147,7 +70234,7 @@
                                   "id": "Z6ZDX",
                                   "name": "pillLabel",
                                   "fill": "$brand.white",
-                                  "content": "Grabando reporte · 00:14",
+                                  "content": "Grabando feedback · 00:14",
                                   "fontFamily": "Geist",
                                   "fontSize": 14,
                                   "fontWeight": "500"
@@ -70216,7 +70303,7 @@
                     {
                       "type": "frame",
                       "id": "mX0U6",
-                      "name": "Founder / Reportar un problema — Consentimiento",
+                      "name": "Founder / Enviar feedback — Consentimiento",
                       "clip": true,
                       "width": 1440,
                       "height": 840,
@@ -70396,7 +70483,7 @@
                             {
                               "type": "frame",
                               "id": "Z4lZuG",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -70409,7 +70496,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -71612,7 +71699,7 @@
                                   "id": "bZWjW",
                                   "name": "title",
                                   "fill": "$brand.ink",
-                                  "content": "Reportar un problema",
+                                  "content": "Enviar feedback",
                                   "fontFamily": "Geist",
                                   "fontSize": 16,
                                   "fontWeight": "600"
@@ -71624,7 +71711,7 @@
                                   "fill": "$ds.muted",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Esto va a grabar tu pantalla mientras muestras el problema. La grabación se usa solo para crear el reporte — no se guarda de forma permanente. Evita mostrar datos sensibles de clientes si es posible.",
+                                  "content": "Esto va a grabar tu pantalla mientras muestras lo que quieres compartir — un problema, algo confuso o una idea. La grabación se usa solo para crear el reporte y no se guarda de forma permanente. Evita mostrar datos sensibles de clientes si es posible.",
                                   "lineHeight": 1.5,
                                   "fontFamily": "Geist",
                                   "fontSize": 13,
@@ -71677,7 +71764,7 @@
                     {
                       "type": "frame",
                       "id": "PvfQV",
-                      "name": "Founder / Reportar un problema — Enviando",
+                      "name": "Founder / Enviar feedback — Enviando",
                       "clip": true,
                       "width": 1440,
                       "height": 840,
@@ -71857,7 +71944,7 @@
                             {
                               "type": "frame",
                               "id": "J8DTg",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -71870,7 +71957,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -73073,7 +73160,7 @@
                                   "id": "OVmXZ",
                                   "name": "title",
                                   "fill": "$brand.ink",
-                                  "content": "Enviando reporte…",
+                                  "content": "Enviando feedback…",
                                   "fontFamily": "Geist",
                                   "fontSize": 16,
                                   "fontWeight": "600"
@@ -73085,7 +73172,7 @@
                                   "fill": "$ds.muted",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Creando el reporte en GitHub. Esto puede tardar un momento.",
+                                  "content": "Enviando tu feedback al equipo. Esto puede tardar un momento.",
                                   "lineHeight": 1.5,
                                   "fontFamily": "Geist",
                                   "fontSize": 13,
@@ -73100,7 +73187,7 @@
                     {
                       "type": "frame",
                       "id": "S8FdaB",
-                      "name": "Founder / Reportar un problema — Reporte enviado",
+                      "name": "Founder / Enviar feedback — Feedback enviado",
                       "clip": true,
                       "width": 1440,
                       "height": 840,
@@ -73280,7 +73367,7 @@
                             {
                               "type": "frame",
                               "id": "zUfdm",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -73293,7 +73380,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -74519,7 +74606,7 @@
                                   "id": "CdFww",
                                   "name": "title",
                                   "fill": "$brand.ink",
-                                  "content": "Reporte enviado",
+                                  "content": "Feedback enviado",
                                   "fontFamily": "Geist",
                                   "fontSize": 16,
                                   "fontWeight": "600"
@@ -74531,7 +74618,7 @@
                                   "fill": "$ds.muted",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.",
+                                  "content": "Gracias por tu feedback. Nuestro equipo lo va a revisar y priorizar.",
                                   "lineHeight": 1.5,
                                   "fontFamily": "Geist",
                                   "fontSize": 13,
@@ -74569,7 +74656,7 @@
                     {
                       "type": "frame",
                       "id": "LoVTA",
-                      "name": "Founder / Reportar un problema — Error",
+                      "name": "Founder / Enviar feedback — Error",
                       "clip": true,
                       "width": 1440,
                       "height": 840,
@@ -74749,7 +74836,7 @@
                             {
                               "type": "frame",
                               "id": "q0p86",
-                              "name": "navBug",
+                              "name": "navFeedback",
                               "width": 40,
                               "height": 40,
                               "cornerRadius": 11,
@@ -74762,7 +74849,7 @@
                                   "name": "i",
                                   "width": 19,
                                   "height": 19,
-                                  "icon": "bug",
+                                  "icon": "message-square",
                                   "library": "lucide",
                                   "fill": "$ds.muted"
                                 }
@@ -76259,6 +76346,28 @@
                         },
                         {
                           "type": "frame",
+                          "id": "s1D5gk",
+                          "name": "navFeedback",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 11,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "QZv4t",
+                              "name": "i",
+                              "width": 19,
+                              "height": 19,
+                              "icon": "message-square",
+                              "library": "lucide",
+                              "fill": "$ds.muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
                           "id": "kG0GE",
                           "name": "av",
                           "width": 34,
@@ -77343,6 +77452,28 @@
                           "name": "sp",
                           "width": 1,
                           "height": "fill_container"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "V8XSY0",
+                          "name": "navFeedback",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 11,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "OAd9I",
+                              "name": "i",
+                              "width": 19,
+                              "height": 19,
+                              "icon": "message-square",
+                              "library": "lucide",
+                              "fill": "$ds.muted"
+                            }
+                          ]
                         },
                         {
                           "type": "frame",
@@ -79748,6 +79879,28 @@
                           "name": "sp",
                           "width": 1,
                           "height": "fill_container"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KC6Mf",
+                          "name": "navFeedback",
+                          "width": 40,
+                          "height": 40,
+                          "cornerRadius": 11,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "T0F0V",
+                              "name": "i",
+                              "width": 19,
+                              "height": 19,
+                              "icon": "message-square",
+                              "library": "lucide",
+                              "fill": "$ds.muted"
+                            }
+                          ]
                         },
                         {
                           "type": "frame",
@@ -85471,15 +85624,15 @@
                               "id": "stJx6",
                               "type": "ref",
                               "ref": "WoWn9",
-                              "name": "Reportar un problema",
+                              "name": "Enviar feedback",
                               "width": "fill_container",
                               "descendants": {
                                 "oeQMo": {
                                   "fill": "$brand.blue.primary",
-                                  "icon": "bug"
+                                  "icon": "message-square"
                                 },
                                 "CkrII": {
-                                  "content": "Reportar un problema"
+                                  "content": "Enviar feedback"
                                 }
                               }
                             }
@@ -85544,7 +85697,7 @@
             {
               "type": "frame",
               "id": "v8bmyV",
-              "name": "11a Reportar un problema · Consentimiento",
+              "name": "11a Enviar feedback · Consentimiento",
               "clip": true,
               "width": 390,
               "height": 844,
@@ -85569,7 +85722,7 @@
                       "icon": "x"
                     },
                     "XlCal": {
-                      "content": "Reportar un problema"
+                      "content": "Enviar feedback"
                     },
                     "OJ3eJ": {
                       "enabled": false
@@ -85609,10 +85762,10 @@
                         {
                           "type": "icon",
                           "id": "oI6Fw",
-                          "name": "bugIcon",
+                          "name": "feedbackIcon",
                           "width": 28,
                           "height": 28,
-                          "icon": "bug",
+                          "icon": "message-square",
                           "library": "lucide",
                           "fill": "$brand.blue.deep"
                         }
@@ -85625,7 +85778,7 @@
                       "fill": "#5B6472",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Esto va a grabar tu pantalla y tu voz mientras describes el problema. La grabación se transcribe automáticamente y se usa solo para crear el reporte — no se guarda en nuestros servidores. Evita mostrar datos sensibles de clientes si es posible.",
+                      "content": "Esto va a grabar tu pantalla mientras muestras lo que quieres compartir — un problema, algo confuso o una idea. La grabación se usa solo para crear el reporte y no se guarda de forma permanente. Evita mostrar datos sensibles de clientes si es posible.",
                       "lineHeight": 1.45,
                       "fontFamily": "Geist",
                       "fontSize": 15,
@@ -85686,7 +85839,7 @@
             {
               "type": "frame",
               "id": "rv2oJ",
-              "name": "11c Reportar un problema · Enviando",
+              "name": "11c Enviar feedback · Enviando",
               "clip": true,
               "width": 390,
               "height": 844,
@@ -85715,7 +85868,7 @@
                       "id": "mOX6r",
                       "name": "headerTitle",
                       "fill": "$brand.blue.deep",
-                      "content": "Enviando reporte…",
+                      "content": "Enviando feedback…",
                       "fontFamily": "Geist",
                       "fontSize": 20,
                       "fontWeight": "700"
@@ -85769,7 +85922,7 @@
                       "fill": "#5B6472",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Transcribiendo y creando el reporte en GitHub. Esto puede tardar un momento.",
+                      "content": "Enviando tu feedback al equipo. Esto puede tardar un momento.",
                       "lineHeight": 1.45,
                       "textAlign": "center",
                       "fontFamily": "Geist",
@@ -85783,7 +85936,7 @@
             {
               "type": "frame",
               "id": "fsDNM",
-              "name": "11d Reportar un problema · Enviado",
+              "name": "11d Enviar feedback · Enviado",
               "clip": true,
               "width": 390,
               "height": 844,
@@ -85812,7 +85965,7 @@
                       "id": "OY9JM",
                       "name": "headerTitle",
                       "fill": "$brand.blue.deep",
-                      "content": "Reporte enviado",
+                      "content": "Feedback enviado",
                       "fontFamily": "Geist",
                       "fontSize": 20,
                       "fontWeight": "700"
@@ -85866,7 +86019,7 @@
                       "fill": "#5B6472",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.",
+                      "content": "Gracias por tu feedback. Nuestro equipo lo va a revisar y priorizar.",
                       "lineHeight": 1.45,
                       "textAlign": "center",
                       "fontFamily": "Geist",
@@ -85915,7 +86068,7 @@
             {
               "type": "frame",
               "id": "oTSL4",
-              "name": "11e Reportar un problema · Error",
+              "name": "11e Enviar feedback · Error",
               "clip": true,
               "width": 390,
               "height": 844,
@@ -86060,7 +86213,7 @@
             {
               "type": "frame",
               "id": "OWGz8",
-              "name": "11b Reportar un problema · Grabando (overlay sobre cualquier pantalla)",
+              "name": "11b Enviar feedback · Grabando (overlay sobre cualquier pantalla)",
               "clip": true,
               "width": 390,
               "height": 844,
@@ -86481,15 +86634,15 @@
                           "id": "Xb9g3",
                           "type": "ref",
                           "ref": "WoWn9",
-                          "name": "Reportar un problema",
+                          "name": "Enviar feedback",
                           "width": "fill_container",
                           "descendants": {
                             "oeQMo": {
                               "fill": "$brand.blue.primary",
-                              "icon": "bug"
+                              "icon": "message-square"
                             },
                             "CkrII": {
-                              "content": "Reportar un problema"
+                              "content": "Enviar feedback"
                             }
                           }
                         }

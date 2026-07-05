@@ -9,10 +9,10 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .manage(commands::BugReportCaptureState::default())
+        .manage(commands::FeedbackCaptureState::default())
         .invoke_handler(tauri::generate_handler![
-            commands::start_bug_report_recording,
-            commands::stop_bug_report_recording
+            commands::start_feedback_recording,
+            commands::stop_feedback_recording
         ]);
 
     // Auto-update is desktop-only: the updater fetches/installs signed releases

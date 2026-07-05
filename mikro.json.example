@@ -110,7 +110,7 @@
       }
     ]
   },
-  "githubBugReport": {
+  "githubFeedback": {
     "token": "",
     "repo": ""
   }

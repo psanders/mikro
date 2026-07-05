@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { finishBugReportRecording } from "../finishBugReportRecording";
+import { finishFeedbackRecording } from "../finishFeedbackRecording";
 import type { ScreenRecordingFile } from "react-native-nitro-screen-recorder";
 
 function makeFile(overrides: Partial<ScreenRecordingFile> = {}): ScreenRecordingFile {
@@ -15,14 +15,14 @@ function makeFile(overrides: Partial<ScreenRecordingFile> = {}): ScreenRecording
   };
 }
 
-describe("finishBugReportRecording", () => {
+describe("finishFeedbackRecording", () => {
   it("reads the video and submits it in the expected shape", async () => {
     const submit = jest
       .fn()
       .mockResolvedValue({ issueUrl: "https://github.com/psanders/mikro/issues/123" });
     const readBase64 = jest.fn().mockResolvedValue("dmlkZW8=");
 
-    const result = await finishBugReportRecording(makeFile(), {
+    const result = await finishFeedbackRecording(makeFile(), {
       readBase64,
       submit,
       platform: "ios"
@@ -43,7 +43,7 @@ describe("finishBugReportRecording", () => {
     const readBase64 = jest.fn();
 
     await expect(
-      finishBugReportRecording(undefined, { readBase64, submit, platform: "android" })
+      finishFeedbackRecording(undefined, { readBase64, submit, platform: "android" })
     ).rejects.toThrow("No se generó ningún archivo de grabación.");
 
     expect(readBase64).not.toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe("finishBugReportRecording", () => {
     const readBase64 = jest.fn().mockRejectedValue(new Error("disk read failed"));
 
     await expect(
-      finishBugReportRecording(makeFile(), { readBase64, submit, platform: "android" })
+      finishFeedbackRecording(makeFile(), { readBase64, submit, platform: "android" })
     ).rejects.toThrow("disk read failed");
 
     expect(submit).not.toHaveBeenCalled();
@@ -64,11 +64,11 @@ describe("finishBugReportRecording", () => {
   it("propagates the server error and does not swallow it when submit fails", async () => {
     const submit = jest
       .fn()
-      .mockRejectedValue(new Error("Espera un momento antes de enviar otro reporte."));
+      .mockRejectedValue(new Error("Espera un momento antes de enviar más feedback."));
     const readBase64 = jest.fn().mockResolvedValue("dmlkZW8=");
 
     await expect(
-      finishBugReportRecording(makeFile(), { readBase64, submit, platform: "ios" })
-    ).rejects.toThrow("Espera un momento antes de enviar otro reporte.");
+      finishFeedbackRecording(makeFile(), { readBase64, submit, platform: "ios" })
+    ).rejects.toThrow("Espera un momento antes de enviar más feedback.");
   });
 });

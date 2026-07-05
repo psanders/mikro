@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Processing / result / error states for the bug-report flow (Pencil nodes
+ * Processing / result / error states for the feedback flow (Pencil nodes
  * `rv2oJ`, `fsDNM`, `oTSL4`). Global like the pill, since the user may have
  * navigated away from Perfil by the time the recording is stopped and
  * processed.
@@ -9,11 +9,11 @@
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
 import { Check, TriangleAlert, RefreshCw } from "lucide-react-native";
 import { colors, radii } from "../../lib/theme";
-import { useBugReport } from "../../lib/bugReport/BugReportContext";
+import { useFeedback } from "../../lib/feedback/FeedbackContext";
 import { BtnCta } from "../ui/BtnCta";
 
-export function BugReportStatusModal() {
-  const { stage, errorMessage, reset, retrySubmit } = useBugReport();
+export function FeedbackStatusModal() {
+  const { stage, errorMessage, reset, retrySubmit } = useFeedback();
 
   if (stage !== "processing" && stage !== "result" && stage !== "error") return null;
 
@@ -23,9 +23,9 @@ export function BugReportStatusModal() {
         <View style={styles.card}>
           {stage === "processing" && (
             <>
-              <Text style={styles.title}>Enviando reporte…</Text>
+              <Text style={styles.title}>Enviando feedback…</Text>
               <Text style={styles.body}>
-                Transcribiendo y creando el reporte en GitHub. Esto puede tardar un momento.
+                Enviando tu feedback al equipo. Esto puede tardar un momento.
               </Text>
             </>
           )}
@@ -35,9 +35,9 @@ export function BugReportStatusModal() {
               <View style={[styles.iconWrap, { backgroundColor: colors.status.successBg }]}>
                 <Check size={26} color={colors.status.success} strokeWidth={2.5} />
               </View>
-              <Text style={styles.title}>Reporte enviado</Text>
+              <Text style={styles.title}>Feedback enviado</Text>
               <Text style={styles.body}>
-                Gracias por tu reporte. Nuestro equipo lo va a revisar, priorizar y corregir.
+                Gracias por tu feedback. Nuestro equipo lo va a revisar y priorizar.
               </Text>
               <View style={styles.actions}>
                 <BtnCta label="Cerrar" onPress={reset} />

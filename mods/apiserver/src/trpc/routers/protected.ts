@@ -224,9 +224,9 @@ import {
   setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
 } from "../../api/copilot/index.js";
-// Bug report schema + API function
-import { submitBugReportSchema, getConfig } from "@mikro/common";
-import { createSubmitBugReport } from "../../api/bugReports/createSubmitBugReport.js";
+// Feedback schema + API function
+import { submitFeedbackSchema, getConfig } from "@mikro/common";
+import { createSubmitFeedback } from "../../api/feedback/createSubmitFeedback.js";
 import { createTranscribeVoiceNote } from "../../voice/createTranscribeVoiceNote.js";
 import { Octokit } from "@octokit/rest";
 // Accounting API functions
@@ -244,11 +244,11 @@ import {
   createGetTransactionAttachment
 } from "../../api/accounting/index.js";
 
-// In-memory per-user cooldown for submitBugReport (mikro/#69) — keeps a
+// In-memory per-user cooldown for submitFeedback (mikro/#69) — keeps a
 // stuck client from spamming the target repo with issues. Not persisted:
 // a server restart resets it, which is fine for a spam guard, not a hard limit.
-const bugReportRateLimit = new Map<string, number>();
-const BUG_REPORT_RATE_LIMIT_MS = 60 * 1000;
+const feedbackRateLimit = new Map<string, number>();
+const FEEDBACK_RATE_LIMIT_MS = 60 * 1000;
 
 /**
  * Protected router - procedures that require Basic Auth.
@@ -777,22 +777,22 @@ export const protectedRouter = router({
   }),
 
   /**
-   * File a bug report from an in-app screen+mic recording (mikro/#69).
+   * File user feedback from an in-app screen+mic recording (mikro/#69).
    * Available to any authenticated user, rate-limited per user to keep a
    * stuck client (or a mis-click loop) from spamming the target repo with
-   * issues — one report per user per BUG_REPORT_RATE_LIMIT_MS.
+   * issues — one submission per user per FEEDBACK_RATE_LIMIT_MS.
    */
-  submitBugReport: protectedProcedure
-    .input(submitBugReportSchema)
+  submitFeedback: protectedProcedure
+    .input(submitFeedbackSchema)
     .mutation(async ({ ctx, input }) => {
-      const last = bugReportRateLimit.get(ctx.userId);
-      if (last && Date.now() - last < BUG_REPORT_RATE_LIMIT_MS) {
+      const last = feedbackRateLimit.get(ctx.userId);
+      if (last && Date.now() - last < FEEDBACK_RATE_LIMIT_MS) {
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
-          message: "Espera un momento antes de enviar otro reporte."
+          message: "Espera un momento antes de enviar más feedback."
         });
       }
-      bugReportRateLimit.set(ctx.userId, Date.now());
+      feedbackRateLimit.set(ctx.userId, Date.now());
 
       const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
       const cfg = getConfig();
@@ -800,17 +800,17 @@ export const protectedRouter = router({
       if (!deepgramApiKey) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Bug reporting is not configured (voiceNotes.deepgramApiKey is empty)."
+          message: "Feedback is not configured (voiceNotes.deepgramApiKey is empty)."
         });
       }
-      if (!cfg.githubBugReport.token) {
+      if (!cfg.githubFeedback.token) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Bug reporting is not configured (githubBugReport.token is empty)."
+          message: "Feedback is not configured (githubFeedback.token is empty)."
         });
       }
 
-      const fn = createSubmitBugReport({
+      const fn = createSubmitFeedback({
         transcribe: createTranscribeVoiceNote(deepgramApiKey),
         createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
         // Without an explicit API version, GitHub routes the request through
@@ -818,10 +818,10 @@ export const protectedRouter = router({
         // ("scheduled to be removed" — seen for real on the issues.create
         // call). Pin the current stable version explicitly.
         octokit: new Octokit({
-          auth: cfg.githubBugReport.token,
+          auth: cfg.githubFeedback.token,
           request: { headers: { "x-github-api-version": "2022-11-28" } }
         }),
-        repo: cfg.githubBugReport.repo
+        repo: cfg.githubFeedback.repo
       });
       return fn(input, { userId: ctx.userId, name: user?.name ?? "Usuario Mikro" });
     }),

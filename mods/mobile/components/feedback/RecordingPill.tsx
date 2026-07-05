@@ -4,7 +4,7 @@
  * Presentational recording pill (Pencil node `zMnuA` inside `OWGz8`). Pure —
  * takes the elapsed time and the stop/discard callbacks and renders the pill
  * body only; the floating absolute positioning + context wiring live in
- * `BugReportPill`. Split out so the visual can be exercised in Storybook
+ * `FeedbackPill`. Split out so the visual can be exercised in Storybook
  * without a live recording session, and to keep exact parity with the
  * dashboard's `RecordingPill` (same props: elapsedSeconds / onStop /
  * onDiscard).

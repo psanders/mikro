@@ -14,19 +14,19 @@ import { z } from "zod/v4";
  * screenshot field below is a legacy fallback no client sends anymore, since
  * the video carries strictly more information.
  */
-export const MAX_BUG_REPORT_VIDEO_BYTES = 50 * 1024 * 1024;
+export const MAX_FEEDBACK_VIDEO_BYTES = 50 * 1024 * 1024;
 
 /** Single still frame — same order of magnitude as other image uploads. */
-export const MAX_BUG_REPORT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+export const MAX_FEEDBACK_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 
 const base64SizeCheck = (max: number) => (b: string) => Math.ceil((b.length * 3) / 4) <= max;
 
-export const submitBugReportSchema = z.object({
+export const submitFeedbackSchema = z.object({
   /** Base64-encoded screen recording (no data: prefix), with or without audio. Transcribed (best-effort) then committed to the target repo. */
   videoBase64: z
     .string()
     .min(1, "Recording is required")
-    .refine(base64SizeCheck(MAX_BUG_REPORT_VIDEO_BYTES), {
+    .refine(base64SizeCheck(MAX_FEEDBACK_VIDEO_BYTES), {
       message: "Recording exceeds the maximum allowed size"
     }),
   videoMimeType: z.string().min(1).max(100),
@@ -39,7 +39,7 @@ export const submitBugReportSchema = z.object({
   screenshotBase64: z
     .string()
     .min(1)
-    .refine(base64SizeCheck(MAX_BUG_REPORT_SCREENSHOT_BYTES), {
+    .refine(base64SizeCheck(MAX_FEEDBACK_SCREENSHOT_BYTES), {
       message: "Screenshot exceeds the maximum allowed size"
     })
     .optional(),
@@ -49,8 +49,8 @@ export const submitBugReportSchema = z.object({
   userAgent: z.string().max(500).optional()
 });
 
-export type SubmitBugReportInput = z.infer<typeof submitBugReportSchema>;
+export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;
 
-export interface SubmitBugReportResult {
+export interface SubmitFeedbackResult {
   issueUrl: string;
 }
