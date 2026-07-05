@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.1](https://github.com/psanders/mikro/compare/v1.22.0...v1.22.1) (2026-07-05)
+
+### Bug Fixes
+
+- **dashboard:** ad-hoc sign the macOS bundle so Screen Recording persists ([206f35e](https://github.com/psanders/mikro/commit/206f35ebced54bcb8ea0a3483b0f299f8dc026a2))
+
+### Features
+
+- **dashboard:** show app version in the desktop window title ([7baa689](https://github.com/psanders/mikro/commit/7baa6895324bf4be29c53dbf3f16ebc0d1a1a810)), closes [#99](https://github.com/psanders/mikro/issues/99)
+- **mobile:** frequency-aware first-payment calendar on conversion & contract ([8580304](https://github.com/psanders/mikro/commit/858030492293282d900c4f1c106c6a5e989de556)), closes [#1](https://github.com/psanders/mikro/issues/1)
+- **mobile:** status-aware reopen label and preset start date on conversion ([02b3b7b](https://github.com/psanders/mikro/commit/02b3b7bd5c65838b7b5d732cc6039b78ca258164))
+
 # [1.22.0](https://github.com/psanders/mikro/compare/v1.21.2...v1.22.0) (2026-07-04)
 
 ### Features
