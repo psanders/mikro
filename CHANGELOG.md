@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.22.6](https://github.com/psanders/mikro/compare/v1.22.5...v1.22.6) (2026-07-05)
+
+### Bug Fixes
+
+- **dashboard:** delay rail tooltip 700ms and drop the arrow ([2dea9a7](https://github.com/psanders/mikro/commit/2dea9a724316f519daf4b9b0f2a2ccdd1625a4f2))
+
 ## [1.22.5](https://github.com/psanders/mikro/compare/v1.22.4...v1.22.5) (2026-07-05)
 
 ### Bug Fixes
