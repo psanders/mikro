@@ -13,7 +13,7 @@ import { useBugReport } from "../../lib/bugReport/BugReportContext";
 import { BtnCta } from "../ui/BtnCta";
 
 export function BugReportStatusModal() {
-  const { stage, errorMessage, reset, startRecording } = useBugReport();
+  const { stage, errorMessage, reset, retrySubmit } = useBugReport();
 
   if (stage !== "processing" && stage !== "result" && stage !== "error") return null;
 
@@ -55,7 +55,7 @@ export function BugReportStatusModal() {
                 {errorMessage ?? "Ocurrió un error inesperado."}
               </Text>
               <View style={styles.actions}>
-                <BtnCta label="Intentar de nuevo" icon={RefreshCw} onPress={startRecording} />
+                <BtnCta label="Intentar de nuevo" icon={RefreshCw} onPress={retrySubmit} />
                 <Pressable onPress={reset} style={styles.closeLink}>
                   <Text style={styles.closeLinkText}>Cerrar</Text>
                 </Pressable>
