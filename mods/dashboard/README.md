@@ -132,3 +132,34 @@ On our ad-hoc signed bundles a `relaunch()` can occasionally re-run the
 already-loaded old image rather than cold-launching the swapped binary; a full
 `Cmd+Q` + relaunch always picks up the new version. Cosmetic — it does not affect
 whether the update installed.
+
+### Known issue: stale Screen Recording / Microphone entry after deleting the app (macOS)
+
+macOS stores TCC privacy grants keyed to the bundle id `do.mikro.dashboard` in a
+database **independent of the app bundle**. Deleting `/Applications/Mikro.app`
+does **not** remove the grant, so a stale (often greyed-out) **Mikro** row lingers
+in System Settings → Privacy & Security → **Screen & System Audio Recording** and
+**Microphone**.
+
+`tccutil reset All do.mikro.dashboard` is the normal way to clear grants, but it
+resolves the bundle id through LaunchServices and **fails once the app is deleted**:
+
+```
+tccutil: No such bundle identifier "do.mikro.dashboard" … (OSStatus error -10814.)
+```
+
+Chicken-and-egg: the grant outlives the app, but the tool that clears it needs the
+app present. Fixes, in order of preference:
+
+1. **Remove the row manually** (works with the app already deleted): select
+   **Mikro** in each privacy list, click **−**, authenticate, then `Cmd+Q` System
+   Settings and reopen to confirm it's gone.
+2. **Reset before deleting** — run `tccutil reset All do.mikro.dashboard` **while
+   the app is still installed**, then delete it.
+3. If you've already deleted it and prefer `tccutil`: rebuild/reinstall the app
+   (`npm run tauri:dashboard:build:local`), reset, then delete again.
+
+A clean rebuild after removal re-triggers fresh Screen + Audio permission prompts.
+The complete app footprint to delete for a full reset: `/Applications/Mikro.app`,
+`~/Library/Caches/do.mikro.dashboard`, `~/Library/WebKit/do.mikro.dashboard` (the
+Tauri shell leaves nothing in Application Support / Preferences / Containers).
