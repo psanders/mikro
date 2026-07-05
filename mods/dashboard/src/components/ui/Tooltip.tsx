@@ -10,6 +10,10 @@
  * the wrapped control keeps its own `aria-label`, so assistive tech is
  * unaffected regardless of pointer type. `role="tooltip"` + `aria-hidden`
  * keep the decorative label out of the a11y tree.
+ *
+ * Reveal is delayed (~0.7s) so brushing past an icon doesn't flash a tooltip
+ * — the delay is on the show transition only; hiding is immediate. No arrow:
+ * a clean floating pill reads better next to the rail than a caret did.
  */
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
@@ -29,13 +33,16 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       <span
         role="tooltip"
         aria-hidden
-        className="pointer-events-none absolute left-[calc(100%+9px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-[8px] bg-[#14254A] px-[11px] py-[7px] text-[12px] font-medium text-white opacity-0 shadow-[0_6px_18px_rgba(20,37,74,0.33)] transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100"
+        className={cn(
+          "pointer-events-none absolute left-full top-1/2 z-50 ml-[10px] -translate-y-1/2 -translate-x-1",
+          "whitespace-nowrap rounded-[7px] bg-[#14254A] px-2.5 py-[7px] text-[12px] font-medium leading-none text-white",
+          "opacity-0 shadow-[0_6px_20px_-4px_rgba(20,37,74,0.5)] ring-1 ring-white/10",
+          "transition-[opacity,transform] duration-150 ease-out",
+          "group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-[700ms]",
+          "group-focus-within:translate-x-0 group-focus-within:opacity-100 group-focus-within:delay-[700ms]"
+        )}
       >
         {label}
-        <span
-          aria-hidden
-          className="absolute right-full top-1/2 -mr-[3px] h-[9px] w-[9px] -translate-y-1/2 rotate-45 rounded-[2px] bg-[#14254A]"
-        />
       </span>
     </div>
   );
