@@ -8,6 +8,7 @@ import { trpc, createTrpcClient } from "./lib/trpc";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { AppUpdater } from "./components/AppUpdater";
+import { WindowTitle } from "./components/WindowTitle";
 import { LoginPage } from "./pages/LoginPage";
 import { AccessScreen } from "./founder/AccessScreen";
 import { FounderShell } from "./founder/FounderShell";
@@ -82,6 +83,7 @@ export function App() {
         <AuthProvider>
           <ToastProvider>
             <AppUpdater />
+            <WindowTitle />
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>
