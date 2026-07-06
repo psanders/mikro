@@ -231,6 +231,64 @@ export const ruleAlertEvent: FeedEvent = {
   }
 };
 
+export const taskDueEvent: FeedEvent = {
+  id: "evt-task-due",
+  type: "task.due",
+  occurredAt: minutesAgo(5),
+  actorName: "Sistema",
+  summary: 'La tarea "Pago semanal — Luis M." está lista para confirmar.',
+  payload: {
+    taskFiringId: "11111111-1111-4111-8111-111111111111",
+    automationId: "pay-collector",
+    taskName: "Pago semanal — Luis M.",
+    dueAt: minutesAgo(5)
+  }
+};
+
+export const taskNeedsInputEvent: FeedEvent = {
+  id: "evt-task-needs-input",
+  type: "task.needs_input",
+  occurredAt: minutesAgo(8),
+  actorName: "Sistema",
+  summary: 'La tarea "Pago semanal — Luis M." necesita información: accountId.',
+  payload: {
+    taskFiringId: "33333333-3333-4333-8333-333333333333",
+    automationId: "pay-collector",
+    taskName: "Pago semanal — Luis M.",
+    missingSlots: ["accountId"]
+  }
+};
+
+export const taskCompletedEvent: FeedEvent = {
+  id: "evt-task-completed",
+  type: "task.completed",
+  occurredAt: minutesAgo(12),
+  actorName: "Pedro S.",
+  amount: 3500,
+  summary: "Pago de RD$3,500 a Luis M. registrado.",
+  payload: {
+    taskFiringId: "11111111-1111-4111-8111-111111111111",
+    automationId: "pay-collector",
+    taskName: "Pago semanal — Luis M.",
+    skipped: false,
+    resultSummary: "Pago de RD$3,500 a Luis M. registrado."
+  }
+};
+
+export const taskFailedEvent: FeedEvent = {
+  id: "evt-task-failed",
+  type: "task.failed",
+  occurredAt: minutesAgo(15),
+  actorName: "Pedro S.",
+  summary: 'La tarea "Cierre contable del día" falló: El día 2026-07-05 ya fue cerrado.',
+  payload: {
+    taskFiringId: "22222222-2222-4222-8222-222222222222",
+    automationId: "daily-close",
+    taskName: "Cierre contable del día",
+    reason: "El día 2026-07-05 ya fue cerrado (transacción txn-1)."
+  }
+};
+
 /** All twelve catalog specimens, in a stable order — used by the Feed composite story. */
 export const allFeedEvents: FeedEvent[] = [
   applicationApprovedExceptionEvent,

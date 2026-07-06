@@ -14,7 +14,11 @@ import {
   Repeat,
   UserPlus,
   Sparkles,
-  BellRing
+  BellRing,
+  AlarmClockCheck,
+  CircleAlert,
+  CalendarCheck,
+  CalendarX
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -70,7 +74,11 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
   "customer.created": { icon: UserPlus, accent: "blue" },
   "copilot.action": { icon: Sparkles, accent: "blue" },
-  "rule.alert": { icon: BellRing, accent: "amber" }
+  "rule.alert": { icon: BellRing, accent: "amber" },
+  "task.due": { icon: AlarmClockCheck, accent: "amber" },
+  "task.needs_input": { icon: CircleAlert, accent: "amber" },
+  "task.completed": { icon: CalendarCheck, accent: "green" },
+  "task.failed": { icon: CalendarX, accent: "red" }
 };
 
 /** `application.approved` with `payload.policyException === true`. */
@@ -183,6 +191,32 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
       }
       return { text: name, tone: "muted" };
     }
+    case "task.due":
+      return { text: "Tarea programada · lista para confirmar", tone: "muted" };
+    case "task.needs_input": {
+      const missing = Array.isArray(payload.missingSlots)
+        ? (payload.missingSlots as unknown[]).filter((s) => typeof s === "string").join(", ")
+        : "";
+      return {
+        text: missing
+          ? `Tarea programada · falta: ${missing}`
+          : "Tarea programada · necesita información",
+        tone: "muted"
+      };
+    }
+    case "task.completed":
+      return {
+        text: payload.skipped === true ? "Tarea omitida" : "Tarea completada",
+        tone: "muted"
+      };
+    case "task.failed":
+      return {
+        text:
+          typeof payload.reason === "string" && payload.reason
+            ? `Tarea fallida · ${payload.reason}`
+            : "Tarea fallida",
+        tone: "red"
+      };
     default:
       return { text: "", tone: "muted" };
   }
@@ -312,6 +346,20 @@ export function resolveNarrative(event: FeedEvent): string | null {
     }
     case "rule.alert":
       return null;
+    case "task.due":
+    case "task.needs_input":
+      // The live action widget (TaskActionCard) carries the substance while
+      // the firing is open; a resolved firing's compact line says the rest.
+      return null;
+    case "task.completed": {
+      const resultSummary =
+        typeof payload.resultSummary === "string" && payload.resultSummary
+          ? payload.resultSummary
+          : "";
+      return resultSummary || null;
+    }
+    case "task.failed":
+      return null;
   }
 }
 
@@ -395,6 +443,15 @@ export function resolveInsightsQuestion(event: FeedEvent): string {
       return ruleName
         ? `Cuéntame más sobre esta alerta: ${ruleName}.`
         : "Cuéntame más sobre esta alerta.";
+    }
+    case "task.due":
+    case "task.needs_input":
+    case "task.completed":
+    case "task.failed": {
+      const taskName = typeof event.payload.taskName === "string" ? event.payload.taskName : "";
+      return taskName
+        ? `Cuéntame más sobre la tarea "${taskName}".`
+        : "Cuéntame más sobre esta tarea programada.";
     }
     default:
       return "Cuéntame más sobre este evento.";

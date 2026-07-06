@@ -8,7 +8,15 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FileText, House, LogOut, ShipWheel, Search, TriangleAlert } from "lucide-react";
+import {
+  FileText,
+  House,
+  ListChecks,
+  LogOut,
+  ShipWheel,
+  Search,
+  TriangleAlert
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
@@ -147,6 +155,12 @@ export function FounderShell() {
             label="Reportes"
             active={path.startsWith("/founder/reportes")}
             onClick={() => navigate("/founder/reportes")}
+          />
+          <RailItem
+            icon={ListChecks}
+            label="Tareas"
+            active={path.startsWith("/founder/tareas")}
+            onClick={() => navigate("/founder/tareas")}
           />
           <div className="flex-1" />
           <FeedbackButton />

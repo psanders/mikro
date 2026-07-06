@@ -15,6 +15,7 @@ import { FounderShell } from "./founder/FounderShell";
 import { FeedScreen } from "./founder/FeedScreen";
 import { BusquedaScreen } from "./founder/BusquedaScreen";
 import { ReportesScreen } from "./founder/ReportesScreen";
+import { TareasScreen } from "./founder/TareasScreen";
 
 function FullscreenLoading() {
   return (
@@ -61,6 +62,7 @@ function AppRoutes() {
           <Route index element={<FeedScreen />} />
           <Route path="buscar" element={<BusquedaScreen />} />
           <Route path="reportes" element={<ReportesScreen />} />
+          <Route path="tareas" element={<TareasScreen />} />
         </Route>
         {/* Unknown paths (including any retired operations route) redirect
             admins to the founder app; the access screen already caught
