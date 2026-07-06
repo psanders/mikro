@@ -75,6 +75,7 @@ Confirm is a tRPC mutation: validate ask-slot values against the automation's Zo
 ### D6 — Seed automations
 
 - **`pay-collector`** — gate floor `confirm`. Slots: `collectorId` (static), `accountId` + `categoryId` (static), `amount` (ask), `note` (ask, optional). Execute: `createCreateTransaction` expense from the configured account. Card shows collector name and the week's collected total (computed, display-only context) beside the amount field.
+- **`record-expense`** — gate floor `confirm`. A generic recurring operating expense (the founder's gas-week case, decided at design review 2026-07-05). Slots: `concept` (static, e.g. "Gasolina de la semana"), `accountId` + `categoryId` (static), `amount` (ask), `note` (ask, optional). Execute: `createCreateTransaction` expense — same shape as `pay-collector` minus the collector context.
 - **`daily-close`** — gate floor `confirm` (founder may not relax in v1; revisit once trusted). Slots: `closeDate` (computed: previous business day), `accountId` (static). Execute: sum the day's collected `Payment` rows and post the bridging deposit transaction(s) to the ledger — the ACCOUNTING.md "future automation". Idempotency: refuses to double-close a date already bridged (checks for a prior close transaction marker for that date).
 
 ### D7 — Copilot integration is three DIRECT tools

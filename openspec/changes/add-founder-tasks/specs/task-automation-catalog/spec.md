@@ -28,6 +28,15 @@ The catalog SHALL include `pay-collector` with gate floor `confirm`. Slots: `col
 - **WHEN** a `pay-collector` firing is presented for confirmation
 - **THEN** the card shows the collector's week collected total while the amount field remains founder-supplied
 
+### Requirement: record-expense automation records a recurring operating expense
+
+The catalog SHALL include `record-expense` with gate floor `confirm`. Slots: `concept` (static, display text such as "Gasolina de la semana"), `accountId`, `categoryId` (static); `amount` (ask, positive, bounded); `note` (ask, optional). Execute SHALL create an expense `AccountingTransaction` from the configured account via the existing accounting service and succeed or fail atomically.
+
+#### Scenario: Confirmed expense posts a transaction
+
+- **WHEN** a founder confirms a `record-expense` firing for the weekly gas task with amount 2000
+- **THEN** an expense transaction of 2000 exists on the configured account and category, attributed to the founder
+
 ### Requirement: daily-close automation bridges the day's collections into the ledger
 
 The catalog SHALL include `daily-close` with gate floor `confirm`. Slots: `closeDate` (computed: the previous business day); `accountId` (static). Execute SHALL sum the close date's collected loan `Payment` rows, grouped per payment method, and post the bridging deposit transaction(s) to the configured ledger account. Execution MUST be idempotent per close date: if that date was already bridged, execute SHALL refuse with a clear reason (surfaced as `task.failed`) and post nothing.

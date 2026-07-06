@@ -5,7 +5,7 @@ Recurring business obligations (paying collectors every Friday, recording the we
 ## What Changes
 
 - Add a **pre-registered automation catalog**: automations are code in the repo (Zod-validated params, DI-injected deps, unit-tested), never model-invented or user-defined. Each automation declares a param schema with per-slot **sources** (`static` = bound at task creation, `computed` = resolved deterministically at fire time, `ask` = supplied by the founder at confirm time), a **gate floor** (`auto` runs on fire; `confirm` requires the founder), and an `execute` function that performs the flow and records business events.
-- Seed the catalog with two automations: **`pay-collector`** (confirm-gated; static collector + accounts, `ask` amount; executes an accounting transaction) and **`daily-close`** (bridges the day's collected loan payments into the accounting ledger — the "future automation" ACCOUNTING.md anticipates; confirm-gated by default, founder may relax to auto per task only where the automation's floor allows).
+- Seed the catalog with three automations: **`pay-collector`** (confirm-gated; static collector + accounts, `ask` amount; executes an accounting transaction), **`record-expense`** (confirm-gated; generic recurring operating expense such as the week's gas — static account + category + concept, `ask` amount), and **`daily-close`** (bridges the day's collected loan payments into the accounting ledger — the "future automation" ACCOUNTING.md anticipates; confirm-gated by default, founder may relax to auto per task only where the automation's floor allows).
 - Add a **Task** record: a binding of `automationId` + recurrence schedule (one-time / daily / weekly / monthly, timezone America/Santo_Domingo) + bound static params + `nextFireAt`. Editable and cancelable after creation.
 - Add a **task worker** (same interval-worker shape as the follow-up worker and watch-rule evaluator): polls enabled tasks with `nextFireAt <= now`, runs the gathering phase (computed-slot resolvers), advances `nextFireAt`, and drives the firing lifecycle `GATHERING → NEEDS_INPUT | READY → EXECUTING → DONE | FAILED`. Missed firings fire late (never silently skipped).
 - Emit new business events — `task.due`, `task.needs_input`, `task.completed`, `task.failed` — to the append-only event log; the founder feed renders open task firings as **amber action cards** carrying a small form for `ask` slots plus a confirm button (live firing state fetched by `taskFiringId` from the event payload, same pattern as the copilot pending-action card). No LLM at fire, confirm, or execute time.
@@ -18,7 +18,7 @@ Recurring business obligations (paying collectors every Friday, recording the we
 ### New Capabilities
 
 - `founder-tasks`: the Task record, recurrence scheduling, the firing lifecycle and worker, slot-filling payload gathering, the Tasks tab, and task edit/cancel.
-- `task-automation-catalog`: the automation registry contract (param sources, gate floor, execute) and the two seed automations `pay-collector` and `daily-close`.
+- `task-automation-catalog`: the automation registry contract (param sources, gate floor, execute) and the three seed automations `pay-collector`, `record-expense`, and `daily-close`.
 
 ### Modified Capabilities
 

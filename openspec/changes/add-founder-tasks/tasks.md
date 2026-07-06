@@ -9,8 +9,9 @@
 
 - [ ] 2.1 Define the `Automation` contract (`id`, `title`, `gateFloor`, param spec with slot sources, DI-injected `execute`) and the registry in `mods/apiserver/src/tasks/automations/`
 - [ ] 2.2 Implement `pay-collector` (static collector/account/category, ask amount+note, week-collected display context, expense transaction via `createCreateTransaction`) with sinon tests
-- [ ] 2.3 Implement `daily-close` (computed previous business day, per-method bridge deposits, per-date idempotency refusal, zero-day success) with sinon tests
-- [ ] 2.4 Payload re-validation helper: validate stored payload against current param schema at fire and confirm; mismatch → `NEEDS_INPUT`, tested for the drift case
+- [ ] 2.3 Implement `record-expense` (static concept/account/category, ask amount+note, expense transaction) with sinon tests
+- [ ] 2.4 Implement `daily-close` (computed previous business day, per-method bridge deposits, per-date idempotency refusal, zero-day success) with sinon tests
+- [ ] 2.5 Payload re-validation helper: validate stored payload against current param schema at fire and confirm; mismatch → `NEEDS_INPUT`, tested for the drift case
 
 ## 3. Scheduling & worker
 
@@ -37,7 +38,7 @@
 
 ## 7. Tasks tab
 
-- [ ] 7.1 Tasks tab screen in the founder shell: definition list (name, automation, schedule, next firing, enabled) + cancel, with Storybook stories
+- [ ] 7.1 Tasks tab screen in the founder shell: definition list (name, automation, schedule, next firing) + pause/resume toggle + cancel, with Storybook stories
 - [ ] 7.2 Schema-driven create/edit form generated from the automation param spec (static inputs, ask-slot preview, gate clamped to floor), parity with copilot creation
 - [ ] 7.3 Pencil design for the Tasks tab + task card states, and update pencil.pen to match the implemented screens (source-of-truth rule)
 

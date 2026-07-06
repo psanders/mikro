@@ -69,7 +69,7 @@ For a firing in `READY` or `NEEDS_INPUT`, the apiserver SHALL expose founder-onl
 
 ### Requirement: Tasks tab lists definitions and creates them with a schema-driven form
 
-The founder app SHALL include a Tasks tab listing task definitions (name, automation, schedule, next firing, enabled state) with create, edit, and cancel. The create/edit form SHALL be generated from the selected automation's param spec: `static` slots render as inputs validated against the schema, `ask` slots are displayed as to-be-asked-at-confirmation, and the gate control is clamped to the automation's floor. Manual creation SHALL have full parity with copilot creation and require no LLM.
+The founder app SHALL include a Tasks tab listing task definitions (name, automation, schedule, next firing, enabled state) with create, edit, cancel, and a per-row pause/resume toggle (the `enabled` flag: a paused task fires nothing until resumed, and resuming recomputes `nextFireAt` forward — paused periods are not fired retroactively). The create/edit form SHALL be generated from the selected automation's param spec: `static` slots render as inputs (selects for catalog-backed values, starting with the automation itself) validated against the schema, `ask` slots are displayed as to-be-asked-at-confirmation, and the gate control is clamped to the automation's floor. Manual creation SHALL have full parity with copilot creation and require no LLM.
 
 #### Scenario: Manual creation via generated form
 
@@ -80,3 +80,8 @@ The founder app SHALL include a Tasks tab listing task definitions (name, automa
 
 - **WHEN** a founder cancels a task from the Tasks tab
 - **THEN** the task stops firing, and any still-open firing of it can still be confirmed or skipped
+
+#### Scenario: Pause and resume skip the paused periods
+
+- **WHEN** a founder pauses a weekly task for three weeks and then resumes it
+- **THEN** no firings are created for the paused weeks and `nextFireAt` is the next occurrence after the resume
