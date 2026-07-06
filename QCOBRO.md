@@ -66,6 +66,12 @@ Nothing improves merely by waiting, so the forward (deteriorating) direction is 
 it recomputes days-past-due from due dates and re-syncs. Ops actions (e.g. marking a loan
 `DEFAULTED`) are reflected on the next cron tick.
 
+Each cron tick also records a `qcobro.synced` business event (customers processed, portfolios
+pushed/skipped, duration) so the daily run shows up as a card on the Founder Feed — an auditable
+trail that the sync actually ran and didn't silently push zero portfolios. The on-payment trigger
+does **not** emit this event (it would flood the feed with one card per payment); only the cron's
+full pass does.
+
 **Why a full pass, not just the paying customer:** QCobro's real `portfolios.syncAccounts` call
 pushes a portfolio's **entire** account list in one batch (`mode: REPLACE` replaces the whole set
 with whatever is in that call). Pushing just the one customer who paid would, under `REPLACE`, wipe

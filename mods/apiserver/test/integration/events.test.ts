@@ -321,8 +321,9 @@ describe("Founder Feed Integration", () => {
       // These are written intrinsically (never by a boundary mapper):
       // application.restored by createRestoreApplication; copilot.action by the
       // copilot confirm flow; rule.alert by the watch-rule evaluator; task.* by
-      // the task worker and firing confirm/skip flow. They must be the only
-      // types without a registered mapper.
+      // the task worker and firing confirm/skip flow; qcobro.synced by the
+      // QCobro cron worker's tick(). They must be the only types without a
+      // registered mapper.
       const intrinsic = new Set([
         "application.restored",
         "copilot.action",
@@ -330,7 +331,8 @@ describe("Founder Feed Integration", () => {
         "task.due",
         "task.needs_input",
         "task.completed",
-        "task.failed"
+        "task.failed",
+        "qcobro.synced"
       ]);
       for (const type of businessEventTypeEnum.options) {
         if (intrinsic.has(type)) {
