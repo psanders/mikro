@@ -10,7 +10,7 @@ Append-only log of business events in the apiserver — the single source of tru
 
 The apiserver SHALL persist a `BusinessEvent` row for every successful business mutation in the event catalog, captured at the API boundary within the same request: the event is written immediately after the mutation commits, an event is never written for a failed or rolled-back mutation, and an event-write failure after a committed mutation SHALL be logged as an error without failing the request. The event log MUST be append-only: the API SHALL expose no procedure that updates or deletes an event, and corrections SHALL be represented as new events. Events SHALL be retained indefinitely.
 
-The boundary-captured catalog is: `payment.collected`, `payment.reversed`, `application.approved`, `application.rejected`, `application.signed`, `application.converted`, `application.deleted`, `application.restored`, `loan.status_changed`, `customer.created`. In addition, the catalog includes intrinsically recorded types written directly by their producing features (not via annotated procedures): `copilot.action` (a confirmed copilot write, with tool provenance in the payload) and `rule.alert` (a watch-rule threshold crossing).
+The boundary-captured catalog is: `payment.collected`, `payment.reversed`, `application.approved`, `application.rejected`, `application.signed`, `application.converted`, `application.deleted`, `application.restored`, `loan.status_changed`, `customer.created`. In addition, the catalog includes intrinsically recorded types written directly by their producing features (not via annotated procedures): `copilot.action` (a confirmed copilot write, with tool provenance in the payload), `rule.alert` (a watch-rule threshold crossing), and the task lifecycle types `task.due` (a confirm-gated firing became ready), `task.needs_input` (gathering left a firing missing slot values), `task.completed` (a firing executed or was skipped — `skipped: true` in the payload distinguishes the two), and `task.failed` (execution refused or errored, with a reason). Task lifecycle payloads carry `taskFiringId`, `automationId`, and the task name as denormalized display data; like all events they carry no foreign keys and remain renderable after their task is deleted.
 
 #### Scenario: Payment collection records an event
 
@@ -36,6 +36,11 @@ The boundary-captured catalog is: `payment.collected`, `payment.reversed`, `appl
 
 - **WHEN** a copilot pending action is confirmed and executed
 - **THEN** a `copilot.action` event exists with the founder as actor and the tool name and arguments in the payload
+
+#### Scenario: Task firing records lifecycle events
+
+- **WHEN** a confirm-gated task fires and the founder later confirms it successfully
+- **THEN** a `task.due` event and a `task.completed` event exist, each carrying the `taskFiringId`, `automationId`, and task name in the payload
 
 ### Requirement: Events carry denormalized display data and a typed payload
 
