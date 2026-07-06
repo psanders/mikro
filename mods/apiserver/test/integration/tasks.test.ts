@@ -17,6 +17,10 @@ import {
 } from "./setup.js";
 import { processDueTasks } from "../../src/tasks/processDueTasks.js";
 import { executeFiring, skipFiring } from "../../src/tasks/firings.js";
+import { createCopilotChat } from "../../src/api/copilot/createCopilotChat.js";
+import { getBoundToolNames } from "../../src/api/copilot/toolPolicy.js";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { ToolExecutor } from "@mikro/agents";
 
 const FOUNDER_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -456,6 +460,100 @@ describe("Founder Tasks Integration", () => {
       }
       expect(threw).to.equal(true);
       expect(await db.accountingTransaction.count()).to.equal(1);
+    });
+  });
+
+  describe("copilot task tools", () => {
+    /** Fake model replaying scripted turns (same shape as copilot.test.ts). */
+    function makeFakeModel(
+      turns: Array<{
+        content: string;
+        tool_calls?: Array<{ id: string; name: string; args: Record<string, unknown> }>;
+      }>
+    ) {
+      let i = 0;
+      return (): BaseChatModel =>
+        ({
+          bindTools() {
+            return { invoke: async () => turns[Math.min(i++, turns.length - 1)] };
+          }
+        }) as unknown as BaseChatModel;
+    }
+
+    const noopExecutor: ToolExecutor = async () => ({ success: true, message: "OK" });
+
+    it("binds the three task tools to the model", () => {
+      const bound = getBoundToolNames();
+      expect(bound).to.include.members(["createTask", "listTasks", "cancelTask"]);
+    });
+
+    it("createTask resolves collector/account/category names to UUIDs and creates the task", async () => {
+      const chat = createCopilotChat({
+        db,
+        toolExecutor: noopExecutor,
+        createModel: makeFakeModel([
+          {
+            content: "",
+            tool_calls: [
+              {
+                id: "1",
+                name: "createTask",
+                args: {
+                  name: "Pago semanal — Luis M.",
+                  automationId: "pay-collector",
+                  frequency: "weekly",
+                  weekday: "5",
+                  timeOfDay: "08:00",
+                  staticParams: {
+                    collectorId: "Luis M.",
+                    accountId: "Caja principal",
+                    categoryId: "Comisiones"
+                  }
+                }
+              }
+            ]
+          },
+          { content: "Listo, tarea creada." }
+        ])
+      });
+
+      const reply = await chat({ userId: FOUNDER_ID, message: "cada viernes pagar a Luis" });
+      expect(reply.reply).to.include("tarea");
+
+      const task = await db.task.findFirstOrThrow({});
+      const params = JSON.parse(task.staticParamsJson);
+      expect(params.collectorId).to.equal(collectorId);
+      expect(params.accountId).to.equal(accountId);
+      expect(params.categoryId).to.equal(categoryId);
+      expect(task.gate).to.equal("confirm");
+    });
+
+    it("createTask with an automation outside the catalog fails without creating anything", async () => {
+      const chat = createCopilotChat({
+        db,
+        toolExecutor: noopExecutor,
+        createModel: makeFakeModel([
+          {
+            content: "",
+            tool_calls: [
+              {
+                id: "1",
+                name: "createTask",
+                args: {
+                  name: "TSS",
+                  automationId: "tss-check",
+                  frequency: "daily",
+                  timeOfDay: "08:00"
+                }
+              }
+            ]
+          },
+          { content: "No pude crear la tarea." }
+        ])
+      });
+
+      await chat({ userId: FOUNDER_ID, message: "revisa la tss cada día" });
+      expect(await db.task.count()).to.equal(0);
     });
   });
 });
