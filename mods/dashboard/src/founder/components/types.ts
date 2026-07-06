@@ -23,6 +23,17 @@ export interface FeedEvent {
   payload: Record<string, unknown>;
 }
 
+/**
+ * Event types that count as an "alert" (issue #109) — shared by the feed's
+ * "Alertas" filter pill and the rail's unread-badge polling so the two stay
+ * in sync.
+ */
+export const ALERT_EVENT_TYPES: BusinessEventType[] = [
+  "application.deleted",
+  "application.restored",
+  "loan.status_changed"
+];
+
 export type NavigateTargetKind = "application" | "loan" | "customer";
 
 export interface NavigateTarget {

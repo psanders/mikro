@@ -7,7 +7,8 @@
  * expand per-card; the top filter pills narrow the stream server-side. The
  * copilot sparkles button ships inert (a later change owns the dock).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
 import { cn } from "../lib/cn";
@@ -15,13 +16,14 @@ import { trpc, type RouterOutputs } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
 import { isForbidden } from "../lib/applications";
 import { useCopilot } from "./copilot/CopilotContext";
+import { useAlerts } from "./alerts/AlertsContext";
 import { FeedCard } from "./components/FeedCard";
 import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
 import { formatDayLabel } from "./components/format";
 import { subjectQuestion } from "./components/typeConfig";
-import type { FeedEvent, NavigateTarget } from "./components/types";
+import { ALERT_EVENT_TYPES, type FeedEvent, type NavigateTarget } from "./components/types";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
@@ -43,12 +45,12 @@ const FILTERS: FilterDef[] = [
     label: "Decisiones",
     types: ["application.approved", "application.rejected"]
   },
-  {
-    id: "alertas",
-    label: "Alertas",
-    types: ["application.deleted", "application.restored", "loan.status_changed"]
-  }
+  { id: "alertas", label: "Alertas", types: ALERT_EVENT_TYPES }
 ];
+
+interface FeedNavState {
+  filterId?: string;
+}
 
 function toFeedEvent(item: FeedItem): FeedEvent {
   return {
@@ -90,9 +92,24 @@ export function FeedScreen() {
   const toast = useToast();
   const utils = trpc.useUtils();
   const copilot = useCopilot();
-  const [filterId, setFilterId] = useState("todo");
+  const alerts = useAlerts();
+  const location = useLocation();
+  const navState = location.state as FeedNavState | null;
+  const [filterId, setFilterId] = useState(navState?.filterId ?? "todo");
+
+  // The rail's "Excepciones" button navigates here with `state.filterId` set
+  // — re-sync on every navigation (keyed by location.key so a second click
+  // while already on this screen still takes effect).
+  useEffect(() => {
+    if (navState?.filterId) setFilterId(navState.filterId);
+  }, [location.key, navState?.filterId]);
 
   const activeFilter = FILTERS.find((f) => f.id === filterId) ?? FILTERS[0]!;
+
+  // Viewing the alerts filter acknowledges any unread alert, per issue #109.
+  useEffect(() => {
+    if (filterId === "alertas") alerts.markSeen();
+  }, [filterId, alerts]);
 
   const feed = trpc.listFeedEvents.useInfiniteQuery(
     activeFilter.types ? { types: activeFilter.types } : {},
