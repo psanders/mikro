@@ -49,7 +49,7 @@ export function createGetCopilotHistory(db: PrismaClient) {
     });
 
     const pending = await db.copilotPendingAction.findMany({
-      where: { userId: params.userId },
+      where: { userId: params.userId, deletedAt: null },
       orderBy: { createdAt: "asc" }
     });
 

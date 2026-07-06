@@ -640,6 +640,7 @@ model CopilotPendingAction {
   status     String    @default("PENDING")
   createdAt  DateTime  @default(now()) @map("created_at")
   resolvedAt DateTime? @map("resolved_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   @@index([userId, status])
   @@map("copilot_pending_actions")

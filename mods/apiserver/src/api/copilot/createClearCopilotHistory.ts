@@ -2,9 +2,10 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Clear the founder's copilot conversation (design decision: soft-delete, not
- * hard-delete). Marks every copilot-channel `Message` row owned by the caller
- * with `deletedAt` — the rows are never removed, only excluded from history
- * reads (`createGetCopilotHistory`, `createCopilotChat`). Refuses to clear
+ * hard-delete). Marks every copilot-channel `Message` row and every resolved
+ * `CopilotPendingAction` owned by the caller with `deletedAt` — the rows are
+ * never removed, only excluded from history reads
+ * (`createGetCopilotHistory`, `createCopilotChat`). Refuses to clear
  * while the caller has a PENDING, unexpired `CopilotPendingAction`: a write the
  * founder hasn't resolved yet must never be silently hidden from view.
  */
@@ -43,9 +44,17 @@ export function createClearCopilotHistory(deps: ClearCopilotHistoryDeps) {
       });
     }
 
+    const now = new Date();
     const { count } = await db.message.updateMany({
       where: { userId, channel: "copilot", deletedAt: null },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: now }
+    });
+
+    // Resolved (or expired) action cards belong to the conversation being
+    // cleared — hide them too, or they resurface alone on the next reload.
+    await db.copilotPendingAction.updateMany({
+      where: { userId, deletedAt: null },
+      data: { deletedAt: now }
     });
 
     return { cleared: count };
