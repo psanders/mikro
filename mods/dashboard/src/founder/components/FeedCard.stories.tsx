@@ -4,7 +4,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FeedCard } from "./FeedCard";
 import { FeedDayHeader } from "./FeedDayHeader";
+import { TaskActionCard } from "./TaskActionCard";
 import {
+  taskCompletedEvent,
+  taskDueEvent,
+  taskFailedEvent,
   applicationApprovedEvent,
   applicationApprovedExceptionEvent,
   applicationConvertedEvent,
@@ -113,6 +117,43 @@ export const RuleAlert: Story = {
 export const PaymentCollectedExpandedWithLateFee: Story = {
   name: "Expanded — payment with late fee detail",
   args: { event: paymentCollectedWithLateFeeEvent, defaultExpanded: true }
+};
+
+export const TaskDueOpen: Story = {
+  name: "Task due — open firing (amber wash + action widget)",
+  args: {
+    event: taskDueEvent,
+    defaultExpanded: true,
+    tint: "amber",
+    actionSlot: (
+      <TaskActionCard
+        firing={{
+          id: "11111111-1111-4111-8111-111111111111",
+          taskName: "Pago semanal — Luis M.",
+          automationId: "pay-collector",
+          status: "READY",
+          askSlots: [
+            { name: "amount", label: "Monto (RD$)", kind: "amount", optional: false },
+            { name: "note", label: "Nota (opcional)", kind: "text", optional: true }
+          ],
+          missingSlots: [],
+          context: { collectorName: "Luis M.", weekCollected: 48300, weekPayments: 37 }
+        }}
+        onConfirm={() => {}}
+        onSkip={() => {}}
+      />
+    )
+  }
+};
+
+export const TaskCompletedRow: Story = {
+  name: "Task completed — plain resolved row",
+  args: { event: taskCompletedEvent, defaultExpanded: true }
+};
+
+export const TaskFailedRow: Story = {
+  name: "Task failed — red meta with the refusal reason",
+  args: { event: taskFailedEvent, defaultExpanded: true }
 };
 
 /**

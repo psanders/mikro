@@ -18,6 +18,7 @@ import { isForbidden } from "../lib/applications";
 import { useCopilot } from "./copilot/CopilotContext";
 import { useAlerts } from "./alerts/AlertsContext";
 import { FeedCard } from "./components/FeedCard";
+import { TaskFeedCard } from "./TaskFeedCard";
 import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
@@ -45,8 +46,18 @@ const FILTERS: FilterDef[] = [
     label: "Decisiones",
     types: ["application.approved", "application.rejected"]
   },
-  { id: "alertas", label: "Alertas", types: ALERT_EVENT_TYPES }
+  { id: "alertas", label: "Alertas", types: ALERT_EVENT_TYPES },
+  {
+    id: "tareas",
+    label: "Tareas",
+    types: ["task.due", "task.needs_input", "task.completed", "task.failed"]
+  }
 ];
+
+/** Task lifecycle events whose card may carry the live action widget. */
+function isTaskEvent(event: FeedEvent): boolean {
+  return event.type === "task.due" || event.type === "task.needs_input";
+}
 
 interface FeedNavState {
   filterId?: string;
@@ -207,16 +218,19 @@ export function FeedScreen() {
         {groups.map((group) => (
           <div key={group.key}>
             {formatDayLabel(group.date) !== "Hoy" && <FeedDayHeader date={group.date} />}
-            {group.events.map((event) => (
-              <FeedCard
-                key={event.id}
-                event={event}
-                canRestore={canRestore(event)}
-                onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
-                onNavigate={(target) => handleNavigate(event, target)}
-                onAskCopilot={(question) => copilot.openWith(question)}
-              />
-            ))}
+            {group.events.map((event) => {
+              const Card = isTaskEvent(event) ? TaskFeedCard : FeedCard;
+              return (
+                <Card
+                  key={event.id}
+                  event={event}
+                  canRestore={canRestore(event)}
+                  onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
+                  onNavigate={(target) => handleNavigate(event, target)}
+                  onAskCopilot={(question) => copilot.openWith(question)}
+                />
+              );
+            })}
           </div>
         ))}
 

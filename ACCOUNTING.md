@@ -38,7 +38,18 @@ kind `LATE_FEE`, optionally created together with an `INSTALLMENT` row for the
 same cash-in. These loan payments are **not** bridged automatically into
 `AccountingTransaction` or any bank/cash account; teams that want ledger alignment
 continue to record deposits and movements in the accounting module by hand (or
-via future automation).
+via the founder-task automations below).
+
+**Founder-task bridge (`daily-close`):** the scheduled-task system offers a
+`daily-close` automation that bridges one calendar day's collected loan
+payments into the ledger — one `INCOME` deposit per payment method to a
+configured account, idempotent per close date (reference marker
+`daily-close:<date>`, a bridged date refuses to post again). It is
+confirm-gated: the founder reviews the day's totals on the feed card before
+anything posts. Companion automations `pay-collector` and `record-expense`
+post confirm-gated `EXPENSE` transactions for collector payments and recurring
+operating expenses. All three are code in `mods/apiserver/src/tasks/` — the
+scheduler never invents entries an automation didn't define.
 
 ## Interest
 

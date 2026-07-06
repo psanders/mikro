@@ -11,8 +11,10 @@ describe("buildCopilotSystemPrompt", () => {
     expect(prompt).to.include("Hoy es 5 de julio de 2026.");
     expect(prompt).to.include("CONSULTAR");
     expect(prompt).to.include("VIGILAR");
+    expect(prompt).to.include("PROGRAMAR");
     expect(prompt).to.include("MEJORAR");
     expect(prompt).to.include("githubFeedback");
+    expect(prompt).to.include("createTask");
   });
 
   it("mentions the founder's name when known", () => {

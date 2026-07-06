@@ -644,3 +644,63 @@ model CopilotPendingAction {
   @@index([userId, status])
   @@map("copilot_pending_actions")
 }
+
+// =============================================================================
+// Founder tasks (scheduled automations)
+// =============================================================================
+
+// A founder task: binds a catalog automation (code shipped with the apiserver,
+// never user-defined) to a recurrence schedule plus the automation's static
+// slot values. Schedule fields are interpreted in America/Santo_Domingo;
+// `nextFireAt` is the precomputed UTC instant the worker indexes on. `gate`
+// is "auto"/"confirm" and can never be looser than the automation's floor.
+model Task {
+  id               String       @id @default(uuid())
+  name             String
+  automationId     String       @map("automation_id")
+  frequency        String // once | daily | weekly | monthly
+  weekday          Int? // 0=Sunday..6=Saturday, weekly only
+  dayOfMonth       Int?         @map("day_of_month") // 1-31, monthly only (clamped)
+  onDate           String?      @map("on_date") // YYYY-MM-DD, once only
+  timeOfDay        String       @map("time_of_day") // HH:MM (24h)
+  staticParamsJson String       @map("static_params_json")
+  gate             String
+  enabled          Boolean      @default(true)
+  nextFireAt       DateTime?    @map("next_fire_at")
+  createdById      String       @map("created_by_id")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  firings          TaskFiring[]
+
+  @@index([enabled, nextFireAt])
+  @@map("tasks")
+}
+
+// One occurrence of a task. Created by the worker after the gathering phase
+// with status READY (confirm-gated, all slots resolved) or NEEDS_INPUT
+// (a resolver failed / schema drift), and resolved to DONE, SKIPPED, or
+// FAILED. `automationId`/`taskName` are denormalized and `taskId` nullable
+// (SetNull) so an open firing survives its task's deletion and can still be
+// confirmed or skipped. `payloadJson` holds resolved slot values;
+// `contextJson` display-only fire-time context for the feed card.
+model TaskFiring {
+  id               String    @id @default(uuid())
+  taskId           String?   @map("task_id")
+  task             Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  automationId     String    @map("automation_id")
+  taskName         String    @map("task_name")
+  gate             String
+  status           String
+  payloadJson      String    @map("payload_json")
+  missingSlotsJson String?   @map("missing_slots_json")
+  contextJson      String?   @map("context_json")
+  reason           String?
+  dueAt            DateTime  @map("due_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  resolvedAt       DateTime? @map("resolved_at")
+  resolvedById     String?   @map("resolved_by_id")
+
+  @@index([taskId, status])
+  @@index([status])
+  @@map("task_firings")
+}

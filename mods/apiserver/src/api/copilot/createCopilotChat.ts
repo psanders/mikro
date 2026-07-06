@@ -33,6 +33,7 @@ import { buildCopilotSystemPrompt } from "./systemPrompt.js";
 import { summarizeAction } from "./summarizeAction.js";
 import { createWatchRule, disableWatchRule, type WatchRuleView } from "./watchRules.js";
 import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from "./toolPolicy.js";
+import { createTask, listTasks, cancelTask, getAutomation } from "../../tasks/index.js";
 
 const MAX_TOOL_ITERATIONS = 10;
 const HISTORY_WINDOW = 20;
@@ -199,6 +200,118 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     try {
       const rule = await disableWatchRule(db, String(args.id));
       return { success: true, message: `Regla "${rule.name}" desactivada.`, data: { rule } };
+    } catch (error) {
+      return { success: false, message: (error as Error).message };
+    }
+  }
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  /**
+   * Resolve name-typed static params to UUIDs so the model can say "Caja
+   * principal" instead of an id it cannot know. Only slots whose kind is
+   * collector/account/category are resolved; UUIDs pass through untouched.
+   * Exact match first, contains as fallback (unique names enforced by schema
+   * for accounts/categories).
+   */
+  async function resolveStaticParamNames(
+    automationId: string,
+    staticParams: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    const automation = getAutomation(automationId);
+    if (!automation) return staticParams;
+
+    const resolved: Record<string, unknown> = { ...staticParams };
+    for (const [name, spec] of Object.entries(automation.params)) {
+      const value = resolved[name];
+      if (typeof value !== "string" || value === "" || UUID_RE.test(value)) continue;
+
+      if (spec.kind === "collector") {
+        const user =
+          (await db.user.findFirst({ where: { name: value }, select: { id: true } })) ??
+          (await db.user.findFirst({ where: { name: { contains: value } }, select: { id: true } }));
+        if (user) resolved[name] = user.id;
+      } else if (spec.kind === "account") {
+        const account =
+          (await db.accountingAccount.findFirst({
+            where: { name: value },
+            select: { id: true }
+          })) ??
+          (await db.accountingAccount.findFirst({
+            where: { name: { contains: value } },
+            select: { id: true }
+          }));
+        if (account) resolved[name] = account.id;
+      } else if (spec.kind === "category") {
+        const category =
+          (await db.accountingCategory.findFirst({
+            where: { name: value },
+            select: { id: true }
+          })) ??
+          (await db.accountingCategory.findFirst({
+            where: { name: { contains: value } },
+            select: { id: true }
+          }));
+        if (category) resolved[name] = category.id;
+      }
+    }
+    return resolved;
+  }
+
+  /** Create a scheduled task (copilot DIRECT tool). Coerces string args. */
+  async function handleCreateTask(
+    args: Record<string, unknown>,
+    userId: string
+  ): Promise<ToolResult> {
+    try {
+      const automationId = String(args.automationId ?? "");
+      const rawParams =
+        typeof args.staticParams === "object" && args.staticParams !== null
+          ? (args.staticParams as Record<string, unknown>)
+          : {};
+      const staticParams = await resolveStaticParamNames(automationId, rawParams);
+
+      const task = await createTask(
+        db,
+        {
+          name: args.name,
+          automationId,
+          frequency: args.frequency,
+          weekday: args.weekday !== undefined ? Number(args.weekday) : undefined,
+          dayOfMonth: args.dayOfMonth !== undefined ? Number(args.dayOfMonth) : undefined,
+          onDate: args.onDate ? String(args.onDate) : undefined,
+          timeOfDay: args.timeOfDay,
+          staticParams
+        },
+        userId
+      );
+      return {
+        success: true,
+        message: `Tarea "${task.name}" creada. Próximo disparo: ${task.nextFireAt?.toISOString() ?? "—"}.`,
+        data: { task }
+      };
+    } catch (error) {
+      return { success: false, message: (error as Error).message };
+    }
+  }
+
+  /** List scheduled tasks (copilot read tool). */
+  async function handleListTasks(args: Record<string, unknown>): Promise<ToolResult> {
+    try {
+      const tasks = await listTasks(db, {
+        includeDisabled: String(args.includeDisabled) === "true"
+      });
+      return { success: true, message: `${tasks.length} tarea(s).`, data: { tasks } };
+    } catch (error) {
+      return { success: false, message: (error as Error).message };
+    }
+  }
+
+  /** Cancel a scheduled task (copilot DIRECT tool). */
+  async function handleCancelTask(args: Record<string, unknown>): Promise<ToolResult> {
+    try {
+      const result = await cancelTask(db, { id: String(args.id) });
+      return { success: true, message: "Tarea cancelada.", data: result };
     } catch (error) {
       return { success: false, message: (error as Error).message };
     }
@@ -401,6 +514,12 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           if (outcome.rule) createdRule = outcome.rule;
         } else if (tc.name === "disableWatchRule") {
           result = await handleDisableWatchRule(tc.args);
+        } else if (tc.name === "createTask") {
+          result = await handleCreateTask(tc.args, userId);
+        } else if (tc.name === "listTasks") {
+          result = await handleListTasks(tc.args);
+        } else if (tc.name === "cancelTask") {
+          result = await handleCancelTask(tc.args);
         } else if (tc.name === "githubFeedback") {
           result = await handleGithubFeedback(tc.args, lastFailedCall);
           feedbackOutcome = { ok: result.success };

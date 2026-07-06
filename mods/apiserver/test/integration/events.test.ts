@@ -320,9 +320,18 @@ describe("Founder Feed Integration", () => {
     it("registers a mapper for every catalog type except intrinsically-written ones", () => {
       // These are written intrinsically (never by a boundary mapper):
       // application.restored by createRestoreApplication; copilot.action by the
-      // copilot confirm flow; rule.alert by the watch-rule evaluator. They must
-      // be the only types without a registered mapper.
-      const intrinsic = new Set(["application.restored", "copilot.action", "rule.alert"]);
+      // copilot confirm flow; rule.alert by the watch-rule evaluator; task.* by
+      // the task worker and firing confirm/skip flow. They must be the only
+      // types without a registered mapper.
+      const intrinsic = new Set([
+        "application.restored",
+        "copilot.action",
+        "rule.alert",
+        "task.due",
+        "task.needs_input",
+        "task.completed",
+        "task.failed"
+      ]);
       for (const type of businessEventTypeEnum.options) {
         if (intrinsic.has(type)) {
           expect(eventMappers[type], `${type} should NOT have a mapper`).to.equal(undefined);

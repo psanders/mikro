@@ -41,6 +41,16 @@ export interface FeedCardProps {
   onNavigate?: (target: NavigateTarget) => void;
   /** Opens the copilot dock prefilled with the chip's question. Chip is inert when omitted. */
   onAskCopilot?: (question: string) => void;
+  /**
+   * Full-card tint override — used by live task cards, whose amber wash
+   * depends on the firing's current state, not the event type alone.
+   */
+  tint?: "amber" | "red";
+  /**
+   * Extra expanded content rendered above the actions row — the task action
+   * widget mounts here. The card stays a plain event row when omitted.
+   */
+  actionSlot?: React.ReactNode;
   className?: string;
 }
 
@@ -79,6 +89,8 @@ export function FeedCard({
   onRestore,
   onNavigate,
   onAskCopilot,
+  tint: tintOverride,
+  actionSlot,
   className
 }: FeedCardProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
@@ -92,7 +104,7 @@ export function FeedCard({
     onToggle?.(next);
   }
 
-  const tint = resolveCardTint(event);
+  const tint = tintOverride ?? resolveCardTint(event);
   const deletion = isDeletion(event);
   const subjectLink = resolveSubjectLink(event);
   const narrative = resolveNarrative(event);
@@ -183,6 +195,8 @@ export function FeedCard({
             {metadataOpen && (
               <EventMetadataPanel event={event} onClose={() => setMetadataOpen(false)} />
             )}
+
+            {actionSlot}
 
             <div className="flex flex-wrap items-center gap-[10px]">
               {deletion ? (

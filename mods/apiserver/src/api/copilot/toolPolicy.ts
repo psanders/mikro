@@ -16,6 +16,7 @@
  */
 import type { ToolFunction } from "@mikro/agents";
 import { getToolByName } from "@mikro/agents";
+import { listAutomationDescriptors } from "../../tasks/index.js";
 
 /**
  * Query the append-only business-event log (the founder feed). A read tool: the
@@ -185,6 +186,130 @@ export const githubFeedbackTool: ToolFunction = {
 };
 
 /**
+ * The automation catalog rendered into the createTask tool docs: id enum +
+ * per-automation slot summary, so the model can only bind automations and
+ * slots that exist (founder-tasks spec, "Model cannot invent an automation").
+ */
+function automationCatalogDoc(): { ids: string[]; doc: string } {
+  const descriptors = listAutomationDescriptors();
+  const doc = descriptors
+    .map((d) => {
+      const statics = d.slots
+        .filter((s) => s.source === "static")
+        .map((s) => `${s.name} (${s.label})`)
+        .join(", ");
+      const asks = d.slots
+        .filter((s) => s.source === "ask")
+        .map((s) => s.label)
+        .join(", ");
+      return `- ${d.id} ("${d.title}"): parámetros fijos: ${statics || "ninguno"}. Se pregunta al confirmar: ${asks || "nada"}.`;
+    })
+    .join("\n");
+  return { ids: descriptors.map((d) => d.id), doc };
+}
+
+const catalogDoc = automationCatalogDoc();
+
+/**
+ * Create a scheduled task bound to a catalog automation. A DIRECT tool —
+ * reversible config (pause/cancel), mirroring the watch-rule tools. Task
+ * EXECUTION never touches the copilot loop.
+ */
+export const createTaskTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "createTask",
+    description:
+      "Crear una tarea programada que dispara una automatización del catálogo (ej: 'recuérdame cada viernes a las 8am pagar al cobrador Luis'). Se ejecuta directamente porque es reversible (pausar/cancelar). La tarea aparece en el feed como tarjeta ámbar cuando vence; nada se ejecuta sin la confirmación del fundador cuando la automatización lo requiere. Catálogo:\n" +
+      catalogDoc.doc +
+      "\nPara los parámetros fijos de tipo cobrador/cuenta/categoría puedes pasar el UUID o el nombre exacto (se resuelve automáticamente).",
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Nombre corto y descriptivo de la tarea (ej: 'Pago semanal — Luis M.')."
+        },
+        automationId: {
+          type: "string",
+          description: "Automatización del catálogo a disparar.",
+          enum: catalogDoc.ids
+        },
+        frequency: {
+          type: "string",
+          description:
+            "Frecuencia: 'once' (una vez, requiere onDate), 'daily', 'weekly' (requiere weekday) o 'monthly' (requiere dayOfMonth).",
+          enum: ["once", "daily", "weekly", "monthly"]
+        },
+        weekday: {
+          type: "string",
+          description: "Día de la semana para weekly: 0=domingo … 6=sábado."
+        },
+        dayOfMonth: {
+          type: "string",
+          description:
+            "Día del mes (1-31) para monthly; se ajusta al último día si el mes es más corto."
+        },
+        onDate: {
+          type: "string",
+          description: "Fecha YYYY-MM-DD para once."
+        },
+        timeOfDay: {
+          type: "string",
+          description: "Hora HH:MM (24h) en hora de República Dominicana."
+        },
+        staticParams: {
+          type: "object",
+          description:
+            "Parámetros fijos de la automatización elegida (ver catálogo). UUIDs o nombres exactos."
+        }
+      },
+      required: ["name", "automationId", "frequency", "timeOfDay"]
+    }
+  }
+};
+
+/** List the founder's scheduled tasks. A read tool. */
+export const listTasksTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listTasks",
+    description:
+      "Listar las tareas programadas existentes. Por defecto solo las activas; usa includeDisabled='true' para incluir las pausadas.",
+    parameters: {
+      type: "object",
+      properties: {
+        includeDisabled: {
+          type: "string",
+          description: "Si es 'true', incluye también las tareas pausadas. Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/** Cancel (delete) a scheduled task. A DIRECT tool. */
+export const cancelTaskTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "cancelTask",
+    description:
+      "Cancelar (eliminar) una tarea programada por su ID (UUID). Una ocurrencia ya disparada y pendiente sigue siendo confirmable u omisible desde el feed.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la tarea a cancelar."
+        }
+      },
+      required: ["id"]
+    }
+  }
+};
+
+/**
  * Tool definitions owned by the copilot module (not by the WhatsApp agents).
  * Handled inline by createCopilotChat rather than the shared tool executor.
  */
@@ -193,7 +318,10 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   createWatchRuleTool,
   listWatchRulesTool,
   disableWatchRuleTool,
-  githubFeedbackTool
+  githubFeedbackTool,
+  createTaskTool,
+  listTasksTool,
+  cancelTaskTool
 ];
 
 /**
@@ -215,7 +343,8 @@ export const READ_TOOLS: readonly string[] = [
   "generateDefaultedReport",
   "generateRenewalCandidatesReport",
   "queryFeedEvents",
-  "listWatchRules"
+  "listWatchRules",
+  "listTasks"
 ];
 
 /**
@@ -240,7 +369,11 @@ export const WRITE_TOOLS: readonly string[] = [
 export const DIRECT_TOOLS: readonly string[] = [
   "createWatchRule",
   "disableWatchRule",
-  "githubFeedback"
+  "githubFeedback",
+  // Task definitions are reversible config (pause/cancel) like watch rules;
+  // execution is gated separately by the firing confirm flow, never here.
+  "createTask",
+  "cancelTask"
 ];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */
