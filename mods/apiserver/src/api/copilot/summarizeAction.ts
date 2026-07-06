@@ -45,6 +45,19 @@ export function summarizeAction(toolName: string, args: Record<string, unknown>)
       const phone = str(args, "phone");
       return `Enviar la promoción por WhatsApp${phone ? ` al ${phone}` : ""}`;
     }
+    case "approveApplication": {
+      const id = str(args, "id");
+      return `Aprobar la solicitud${id ? ` ${id}` : ""}.`;
+    }
+    case "rejectApplication": {
+      const id = str(args, "id");
+      const reason = str(args, "reason");
+      return `Rechazar la solicitud${id ? ` ${id}` : ""}${reason ? ` por el motivo: ${reason}` : ""}.`;
+    }
+    case "deleteApplication": {
+      const id = str(args, "id");
+      return `Eliminar permanentemente la solicitud${id ? ` ${id}` : ""}.`;
+    }
     default:
       return `Ejecutar ${toolName} con los datos: ${JSON.stringify(args)}.`;
   }
