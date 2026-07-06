@@ -60,7 +60,7 @@ describe("Founder Tasks Integration", () => {
   function makeTask(overrides: Record<string, unknown> = {}) {
     return db.task.create({
       data: {
-        name: "Pago semanal — Luis M.",
+        name: "Pago semanal Ana",
         automationId: "pay-collector",
         frequency: "weekly",
         weekday: 5,
@@ -321,7 +321,7 @@ describe("Founder Tasks Integration", () => {
 
     function createInput(overrides: Record<string, unknown> = {}) {
       return {
-        name: "Pago semanal — Luis M.",
+        name: "Pago semanal Ana",
         automationId: "pay-collector",
         frequency: "weekly" as const,
         weekday: 5,
@@ -499,7 +499,7 @@ describe("Founder Tasks Integration", () => {
                 id: "1",
                 name: "createTask",
                 args: {
-                  name: "Pago semanal — Luis M.",
+                  name: "Pago semanal Ana",
                   automationId: "pay-collector",
                   frequency: "weekly",
                   weekday: "5",

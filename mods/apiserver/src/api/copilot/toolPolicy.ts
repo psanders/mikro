@@ -228,7 +228,7 @@ export const createTaskTool: ToolFunction = {
       properties: {
         name: {
           type: "string",
-          description: "Nombre corto y descriptivo de la tarea (ej: 'Pago semanal — Luis M.')."
+          description: "Nombre corto y descriptivo de la tarea (ej: 'Pago semanal Ana')."
         },
         automationId: {
           type: "string",

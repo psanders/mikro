@@ -13,7 +13,7 @@ function inDays(days: number, hour: number): string {
 
 const payCollectorTask: TaskListItem = {
   id: "task-1",
-  name: "Pago semanal — Luis M.",
+  name: "Pago semanal Ana",
   automationId: "pay-collector",
   automationTitle: "Pagar cobrador",
   frequency: "weekly",

@@ -236,11 +236,11 @@ export const taskDueEvent: FeedEvent = {
   type: "task.due",
   occurredAt: minutesAgo(5),
   actorName: "Sistema",
-  summary: 'La tarea "Pago semanal — Luis M." está lista para confirmar.',
+  summary: 'La tarea "Pago semanal Ana" está lista para confirmar.',
   payload: {
     taskFiringId: "11111111-1111-4111-8111-111111111111",
     automationId: "pay-collector",
-    taskName: "Pago semanal — Luis M.",
+    taskName: "Pago semanal Ana",
     dueAt: minutesAgo(5)
   }
 };
@@ -250,11 +250,11 @@ export const taskNeedsInputEvent: FeedEvent = {
   type: "task.needs_input",
   occurredAt: minutesAgo(8),
   actorName: "Sistema",
-  summary: 'La tarea "Pago semanal — Luis M." necesita información: accountId.',
+  summary: 'La tarea "Pago semanal Ana" necesita información: accountId.',
   payload: {
     taskFiringId: "33333333-3333-4333-8333-333333333333",
     automationId: "pay-collector",
-    taskName: "Pago semanal — Luis M.",
+    taskName: "Pago semanal Ana",
     missingSlots: ["accountId"]
   }
 };
@@ -269,7 +269,7 @@ export const taskCompletedEvent: FeedEvent = {
   payload: {
     taskFiringId: "11111111-1111-4111-8111-111111111111",
     automationId: "pay-collector",
-    taskName: "Pago semanal — Luis M.",
+    taskName: "Pago semanal Ana",
     skipped: false,
     resultSummary: "Pago de RD$3,500 a Luis M. registrado."
   }

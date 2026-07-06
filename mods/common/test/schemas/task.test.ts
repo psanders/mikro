@@ -13,7 +13,7 @@ import {
 } from "../../src/schemas/index.js";
 
 const base = {
-  name: "Pago semanal — Luis M.",
+  name: "Pago semanal Ana",
   automationId: "pay-collector",
   timeOfDay: "08:00"
 };
@@ -79,7 +79,7 @@ describe("updateTaskSchema", () => {
   it("allows a partial update that leaves the schedule alone", () => {
     const parsed = updateTaskSchema.safeParse({
       id: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
-      name: "Pago semanal — Marta R."
+      name: "Pago semanal Beto"
     });
     expect(parsed.success).to.equal(true);
   });
@@ -99,7 +99,7 @@ describe("task.* business-event payloads", () => {
   const firing = {
     taskFiringId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
     automationId: "pay-collector",
-    taskName: "Pago semanal — Luis M."
+    taskName: "Pago semanal Ana"
   };
 
   it("task.due requires the intended dueAt", () => {

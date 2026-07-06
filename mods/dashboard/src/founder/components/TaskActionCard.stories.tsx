@@ -7,7 +7,7 @@ import type { TaskFiringInfo } from "./TaskActionCard";
 
 const readyFiring: TaskFiringInfo = {
   id: "11111111-1111-4111-8111-111111111111",
-  taskName: "Pago semanal — Luis M.",
+  taskName: "Pago semanal Ana",
   automationId: "pay-collector",
   status: "READY",
   askSlots: [
@@ -30,7 +30,7 @@ const dailyCloseFiring: TaskFiringInfo = {
 
 const needsInputFiring: TaskFiringInfo = {
   id: "33333333-3333-4333-8333-333333333333",
-  taskName: "Pago semanal — Luis M.",
+  taskName: "Pago semanal Ana",
   automationId: "pay-collector",
   status: "NEEDS_INPUT",
   askSlots: [

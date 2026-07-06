@@ -129,7 +129,7 @@ export const TaskDueOpen: Story = {
       <TaskActionCard
         firing={{
           id: "11111111-1111-4111-8111-111111111111",
-          taskName: "Pago semanal — Luis M.",
+          taskName: "Pago semanal Ana",
           automationId: "pay-collector",
           status: "READY",
           askSlots: [

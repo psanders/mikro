@@ -114,7 +114,7 @@ export const Edit: Story = {
   args: {
     mode: "edit",
     initial: {
-      name: "Pago semanal — Luis M.",
+      name: "Pago semanal Ana",
       automationId: "pay-collector",
       frequency: "weekly",
       weekday: 5,
