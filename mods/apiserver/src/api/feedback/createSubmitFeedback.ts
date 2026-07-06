@@ -24,6 +24,7 @@ import type { Octokit } from "@octokit/rest";
 import { TRPCError } from "@trpc/server";
 import type { SubmitFeedbackInput, SubmitFeedbackResult } from "@mikro/common";
 import { logger } from "../../logger.js";
+import { fileGithubIssue, parseRepo } from "./fileGithubIssue.js";
 
 export interface FeedbackReporter {
   name: string;
@@ -82,17 +83,6 @@ function parseStructuredFeedback(raw: string): StructuredFeedback | null {
   } catch {
     return null;
   }
-}
-
-function parseRepo(repo: string): { owner: string; name: string } {
-  const [owner, name] = repo.split("/");
-  if (!owner || !name) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: 'githubFeedback.repo must be configured as "owner/repo".'
-    });
-  }
-  return { owner, name };
 }
 
 function extFromMimeType(mimeType: string): string {
@@ -204,16 +194,15 @@ export function createSubmitFeedback(deps: SubmitFeedbackDeps) {
     // No `labels` here: GitHub rejects issue creation if a named label
     // doesn't already exist in the target repo, and feedback is generic
     // anyway (a bug, an idea, or confusion) — the team triages and labels
-    // afterward.
-    const issue = await deps.octokit.issues.create({
-      owner,
-      repo: repoName,
-      title,
-      body: bodySections
-    });
+    // afterward. fileGithubIssue is the same path the copilot's githubFeedback
+    // tool uses (add-copilot-tool-awareness-feedback) — one GitHub client, not two.
+    const { issueUrl } = await fileGithubIssue(
+      { octokit: deps.octokit, repo: deps.repo },
+      { title, body: bodySections }
+    );
 
-    logger.info("feedback filed", { issueUrl: issue.data.html_url, reporter: reporter.userId });
+    logger.info("feedback filed", { issueUrl, reporter: reporter.userId });
 
-    return { issueUrl: issue.data.html_url };
+    return { issueUrl };
   };
 }

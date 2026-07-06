@@ -142,6 +142,49 @@ export const disableWatchRuleTool: ToolFunction = {
 };
 
 /**
+ * File a GitHub issue mid-conversation (design Decision 4, issue #111): a bug,
+ * a missing capability, or a UI/UX idea the copilot notices. A DIRECT tool —
+ * executes inline, no confirmation gate, because filing an internal,
+ * unlabeled issue isn't a business-data mutation (unlike WRITE_TOOLS) and is
+ * trivially reversible. `reasoning` is required so every filed issue explains
+ * *why* it matters, not just that something happened. `toolContext` is NOT a
+ * model-supplied argument — the chat loop attaches the most recently failed
+ * tool call in the same turn automatically, if there was one.
+ */
+export const githubFeedbackTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "githubFeedback",
+    description:
+      "Registrar un bug, una capacidad faltante, o una idea de mejora de UI/UX como un issue de GitHub, en el momento en que lo notas durante la conversación. Úsalo para gaps reales que observas (una herramienta que no puede hacer lo que se le pide, una tarjeta del dashboard confusa o que falta, algo que rompió el flujo) — no lo uses como respuesta a una simple búsqueda sin resultados.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description: "Tipo de feedback.",
+          enum: ["bug", "missing_capability", "ui_suggestion", "other"]
+        },
+        title: {
+          type: "string",
+          description: "Título corto y específico del issue (máx 120 caracteres)."
+        },
+        summary: {
+          type: "string",
+          description: "Resumen de una o dos frases de lo que ocurrió o de la idea."
+        },
+        reasoning: {
+          type: "string",
+          description:
+            "Por qué esto importa — no solo qué pasó, sino el impacto o la oportunidad que representa."
+        }
+      },
+      required: ["category", "title", "summary", "reasoning"]
+    }
+  }
+};
+
+/**
  * Tool definitions owned by the copilot module (not by the WhatsApp agents).
  * Handled inline by createCopilotChat rather than the shared tool executor.
  */
@@ -149,7 +192,8 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   queryFeedEventsTool,
   createWatchRuleTool,
   listWatchRulesTool,
-  disableWatchRuleTool
+  disableWatchRuleTool,
+  githubFeedbackTool
 ];
 
 /**
@@ -159,6 +203,7 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
 export const READ_TOOLS: readonly string[] = [
   "getCustomer",
   "getCustomerByPhone",
+  "getApplicationById",
   "listLoansByCustomer",
   "listPaymentsByLoanId",
   "getLoanByLoanId",
@@ -185,11 +230,35 @@ export const WRITE_TOOLS: readonly string[] = [
   "sendPromo"
 ];
 
-/** Direct tools: reversible watch-rule management, executed inline. */
-export const DIRECT_TOOLS: readonly string[] = ["createWatchRule", "disableWatchRule"];
+/**
+ * Direct tools: executed inline, no confirmation. Watch-rule management is
+ * reversible business config; githubFeedback is an external, non-business
+ * side effect (an internal issue, not a mutation) — issue #111 explicitly
+ * asks for it to be callable in the moment, which a confirm-first flow would
+ * defeat.
+ */
+export const DIRECT_TOOLS: readonly string[] = [
+  "createWatchRule",
+  "disableWatchRule",
+  "githubFeedback"
+];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */
 export const LOCAL_TOOL_NAMES: readonly string[] = COPILOT_LOCAL_TOOLS.map((t) => t.function.name);
+
+/**
+ * Hand-curated disambiguation notes for tools whose inputs could otherwise be
+ * confused with one another (design Decision 3, environment/tool-capability
+ * awareness). Deliberately small — NOT an attempt to auto-document every
+ * bound tool (the model already gets full param schemas via bindTools). Only
+ * add an entry here when two bound tools could plausibly resolve the same
+ * kind of user input, the way a customer UUID and a solicitud UUID look
+ * identical but come from different tables.
+ */
+export const TOOL_NOTES: Record<string, string> = {
+  getCustomer: "usa el UUID del cliente; para solicitudes usa getApplicationById, no este.",
+  getApplicationById: "usa el UUID de la solicitud, no el del cliente."
+};
 
 export function isReadTool(name: string): boolean {
   return READ_TOOLS.includes(name);

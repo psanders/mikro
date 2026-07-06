@@ -10,6 +10,7 @@
  * action), and admin-only authorization on all seven procedures.
  */
 import { expect } from "chai";
+import sinon from "sinon";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import {
   createTestDb,
@@ -128,8 +129,10 @@ describe("Founder Copilot Integration", () => {
       const bound = getBoundToolNames();
       // A representative bound tool from each list.
       expect(bound).to.include("queryFeedEvents"); // read
+      expect(bound).to.include("getApplicationById"); // read
       expect(bound).to.include("createPayment"); // write
       expect(bound).to.include("createWatchRule"); // direct
+      expect(bound).to.include("githubFeedback"); // direct
       // Tools that exist in the agents registry but are NOT in any list.
       expect(bound).to.not.include("sendReceiptViaWhatsApp");
       expect(bound).to.not.include("saveAnswer");
@@ -170,6 +173,195 @@ describe("Founder Copilot Integration", () => {
       expect(reply.reply).to.equal("No hubo eventos recientes.");
       expect(reply.provenance?.tools).to.include("queryFeedEvents");
       expect(reply.pendingAction).to.equal(undefined);
+    });
+
+    it("resolves a solicitud by UUID via getApplicationById, not a customer lookup", async () => {
+      const { adminCaller } = await makeAdmin();
+      const applicationId = "0a1dad76-f0ec-44cc-bc74-ddf4286a95f6";
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "getApplicationById", args: { id: applicationId } }]
+        },
+        { content: "La solicitud está en revisión con un ISC de 62." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor({
+        success: true,
+        message: "Información de la solicitud obtenida.",
+        data: { application: { id: applicationId, status: "IN_REVIEW", score: 62 } }
+      });
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({
+        message: `Muéstrame los detalles de la solicitud ${applicationId}`
+      });
+
+      expect(calls).to.have.lengthOf(1);
+      expect(calls[0].name).to.equal("getApplicationById");
+      expect(calls[0].args).to.deep.equal({ id: applicationId });
+      expect(reply.reply).to.equal("La solicitud está en revisión con un ISC de 62.");
+      expect(reply.reply).to.not.match(/cliente no encontrado/i);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // githubFeedback tool (issue #111)
+  // ---------------------------------------------------------------------------
+
+  describe("githubFeedback tool", () => {
+    it("files an issue and discloses it in the reply", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "githubFeedback",
+              args: {
+                category: "missing_capability",
+                title: "No hay forma de buscar por ID de solicitud",
+                summary: "El fundador pidió una solicitud por UUID y no había herramienta.",
+                reasoning:
+                  "Sin esto, el fundador no puede seguir el enlace 'Ver solicitud' del feed."
+              }
+            }
+          ]
+        },
+        { content: "Ya reporté esta situación al equipo." }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      const fileFeedback = sinon.stub().resolves({ issueUrl: "https://github.com/o/r/issues/42" });
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory, fileFeedback });
+
+      const reply = await adminCaller.copilotChat({ message: "no encontré la solicitud" });
+
+      expect(fileFeedback.calledOnce).to.be.true;
+      const filedInput = fileFeedback.firstCall.args[0];
+      expect(filedInput.title).to.equal("No hay forma de buscar por ID de solicitud");
+      expect(filedInput.body).to.contain("missing_capability");
+      expect(reply.reply).to.contain("Registré esto como una mejora pendiente.");
+    });
+
+    it("attaches the prior failed tool call as context automatically", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "getApplicationById", args: { id: "missing-id" } }]
+        },
+        {
+          content: "",
+          tool_calls: [
+            {
+              id: "c2",
+              name: "githubFeedback",
+              args: {
+                category: "bug",
+                title: "Solicitud no encontrada",
+                summary: "getApplicationById no encontró nada.",
+                reasoning: "Puede ser un ID inválido, vale la pena revisar."
+              }
+            }
+          ]
+        },
+        { content: "Reporté el problema." }
+      ]);
+      const { executor } = makeRecordingExecutor({
+        success: false,
+        message: "Solicitud no encontrada con el ID: missing-id",
+        reason: "NOT_FOUND"
+      });
+      const fileFeedback = sinon.stub().resolves({ issueUrl: "https://github.com/o/r/issues/43" });
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory, fileFeedback });
+
+      await adminCaller.copilotChat({ message: "muéstrame la solicitud missing-id" });
+
+      const filedInput = fileFeedback.firstCall.args[0];
+      expect(filedInput.body).to.contain("getApplicationById");
+      expect(filedInput.body).to.contain("NOT_FOUND");
+    });
+
+    it("rejects a call missing reasoning, files nothing, discloses no success", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "githubFeedback",
+              args: { category: "other", title: "Algo", summary: "Algo pasó." }
+            }
+          ]
+        },
+        { content: "" }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      const fileFeedback = sinon.stub().resolves({ issueUrl: "https://github.com/o/r/issues/44" });
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory, fileFeedback });
+
+      const reply = await adminCaller.copilotChat({ message: "algo" });
+
+      expect(fileFeedback.called).to.be.false;
+      expect(reply.reply).to.not.contain("Registré esto como una mejora pendiente.");
+    });
+
+    it("discloses failure without breaking the turn when filing fails", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "githubFeedback",
+              args: {
+                category: "ui_suggestion",
+                title: "Falta una tarjeta de X",
+                summary: "Sería útil ver X en el dashboard.",
+                reasoning: "El fundador lo pidió dos veces esta semana."
+              }
+            }
+          ]
+        },
+        { content: "" }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      const fileFeedback = sinon.stub().rejects(new Error("token inválido"));
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory, fileFeedback });
+
+      const reply = await adminCaller.copilotChat({ message: "sería bueno ver X" });
+
+      expect(reply.reply).to.contain("no se pudo completar");
+    });
+
+    it("reports not configured when fileFeedback is absent, breaks nothing", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "githubFeedback",
+              args: {
+                category: "bug",
+                title: "Algo",
+                summary: "Algo pasó.",
+                reasoning: "Porque sí."
+              }
+            }
+          ]
+        },
+        { content: "" }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory }); // no fileFeedback
+
+      const reply = await adminCaller.copilotChat({ message: "algo" });
+
+      expect(reply.reply).to.contain("no se pudo completar");
     });
   });
 

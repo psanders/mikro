@@ -9,6 +9,7 @@ export {
   WRITE_TOOLS,
   DIRECT_TOOLS,
   COPILOT_LOCAL_TOOLS,
+  TOOL_NOTES,
   getCopilotToolDefinitions,
   getBoundToolNames,
   isReadTool,
@@ -59,4 +60,4 @@ export {
 } from "./createClearCopilotHistory.js";
 export { setCopilotDeps, getCopilotDeps, clearCopilotDeps, type CopilotDeps } from "./deps.js";
 export { summarizeAction } from "./summarizeAction.js";
-export { COPILOT_SYSTEM_PROMPT } from "./systemPrompt.js";
+export { buildCopilotSystemPrompt } from "./systemPrompt.js";

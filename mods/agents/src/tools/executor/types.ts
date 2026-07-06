@@ -151,6 +151,11 @@ export interface ToolExecutorDependencies {
     phone: string;
   }) => Promise<{ id: string; name: string; phone: string } | null>;
 
+  /** Get a loan application (solicitud) by its id (UUID) */
+  getApplication: (params: {
+    id: string;
+  }) => Promise<import("@mikro/common").LoanApplication | null>;
+
   /** List loans by customer ID */
   listLoansByCustomer: (params: {
     customerId: string;

@@ -21,7 +21,8 @@ export async function handleGetCustomerByPhone(
   if (!customer) {
     return {
       success: false,
-      message: `Cliente no encontrado con el teléfono: ${phoneInput}`
+      message: `Cliente no encontrado con el teléfono: ${phoneInput}`,
+      reason: "NOT_FOUND"
     };
   }
 
