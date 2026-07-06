@@ -20,3 +20,13 @@ export type { ScheduleFields } from "./dates.js";
 export { OPEN_FIRING_STATUSES, gatherPayload, executeFiring, skipFiring } from "./firings.js";
 export { processDueTasks } from "./processDueTasks.js";
 export { createTaskWorker } from "./createTaskWorker.js";
+export {
+  createTask,
+  listTasks,
+  updateTask,
+  setTaskEnabled,
+  cancelTask,
+  getTaskFiring,
+  confirmTaskFiring,
+  skipTaskFiring
+} from "./service.js";

@@ -8,7 +8,13 @@
  * once-task disable, and the unknown-automation degrade.
  */
 import { expect } from "chai";
-import { createTestDb, applySchema, type TestDb } from "./setup.js";
+import {
+  createTestDb,
+  createAuthenticatedCaller,
+  applySchema,
+  type TestDb,
+  type AuthenticatedCaller
+} from "./setup.js";
 import { processDueTasks } from "../../src/tasks/processDueTasks.js";
 import { executeFiring, skipFiring } from "../../src/tasks/firings.js";
 
@@ -261,6 +267,23 @@ describe("Founder Tasks Integration", () => {
       expect(await db.accountingTransaction.count()).to.equal(0);
     });
 
+    it("recovers a NEEDS_INPUT firing when confirm supplies the missing slot", async () => {
+      // Fire with a missing static slot (account), then supply it on confirm.
+      await makeTask({ staticParamsJson: JSON.stringify({ collectorId, categoryId }) });
+      await processDueTasks(db);
+      const firing = await db.taskFiring.findFirstOrThrow({ where: { status: "NEEDS_INPUT" } });
+
+      const result = await executeFiring(
+        db,
+        firing,
+        { accountId, amount: 3500 },
+        { id: FOUNDER_ID, name: "Pedro S." }
+      );
+
+      expect(result.status).to.equal("DONE");
+      expect(await db.accountingTransaction.count()).to.equal(1);
+    });
+
     it("degrades to NEEDS_INPUT when the stored payload no longer validates (drift)", async () => {
       const firing = await readyFiring();
       await db.taskFiring.update({
@@ -282,6 +305,157 @@ describe("Founder Tasks Integration", () => {
       expect(result.status).to.equal("NEEDS_INPUT");
       expect(await db.accountingTransaction.count()).to.equal(0);
       expect(await db.businessEvent.count({ where: { type: "task.needs_input" } })).to.equal(1);
+    });
+  });
+
+  describe("tasks tRPC router", () => {
+    let caller: AuthenticatedCaller;
+
+    beforeEach(() => {
+      caller = createAuthenticatedCaller(db);
+    });
+
+    function createInput(overrides: Record<string, unknown> = {}) {
+      return {
+        name: "Pago semanal — Luis M.",
+        automationId: "pay-collector",
+        frequency: "weekly" as const,
+        weekday: 5,
+        timeOfDay: "08:00",
+        staticParams: { collectorId, accountId, categoryId },
+        ...overrides
+      };
+    }
+
+    it("creates a task with the automation's floor as the default gate", async () => {
+      const task = await caller.tasks.create(createInput());
+      expect(task.gate).to.equal("confirm");
+      expect(task.nextFireAt).to.not.equal(null);
+      expect(task.enabled).to.equal(true);
+    });
+
+    it("rejects loosening the gate below the automation floor", async () => {
+      let threw = false;
+      try {
+        await caller.tasks.create(createInput({ gate: "auto" }));
+      } catch (err) {
+        threw = true;
+        expect((err as Error).message).to.include("confirmación");
+      }
+      expect(threw).to.equal(true);
+      expect(await db.task.count()).to.equal(0);
+    });
+
+    it("rejects an unknown automation", async () => {
+      let threw = false;
+      try {
+        await caller.tasks.create(createInput({ automationId: "tss-check" }));
+      } catch (err) {
+        threw = true;
+        expect((err as Error).message).to.include("desconocida");
+      }
+      expect(threw).to.equal(true);
+    });
+
+    it("rejects invalid static slots at creation", async () => {
+      let threw = false;
+      try {
+        await caller.tasks.create(createInput({ staticParams: { collectorId: "nope" } }));
+      } catch {
+        threw = true;
+      }
+      expect(threw).to.equal(true);
+      expect(await db.task.count()).to.equal(0);
+    });
+
+    it("lists automations as descriptors for the schema-driven form", async () => {
+      const descriptors = await caller.tasks.listAutomations();
+      expect(descriptors.map((d) => d.id).sort()).to.deep.equal([
+        "daily-close",
+        "pay-collector",
+        "record-expense"
+      ]);
+    });
+
+    it("pause stops firing; resume recomputes nextFireAt forward", async () => {
+      const task = await caller.tasks.create(createInput());
+      const paused = await caller.tasks.setEnabled({ id: task.id, enabled: false });
+      expect(paused.enabled).to.equal(false);
+
+      // Make it look overdue while paused; the worker must not fire it.
+      await db.task.update({
+        where: { id: task.id },
+        data: { nextFireAt: new Date(Date.now() - 1000) }
+      });
+      const pass = await processDueTasks(db);
+      expect(pass.fired).to.equal(0);
+
+      const resumed = await caller.tasks.setEnabled({ id: task.id, enabled: true });
+      expect(resumed.nextFireAt!.getTime()).to.be.greaterThan(Date.now());
+    });
+
+    it("cancel deletes the definition while its open firing stays resolvable", async () => {
+      const task = await caller.tasks.create(createInput());
+      await db.task.update({
+        where: { id: task.id },
+        data: { nextFireAt: new Date(Date.now() - 1000) }
+      });
+      await processDueTasks(db);
+      const firing = await db.taskFiring.findFirstOrThrow({ where: { taskId: task.id } });
+
+      await caller.tasks.cancel({ id: task.id });
+      expect(await db.task.count()).to.equal(0);
+
+      const view = await caller.tasks.getFiring({ id: firing.id });
+      expect(view.taskId).to.equal(null);
+      expect(view.status).to.equal("READY");
+
+      const confirmed = await caller.tasks.confirmFiring({
+        id: firing.id,
+        askValues: { amount: 3500 }
+      });
+      expect(confirmed.status).to.equal("DONE");
+    });
+
+    it("getFiring exposes payload, context, and pending ask slots for the card", async () => {
+      const task = await caller.tasks.create(createInput());
+      await db.task.update({
+        where: { id: task.id },
+        data: { nextFireAt: new Date(Date.now() - 1000) }
+      });
+      await processDueTasks(db);
+      const firing = await db.taskFiring.findFirstOrThrow({});
+
+      const view = await caller.tasks.getFiring({ id: firing.id });
+      expect(view.askSlots.map((s) => s.name).sort()).to.deep.equal(["amount", "note"]);
+      expect(view.context.collectorName).to.equal("Luis M.");
+      expect(view.payload.accountId).to.equal(accountId);
+    });
+
+    it("confirm and a second resolution attempt: the second is rejected", async () => {
+      const task = await caller.tasks.create(createInput());
+      await db.task.update({
+        where: { id: task.id },
+        data: { nextFireAt: new Date(Date.now() - 1000) }
+      });
+      await processDueTasks(db);
+      const firing = await db.taskFiring.findFirstOrThrow({});
+
+      const first = await caller.tasks.confirmFiring({
+        id: firing.id,
+        askValues: { amount: 3500 }
+      });
+      expect(first.status).to.equal("DONE");
+
+      let threw = false;
+      try {
+        await caller.tasks.skipFiring({ id: firing.id });
+      } catch (err) {
+        threw = true;
+        expect((err as Error).message).to.include("resuelta");
+      }
+      expect(threw).to.equal(true);
+      expect(await db.accountingTransaction.count()).to.equal(1);
     });
   });
 });

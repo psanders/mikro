@@ -132,7 +132,13 @@ export async function executeFiring(
   }
 
   const stored = JSON.parse(firing.payloadJson) as Record<string, unknown>;
-  const storedResult = validateSlots(automation, stored, ["static", "computed"]);
+  // Founder-supplied values may also fill missing static/computed slots — the
+  // NEEDS_INPUT card offers inputs for exactly those, so a failed resolver's
+  // slot is recoverable at confirm.
+  const storedResult = validateSlots(automation, { ...stored, ...askValues }, [
+    "static",
+    "computed"
+  ]);
   if (storedResult.missing.length > 0) {
     return degradeToNeedsInput(
       db,

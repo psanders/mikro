@@ -224,6 +224,18 @@ import {
   setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
 } from "../../api/copilot/index.js";
+// Founder task schemas + service (Tasks tab, feed task cards, copilot tools)
+import {
+  createTaskSchema,
+  listTasksSchema,
+  updateTaskSchema,
+  setTaskEnabledSchema,
+  cancelTaskSchema,
+  getTaskFiringSchema,
+  confirmTaskFiringSchema,
+  skipTaskFiringSchema
+} from "@mikro/common";
+import * as taskService from "../../tasks/index.js";
 // Feedback schema + API function
 import { submitFeedbackSchema, getConfig } from "@mikro/common";
 import { createSubmitFeedback } from "../../api/feedback/createSubmitFeedback.js";
@@ -1141,6 +1153,71 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       return setWatchRuleEnabledFn(ctx.db as unknown as PrismaClient, input);
     }),
+
+  // ==================== Founder task procedures ====================
+  //
+  // Scheduled automations (Tasks tab + feed task cards). Nested under
+  // `tasks.*`. Definitions are founder config; firing confirm/skip executes
+  // catalog code with no LLM involved.
+  tasks: router({
+    /** Catalog descriptors — the Tasks tab generates its create form from these. */
+    listAutomations: adminProcedure.query(async () => taskService.listAutomationDescriptors()),
+
+    create: adminProcedure.input(createTaskSchema).mutation(async ({ ctx, input }) => {
+      return taskService.createTask(ctx.db as unknown as PrismaClient, input, ctx.userId);
+    }),
+
+    list: adminProcedure.input(listTasksSchema).query(async ({ ctx, input }) => {
+      return taskService.listTasks(ctx.db as unknown as PrismaClient, input);
+    }),
+
+    update: adminProcedure.input(updateTaskSchema).mutation(async ({ ctx, input }) => {
+      return taskService.updateTask(ctx.db as unknown as PrismaClient, input);
+    }),
+
+    /** Pause/resume. Resuming recomputes nextFireAt forward (no retroactive firings). */
+    setEnabled: adminProcedure.input(setTaskEnabledSchema).mutation(async ({ ctx, input }) => {
+      return taskService.setTaskEnabled(ctx.db as unknown as PrismaClient, input);
+    }),
+
+    /** Delete the definition; an open firing survives and stays resolvable. */
+    cancel: adminProcedure.input(cancelTaskSchema).mutation(async ({ ctx, input }) => {
+      return taskService.cancelTask(ctx.db as unknown as PrismaClient, input);
+    }),
+
+    /** Live firing state for the feed card widget. */
+    getFiring: adminProcedure.input(getTaskFiringSchema).query(async ({ ctx, input }) => {
+      return taskService.getTaskFiring(ctx.db as unknown as PrismaClient, input);
+    }),
+
+    /** Confirm: validate ask values, execute the automation, record the outcome event. */
+    confirmFiring: adminProcedure
+      .input(confirmTaskFiringSchema)
+      .mutation(async ({ ctx, input }) => {
+        const db = ctx.db as unknown as PrismaClient;
+        const user = await db.user.findUnique({
+          where: { id: ctx.userId },
+          select: { name: true }
+        });
+        return taskService.confirmTaskFiring(db, input, {
+          id: ctx.userId,
+          name: user?.name ?? "Administrador"
+        });
+      }),
+
+    /** Skip: resolve the firing without executing (task.completed, skipped: true). */
+    skipFiring: adminProcedure.input(skipTaskFiringSchema).mutation(async ({ ctx, input }) => {
+      const db = ctx.db as unknown as PrismaClient;
+      const user = await db.user.findUnique({
+        where: { id: ctx.userId },
+        select: { name: true }
+      });
+      return taskService.skipTaskFiring(db, input, {
+        id: ctx.userId,
+        name: user?.name ?? "Administrador"
+      });
+    })
+  }),
 
   // ==================== Accounting procedures ====================
   //
