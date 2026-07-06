@@ -29,7 +29,7 @@ import type { ToolExecutor, ToolResult } from "@mikro/agents";
 import type { CopilotChatReply } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
-import { COPILOT_SYSTEM_PROMPT } from "./systemPrompt.js";
+import { buildCopilotSystemPrompt } from "./systemPrompt.js";
 import { summarizeAction } from "./summarizeAction.js";
 import { createWatchRule, disableWatchRule, type WatchRuleView } from "./watchRules.js";
 import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from "./toolPolicy.js";
@@ -41,6 +41,15 @@ export interface CopilotChatDeps {
   db: PrismaClient;
   toolExecutor: ToolExecutor;
   createModel: () => BaseChatModel;
+  /** Files a GitHub issue for the `githubFeedback` tool. See CopilotDeps for the full contract. */
+  fileFeedback?: (input: { title: string; body: string }) => Promise<{ issueUrl: string }>;
+}
+
+/** The most recently failed/limited tool call in the turn — attached to a githubFeedback filing automatically. */
+interface FailedToolCall {
+  toolName: string;
+  args: Record<string, unknown>;
+  reason?: string;
 }
 
 export interface CopilotChatParams {
@@ -82,7 +91,7 @@ interface LcToolCall {
  * Creates the copilot chat function.
  */
 export function createCopilotChat(deps: CopilotChatDeps) {
-  const { db, toolExecutor, createModel } = deps;
+  const { db, toolExecutor, createModel, fileFeedback } = deps;
 
   const toPendingView = (row: PendingActionRow) => ({
     id: row.id,
@@ -195,6 +204,64 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     }
   }
 
+  /**
+   * File a GitHub issue for a bug, missing capability, or UI idea (copilot
+   * DIRECT tool, design Decision 4). `reasoning` is required — a call missing
+   * it is rejected without filing anything. `lastFailedCall`, if present, is
+   * attached as tool-context so the issue is actionable without re-deriving
+   * what triggered it.
+   */
+  async function handleGithubFeedback(
+    args: Record<string, unknown>,
+    lastFailedCall: FailedToolCall | undefined
+  ): Promise<ToolResult> {
+    const category = typeof args.category === "string" ? args.category : "other";
+    const title = typeof args.title === "string" ? args.title.trim() : "";
+    const summary = typeof args.summary === "string" ? args.summary.trim() : "";
+    const reasoning = typeof args.reasoning === "string" ? args.reasoning.trim() : "";
+
+    if (!title || !summary || !reasoning) {
+      return {
+        success: false,
+        message: "Falta título, resumen o razonamiento — no se registró el feedback."
+      };
+    }
+
+    if (!fileFeedback) {
+      return { success: false, message: "El feedback no está configurado." };
+    }
+
+    const bodyLines = [
+      `**Categoría:** ${category}`,
+      "",
+      "## Resumen",
+      summary,
+      "",
+      "## Razonamiento",
+      reasoning
+    ];
+    if (lastFailedCall) {
+      bodyLines.push(
+        "",
+        "## Contexto de la herramienta",
+        `Herramienta: \`${lastFailedCall.toolName}\``,
+        `Argumentos: \`${JSON.stringify(lastFailedCall.args)}\``,
+        ...(lastFailedCall.reason ? [`Motivo: \`${lastFailedCall.reason}\``] : [])
+      );
+    }
+    bodyLines.push("", "---", "Reportado por el copiloto del fundador durante una conversación.");
+
+    try {
+      const { issueUrl } = await fileFeedback({ title, body: bodyLines.join("\n") });
+      return { success: true, message: `Feedback registrado: ${issueUrl}`, data: { issueUrl } };
+    } catch (error) {
+      return {
+        success: false,
+        message: `No se pudo registrar el feedback: ${(error as Error).message}`
+      };
+    }
+  }
+
   return async function copilotChat(params: CopilotChatParams): Promise<CopilotChatReply> {
     const { userId, actorName, message } = params;
     const startedAt = Date.now();
@@ -212,7 +279,13 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     });
     const chronological = [...historyRows].reverse();
 
-    const lcMessages: BaseMessage[] = [new SystemMessage(COPILOT_SYSTEM_PROMPT)];
+    const today = new Date().toLocaleDateString("es-DO", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+    const systemPrompt = buildCopilotSystemPrompt({ actorName, today });
+    const lcMessages: BaseMessage[] = [new SystemMessage(systemPrompt)];
     for (const row of chronological) {
       if (row.role === "AI") {
         lcMessages.push(new AIMessage(row.content));
@@ -236,6 +309,12 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     const context: Record<string, unknown> = { userId, role: "ADMIN", name: actorName };
     const toolsUsed: string[] = [];
     let createdRule: WatchRuleView | undefined;
+    // Tracks the most recent failed/limited tool call so a githubFeedback call
+    // right after it can attach that context automatically (design Decision 4).
+    let lastFailedCall: FailedToolCall | undefined;
+    // Whether githubFeedback fired this turn, and whether it succeeded — drives
+    // the mandatory disclosure appended to the reply below (no silent filing).
+    let feedbackOutcome: { ok: boolean } | undefined;
 
     const persistAI = async (content: string): Promise<void> => {
       await db.message.create({
@@ -322,9 +401,19 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           if (outcome.rule) createdRule = outcome.rule;
         } else if (tc.name === "disableWatchRule") {
           result = await handleDisableWatchRule(tc.args);
+        } else if (tc.name === "githubFeedback") {
+          result = await handleGithubFeedback(tc.args, lastFailedCall);
+          feedbackOutcome = { ok: result.success };
         } else {
           // Existing business read tool → shared executor.
           result = await toolExecutor(tc.name, tc.args, context);
+        }
+
+        // Track failures for a subsequent githubFeedback call to attach — but
+        // not githubFeedback's own outcome, so a failed filing doesn't become
+        // "context" for the next filing attempt.
+        if (!result.success && tc.name !== "githubFeedback") {
+          lastFailedCall = { toolName: tc.name, args: tc.args, reason: result.reason };
         }
 
         toolMessages.push(
@@ -340,9 +429,19 @@ export function createCopilotChat(deps: CopilotChatDeps) {
       response = await bound.invoke(lcMessages);
     }
 
-    const reply =
+    const modelReply =
       getText(response.content).trim() ||
       (createdRule ? `Listo, creé la regla "${createdRule.name}".` : "");
+
+    // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
+    // appended deterministically, not left to the model's own phrasing, so a
+    // GitHub issue never appears without the founder being told in this reply.
+    const disclosure = feedbackOutcome
+      ? feedbackOutcome.ok
+        ? "Registré esto como una mejora pendiente."
+        : "Intenté registrar esto como feedback, pero no se pudo completar."
+      : undefined;
+    const reply = disclosure ? [modelReply, disclosure].filter(Boolean).join(" ") : modelReply;
 
     await persistAI(reply);
 

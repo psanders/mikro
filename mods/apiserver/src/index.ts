@@ -72,6 +72,9 @@ import {
 } from "@mikro/agents";
 import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
+import { createGetApplication } from "./api/applications/createGetApplication.js";
+import { Octokit } from "@octokit/rest";
+import { fileGithubIssue } from "./api/feedback/fileGithubIssue.js";
 import { prisma } from "./db.js";
 import { logger } from "./logger.js";
 
@@ -421,6 +424,7 @@ async function initializeMessageProcessor() {
     const getLoanByLoanId = createGetLoanByLoanId(dbClient);
     const previewLateFee = createPreviewLateFee(dbClient);
     const getCustomer = createGetCustomer(dbClient);
+    const getApplication = createGetApplication(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
@@ -578,6 +582,9 @@ async function initializeMessageProcessor() {
         const customer = await getCustomerByPhone(params);
         return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
       },
+      getApplication: async (params: Parameters<ToolExecutorDependencies["getApplication"]>[0]) => {
+        return getApplication(params);
+      },
       listLoansByCustomer: async (
         params: Parameters<ToolExecutorDependencies["listLoansByCustomer"]>[0]
       ) => {
@@ -710,9 +717,26 @@ async function initializeMessageProcessor() {
 
     // Wire the founder copilot: it reuses the same tool executor as the WhatsApp
     // path and a text-model factory (injectable, kept out of the static router).
+    // fileFeedback reuses the same githubFeedback config/Octokit path as the
+    // human-facing feedback flow (protected.ts submitFeedback) — one GitHub
+    // client, not two. Left unset (tool reports "not configured") if the
+    // token is absent, same precondition-error convention as submitFeedback.
+    const githubFeedbackOctokit = cfg.githubFeedback.token
+      ? new Octokit({
+          auth: cfg.githubFeedback.token,
+          request: { headers: { "x-github-api-version": "2022-11-28" } }
+        })
+      : undefined;
     setCopilotDeps({
       toolExecutor,
-      createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 })
+      createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+      fileFeedback: githubFeedbackOctokit
+        ? (input) =>
+            fileGithubIssue(
+              { octokit: githubFeedbackOctokit, repo: cfg.githubFeedback.repo },
+              input
+            )
+        : undefined
     });
 
     // Generic ack messages sent before slow tool execution (no LLM involved)

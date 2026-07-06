@@ -5,26 +5,25 @@ import type { ToolResult } from "../../llm/types.js";
 import type { ToolExecutorDependencies } from "./types.js";
 import { logger } from "../../logger.js";
 
-export async function handleGetCustomer(
+export async function handleGetApplicationById(
   deps: ToolExecutorDependencies,
   args: Record<string, unknown>
 ): Promise<ToolResult> {
-  const customer = await deps.getCustomer({
-    id: args.customerId as string
-  });
+  const id = args.id as string;
+  const application = await deps.getApplication({ id });
 
-  if (!customer) {
+  if (!application) {
     return {
       success: false,
-      message: `Cliente no encontrado: ${args.customerId}`,
+      message: `Solicitud no encontrada con el ID: ${id}`,
       reason: "NOT_FOUND"
     };
   }
 
-  logger.verbose("customer retrieved via tool", { customerId: customer.id });
+  logger.verbose("application retrieved via tool by id", { applicationId: application.id });
   return {
     success: true,
-    message: "Información del cliente obtenida.",
-    data: { customer }
+    message: "Información de la solicitud obtenida.",
+    data: { application }
   };
 }

@@ -341,6 +341,32 @@ export const getCustomerByPhoneTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for getting a loan application (solicitud) by its id.
+ * Used by the founder copilot — distinct from getCustomer/getCustomerByPhone,
+ * which look up a Customer, not a LoanApplication. The two are different
+ * tables with their own UUIDs; this tool exists specifically so a solicitud
+ * UUID doesn't get mistaken for (or silently fail against) a customer lookup.
+ */
+export const getApplicationByIdTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getApplicationById",
+    description:
+      "Obtener los detalles de una solicitud (loan application) por su ID (UUID). Este ID es el de la SOLICITUD, no el del cliente — son tablas distintas. Útil cuando el fundador pregunta por una solicitud específica (ej. desde 'Ver solicitud' en el feed).",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la solicitud a buscar."
+        }
+      },
+      required: ["id"]
+    }
+  }
+};
+
+/**
  * Tool definition for listing loans by customer ID.
  * Used by Juan (collector).
  */
@@ -685,6 +711,7 @@ export const allTools: ToolFunction[] = [
   updateLoanStatusTool,
   sendPromoTool,
   getCustomerByPhoneTool,
+  getApplicationByIdTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,
   listUsersTool,

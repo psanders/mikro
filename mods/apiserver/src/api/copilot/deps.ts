@@ -15,6 +15,14 @@ export interface CopilotDeps {
   toolExecutor: ToolExecutor;
   /** Factory for the chat model — injectable so tests can stub the LLM. */
   createModel: () => BaseChatModel;
+  /**
+   * Files a GitHub issue for the copilot's `githubFeedback` tool (design
+   * Decision 4, issue #111) — the same `fileGithubIssue` path the human
+   * feedback flow uses, pre-bound to the configured octokit/repo. Optional:
+   * absent means the tool reports "not configured" instead of throwing,
+   * matching the existing feedback flow's precondition-error convention.
+   */
+  fileFeedback?: (input: { title: string; body: string }) => Promise<{ issueUrl: string }>;
 }
 
 let registered: CopilotDeps | undefined;

@@ -124,6 +124,15 @@ export interface ToolResult {
   success: boolean;
   message: string;
   data?: unknown;
+  /**
+   * Optional discriminant for a failed result, distinguishing "no matching
+   * record" from "this tool can't answer that kind of query" — collapsing
+   * both into a generic `success: false` made them indistinguishable to the
+   * model and to any downstream feedback tooling. Additive/optional so every
+   * existing ToolResult literal keeps compiling unchanged; only handlers that
+   * have a real distinction to make need to set it.
+   */
+  reason?: "NOT_FOUND" | "UNSUPPORTED" | "VALIDATION_ERROR";
 }
 
 /**

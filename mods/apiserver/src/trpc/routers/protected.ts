@@ -1093,9 +1093,9 @@ export const protectedRouter = router({
   /** Look up the caller's display name for provenance/event attribution. */
   copilotChat: adminProcedure.input(copilotChatSchema).mutation(async ({ ctx, input }) => {
     const db = ctx.db as unknown as PrismaClient;
-    const { toolExecutor, createModel } = getCopilotDeps();
+    const { toolExecutor, createModel, fileFeedback } = getCopilotDeps();
     const user = await db.user.findUnique({ where: { id: ctx.userId }, select: { name: true } });
-    const fn = createCopilotChat({ db, toolExecutor, createModel });
+    const fn = createCopilotChat({ db, toolExecutor, createModel, fileFeedback });
     return fn({ userId: ctx.userId, actorName: user?.name, message: input.message });
   }),
 
