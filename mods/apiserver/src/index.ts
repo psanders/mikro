@@ -71,6 +71,7 @@ import {
   type ExportedCustomer
 } from "@mikro/agents";
 import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
+import { createTaskWorker } from "./tasks/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
 import { Octokit } from "@octokit/rest";
@@ -893,17 +894,20 @@ const followUpTemplate = getWhatsAppFollowUpTemplate();
 let stopFollowUpWorker: (() => void) | undefined;
 let stopQCobroWorker: (() => void) | undefined;
 let stopWatchRuleEvaluator: (() => void) | undefined;
+let stopTaskWorker: (() => void) | undefined;
 
 process.on("SIGTERM", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
   stopWatchRuleEvaluator?.();
+  stopTaskWorker?.();
   process.exit(0);
 });
 process.on("SIGINT", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
   stopWatchRuleEvaluator?.();
+  stopTaskWorker?.();
   process.exit(0);
 });
 
@@ -963,6 +967,11 @@ initializeMessageProcessor()
       // Start the watch-rule evaluator (founder copilot alerts on state change)
       stopWatchRuleEvaluator = createWatchRuleEvaluator(
         prisma as unknown as Parameters<typeof createWatchRuleEvaluator>[0]
+      );
+
+      // Start the founder-task worker (fires scheduled automations)
+      stopTaskWorker = createTaskWorker(
+        prisma as unknown as Parameters<typeof createTaskWorker>[0]
       );
     });
   })
