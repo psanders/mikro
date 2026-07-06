@@ -76,6 +76,9 @@ export function TaskFeedCard(props: TaskFeedCardProps) {
   return (
     <FeedCard
       {...props}
+      // Remount when the firing loads: the plain row above may already have
+      // mounted (query in flight), and defaultExpanded only applies at mount.
+      key={`open-${firing.id}`}
       defaultExpanded
       tint="amber"
       actionSlot={
