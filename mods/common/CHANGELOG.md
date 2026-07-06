@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.25.0](https://github.com/psanders/mikro/compare/v1.24.1...v1.25.0) (2026-07-06)
+
+### Features
+
+- **apiserver:** show daily QCobro sync on the founder feed ([#127](https://github.com/psanders/mikro/issues/127)) ([2ec1048](https://github.com/psanders/mikro/commit/2ec10483f432dded9f9eb1d5e67ed1bb446fd6c4)), closes [#124](https://github.com/psanders/mikro/issues/124)
+
 ## [1.24.1](https://github.com/psanders/mikro/compare/v1.24.0...v1.24.1) (2026-07-06)
 
 **Note:** Version bump only for package @mikro/common

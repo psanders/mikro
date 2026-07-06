@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.25.0](https://github.com/psanders/mikro/compare/v1.24.1...v1.25.0) (2026-07-06)
+
+### Bug Fixes
+
+- **dashboard:** style task form selects to match input height ([9a5ceac](https://github.com/psanders/mikro/commit/9a5ceac1379953f51e3ff14bda8d9d6704792c4a)), closes [#125](https://github.com/psanders/mikro/issues/125)
+- **lockfile:** regenerate with npm 10.9.8 to match CI's resolver ([1916269](https://github.com/psanders/mikro/commit/1916269fe7ae81f78c3f3e0b1dbf253ccbc33783))
+
+### Features
+
+- **apiserver:** show daily QCobro sync on the founder feed ([#127](https://github.com/psanders/mikro/issues/127)) ([2ec1048](https://github.com/psanders/mikro/commit/2ec10483f432dded9f9eb1d5e67ed1bb446fd6c4)), closes [#124](https://github.com/psanders/mikro/issues/124)
+- **dashboard:** OS notification for red/amber feed events ([#124](https://github.com/psanders/mikro/issues/124)) ([8b60a1c](https://github.com/psanders/mikro/commit/8b60a1ccf11fc016aa8ad37daabf83b81b2c78bb)), closes [#109](https://github.com/psanders/mikro/issues/109)
+
 ## [1.24.1](https://github.com/psanders/mikro/compare/v1.24.0...v1.24.1) (2026-07-06)
 
 **Note:** Version bump only for package mikro
