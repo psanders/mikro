@@ -318,7 +318,8 @@ CREATE TABLE "copilot_pending_actions" (
     "summary" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "resolved_at" DATETIME
+    "resolved_at" DATETIME,
+    "deleted_at" DATETIME
 );
 CREATE INDEX "copilot_pending_actions_user_id_status_idx" ON "copilot_pending_actions"("user_id", "status");
 

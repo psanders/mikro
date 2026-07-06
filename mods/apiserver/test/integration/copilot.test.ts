@@ -661,6 +661,33 @@ describe("Founder Copilot Integration", () => {
       expect(history.messages).to.have.lengthOf(1);
       expect(history.messages[0].content).to.equal("después de borrar");
     });
+
+    it("soft-deletes resolved action cards so they don't resurface after reload", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      await db.message.create({
+        data: { role: "HUMAN", content: "registra un pago", userId: admin.id, channel: "copilot" }
+      });
+      await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createPayment",
+          argsJson: JSON.stringify({ loanId: "10000", amount: "650" }),
+          summary: "Registrar un pago.",
+          status: "CONFIRMED",
+          resolvedAt: new Date()
+        }
+      });
+
+      await adminCaller.clearCopilotHistory({});
+
+      const history = await adminCaller.getCopilotHistory({});
+      expect(history.messages).to.have.lengthOf(0);
+      expect(history.pendingActions).to.have.lengthOf(0);
+
+      const rows = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(rows).to.have.lengthOf(1);
+      expect(rows[0].deletedAt).to.not.equal(null);
+    });
   });
 
   // ---------------------------------------------------------------------------
