@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.25.1](https://github.com/psanders/mikro/compare/v1.25.0...v1.25.1) (2026-07-06)
+
+### Bug Fixes
+
+- **dashboard:** replace em-dash placeholder example with generic names ([28855c1](https://github.com/psanders/mikro/commit/28855c1a6b83ab27c4ca5762895a26a79ed3c7a1))
+
 # [1.25.0](https://github.com/psanders/mikro/compare/v1.24.1...v1.25.0) (2026-07-06)
 
 ### Features
