@@ -367,6 +367,79 @@ export const getApplicationByIdTool: ToolFunction = {
 };
 
 /**
+ * Tool definitions for reviewing a loan application (solicitud) from the founder
+ * copilot: approve, reject (with a required, recorded reason), and delete. All
+ * three are WRITE_TOOLS — the founder confirms via the pending-action card before
+ * anything runs. `id` is the SOLICITUD UUID (as from getApplicationById), not a
+ * customer id.
+ */
+export const approveApplicationTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "approveApplication",
+    description:
+      "Aprobar una solicitud (loan application) que está RECEIVED o IN_REVIEW, pasándola a APPROVED. Usa el ID (UUID) de la SOLICITUD. Puedes incluir una nota opcional.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la solicitud a aprobar."
+        },
+        note: {
+          type: "string",
+          description: "Nota opcional sobre la aprobación."
+        }
+      },
+      required: ["id"]
+    }
+  }
+};
+
+export const rejectApplicationTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "rejectApplication",
+    description:
+      "Rechazar formalmente una solicitud (loan application) que está RECEIVED o IN_REVIEW, pasándola a REJECTED. Conserva el registro y el motivo para auditoría (NO la elimina). Prefiere esta herramienta sobre deleteApplication para declinar a un solicitante. El motivo es OBLIGATORIO. Usa el ID (UUID) de la SOLICITUD.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la solicitud a rechazar."
+        },
+        reason: {
+          type: "string",
+          description:
+            "Motivo del rechazo. Obligatorio — queda registrado como la nota de revisión."
+        }
+      },
+      required: ["id", "reason"]
+    }
+  }
+};
+
+export const deleteApplicationTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "deleteApplication",
+    description:
+      "Eliminar permanentemente una solicitud (loan application). Es IRREVERSIBLE y borra el historial — úsala solo para flujos muertos, spam o abandonados que el fundador quiere purgar. Para declinar a un solicitante real usa rejectApplication (conserva el registro). No se puede eliminar una solicitud CONVERTED. Usa el ID (UUID) de la SOLICITUD.",
+    parameters: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "ID (UUID) de la solicitud a eliminar."
+        }
+      },
+      required: ["id"]
+    }
+  }
+};
+
+/**
  * Tool definition for listing loans by customer ID.
  * Used by Juan (collector).
  */
@@ -712,6 +785,9 @@ export const allTools: ToolFunction[] = [
   sendPromoTool,
   getCustomerByPhoneTool,
   getApplicationByIdTool,
+  approveApplicationTool,
+  rejectApplicationTool,
+  deleteApplicationTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,
   listUsersTool,

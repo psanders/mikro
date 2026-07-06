@@ -25,8 +25,14 @@ import {
   clearCopilotDeps,
   getBoundToolNames
 } from "../../src/api/copilot/index.js";
+import { isWriteTool } from "../../src/api/copilot/toolPolicy.js";
+import { summarizeAction } from "../../src/api/copilot/summarizeAction.js";
+import {
+  createRejectApplication,
+  createApproveApplication
+} from "../../src/api/applications/index.js";
 import { COPILOT_ACTION_EXPIRY_MINUTES } from "@mikro/common";
-import type { ToolResult, ToolExecutor } from "@mikro/agents";
+import { createToolExecutor, type ToolResult, type ToolExecutor } from "@mikro/agents";
 
 /** A fake AI turn: text plus optional tool calls. */
 interface FakeTurn {
@@ -106,6 +112,7 @@ describe("Founder Copilot Integration", () => {
     await db.copilotPendingAction.deleteMany();
     await db.watchRule.deleteMany();
     await db.businessEvent.deleteMany();
+    await db.loanApplication.deleteMany();
     await db.message.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
@@ -530,6 +537,154 @@ describe("Founder Copilot Integration", () => {
 
       const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
       expect(refreshed?.status).to.equal("PENDING");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Application review write tools (issue #114)
+  // ---------------------------------------------------------------------------
+
+  describe("application review write tools", () => {
+    /** Seed a solicitud in a given status; returns its id. */
+    async function seedApplication(status: string): Promise<string> {
+      phoneSeq += 1;
+      const app = await db.loanApplication.create({
+        data: {
+          sessionId: `sess-${phoneSeq}-${Date.now()}`,
+          status,
+          firstName: "Elena",
+          lastName: "Ramírez",
+          rawData: {}
+        }
+      });
+      return app.id;
+    }
+
+    it("classifies approve/reject/delete as write tools and binds them", () => {
+      for (const name of ["approveApplication", "rejectApplication", "deleteApplication"]) {
+        expect(isWriteTool(name), `${name} isWriteTool`).to.be.true;
+        expect(getBoundToolNames(), `${name} bound`).to.include(name);
+      }
+    });
+
+    it("summarizes a rejection with its reason (not the generic fallback)", () => {
+      const summary = summarizeAction("rejectApplication", {
+        id: "app-x",
+        reason: "Capacidad de pago insuficiente"
+      });
+      expect(summary).to.match(/Rechazar la solicitud app-x/);
+      expect(summary).to.contain("Capacidad de pago insuficiente");
+      expect(summary).to.not.contain("Ejecutar rejectApplication");
+    });
+
+    it("a reject tool call is short-circuited into a PENDING action, nothing executes", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const appId = await seedApplication("RECEIVED");
+      const fake = makeFakeModel([
+        {
+          content: "Voy a rechazar la solicitud.",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "rejectApplication",
+              args: { id: appId, reason: "Documentación incompleta" }
+            }
+          ]
+        }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: `rechaza la solicitud ${appId}` });
+
+      expect(calls, "no tool executed inline").to.have.lengthOf(0);
+      expect(reply.pendingAction?.toolName).to.equal("rejectApplication");
+      expect(reply.pendingAction?.summary).to.contain("Documentación incompleta");
+
+      // Application untouched, no event.
+      const row = await db.loanApplication.findUnique({ where: { id: appId } });
+      expect(row?.status).to.equal("RECEIVED");
+      expect(await db.businessEvent.count()).to.equal(0);
+
+      const pending = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(pending).to.have.lengthOf(1);
+      expect(pending[0].status).to.equal("PENDING");
+    });
+
+    it("confirming a rejection transitions to REJECTED, stores the reason, records copilot.action", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const appId = await seedApplication("RECEIVED");
+
+      // A REAL executor wired to the review procedure, so the confirm actually mutates.
+      const realExecutor = createToolExecutor({
+        rejectApplication: createRejectApplication(db as any)
+      } as any);
+      setCopilotDeps({
+        toolExecutor: realExecutor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const reason = "Capacidad de pago insuficiente";
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "rejectApplication",
+          argsJson: JSON.stringify({ id: appId, reason }),
+          summary: `Rechazar la solicitud ${appId} por el motivo: ${reason}.`,
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
+      expect(res.status).to.equal("CONFIRMED");
+
+      // Row moved to REJECTED with the reason preserved as the review note (audit).
+      const row = await db.loanApplication.findUnique({ where: { id: appId } });
+      expect(row?.status).to.equal("REJECTED");
+      expect(row?.reviewNote).to.equal(reason);
+      expect(row?.reviewedById).to.equal(admin.id);
+
+      // Exactly one copilot.action event carrying the tool + args.
+      const events = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
+      expect(events).to.have.lengthOf(1);
+      const payload = JSON.parse(events[0].payload);
+      expect(payload.toolName).to.equal("rejectApplication");
+      expect(payload.args.reason).to.equal(reason);
+    });
+
+    it("confirming an approve on a wrong-status solicitud is refused, nothing changes", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const appId = await seedApplication("CONVERTED"); // not a valid source for approve
+
+      const realExecutor = createToolExecutor({
+        approveApplication: createApproveApplication(db as any)
+      } as any);
+      setCopilotDeps({
+        toolExecutor: realExecutor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "approveApplication",
+          argsJson: JSON.stringify({ id: appId }),
+          summary: `Aprobar la solicitud ${appId}.`,
+          status: "PENDING"
+        }
+      });
+
+      let threw = false;
+      try {
+        await adminCaller.copilotConfirmAction({ actionId: action.id });
+      } catch {
+        threw = true;
+      }
+      expect(threw, "confirm should throw on an invalid transition").to.equal(true);
+
+      const row = await db.loanApplication.findUnique({ where: { id: appId } });
+      expect(row?.status).to.equal("CONVERTED");
+      expect(await db.businessEvent.count()).to.equal(0);
     });
   });
 

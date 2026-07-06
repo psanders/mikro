@@ -227,7 +227,10 @@ export const WRITE_TOOLS: readonly string[] = [
   "createCustomer",
   "createLoan",
   "updateLoanStatus",
-  "sendPromo"
+  "sendPromo",
+  "approveApplication",
+  "rejectApplication",
+  "deleteApplication"
 ];
 
 /**

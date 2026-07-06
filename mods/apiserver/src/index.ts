@@ -73,6 +73,11 @@ import {
 import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
+import {
+  createApproveApplication,
+  createRejectApplication,
+  createDeleteApplication
+} from "./api/applications/index.js";
 import { Octokit } from "@octokit/rest";
 import { fileGithubIssue } from "./api/feedback/fileGithubIssue.js";
 import { prisma } from "./db.js";
@@ -425,6 +430,9 @@ async function initializeMessageProcessor() {
     const previewLateFee = createPreviewLateFee(dbClient);
     const getCustomer = createGetCustomer(dbClient);
     const getApplication = createGetApplication(dbClient);
+    const approveApplication = createApproveApplication(dbClient);
+    const rejectApplication = createRejectApplication(dbClient);
+    const deleteApplication = createDeleteApplication(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
@@ -585,6 +593,12 @@ async function initializeMessageProcessor() {
       getApplication: async (params: Parameters<ToolExecutorDependencies["getApplication"]>[0]) => {
         return getApplication(params);
       },
+      // Founder copilot application-review write tools. Executed only through the
+      // pending-action confirm flow (createConfirmCopilotAction), which passes the
+      // confirming founder's id as context.userId -> reviewerId here.
+      approveApplication: async (input, reviewerId) => approveApplication(input, reviewerId),
+      rejectApplication: async (input, reviewerId) => rejectApplication(input, reviewerId),
+      deleteApplication: async (input, reviewerId) => deleteApplication(input, reviewerId),
       listLoansByCustomer: async (
         params: Parameters<ToolExecutorDependencies["listLoansByCustomer"]>[0]
       ) => {
