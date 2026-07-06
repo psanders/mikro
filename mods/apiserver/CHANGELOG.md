@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.23.0](https://github.com/psanders/mikro/compare/v1.22.6...v1.23.0) (2026-07-06)
+
+### Features
+
+- **copilot:** tool/environment awareness + githubFeedback tool ([#111](https://github.com/psanders/mikro/issues/111)) ([752db3f](https://github.com/psanders/mikro/commit/752db3f76f1fbef5dfda229d57b1a654e199aa14))
+
 ## [1.22.6](https://github.com/psanders/mikro/compare/v1.22.5...v1.22.6) (2026-07-05)
 
 **Note:** Version bump only for package @mikro/apiserver
