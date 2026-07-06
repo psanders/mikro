@@ -109,6 +109,22 @@ export function resolveCardTint(event: FeedEvent): "amber" | "red" | null {
   return null;
 }
 
+/**
+ * Event types worth fetching for the OS-notification trigger (issue #124):
+ * every type whose BASE accent is red or amber, plus `application.approved`
+ * — a policy-exception approval is promoted to amber by `resolveVisual`, so
+ * the type has to be queried even though its base accent is green. Querying
+ * this list still isn't the final word per-event: `resolveVisual(event)
+ * .accent` settles it (rules out a plain, non-exception approval).
+ */
+export const ACCENT_ALERT_EVENT_TYPES: BusinessEventType[] = [
+  ...(Object.keys(BASE_VISUALS) as BusinessEventType[]).filter((type) => {
+    const accent = BASE_VISUALS[type].accent;
+    return accent === "red" || accent === "amber";
+  }),
+  "application.approved"
+];
+
 export type CompactMetaTone = "muted" | "red";
 
 export interface CompactMeta {

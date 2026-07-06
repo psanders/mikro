@@ -9,6 +9,7 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(commands::FeedbackCaptureState::default())
         .invoke_handler(tauri::generate_handler![
             commands::start_feedback_recording,

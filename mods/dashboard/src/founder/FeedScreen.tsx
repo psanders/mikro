@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
 import { cn } from "../lib/cn";
-import { trpc, type RouterOutputs } from "../lib/trpc";
+import { trpc } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
 import { isForbidden } from "../lib/applications";
 import { useCopilot } from "./copilot/CopilotContext";
@@ -24,11 +24,14 @@ import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
 import { formatDayLabel } from "./components/format";
 import { subjectQuestion } from "./components/typeConfig";
-import { ALERT_EVENT_TYPES, type FeedEvent, type NavigateTarget } from "./components/types";
+import {
+  ALERT_EVENT_TYPES,
+  toFeedEvent,
+  type FeedEvent,
+  type NavigateTarget
+} from "./components/types";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-
-type FeedItem = RouterOutputs["listFeedEvents"]["items"][number];
 
 interface FilterDef {
   id: string;
@@ -61,21 +64,6 @@ function isTaskEvent(event: FeedEvent): boolean {
 
 interface FeedNavState {
   filterId?: string;
-}
-
-function toFeedEvent(item: FeedItem): FeedEvent {
-  return {
-    id: item.id,
-    type: item.type as FeedEvent["type"],
-    occurredAt: new Date(item.occurredAt).toISOString(),
-    actorName: item.actorName,
-    customerName: item.customerName ?? undefined,
-    loanId: item.loanId ?? undefined,
-    applicationId: item.applicationId ?? undefined,
-    amount: item.amount ?? undefined,
-    summary: item.summary,
-    payload: (item.payload ?? {}) as Record<string, unknown>
-  };
 }
 
 interface DayGroup {

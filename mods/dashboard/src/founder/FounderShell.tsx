@@ -20,6 +20,7 @@ import { FeedbackButton } from "../components/FeedbackButton";
 import { Tooltip } from "../components/ui/Tooltip";
 import { useAuth } from "../context/AuthContext";
 import { AlertsProvider, useAlerts } from "./alerts/AlertsContext";
+import { useOsAlertNotifications } from "./alerts/osAlertNotifications";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 
@@ -142,6 +143,7 @@ export function FounderShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const whoami = trpc.whoami.useQuery();
+  useOsAlertNotifications();
 
   const path = location.pathname;
   const initials = initialsOf(whoami.data?.name ?? "");
