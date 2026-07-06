@@ -10,7 +10,7 @@
  * with copilot creation: both paths hit the same tasks.create validation.
  */
 import { useMemo, useState } from "react";
-import { Check, Info, X } from "lucide-react";
+import { Check, ChevronDown, Info, X } from "lucide-react";
 import { cn } from "../../lib/cn";
 
 export interface TaskAutomationOption {
@@ -77,6 +77,9 @@ const FREQUENCY_OPTIONS = [
 const FIELD_LABEL = "text-[13px] font-medium text-[#14254A]";
 const FIELD_INPUT =
   "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] focus:border-[#1F4AA8] focus:outline-none";
+const FIELD_SELECT = cn(FIELD_INPUT, "appearance-none pr-[36px]");
+const SELECT_CHEVRON =
+  "pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2 text-[#697A93]";
 
 export function TaskFormModal({
   automations,
@@ -155,21 +158,27 @@ export function TaskFormModal({
 
         <label className="flex flex-col gap-[7px]">
           <span className={FIELD_LABEL}>Automatización</span>
-          <select
-            value={automationId}
-            disabled={mode === "edit"}
-            onChange={(e) => {
-              setAutomationId(e.target.value);
-              setStaticParams({});
-            }}
-            className={cn(FIELD_INPUT, mode === "edit" && "opacity-60")}
-          >
-            {automations.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.title}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={automationId}
+              disabled={mode === "edit"}
+              onChange={(e) => {
+                setAutomationId(e.target.value);
+                setStaticParams({});
+              }}
+              className={cn(FIELD_SELECT, mode === "edit" && "opacity-60")}
+            >
+              {automations.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.title}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              className={cn(SELECT_CHEVRON, mode === "edit" && "opacity-60")}
+            />
+          </div>
         </label>
 
         <label className="flex flex-col gap-[7px]">
@@ -186,33 +195,39 @@ export function TaskFormModal({
         <div className="flex gap-[10px]">
           <label className="flex flex-1 flex-col gap-[7px]">
             <span className={FIELD_LABEL}>Frecuencia</span>
-            <select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as TaskFormValues["frequency"])}
-              className={FIELD_INPUT}
-            >
-              {FREQUENCY_OPTIONS.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value as TaskFormValues["frequency"])}
+                className={FIELD_SELECT}
+              >
+                {FREQUENCY_OPTIONS.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className={SELECT_CHEVRON} />
+            </div>
           </label>
 
           {frequency === "weekly" && (
             <label className="flex flex-1 flex-col gap-[7px]">
               <span className={FIELD_LABEL}>Día</span>
-              <select
-                value={weekday}
-                onChange={(e) => setWeekday(Number(e.target.value))}
-                className={FIELD_INPUT}
-              >
-                {WEEKDAY_OPTIONS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={weekday}
+                  onChange={(e) => setWeekday(Number(e.target.value))}
+                  className={FIELD_SELECT}
+                >
+                  {WEEKDAY_OPTIONS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className={SELECT_CHEVRON} />
+              </div>
             </label>
           )}
 
@@ -262,20 +277,23 @@ export function TaskFormModal({
                 <label key={slot.name} className="flex flex-col gap-[7px]">
                   <span className={FIELD_LABEL}>{slot.label}</span>
                   {options ? (
-                    <select
-                      value={staticParams[slot.name] ?? ""}
-                      onChange={(e) => setParam(slot.name, e.target.value)}
-                      className={FIELD_INPUT}
-                    >
-                      <option value="" disabled>
-                        Selecciona…
-                      </option>
-                      {options.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.name}
+                    <div className="relative">
+                      <select
+                        value={staticParams[slot.name] ?? ""}
+                        onChange={(e) => setParam(slot.name, e.target.value)}
+                        className={FIELD_SELECT}
+                      >
+                        <option value="" disabled>
+                          Selecciona…
                         </option>
-                      ))}
-                    </select>
+                        {options.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className={SELECT_CHEVRON} />
+                    </div>
                   ) : (
                     <input
                       type="text"
