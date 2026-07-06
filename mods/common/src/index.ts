@@ -441,7 +441,32 @@ export {
   type CopilotPendingAction,
   type CopilotProvenance,
   type CopilotChatReply,
-  type ClearCopilotHistoryResult
+  type ClearCopilotHistoryResult,
+  // Founder task schemas
+  TASK_TIMEZONE,
+  TASK_UTC_OFFSET_HOURS,
+  taskFrequencyEnum,
+  taskGateEnum,
+  taskFiringStatusEnum,
+  taskSlotSourceEnum,
+  createTaskSchema,
+  updateTaskSchema,
+  setTaskEnabledSchema,
+  cancelTaskSchema,
+  listTasksSchema,
+  getTaskFiringSchema,
+  confirmTaskFiringSchema,
+  skipTaskFiringSchema,
+  type TaskFrequency,
+  type TaskGate,
+  type TaskFiringStatus,
+  type TaskSlotSource,
+  type CreateTaskInput,
+  type UpdateTaskInput,
+  type TaskSlotDescriptor,
+  type TaskAutomationDescriptor,
+  type TaskView,
+  type TaskFiringView
 } from "./schemas/index.js";
 
 // Report types and helpers

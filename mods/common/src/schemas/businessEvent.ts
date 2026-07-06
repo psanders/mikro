@@ -19,7 +19,11 @@ export const businessEventTypeEnum = z.enum([
   "loan.status_changed",
   "customer.created",
   "copilot.action",
-  "rule.alert"
+  "rule.alert",
+  "task.due",
+  "task.needs_input",
+  "task.completed",
+  "task.failed"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -98,6 +102,37 @@ const ruleAlertPayloadSchema = z.object({
   threshold: z.number()
 });
 
+// Task lifecycle events, written intrinsically by the task worker and the
+// firing confirm/skip flow. They carry the firing/automation refs plus the
+// task name denormalized — like every event, no foreign keys, so the row
+// stays renderable after its task is edited or deleted.
+const taskEventBase = z.object({
+  taskFiringId: z.uuid(),
+  automationId: z.string().min(1),
+  taskName: z.string().min(1)
+});
+
+const taskDuePayloadSchema = taskEventBase.extend({
+  // The period's intended due time (ISO), which may be earlier than
+  // occurredAt when the firing fired late after downtime.
+  dueAt: z.iso.datetime()
+});
+
+const taskNeedsInputPayloadSchema = taskEventBase.extend({
+  missingSlots: z.array(z.string()).min(1),
+  reason: z.string().optional()
+});
+
+const taskCompletedPayloadSchema = taskEventBase.extend({
+  // True when the founder skipped the firing instead of executing it.
+  skipped: z.boolean(),
+  resultSummary: z.string().optional()
+});
+
+const taskFailedPayloadSchema = taskEventBase.extend({
+  reason: z.string().min(1)
+});
+
 /** Per-type payload schema. Producers MUST validate through this map. */
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
@@ -111,7 +146,11 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "loan.status_changed": loanStatusChangedPayloadSchema,
   "customer.created": customerCreatedPayloadSchema,
   "copilot.action": copilotActionPayloadSchema,
-  "rule.alert": ruleAlertPayloadSchema
+  "rule.alert": ruleAlertPayloadSchema,
+  "task.due": taskDuePayloadSchema,
+  "task.needs_input": taskNeedsInputPayloadSchema,
+  "task.completed": taskCompletedPayloadSchema,
+  "task.failed": taskFailedPayloadSchema
 };
 
 /**

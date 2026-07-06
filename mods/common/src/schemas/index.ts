@@ -340,3 +340,30 @@ export {
   type CopilotChatReply,
   type ClearCopilotHistoryResult
 } from "./copilot.js";
+
+export {
+  TASK_TIMEZONE,
+  TASK_UTC_OFFSET_HOURS,
+  taskFrequencyEnum,
+  taskGateEnum,
+  taskFiringStatusEnum,
+  taskSlotSourceEnum,
+  createTaskSchema,
+  updateTaskSchema,
+  setTaskEnabledSchema,
+  cancelTaskSchema,
+  listTasksSchema,
+  getTaskFiringSchema,
+  confirmTaskFiringSchema,
+  skipTaskFiringSchema,
+  type TaskFrequency,
+  type TaskGate,
+  type TaskFiringStatus,
+  type TaskSlotSource,
+  type CreateTaskInput,
+  type UpdateTaskInput,
+  type TaskSlotDescriptor,
+  type TaskAutomationDescriptor,
+  type TaskView,
+  type TaskFiringView
+} from "./task.js";
