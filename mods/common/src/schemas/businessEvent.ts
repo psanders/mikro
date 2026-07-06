@@ -23,7 +23,8 @@ export const businessEventTypeEnum = z.enum([
   "task.due",
   "task.needs_input",
   "task.completed",
-  "task.failed"
+  "task.failed",
+  "qcobro.synced"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -133,6 +134,16 @@ const taskFailedPayloadSchema = taskEventBase.extend({
   reason: z.string().min(1)
 });
 
+// Written intrinsically by the QCobro cron worker after each full-base
+// sync pass (issue #127) — never by the on-payment resync, which would
+// flood the feed with one card per payment.
+const qcobroSyncedPayloadSchema = z.object({
+  customers: z.number().int().nonnegative(),
+  portfoliosPushed: z.number().int().nonnegative(),
+  portfoliosSkipped: z.number().int().nonnegative(),
+  durationMs: z.number().int().nonnegative()
+});
+
 /** Per-type payload schema. Producers MUST validate through this map. */
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
@@ -150,7 +161,8 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "task.due": taskDuePayloadSchema,
   "task.needs_input": taskNeedsInputPayloadSchema,
   "task.completed": taskCompletedPayloadSchema,
-  "task.failed": taskFailedPayloadSchema
+  "task.failed": taskFailedPayloadSchema,
+  "qcobro.synced": qcobroSyncedPayloadSchema
 };
 
 /**

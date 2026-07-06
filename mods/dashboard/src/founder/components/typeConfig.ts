@@ -18,7 +18,8 @@ import {
   AlarmClockCheck,
   CircleAlert,
   CalendarCheck,
-  CalendarX
+  CalendarX,
+  RefreshCw
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -78,7 +79,8 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "task.due": { icon: AlarmClockCheck, accent: "amber" },
   "task.needs_input": { icon: CircleAlert, accent: "amber" },
   "task.completed": { icon: CalendarCheck, accent: "green" },
-  "task.failed": { icon: CalendarX, accent: "red" }
+  "task.failed": { icon: CalendarX, accent: "red" },
+  "qcobro.synced": { icon: RefreshCw, accent: "blue" }
 };
 
 /** `application.approved` with `payload.policyException === true`. */
@@ -233,6 +235,16 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
             : "Tarea fallida",
         tone: "red"
       };
+    case "qcobro.synced": {
+      const customers = typeof payload.customers === "number" ? payload.customers : 0;
+      const pushed = typeof payload.portfoliosPushed === "number" ? payload.portfoliosPushed : 0;
+      const skipped = typeof payload.portfoliosSkipped === "number" ? payload.portfoliosSkipped : 0;
+      const durationMs = typeof payload.durationMs === "number" ? payload.durationMs : 0;
+      return {
+        text: `${customers} clientes · ${pushed} portafolios enviados · ${skipped} omitidos · ${durationMs} ms`,
+        tone: "muted"
+      };
+    }
     default:
       return { text: "", tone: "muted" };
   }
@@ -376,6 +388,8 @@ export function resolveNarrative(event: FeedEvent): string | null {
     }
     case "task.failed":
       return null;
+    case "qcobro.synced":
+      return null;
   }
 }
 
@@ -469,6 +483,8 @@ export function resolveInsightsQuestion(event: FeedEvent): string {
         ? `Cuéntame más sobre la tarea "${taskName}".`
         : "Cuéntame más sobre esta tarea programada.";
     }
+    case "qcobro.synced":
+      return "Cuéntame más sobre esta sincronización con QCobro.";
     default:
       return "Cuéntame más sobre este evento.";
   }
