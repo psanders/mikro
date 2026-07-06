@@ -2,9 +2,13 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Self-contained founder shell — Pencil "Feed en vivo" board (`EzobQ`). A slim
- * dark-on-white icon rail (feed home, exceptions [inert], búsqueda, reportes,
+ * dark-on-white icon rail (feed home, exceptions, búsqueda, reportes,
  * profile) on the left, the active screen on the right. Rendered OUTSIDE the
  * operations Layout: an admin on any `/founder` route sees only this chrome.
+ *
+ * "Exceptions" (issue #109) opens the feed's alerts filter and carries a red
+ * badge — lit by `AlertsProvider` polling for newly caught alert-type events,
+ * cleared once the alert has been viewed.
  */
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -15,6 +19,7 @@ import { trpc } from "../lib/trpc";
 import { FeedbackButton } from "../components/FeedbackButton";
 import { Tooltip } from "../components/ui/Tooltip";
 import { useAuth } from "../context/AuthContext";
+import { AlertsProvider, useAlerts } from "./alerts/AlertsContext";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 
@@ -49,6 +54,26 @@ function RailItem({ icon: Icon, label, active, onClick, inert, badge }: RailItem
         )}
       </button>
     </Tooltip>
+  );
+}
+
+/** "Excepciones" rail item — navigates to the feed's alerts filter, badge lit while an alert is unread. */
+function ExceptionsRailItem() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const alerts = useAlerts();
+
+  return (
+    <RailItem
+      icon={TriangleAlert}
+      label="Excepciones"
+      active={location.pathname === "/founder" && location.state?.filterId === "alertas"}
+      badge={alerts.hasUnread}
+      onClick={() => {
+        alerts.markSeen();
+        navigate("/founder", { state: { filterId: "alertas" } });
+      }}
+    />
   );
 }
 
@@ -122,43 +147,45 @@ export function FounderShell() {
   const initials = initialsOf(whoami.data?.name ?? "");
 
   return (
-    <CopilotProvider>
-      <div className="flex h-dvh w-full bg-white text-[#14254A]">
-        <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
-          <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
-            <ShipWheel size={24} strokeWidth={2} />
+    <AlertsProvider>
+      <CopilotProvider>
+        <div className="flex h-dvh w-full bg-white text-[#14254A]">
+          <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
+            <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
+              <ShipWheel size={24} strokeWidth={2} />
+            </div>
+            <div className="h-[10px]" />
+            <RailItem
+              icon={House}
+              label="Feed"
+              active={path === "/founder" && location.state?.filterId !== "alertas"}
+              onClick={() => navigate("/founder")}
+            />
+            <ExceptionsRailItem />
+            <RailItem
+              icon={Search}
+              label="Búsqueda"
+              active={path.startsWith("/founder/buscar")}
+              onClick={() => navigate("/founder/buscar")}
+            />
+            <RailItem
+              icon={FileText}
+              label="Reportes"
+              active={path.startsWith("/founder/reportes")}
+              onClick={() => navigate("/founder/reportes")}
+            />
+            <div className="flex-1" />
+            <FeedbackButton />
+            <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
+          </nav>
+
+          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
+            <Outlet />
           </div>
-          <div className="h-[10px]" />
-          <RailItem
-            icon={House}
-            label="Feed"
-            active={path === "/founder"}
-            onClick={() => navigate("/founder")}
-          />
-          <RailItem icon={TriangleAlert} label="Excepciones" inert badge />
-          <RailItem
-            icon={Search}
-            label="Búsqueda"
-            active={path.startsWith("/founder/buscar")}
-            onClick={() => navigate("/founder/buscar")}
-          />
-          <RailItem
-            icon={FileText}
-            label="Reportes"
-            active={path.startsWith("/founder/reportes")}
-            onClick={() => navigate("/founder/reportes")}
-          />
-          <div className="flex-1" />
-          <FeedbackButton />
-          <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
-        </nav>
 
-        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
-          <Outlet />
+          <CopilotDockContainer />
         </div>
-
-        <CopilotDockContainer />
-      </div>
-    </CopilotProvider>
+      </CopilotProvider>
+    </AlertsProvider>
   );
 }
