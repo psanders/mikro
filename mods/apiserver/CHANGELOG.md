@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.24.0](https://github.com/psanders/mikro/compare/v1.23.0...v1.24.0) (2026-07-06)
+
+### Bug Fixes
+
+- **copilot:** soft-delete action cards when clearing history ([7dc25fa](https://github.com/psanders/mikro/commit/7dc25faa9865e01b4d5ad7abe7df18e37c804ce0))
+
+### Features
+
+- **copilot:** createTask/listTasks/cancelTask DIRECT tools ([935e11a](https://github.com/psanders/mikro/commit/935e11ac7b6ff842beddfcb67220f64884195112))
+- **tasks:** automation catalog with pay-collector, record-expense, daily-close ([d108060](https://github.com/psanders/mikro/commit/d108060f5dd9f8ecb449e639e8e327988f56d664))
+- **tasks:** firing lifecycle + task worker wired at startup ([934589d](https://github.com/psanders/mikro/commit/934589d297027ec54a9d313960b9f92ffd649cf4))
+- **tasks:** Task/TaskFiring models + task.\* event and task contracts ([1d68f16](https://github.com/psanders/mikro/commit/1d68f1694157f71acb57378a1d1de053856f9fec))
+- **tasks:** tasks.\* tRPC router — CRUD, firing state, confirm/skip ([33a50a9](https://github.com/psanders/mikro/commit/33a50a9b27b90b2a3eaf90d7e6b4aa9d863843db))
+
 # [1.23.0](https://github.com/psanders/mikro/compare/v1.22.6...v1.23.0) (2026-07-06)
 
 ### Features

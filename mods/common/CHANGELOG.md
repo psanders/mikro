@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.24.0](https://github.com/psanders/mikro/compare/v1.23.0...v1.24.0) (2026-07-06)
+
+### Features
+
+- **tasks:** Task/TaskFiring models + task.\* event and task contracts ([1d68f16](https://github.com/psanders/mikro/commit/1d68f1694157f71acb57378a1d1de053856f9fec))
+
 ## [1.22.6](https://github.com/psanders/mikro/compare/v1.22.5...v1.22.6) (2026-07-05)
 
 **Note:** Version bump only for package @mikro/common

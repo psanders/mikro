@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.24.0](https://github.com/psanders/mikro/compare/v1.23.0...v1.24.0) (2026-07-06)
+
+### Bug Fixes
+
+- **copilot:** soft-delete action cards when clearing history ([7dc25fa](https://github.com/psanders/mikro/commit/7dc25faa9865e01b4d5ad7abe7df18e37c804ce0))
+- **dashboard:** Tareas rail uses a clock icon, placed under Feed ([4a380b8](https://github.com/psanders/mikro/commit/4a380b8770a9c8cd37d1bb674a97835d6bc7637d))
+
+### Features
+
+- **copilot:** createTask/listTasks/cancelTask DIRECT tools ([935e11a](https://github.com/psanders/mikro/commit/935e11ac7b6ff842beddfcb67220f64884195112))
+- **dashboard:** amber task cards in the feed + Tareas tab ([38b8629](https://github.com/psanders/mikro/commit/38b8629a329fa7bf27389c81fe2355f2677d59b9))
+- **founder:** catch triggered alerts and flag rail with red dot ([#109](https://github.com/psanders/mikro/issues/109)) ([e270855](https://github.com/psanders/mikro/commit/e270855db231e0c9c27f27490efa2d64df0c0c37))
+- **tasks:** automation catalog with pay-collector, record-expense, daily-close ([d108060](https://github.com/psanders/mikro/commit/d108060f5dd9f8ecb449e639e8e327988f56d664))
+- **tasks:** firing lifecycle + task worker wired at startup ([934589d](https://github.com/psanders/mikro/commit/934589d297027ec54a9d313960b9f92ffd649cf4))
+- **tasks:** Task/TaskFiring models + task.\* event and task contracts ([1d68f16](https://github.com/psanders/mikro/commit/1d68f1694157f71acb57378a1d1de053856f9fec))
+- **tasks:** tasks.\* tRPC router — CRUD, firing state, confirm/skip ([33a50a9](https://github.com/psanders/mikro/commit/33a50a9b27b90b2a3eaf90d7e6b4aa9d863843db))
+- **tasks:** verification pass — docs, auto-expand fix, checklist ([3786d23](https://github.com/psanders/mikro/commit/3786d238f2d8796dd18d9f5d0363190a63fd3b98))
+
 # [1.23.0](https://github.com/psanders/mikro/compare/v1.22.6...v1.23.0) (2026-07-06)
 
 ### Features
