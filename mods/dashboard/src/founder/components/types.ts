@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { BusinessEventType } from "@mikro/common";
+import type { RouterOutputs } from "../../lib/trpc";
 
 /**
  * Presentational shape for a single feed card. Pages map the tRPC
@@ -42,3 +43,27 @@ export interface NavigateTarget {
 }
 
 export type { BusinessEventType };
+
+/** Raw `listFeedEvents` row, before it's mapped onto {@link FeedEvent}. */
+export type FeedItem = RouterOutputs["listFeedEvents"]["items"][number];
+
+/**
+ * Wire → presentational mapping shared by every consumer of `listFeedEvents`
+ * (the feed screen's paginated list, the OS-notification poll in
+ * `osAlertNotifications.ts`, …) so there's exactly one place that knows the
+ * wire shape.
+ */
+export function toFeedEvent(item: FeedItem): FeedEvent {
+  return {
+    id: item.id,
+    type: item.type as FeedEvent["type"],
+    occurredAt: new Date(item.occurredAt).toISOString(),
+    actorName: item.actorName,
+    customerName: item.customerName ?? undefined,
+    loanId: item.loanId ?? undefined,
+    applicationId: item.applicationId ?? undefined,
+    amount: item.amount ?? undefined,
+    summary: item.summary,
+    payload: (item.payload ?? {}) as Record<string, unknown>
+  };
+}

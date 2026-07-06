@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "notification",
+  "description": "Native OS notification permission (issue #124) — fired when AlertsContext catches a genuinely new alert-type feed event, so the rail's red badge doesn't go unnoticed while the window isn't focused.",
+  "windows": ["main"],
+  "permissions": ["notification:default"]
+}
