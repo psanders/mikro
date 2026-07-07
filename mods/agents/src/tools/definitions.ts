@@ -496,7 +496,9 @@ export const listLoansByCustomerTool: ToolFunction = {
 
 /**
  * Tool definition for listing loans by customer phone number.
- * Used by Juan (collector). This is a convenience tool that combines getCustomerByPhone and listLoansByCustomer.
+ * Used by Juan (collector) and the founder Copilot (issue #119). This is a
+ * convenience tool that combines getCustomerByPhone and listLoansByCustomer
+ * into a single call.
  */
 export const listCustomerLoansByPhoneTool: ToolFunction = {
   type: "function",

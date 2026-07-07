@@ -24,6 +24,13 @@ describe("buildCopilotSystemPrompt", () => {
     expect(prompt).to.include("listPaymentsByLoanId");
   });
 
+  it("includes loan-lookup-by-phone guidance (issue #119)", () => {
+    const prompt = buildCopilotSystemPrompt({ today: "5 de julio de 2026" });
+
+    expect(prompt).to.include("listCustomerLoansByPhone");
+    expect(prompt).to.include("listCustomerLoansByPhone:");
+  });
+
   it("mentions the founder's name when known", () => {
     const withName = buildCopilotSystemPrompt({ today: "5 de julio de 2026", actorName: "Pedro" });
     const withoutName = buildCopilotSystemPrompt({ today: "5 de julio de 2026" });
