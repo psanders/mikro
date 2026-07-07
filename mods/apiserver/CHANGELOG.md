@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.29.0](https://github.com/psanders/mikro/compare/v1.28.0...v1.29.0) (2026-07-07)
+
+### Features
+
+- **copilot:** application review tools (approve/reject/delete) — [#114](https://github.com/psanders/mikro/issues/114) ([add384b](https://github.com/psanders/mikro/commit/add384b1b27c3ad926478303da85f6702812693e))
+
 # [1.28.0](https://github.com/psanders/mikro/compare/v1.27.0...v1.28.0) (2026-07-07)
 
 ### Features
