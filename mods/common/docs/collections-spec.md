@@ -88,3 +88,10 @@ moraAccrued (net owed) must equal max(0, grossMora − collectedMora). A negativ
 - **severity:** warning
 
 When cuotas covered reach the term, pending payments and remaining balance must both be zero. A fully paid loan still showing dues is a UI/logic contradiction.
+
+### A loan marked COMPLETED is actually settled
+
+- **id:** `closed-loan-reconciled`
+- **severity:** warning
+
+COMPLETED means the loan was closed out as paid in full. Only DEFAULTED/CANCELLED loans are expected to carry an unpaid balance — those statuses mean the opposite of settled. A COMPLETED loan with money still owed either had an undocumented write-off/early-settlement or the status was set incorrectly; either way it's worth a founder's attention, not a silent pass.
