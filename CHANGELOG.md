@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.27.0](https://github.com/psanders/mikro/compare/v1.26.0...v1.27.0) (2026-07-07)
+
+### Bug Fixes
+
+- **ci:** retry windows npm install on transient ECONNRESET ([291ed33](https://github.com/psanders/mikro/commit/291ed332f3bc4d360c116ee7257c5601c667d5c3))
+
+### Features
+
+- **eval:** add closed-loan-reconciled check, found from running the framework on real data ([fcb2ce5](https://github.com/psanders/mikro/commit/fcb2ce50ca0339cd20d676bc7f89049155587745)), closes [#10002](https://github.com/psanders/mikro/issues/10002)
+
 # [1.26.0](https://github.com/psanders/mikro/compare/v1.25.1...v1.26.0) (2026-07-07)
 
 ### Bug Fixes
