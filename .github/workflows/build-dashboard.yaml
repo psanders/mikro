@@ -80,12 +80,23 @@ jobs:
       # --legacy-peer-deps mirrors how the committed lock was produced: a fresh
       # resolution otherwise trips an ERESOLVE peer conflict in @mikro/mobile
       # (react-native-reanimated vs react-native-worklets) that `npm ci` skips.
+      # The windows-latest runner's outbound network to the npm registry
+      # occasionally drops mid-install (ECONNRESET / "network aborted"),
+      # unrelated to any dependency change. npm's own per-request retries
+      # don't cover a reset that kills the whole process, so retry the
+      # command itself.
       - name: Install dependencies
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             rm -f package-lock.json
-            npm install --no-audit --no-fund --legacy-peer-deps
+            for attempt in 1 2 3; do
+              npm install --no-audit --no-fund --legacy-peer-deps && exit 0
+              echo "npm install failed (attempt $attempt); retrying in 15s"
+              sleep 15
+            done
+            echo "::error::npm install failed after 3 attempts"
+            exit 1
           else
             npm ci
           fi
