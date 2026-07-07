@@ -156,6 +156,32 @@ export interface ToolExecutorDependencies {
     id: string;
   }) => Promise<import("@mikro/common").LoanApplication | null>;
 
+  // ── Application review write tools (optional — only wired in apiserver) ────
+  /**
+   * Approve a solicitud (RECEIVED/IN_REVIEW -> APPROVED). `reviewerId` is the
+   * confirming founder. Copilot-only; the WhatsApp agent executor leaves it unset.
+   */
+  approveApplication?: (
+    input: { id?: string; sessionId?: string; note?: string },
+    reviewerId: string
+  ) => Promise<import("@mikro/common").LoanApplication>;
+  /**
+   * Reject a solicitud (RECEIVED/IN_REVIEW -> REJECTED). The required `reason` is
+   * persisted as the review note for audit. `reviewerId` is the confirming founder.
+   */
+  rejectApplication?: (
+    input: { id?: string; sessionId?: string; reason: string },
+    reviewerId: string
+  ) => Promise<import("@mikro/common").LoanApplication>;
+  /**
+   * Hard-delete (purge) a non-CONVERTED solicitud. Irreversible. `reviewerId` is
+   * the confirming founder.
+   */
+  deleteApplication?: (
+    input: { id?: string; sessionId?: string },
+    reviewerId: string
+  ) => Promise<import("@mikro/common").LoanApplication>;
+
   /** List loans by customer ID */
   listLoansByCustomer: (params: {
     customerId: string;
