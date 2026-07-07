@@ -179,7 +179,7 @@ export interface DbClient {
             status?: PaymentStatus | { in: PaymentStatus[] };
             kind?: "INSTALLMENT" | "LATE_FEE";
           };
-          select?: { paidAt?: boolean; status?: boolean; kind?: boolean };
+          select?: { paidAt?: boolean; status?: boolean; kind?: boolean; amount?: boolean };
         };
       };
       select?: {
@@ -215,7 +215,7 @@ export interface DbClient {
             status?: PaymentStatus | { in: PaymentStatus[] };
             kind?: "INSTALLMENT" | "LATE_FEE";
           };
-          select?: { paidAt?: boolean; status?: boolean };
+          select?: { paidAt?: boolean; status?: boolean; amount?: boolean };
         };
         _count?: {
           select?: {

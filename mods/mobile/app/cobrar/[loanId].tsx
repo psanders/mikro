@@ -80,7 +80,12 @@ export default function CobrarPagoScreen() {
   const termLength = loan?.termLength ?? visit?.termLength ?? 0;
   const paidCount = visit ? visit.installmentNumber - 1 : 0;
   const remainingCuotas = Math.max(0, termLength - paidCount);
-  const settleAmount = remainingCuotas * cuota + mora;
+  // True payoff = money still owed (partials accumulated), not cuota-count x cuota —
+  // the final cuota may be partially covered already.
+  const remainingBalance = visit?.remainingBalance ?? remainingCuotas * cuota;
+  // Never charge more cuota than what's left on the loan.
+  const cuotaDue = Math.min(cuota, remainingBalance);
+  const settleAmount = remainingBalance + mora;
 
   const displayName =
     loan?.customer?.nickname ??
@@ -96,11 +101,11 @@ export default function CobrarPagoScreen() {
       opts.push({
         key: "arrears",
         label: "Cobrar cuota + mora",
-        value: formatRD(cuota + mora)
+        value: formatRD(cuotaDue + mora)
       });
     }
     if (mora === 0) {
-      opts.push({ key: "cuota", label: "Cobrar cuota", value: formatRD(cuota) });
+      opts.push({ key: "cuota", label: "Cobrar cuota", value: formatRD(cuotaDue) });
     }
     if (mora > 0) {
       opts.push({ key: "mora", label: "Solo mora", value: formatRD(mora) });
@@ -114,7 +119,7 @@ export default function CobrarPagoScreen() {
     }
     opts.push({ key: "custom", label: "Otro monto", value: "" });
     return opts;
-  }, [cuota, mora, remainingCuotas, settleAmount]);
+  }, [cuotaDue, mora, remainingCuotas, settleAmount]);
 
   const effectiveOption = selectedOption ?? (mora > 0 ? "arrears" : "cuota");
 
@@ -126,9 +131,9 @@ export default function CobrarPagoScreen() {
   const amount = useMemo(() => {
     switch (effectiveOption) {
       case "cuota":
-        return cuota;
+        return cuotaDue;
       case "arrears":
-        return cuota + mora;
+        return cuotaDue + mora;
       case "mora":
         return mora;
       case "settle":
@@ -136,7 +141,7 @@ export default function CobrarPagoScreen() {
       case "custom":
         return customAmount;
     }
-  }, [effectiveOption, cuota, mora, settleAmount, customAmount]);
+  }, [effectiveOption, cuotaDue, mora, settleAmount, customAmount]);
 
   const split = useMemo(
     () =>
@@ -155,12 +160,12 @@ export default function CobrarPagoScreen() {
       rows.push({ label: "Cargo por mora", value: formatRD(mora) });
     } else if (effectiveOption === "arrears" && mora > 0) {
       rows.push({ label: "Cargo por mora", value: formatRD(mora) });
-      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
+      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuotaDue) });
     } else if (effectiveOption === "settle") {
       if (mora > 0) rows.push({ label: "Cargo por mora", value: formatRD(mora) });
       rows.push({
         label: `${remainingCuotas} cuotas restantes`,
-        value: formatRD(remainingCuotas * cuota)
+        value: formatRD(remainingBalance)
       });
     } else if (effectiveOption === "custom") {
       if (mora > 0 && customAmount > 0) {
@@ -175,10 +180,19 @@ export default function CobrarPagoScreen() {
         });
       }
     } else {
-      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuota) });
+      rows.push({ label: `Cuota ${paidCount + 1}`, value: formatRD(cuotaDue) });
     }
     return rows;
-  }, [effectiveOption, mora, cuota, paidCount, remainingCuotas, customAmount, split]);
+  }, [
+    effectiveOption,
+    mora,
+    cuotaDue,
+    paidCount,
+    remainingCuotas,
+    remainingBalance,
+    customAmount,
+    split
+  ]);
 
   const hintText = payOptions.find((o) => o.key === effectiveOption)?.label ?? "";
 

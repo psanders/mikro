@@ -12,6 +12,7 @@ import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { getRoles, canManagePayments } from "../../lib/auth";
+import { countCuotasCovered } from "@mikro/common/utils/calculatePaymentStatus";
 import {
   useLocalLoan,
   useLocalPaymentsByLoan,
@@ -109,12 +110,18 @@ export default function PrestamoDetalleScreen() {
       .sort((a, b) => new Date(a.paidAt).getTime() - new Date(b.paidAt).getTime());
   }, [paymentsQuery.data]);
 
-  const paidCount = installmentPayments.length;
   const termLength = loan?.termLength ?? visit?.termLength ?? 0;
   const paymentAmount = loan ? Number(loan.paymentAmount) : (visit?.paymentAmount ?? 0);
-  const principal = loan ? Number(loan.principal) : 0;
-  const totalPaid = installmentPayments.reduce((s, p) => s + Number(p.amount), 0);
-  const balance = principal > 0 ? principal - totalPaid : paymentAmount * (termLength - paidCount);
+  const totalPaid = installmentPayments
+    .filter((p) => p.status === "COMPLETED" || p.status === "PARTIAL")
+    .reduce((s, p) => s + Number(p.amount), 0);
+  // Progress is money-based: partials accumulate toward cuotas, matching
+  // getCycleMetrics and the home dashboard (counting rows overshoots when
+  // handovers are split into partial + mora rows).
+  const paidCount = Math.min(countCuotasCovered(totalPaid, paymentAmount), termLength);
+  // What's left to collect is the repayment obligation (term x cuota), not the
+  // disbursed principal — for SAN loans the customer repays principal + interest.
+  const balance = Math.max(0, paymentAmount * termLength - totalPaid);
   const progress = termLength > 0 ? paidCount / termLength : 0;
   const freq = loan?.paymentFrequency ?? "DAILY";
   const loanStart = loan ? new Date(loan.startingDate ?? loan.createdAt) : null;
@@ -137,7 +144,10 @@ export default function PrestamoDetalleScreen() {
       : null;
 
   const moraAmount = lateFee?.accruedMora ?? 0;
-  const todayTotal = paymentAmount + moraAmount;
+  // Never quote more cuota than what's left on the loan (final stretch may owe
+  // less than a full cuota once partials are accumulated).
+  const cuotaDue = Math.min(paymentAmount, balance);
+  const todayTotal = cuotaDue + moraAmount;
 
   const cuotas = useMemo(() => {
     if (!loanStart || termLength === 0) return [];
@@ -153,16 +163,20 @@ export default function PrestamoDetalleScreen() {
       const due = getDueDateForCycle(loanStart, i, freq);
       const isPaid = i < paidCount;
       const isOverdue = !isPaid && due.getTime() < now.getTime();
+      // Money already applied to this cuota (partials accumulate in order),
+      // so a half-covered cuota shows only what's left on it.
+      const applied = Math.min(Math.max(totalPaid - i * paymentAmount, 0), paymentAmount);
+      const remaining = paymentAmount - applied;
 
       rows.push({
         name: `Cuota ${i + 1}`,
         date: formatShortDate(due),
-        amount: formatRD(paymentAmount),
+        amount: formatRD(isPaid ? paymentAmount : remaining),
         status: isPaid ? "paid" : isOverdue ? "overdue" : "pending"
       });
     }
     return rows;
-  }, [loanStart, termLength, paidCount, freq, paymentAmount]);
+  }, [loanStart, termLength, paidCount, freq, paymentAmount, totalPaid]);
 
   const pills = [
     formatFreq(freq),
@@ -198,9 +212,9 @@ export default function PrestamoDetalleScreen() {
                   <Text style={styles.gridValue}>{formatRD(totalPaid)}</Text>
                 </View>
                 <View>
-                  <Text style={styles.gridLabel}>Cuota</Text>
+                  <Text style={styles.gridLabel}>Cuotas pagadas</Text>
                   <Text style={styles.gridValue}>
-                    {paidCount} / {termLength}
+                    {paidCount} de {termLength}
                   </Text>
                 </View>
                 <View>
@@ -212,7 +226,7 @@ export default function PrestamoDetalleScreen() {
               </View>
             </View>
 
-            {paymentAmount > 0 && (
+            {(cuotaDue > 0 || moraAmount > 0) && (
               <View style={styles.totalCard}>
                 <View style={styles.totalHeader}>
                   <View style={{ gap: 2 }}>
@@ -225,7 +239,7 @@ export default function PrestamoDetalleScreen() {
                   </View>
                 </View>
                 <View style={styles.totalDivider} />
-                <KvRow label="Cuota pendiente" value={formatRD(paymentAmount)} />
+                <KvRow label="Cuota pendiente" value={formatRD(cuotaDue)} />
                 {moraAmount > 0 && <KvRow label="Cargo por mora" value={formatRD(moraAmount)} />}
               </View>
             )}

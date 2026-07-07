@@ -10,6 +10,7 @@ import { Chip } from "../../components/ui/Chip";
 import { Header } from "../../components/ui/Header";
 import { useLocalDashboard } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
+import { formatDueLabel } from "../../lib/dueLabel";
 
 type FilterKey = "all" | "pending" | "late" | "done";
 
@@ -42,7 +43,7 @@ export default function RutaScreen() {
     for (const v of visits) {
       if (v.paidToday) done++;
       else if (v.isOverdue) late++;
-      else pending++;
+      else if (v.dueToday && v.remainingBalance > 0) pending++;
     }
     return { all: visits.length, pending, late, done };
   }, [visits]);
@@ -50,7 +51,9 @@ export default function RutaScreen() {
   const filtered = useMemo(() => {
     switch (activeFilter) {
       case "pending":
-        return visits.filter((v) => !v.paidToday && !v.isOverdue);
+        return visits.filter(
+          (v) => !v.paidToday && !v.isOverdue && v.dueToday && v.remainingBalance > 0
+        );
       case "late":
         return visits.filter((v) => !v.paidToday && v.isOverdue);
       case "done":
@@ -134,8 +137,8 @@ export default function RutaScreen() {
                     ? `${v.daysOverdue} días atraso · ${v.address}`
                     : `${v.daysOverdue} días atraso`
                   : v.address
-                    ? `Hoy · ${v.address}`
-                    : "Hoy"
+                    ? `${formatDueLabel(v.nextDueDate)} · ${v.address}`
+                    : formatDueLabel(v.nextDueDate)
             }
             amount={formatRD(v.paidToday ? v.amountPaidToday : v.paymentAmount)}
             amountSub={!v.paidToday && v.isOverdue ? "+ mora" : undefined}

@@ -132,6 +132,10 @@ export interface DashboardVisit {
   paymentAmount: number;
   installmentNumber: number;
   termLength: number;
+  /** Repayment still owed: term x cuota minus installment money collected (>= 0). */
+  remainingBalance: number;
+  /** True when the next cuota's due date is today or earlier (day-of-week route model). */
+  dueToday: boolean;
   isOverdue: boolean;
   daysOverdue: number;
   paidToday: boolean;
@@ -195,8 +199,12 @@ function buildVisitsForLoans(
 
   return loans.map((l) => {
     const loanPayments = paymentsByLoan.get(l.id) ?? [];
+    // COMPLETED + PARTIAL: cycle counting is money-based, so partials
+    // accumulate toward completed cuotas.
     const installmentPayments = loanPayments.filter(
-      (p) => (!p.kind || p.kind === "INSTALLMENT") && p.status === "COMPLETED"
+      (p) =>
+        (!p.kind || p.kind === "INSTALLMENT") &&
+        (p.status === "COMPLETED" || p.status === "PARTIAL")
     );
 
     const loanStart = new Date(l.starting_date ?? l.created_at);
@@ -205,15 +213,19 @@ function buildVisitsForLoans(
       createdAt: new Date(l.created_at),
       startingDate: l.starting_date ? new Date(l.starting_date) : null,
       termLength: l.term_length,
+      paymentAmount: l.payment_amount,
       payments: installmentPayments.map((p) => ({
         paidAt: new Date(p.paid_at),
-        status: p.status
+        status: p.status,
+        amount: p.amount
       })),
       preferredPaymentDay: l.preferred_payment_day ?? null
     };
 
     const metrics = getCycleMetrics(loanData, now);
     const paid = paidLoanIds.has(l.id);
+    const totalInstallmentPaid = installmentPayments.reduce((s, p) => s + p.amount, 0);
+    const remainingBalance = Math.max(0, l.payment_amount * l.term_length - totalInstallmentPaid);
 
     const daysOverdue =
       !paid && metrics.missedCycles > 0
@@ -234,6 +246,8 @@ function buildVisitsForLoans(
       l.preferred_payment_day ?? null
     );
 
+    const dueToday = nextDue.getTime() <= endOfDay.getTime();
+
     return {
       loanId: l.loan_id,
       customerId: l.customer_id,
@@ -243,6 +257,8 @@ function buildVisitsForLoans(
       paymentAmount: l.payment_amount,
       installmentNumber: metrics.paymentsMade + 1,
       termLength: l.term_length,
+      remainingBalance,
+      dueToday,
       isOverdue: !paid && daysOverdue > 0,
       daysOverdue: paid ? 0 : daysOverdue,
       paidToday: paid,
@@ -278,14 +294,26 @@ export function getCollectorDashboard(): CollectorDashboard | null {
 
   const visits = buildVisitsForLoans(db, loans, now);
 
-  const dailyTarget = loans.reduce((sum, l) => sum + l.payment_amount, 0);
+  // Day-of-week route model: today's meta covers only customers due today or
+  // overdue (plus what was already collected today) — a customer due next week
+  // is not part of today's goal. The ask per loan is capped at what's left.
+  const dailyTarget = visits.reduce((sum, v) => {
+    if (v.paidToday) return sum + v.amountPaidToday;
+    if (v.dueToday || v.isOverdue) return sum + Math.min(v.paymentAmount, v.remainingBalance);
+    return sum;
+  }, 0);
   const amountCollected = visits.reduce((sum, v) => sum + v.amountPaidToday, 0);
   // "Cobros" counts customers, not loans: a customer with several loans is a
-  // single visit. Done = distinct customers collected today; pending = the rest.
+  // single visit. Done = distinct customers collected today; pending = those
+  // still due today (or overdue) and not yet collected.
   const paidCustomerIds = new Set(visits.filter((v) => v.paidToday).map((v) => v.customerId));
-  const allCustomerIds = new Set(visits.map((v) => v.customerId));
+  const dueCustomerIds = new Set(
+    visits
+      .filter((v) => !v.paidToday && (v.dueToday || v.isOverdue) && v.remainingBalance > 0)
+      .map((v) => v.customerId)
+  );
   const visitsDone = paidCustomerIds.size;
-  const visitsPending = allCustomerIds.size - visitsDone;
+  const visitsPending = [...dueCustomerIds].filter((id) => !paidCustomerIds.has(id)).length;
 
   sortVisits(visits);
 
@@ -701,13 +729,14 @@ export function previewLateFee(loanId: number): PreviewLateFeeResult | null {
 
   const installmentPayments = payments
     .filter((p) => !p.kind || p.kind === "INSTALLMENT")
-    .map((p) => ({ paidAt: new Date(p.paid_at), status: p.status }));
+    .map((p) => ({ paidAt: new Date(p.paid_at), status: p.status, amount: p.amount }));
 
   const loanData: LoanPaymentData = {
     paymentFrequency: loan.payment_frequency,
     createdAt: new Date(loan.created_at),
     startingDate: loan.starting_date ? new Date(loan.starting_date) : null,
     termLength: loan.term_length,
+    paymentAmount: cuota,
     payments: installmentPayments,
     preferredPaymentDay: loan.preferred_payment_day ?? null
   };

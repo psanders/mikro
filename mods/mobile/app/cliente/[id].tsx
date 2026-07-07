@@ -185,7 +185,7 @@ export default function ClienteDetalleScreen() {
                   <ProgressBar progress={progress} />
                   <View style={styles.loanMeta}>
                     <Text style={styles.loanMetaLeft}>
-                      Cuota {v.installmentNumber - 1} de {v.termLength}
+                      {v.installmentNumber - 1} de {v.termLength} pagadas
                     </Text>
                     <Text
                       style={[

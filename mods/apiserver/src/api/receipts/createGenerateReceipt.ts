@@ -10,6 +10,7 @@ import {
   renderReceiptCardToImage,
   formatMoney,
   amountToNumber,
+  countCuotasCovered,
   type GenerateReceiptInput,
   type DbClient,
   type ReceiptData
@@ -82,11 +83,22 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
     const { loan } = payment;
     const { customer, payments: allPayments } = loan;
 
-    const completedPayments = allPayments.filter((p) => p.status === "COMPLETED");
-    const completedIndex = completedPayments.findIndex((p) => p.id === payment.id);
-    const completedPaymentNumber =
-      completedIndex >= 0 ? completedIndex + 1 : completedPayments.length;
-    const pendingPayments = Math.max(0, loan.termLength - completedPayments.length);
+    // Progress is money-based: partial payments accumulate toward cuotas.
+    // Count cuotas covered through THIS payment so historical
+    // receipts reflect their moment even when regenerated later.
+    const cuota = amountToNumber(loan.paymentAmount);
+    const rowIndex = allPayments.findIndex((p) => p.id === payment.id);
+    const rowsThrough =
+      rowIndex >= 0
+        ? allPayments.slice(0, rowIndex + 1)
+        : // LATE_FEE receipts: the fee row is not in the installment list;
+          // count installments up to the fee's timestamp.
+          allPayments.filter((p) => p.paidAt <= payment.paidAt);
+    const paidThrough = rowsThrough.reduce((sum, p) => sum + amountToNumber(p.amount), 0);
+    const cuotasAfter = countCuotasCovered(paidThrough, cuota);
+    const cuotasBefore = countCuotasCovered(paidThrough - amountToNumber(payment.amount), cuota);
+    const completesCuota = cuotasAfter > cuotasBefore;
+    const pendingPayments = Math.max(0, loan.termLength - cuotasAfter);
 
     const kind = (payment.kind as string | undefined) ?? "INSTALLMENT";
     const linkedFee = payment.linkedLateFee as { amount: unknown } | null | undefined;
@@ -108,12 +120,7 @@ export function createGenerateReceipt(deps: ReceiptDependencies) {
       principalAmount: `RD$ ${formatMoney(amountToNumber(loan.principal))}`,
       amountPaid: kind === "LATE_FEE" ? undefined : `RD$ ${formatMoney(installmentDisplay)}`,
       pendingPayments: Math.max(0, pendingPayments),
-      paymentNumber:
-        kind === "LATE_FEE"
-          ? "Mora"
-          : payment.status === "PARTIAL"
-            ? "Parcial"
-            : `P${completedPaymentNumber}`,
+      paymentNumber: kind === "LATE_FEE" ? "Mora" : completesCuota ? `P${cuotasAfter}` : "Parcial",
       agentName: payment.collectedBy?.name,
       feePaid:
         kind === "LATE_FEE"

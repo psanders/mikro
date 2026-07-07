@@ -15,8 +15,17 @@
 export interface LoanPaymentData {
   paymentFrequency: string;
   createdAt: Date;
-  /** When `status` is present, only `COMPLETED` rows count toward payments made. */
-  payments: Array<{ paidAt: Date; status?: string }>;
+  /**
+   * When `amount` is present on the rows AND `paymentAmount` is set on the loan,
+   * payments made are counted by money: floor(sum of installment amounts / cuota).
+   * PARTIAL rows then accumulate toward completed cuotas (previously partials
+   * never advanced the cycle, freezing receipts and over-accruing mora).
+   *
+   * Fallback (no amounts): when `status` is present, only `COMPLETED` rows count.
+   */
+  payments: Array<{ paidAt: Date; status?: string; amount?: number }>;
+  /** Cuota size. Required (along with per-payment `amount`) for money-based counting. */
+  paymentAmount?: number;
   /** Customer's preferred payment day (e.g. "FRIDAY"). When set for WEEKLY loans,
    *  cycles are anchored to this day of the week so due dates fall on the
    *  customer's preferred day rather than raw 7-day intervals from creation. */
@@ -200,6 +209,41 @@ function monthlyElapsed(startDate: Date, asOfDate: Date): number {
 }
 
 /**
+ * Cuotas covered by a set of installment payments, counted by money.
+ * floor(sum of amounts / cuota) with a small epsilon so exact multiples
+ * are not lost to floating-point error. Exported so receipts and other
+ * derived views count progress identically to cycle metrics.
+ */
+export function countCuotasCovered(totalInstallmentPaid: number, cuota: number): number {
+  if (cuota <= 0) return 0;
+  return Math.max(0, Math.floor(totalInstallmentPaid / cuota + 1e-6));
+}
+
+/**
+ * Payments made as of a date. Money-based when the data allows it (see
+ * `LoanPaymentData.payments` doc); otherwise falls back to counting
+ * COMPLETED rows. REVERSED and PENDING rows never count in money mode.
+ */
+function countPaymentsMade(loan: LoanPaymentData, asOf: Date): number {
+  const cuota = loan.paymentAmount ?? 0;
+  // Keep unless strictly after asOf — matches the historical filter, which
+  // also kept rows whose paidAt fails to parse (NaN compares false both ways).
+  const onOrBefore = loan.payments.filter((p) => !(new Date(p.paidAt) > asOf));
+
+  const moneyMode = cuota > 0 && onOrBefore.every((p) => typeof p.amount === "number");
+  if (moneyMode) {
+    const total = onOrBefore
+      .filter((p) => p.status === undefined || p.status === "COMPLETED" || p.status === "PARTIAL")
+      .reduce((sum, p) => sum + (p.amount as number), 0);
+    const covered = countCuotasCovered(total, cuota);
+    const term = loan.termLength;
+    return term !== undefined && term > 0 ? Math.min(covered, term) : covered;
+  }
+
+  return onOrBefore.filter((p) => p.status === undefined || p.status === "COMPLETED").length;
+}
+
+/**
  * Compute cycle metrics for a loan as of a given date.
  * Payments with paidAt after asOfDate are not counted.
  *
@@ -245,14 +289,8 @@ export function getCycleMetrics(loan: LoanPaymentData, asOfDate: Date = new Date
     cyclesElapsed = Math.max(0, Math.floor(daysSinceLoan / intervalDays));
   }
 
-  const countsAsPaid = (p: { paidAt: Date; status?: string }) => {
-    if (new Date(p.paidAt) > asOf) return false;
-    if (p.status === undefined) return true;
-    return p.status === "COMPLETED";
-  };
-  const paymentsMade = loan.payments.filter(countsAsPaid).length;
-
   const term = loan.termLength;
+  const paymentsMade = countPaymentsMade(loan, asOf);
   const cappedCycles =
     term !== undefined && term > 0 ? Math.min(cyclesElapsed, term) : cyclesElapsed;
   const missedCycles = Math.max(0, cappedCycles - paymentsMade);
