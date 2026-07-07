@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.31.0](https://github.com/psanders/mikro/compare/v1.30.0...v1.31.0) (2026-07-07)
+
+### Features
+
+- **copilot:** send payment receipt via WhatsApp (Maria parity) ([0a527e5](https://github.com/psanders/mikro/commit/0a527e51b998aa6d593a266d50249cd6f61837e5)), closes [#118](https://github.com/psanders/mikro/issues/118)
+
 # [1.30.0](https://github.com/psanders/mikro/compare/v1.29.0...v1.30.0) (2026-07-07)
 
 ### Bug Fixes
