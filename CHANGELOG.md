@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.32.0](https://github.com/psanders/mikro/compare/v1.31.0...v1.32.0) (2026-07-07)
+
+### Bug Fixes
+
+- **feedback:** wait for real recording finalization before reading files ([#135](https://github.com/psanders/mikro/issues/135)) ([87849ca](https://github.com/psanders/mikro/commit/87849ca2e42e7b9941d97cb72064017f5a2daf2b))
+
+### Features
+
+- **copilot:** loan lookup by phone parity (Maria parity) — [#119](https://github.com/psanders/mikro/issues/119) ([657c73b](https://github.com/psanders/mikro/commit/657c73b21347dfafb0b9fc6edd0d061c5aaf2b46))
+
 # [1.31.0](https://github.com/psanders/mikro/compare/v1.30.0...v1.31.0) (2026-07-07)
 
 ### Features
