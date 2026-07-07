@@ -56,6 +56,7 @@ export {
   withErrorHandlingAndValidation,
   validatePhone,
   getCycleMetrics,
+  countCuotasCovered,
   getDueDateForCycle,
   getLateDaysThreshold,
   dayOfWeekToNumber,

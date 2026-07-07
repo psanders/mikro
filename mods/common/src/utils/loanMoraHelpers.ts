@@ -23,6 +23,8 @@ export interface LoanWithPaymentsForMora {
   createdAt: Date;
   startingDate: Date | null;
   termLength: number;
+  /** Cuota size. When present (with payment amounts), cycle counting is money-based. */
+  paymentAmount?: unknown;
   payments: Array<{
     paidAt: Date;
     status: string;
@@ -37,7 +39,8 @@ export interface LoanWithPaymentsForMora {
  * `LoanPaymentData` shape consumed by `getCycleMetrics` / `computeAccruedMora`.
  *
  * Only INSTALLMENT payments are included — LATE_FEE rows must not
- * affect cycle counts or arrears calculations.
+ * affect cycle counts or arrears calculations. Payment amounts and the cuota
+ * are passed through so cycle counting is money-based (partials accumulate).
  */
 export function toLoanPaymentData(loan: LoanWithPaymentsForMora): LoanPaymentData {
   const installmentPayments = loan.payments.filter((p) => !p.kind || p.kind === "INSTALLMENT");
@@ -46,9 +49,11 @@ export function toLoanPaymentData(loan: LoanWithPaymentsForMora): LoanPaymentDat
     createdAt: new Date(loan.createdAt),
     startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
     termLength: loan.termLength,
+    paymentAmount: loan.paymentAmount != null ? amountToNumber(loan.paymentAmount) : undefined,
     payments: installmentPayments.map((p) => ({
       paidAt: new Date(p.paidAt),
-      status: p.status
+      status: p.status,
+      amount: p.amount != null ? amountToNumber(p.amount) : undefined
     })),
     preferredPaymentDay: loan.customer.preferredPaymentDay ?? null
   };

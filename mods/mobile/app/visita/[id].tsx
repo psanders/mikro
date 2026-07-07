@@ -65,7 +65,7 @@ export default function AnotarVisitaScreen() {
     visit?.customerName ??
     "...";
 
-  const cuotaInfo = visit ? `Cuota ${visit.installmentNumber} de ${visit.termLength}` : "";
+  const cuotaInfo = visit ? `${visit.installmentNumber - 1} de ${visit.termLength} pagadas` : "";
 
   const now = new Date();
   const timeStr = `${now.getDate()} ${["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"][now.getMonth()]} · ${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, "0")} ${now.getHours() >= 12 ? "PM" : "AM"}`;

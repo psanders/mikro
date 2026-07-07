@@ -21,6 +21,10 @@ export interface DashboardVisit {
   paymentAmount: number;
   installmentNumber: number;
   termLength: number;
+  /** Repayment still owed: term x cuota minus installment money collected (>= 0). */
+  remainingBalance: number;
+  /** True when the next cuota's due date is today or earlier (day-of-week route model). */
+  dueToday: boolean;
   isOverdue: boolean;
   daysOverdue: number;
   paidToday: boolean;
@@ -64,8 +68,8 @@ export function createGetCollectorDashboard(client: DbClient) {
             }
           },
           payments: {
-            where: { kind: "INSTALLMENT" },
-            select: { paidAt: true, status: true }
+            where: { kind: "INSTALLMENT", status: { in: ["COMPLETED", "PARTIAL"] } },
+            select: { paidAt: true, status: true, amount: true }
           }
         }
       }),
@@ -90,19 +94,7 @@ export function createGetCollectorDashboard(client: DbClient) {
       );
     }
 
-    const dailyTarget = loans.reduce((sum, l) => sum + amountToNumber(l.paymentAmount), 0);
     const amountCollected = todayPayments.reduce((sum, p) => sum + amountToNumber(p.amount), 0);
-    // "Cobros" counts customers, not loans: a customer with several loans is a
-    // single visit. Done = distinct customers collected today; pending = the rest.
-    const customerByLoanId = new Map(
-      (loans as LoanWithRelations[]).map((l) => [l.id, l.customer.id])
-    );
-    const paidCustomerIds = new Set(
-      todayPayments.map((p) => customerByLoanId.get(p.loanId)).filter((id): id is string => !!id)
-    );
-    const allCustomerIds = new Set((loans as LoanWithRelations[]).map((l) => l.customer.id));
-    const visitsDone = paidCustomerIds.size;
-    const visitsPending = allCustomerIds.size - visitsDone;
 
     type LoanWithRelations = Loan & {
       customer: {
@@ -112,7 +104,7 @@ export function createGetCollectorDashboard(client: DbClient) {
         collectionPoint: string | null;
         preferredPaymentDay: string | null;
       };
-      payments: Array<{ paidAt: Date; status: string }>;
+      payments: Array<{ paidAt: Date; status: string; amount: unknown }>;
     };
 
     const loansWithRelations = loans as LoanWithRelations[];
@@ -125,7 +117,12 @@ export function createGetCollectorDashboard(client: DbClient) {
           startingDate: l.startingDate,
           termLength: l.termLength,
           preferredPaymentDay: l.customer.preferredPaymentDay,
-          payments: l.payments
+          paymentAmount: amountToNumber(l.paymentAmount),
+          payments: l.payments.map((p) => ({
+            paidAt: p.paidAt,
+            status: p.status,
+            amount: amountToNumber(p.amount)
+          }))
         };
 
         const metrics = getCycleMetrics(loanData, now);
@@ -150,6 +147,11 @@ export function createGetCollectorDashboard(client: DbClient) {
           l.paymentFrequency,
           l.customer.preferredPaymentDay ?? null
         );
+        const totalInstallmentPaid = l.payments.reduce((s, p) => s + amountToNumber(p.amount), 0);
+        const remainingBalance = Math.max(
+          0,
+          amountToNumber(l.paymentAmount) * l.termLength - totalInstallmentPaid
+        );
 
         return {
           loanId: l.loanId,
@@ -160,6 +162,8 @@ export function createGetCollectorDashboard(client: DbClient) {
           paymentAmount: amountToNumber(l.paymentAmount),
           installmentNumber: metrics.paymentsMade + 1,
           termLength: l.termLength,
+          remainingBalance,
+          dueToday: nextDue.getTime() <= endOfDay.getTime(),
           isOverdue: !paid && daysOverdue > 0,
           daysOverdue: paid ? 0 : daysOverdue,
           paidToday: paid,
@@ -173,6 +177,22 @@ export function createGetCollectorDashboard(client: DbClient) {
         if (a.daysOverdue !== b.daysOverdue) return b.daysOverdue - a.daysOverdue;
         return a.customerName.localeCompare(b.customerName);
       });
+
+    // Day-of-week route model: today's meta covers only customers due today or
+    // overdue (plus what was already collected today); ask capped at what's left.
+    const dailyTarget = visits.reduce((sum, v) => {
+      if (v.paidToday) return sum + v.amountPaidToday;
+      if (v.dueToday || v.isOverdue) return sum + Math.min(v.paymentAmount, v.remainingBalance);
+      return sum;
+    }, 0);
+    const paidCustomerIds = new Set(visits.filter((v) => v.paidToday).map((v) => v.customerId));
+    const dueCustomerIds = new Set(
+      visits
+        .filter((v) => !v.paidToday && (v.dueToday || v.isOverdue) && v.remainingBalance > 0)
+        .map((v) => v.customerId)
+    );
+    const visitsDone = paidCustomerIds.size;
+    const visitsPending = [...dueCustomerIds].filter((id) => !paidCustomerIds.has(id)).length;
 
     logger.verbose("collector dashboard ready", {
       collectorId: params.collectorId,

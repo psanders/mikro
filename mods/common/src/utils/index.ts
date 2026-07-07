@@ -5,6 +5,7 @@ export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation
 export { validatePhone } from "./validatePhone.js";
 export {
   getCycleMetrics,
+  countCuotasCovered,
   getDueDateForCycle,
   getLateDaysThreshold,
   dayOfWeekToNumber,

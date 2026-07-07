@@ -12,6 +12,7 @@ import { QuickAction } from "../../components/ui/QuickAction";
 import { ClientRow } from "../../components/ui/ClientRow";
 import { useLocalDashboard } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
+import { formatDueLabel } from "../../lib/dueLabel";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -24,17 +25,6 @@ function formatDate(): string {
   return `${day.charAt(0).toUpperCase() + day.slice(1)}, ${date}`;
 }
 
-function formatDueLabel(iso: string): string {
-  const due = new Date(iso);
-  const now = new Date();
-  const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const diffDays = Math.round((due.getTime() - todayStart.getTime()) / 86_400_000);
-  if (diffDays <= 0) return "Hoy";
-  if (diffDays === 1) return "Mañana";
-  const day = due.toLocaleDateString("es-DO", { weekday: "long", timeZone: "UTC" });
-  return day.charAt(0).toUpperCase() + day.slice(1);
-}
-
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -44,13 +34,18 @@ export default function HomeScreen() {
 
   const data = dashboard.data;
   const upcomingVisits = useMemo(() => {
+    // Day-of-week route: only customers due today or in arrears belong to
+    // today's visit list — someone due next week shows up on their day.
     const pending =
-      data?.visits.filter((v) => !v.paidToday && v.installmentNumber <= v.termLength) ?? [];
+      data?.visits.filter(
+        (v) => !v.paidToday && (v.dueToday || v.isOverdue) && v.remainingBalance > 0
+      ) ?? [];
+    // Overdue customers lead (most days late first); current customers follow,
+    // soonest due date first — someone due next week never outranks arrears.
     return [...pending].sort((a, b) => {
-      if (a.isOverdue !== b.isOverdue) return a.isOverdue ? 1 : -1;
-      if (!a.isOverdue)
-        return new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime();
-      return b.daysOverdue - a.daysOverdue;
+      if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+      if (a.isOverdue) return b.daysOverdue - a.daysOverdue;
+      return new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime();
     });
   }, [data?.visits]);
   const firstName = data?.collector.name.split(" ")[0] ?? "...";
@@ -192,8 +187,8 @@ export default function HomeScreen() {
               business={v.loanNickname ? v.customerName : ""}
               meta={
                 v.address
-                  ? `${v.address} · Cuota ${v.installmentNumber}/${v.termLength}`
-                  : `Cuota ${v.installmentNumber}/${v.termLength}`
+                  ? `${v.address} · ${v.installmentNumber - 1}/${v.termLength} pagadas`
+                  : `${v.installmentNumber - 1}/${v.termLength} pagadas`
               }
               amount={formatRD(v.paymentAmount)}
               amountSub={v.isOverdue ? `Mora · ${v.daysOverdue}d` : formatDueLabel(v.nextDueDate)}

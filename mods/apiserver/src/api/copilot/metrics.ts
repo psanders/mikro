@@ -29,6 +29,7 @@ const activeLoanSelect = {
   createdAt: true,
   startingDate: true,
   termLength: true,
+  paymentAmount: true,
   payments: { select: { paidAt: true, status: true, kind: true, amount: true } },
   customer: { select: { preferredPaymentDay: true } }
 } as const;
@@ -59,6 +60,7 @@ async function computeMoraPct(
       createdAt: loan.createdAt,
       startingDate: loan.startingDate,
       termLength: loan.termLength,
+      paymentAmount: loan.paymentAmount,
       payments: loan.payments,
       customer: { preferredPaymentDay: loan.customer.preferredPaymentDay }
     });
