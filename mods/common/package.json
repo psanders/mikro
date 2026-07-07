@@ -1,6 +1,6 @@
 {
   "name": "@mikro/common",
-  "version": "1.27.0",
+  "version": "1.28.0",
   "description": "Common utilities and shared code for Mikro",
   "type": "module",
   "sideEffects": false,

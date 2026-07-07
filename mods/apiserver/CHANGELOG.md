@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.28.0](https://github.com/psanders/mikro/compare/v1.27.0...v1.28.0) (2026-07-07)
+
+### Features
+
+- **whatsapp:** track delivery status and deliver templates outside the 24h window ([22ca3ab](https://github.com/psanders/mikro/commit/22ca3ab9222d47a06dcd3694fa41ab97b46c691b)), closes [#85](https://github.com/psanders/mikro/issues/85) [#121](https://github.com/psanders/mikro/issues/121)
+
 # [1.27.0](https://github.com/psanders/mikro/compare/v1.26.0...v1.27.0) (2026-07-07)
 
 **Note:** Version bump only for package @mikro/apiserver
