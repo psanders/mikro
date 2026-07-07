@@ -212,6 +212,24 @@ describe("collections eval — each check catches its violation", () => {
     s.derived.pendingPayments = 2;
     expectFail(s, "fully-paid-has-no-dues");
   });
+
+  it("closed-loan-reconciled: COMPLETED status with money still owed", () => {
+    const s = clone(good);
+    s.terms.status = "COMPLETED"; // good's remainingBalance is 1256, not zero
+    expectFail(s, "closed-loan-reconciled");
+  });
+
+  it("closed-loan-reconciled: does not flag DEFAULTED/CANCELLED carrying a balance", () => {
+    const defaulted = clone(good);
+    defaulted.terms.status = "DEFAULTED";
+    const report = evaluateSnapshot(defaulted);
+    expect(report.results.find((r) => r.id === "closed-loan-reconciled")!.pass).to.equal(true);
+
+    const cancelled = clone(good);
+    cancelled.terms.status = "CANCELLED";
+    const report2 = evaluateSnapshot(cancelled);
+    expect(report2.results.find((r) => r.id === "closed-loan-reconciled")!.pass).to.equal(true);
+  });
 });
 
 describe("collections eval — portfolio aggregation", () => {

@@ -293,6 +293,27 @@ export const COLLECTIONS_CHECKS: Check[] = [
           : "Loan is not fully paid."
       };
     }
+  },
+  {
+    id: "closed-loan-reconciled",
+    title: "A loan marked COMPLETED is actually settled",
+    rationale:
+      "COMPLETED means the loan was closed out as paid in full. Only DEFAULTED/CANCELLED loans are expected to carry an unpaid balance — those statuses mean the opposite of settled. A COMPLETED loan with money still owed either had an undocumented write-off/early-settlement or the status was set incorrectly; either way it's worth a founder's attention, not a silent pass.",
+    severity: "warning",
+    class: "invariant",
+    run(s) {
+      const pass = s.terms.status !== "COMPLETED" || approxEq(s.derived.remainingBalance, 0);
+      return {
+        pass,
+        expected: s.terms.status === "COMPLETED" ? "remainingBalance = 0" : "n/a (not COMPLETED)",
+        actual: `status=${s.terms.status}, remainingBalance=${s.derived.remainingBalance.toFixed(2)}`,
+        explanation: pass
+          ? s.terms.status === "COMPLETED"
+            ? "Closed loan reconciles to zero balance."
+            : "Not a COMPLETED loan; balance is expected."
+          : "Loan is marked COMPLETED but money math shows an unpaid balance — check for an undocumented write-off or a wrong status."
+      };
+    }
   }
 ];
 
