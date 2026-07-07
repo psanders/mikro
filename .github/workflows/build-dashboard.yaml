@@ -207,9 +207,24 @@ jobs:
       - name: Download signed updater files from the Release
         run: |
           mkdir -p updates
-          # The manifest plus the two updater bundles it references.
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" -D updates \
-            -p 'latest.json' -p '*.app.tar.gz' -p '*.nsis.zip'
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" -D updates -p 'latest.json'
+          # Download exactly the files latest.json's platform entries point at,
+          # instead of guessing glob patterns. A prior version guessed
+          # '*.nsis.zip' for the Windows bundle, but Tauri's NSIS updater
+          # artifact is the raw '*-setup.exe' — no .nsis.zip is ever produced —
+          # so that pattern matched nothing and the Windows installer (.msi)
+          # silently never made it into the updates folder, even though the
+          # manifest (copied as-is) kept advertising it as available (#136).
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync("updates/latest.json", "utf8"));
+            const files = [...new Set(Object.values(manifest.platforms).map(p => decodeURIComponent(p.url.split("/").pop())))];
+            fs.writeFileSync("updates/.assets", files.join("\n") + "\n");
+          '
+          while IFS= read -r asset; do
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" -D updates -p "$asset"
+          done < updates/.assets
+          rm updates/.assets
           ls -la updates
 
       - name: Rewrite manifest URLs to the apiserver and normalize filenames
