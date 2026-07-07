@@ -21,6 +21,7 @@ import { handleGetApplicationById } from "./getApplicationById.js";
 import { handleApproveApplication } from "./approveApplication.js";
 import { handleRejectApplication } from "./rejectApplication.js";
 import { handleDeleteApplication } from "./deleteApplication.js";
+import { handleForceQCobroSync } from "./forceQCobroSync.js";
 import { handleListLoansByCustomer } from "./listLoansByCustomer.js";
 import { handleListCustomerLoansByPhone } from "./listCustomerLoansByPhone.js";
 import { handleListUsers } from "./listUsers.js";
@@ -73,6 +74,7 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     approveApplication: handleApproveApplication,
     rejectApplication: handleRejectApplication,
     deleteApplication: handleDeleteApplication,
+    forceQCobroSync: handleForceQCobroSync,
     listLoansByCustomer: handleListLoansByCustomer,
     listCustomerLoansByPhone: handleListCustomerLoansByPhone,
     listUsers: handleListUsers,

@@ -11,7 +11,8 @@ import { Cron } from "croner";
 import { getConfig, type DbClient, type ResolvedMikroConfig } from "@mikro/common";
 import { createSyncAllPortfolios } from "./createSyncAllPortfolios.js";
 import { isQCobroConfigured } from "./createQCobroClient.js";
-import { recordEvent, type EventClient } from "../api/events/recordEvent.js";
+import { recordQCobroSyncedEvent } from "./recordQCobroSyncedEvent.js";
+import type { EventClient } from "../api/events/recordEvent.js";
 import { logger } from "../logger.js";
 
 export interface CreateQCobroWorkerOptions {
@@ -42,17 +43,7 @@ export function createQCobroWorker(
     }
 
     try {
-      await recordEvent(client as unknown as EventClient, {
-        type: "qcobro.synced",
-        actorName: "Sistema",
-        summary: `Sincronización QCobro completada: ${result.customers} clientes procesados, ${result.portfoliosPushed} portafolios enviados, ${result.portfoliosSkipped} omitidos (${result.durationMs} ms).`,
-        payload: {
-          customers: result.customers,
-          portfoliosPushed: result.portfoliosPushed,
-          portfoliosSkipped: result.portfoliosSkipped,
-          durationMs: result.durationMs
-        }
-      });
+      await recordQCobroSyncedEvent(client as unknown as EventClient, result);
     } catch (err) {
       logger.error("qcobro worker: failed to record feed event", {
         error: (err as Error).message

@@ -129,7 +129,11 @@ import {
   createSendFollowUpNudge,
   createFollowUpWorker
 } from "./follow-up/index.js";
-import { createSyncAllPortfolios, createQCobroWorker } from "./qcobro/index.js";
+import {
+  createSyncAllPortfolios,
+  createQCobroWorker,
+  recordQCobroSyncedEvent
+} from "./qcobro/index.js";
 import {
   createGetApplicationState,
   createSaveAnswer,
@@ -606,6 +610,17 @@ async function initializeMessageProcessor() {
       approveApplication: async (input, reviewerId) => approveApplication(input, reviewerId),
       rejectApplication: async (input, reviewerId) => rejectApplication(input, reviewerId),
       deleteApplication: async (input, reviewerId) => deleteApplication(input, reviewerId),
+      // On-demand QCobro sync (mikro/#130), gated by the same confirm flow.
+      // Reuses syncAllPortfoliosOnPayment — the identical full-base pass the
+      // cron worker and on-payment trigger already run — and records its own
+      // qcobro.synced feed event so the run shows up on the feed with counts,
+      // just like the cron run (createConfirmCopilotAction separately records
+      // the generic copilot.action event for every confirmed write).
+      forceQCobroSync: async (actorName?: string) => {
+        const result = await syncAllPortfoliosOnPayment();
+        await recordQCobroSyncedEvent(prisma, result, actorName ?? "Fundador");
+        return result;
+      },
       listLoansByCustomer: async (
         params: Parameters<ToolExecutorDependencies["listLoansByCustomer"]>[0]
       ) => {

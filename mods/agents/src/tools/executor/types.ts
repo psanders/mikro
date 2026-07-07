@@ -182,6 +182,21 @@ export interface ToolExecutorDependencies {
     reviewerId: string
   ) => Promise<import("@mikro/common").LoanApplication>;
 
+  // ── QCobro on-demand sync (optional — only wired in apiserver) ───────────
+  /**
+   * Force a full-base QCobro portfolio sync on demand — the exact same pass
+   * the cron worker and on-payment trigger already run (see
+   * createSyncAllPortfolios.ts). Copilot-only, gated by the pending-action
+   * confirm flow. `actorName` (the confirming founder) attributes the
+   * `qcobro.synced` feed event this records.
+   */
+  forceQCobroSync?: (actorName?: string) => Promise<{
+    customers: number;
+    portfoliosPushed: number;
+    portfoliosSkipped: number;
+    durationMs: number;
+  }>;
+
   /** List loans by customer ID */
   listLoansByCustomer: (params: {
     customerId: string;
