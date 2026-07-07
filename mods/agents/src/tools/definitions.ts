@@ -440,6 +440,26 @@ export const deleteApplicationTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for forcing an on-demand, full-base QCobro portfolio sync
+ * (WRITE_TOOL — the founder confirms via the pending-action card before it
+ * runs). No arguments: it reruns the exact same full pass the cron worker and
+ * the on-payment trigger already use (see createSyncAllPortfolios.ts).
+ */
+export const forceQCobroSyncTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "forceQCobroSync",
+    description:
+      "Forzar una sincronización completa de la cartera con QCobro ahora mismo, sin esperar el próximo tick programado. Corre el mismo proceso que el worker automático (recalcula etiquetas AUTO, evalúa las reglas de portafolio y empuja los cambios a QCobro). Útil después de un cambio masivo de datos o para verificar la integración. No requiere parámetros.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
  * Tool definition for listing loans by customer ID.
  * Used by Juan (collector).
  */
@@ -788,6 +808,7 @@ export const allTools: ToolFunction[] = [
   approveApplicationTool,
   rejectApplicationTool,
   deleteApplicationTool,
+  forceQCobroSyncTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,
   listUsersTool,

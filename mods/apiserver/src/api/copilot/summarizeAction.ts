@@ -58,6 +58,8 @@ export function summarizeAction(toolName: string, args: Record<string, unknown>)
       const id = str(args, "id");
       return `Eliminar permanentemente la solicitud${id ? ` ${id}` : ""}.`;
     }
+    case "forceQCobroSync":
+      return "Forzar sincronización con QCobro ahora.";
     default:
       return `Ejecutar ${toolName} con los datos: ${JSON.stringify(args)}.`;
   }

@@ -18,3 +18,4 @@ export {
   type SyncAllPortfoliosResult
 } from "./createSyncAllPortfolios.js";
 export { createQCobroWorker, type CreateQCobroWorkerOptions } from "./createQCobroWorker.js";
+export { recordQCobroSyncedEvent } from "./recordQCobroSyncedEvent.js";

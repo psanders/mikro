@@ -33,6 +33,7 @@ import {
 } from "../../src/api/applications/index.js";
 import { COPILOT_ACTION_EXPIRY_MINUTES } from "@mikro/common";
 import { createToolExecutor, type ToolResult, type ToolExecutor } from "@mikro/agents";
+import { recordQCobroSyncedEvent } from "../../src/qcobro/index.js";
 
 /** A fake AI turn: text plus optional tool calls. */
 interface FakeTurn {
@@ -684,6 +685,122 @@ describe("Founder Copilot Integration", () => {
 
       const row = await db.loanApplication.findUnique({ where: { id: appId } });
       expect(row?.status).to.equal("CONVERTED");
+      expect(await db.businessEvent.count()).to.equal(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // On-demand QCobro sync (issue #130)
+  // ---------------------------------------------------------------------------
+
+  describe("forceQCobroSync", () => {
+    it("classifies forceQCobroSync as a write tool and binds it", () => {
+      expect(isWriteTool("forceQCobroSync")).to.be.true;
+      expect(getBoundToolNames()).to.include("forceQCobroSync");
+    });
+
+    it("summarizes the action with the fixed confirmation copy", () => {
+      expect(summarizeAction("forceQCobroSync", {})).to.equal(
+        "Forzar sincronización con QCobro ahora."
+      );
+    });
+
+    it("a tool call is short-circuited into a PENDING action, nothing executes", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "Voy a sincronizar con QCobro.",
+          tool_calls: [{ id: "c1", name: "forceQCobroSync", args: {} }]
+        }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "sincroniza con QCobro ahora" });
+
+      expect(calls, "no tool executed inline").to.have.lengthOf(0);
+      expect(reply.pendingAction?.toolName).to.equal("forceQCobroSync");
+
+      expect(await db.businessEvent.count()).to.equal(0);
+      const pending = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(pending).to.have.lengthOf(1);
+      expect(pending[0].status).to.equal("PENDING");
+    });
+
+    it("confirming runs the sync once and records qcobro.synced plus copilot.action", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+
+      // A REAL executor wired the way index.ts wires it: the dependency runs
+      // the sync and records its own qcobro.synced event (mirrors the cron
+      // worker's tick), same as the cron/on-payment triggers already do.
+      const syncStub = sinon.stub().resolves({
+        customers: 8,
+        portfoliosPushed: 2,
+        portfoliosSkipped: 1,
+        durationMs: 42
+      });
+      const realExecutor = createToolExecutor({
+        forceQCobroSync: async (actorName?: string) => {
+          const result = await syncStub();
+          await recordQCobroSyncedEvent(db as any, result, actorName ?? "Fundador");
+          return result;
+        }
+      } as any);
+      setCopilotDeps({
+        toolExecutor: realExecutor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "forceQCobroSync",
+          argsJson: JSON.stringify({}),
+          summary: "Forzar sincronización con QCobro ahora.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
+      expect(res.status).to.equal("CONFIRMED");
+      expect(syncStub.calledOnce, "sync ran exactly once").to.be.true;
+
+      const syncedEvents = await db.businessEvent.findMany({ where: { type: "qcobro.synced" } });
+      expect(syncedEvents).to.have.lengthOf(1);
+      const syncedPayload = JSON.parse(syncedEvents[0].payload);
+      expect(syncedPayload).to.deep.equal({
+        customers: 8,
+        portfoliosPushed: 2,
+        portfoliosSkipped: 1,
+        durationMs: 42
+      });
+
+      const actionEvents = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
+      expect(actionEvents).to.have.lengthOf(1);
+      expect(JSON.parse(actionEvents[0].payload).toolName).to.equal("forceQCobroSync");
+    });
+
+    it("rejecting runs no sync", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "forceQCobroSync",
+          argsJson: JSON.stringify({}),
+          summary: "Forzar sincronización con QCobro ahora.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotRejectAction({ actionId: action.id });
+      expect(res.status).to.equal("REJECTED");
+      expect(calls).to.have.lengthOf(0);
       expect(await db.businessEvent.count()).to.equal(0);
     });
   });
