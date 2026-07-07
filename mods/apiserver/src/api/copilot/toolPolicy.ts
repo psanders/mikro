@@ -387,6 +387,7 @@ export const READ_TOOLS: readonly string[] = [
   "getCustomerByPhone",
   "getApplicationById",
   "listLoansByCustomer",
+  "listCustomerLoansByPhone",
   "listPaymentsByLoanId",
   "getLoanByLoanId",
   "listUsers",
@@ -451,7 +452,9 @@ export const LOCAL_TOOL_NAMES: readonly string[] = COPILOT_LOCAL_TOOLS.map((t) =
  */
 export const TOOL_NOTES: Record<string, string> = {
   getCustomer: "usa el UUID del cliente; para solicitudes usa getApplicationById, no este.",
-  getApplicationById: "usa el UUID de la solicitud, no el del cliente."
+  getApplicationById: "usa el UUID de la solicitud, no el del cliente.",
+  listCustomerLoansByPhone:
+    "para ubicar un cliente y sus préstamos por teléfono, prefiere esta sobre encadenar getCustomerByPhone + listLoansByCustomer."
 };
 
 export function isReadTool(name: string): boolean {

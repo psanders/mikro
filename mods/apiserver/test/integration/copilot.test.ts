@@ -138,6 +138,7 @@ describe("Founder Copilot Integration", () => {
       // A representative bound tool from each list.
       expect(bound).to.include("queryFeedEvents"); // read
       expect(bound).to.include("getApplicationById"); // read
+      expect(bound).to.include("listCustomerLoansByPhone"); // read (#119)
       expect(bound).to.include("createPayment"); // write
       expect(bound).to.include("sendReceiptViaWhatsApp"); // write (#118)
       expect(bound).to.include("createWatchRule"); // direct
@@ -209,6 +210,37 @@ describe("Founder Copilot Integration", () => {
       expect(calls[0].args).to.deep.equal({ id: applicationId });
       expect(reply.reply).to.equal("La solicitud está en revisión con un ISC de 62.");
       expect(reply.reply).to.not.match(/cliente no encontrado/i);
+    });
+
+    it("resolves a customer's loans by phone in one call (issue #119)", async () => {
+      const { adminCaller } = await makeAdmin();
+      const phone = "+18095551234";
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "listCustomerLoansByPhone", args: { phone } }]
+        },
+        { content: "Elena Ramírez tiene 1 préstamo activo, el #218." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor({
+        success: true,
+        message: "Se encontraron 1 préstamos para Elena Ramírez.",
+        data: {
+          customer: { id: "cust-1", name: "Elena Ramírez", phone },
+          loans: [{ id: "218" }]
+        }
+      });
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({
+        message: `Registra un pago al ${phone}`
+      });
+
+      expect(calls).to.have.lengthOf(1);
+      expect(calls[0].name).to.equal("listCustomerLoansByPhone");
+      expect(calls[0].args).to.deep.equal({ phone });
+      expect(reply.reply).to.equal("Elena Ramírez tiene 1 préstamo activo, el #218.");
+      expect(reply.pendingAction).to.equal(undefined);
     });
   });
 
