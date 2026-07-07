@@ -18,16 +18,24 @@ mod mac {
     use base64::{engine::general_purpose::STANDARD, Engine as _};
     use screencapturekit::prelude::*;
     use screencapturekit::recording_output::{
-        SCRecordingOutput, SCRecordingOutputCodec, SCRecordingOutputConfiguration,
-        SCRecordingOutputFileType,
+        RecordingCallbacks, SCRecordingOutput, SCRecordingOutputCodec,
+        SCRecordingOutputConfiguration, SCRecordingOutputFileType,
     };
     use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::sync::mpsc;
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
     pub struct Session {
         stream: SCStream,
         recording: SCRecordingOutput,
         path: PathBuf,
+        // Signaled by the recording delegate once ScreenCaptureKit actually
+        // finishes flushing/finalizing the MP4 (writing the moov atom).
+        // `stop_capture`/`remove_recording_output` return before that
+        // finishes — reading the file at that point races the writer and
+        // can yield a truncated MP4 (moov atom missing), which Deepgram then
+        // rejects as "corrupt or unsupported data" (mikro/#135).
+        finished: mpsc::Receiver<Result<(), String>>,
     }
 
     // `SCStream`/`SCRecordingOutput` wrap thread-safe Objective-C objects and
@@ -58,9 +66,20 @@ mod mac {
             .with_video_codec(SCRecordingOutputCodec::H264)
             .with_output_file_type(SCRecordingOutputFileType::MP4);
 
-        let recording = SCRecordingOutput::new(&rec_config).ok_or_else(|| {
-            "No se pudo iniciar la grabación: se requiere macOS 15 o superior.".to_string()
-        })?;
+        let (tx, rx) = mpsc::channel::<Result<(), String>>();
+        let tx_fail = tx.clone();
+        let delegate = RecordingCallbacks::new()
+            .on_finish(move || {
+                let _ = tx.send(Ok(()));
+            })
+            .on_fail(move |err| {
+                let _ = tx_fail.send(Err(err));
+            });
+
+        let recording = SCRecordingOutput::new_with_delegate(&rec_config, delegate)
+            .ok_or_else(|| {
+                "No se pudo iniciar la grabación: se requiere macOS 15 o superior.".to_string()
+            })?;
 
         let stream = SCStream::new(&filter, &config);
         stream
@@ -72,6 +91,7 @@ mod mac {
             stream,
             recording,
             path,
+            finished: rx,
         })
     }
 
@@ -81,6 +101,24 @@ mod mac {
             .stream
             .remove_recording_output(&session.recording)
             .map_err(describe_error)?;
+
+        // Block for the delegate's finish/fail signal so we never read the
+        // file before ScreenCaptureKit has actually closed it out. Without
+        // this, `fs::read` below wins the race often enough to ship a
+        // moov-less MP4 to Deepgram (mikro/#135). 30s is generous headroom
+        // above normal finalization time (sub-second to a couple seconds,
+        // even near the 50MB/~3min feedback recording cap in
+        // MAX_FEEDBACK_VIDEO_BYTES) — a real hang should still surface as an
+        // error quickly rather than leaving the user staring at a spinner.
+        match session.finished.recv_timeout(Duration::from_secs(30)) {
+            Ok(Ok(())) => {}
+            Ok(Err(err)) => return Err(format!("La grabación falló al finalizar: {err}")),
+            Err(_) => {
+                return Err(
+                    "Tiempo de espera agotado finalizando la grabación.".to_string()
+                )
+            }
+        }
 
         let bytes = std::fs::read(&session.path)
             .map_err(|e| format!("No se pudo leer la grabación: {e}"))?;
