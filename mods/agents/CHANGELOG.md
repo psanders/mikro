@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.33.0](https://github.com/psanders/mikro/compare/v1.32.0...v1.33.0) (2026-07-07)
+
+### Features
+
+- **copilot:** daily cash reconciliation + accounting transaction tool ([#115](https://github.com/psanders/mikro/issues/115)) ([ebf94d2](https://github.com/psanders/mikro/commit/ebf94d279fa723b01483b83b315998a2a5e8e5fa))
+
 # [1.32.0](https://github.com/psanders/mikro/compare/v1.31.0...v1.32.0) (2026-07-07)
 
 ### Features
