@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { SendWhatsAppTemplateInput, WhatsAppSendResponse } from "@mikro/common";
+import type { RecordOutboundMessageFn } from "../messages/index.js";
 import { logger } from "../../logger.js";
 
 /** Outcome of attempting to send the promo template for an application. */
@@ -20,12 +21,17 @@ interface Deps {
   languageCode: string;
   /** Public URL for the template's image header (required per-send parameter). */
   imageUrl: string;
+  /** Optional: track delivery + emit a founder-feed card for the send. */
+  recordOutbound?: RecordOutboundMessageFn;
 }
 
 interface SendArgs {
   phone: string | null;
   /** Token for the template's Flow button; echoed back on Flow submission. */
   flowToken: string;
+  /** Optional application id + name for the feed card context. */
+  applicationId?: string;
+  customerName?: string;
 }
 
 /**
@@ -34,7 +40,12 @@ interface SendArgs {
  * throwing, so the caller (manual creation) never rolls back over a failed send.
  */
 export function createSendApplicationPromo(deps: Deps) {
-  return async ({ phone, flowToken }: SendArgs): Promise<PromoResult> => {
+  return async ({
+    phone,
+    flowToken,
+    applicationId,
+    customerName
+  }: SendArgs): Promise<PromoResult> => {
     if (!phone) return { sent: false, error: "La solicitud no tiene teléfono." };
     if (!deps.imageUrl) {
       return {
@@ -58,6 +69,15 @@ export function createSendApplicationPromo(deps: Deps) {
       });
       const messageId = res.messages?.[0]?.id;
       logger.info("application promo sent", { phone, messageId });
+      if (messageId && deps.recordOutbound) {
+        await deps.recordOutbound({
+          waMessageId: messageId,
+          phone,
+          kind: "promo",
+          applicationId,
+          customerName
+        });
+      }
       return { sent: true, messageId };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);

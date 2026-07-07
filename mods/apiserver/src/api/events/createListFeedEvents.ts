@@ -65,6 +65,35 @@ function mapRow(row: {
 }
 
 /**
+ * Overlays the current `outbound_messages` delivery status onto `message.sent`
+ * feed items (in place). The card renders its color from `payload.status`, so
+ * this is what makes an "enviado" card flip to delivered/read/failed on refetch.
+ * A single batched query for the page's message ids; no-op when the page has no
+ * message cards.
+ */
+async function overlayMessageStatus(client: EventClient, items: FeedEventItem[]): Promise<void> {
+  const byWaId = new Map<string, FeedEventItem>();
+  for (const item of items) {
+    if (item.type !== "message.sent") continue;
+    const waId = (item.payload as { waMessageId?: unknown }).waMessageId;
+    if (typeof waId === "string") byWaId.set(waId, item);
+  }
+  if (byWaId.size === 0) return;
+
+  const rows = await client.outboundMessage.findMany({
+    where: { waMessageId: { in: [...byWaId.keys()] } },
+    select: { waMessageId: true, status: true, errorTitle: true }
+  });
+  for (const row of rows) {
+    const item = byWaId.get(row.waMessageId);
+    if (!item) continue;
+    const payload = item.payload as Record<string, unknown>;
+    payload.status = row.status;
+    if (row.errorTitle) payload.errorTitle = row.errorTitle;
+  }
+}
+
+/**
  * Reverse-chronological feed of business events with opaque `(occurredAt, id)`
  * cursor pagination — a deliberate exception to the repo's offset/limit
  * convention: the feed grows at the head, so offsets would skip/duplicate rows
@@ -105,6 +134,13 @@ export function createListFeedEvents(client: EventClient) {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     const items = page.map(mapRow);
+
+    // Overlay live delivery state onto `message.sent` cards. The event payload is
+    // frozen at send time (`status: "accepted"`) because the event log is
+    // append-only; the mutable truth lives in `outbound_messages`, keyed by the
+    // payload's `waMessageId`. One batched lookup keeps this O(1) queries/page.
+    await overlayMessageStatus(client, items);
+
     const last = items[items.length - 1];
     const nextCursor = hasMore && last ? encodeCursor(last.occurredAt, last.id) : null;
 

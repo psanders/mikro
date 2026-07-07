@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { z } from "zod/v4";
+import { outboundMessageStatusEnum } from "./whatsapp.js";
 
 /**
  * v1 business event catalog. The event log is append-only: corrections are
@@ -24,7 +25,8 @@ export const businessEventTypeEnum = z.enum([
   "task.needs_input",
   "task.completed",
   "task.failed",
-  "qcobro.synced"
+  "qcobro.synced",
+  "message.sent"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -144,6 +146,18 @@ const qcobroSyncedPayloadSchema = z.object({
   durationMs: z.number().int().nonnegative()
 });
 
+// A business-initiated WhatsApp send (promo, payment confirmation, reminder,
+// overdue). Emitted ONCE at send time; `status` here is the initial value.
+// Live delivery state lives in the mutable `outbound_messages` row (keyed by
+// `waMessageId`) and is overlaid onto this payload at feed-read time — the
+// event log itself stays append-only.
+const messageSentPayloadSchema = z.object({
+  waMessageId: z.string().min(1),
+  kind: z.string().min(1),
+  phone: z.string().min(1),
+  status: outboundMessageStatusEnum
+});
+
 /** Per-type payload schema. Producers MUST validate through this map. */
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
@@ -162,7 +176,8 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "task.needs_input": taskNeedsInputPayloadSchema,
   "task.completed": taskCompletedPayloadSchema,
   "task.failed": taskFailedPayloadSchema,
-  "qcobro.synced": qcobroSyncedPayloadSchema
+  "qcobro.synced": qcobroSyncedPayloadSchema,
+  "message.sent": messageSentPayloadSchema
 };
 
 /**

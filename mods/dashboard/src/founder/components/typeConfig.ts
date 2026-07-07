@@ -19,7 +19,9 @@ import {
   CircleAlert,
   CalendarCheck,
   CalendarX,
-  RefreshCw
+  RefreshCw,
+  MessageSquare,
+  MessageSquareX
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -80,8 +82,23 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "task.needs_input": { icon: CircleAlert, accent: "amber" },
   "task.completed": { icon: CalendarCheck, accent: "green" },
   "task.failed": { icon: CalendarX, accent: "red" },
-  "qcobro.synced": { icon: RefreshCw, accent: "blue" }
+  "qcobro.synced": { icon: RefreshCw, accent: "blue" },
+  // Base is amber ("enviado", awaiting a delivery receipt). `resolveVisual`
+  // promotes it to green (delivered/read) or red (failed) from payload.status.
+  "message.sent": { icon: MessageSquare, accent: "amber" }
 };
+
+/**
+ * Delivery-state → card accent for a `message.sent` card. `accepted`/`sent` are
+ * pending (amber); `delivered`/`read` succeeded (green); `failed` is red. The
+ * live status is overlaid onto `payload.status` server-side by
+ * `createListFeedEvents`, so this reflects real delivery on each refetch.
+ */
+function messageStatusAccent(status: unknown): FeedAccent {
+  if (status === "delivered" || status === "read") return "green";
+  if (status === "failed") return "red";
+  return "amber";
+}
 
 /** `application.approved` with `payload.policyException === true`. */
 export function isPolicyExceptionApproval(event: FeedEvent): boolean {
@@ -97,6 +114,10 @@ export function resolveVisual(event: FeedEvent): TypeVisual {
   if (isPolicyExceptionApproval(event)) {
     return { icon: TriangleAlert, accent: "amber" };
   }
+  if (event.type === "message.sent") {
+    const accent = messageStatusAccent(event.payload.status);
+    return { icon: accent === "red" ? MessageSquareX : MessageSquare, accent };
+  }
   return BASE_VISUALS[event.type];
 }
 
@@ -108,6 +129,14 @@ export function resolveVisual(event: FeedEvent): TypeVisual {
 export function resolveCardTint(event: FeedEvent): "amber" | "red" | null {
   if (isPolicyExceptionApproval(event)) return "amber";
   if (isDeletion(event)) return "red";
+  // A WhatsApp send tints while pending (amber) or on failure (red); a delivered/
+  // read message settles to a plain card.
+  if (event.type === "message.sent") {
+    const accent = messageStatusAccent(event.payload.status);
+    if (accent === "red") return "red";
+    if (accent === "amber") return "amber";
+    return null;
+  }
   return null;
 }
 
@@ -245,10 +274,28 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
         tone: "muted"
       };
     }
+    case "message.sent": {
+      const status = typeof payload.status === "string" ? payload.status : "accepted";
+      const label = MESSAGE_STATUS_LABELS[status] ?? "Enviado";
+      if (status === "failed") {
+        const reason = typeof payload.errorTitle === "string" ? payload.errorTitle : "";
+        return { text: reason ? `${label} · ${reason}` : label, tone: "red" };
+      }
+      return { text: label, tone: "muted" };
+    }
     default:
       return { text: "", tone: "muted" };
   }
 }
+
+/** Spanish delivery-state labels for a `message.sent` card's meta line. */
+const MESSAGE_STATUS_LABELS: Record<string, string> = {
+  accepted: "Enviado · esperando confirmación",
+  sent: "Enviado",
+  delivered: "Entregado",
+  read: "Leído",
+  failed: "No entregado"
+};
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Efectivo",
@@ -389,6 +436,9 @@ export function resolveNarrative(event: FeedEvent): string | null {
     case "task.failed":
       return null;
     case "qcobro.synced":
+      return null;
+    case "message.sent":
+      // The compact meta line already carries the delivery state.
       return null;
   }
 }

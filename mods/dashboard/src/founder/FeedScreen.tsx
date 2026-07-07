@@ -54,7 +54,8 @@ const FILTERS: FilterDef[] = [
     id: "tareas",
     label: "Tareas",
     types: ["task.due", "task.needs_input", "task.completed", "task.failed"]
-  }
+  },
+  { id: "mensajes", label: "Mensajes", types: ["message.sent"] }
 ];
 
 /** Task lifecycle events whose card may carry the live action widget. */

@@ -9,6 +9,7 @@ import {
   type WhatsAppSendResponse
 } from "@mikro/common";
 import { type GenerateReceiptResponse } from "@mikro/common";
+import type { RecordOutboundMessageFn } from "../messages/index.js";
 import { saveReceiptImage } from "../../receipts/storage.js";
 import { getReceiptsPath } from "@mikro/agents";
 import { logger } from "../../logger.js";
@@ -41,6 +42,8 @@ export interface SendReceiptViaWhatsAppDependencies {
   }) => Promise<WhatsAppSendResponse>;
   uploadMedia: (imageBuffer: Buffer, mimeType: string) => Promise<string>;
   receiptsPath?: string;
+  /** Optional: track delivery for the send (no feed card — internal collector send). */
+  recordOutbound?: RecordOutboundMessageFn;
 }
 
 /**
@@ -144,6 +147,14 @@ export function createSendReceiptViaWhatsApp(deps: SendReceiptViaWhatsAppDepende
       const whatsappResponse = await sendWhatsAppMessage(messageParams);
 
       const messageId = whatsappResponse.messages?.[0]?.id;
+
+      if (messageId && deps.recordOutbound) {
+        await deps.recordOutbound({
+          waMessageId: messageId,
+          phone: recipientPhone,
+          kind: "receipt"
+        });
+      }
 
       logger.verbose("receipt sent via whatsapp", {
         paymentId: params.paymentId,

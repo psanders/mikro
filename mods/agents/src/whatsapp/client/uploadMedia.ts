@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { WhatsAppApiError } from "./types.js";
+import { GRAPH_API_BASE_URL } from "./constants.js";
 import { logger } from "../../logger.js";
 
 /**
@@ -58,7 +59,7 @@ export async function uploadMedia(
   fileBuffer: Buffer,
   mimeType: string
 ): Promise<string> {
-  const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/media`;
+  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/media`;
   logger.verbose("uploading media to whatsapp", {
     size: fileBuffer.length,
     mimeType

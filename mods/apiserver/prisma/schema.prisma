@@ -600,6 +600,37 @@ model BusinessEvent {
 }
 
 // =============================================================================
+// Outbound WhatsApp message delivery tracking
+// =============================================================================
+
+// The MUTABLE delivery state of a business-initiated WhatsApp send (promo,
+// payment confirmation, reminder, overdue, receipt). Written when the send API
+// returns a message id (`status` = accepted), then updated in place by the
+// `statuses` webhook (sent → delivered → read, or failed). This is the source of
+// truth for delivery state precisely BECAUSE the business_events log is
+// append-only: `feedEventId` links back to the `message.sent` card, and
+// `createListFeedEvents` overlays this row's current status onto that card at
+// read time. `waMessageId` is the Meta message id (unique) used to correlate the
+// async status webhook. `kind` is the send category (promo|payment_confirmation|
+// receipt|reminder|overdue). `errorCode`/`errorTitle` capture a failure reason
+// (e.g. 131047 "re-engagement message" = closed 24h window).
+model OutboundMessage {
+  id          String   @id @default(uuid())
+  waMessageId String   @unique @map("wa_message_id")
+  feedEventId String?  @map("feed_event_id")
+  phone       String
+  kind        String
+  status      String   @default("accepted")
+  errorCode   Int?     @map("error_code")
+  errorTitle  String?  @map("error_title")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([feedEventId])
+  @@map("outbound_messages")
+}
+
+// =============================================================================
 // Copilot & watch rules (Founder Copilot)
 // =============================================================================
 

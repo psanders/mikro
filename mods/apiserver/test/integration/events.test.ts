@@ -322,7 +322,8 @@ describe("Founder Feed Integration", () => {
       // application.restored by createRestoreApplication; copilot.action by the
       // copilot confirm flow; rule.alert by the watch-rule evaluator; task.* by
       // the task worker and firing confirm/skip flow; qcobro.synced by the
-      // QCobro cron worker's tick(). They must be the only types without a
+      // QCobro cron worker's tick(); message.sent by the outbound-message
+      // recorder at WhatsApp send time. They must be the only types without a
       // registered mapper.
       const intrinsic = new Set([
         "application.restored",
@@ -332,7 +333,8 @@ describe("Founder Feed Integration", () => {
         "task.needs_input",
         "task.completed",
         "task.failed",
-        "qcobro.synced"
+        "qcobro.synced",
+        "message.sent"
       ]);
       for (const type of businessEventTypeEnum.options) {
         if (intrinsic.has(type)) {
@@ -435,6 +437,67 @@ describe("Founder Feed Integration", () => {
       const res = await caller.listFeedEvents({ types: ["payment.collected"] });
       expect(res.items).to.have.lengthOf(1);
       expect(res.items[0].type).to.equal("payment.collected");
+    });
+
+    it("overlays live delivery status onto a message.sent card", async () => {
+      // The event payload is frozen at "accepted"; the mutable outbound_messages
+      // row is the source of truth. The feed must reflect the row's status.
+      await recordEvent(db, {
+        type: "message.sent",
+        actorName: "Mikro",
+        summary: "Recibo enviado por WhatsApp",
+        payload: {
+          waMessageId: "wamid.OVERLAY",
+          kind: "payment_confirmation",
+          phone: "+18095551234",
+          status: "accepted"
+        }
+      });
+      await db.outboundMessage.create({
+        data: {
+          waMessageId: "wamid.OVERLAY",
+          phone: "+18095551234",
+          kind: "payment_confirmation",
+          status: "read"
+        }
+      });
+
+      const res = await caller.listFeedEvents({ types: ["message.sent"] });
+      expect(res.items).to.have.lengthOf(1);
+      const payload = res.items[0].payload as { status: string };
+      expect(payload.status).to.equal("read");
+    });
+
+    it("surfaces a failed delivery with its error title on the card", async () => {
+      await recordEvent(db, {
+        type: "message.sent",
+        actorName: "Mikro",
+        summary: "Promoción enviada por WhatsApp",
+        payload: {
+          waMessageId: "wamid.FAIL",
+          kind: "promo",
+          phone: "+18095559999",
+          status: "accepted"
+        }
+      });
+      await db.outboundMessage.create({
+        data: {
+          waMessageId: "wamid.FAIL",
+          phone: "+18095559999",
+          kind: "promo",
+          status: "failed",
+          errorCode: 131047,
+          errorTitle: "Re-engagement message"
+        }
+      });
+
+      const res = await caller.listFeedEvents({ types: ["message.sent"] });
+      const failed = res.items.find(
+        (i) => (i.payload as { waMessageId?: string }).waMessageId === "wamid.FAIL"
+      );
+      const payload = failed?.payload as { status: string; errorTitle: string };
+      expect(payload.status).to.equal("failed");
+      expect(payload.errorTitle).to.equal("Re-engagement message");
     });
   });
 

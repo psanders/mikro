@@ -289,8 +289,57 @@ export const taskFailedEvent: FeedEvent = {
   }
 };
 
-/** All twelve catalog specimens, in a stable order — used by the Feed composite story. */
+export const messageSentPendingEvent: FeedEvent = {
+  id: "evt-message-sent-pending",
+  type: "message.sent",
+  occurredAt: minutesAgo(2),
+  actorName: "Mikro",
+  customerName: "Juan Pérez",
+  summary: "Recibo enviado por WhatsApp",
+  payload: {
+    waMessageId: "wamid.PENDING",
+    kind: "payment_confirmation",
+    phone: "+18095551234",
+    status: "sent"
+  }
+};
+
+export const messageSentDeliveredEvent: FeedEvent = {
+  id: "evt-message-sent-delivered",
+  type: "message.sent",
+  occurredAt: minutesAgo(18),
+  actorName: "Mikro",
+  customerName: "Ana Cruz",
+  summary: "Recibo enviado por WhatsApp",
+  payload: {
+    waMessageId: "wamid.READ",
+    kind: "payment_confirmation",
+    phone: "+18095555678",
+    status: "read"
+  }
+};
+
+export const messageSentFailedEvent: FeedEvent = {
+  id: "evt-message-sent-failed",
+  type: "message.sent",
+  occurredAt: minutesAgo(33),
+  actorName: "Mikro",
+  customerName: "Elena Ramírez",
+  summary: "Promoción enviada por WhatsApp",
+  payload: {
+    waMessageId: "wamid.FAILED",
+    kind: "promo",
+    phone: "+18095559012",
+    status: "failed",
+    errorTitle: "Re-engagement message"
+  }
+};
+
+/** All catalog specimens, in a stable order — used by the Feed composite story. */
 export const allFeedEvents: FeedEvent[] = [
+  messageSentPendingEvent,
+  messageSentDeliveredEvent,
+  messageSentFailedEvent,
   applicationApprovedExceptionEvent,
   applicationDeletedRestorableEvent,
   paymentCollectedEvent,

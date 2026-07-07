@@ -89,10 +89,56 @@ export const whatsappMessageSchema = z.object({
 });
 
 /**
- * Schema for WhatsApp webhook change value.
+ * Delivery-status values Meta reports on the `statuses` webhook for an outbound
+ * message. Progress is `sent` → `delivered` → `read`; `failed` is terminal.
+ */
+export const whatsappStatusValueEnum = z.enum(["sent", "delivered", "read", "failed"]);
+
+/**
+ * Lifecycle status we persist for an outbound message. `accepted` is our own
+ * initial state (the send API returned 200 with a message id, before any
+ * `statuses` webhook); the rest mirror {@link whatsappStatusValueEnum}.
+ */
+export const outboundMessageStatusEnum = z.enum([
+  "accepted",
+  "sent",
+  "delivered",
+  "read",
+  "failed"
+]);
+
+/**
+ * Schema for a single error object on a failed `statuses` update. `code` is the
+ * Meta error code (e.g. 131047 "re-engagement message" — a closed 24h window).
+ */
+export const whatsappStatusErrorSchema = z.object({
+  code: z.number(),
+  title: z.string().optional(),
+  message: z.string().optional(),
+  error_data: z.object({ details: z.string().optional() }).optional()
+});
+
+/**
+ * Schema for one entry in the `statuses` array of a webhook change value. Meta
+ * sends these to report async delivery outcomes of messages the business sent;
+ * `id` matches the message id returned by the send API. Failures carry `errors`.
+ */
+export const whatsappStatusSchema = z.object({
+  id: z.string(),
+  status: whatsappStatusValueEnum,
+  timestamp: z.string(),
+  recipient_id: z.string().optional(),
+  errors: z.array(whatsappStatusErrorSchema).optional()
+});
+
+/**
+ * Schema for WhatsApp webhook change value. Inbound user messages arrive under
+ * `messages`; async delivery receipts for our outbound sends arrive under
+ * `statuses`. A single webhook delivery carries one or the other.
  */
 export const whatsappChangeValueSchema = z.object({
-  messages: z.array(whatsappMessageSchema).optional()
+  messages: z.array(whatsappMessageSchema).optional(),
+  statuses: z.array(whatsappStatusSchema).optional()
 });
 
 /**
@@ -331,6 +377,21 @@ export type WhatsAppMessageType = z.infer<typeof whatsappMessageTypeEnum>;
  * Type for an individual WhatsApp message from webhook.
  */
 export type WhatsAppMessage = z.infer<typeof whatsappMessageSchema>;
+
+/**
+ * Type for a single outbound-message delivery status from the webhook.
+ */
+export type WhatsAppStatus = z.infer<typeof whatsappStatusSchema>;
+
+/**
+ * Delivery-status value reported by Meta (`sent`/`delivered`/`read`/`failed`).
+ */
+export type WhatsAppStatusValue = z.infer<typeof whatsappStatusValueEnum>;
+
+/**
+ * Persisted lifecycle status for an outbound message (adds `accepted`).
+ */
+export type OutboundMessageStatus = z.infer<typeof outboundMessageStatusEnum>;
 
 /**
  * Type for WhatsApp webhook change value.

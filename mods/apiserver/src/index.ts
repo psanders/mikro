@@ -115,7 +115,9 @@ import {
   createUpsertApplication,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
-  createSubmitApplicationFromFlow
+  createSubmitApplicationFromFlow,
+  createRecordOutboundMessage,
+  createUpdateOutboundStatus
 } from "./api/index.js";
 import {
   createScheduleFollowUpJob,
@@ -283,6 +285,9 @@ if (getUpdatesConfig().enabled) {
 // leak schema details; only a genuine DB failure returns 500 so the form can
 // show its connection-error message.
 const dbClient = prisma as unknown as DbClient;
+// Shared outbound-message recorder: tracks delivery state + emits the founder
+// `message.sent` feed card for business-initiated WhatsApp sends.
+const recordOutboundMessage = createRecordOutboundMessage(prisma);
 const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
 const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
 const upsertApplication = createUpsertApplication(dbClient, { scheduleFollowUpJob });
@@ -444,7 +449,8 @@ async function initializeMessageProcessor() {
       db: dbClient,
       generateReceipt,
       sendWhatsAppMessage,
-      uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
+      uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient),
+      recordOutbound: recordOutboundMessage
     });
 
     // Resolve the agent serving a profile, treating a disabled agent
@@ -631,7 +637,8 @@ async function initializeMessageProcessor() {
           sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
           templateName,
           languageCode,
-          imageUrl
+          imageUrl,
+          recordOutbound: recordOutboundMessage
         });
         const digits = params.phone.replace(/\D/g, "");
         const e164 =
@@ -857,6 +864,9 @@ async function initializeMessageProcessor() {
       addMessageForUser,
       getAgentForProfile,
       submitApplicationFromFlow,
+      // Apply async delivery receipts (sent/delivered/read/failed) to the tracked
+      // outbound message so the founder feed card reflects real delivery state.
+      updateOutboundStatus: createUpdateOutboundStatus(prisma),
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 
@@ -953,7 +963,8 @@ initializeMessageProcessor()
       const sendFollowUpNudge = createSendFollowUpNudge({
         sendTemplateMessage: whatsAppClient2.sendTemplateMessage.bind(whatsAppClient2),
         templateName: followUpTemplate.templateName,
-        languageCode: followUpTemplate.languageCode
+        languageCode: followUpTemplate.languageCode,
+        recordOutbound: recordOutboundMessage
       });
       stopFollowUpWorker = createFollowUpWorker({
         client: dbClient,

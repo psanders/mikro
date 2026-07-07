@@ -9,6 +9,7 @@ import {
   type SendWhatsAppTemplateInput,
   type WhatsAppSendResponse
 } from "@mikro/common";
+import type { RecordOutboundMessageFn } from "../messages/index.js";
 import { logger } from "../../logger.js";
 
 /**
@@ -35,6 +36,8 @@ export interface SendPaymentConfirmationDependencies {
   languageCode: string;
   /** Build the public image-header URL for a signed token. */
   buildImageUrl: (token: string) => string;
+  /** Optional: track delivery + emit a founder-feed card for the send. */
+  recordOutbound?: RecordOutboundMessageFn;
 }
 
 /**
@@ -80,6 +83,14 @@ export function createSendPaymentConfirmation(deps: SendPaymentConfirmationDepen
         phone: input.phone,
         messageId
       });
+      if (messageId && deps.recordOutbound) {
+        await deps.recordOutbound({
+          waMessageId: messageId,
+          phone: input.phone,
+          kind: "payment_confirmation",
+          customerName: receiptData.name
+        });
+      }
       return { success: true, messageId };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
