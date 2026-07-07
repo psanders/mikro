@@ -83,7 +83,11 @@ describe("createMessageRouter — COLLECTOR routing", () => {
     expect(result.type).to.equal("ignored");
   });
 
-  it("still returns 'ignored' for ADMIN with no agent assigned", async () => {
+  // mikro/#120: María was retired, so ADMIN with no agent assigned is now the
+  // default (not a special case) — it routes as a user exactly like
+  // COLLECTOR, and handleWhatsAppMessage decides to send a dashboard
+  // redirect instead of silently ignoring.
+  it("routes ADMIN to { type: 'user', role: 'ADMIN' } even with no agent assigned", async () => {
     const deps = makeDeps({
       getUserByPhone: sinon.stub().resolves(adminUser),
       getAgentForProfile: sinon.stub().returns(undefined)
@@ -91,14 +95,18 @@ describe("createMessageRouter — COLLECTOR routing", () => {
     const router = createMessageRouter(deps);
     const result = await router(ADMIN_PHONE);
 
-    expect(result.type).to.equal("ignored");
+    expect(result.type).to.equal("user");
+    if (result.type === "user") {
+      expect(result.role).to.equal("ADMIN");
+      expect(result.userId).to.equal("user-admin-1");
+    }
   });
 
-  it("routes ADMIN with an assigned agent to { type: 'user', role: 'ADMIN' }", async () => {
+  it("routes ADMIN with an assigned agent exactly the same way", async () => {
     const deps = makeDeps({
       getUserByPhone: sinon.stub().resolves(adminUser),
       getAgentForProfile: sinon.stub().returns({
-        name: "maria",
+        name: "custom-admin-bot",
         profile: "ADMIN",
         enabled: true,
         systemPrompt: "x",
@@ -114,5 +122,15 @@ describe("createMessageRouter — COLLECTOR routing", () => {
     if (result.type === "user") {
       expect(result.role).to.equal("ADMIN");
     }
+  });
+
+  it("still returns 'ignored' for a disabled ADMIN", async () => {
+    const deps = makeDeps({
+      getUserByPhone: sinon.stub().resolves({ ...adminUser, enabled: false })
+    });
+    const router = createMessageRouter(deps);
+    const result = await router(ADMIN_PHONE);
+
+    expect(result.type).to.equal("ignored");
   });
 });

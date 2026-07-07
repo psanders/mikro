@@ -544,7 +544,22 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
-    // Known users with an LLM agent (e.g. ADMIN → María).
+    // ADMIN: María was retired in favor of the founder Copilot on the
+    // dashboard (mikro/#120) — admin assistance no longer happens over
+    // WhatsApp by default. Redirect once instead of silently ignoring, so an
+    // admin who still texts out of habit knows where help lives now. An
+    // ADMIN profile can still be assigned a different LLM agent in
+    // agents.yaml, in which case this falls through to the normal path below.
+    if (route.role === "ADMIN" && !getAgentForProfile("ADMIN")) {
+      await sendWhatsAppMessage({
+        phone,
+        message:
+          "Ahora la asistencia para administradores está en el dashboard de Mikro: habla con el copiloto ahí para registrar pagos, ver reportes y más."
+      });
+      return;
+    }
+
+    // Known users with an LLM agent (e.g. a custom ADMIN or COLLECTOR agent).
     const agent = getAgentForProfile(route.role);
     if (!agent) {
       logger.verbose("no agent assigned to user role profile", { phone, role: route.role });

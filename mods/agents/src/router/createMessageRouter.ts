@@ -11,11 +11,12 @@ import { validatePhone } from "@mikro/common";
 /**
  * Creates a message router that determines routing based on phone number lookup.
  *
- * Routing rules (the agent that serves each profile is assigned in agents.yaml;
- * a route resolves to an agent only if one is assigned to that profile):
+ * Routing rules (the agent that serves each profile is assigned in agents.yaml):
  * 1. Customer → Log and ignore (customers don't use agents)
- * 2. User → resolve the agent for the user's role profile (ADMIN/COLLECTOR);
- *    ignored when no agent is assigned to that profile
+ * 2. User → routes as a user with their role (ADMIN/COLLECTOR) regardless of
+ *    whether an agent is assigned; handleWhatsAppMessage decides what to do
+ *    when no agent is assigned (a deterministic handler, a redirect, or
+ *    silence), it's not this router's call to make
  * 3. Unknown phone with a partial application → prospect (PROSPECT profile)
  * 4. Unknown phone with no application → guest (GUEST profile)
  *
@@ -35,7 +36,7 @@ import { validatePhone } from "@mikro/common";
  * ```
  */
 export function createMessageRouter(deps: RouterDependencies) {
-  const { getUserByPhone, getCustomerByPhone, getAgentForProfile } = deps;
+  const { getUserByPhone, getCustomerByPhone } = deps;
 
   return async function routeMessage(phone: string): Promise<RouteResult> {
     // Normalize phone number to E.164 format (with +)
@@ -83,21 +84,12 @@ export function createMessageRouter(deps: RouterDependencies) {
         primaryRole = "COLLECTOR";
       }
 
-      // COLLECTOR has a deterministic handler (not an LLM agent), so it
-      // always routes as a user regardless of agent assignment in agents.yaml.
-      // For all other roles, require an assigned agent before routing.
-      if (primaryRole !== "COLLECTOR" && !getAgentForProfile(primaryRole)) {
-        logger.verbose("no agent serving profile, ignoring", {
-          phone: normalizedPhone,
-          profile: primaryRole
-        });
-        return {
-          type: "ignored",
-          reason: "no agent for this profile",
-          phone: normalizedPhone
-        };
-      }
-
+      // Both roles always route as a user regardless of agent assignment in
+      // agents.yaml: COLLECTOR has a deterministic handler (not an LLM
+      // agent), and ADMIN (María was retired in favor of the founder
+      // Copilot — mikro/#120) gets a one-time dashboard redirect instead of
+      // an LLM agent by default. handleWhatsAppMessage decides what to do
+      // when no agent is assigned to a role.
       logger.verbose("phone belongs to user", {
         phone: normalizedPhone,
         userId: user.id,
