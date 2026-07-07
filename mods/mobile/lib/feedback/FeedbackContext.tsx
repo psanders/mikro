@@ -24,6 +24,8 @@ import {
   cancelInAppRecording,
   startGlobalRecording,
   stopGlobalRecording,
+  addScreenRecordingListener,
+  retrieveLastGlobalRecording,
   getMicrophonePermissionStatus,
   requestMicrophonePermission,
   type ScreenRecordingFile
@@ -36,6 +38,45 @@ import { trpc } from "../api";
 import { FeedbackPill } from "../../components/feedback/FeedbackPill";
 import { FeedbackStatusModal } from "../../components/feedback/FeedbackStatusModal";
 import { finishFeedbackRecording, type FeedbackSubmissionInput } from "./finishFeedbackRecording";
+
+/**
+ * Android's `stopGlobalRecording` fires an intent at a background Service
+ * (mediaRecorder.stop() + MP4 faststart) and only *guesses* it's done via a
+ * fixed `settledTimeMs` delay (default 500ms) before handing back whatever
+ * file is cached — there's no guarantee the service has actually finished by
+ * then. Under load that guess loses the race and yields a truncated/corrupt
+ * recording, which Deepgram then rejects outright (mikro/#135), unlike the
+ * silent-video case this file's header describes, which is a valid file with
+ * nothing to transcribe. The library does emit a real completion signal
+ * though — an `ended` event via `addScreenRecordingListener`, fired only
+ * after the native side has actually finished and cached the file — so wait
+ * on that instead of trusting the delay. `stopGlobalRecording`'s own delay
+ * is kept as a fallback in case the event is ever missed (e.g. a dropped
+ * listener registration), not as the primary signal.
+ */
+function stopGlobalRecordingSafely(): Promise<ScreenRecordingFile | undefined> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const removeListener = addScreenRecordingListener({
+      listener: (event) => {
+        if (!settled && event.type === "global" && event.reason === "ended") {
+          settled = true;
+          removeListener();
+          resolve(retrieveLastGlobalRecording());
+        }
+      },
+      ignoreRecordingsInitiatedElsewhere: false
+    });
+
+    void stopGlobalRecording({ settledTimeMs: 3000 }).then((file) => {
+      if (!settled) {
+        settled = true;
+        removeListener();
+        resolve(file);
+      }
+    });
+  });
+}
 
 export type FeedbackStage = "idle" | "recording" | "processing" | "result" | "error";
 
@@ -137,7 +178,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setStage("processing");
     try {
       const file: ScreenRecordingFile | undefined =
-        Platform.OS === "ios" ? await stopInAppRecording() : await stopGlobalRecording();
+        Platform.OS === "ios" ? await stopInAppRecording() : await stopGlobalRecordingSafely();
 
       const result = await finishFeedbackRecording(file, {
         readBase64: (path) => new File(path).base64(),
