@@ -6,6 +6,7 @@ import {
   whatsappWebhookSchema,
   type WhatsAppWebhookBody,
   type WhatsAppMessage,
+  type WhatsAppStatus,
   type SendWhatsAppMessageInput,
   type SendWhatsAppTemplateInput,
   type WhatsAppSendResponse
@@ -75,6 +76,11 @@ export interface MessageProcessorDependencies {
    * When unset, Flow submissions are ignored.
    */
   submitApplicationFromFlow?: (payload: Record<string, string | boolean>) => Promise<void>;
+  /**
+   * Optional: apply an async delivery-status update (from the `statuses` webhook)
+   * to the tracked outbound message. When unset, statuses are ignored.
+   */
+  updateOutboundStatus?: (status: WhatsAppStatus) => Promise<void>;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -257,6 +263,14 @@ export const handleWhatsAppMessage = (() => {
           if (!senders.includes(message.from)) {
             senders.push(message.from);
           }
+        }
+
+        // Async delivery receipts for our outbound sends (sent/delivered/read/
+        // failed). Separate from inbound `messages` — a delivery does not count
+        // as a processed message or a sender.
+        const statuses = change.value?.statuses ?? [];
+        for (const status of statuses) {
+          await processStatusUpdate(status);
         }
       }
     }
@@ -600,6 +614,24 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     } catch {
       logger.error("failed to send error message", { phone });
     }
+  }
+}
+
+/**
+ * Route an async delivery-status update to the configured handler. No-op when no
+ * processor / `updateOutboundStatus` is configured (statuses are ignored, as
+ * before). Best-effort: failures are logged, never thrown.
+ */
+async function processStatusUpdate(status: WhatsAppStatus): Promise<void> {
+  if (!messageProcessor?.updateOutboundStatus) return;
+  try {
+    await messageProcessor.updateOutboundStatus(status);
+  } catch (error) {
+    logger.error("failed to process delivery status", {
+      waMessageId: status.id,
+      status: status.status,
+      error: (error as Error).message
+    });
   }
 }
 

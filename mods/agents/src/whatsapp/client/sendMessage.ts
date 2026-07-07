@@ -7,6 +7,7 @@ import type {
   WhatsAppSendResponse
 } from "@mikro/common";
 import type { WhatsAppApiError } from "./types.js";
+import { GRAPH_API_BASE_URL } from "./constants.js";
 import { logger } from "../../logger.js";
 
 /**
@@ -75,7 +76,7 @@ export async function sendMessage(
   accessToken: string,
   params: SendWhatsAppMessageInput
 ): Promise<WhatsAppSendResponse> {
-  const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
 
   // Interactive reply-button message: up to 3 tappable reply buttons.
   if (params.replyButtons) {
@@ -316,7 +317,7 @@ export async function sendTemplateMessage(
   accessToken: string,
   params: SendWhatsAppTemplateInput
 ): Promise<WhatsAppSendResponse> {
-  const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
 
   const headerParameters = params.headerParameters ?? [];
   const bodyParameters = params.bodyParameters ?? [];

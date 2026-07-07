@@ -14,7 +14,7 @@ import { downloadMedia as downloadMediaImpl } from "./downloadMedia.js";
  * Creates a WhatsApp client that communicates with the Meta Graph API.
  *
  * The client uses the native fetch API to make HTTP requests to WhatsApp's
- * Cloud API (v18.0).
+ * Cloud API (version pinned in `./constants.ts`).
  *
  * @returns A WhatsAppClient implementation
  *

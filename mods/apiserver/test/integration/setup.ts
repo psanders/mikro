@@ -292,6 +292,22 @@ CREATE INDEX "business_events_occurred_at_id_idx" ON "business_events"("occurred
 CREATE INDEX "business_events_type_idx" ON "business_events"("type");
 CREATE INDEX "business_events_customer_id_idx" ON "business_events"("customer_id");
 
+-- Outbound WhatsApp message delivery tracking
+CREATE TABLE "outbound_messages" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "wa_message_id" TEXT NOT NULL,
+    "feed_event_id" TEXT,
+    "phone" TEXT NOT NULL,
+    "kind" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'accepted',
+    "error_code" INTEGER,
+    "error_title" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX "outbound_messages_wa_message_id_key" ON "outbound_messages"("wa_message_id");
+CREATE INDEX "outbound_messages_feed_event_id_idx" ON "outbound_messages"("feed_event_id");
+
 -- Watch rules (founder copilot)
 CREATE TABLE "watch_rules" (
     "id" TEXT NOT NULL PRIMARY KEY,

@@ -154,6 +154,7 @@ import { createGenerateReceipt } from "../../api/receipts/createGenerateReceipt.
 import { createGenerateReceiptFromDataApi } from "../../api/receipts/createGenerateReceiptFromData.js";
 import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendReceiptViaWhatsApp.js";
 import { createSendPaymentConfirmation } from "../../api/receipts/createSendPaymentConfirmation.js";
+import { createRecordOutboundMessage } from "../../api/messages/index.js";
 // Report API functions
 import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
 import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
@@ -696,7 +697,8 @@ export const protectedRouter = router({
           sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
           templateName,
           languageCode,
-          imageUrl
+          imageUrl,
+          recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
         });
         promo = await sendPromo({ phone: application.phone, flowToken: application.id });
       }
@@ -768,14 +770,15 @@ export const protectedRouter = router({
    * Available to any authenticated user. Best-effort: errors are returned as
    * `{ sent: false, error }` rather than thrown.
    */
-  sendPromo: protectedProcedure.input(sendPromoSchema).mutation(async ({ input }) => {
+  sendPromo: protectedProcedure.input(sendPromoSchema).mutation(async ({ ctx, input }) => {
     const whatsAppClient = createWhatsAppClient();
     const { templateName, languageCode, imageUrl } = getWhatsAppPromoTemplate();
     const sendFn = createSendApplicationPromo({
       sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
       templateName,
       languageCode,
-      imageUrl
+      imageUrl,
+      recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
     });
     // Normalize to E.164 — same logic as normalizeApplication's parsePhone.
     const digits = input.phone.replace(/\D/g, "");
@@ -963,7 +966,8 @@ export const protectedRouter = router({
         db: ctx.db,
         generateReceipt,
         sendWhatsAppMessage,
-        uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient)
+        uploadMedia: whatsAppClient.uploadMedia.bind(whatsAppClient),
+        recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
       });
 
       return fn(input);
@@ -988,7 +992,8 @@ export const protectedRouter = router({
         sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
         templateName,
         languageCode,
-        buildImageUrl: getReceiptImageUrl
+        buildImageUrl: getReceiptImageUrl,
+        recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
       });
 
       return fn(input);

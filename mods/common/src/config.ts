@@ -30,9 +30,10 @@ const llmPurposesSchema = z.object({
 // All templates are registered under the single shared `whatsapp.languageCode`
 // (es_DO). There are intentionally no per-template language overrides.
 const whatsappTemplatesSchema = z.object({
-  // Approved template sent to the borrower after a payment: landscape receipt
-  // card as the image header, "Descargar recibo" URL button.
-  paymentConfirmation: z.string().default("payment_receipt"),
+  // Approved UTILITY template sent to the borrower after a payment: landscape
+  // receipt card as the image header, "Descargar recibo" URL button. Delivers
+  // outside the 24h window.
+  paymentConfirmation: z.string().default("payment_confirmation"),
   // Approved Flow template whose CTA opens the loan-application intake Flow.
   // Sent as the "promoción" when a reviewer opts in on manual creation.
   loanApplicationPromo: z.string().default("loan_application"),
@@ -41,8 +42,12 @@ const whatsappTemplatesSchema = z.object({
   // at a publicly reachable JPEG/PNG of the promo banner.
   loanApplicationPromoImageUrl: z.string().default(""),
   // Follow-up nudge template: text-only, no image header, no flow button.
-  // Sent 10 min after a RECEIVED application if still unattended.
-  loanApplicationFollowUp: z.string().default("loan_application")
+  // Sent 10 min after a RECEIVED application if still unattended. Dedicated
+  // MARKETING template (was pointed at `loan_application` before its own was
+  // approved).
+  loanApplicationFollowUp: z.string().default("loan_request_followup")
+  // NOTE: payment_reminder / payment_overdue (approved UTILITY templates) are
+  // sent by an external application, not mikro — intentionally not wired here.
 });
 
 const whatsappSchema = z.object({
@@ -51,10 +56,10 @@ const whatsappSchema = z.object({
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
   templates: whatsappTemplatesSchema.default(() => ({
-    paymentConfirmation: "payment_receipt",
+    paymentConfirmation: "payment_confirmation",
     loanApplicationPromo: "loan_application",
     loanApplicationPromoImageUrl: "",
-    loanApplicationFollowUp: "loan_application"
+    loanApplicationFollowUp: "loan_request_followup"
   }))
 });
 

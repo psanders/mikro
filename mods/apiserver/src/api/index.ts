@@ -85,6 +85,16 @@ export {
 // Dashboard operations
 export { createGetCollectorDashboard } from "./dashboard/index.js";
 
+// Outbound WhatsApp message delivery tracking
+export {
+  createRecordOutboundMessage,
+  createUpdateOutboundStatus,
+  type OutboundMessageKind,
+  type RecordOutboundMessageArgs,
+  type RecordOutboundMessageFn,
+  type UpdateOutboundStatusFn
+} from "./messages/index.js";
+
 // Sync operations
 export {
   createCollectorSync,

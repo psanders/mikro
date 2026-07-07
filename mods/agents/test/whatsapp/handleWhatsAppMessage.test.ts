@@ -60,7 +60,8 @@ describe("handleWhatsAppMessage", () => {
       systemPrompt: "You are Maria",
       allowedTools: []
     }),
-    submitApplicationFromFlow: sinon.stub().resolves()
+    submitApplicationFromFlow: sinon.stub().resolves(),
+    updateOutboundStatus: sinon.stub().resolves()
   };
 
   beforeEach(() => {
@@ -85,6 +86,7 @@ describe("handleWhatsAppMessage", () => {
       allowedTools: []
     });
     mockMessageProcessor.submitApplicationFromFlow = sinon.stub().resolves();
+    mockMessageProcessor.updateOutboundStatus = sinon.stub().resolves();
 
     resetProcessedMessageIdsForTesting();
     clearSessionsForTesting();
@@ -591,6 +593,61 @@ describe("handleWhatsAppMessage", () => {
 
       // Assert - Should still count messages processed
       expect(result.messagesProcessed).to.equal(1);
+    });
+  });
+
+  describe("delivery status webhooks (statuses)", () => {
+    const statusWebhook = (status: string, extra: Record<string, unknown> = {}) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                statuses: [
+                  {
+                    id: "wamid.ABC",
+                    status,
+                    timestamp: recentTs(),
+                    recipient_id: "18095551234",
+                    ...extra
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    it("routes a delivery status to updateOutboundStatus", async () => {
+      const result = await handleWhatsAppMessage(statusWebhook("delivered"));
+
+      expect(mockMessageProcessor.updateOutboundStatus.calledOnce).to.equal(true);
+      const arg = mockMessageProcessor.updateOutboundStatus.firstCall.args[0];
+      expect(arg.id).to.equal("wamid.ABC");
+      expect(arg.status).to.equal("delivered");
+      // A status is not an inbound message: no processed messages, no senders.
+      expect(result.messagesProcessed).to.equal(0);
+      expect(result.senders).to.have.length(0);
+    });
+
+    it("passes the error code through on a failed status", async () => {
+      await handleWhatsAppMessage(
+        statusWebhook("failed", {
+          errors: [{ code: 131047, title: "Re-engagement message" }]
+        })
+      );
+
+      const arg = mockMessageProcessor.updateOutboundStatus.firstCall.args[0];
+      expect(arg.status).to.equal("failed");
+      expect(arg.errors[0].code).to.equal(131047);
+    });
+
+    it("does not treat a status as an inbound message send", async () => {
+      await handleWhatsAppMessage(statusWebhook("read"));
+      expect(mockMessageProcessor.sendWhatsAppMessage.called).to.equal(false);
+      expect(mockMessageProcessor.invokeLLM.called).to.equal(false);
     });
   });
 });

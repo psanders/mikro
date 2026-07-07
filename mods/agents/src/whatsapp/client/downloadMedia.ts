@@ -2,13 +2,14 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { MediaUrlResponse, WhatsAppApiError } from "./types.js";
+import { GRAPH_API_BASE_URL } from "./constants.js";
 import { logger } from "../../logger.js";
 
 export async function downloadMedia(accessToken: string, mediaId: string): Promise<string> {
   logger.verbose("downloading whatsapp media", { mediaId });
 
   // Step 1: Get media URL from WhatsApp API
-  const mediaUrl = `https://graph.facebook.com/v18.0/${mediaId}`;
+  const mediaUrl = `${GRAPH_API_BASE_URL}/${mediaId}`;
 
   const mediaResponse = await fetch(mediaUrl, {
     headers: {
