@@ -19,6 +19,10 @@
       "types": "./dist/schemas/index.d.ts",
       "default": "./dist/schemas/index.js"
     },
+    "./eval": {
+      "types": "./dist/eval/index.d.ts",
+      "default": "./dist/eval/index.js"
+    },
     "./contracts": {
       "types": "./dist/contracts/index.d.ts",
       "default": "./dist/contracts/index.js"
@@ -32,6 +36,7 @@
     "build": "tsc -b --force",
     "typecheck": "tsc --noEmit",
     "test": "mocha",
+    "spec:collections": "tsx scripts/generate-collections-spec.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {

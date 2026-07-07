@@ -278,6 +278,8 @@ export {
   calculateLoanSchema,
   getLoanSchema,
   getLoanByLoanIdSchema,
+  loanHealthSchema,
+  portfolioHealthSchema,
   updateLoanStatusSchema,
   updateLoanNicknameSchema,
   listLoansSchema,
@@ -287,6 +289,8 @@ export {
   type CalculateLoanInput,
   type GetLoanInput,
   type GetLoanByLoanIdInput,
+  type LoanHealthInput,
+  type PortfolioHealthInput,
   type UpdateLoanStatusInput,
   type UpdateLoanNicknameInput,
   type ListLoansInput,
@@ -595,3 +599,6 @@ export {
   type Font,
   type ReceiptElement
 } from "./receipts/index.js";
+
+// Collections evaluation framework (canonical snapshot + spec-as-code checks)
+export * from "./eval/index.js";

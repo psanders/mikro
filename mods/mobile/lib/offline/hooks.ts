@@ -10,6 +10,7 @@ import {
   getLoanVisit,
   searchCustomers,
   getLoanByLoanId,
+  buildLoanSnapshotLocal,
   listPaymentsByLoanId,
   listPaymentsByCustomer,
   listPayments,
@@ -21,6 +22,7 @@ import {
   type PaymentDetail,
   type PreviewLateFeeResult
 } from "./queries";
+import type { LoanSnapshot } from "@mikro/common/eval";
 import { useSyncContext } from "./SyncProvider";
 
 interface QueryResult<T> {
@@ -161,6 +163,27 @@ export function useLocalLoan(loanId: number | undefined): QueryResult<LoanDetail
   useEffect(() => {
     if (loanId === undefined || isNaN(loanId)) return;
     setData(getLoanByLoanId(loanId) ?? undefined);
+  }, [loanId, version]);
+
+  return {
+    data,
+    isLoading: !data && loanId !== undefined,
+    isError: false,
+    isSuccess: data !== undefined
+  };
+}
+
+/**
+ * Canonical loan snapshot from the local mirror — the single source of truth for
+ * a loan's derived numbers (progress, balance, mora) on the detail screens.
+ */
+export function useLocalLoanSnapshot(loanId: number | undefined): QueryResult<LoanSnapshot> {
+  const version = useSyncVersion();
+  const [data, setData] = useState<LoanSnapshot | undefined>(undefined);
+
+  useEffect(() => {
+    if (loanId === undefined || isNaN(loanId)) return;
+    setData(buildLoanSnapshotLocal(loanId) ?? undefined);
   }, [loanId, version]);
 
   return {

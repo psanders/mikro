@@ -9,3 +9,10 @@ export { createListLoansByCollector } from "./createListLoansByCollector.js";
 export { createListLoansByCustomer } from "./createListLoansByCustomer.js";
 export { createGetLoanByLoanId } from "./createGetLoanByLoanId.js";
 export { createCalculateLoan } from "./createCalculateLoan.js";
+export { createGetLoanEvaluationSnapshot } from "./createGetLoanEvaluationSnapshot.js";
+export {
+  createGetLoanHealth,
+  type LoanHealthResult,
+  type GetLoanHealthOptions
+} from "./createGetLoanHealth.js";
+export { buildLoanSnapshotFromDb } from "./buildLoanSnapshotFromDb.js";

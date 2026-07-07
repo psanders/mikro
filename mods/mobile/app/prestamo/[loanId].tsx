@@ -12,13 +12,7 @@ import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { getRoles, canManagePayments } from "../../lib/auth";
-import { countCuotasCovered } from "@mikro/common/utils/calculatePaymentStatus";
-import {
-  useLocalLoan,
-  useLocalPaymentsByLoan,
-  useLocalLateFeePreview,
-  useLocalLoanVisit
-} from "../../lib/offline/hooks";
+import { useLocalLoan, useLocalLoanSnapshot } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 
 function formatRD(amount: number): string {
@@ -96,40 +90,34 @@ export default function PrestamoDetalleScreen() {
   }, []);
 
   const loanQuery = useLocalLoan(numericId);
-  const paymentsQuery = useLocalPaymentsByLoan(numericId);
-  const lateFeeQuery = useLocalLateFeePreview(numericId);
-  const visitQuery = useLocalLoanVisit(numericId);
+  const snapshotQuery = useLocalLoanSnapshot(numericId);
 
   const loan = loanQuery.data;
-  const lateFee = lateFeeQuery.data;
-  const visit = visitQuery.data;
+  const snap = snapshotQuery.data;
+  // Single source of truth: the shared snapshot builder computes progress,
+  // balance, and mora the same way the server and the home dashboard do.
+  const d = snap?.derived;
 
-  const installmentPayments = useMemo(() => {
-    return (paymentsQuery.data ?? [])
-      .filter((p) => p.status !== "REVERSED" && p.kind === "INSTALLMENT")
-      .sort((a, b) => new Date(a.paidAt).getTime() - new Date(b.paidAt).getTime());
-  }, [paymentsQuery.data]);
-
-  const termLength = loan?.termLength ?? visit?.termLength ?? 0;
-  const paymentAmount = loan ? Number(loan.paymentAmount) : (visit?.paymentAmount ?? 0);
-  const totalPaid = installmentPayments
-    .filter((p) => p.status === "COMPLETED" || p.status === "PARTIAL")
-    .reduce((s, p) => s + Number(p.amount), 0);
-  // Progress is money-based: partials accumulate toward cuotas, matching
-  // getCycleMetrics and the home dashboard (counting rows overshoots when
-  // handovers are split into partial + mora rows).
-  const paidCount = Math.min(countCuotasCovered(totalPaid, paymentAmount), termLength);
-  // What's left to collect is the repayment obligation (term x cuota), not the
-  // disbursed principal — for SAN loans the customer repays principal + interest.
-  const balance = Math.max(0, paymentAmount * termLength - totalPaid);
+  const termLength = d?.termLength ?? loan?.termLength ?? 0;
+  const paymentAmount = snap?.terms.cuota ?? (loan ? Number(loan.paymentAmount) : 0);
+  const totalPaid = d?.totalInstallmentPaid ?? 0;
+  const paidCount = d?.cuotasCovered ?? 0;
+  const balance = d?.remainingBalance ?? 0;
   const progress = termLength > 0 ? paidCount / termLength : 0;
-  const freq = loan?.paymentFrequency ?? "DAILY";
-  const loanStart = loan ? new Date(loan.startingDate ?? loan.createdAt) : null;
+  const freq = loan?.paymentFrequency ?? snap?.terms.paymentFrequency ?? "DAILY";
+  const loanStart = snap
+    ? new Date(snap.terms.startingDate ?? snap.terms.createdAt)
+    : loan
+      ? new Date(loan.startingDate ?? loan.createdAt)
+      : null;
 
-  const displayName = loan
-    ? (loan.customer?.nickname ?? loan.customer?.name ?? `#${loanId}`)
-    : (visit?.loanNickname ?? visit?.customerName ?? `#${loanId}`);
-  const subtitle = loan ? `${displayName} · Préstamo #${loanId}` : `Préstamo #${loanId}`;
+  const displayName =
+    snap?.customer.nickname ??
+    snap?.customer.name ??
+    loan?.customer?.nickname ??
+    loan?.customer?.name ??
+    `#${loanId}`;
+  const subtitle = loan || snap ? `${displayName} · Préstamo #${loanId}` : `Préstamo #${loanId}`;
 
   const endDate =
     loanStart && termLength > 0 ? getDueDateForCycle(loanStart, termLength - 1, freq) : null;
@@ -137,13 +125,13 @@ export default function PrestamoDetalleScreen() {
     ? Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / 86_400_000))
     : null;
 
-  const nextDueDate = visit?.nextDueDate
-    ? new Date(visit.nextDueDate)
+  const nextDueDate = d?.nextDueDate
+    ? new Date(d.nextDueDate)
     : loanStart
       ? getDueDateForCycle(loanStart, paidCount, freq)
       : null;
 
-  const moraAmount = lateFee?.accruedMora ?? 0;
+  const moraAmount = d?.moraAccrued ?? 0;
   // Never quote more cuota than what's left on the loan (final stretch may owe
   // less than a full cuota once partials are accumulated).
   const cuotaDue = Math.min(paymentAmount, balance);

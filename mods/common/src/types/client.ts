@@ -180,6 +180,8 @@ export interface DbClient {
             kind?: "INSTALLMENT" | "LATE_FEE";
           };
           select?: { paidAt?: boolean; status?: boolean; kind?: boolean; amount?: boolean };
+          // Full-row ledger for the evaluation snapshot (all scalar fields + collector name).
+          include?: { collectedBy?: boolean | { select?: { name?: boolean } } };
         };
       };
       select?: {
@@ -197,6 +199,7 @@ export interface DbClient {
           assignedCollectorId?: string;
         };
       };
+      select?: { loanId?: boolean };
       include?: {
         customer?:
           | boolean

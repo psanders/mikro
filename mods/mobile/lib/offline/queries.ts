@@ -2,11 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import {
-  getCycleMetrics,
-  getDueDateForCycle,
-  type LoanPaymentData
-} from "@mikro/common/utils/calculatePaymentStatus";
-import { daysLateFromOldestDue, computeAccruedMora } from "@mikro/common/utils/lateFee";
+  buildLoanSnapshot,
+  type BuildSnapshotInput,
+  type LoanSnapshot,
+  type SnapshotPayment
+} from "@mikro/common/eval";
+import type { PaymentKind, PaymentStatus, LoanStatus } from "@mikro/common/schemas";
 import { getDatabase } from "./database";
 
 // -- Sync metadata --
@@ -100,6 +101,7 @@ interface LoanRow {
   id: string;
   loan_id: number;
   status: string;
+  principal: number;
   payment_amount: number;
   payment_frequency: string;
   term_length: number;
@@ -152,6 +154,70 @@ export interface CollectorDashboard {
   visits: DashboardVisit[];
 }
 
+/** Payment row shape accepted by the snapshot mapper (id/method optional). */
+interface SnapshotPaymentRow {
+  id?: string;
+  paid_at: string;
+  status: string;
+  kind: string;
+  amount: number;
+  method?: string | null;
+  collected_by_id?: string | null;
+  linked_payment_id?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Map a local loan row + its payment rows into the shared snapshot builder's
+ * input. This is the single place mobile turns SQLite into the canonical
+ * snapshot, mirroring the server's `buildLoanSnapshotFromDb` so both platforms
+ * produce identical derived numbers from the same engine.
+ */
+function toSnapshotInput(l: LoanRow, rows: SnapshotPaymentRow[], asOf: Date): BuildSnapshotInput {
+  const cfg = getMoraConfig();
+  const payments: SnapshotPayment[] = rows.map((p, i) => ({
+    id: p.id ?? `${l.id}-${i}`,
+    kind: (p.kind || "INSTALLMENT") as PaymentKind,
+    status: p.status as PaymentStatus,
+    amount: p.amount,
+    paidAt: new Date(p.paid_at),
+    method: p.method ?? null,
+    collectedById: p.collected_by_id ?? null,
+    linkedPaymentId: p.linked_payment_id ?? null,
+    notes: p.notes ?? null
+  }));
+  return {
+    loanId: l.loan_id,
+    customer: {
+      id: l.customer_id,
+      name: l.customer_name,
+      nickname: null,
+      preferredPaymentDay: l.preferred_payment_day ?? null
+    },
+    loan: {
+      principal: l.principal,
+      paymentAmount: l.payment_amount,
+      termLength: l.term_length,
+      paymentFrequency: l.payment_frequency,
+      status: l.status as LoanStatus,
+      createdAt: new Date(l.created_at),
+      startingDate: l.starting_date ? new Date(l.starting_date) : null,
+      updatedAt: new Date(l.updated_at),
+      nickname: l.nickname
+    },
+    payments,
+    policy: {
+      moraRate: l.mora_rate ?? cfg.defaultMoraRate,
+      moraGraceDays: cfg.moraGraceDays,
+      moraCapInCuotas: cfg.moraCapInCuotas,
+      moraMinDop: cfg.moraMinDop,
+      moraStopOnDefault: cfg.moraStopOnDefault,
+      moraEffectiveFrom: cfg.moraEffectiveFrom
+    },
+    asOf
+  };
+}
+
 // Computes per-loan visit metrics for an arbitrary set of loans, independent of
 // which collector is assigned. The collector-scoped dashboard and the
 // customer/loan detail screens all build on top of this so they stay consistent.
@@ -198,55 +264,12 @@ function buildVisitsForLoans(
   }
 
   return loans.map((l) => {
+    // Reversed rows are already excluded by the batch query; the shared builder
+    // derives the same money-based numbers used everywhere else.
     const loanPayments = paymentsByLoan.get(l.id) ?? [];
-    // COMPLETED + PARTIAL: cycle counting is money-based, so partials
-    // accumulate toward completed cuotas.
-    const installmentPayments = loanPayments.filter(
-      (p) =>
-        (!p.kind || p.kind === "INSTALLMENT") &&
-        (p.status === "COMPLETED" || p.status === "PARTIAL")
-    );
-
-    const loanStart = new Date(l.starting_date ?? l.created_at);
-    const loanData: LoanPaymentData = {
-      paymentFrequency: l.payment_frequency,
-      createdAt: new Date(l.created_at),
-      startingDate: l.starting_date ? new Date(l.starting_date) : null,
-      termLength: l.term_length,
-      paymentAmount: l.payment_amount,
-      payments: installmentPayments.map((p) => ({
-        paidAt: new Date(p.paid_at),
-        status: p.status,
-        amount: p.amount
-      })),
-      preferredPaymentDay: l.preferred_payment_day ?? null
-    };
-
-    const metrics = getCycleMetrics(loanData, now);
+    const { derived } = buildLoanSnapshot(toSnapshotInput(l, loanPayments, now));
     const paid = paidLoanIds.has(l.id);
-    const totalInstallmentPaid = installmentPayments.reduce((s, p) => s + p.amount, 0);
-    const remainingBalance = Math.max(0, l.payment_amount * l.term_length - totalInstallmentPaid);
-
-    const daysOverdue =
-      !paid && metrics.missedCycles > 0
-        ? daysLateFromOldestDue(
-            loanStart,
-            l.payment_frequency,
-            l.preferred_payment_day ?? null,
-            metrics.paymentsMade,
-            metrics.missedCycles,
-            now
-          )
-        : 0;
-
-    const nextDue = getDueDateForCycle(
-      loanStart,
-      metrics.paymentsMade,
-      l.payment_frequency,
-      l.preferred_payment_day ?? null
-    );
-
-    const dueToday = nextDue.getTime() <= endOfDay.getTime();
+    const dueToday = new Date(derived.nextDueDate).getTime() <= endOfDay.getTime();
 
     return {
       loanId: l.loan_id,
@@ -255,15 +278,15 @@ function buildVisitsForLoans(
       loanNickname: l.nickname,
       address: l.collection_point ?? l.home_address,
       paymentAmount: l.payment_amount,
-      installmentNumber: metrics.paymentsMade + 1,
+      installmentNumber: derived.cuotasCovered + 1,
       termLength: l.term_length,
-      remainingBalance,
+      remainingBalance: derived.remainingBalance,
       dueToday,
-      isOverdue: !paid && daysOverdue > 0,
-      daysOverdue: paid ? 0 : daysOverdue,
+      isOverdue: !paid && derived.isOverdue,
+      daysOverdue: paid ? 0 : derived.daysOverdue,
       paidToday: paid,
       amountPaidToday: paidAmountByLoan.get(l.id) ?? 0,
-      nextDueDate: nextDue.toISOString()
+      nextDueDate: derived.nextDueDate
     };
   });
 }
@@ -692,85 +715,48 @@ export interface PreviewLateFeeResult {
 }
 
 export function previewLateFee(loanId: number): PreviewLateFeeResult | null {
+  const snapshot = buildLoanSnapshotLocal(loanId);
+  if (!snapshot) return null;
+  const d = snapshot.derived;
+  return {
+    accruedMora: d.moraAccrued,
+    grossMora: d.grossMora,
+    collectedMora: d.collectedMora,
+    daysLate: d.daysLate,
+    missedCycles: d.missedCycles,
+    cuota: snapshot.terms.cuota,
+    suggestedTotal: snapshot.terms.cuota + d.moraAccrued,
+    moraRate: snapshot.terms.moraPolicy.moraRate
+  };
+}
+
+// -- Canonical loan snapshot (offline) --
+
+/**
+ * Build the canonical loan snapshot from the local SQLite mirror — the same
+ * shape the server returns, produced by the same `@mikro/common` builder. The
+ * ledger includes every payment (reversed and pending too); the derived block
+ * is the single source of truth for a loan's progress, balance, and mora on the
+ * detail screens. Returns null if the loan isn't cached locally.
+ */
+export function buildLoanSnapshotLocal(
+  loanId: number,
+  asOf: Date = new Date()
+): LoanSnapshot | null {
   const db = getDatabase();
-  const loan = db.getFirstSync<{
-    id: string;
-    payment_amount: number;
-    payment_frequency: string;
-    term_length: number;
-    mora_rate: number | null;
-    starting_date: string | null;
-    created_at: string;
-    updated_at: string;
-    status: string;
-    preferred_payment_day: string | null;
-  }>(
-    `SELECT l.*, c.preferred_payment_day
+  const l = db.getFirstSync<LoanRow>(
+    `SELECT l.*, c.name as customer_name, c.collection_point, c.home_address, c.preferred_payment_day
      FROM loans l JOIN customers c ON l.customer_id = c.id
      WHERE l.loan_id = ?`,
     [loanId]
   );
-  if (!loan) return null;
+  if (!l) return null;
 
-  const payments = db.getAllSync<{
-    paid_at: string;
-    status: string;
-    kind: string;
-    amount: number;
-  }>(
-    "SELECT paid_at, status, kind, amount FROM payments WHERE loan_id = ? AND status != 'REVERSED'",
-    [loan.id]
+  const rows = db.getAllSync<SnapshotPaymentRow>(
+    `SELECT id, paid_at, status, kind, amount, method, collected_by_id, linked_payment_id, notes
+     FROM payments WHERE loan_id = ? ORDER BY paid_at ASC`,
+    [l.id]
   );
 
-  const cfg = getMoraConfig();
-  const moraRate = loan.mora_rate ?? cfg.defaultMoraRate;
-  const cuota = loan.payment_amount;
-  const loanStart = new Date(loan.starting_date ?? loan.created_at);
-
-  const installmentPayments = payments
-    .filter((p) => !p.kind || p.kind === "INSTALLMENT")
-    .map((p) => ({ paidAt: new Date(p.paid_at), status: p.status, amount: p.amount }));
-
-  const loanData: LoanPaymentData = {
-    paymentFrequency: loan.payment_frequency,
-    createdAt: new Date(loan.created_at),
-    startingDate: loan.starting_date ? new Date(loan.starting_date) : null,
-    termLength: loan.term_length,
-    paymentAmount: cuota,
-    payments: installmentPayments,
-    preferredPaymentDay: loan.preferred_payment_day ?? null
-  };
-
-  const collectedLateFeePayments = payments
-    .filter((p) => p.kind === "LATE_FEE" && p.status !== "REVERSED")
-    .map((p) => ({
-      paidAt: new Date(p.paid_at),
-      amount: p.amount,
-      status: p.status
-    }));
-
-  const accrued = computeAccruedMora({
-    loanData,
-    moraRate,
-    paymentAmount: cuota,
-    paymentFrequency: loan.payment_frequency,
-    preferredPaymentDay: loan.preferred_payment_day ?? null,
-    loanStart,
-    asOfDate: new Date(),
-    loanStatus: loan.status as "ACTIVE" | "COMPLETED" | "DEFAULTED" | "CANCELLED",
-    loanUpdatedAt: new Date(loan.updated_at),
-    policy: cfg,
-    collectedLateFeePayments
-  });
-
-  return {
-    accruedMora: accrued.moraAmount,
-    grossMora: accrued.grossMoraAmount,
-    collectedMora: accrued.collectedMora,
-    daysLate: accrued.daysLate,
-    missedCycles: accrued.missedCycles,
-    cuota,
-    suggestedTotal: cuota + accrued.moraAmount,
-    moraRate
-  };
+  return buildLoanSnapshot(toSnapshotInput(l, rows, asOf));
 }

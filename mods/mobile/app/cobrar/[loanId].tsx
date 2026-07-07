@@ -21,12 +21,7 @@ import { OptionRow } from "../../components/ui/OptionRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { trpc } from "../../lib/api";
-import {
-  useLocalLoan,
-  useLocalLateFeePreview,
-  useLocalLoanVisit,
-  useLocalCollector
-} from "../../lib/offline/hooks";
+import { useLocalLoan, useLocalLoanSnapshot, useLocalCollector } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
 import { getLastCustomerPaymentAt } from "../../lib/offline/queries";
@@ -62,36 +57,34 @@ export default function CobrarPagoScreen() {
   }, []);
 
   const loanQuery = useLocalLoan(numericId);
-  const lateFeeQuery = useLocalLateFeePreview(numericId);
-  const visitQuery = useLocalLoanVisit(numericId);
+  const snapshotQuery = useLocalLoanSnapshot(numericId);
   const collectorQuery = useLocalCollector();
   const { isOnline, refreshState, pull } = useSyncContext();
 
   const createPayment = trpc.createPayment.useMutation();
 
   const loan = loanQuery.data;
-  const lateFee = lateFeeQuery.data;
+  const snap = snapshotQuery.data;
+  const d = snap?.derived;
   const collectorId = collectorQuery.data?.id;
 
-  const visit = visitQuery.data;
-
-  const cuota = lateFee?.cuota ?? (loan ? Number(loan.paymentAmount) : 0);
-  const mora = lateFee?.accruedMora ?? 0;
-  const termLength = loan?.termLength ?? visit?.termLength ?? 0;
-  const paidCount = visit ? visit.installmentNumber - 1 : 0;
+  const cuota = snap?.terms.cuota ?? (loan ? Number(loan.paymentAmount) : 0);
+  const mora = d?.moraAccrued ?? 0;
+  const termLength = d?.termLength ?? loan?.termLength ?? 0;
+  const paidCount = d?.cuotasCovered ?? 0;
   const remainingCuotas = Math.max(0, termLength - paidCount);
   // True payoff = money still owed (partials accumulated), not cuota-count x cuota —
   // the final cuota may be partially covered already.
-  const remainingBalance = visit?.remainingBalance ?? remainingCuotas * cuota;
+  const remainingBalance = d?.remainingBalance ?? remainingCuotas * cuota;
   // Never charge more cuota than what's left on the loan.
   const cuotaDue = Math.min(cuota, remainingBalance);
   const settleAmount = remainingBalance + mora;
 
   const displayName =
+    snap?.customer.nickname ??
+    snap?.customer.name ??
     loan?.customer?.nickname ??
     loan?.customer?.name ??
-    visit?.loanNickname ??
-    visit?.customerName ??
     "...";
   const meta = `Préstamo #${loanId}`;
 
@@ -202,7 +195,7 @@ export default function CobrarPagoScreen() {
     // Guard against duplicate collections for the same customer within the
     // window (handles double-taps, re-entries, and most sync retries before
     // they ever reach the server).
-    const customerId = loan?.customerId ?? visit?.customerId;
+    const customerId = loan?.customerId ?? snap?.customer.id;
     if (customerId) {
       const lastPaidAt = getLastCustomerPaymentAt(customerId);
       if (lastPaidAt) {
