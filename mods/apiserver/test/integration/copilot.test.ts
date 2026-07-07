@@ -139,10 +139,10 @@ describe("Founder Copilot Integration", () => {
       expect(bound).to.include("queryFeedEvents"); // read
       expect(bound).to.include("getApplicationById"); // read
       expect(bound).to.include("createPayment"); // write
+      expect(bound).to.include("sendReceiptViaWhatsApp"); // write (#118)
       expect(bound).to.include("createWatchRule"); // direct
       expect(bound).to.include("githubFeedback"); // direct
       // Tools that exist in the agents registry but are NOT in any list.
-      expect(bound).to.not.include("sendReceiptViaWhatsApp");
       expect(bound).to.not.include("saveAnswer");
       expect(bound).to.not.include("finalizeApplication");
       expect(bound).to.not.include("getApplicationState");
@@ -538,6 +538,120 @@ describe("Founder Copilot Integration", () => {
 
       const refreshed = await db.copilotPendingAction.findUnique({ where: { id: action.id } });
       expect(refreshed?.status).to.equal("PENDING");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // sendReceiptViaWhatsApp (issue #118, Maria/Juan parity)
+  // ---------------------------------------------------------------------------
+
+  describe("sendReceiptViaWhatsApp", () => {
+    it("classifies sendReceiptViaWhatsApp as a write tool and binds it", () => {
+      expect(isWriteTool("sendReceiptViaWhatsApp")).to.be.true;
+      expect(getBoundToolNames()).to.include("sendReceiptViaWhatsApp");
+    });
+
+    it("summarizes the action with the recipient phone", () => {
+      expect(
+        summarizeAction("sendReceiptViaWhatsApp", {
+          paymentId: "11111111-1111-4111-8111-111111111111",
+          phone: "+18095551234"
+        })
+      ).to.equal("Enviar el recibo del pago por WhatsApp al +18095551234.");
+    });
+
+    it("a tool call is short-circuited into a PENDING action, nothing executes", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "Voy a enviar el recibo.",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "sendReceiptViaWhatsApp",
+              args: { paymentId: "11111111-1111-4111-8111-111111111111", phone: "+18095551234" }
+            }
+          ]
+        }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "envía el recibo del último pago" });
+
+      expect(calls, "no tool executed inline").to.have.lengthOf(0);
+      expect(reply.pendingAction?.toolName).to.equal("sendReceiptViaWhatsApp");
+      expect(reply.pendingAction?.status).to.equal("PENDING");
+
+      const pending = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(pending).to.have.lengthOf(1);
+      expect(pending[0].status).to.equal("PENDING");
+      expect(await db.businessEvent.count()).to.equal(0);
+    });
+
+    it("confirming executes the tool through the shared executor and records copilot.action", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor({
+        success: true,
+        message: "Recibo enviado por WhatsApp."
+      });
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "sendReceiptViaWhatsApp",
+          argsJson: JSON.stringify({
+            paymentId: "11111111-1111-4111-8111-111111111111",
+            phone: "+18095551234"
+          }),
+          summary: "Enviar el recibo del pago por WhatsApp al +18095551234.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
+      expect(res.status).to.equal("CONFIRMED");
+      expect(calls).to.have.lengthOf(1);
+      expect(calls[0].name).to.equal("sendReceiptViaWhatsApp");
+      expect(calls[0].args).to.deep.equal({
+        paymentId: "11111111-1111-4111-8111-111111111111",
+        phone: "+18095551234"
+      });
+
+      const events = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
+      expect(events).to.have.lengthOf(1);
+      expect(JSON.parse(events[0].payload).toolName).to.equal("sendReceiptViaWhatsApp");
+    });
+
+    it("rejecting sends nothing", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "sendReceiptViaWhatsApp",
+          argsJson: JSON.stringify({
+            paymentId: "11111111-1111-4111-8111-111111111111",
+            phone: "+18095551234"
+          }),
+          summary: "Enviar el recibo del pago por WhatsApp al +18095551234.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotRejectAction({ actionId: action.id });
+      expect(res.status).to.equal("REJECTED");
+      expect(calls).to.have.lengthOf(0);
+      expect(await db.businessEvent.count()).to.equal(0);
     });
   });
 

@@ -23,20 +23,23 @@ export async function handleSendReceiptViaWhatsApp(
       };
     }
 
-    // Get collector's phone from context (the person requesting the receipt)
-    const collectorPhone = (context?.phone as string) || undefined;
-    if (!collectorPhone) {
+    // Explicit `phone` arg (mikro/#118, the founder copilot — it has no live
+    // WhatsApp conversation to infer a recipient from) takes precedence over
+    // the collector's phone from context (the person requesting the receipt
+    // in the Juan/collector WhatsApp flow).
+    const explicitPhone = typeof args.phone === "string" ? args.phone.trim() : "";
+    const recipientPhone = explicitPhone || (context?.phone as string) || undefined;
+    if (!recipientPhone) {
       return {
         success: false,
         message:
-          "No se pudo obtener el número de teléfono del cobrador. Por favor, intenta de nuevo."
+          "No se pudo obtener el número de teléfono del destinatario. Indica el teléfono del cliente."
       };
     }
 
-    // Send receipt to the collector (requestor)
     const result = await deps.sendReceiptViaWhatsApp({
       paymentId,
-      phone: collectorPhone // Send to collector who requested it
+      phone: recipientPhone
     });
 
     logger.verbose("receipt sent via whatsapp via tool", {

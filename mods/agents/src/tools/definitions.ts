@@ -108,9 +108,12 @@ export const createPaymentTool: ToolFunction = {
 
 /**
  * Tool definition for sending a receipt via WhatsApp.
- * Used by Juan (collector).
+ * Used by Juan (collector) and the founder copilot (mikro/#118).
  *
- * This is the tool for sending receipts to the collector (requestor).
+ * This is the tool for sending receipts to the collector (requestor), or, when
+ * called with an explicit `phone`, to whatever recipient the caller names (the
+ * founder copilot always supplies the customer's phone since it has no live
+ * WhatsApp conversation of its own to infer a recipient from).
  * It generates the receipt, saves it to disk, and sends it via WhatsApp automatically.
  */
 export const sendReceiptViaWhatsAppTool: ToolFunction = {
@@ -118,7 +121,7 @@ export const sendReceiptViaWhatsAppTool: ToolFunction = {
   function: {
     name: "sendReceiptViaWhatsApp",
     description:
-      "Generar y enviar un recibo por WhatsApp al cobrador (la persona que solicita el recibo). Esta es la herramienta RECOMENDADA para enviar recibos. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp al teléfono del cobrador. IMPORTANTE: Esta herramienta REQUIERE el paymentId de la respuesta de createPayment. DEBES llamar createPayment primero y esperar su respuesta antes de llamar esta herramienta.",
+      "Generar y enviar un recibo por WhatsApp. Genera el recibo, lo guarda en el servidor y lo envía automáticamente por WhatsApp. IMPORTANTE: Esta herramienta REQUIERE el paymentId de la respuesta de createPayment (o de listPaymentsByLoanId para un pago ya registrado). DEBES obtener el paymentId antes de llamar esta herramienta. Si no se indica `phone`, se envía al cobrador que solicita el recibo en la conversación actual; el copiloto del fundador SIEMPRE debe indicar `phone` explícitamente (el teléfono del cliente dueño del préstamo).",
     parameters: {
       type: "object",
       properties: {
@@ -126,6 +129,11 @@ export const sendReceiptViaWhatsAppTool: ToolFunction = {
           type: "string",
           description:
             "ID del pago (UUID) para el cual enviar el recibo. Debe ser un UUID válido en formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Este es el ID del pago, NO el número de préstamo. Puedes obtener el paymentId del resultado de createPayment."
+        },
+        phone: {
+          type: "string",
+          description:
+            "Teléfono del destinatario del recibo (con o sin código de país). Opcional en la conversación de un cobrador (se usa su propio teléfono); REQUERIDO cuando esta herramienta la invoca el copiloto del fundador."
         }
       },
       required: ["paymentId"]
