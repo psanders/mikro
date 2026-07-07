@@ -60,6 +60,10 @@ export function summarizeAction(toolName: string, args: Record<string, unknown>)
     }
     case "forceQCobroSync":
       return "Forzar sincronización con QCobro ahora.";
+    case "sendReceiptViaWhatsApp": {
+      const phone = str(args, "phone");
+      return `Enviar el recibo del pago por WhatsApp${phone ? ` al ${phone}` : ""}.`;
+    }
     default:
       return `Ejecutar ${toolName} con los datos: ${JSON.stringify(args)}.`;
   }

@@ -416,7 +416,8 @@ export const WRITE_TOOLS: readonly string[] = [
   "approveApplication",
   "rejectApplication",
   "deleteApplication",
-  "forceQCobroSync"
+  "forceQCobroSync",
+  "sendReceiptViaWhatsApp"
 ];
 
 /**
