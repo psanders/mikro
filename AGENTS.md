@@ -47,6 +47,14 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   compile (`MTLSamplerReductionMode` not in scope). Keep the pin until
   the migration completes; any new macOS job that builds src-tauri needs
   the same.
+- **build-dashboard's windows-latest `Install dependencies` step retries
+  3x.** The runner's outbound connection to the npm registry occasionally
+  resets mid-install (`ECONNRESET` / "network aborted"), unrelated to any
+  dependency change — seen first on 2026-07-07 (v1.26.0 run). npm's
+  built-in per-request retries don't cover a reset that kills the whole
+  process, so the step wraps `npm install` in a 3-attempt shell loop.
+  If it starts failing on all 3 attempts, suspect an actual dependency
+  problem instead of the network.
 - **`patch-package`** patches a dependency's shipped code post-install (root
   `postinstall` script, diffs in `patches/`). First and, as of 2026-07-04,
   only use: `react-native-nitro-screen-recorder`'s Expo config plugin
