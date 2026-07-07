@@ -74,6 +74,7 @@ import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js
 import { createTaskWorker } from "./tasks/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
+import { createCreateTransaction } from "./api/accounting/index.js";
 import {
   createApproveApplication,
   createRejectApplication,
@@ -532,6 +533,40 @@ async function initializeMessageProcessor() {
       }))
     });
 
+    // mikro/#115: resolve a copilot-supplied accounting account/category
+    // reference (name or UUID) to its id. Exact match first, `contains` as a
+    // fallback — same convention as resolveStaticParamNames in
+    // createCopilotChat.ts for task automation params.
+    const ACCOUNTING_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    async function resolveAccountingAccountRef(ref: string): Promise<string> {
+      if (ACCOUNTING_UUID_RE.test(ref)) return ref;
+      const account =
+        (await prisma.accountingAccount.findFirst({
+          where: { name: ref },
+          select: { id: true }
+        })) ??
+        (await prisma.accountingAccount.findFirst({
+          where: { name: { contains: ref } },
+          select: { id: true }
+        }));
+      if (!account) throw new Error(`Cuenta no encontrada: "${ref}"`);
+      return account.id;
+    }
+    async function resolveAccountingCategoryRef(ref: string): Promise<string> {
+      if (ACCOUNTING_UUID_RE.test(ref)) return ref;
+      const category =
+        (await prisma.accountingCategory.findFirst({
+          where: { name: ref },
+          select: { id: true }
+        })) ??
+        (await prisma.accountingCategory.findFirst({
+          where: { name: { contains: ref } },
+          select: { id: true }
+        }));
+      if (!category) throw new Error(`Categoría no encontrada: "${ref}"`);
+      return category.id;
+    }
+
     const toolExecutor = createToolExecutor({
       createCustomer: async (params: Parameters<ToolExecutorDependencies["createCustomer"]>[0]) => {
         const customer = await createCustomer(params);
@@ -620,6 +655,57 @@ async function initializeMessageProcessor() {
         const result = await syncAllPortfoliosOnPayment();
         await recordQCobroSyncedEvent(prisma, result, actorName ?? "Fundador");
         return result;
+      },
+      // Founder copilot: create an accounting transaction (mikro/#115, daily
+      // cash reconciliation + books closing). account/toAccount/category are
+      // names or UUIDs from the model — resolved here before delegating to
+      // the same createCreateTransaction factory the accounting.* tRPC
+      // router uses, so behavior (balance updates, currency checks, etc.)
+      // is identical to a dashboard-created transaction.
+      createAccountingTransaction: async (
+        params: {
+          type: "DEPOSIT" | "WITHDRAWAL" | "EXPENSE" | "INCOME" | "TRANSFER";
+          account: string;
+          toAccount?: string;
+          amount: number;
+          category?: string;
+          description?: string;
+          vendor?: string;
+          reference?: string;
+          occurredAt?: Date;
+        },
+        createdById: string
+      ) => {
+        const accountId = await resolveAccountingAccountRef(params.account);
+        const toAccountId = params.toAccount
+          ? await resolveAccountingAccountRef(params.toAccount)
+          : undefined;
+        const categoryId = params.category
+          ? await resolveAccountingCategoryRef(params.category)
+          : undefined;
+
+        const fn = createCreateTransaction(prisma);
+        const txn = await fn({
+          type: params.type,
+          accountId,
+          toAccountId,
+          amount: params.amount,
+          categoryId,
+          description: params.description,
+          vendor: params.vendor,
+          reference: params.reference,
+          occurredAt: params.occurredAt ?? new Date(),
+          createdById
+        });
+
+        return {
+          id: txn.id,
+          type: txn.type,
+          amount: txn.amount,
+          account: txn.account.name,
+          toAccount: txn.toAccount?.name ?? null,
+          category: txn.category?.name ?? null
+        };
       },
       listLoansByCustomer: async (
         params: Parameters<ToolExecutorDependencies["listLoansByCustomer"]>[0]

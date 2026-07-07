@@ -64,6 +64,22 @@ export function summarizeAction(toolName: string, args: Record<string, unknown>)
       const phone = str(args, "phone");
       return `Enviar el recibo del pago por WhatsApp${phone ? ` al ${phone}` : ""}.`;
     }
+    case "createAccountingTransaction": {
+      const type = str(args, "type");
+      const amount = str(args, "amount");
+      const account = str(args, "account");
+      const typeLabel =
+        type === "INCOME"
+          ? "un ingreso"
+          : type === "EXPENSE"
+            ? "un gasto"
+            : type === "TRANSFER"
+              ? "una transferencia"
+              : "una transacción";
+      return `Registrar ${typeLabel}${amount ? ` de RD$${amount}` : ""}${
+        account ? ` en la cuenta ${account}` : ""
+      }.`;
+    }
     default:
       return `Ejecutar ${toolName} con los datos: ${JSON.stringify(args)}.`;
   }

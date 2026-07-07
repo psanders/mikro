@@ -197,6 +197,36 @@ export interface ToolExecutorDependencies {
     durationMs: number;
   }>;
 
+  // ── Founder copilot accounting write tool (optional — only wired in apiserver) ──
+  /**
+   * Create an accounting transaction (income/expense/transfer). Copilot-only,
+   * gated by the pending-action confirm flow (mikro/#115). `account`,
+   * `toAccount`, and `category` may be a name or a UUID — the apiserver
+   * wiring resolves names to ids before calling the accounting API.
+   * `createdById` is the confirming founder.
+   */
+  createAccountingTransaction?: (
+    params: {
+      type: "DEPOSIT" | "WITHDRAWAL" | "EXPENSE" | "INCOME" | "TRANSFER";
+      account: string;
+      toAccount?: string;
+      amount: number;
+      category?: string;
+      description?: string;
+      vendor?: string;
+      reference?: string;
+      occurredAt?: Date;
+    },
+    createdById: string
+  ) => Promise<{
+    id: string;
+    type: string;
+    amount: number;
+    account: string;
+    toAccount: string | null;
+    category: string | null;
+  }>;
+
   /** List loans by customer ID */
   listLoansByCustomer: (params: {
     customerId: string;
