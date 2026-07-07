@@ -62,6 +62,23 @@ export const getLoanByLoanIdSchema = z.object({
 });
 
 /**
+ * Schema for the loan evaluation snapshot / single-loan health check.
+ * `explain` requests an LLM narration of how the numbers were reached.
+ */
+export const loanHealthSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer"),
+  explain: z.boolean().optional().default(false)
+});
+
+/**
+ * Schema for the portfolio-wide health check. Scans ACTIVE loans by default;
+ * `includeAllStatuses` widens to every status for forensic re-checks.
+ */
+export const portfolioHealthSchema = z.object({
+  includeAllStatuses: z.boolean().optional().default(false)
+});
+
+/**
  * Enum for loan status.
  */
 export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]);
@@ -150,6 +167,12 @@ export type ListLoansByCustomerInput = z.infer<typeof listLoansByCustomerSchema>
  * Input type for getting a loan by numeric loan ID.
  */
 export type GetLoanByLoanIdInput = z.infer<typeof getLoanByLoanIdSchema>;
+
+/** Input type for the single-loan health check. */
+export type LoanHealthInput = z.infer<typeof loanHealthSchema>;
+
+/** Input type for the portfolio health check. */
+export type PortfolioHealthInput = z.infer<typeof portfolioHealthSchema>;
 
 /**
  * Input type for updating a loan's status.

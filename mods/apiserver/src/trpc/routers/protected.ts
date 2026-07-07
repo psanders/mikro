@@ -27,6 +27,8 @@ import {
   listLoansByCollectorSchema,
   listLoansByCustomerSchema,
   getLoanByLoanIdSchema,
+  loanHealthSchema,
+  portfolioHealthSchema,
   // Payment schemas
   createPaymentSchema,
   previewLateFeeSchema,
@@ -115,6 +117,12 @@ import { createListLoansByCollector } from "../../api/loans/createListLoansByCol
 import { createListLoansByCustomer } from "../../api/loans/createListLoansByCustomer.js";
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 import { createGetLoanByLoanId } from "../../api/loans/createGetLoanByLoanId.js";
+import { createGetLoanEvaluationSnapshot } from "../../api/loans/createGetLoanEvaluationSnapshot.js";
+import {
+  createGetLoanHealth,
+  type GetLoanHealthOptions
+} from "../../api/loans/createGetLoanHealth.js";
+import { createRunPortfolioHealthCheck } from "../../api/reports/createRunPortfolioHealthCheck.js";
 // Loan application API functions
 import { createListApplications } from "../../api/applications/createListApplications.js";
 import { createGetApplication } from "../../api/applications/createGetApplication.js";
@@ -493,6 +501,45 @@ export const protectedRouter = router({
     const fn = createGetLoanByLoanId(ctx.db);
     return fn(input);
   }),
+
+  /**
+   * Canonical loan snapshot — terms + full raw ledger + collector-facing derived
+   * numbers, all in one JSON. Substrate for the evaluation framework.
+   */
+  getLoanEvaluationSnapshot: protectedProcedure
+    .input(getLoanByLoanIdSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createGetLoanEvaluationSnapshot(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Single-loan health check: snapshot + deterministic spec checks, plus an LLM
+   * narration when `explain` is set (numbers always come from the eval engine).
+   */
+  getLoanHealth: protectedProcedure.input(loanHealthSchema).query(async ({ ctx, input }) => {
+    let createModel: GetLoanHealthOptions["createModel"];
+    if (input.explain) {
+      try {
+        createModel = getCopilotDeps().createModel;
+      } catch {
+        // copilot not configured → narration is skipped
+      }
+    }
+    const fn = createGetLoanHealth(ctx.db, { createModel });
+    return fn(input);
+  }),
+
+  /**
+   * Portfolio-wide health check: runs the spec checks over every loan and returns
+   * an aggregate report. Deterministic, no LLM.
+   */
+  runPortfolioHealthCheck: protectedProcedure
+    .input(portfolioHealthSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createRunPortfolioHealthCheck(ctx.db);
+      return fn(input);
+    }),
 
   /**
    * Update a loan's status to COMPLETED, DEFAULTED, or CANCELLED.

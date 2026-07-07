@@ -26,7 +26,7 @@ import {
 } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ToolExecutor, ToolResult } from "@mikro/agents";
-import type { CopilotChatReply } from "@mikro/common";
+import type { CopilotChatReply, DbClient } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 import { buildCopilotSystemPrompt } from "./systemPrompt.js";
@@ -34,6 +34,8 @@ import { summarizeAction } from "./summarizeAction.js";
 import { createWatchRule, disableWatchRule, type WatchRuleView } from "./watchRules.js";
 import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from "./toolPolicy.js";
 import { createTask, listTasks, cancelTask, getAutomation } from "../../tasks/index.js";
+import { createGetLoanHealth } from "../loans/createGetLoanHealth.js";
+import { createRunPortfolioHealthCheck } from "../reports/createRunPortfolioHealthCheck.js";
 
 const MAX_TOOL_ITERATIONS = 10;
 const HISTORY_WINDOW = 20;
@@ -317,6 +319,61 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     }
   }
 
+  /** Single-loan health check (copilot read tool). Numbers are deterministic; the model only summarizes. */
+  async function handleGetLoanHealth(args: Record<string, unknown>): Promise<ToolResult> {
+    const loanId = Number(args.loanId);
+    if (!Number.isFinite(loanId)) {
+      return { success: false, message: "loanId inválido." };
+    }
+    const explain = String(args.explain) === "true";
+    try {
+      const fn = createGetLoanHealth(db as unknown as DbClient, {
+        createModel: explain ? createModel : undefined
+      });
+      const { snapshot, report, narration } = await fn({ loanId, explain });
+      return {
+        success: true,
+        message: report.pass
+          ? `Préstamo #${loanId}: ${report.passCount}/${report.results.length} verificaciones OK.`
+          : `Préstamo #${loanId}: ${report.failCount} verificación(es) fallando.`,
+        data: {
+          loanId,
+          customer: snapshot.customer.nickname ?? snapshot.customer.name,
+          derived: snapshot.derived,
+          pass: report.pass,
+          failing: report.results
+            .filter((r) => !r.pass)
+            .map((r) => ({ id: r.id, expected: r.expected, actual: r.actual })),
+          narration
+        }
+      };
+    } catch (error) {
+      return { success: false, message: (error as Error).message };
+    }
+  }
+
+  /** Portfolio-wide health check (copilot read tool). Deterministic aggregate. */
+  async function handleRunPortfolioHealthCheck(args: Record<string, unknown>): Promise<ToolResult> {
+    const includeAllStatuses = String(args.includeAllStatuses) === "true";
+    try {
+      const fn = createRunPortfolioHealthCheck(db as unknown as DbClient);
+      const report = await fn({ includeAllStatuses });
+      return {
+        success: true,
+        message: `${report.loansPassing}/${report.loansChecked} préstamos sanos; ${report.loansFailing} con problemas.`,
+        data: {
+          loansChecked: report.loansChecked,
+          loansPassing: report.loansPassing,
+          loansFailing: report.loansFailing,
+          failuresByCheck: report.failuresByCheck,
+          offenders: report.offenders.slice(0, 15)
+        }
+      };
+    } catch (error) {
+      return { success: false, message: (error as Error).message };
+    }
+  }
+
   /**
    * File a GitHub issue for a bug, missing capability, or UI idea (copilot
    * DIRECT tool, design Decision 4). `reasoning` is required — a call missing
@@ -520,6 +577,10 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           result = await handleListTasks(tc.args);
         } else if (tc.name === "cancelTask") {
           result = await handleCancelTask(tc.args);
+        } else if (tc.name === "getLoanHealth") {
+          result = await handleGetLoanHealth(tc.args);
+        } else if (tc.name === "runPortfolioHealthCheck") {
+          result = await handleRunPortfolioHealthCheck(tc.args);
         } else if (tc.name === "githubFeedback") {
           result = await handleGithubFeedback(tc.args, lastFailedCall);
           feedbackOutcome = { ok: result.success };

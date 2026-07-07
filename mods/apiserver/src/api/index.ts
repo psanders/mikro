@@ -38,7 +38,10 @@ export {
   createListLoansByCollector,
   createListLoansByCustomer,
   createGetLoanByLoanId,
-  createCalculateLoan
+  createCalculateLoan,
+  createGetLoanEvaluationSnapshot,
+  createGetLoanHealth,
+  type LoanHealthResult
 } from "./loans/index.js";
 
 // Loan application (intake + review) operations
@@ -101,5 +104,6 @@ export {
   createGeneratePortfolioMetrics,
   createGeneratePerformanceReport,
   createGenerateDefaultedReport,
-  createGenerateRenewalCandidatesReport
+  createGenerateRenewalCandidatesReport,
+  createRunPortfolioHealthCheck
 } from "./reports/index.js";

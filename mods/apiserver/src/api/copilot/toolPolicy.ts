@@ -310,6 +310,58 @@ export const cancelTaskTool: ToolFunction = {
 };
 
 /**
+ * Single-loan health check (collections evaluation framework). A read tool: runs
+ * the spec checks over the loan and, when `explain` is set, returns an LLM
+ * narration of how the numbers were reached. Numbers are deterministic.
+ */
+export const getLoanHealthTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getLoanHealth",
+    description:
+      "Revisar la salud de un préstamo: corre las verificaciones de la especificación de cobros sobre el préstamo y devuelve el snapshot (términos + ledger crudo + números derivados) y el resultado de cada verificación. Con explain=true agrega una explicación en español de cómo se llegó a los números. Úsalo cuando el fundador pregunte por qué un préstamo muestra ciertos pagos pendientes, saldo o mora.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description: "Número de préstamo (loanId, ej: 10034)."
+        },
+        explain: {
+          type: "string",
+          description: "'true' para incluir la explicación narrada. Opcional (por defecto false)."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
+ * Portfolio-wide health check. A read tool: runs the spec checks over every loan
+ * and returns the aggregate (pass/fail counts, per-check tally, worst offenders).
+ */
+export const runPortfolioHealthCheckTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "runPortfolioHealthCheck",
+    description:
+      "Correr el chequeo de salud de toda la cartera: aplica las verificaciones de la especificación de cobros a todos los préstamos y devuelve un resumen (cuántos pasan/fallan, fallas por verificación, y los peores casos). Determinista, sin IA. Úsalo cuando el fundador quiera saber si los números de la cartera cuadran con la especificación.",
+    parameters: {
+      type: "object",
+      properties: {
+        includeAllStatuses: {
+          type: "string",
+          description:
+            "'true' para revisar préstamos en cualquier estado (no solo ACTIVE). Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * Tool definitions owned by the copilot module (not by the WhatsApp agents).
  * Handled inline by createCopilotChat rather than the shared tool executor.
  */
@@ -321,7 +373,9 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   githubFeedbackTool,
   createTaskTool,
   listTasksTool,
-  cancelTaskTool
+  cancelTaskTool,
+  getLoanHealthTool,
+  runPortfolioHealthCheckTool
 ];
 
 /**
@@ -344,7 +398,9 @@ export const READ_TOOLS: readonly string[] = [
   "generateRenewalCandidatesReport",
   "queryFeedEvents",
   "listWatchRules",
-  "listTasks"
+  "listTasks",
+  "getLoanHealth",
+  "runPortfolioHealthCheck"
 ];
 
 /**

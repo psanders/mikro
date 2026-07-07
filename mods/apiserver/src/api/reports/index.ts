@@ -8,3 +8,4 @@ export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.j
 export { createGenerateRenewalCandidatesReport } from "./createGenerateRenewalCandidatesReport.js";
 export { createGenerateAccountingReport } from "./createGenerateAccountingReport.js";
 export { createGenerateModeloReport } from "./createGenerateModeloReport.js";
+export { createRunPortfolioHealthCheck } from "./createRunPortfolioHealthCheck.js";
