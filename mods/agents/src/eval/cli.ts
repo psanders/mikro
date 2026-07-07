@@ -88,7 +88,7 @@ Options:
                     Judge always uses llm.evals.
 
 Arguments:
-  agent     - Optional. Agent name (e.g. joan, maria)
+  agent     - Optional. Agent name (e.g. jose, collector)
   scenario  - Optional. Single scenario id (use with agent)
 
 Config (mikro.json):
@@ -97,8 +97,8 @@ Config (mikro.json):
   evals.vendors.<vendor>     Optional per-vendor text/vision overrides
 
 Examples:
-  npm run agents:eval joan happy-path-business
-  npm run agents:eval joan
+  npm run agents:eval jose happy-path-short-isc50
+  npm run agents:eval jose
   npm run agents:eval
   npm run agents:eval -- --vendors openai,anthropic
 `);

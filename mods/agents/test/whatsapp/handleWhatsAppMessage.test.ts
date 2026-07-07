@@ -562,6 +562,73 @@ describe("handleWhatsAppMessage", () => {
     });
   });
 
+  // mikro/#120: María (the WhatsApp ADMIN agent) was retired in favor of the
+  // founder Copilot on the dashboard. An ADMIN with no agent assigned in
+  // agents.yaml now gets a one-time redirect instead of silence; an ADMIN
+  // profile with a different agent assigned still falls through normally.
+  describe("admin routing (mikro/#120)", () => {
+    const adminPhone = "+18095550002";
+    const adminOnlyRoute = {
+      type: "user" as const,
+      userId: "admin-1",
+      name: "Founder",
+      role: "ADMIN" as const,
+      phone: adminPhone
+    };
+
+    const adminWebhook = (id: string) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: adminPhone,
+                    type: "text",
+                    id,
+                    timestamp: recentTs(),
+                    text: { body: "hola" }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    it("redirects an ADMIN with no agent assigned to the dashboard copilot, without invoking an LLM", async () => {
+      mockMessageProcessor.routeMessage.withArgs(adminPhone).resolves(adminOnlyRoute);
+      mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
+
+      await handleWhatsAppMessage(adminWebhook("msg-admin1"));
+
+      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].phone).to.equal(adminPhone);
+      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.contain(
+        "dashboard"
+      );
+      expect(mockMessageProcessor.invokeLLM.called).to.be.false;
+    });
+
+    it("falls through to the normal agent path when an ADMIN profile has an agent assigned", async () => {
+      mockMessageProcessor.routeMessage.withArgs(adminPhone).resolves(adminOnlyRoute);
+      mockMessageProcessor.getAgentForProfile = sinon.stub().returns({
+        name: "custom-admin-bot",
+        profile: "ADMIN",
+        enabled: true,
+        systemPrompt: "You help admins",
+        allowedTools: []
+      });
+
+      await handleWhatsAppMessage(adminWebhook("msg-admin2"));
+
+      expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
+    });
+  });
+
   describe("when message processor is not configured", () => {
     it("should not process messages when processor is missing", async () => {
       // Arrange - Reset processor

@@ -188,7 +188,8 @@ export const getCustomerTool: ToolFunction = {
 
 /**
  * Tool definition for creating a loan.
- * Used by Maria (admin).
+ * Used by the founder copilot (Maria, the WhatsApp admin agent, was retired
+ * in favor of the copilot — mikro/#120).
  */
 export const createLoanTool: ToolFunction = {
   type: "function",
@@ -232,7 +233,8 @@ export const createLoanTool: ToolFunction = {
 
 /**
  * Tool definition for calculating loan payment options.
- * Used by Maria (admin).
+ * Used by the founder copilot (Maria, the WhatsApp admin agent, was retired
+ * in favor of the copilot — mikro/#120).
  */
 export const calculateLoanTool: ToolFunction = {
   type: "function",
@@ -274,7 +276,8 @@ export const calculateLoanTool: ToolFunction = {
 
 /**
  * Tool definition for updating a loan's status.
- * Used by Maria (admin) only.
+ * Used by the founder copilot only (Maria, the WhatsApp admin agent, was
+ * retired in favor of the copilot — mikro/#120).
  */
 export const updateLoanStatusTool: ToolFunction = {
   type: "function",
@@ -606,7 +609,8 @@ export const listPaymentsByLoanIdTool: ToolFunction = {
 
 /**
  * Tool definition for listing users.
- * Used by Joan (guest onboarding) and Maria (admin) to find referrers and collectors.
+ * Used by the founder copilot (Maria, the WhatsApp admin agent, was retired
+ * in favor of the copilot — mikro/#120) to find referrers and collectors.
  */
 export const listUsersTool: ToolFunction = {
   type: "function",
