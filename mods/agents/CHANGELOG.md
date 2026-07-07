@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.30.0](https://github.com/psanders/mikro/compare/v1.29.0...v1.30.0) (2026-07-07)
+
+### Features
+
+- **copilot:** let founders force an on-demand QCobro portfolio sync ([6787ddb](https://github.com/psanders/mikro/commit/6787ddb5ec6f336370528b080f837786ce560c4a)), closes [#130](https://github.com/psanders/mikro/issues/130)
+
 # [1.29.0](https://github.com/psanders/mikro/compare/v1.28.0...v1.29.0) (2026-07-07)
 
 ### Features
