@@ -34,6 +34,7 @@ import {
 import { COPILOT_ACTION_EXPIRY_MINUTES } from "@mikro/common";
 import { createToolExecutor, type ToolResult, type ToolExecutor } from "@mikro/agents";
 import { recordQCobroSyncedEvent } from "../../src/qcobro/index.js";
+import { createCreateTransaction } from "../../src/api/accounting/index.js";
 
 /** A fake AI turn: text plus optional tool calls. */
 interface FakeTurn {
@@ -47,18 +48,36 @@ interface FakeTurn {
  * bindTools + invoke.
  */
 function makeFakeModel(turns: FakeTurn[]) {
-  const record: { boundTools: string[] } = { boundTools: [] };
+  const record: { boundTools: string[]; invokedMessages: unknown[][] } = {
+    boundTools: [],
+    invokedMessages: []
+  };
   let i = 0;
   const factory = (): BaseChatModel =>
     ({
       bindTools(tools: Array<{ function: { name: string } }>) {
         record.boundTools = tools.map((t) => t.function.name);
         return {
-          invoke: async () => turns[Math.min(i++, turns.length - 1)]
+          invoke: async (messages: unknown[]) => {
+            record.invokedMessages.push(messages);
+            return turns[Math.min(i++, turns.length - 1)];
+          }
         };
       }
     }) as unknown as BaseChatModel;
   return { factory, record };
+}
+
+/** Find the ToolMessage content (parsed JSON) for a given tool name across all invoke calls. */
+function findToolResult(invokedMessages: unknown[][], toolName: string): Record<string, unknown> {
+  for (const messages of invokedMessages) {
+    for (const m of messages as Array<{ name?: string; content?: unknown }>) {
+      if (m?.name === toolName) {
+        return JSON.parse(m.content as string);
+      }
+    }
+  }
+  throw new Error(`No tool message found for ${toolName}`);
 }
 
 /** A tool executor that records calls and returns a canned result. */
@@ -115,6 +134,11 @@ describe("Founder Copilot Integration", () => {
     await db.businessEvent.deleteMany();
     await db.loanApplication.deleteMany();
     await db.message.deleteMany();
+    await db.accountingTransaction.deleteMany();
+    await db.accountingAccount.deleteMany();
+    await db.payment.deleteMany();
+    await db.loan.deleteMany();
+    await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
     caller = createAuthenticatedCaller(db);
@@ -184,6 +208,58 @@ describe("Founder Copilot Integration", () => {
       expect(reply.pendingAction).to.equal(undefined);
     });
 
+    it("getDailyCashCollected sums today's non-reversed payments (mikro/#115)", async () => {
+      const { adminCaller } = await makeAdmin();
+      const collector = await caller.createUser({
+        name: "Cobrador",
+        phone: uniquePhone(),
+        role: "COLLECTOR"
+      });
+      const customer = await caller.createCustomer({
+        name: "Cliente",
+        phone: uniquePhone(),
+        idNumber: `001-${String(Date.now()).slice(-7)}-9`,
+        collectionPoint: "https://example.com/p",
+        homeAddress: "Calle 1",
+        assignedCollectorId: collector.id
+      });
+      const loan = await db.loan.create({
+        data: {
+          loanId: 90001,
+          principal: 5000,
+          termLength: 10,
+          paymentAmount: 650,
+          paymentFrequency: "WEEKLY",
+          status: "ACTIVE",
+          startingDate: new Date(),
+          customerId: customer.id
+        }
+      });
+      await db.payment.create({
+        data: { amount: 650, paidAt: new Date(), loanId: loan.id, collectedById: collector.id }
+      });
+      await db.payment.create({
+        data: { amount: 350, paidAt: new Date(), loanId: loan.id, collectedById: collector.id }
+      });
+
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "getDailyCashCollected", args: {} }] },
+        { content: "Se ha cobrado RD$1,000 hoy." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "¿cuánto se ha cobrado hoy?" });
+
+      // getDailyCashCollected is copilot-local — the shared executor is NOT used.
+      expect(calls).to.have.lengthOf(0);
+      expect(reply.reply).to.equal("Se ha cobrado RD$1,000 hoy.");
+      const toolResult = findToolResult(fake.record.invokedMessages, "getDailyCashCollected");
+      expect(toolResult.success).to.equal(true);
+      const data = toolResult.data as { totalCollected: number };
+      expect(data.totalCollected).to.equal(1000);
+    });
+
     it("resolves a solicitud by UUID via getApplicationById, not a customer lookup", async () => {
       const { adminCaller } = await makeAdmin();
       const applicationId = "0a1dad76-f0ec-44cc-bc74-ddf4286a95f6";
@@ -241,6 +317,49 @@ describe("Founder Copilot Integration", () => {
       expect(calls[0].args).to.deep.equal({ phone });
       expect(reply.reply).to.equal("Elena Ramírez tiene 1 préstamo activo, el #218.");
       expect(reply.pendingAction).to.equal(undefined);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // queryFeedEvents amount field (mikro/#115)
+  // ---------------------------------------------------------------------------
+
+  describe("queryFeedEvents amount field (mikro/#115)", () => {
+    it("includes the event amount so the model can sum payment events", async () => {
+      const { adminCaller } = await makeAdmin();
+      await db.businessEvent.create({
+        data: {
+          type: "payment.collected",
+          actorName: "Cobrador",
+          amount: 650,
+          summary: "Cobrador cobró RD$650",
+          payload: "{}"
+        }
+      });
+      await db.businessEvent.create({
+        data: {
+          type: "application.deleted",
+          actorName: "Fundador",
+          summary: "Se eliminó una solicitud",
+          payload: "{}"
+        }
+      });
+
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "queryFeedEvents", args: {} }] },
+        { content: "Se cobraron RD$650 hoy." }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      await adminCaller.copilotChat({ message: "¿qué pasó hoy?" });
+
+      const toolResult = findToolResult(fake.record.invokedMessages, "queryFeedEvents");
+      const events = toolResult.data as { events: Array<{ type: string; amount: number | null }> };
+      const payment = events.events.find((e) => e.type === "payment.collected");
+      const deletion = events.events.find((e) => e.type === "application.deleted");
+      expect(payment?.amount).to.equal(650);
+      expect(deletion?.amount).to.equal(null);
     });
   });
 
@@ -948,6 +1067,202 @@ describe("Founder Copilot Integration", () => {
       expect(res.status).to.equal("REJECTED");
       expect(calls).to.have.lengthOf(0);
       expect(await db.businessEvent.count()).to.equal(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createAccountingTransaction (mikro/#115, daily cash reconciliation)
+  // ---------------------------------------------------------------------------
+
+  describe("createAccountingTransaction", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    /** Mirrors the name-or-UUID resolution index.ts wires for this dep. */
+    async function resolveAccountRef(ref: string): Promise<string> {
+      if (UUID_RE.test(ref)) return ref;
+      const account = await db.accountingAccount.findFirst({ where: { name: ref } });
+      if (!account) throw new Error(`Cuenta no encontrada: "${ref}"`);
+      return account.id;
+    }
+
+    /** A REAL executor wired the way index.ts wires it, for confirm-flow tests. */
+    function makeRealAccountingExecutor() {
+      return createToolExecutor({
+        createAccountingTransaction: async (
+          params: {
+            type: "DEPOSIT" | "WITHDRAWAL" | "EXPENSE" | "INCOME" | "TRANSFER";
+            account: string;
+            toAccount?: string;
+            amount: number;
+            category?: string;
+            occurredAt?: Date;
+          },
+          createdById: string
+        ) => {
+          const accountId = await resolveAccountRef(params.account);
+          const fn = createCreateTransaction(db as any);
+          const txn = await fn({
+            type: params.type,
+            accountId,
+            amount: params.amount,
+            occurredAt: params.occurredAt ?? new Date(),
+            createdById
+          } as any);
+          return {
+            id: txn.id,
+            type: txn.type,
+            amount: txn.amount,
+            account: txn.account.name,
+            toAccount: txn.toAccount?.name ?? null,
+            category: txn.category?.name ?? null
+          };
+        }
+      } as any);
+    }
+
+    it("classifies createAccountingTransaction as a write tool and binds it", () => {
+      expect(isWriteTool("createAccountingTransaction")).to.be.true;
+      expect(getBoundToolNames()).to.include("createAccountingTransaction");
+    });
+
+    it("summarizes the action with type, amount, and account", () => {
+      expect(
+        summarizeAction("createAccountingTransaction", {
+          type: "INCOME",
+          amount: "1000",
+          account: "Caja principal"
+        })
+      ).to.equal("Registrar un ingreso de RD$1000 en la cuenta Caja principal.");
+    });
+
+    it("a tool call is short-circuited into a PENDING action, nothing executes", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "Voy a registrar el cierre del día.",
+          tool_calls: [
+            {
+              id: "c1",
+              name: "createAccountingTransaction",
+              args: { type: "INCOME", account: "Caja principal", amount: "1000" }
+            }
+          ]
+        }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({
+        message: "cierra el día, se cobraron 1000 en efectivo"
+      });
+
+      expect(calls, "no tool executed inline").to.have.lengthOf(0);
+      expect(reply.pendingAction?.toolName).to.equal("createAccountingTransaction");
+      expect(reply.pendingAction?.status).to.equal("PENDING");
+      expect(await db.accountingTransaction.count()).to.equal(0);
+
+      const pending = await db.copilotPendingAction.findMany({ where: { userId: admin.id } });
+      expect(pending).to.have.lengthOf(1);
+    });
+
+    it("confirming resolves the account by name, posts the transaction, and records copilot.action", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const account = await db.accountingAccount.create({
+        data: { name: "Caja principal", kind: "CASH", currency: "DOP", currentBalance: 500 }
+      });
+
+      setCopilotDeps({
+        toolExecutor: makeRealAccountingExecutor(),
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createAccountingTransaction",
+          argsJson: JSON.stringify({
+            type: "INCOME",
+            account: "Caja principal",
+            amount: "1000"
+          }),
+          summary: "Registrar un ingreso de RD$1000 en la cuenta Caja principal.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
+      expect(res.status).to.equal("CONFIRMED");
+
+      const txns = await db.accountingTransaction.findMany({ where: { accountId: account.id } });
+      expect(txns).to.have.lengthOf(1);
+      expect(Number(txns[0].amount)).to.equal(1000);
+      expect(txns[0].type).to.equal("INCOME");
+
+      const updatedAccount = await db.accountingAccount.findUnique({ where: { id: account.id } });
+      expect(Number(updatedAccount?.currentBalance)).to.equal(1500);
+
+      const events = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
+      expect(events).to.have.lengthOf(1);
+      expect(JSON.parse(events[0].payload).toolName).to.equal("createAccountingTransaction");
+    });
+
+    it("confirming with an unknown account name refuses, nothing posted", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      setCopilotDeps({
+        toolExecutor: makeRealAccountingExecutor(),
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createAccountingTransaction",
+          argsJson: JSON.stringify({
+            type: "INCOME",
+            account: "Cuenta que no existe",
+            amount: "1000"
+          }),
+          summary: "Registrar un ingreso de RD$1000 en la cuenta Cuenta que no existe.",
+          status: "PENDING"
+        }
+      });
+
+      let threw = false;
+      try {
+        await adminCaller.copilotConfirmAction({ actionId: action.id });
+      } catch {
+        threw = true;
+      }
+      expect(threw, "confirm should throw on an unresolvable account").to.equal(true);
+      expect(await db.accountingTransaction.count()).to.equal(0);
+    });
+
+    it("rejecting posts nothing", async () => {
+      const { admin, adminCaller } = await makeAdmin();
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({
+        toolExecutor: executor,
+        createModel: makeFakeModel([{ content: "" }]).factory
+      });
+
+      const action = await db.copilotPendingAction.create({
+        data: {
+          userId: admin.id,
+          toolName: "createAccountingTransaction",
+          argsJson: JSON.stringify({
+            type: "INCOME",
+            account: "Caja principal",
+            amount: "1000"
+          }),
+          summary: "Registrar un ingreso de RD$1000 en la cuenta Caja principal.",
+          status: "PENDING"
+        }
+      });
+
+      const res = await adminCaller.copilotRejectAction({ actionId: action.id });
+      expect(res.status).to.equal("REJECTED");
+      expect(calls).to.have.lengthOf(0);
+      expect(await db.accountingTransaction.count()).to.equal(0);
     });
   });
 

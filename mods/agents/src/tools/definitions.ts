@@ -448,6 +448,69 @@ export const deleteApplicationTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for creating an accounting transaction (income, expense, or
+ * transfer). Not exposed to any WhatsApp agent persona — reachable only via
+ * the founder-copilot chat (mikro/#115: daily cash-reconciliation + books
+ * closing), which lists it as a WRITE_TOOL (see
+ * `mods/apiserver/src/api/copilot/toolPolicy.ts`). `account`/`toAccount`/
+ * `category` accept either the exact name or the UUID — the apiserver wiring
+ * resolves names before calling the accounting API.
+ */
+export const createAccountingTransactionTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "createAccountingTransaction",
+    description:
+      "Registrar una transacción contable (ingreso, gasto o transferencia entre cuentas). Úsala para cerrar el día después de reconciliar el efectivo cobrado (getDailyCashCollected) contra el conteo físico del fundador, o para cualquier otro movimiento contable que el fundador pida registrar. account, toAccount y category aceptan el nombre exacto de la cuenta/categoría o su UUID.",
+    parameters: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description:
+            "Tipo de transacción: INCOME (ingreso), EXPENSE (gasto), TRANSFER (entre cuentas), DEPOSIT o WITHDRAWAL.",
+          enum: ["DEPOSIT", "WITHDRAWAL", "EXPENSE", "INCOME", "TRANSFER"]
+        },
+        account: {
+          type: "string",
+          description: "Cuenta de origen: nombre exacto (ej: 'Caja principal') o UUID."
+        },
+        toAccount: {
+          type: "string",
+          description: "Cuenta de destino (nombre o UUID). Obligatorio solo si type es TRANSFER."
+        },
+        amount: {
+          type: "string",
+          description: "Monto de la transacción en pesos dominicanos (positivo)."
+        },
+        category: {
+          type: "string",
+          description:
+            "Categoría (nombre o UUID). Opcional, solo aplica si type es INCOME o EXPENSE."
+        },
+        description: {
+          type: "string",
+          description: "Descripción libre de la transacción. Opcional."
+        },
+        vendor: {
+          type: "string",
+          description: "Proveedor o contraparte. Opcional."
+        },
+        reference: {
+          type: "string",
+          description: "Referencia externa (ej: número de cheque o factura). Opcional."
+        },
+        occurredAt: {
+          type: "string",
+          description: "Fecha en que ocurrió (YYYY-MM-DD). Opcional, por defecto hoy."
+        }
+      },
+      required: ["type", "account", "amount"]
+    }
+  }
+};
+
+/**
  * Tool definition for forcing an on-demand, full-base QCobro portfolio sync
  * (WRITE_TOOL — the founder confirms via the pending-action card before it
  * runs). No arguments: it reruns the exact same full pass the cron worker and
@@ -819,6 +882,7 @@ export const allTools: ToolFunction[] = [
   rejectApplicationTool,
   deleteApplicationTool,
   forceQCobroSyncTool,
+  createAccountingTransactionTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,
   listUsersTool,

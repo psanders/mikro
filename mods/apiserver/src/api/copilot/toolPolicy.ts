@@ -56,6 +56,31 @@ export const queryFeedEventsTool: ToolFunction = {
 };
 
 /**
+ * Today's total cash collected (mikro/#115). A read tool: wraps the same
+ * `cobranza_diaria` computation the watch-rule evaluator uses, so the founder
+ * can ask "¿cuánto se cobró hoy?" ad hoc during a books-closing conversation,
+ * not just via a threshold alert.
+ */
+export const getDailyCashCollectedTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getDailyCashCollected",
+    description:
+      "Consultar el total de efectivo cobrado (suma de pagos no revertidos) en una fecha dada. Úsala cuando el fundador quiera cerrar el día y necesite comparar el total cobrado del sistema contra su conteo físico.",
+    parameters: {
+      type: "object",
+      properties: {
+        date: {
+          type: "string",
+          description: "Fecha en formato YYYY-MM-DD. Opcional, por defecto hoy."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * Create a watch rule directly (design Decision 5). A DIRECT tool — executes
  * inline; the dock renders the rule card immediately.
  */
@@ -367,6 +392,7 @@ export const runPortfolioHealthCheckTool: ToolFunction = {
  */
 export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   queryFeedEventsTool,
+  getDailyCashCollectedTool,
   createWatchRuleTool,
   listWatchRulesTool,
   disableWatchRuleTool,
@@ -398,6 +424,7 @@ export const READ_TOOLS: readonly string[] = [
   "generateDefaultedReport",
   "generateRenewalCandidatesReport",
   "queryFeedEvents",
+  "getDailyCashCollected",
   "listWatchRules",
   "listTasks",
   "getLoanHealth",
@@ -418,7 +445,8 @@ export const WRITE_TOOLS: readonly string[] = [
   "rejectApplication",
   "deleteApplication",
   "forceQCobroSync",
-  "sendReceiptViaWhatsApp"
+  "sendReceiptViaWhatsApp",
+  "createAccountingTransaction"
 ];
 
 /**
@@ -454,7 +482,9 @@ export const TOOL_NOTES: Record<string, string> = {
   getCustomer: "usa el UUID del cliente; para solicitudes usa getApplicationById, no este.",
   getApplicationById: "usa el UUID de la solicitud, no el del cliente.",
   listCustomerLoansByPhone:
-    "para ubicar un cliente y sus préstamos por teléfono, prefiere esta sobre encadenar getCustomerByPhone + listLoansByCustomer."
+    "para ubicar un cliente y sus préstamos por teléfono, prefiere esta sobre encadenar getCustomerByPhone + listLoansByCustomer.",
+  createAccountingTransaction:
+    "account, toAccount y category aceptan el nombre exacto (ej: 'Caja principal') o el UUID; se resuelve automáticamente. No la confundas con createPayment (cobro de un préstamo) — esta es una entrada contable independiente."
 };
 
 export function isReadTool(name: string): boolean {

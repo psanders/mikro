@@ -27,6 +27,7 @@ import {
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ToolExecutor, ToolResult } from "@mikro/agents";
 import type { CopilotChatReply, DbClient } from "@mikro/common";
+import { amountToNumber } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 import { buildCopilotSystemPrompt } from "./systemPrompt.js";
@@ -36,6 +37,7 @@ import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from
 import { createTask, listTasks, cancelTask, getAutomation } from "../../tasks/index.js";
 import { createGetLoanHealth } from "../loans/createGetLoanHealth.js";
 import { createRunPortfolioHealthCheck } from "../reports/createRunPortfolioHealthCheck.js";
+import { computeWatchMetric } from "./metrics.js";
 
 const MAX_TOOL_ITERATIONS = 10;
 const HISTORY_WINDOW = 20;
@@ -141,9 +143,41 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           occurredAt: e.occurredAt,
           summary: e.summary,
           actorName: e.actorName,
-          customerName: e.customerName
+          customerName: e.customerName,
+          // mikro/#115: payment-type events carry an amount the model needs to
+          // sum ("¿cuánto se cobró hoy?") — previously stripped here even
+          // though BusinessEvent.amount is populated for payment.collected.
+          amount: e.amount !== null ? amountToNumber(e.amount) : null
         }))
       }
+    };
+  }
+
+  /**
+   * Today's total cash collected (copilot read tool, mikro/#115). Wraps the
+   * same `cobranza_diaria` computation the watch-rule evaluator uses
+   * (`computeWatchMetric`), so this number always matches what a watch rule on
+   * that metric would see. `date` lets the founder ask about a prior day
+   * during reconciliation ("¿y ayer?"); defaults to now.
+   */
+  async function handleGetDailyCashCollected(args: Record<string, unknown>): Promise<ToolResult> {
+    let asOf = new Date();
+    if (typeof args.date === "string" && args.date.trim()) {
+      const parsed = new Date(args.date);
+      if (Number.isNaN(parsed.getTime())) {
+        return {
+          success: false,
+          message: `Fecha inválida: "${args.date}". Use formato YYYY-MM-DD.`
+        };
+      }
+      asOf = parsed;
+    }
+    const total = await computeWatchMetric(db, { metric: "cobranza_diaria" }, asOf);
+    const dateLabel = asOf.toISOString().slice(0, 10);
+    return {
+      success: true,
+      message: `Total cobrado el ${dateLabel}: RD$${total}.`,
+      data: { date: dateLabel, totalCollected: total }
     };
   }
 
@@ -563,6 +597,8 @@ export function createCopilotChat(deps: CopilotChatDeps) {
         let result: ToolResult;
         if (tc.name === "queryFeedEvents") {
           result = await handleQueryFeedEvents(tc.args);
+        } else if (tc.name === "getDailyCashCollected") {
+          result = await handleGetDailyCashCollected(tc.args);
         } else if (tc.name === "listWatchRules") {
           result = await handleListWatchRules(tc.args);
         } else if (tc.name === "createWatchRule") {
