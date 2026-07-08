@@ -102,8 +102,13 @@ export function FeedScreen() {
     if (filterValue.typeIds.includes("alertas")) alerts.markSeen();
   }, [filterValue.typeIds, alerts]);
 
-  const types = resolveTypes(filterValue);
-  const { from, to } = resolveDateRange(filterValue);
+  const types = useMemo(() => resolveTypes(filterValue), [filterValue]);
+  // resolveDateRange defaults `now` to `new Date()` — memoize on `filterValue`
+  // alone (not recomputed every render) so the query's `from`/`to` stay
+  // stable between renders. Recomputing `to` fresh on every render would
+  // change it by milliseconds each time, giving React Query a new query key
+  // every render and the feed would never settle out of "Cargando…".
+  const { from, to } = useMemo(() => resolveDateRange(filterValue), [filterValue]);
 
   const feed = trpc.listFeedEvents.useInfiniteQuery(
     {
