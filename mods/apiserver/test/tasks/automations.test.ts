@@ -160,15 +160,15 @@ describe("daily-close", () => {
     expect(result.summary).to.include("sin cobranza");
   });
 
-  it("resolves closeDate to the previous Santo Domingo day", async () => {
+  it("resolves closeDate to the firing's own Santo Domingo day", async () => {
     const { deps } = makeDeps();
-    // 2026-07-06 03:30 UTC = 2026-07-05 23:30 in Santo Domingo; previous day = 07-04.
+    // 2026-07-06 03:30 UTC = 2026-07-05 23:30 in Santo Domingo; same-day close = 07-05.
     const value = await dailyClose.params.closeDate.resolve!({
       db: deps.db,
       staticParams: {},
       dueAt: new Date("2026-07-06T03:30:00Z"),
       now: new Date("2026-07-06T03:30:00Z")
     });
-    expect(value).to.equal("2026-07-04");
+    expect(value).to.equal("2026-07-05");
   });
 });

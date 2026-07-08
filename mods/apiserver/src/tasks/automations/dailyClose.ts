@@ -25,9 +25,13 @@ function referenceFor(closeDate: string): string {
   return `daily-close:${closeDate}`;
 }
 
-/** The Santo Domingo calendar day before the firing's due day. */
+/**
+ * The Santo Domingo calendar day of the firing's due day itself. Safe as
+ * same-day close because collections cut off at 5PM and this task fires at
+ * 7PM — a 2-hour buffer, so nothing more lands in the window being closed.
+ */
 async function resolveCloseDate(ctx: ResolveContext): Promise<string> {
-  return localDateString(new Date(ctx.dueAt.getTime() - 24 * 60 * 60 * 1000));
+  return localDateString(ctx.dueAt);
 }
 
 export const dailyClose: Automation = {
