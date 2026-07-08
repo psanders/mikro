@@ -4,14 +4,16 @@
  * Founder feed home (`/founder`) — Pencil "Feed en vivo" board (`EzobQ`).
  * Reverse-chronological business events grouped by day, backed by
  * `listFeedEvents`'s opaque `(occurredAt, id)` cursor. Cards are compact and
- * expand per-card; the top filter pills narrow the stream server-side. The
- * copilot sparkles button ships inert (a later change owns the dock).
+ * expand per-card; the persistent filter bar (Tipo/Actor/Rango de fechas)
+ * narrows the stream server-side and remembers the admin's preference
+ * (issue #131). Consecutive same-type/same-actor runs collapse into a
+ * `GroupedFeedRow`. The copilot sparkles button ships inert (a later change
+ * owns the dock).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
-import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
 import { isForbidden } from "../lib/applications";
@@ -19,51 +21,32 @@ import { useCopilot } from "./copilot/CopilotContext";
 import { useAlerts } from "./alerts/AlertsContext";
 import { FeedCard } from "./components/FeedCard";
 import { TaskFeedCard } from "./TaskFeedCard";
+import { FilterBar } from "./components/FilterBar";
 import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
+import { GroupedFeedRow } from "./components/GroupedFeedRow";
 import { formatDayLabel } from "./components/format";
 import { subjectQuestion } from "./components/typeConfig";
+import { groupFeedRuns } from "./components/groupFeedRuns";
 import {
-  ALERT_EVENT_TYPES,
-  toFeedEvent,
-  type FeedEvent,
-  type NavigateTarget
-} from "./components/types";
+  loadStoredFeedFilters,
+  resolveDateRange,
+  resolveTypes,
+  storeFeedFilters,
+  type FeedFilterValue
+} from "./components/feedFilters";
+import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/types";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
-interface FilterDef {
-  id: string;
-  label: string;
-  types?: FeedEvent["type"][];
-}
-
-// Filter pills → event-type sets (server-side via listFeedEvents `types`).
-const FILTERS: FilterDef[] = [
-  { id: "todo", label: "Todo" },
-  { id: "pagos", label: "Pagos", types: ["payment.collected", "payment.reversed"] },
-  { id: "contratos", label: "Contratos", types: ["application.signed", "application.converted"] },
-  {
-    id: "decisiones",
-    label: "Decisiones",
-    types: ["application.approved", "application.rejected"]
-  },
-  { id: "alertas", label: "Alertas", types: ALERT_EVENT_TYPES },
-  {
-    id: "tareas",
-    label: "Tareas",
-    types: ["task.due", "task.needs_input", "task.completed", "task.failed"]
-  },
-  { id: "mensajes", label: "Mensajes", types: ["message.sent"] }
-];
-
-/** Task lifecycle events whose card may carry the live action widget. */
+/** Task lifecycle events whose card may carry the live action widget — never grouped. */
 function isTaskEvent(event: FeedEvent): boolean {
   return event.type === "task.due" || event.type === "task.needs_input";
 }
 
 interface FeedNavState {
+  /** Legacy nav-state shape from the rail's "Excepciones" button — mapped onto the alertas filter. */
   filterId?: string;
 }
 
@@ -95,25 +78,52 @@ export function FeedScreen() {
   const alerts = useAlerts();
   const location = useLocation();
   const navState = location.state as FeedNavState | null;
-  const [filterId, setFilterId] = useState(navState?.filterId ?? "todo");
+
+  // Remembered across sessions (issue #131): read once on mount, falling
+  // back to the default (Todo / Todos / Hoy) when unset or unparsable.
+  const [filterValue, setFilterValue] = useState<FeedFilterValue>(() => loadStoredFeedFilters());
 
   // The rail's "Excepciones" button navigates here with `state.filterId` set
   // — re-sync on every navigation (keyed by location.key so a second click
   // while already on this screen still takes effect).
   useEffect(() => {
-    if (navState?.filterId) setFilterId(navState.filterId);
+    if (navState?.filterId === "alertas") {
+      setFilterValue((v) => ({ ...v, typeIds: ["alertas"] }));
+    }
   }, [location.key, navState?.filterId]);
 
-  const activeFilter = FILTERS.find((f) => f.id === filterId) ?? FILTERS[0]!;
+  function applyFilter(next: FeedFilterValue) {
+    setFilterValue(next);
+    storeFeedFilters(next);
+  }
 
-  // Viewing the alerts filter acknowledges any unread alert, per issue #109.
+  // Viewing the alertas filter acknowledges any unread alert, per issue #109.
   useEffect(() => {
-    if (filterId === "alertas") alerts.markSeen();
-  }, [filterId, alerts]);
+    if (filterValue.typeIds.includes("alertas")) alerts.markSeen();
+  }, [filterValue.typeIds, alerts]);
+
+  const types = useMemo(() => resolveTypes(filterValue), [filterValue]);
+  // resolveDateRange defaults `now` to `new Date()` — memoize on `filterValue`
+  // alone (not recomputed every render) so the query's `from`/`to` stay
+  // stable between renders. Recomputing `to` fresh on every render would
+  // change it by milliseconds each time, giving React Query a new query key
+  // every render and the feed would never settle out of "Cargando…".
+  const { from, to } = useMemo(() => resolveDateRange(filterValue), [filterValue]);
 
   const feed = trpc.listFeedEvents.useInfiniteQuery(
-    activeFilter.types ? { types: activeFilter.types } : {},
+    {
+      ...(types ? { types } : {}),
+      ...(filterValue.actorId ? { actorId: filterValue.actorId } : {}),
+      from,
+      to
+    },
     { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+  );
+
+  const actorsQuery = trpc.listUsers.useQuery({ limit: 100 });
+  const actors = useMemo(
+    () => (actorsQuery.data ?? []).map((u) => ({ id: u.id, name: u.name })),
+    [actorsQuery.data]
   );
 
   const restore = trpc.restoreApplication.useMutation({
@@ -159,26 +169,7 @@ export function FeedScreen() {
         </button>
       </header>
 
-      <div className="flex shrink-0 gap-2 border-b border-[#E5EAF1] px-6 py-3">
-        {FILTERS.map((f) => {
-          const active = f.id === filterId;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilterId(f.id)}
-              className={cn(
-                "rounded-full px-[14px] py-[6px] text-[12px] font-semibold transition",
-                active
-                  ? "bg-[#14254A] text-white"
-                  : "bg-[#EEF3F9] text-[#697A93] hover:bg-[#E5EAF1]"
-              )}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
+      <FilterBar value={filterValue} actors={actors} onApply={applyFilter} />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {feed.isPending && (
@@ -207,7 +198,20 @@ export function FeedScreen() {
         {groups.map((group) => (
           <div key={group.key}>
             {formatDayLabel(group.date) !== "Hoy" && <FeedDayHeader date={group.date} />}
-            {group.events.map((event) => {
+            {groupFeedRuns(group.events, (e) => !isTaskEvent(e)).map((row) => {
+              if (Array.isArray(row)) {
+                return (
+                  <GroupedFeedRow
+                    key={row[0]!.id}
+                    events={row}
+                    canRestore={canRestore}
+                    onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
+                    onNavigate={handleNavigate}
+                    onAskCopilot={(question) => copilot.openWith(question)}
+                  />
+                );
+              }
+              const event = row;
               const Card = isTaskEvent(event) ? TaskFeedCard : FeedCard;
               return (
                 <Card
