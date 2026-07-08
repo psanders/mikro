@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.33.1](https://github.com/psanders/mikro/compare/v1.33.0...v1.33.1) (2026-07-08)
+
+### Bug Fixes
+
+- **tasks:** close daily-close's own day, not the day before ([fc54d67](https://github.com/psanders/mikro/commit/fc54d67b355b13a37f1559dfdef4696ea7686d18))
+
 # [1.33.0](https://github.com/psanders/mikro/compare/v1.32.0...v1.33.0) (2026-07-07)
 
 ### Features
