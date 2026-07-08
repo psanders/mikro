@@ -111,12 +111,17 @@ const reportsSchema = z
   })
   .default(() => ({}));
 
-const accountingSchema = z
-  .object({
-    /** Where transaction attachments (receipts) are saved. Resolved relative to the config dir. */
-    attachmentsPath: z.string().default("./data/attachments/accounting")
-  })
-  .default(() => ({ attachmentsPath: "./data/attachments/accounting" }));
+const accountingSchema = z.object({
+  /** Where transaction attachments (receipts) are saved. Resolved relative to the config dir. */
+  attachmentsPath: z.string().default("./data/attachments/accounting"),
+  /**
+   * AccountingAccount.id to auto-debit the disbursed principal from when a
+   * loan application converts (mikro/#155). Required — the apiserver refuses
+   * to boot without it rather than fail later at conversion time. Find the id
+   * via `accounting.listAccounts` or the ops dashboard's Contabilidad screen.
+   */
+  disbursementAccountId: z.uuid({ error: "accounting.disbursementAccountId is required" })
+});
 
 const followUpSchema = z
   .object({
@@ -426,9 +431,7 @@ export const mikroConfigSchema = z
       vendors: {}
     })),
     reports: reportsSchema.default(() => ({})),
-    accounting: accountingSchema.default(() => ({
-      attachmentsPath: "./data/attachments/accounting"
-    })),
+    accounting: accountingSchema,
     loans: loansSchema.default(defaultLoansConfig),
     contract: contractSchema,
     followUp: followUpSchema,
@@ -443,15 +446,7 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  | "whatsapp"
-  | "voiceNotes"
-  | "evals"
-  | "reports"
-  | "accounting"
-  | "loans"
-  | "contract"
-  | "updates"
-  | "qcobro"
+  "whatsapp" | "voiceNotes" | "evals" | "reports" | "loans" | "contract" | "updates" | "qcobro"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -461,7 +456,6 @@ export type ResolvedMikroConfig = Omit<
     vendors: NonNullable<NonNullable<MikroConfig["evals"]>["vendors"]>;
   };
   reports: NonNullable<MikroConfig["reports"]>;
-  accounting: NonNullable<MikroConfig["accounting"]>;
   loans: LoansConfig;
   contract: ContractConfig;
   updates: NonNullable<MikroConfig["updates"]>;

@@ -20,6 +20,13 @@ import { appRouter } from "../../src/trpc/index.js";
 import { recordEvent } from "../../src/api/events/recordEvent.js";
 import { eventMappers } from "../../src/api/events/mappers.js";
 
+// Must match test/fixtures/mikro.json's accounting.disbursementAccountId, and
+// the fixed userId createAuthenticatedCaller sets as ctx.userId (mikro/#155:
+// convertApplication now auto-posts a disbursement transaction, which needs a
+// real account + a real creator user to satisfy the DB FK constraints).
+const DISBURSEMENT_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1";
+const REVIEWER_ID = "00000000-0000-4000-8000-000000000001";
+
 describe("Founder Feed Integration", () => {
   let db: TestDb;
   let caller: AuthenticatedCaller;
@@ -41,6 +48,14 @@ describe("Founder Feed Integration", () => {
   before(async () => {
     db = createTestDb();
     await applySchema(db);
+    await db.accountingAccount.create({
+      data: {
+        id: DISBURSEMENT_ACCOUNT_ID,
+        name: "Caja principal (test)",
+        kind: "CASH",
+        currentBalance: 100_000
+      }
+    });
   });
 
   beforeEach(async () => {
@@ -48,11 +63,19 @@ describe("Founder Feed Integration", () => {
     await db.followUpJob.deleteMany();
     await db.loanApplication.deleteMany();
     await db.loanNote.deleteMany();
+    await db.accountingTransaction.deleteMany();
     await db.payment.deleteMany();
     await db.loan.deleteMany();
     await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
+    await db.user.create({
+      data: { id: REVIEWER_ID, name: "Reviewer de prueba", phone: uniquePhone() }
+    });
+    await db.accountingAccount.update({
+      where: { id: DISBURSEMENT_ACCOUNT_ID },
+      data: { currentBalance: 100_000 }
+    });
     caller = createAuthenticatedCaller(db);
   });
 

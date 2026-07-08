@@ -182,6 +182,15 @@ const applicationConverted: EventMapper = async ({ result, ctx }) => {
     customerId: string;
     loanId: number;
     reusedCustomer: boolean;
+    // mikro/#155: set when the disbursement was auto-posted in the same
+    // transaction as the conversion — folded into this single card rather
+    // than a second event, since the log has no cross-event grouping.
+    disbursement?: {
+      transactionId: string;
+      accountId: string;
+      accountName: string;
+      amount: number;
+    };
   };
   const client = db(ctx);
   const actorName = await resolveActorName(client, ctx.userId);
@@ -195,6 +204,9 @@ const applicationConverted: EventMapper = async ({ result, ctx }) => {
   });
   const name = customer?.name ?? applicationDisplayName(r.application);
   const principal = loan ? amountToNumber(loan.principal) : undefined;
+  const disbursementSummary = r.disbursement
+    ? ` — RD$${r.disbursement.amount.toLocaleString("es-DO")} desembolsados desde ${r.disbursement.accountName}`
+    : "";
 
   return {
     type: "application.converted",
@@ -205,14 +217,20 @@ const applicationConverted: EventMapper = async ({ result, ctx }) => {
     loanId: loan?.id,
     applicationId: r.application.id,
     amount: principal,
-    summary: `Solicitud de ${name} convertida en préstamo #${r.loanId}`,
+    summary: `Solicitud de ${name} convertida en préstamo #${r.loanId}${disbursementSummary}`,
     payload: {
       applicationId: r.application.id,
       // The loan was just created in the convert transaction, so it always
       // exists; fall back to the application id only to satisfy the uuid schema.
       loanId: loan?.id ?? r.application.id,
       loanNumber: r.loanId,
-      ...(principal != null ? { principal } : {})
+      ...(principal != null ? { principal } : {}),
+      ...(r.disbursement
+        ? {
+            disbursementAccountName: r.disbursement.accountName,
+            disbursementTransactionId: r.disbursement.transactionId
+          }
+        : {})
     }
   };
 };

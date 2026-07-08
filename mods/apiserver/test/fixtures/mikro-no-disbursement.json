@@ -1,0 +1,48 @@
+{
+  "timezone": "America/Santo_Domingo",
+  "port": 4000,
+  "publicUrl": "http://localhost:4000",
+  "receiptsPath": "/app/receipts",
+  "contractsPath": "/tmp/mikro-test-contracts",
+  "databaseUrl": "file:/app/data/mikro.db",
+  "jwtSecret": "test-jwt-secret",
+  "jwtExpiresIn": "7d",
+  "keysPath": "/app/keys",
+  "assetsPath": "/app/mods/apiserver/assets",
+  "messageMaxAgeSeconds": 60,
+  "sessionTimeoutSeconds": 1800,
+  "llm": {
+    "text": {
+      "vendor": "openai",
+      "apiKey": "test-key",
+      "model": "gpt-4o-mini"
+    },
+    "vision": {
+      "vendor": "openai",
+      "apiKey": "test-key",
+      "model": "gpt-4o"
+    },
+    "evals": {
+      "vendor": "openai",
+      "apiKey": "test-key",
+      "model": "gpt-4o-mini"
+    }
+  },
+  "whatsapp": {
+    "phoneNumberId": "test",
+    "accessToken": "test",
+    "verifyToken": "mikro_webhook_token",
+    "languageCode": "es_DO",
+    "templates": {
+      "paymentConfirmation": "payment_receipt"
+    }
+  },
+  "voiceNotes": {
+    "enabled": false,
+    "deepgramApiKey": ""
+  },
+  "evals": {
+    "similarityThreshold": 0.7,
+    "vendors": {}
+  }
+}

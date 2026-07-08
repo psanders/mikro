@@ -64,7 +64,12 @@ const applicationConvertedPayloadSchema = z.object({
   applicationId: z.uuid(),
   loanId: z.uuid(),
   loanNumber: z.number().int().optional(),
-  principal: z.number().optional()
+  principal: z.number().optional(),
+  // mikro/#155: set when the disbursement was auto-posted to the ledger in
+  // the same transaction as the conversion, so the feed shows one card for
+  // both the loan and its disbursement rather than two separate events.
+  disbursementAccountName: z.string().optional(),
+  disbursementTransactionId: z.uuid().optional()
 });
 
 const applicationDeletedPayloadSchema = z.object({
