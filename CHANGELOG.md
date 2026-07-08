@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.34.0](https://github.com/psanders/mikro/compare/v1.33.1...v1.34.0) (2026-07-08)
+
+### Bug Fixes
+
+- **founder-feed:** memoize date-range so the feed query stops thrashing ([e1c1769](https://github.com/psanders/mikro/commit/e1c1769d964e154fa079f655713e596b7934b98d))
+
+### Features
+
+- **founder-feed:** filter by type/actor/date range and group consecutive events ([bfaee4e](https://github.com/psanders/mikro/commit/bfaee4eb7a55caa083208dce272893debb88edea)), closes [#131](https://github.com/psanders/mikro/issues/131)
+- **loans:** auto-deduct disbursed principal from ledger on conversion ([c58fd15](https://github.com/psanders/mikro/commit/c58fd15e6c9f229853c98ecea18d472409d9962e)), closes [#155](https://github.com/psanders/mikro/issues/155)
+
 ## [1.33.1](https://github.com/psanders/mikro/compare/v1.33.0...v1.33.1) (2026-07-08)
 
 ### Bug Fixes

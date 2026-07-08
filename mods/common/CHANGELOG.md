@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.34.0](https://github.com/psanders/mikro/compare/v1.33.1...v1.34.0) (2026-07-08)
+
+### Features
+
+- **loans:** auto-deduct disbursed principal from ledger on conversion ([c58fd15](https://github.com/psanders/mikro/commit/c58fd15e6c9f229853c98ecea18d472409d9962e)), closes [#155](https://github.com/psanders/mikro/issues/155)
+
 # [1.28.0](https://github.com/psanders/mikro/compare/v1.27.0...v1.28.0) (2026-07-07)
 
 ### Features
