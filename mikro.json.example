@@ -45,7 +45,7 @@
   },
   "accounting": {
     "attachmentsPath": "./data/attachments/accounting",
-    "disbursementAccountId": "REPLACE-WITH-AN-ACCOUNTINGACCOUNT-ID"
+    "disbursementAccountId": "00000000-0000-4000-8000-000000000000"
   },
   "evals": {
     "similarityThreshold": 0.7,
