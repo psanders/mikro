@@ -14,6 +14,7 @@ export interface FeedEvent {
   type: BusinessEventType;
   /** ISO 8601 timestamp. */
   occurredAt: string;
+  actorId?: string;
   actorName: string;
   customerName?: string;
   loanId?: string;
@@ -58,6 +59,7 @@ export function toFeedEvent(item: FeedItem): FeedEvent {
     id: item.id,
     type: item.type as FeedEvent["type"],
     occurredAt: new Date(item.occurredAt).toISOString(),
+    actorId: item.actorId ?? undefined,
     actorName: item.actorName,
     customerName: item.customerName ?? undefined,
     loanId: item.loanId ?? undefined,

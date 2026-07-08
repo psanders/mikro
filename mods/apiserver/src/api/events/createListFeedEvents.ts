@@ -99,7 +99,7 @@ async function overlayMessageStatus(client: EventClient, items: FeedEventItem[])
  * convention: the feed grows at the head, so offsets would skip/duplicate rows
  * between page fetches. The strict keyset predicate keeps pages contiguous and
  * non-overlapping even when new events arrive between requests. Optional
- * type/date filters narrow the stream.
+ * type/actor/date filters narrow the stream.
  */
 export function createListFeedEvents(client: EventClient) {
   const fn = async (input: ListFeedEventsInput): Promise<ListFeedEventsResult> => {
@@ -109,6 +109,7 @@ export function createListFeedEvents(client: EventClient) {
     if (input.types && input.types.length > 0) {
       and.push({ type: { in: input.types } });
     }
+    if (input.actorId) and.push({ actorId: input.actorId });
     if (input.from) and.push({ occurredAt: { gte: input.from } });
     if (input.to) and.push({ occurredAt: { lte: input.to } });
 

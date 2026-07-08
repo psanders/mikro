@@ -15,10 +15,14 @@ function daysAgo(days: number): string {
   return new Date(Date.now() - days * 24 * 60 * 60_000).toISOString();
 }
 
+const ROSA_ID = "11111111-1111-4111-8111-111111111111";
+const CARLOS_ID = "22222222-2222-4222-8222-222222222222";
+
 export const paymentCollectedEvent: FeedEvent = {
   id: "evt-payment-collected",
   type: "payment.collected",
   occurredAt: minutesAgo(5),
+  actorId: ROSA_ID,
   actorName: "Rosa Méndez",
   customerName: "Juan Pérez",
   loanId: "loan-10001",
@@ -31,6 +35,7 @@ export const paymentCollectedWithLateFeeEvent: FeedEvent = {
   id: "evt-payment-collected-late-fee",
   type: "payment.collected",
   occurredAt: minutesAgo(40),
+  actorId: CARLOS_ID,
   actorName: "Carlos Díaz",
   customerName: "Ana Cruz",
   loanId: "loan-10004",
@@ -334,6 +339,30 @@ export const messageSentFailedEvent: FeedEvent = {
     errorTitle: "Re-engagement message"
   }
 };
+
+/**
+ * A run of five consecutive `payment.collected` events from the same actor
+ * (Ana R.), newest-first — `GroupedFeedRow`'s primary specimen (issue #131).
+ */
+const ANA_ID = "33333333-3333-4333-8333-333333333333";
+export const groupedPaymentRun: FeedEvent[] = [5, 4, 3, 2, 1].map((n, i) => ({
+  id: `evt-grouped-payment-${n}`,
+  type: "payment.collected",
+  occurredAt: minutesAgo(60 + i * 4),
+  actorId: ANA_ID,
+  actorName: "Ana R.",
+  customerName: `Cliente ${n}`,
+  amount: 1200,
+  summary: `Ana R. registró un pago de Cliente ${n}`,
+  payload: { paymentId: `pay-grouped-${n}`, method: "cash", kind: "installment" }
+}));
+
+/** `FilterPopup`/`FilterBar` story actor list. */
+export const feedFilterActors = [
+  { id: ROSA_ID, name: "Rosa Méndez" },
+  { id: CARLOS_ID, name: "Carlos Díaz" },
+  { id: ANA_ID, name: "Ana R." }
+];
 
 /** All catalog specimens, in a stable order — used by the Feed composite story. */
 export const allFeedEvents: FeedEvent[] = [

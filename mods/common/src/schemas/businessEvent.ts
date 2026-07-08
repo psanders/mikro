@@ -208,6 +208,7 @@ export const listFeedEventsSchema = z.object({
   cursor: z.string().optional(),
   limit: z.number().int().positive().max(100).optional(),
   types: z.array(businessEventTypeEnum).optional(),
+  actorId: z.uuid().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional()
 });

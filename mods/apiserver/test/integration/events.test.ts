@@ -7,6 +7,7 @@
  * authorization.
  */
 import { expect } from "chai";
+import { TRPCError } from "@trpc/server";
 import { ValidationError, businessEventTypeEnum } from "@mikro/common";
 import {
   createTestDb,
@@ -437,6 +438,89 @@ describe("Founder Feed Integration", () => {
       const res = await caller.listFeedEvents({ types: ["payment.collected"] });
       expect(res.items).to.have.lengthOf(1);
       expect(res.items[0].type).to.equal("payment.collected");
+    });
+
+    it("filters by actorId", async () => {
+      const anaId = "11111111-1111-4111-8111-111111111111";
+      const bereId = "22222222-2222-4222-8222-222222222222";
+      await db.businessEvent.create({
+        data: {
+          type: "payment.collected",
+          actorId: anaId,
+          actorName: "Ana R.",
+          summary: "pago de Ana",
+          payload: "{}"
+        }
+      });
+      await db.businessEvent.create({
+        data: {
+          type: "payment.collected",
+          actorId: bereId,
+          actorName: "Bere M.",
+          summary: "pago de Bere",
+          payload: "{}"
+        }
+      });
+
+      const res = await caller.listFeedEvents({ actorId: anaId });
+      expect(res.items).to.have.lengthOf(1);
+      expect(res.items[0].summary).to.equal("pago de Ana");
+    });
+
+    it("combines actorId with types and a date range", async () => {
+      const anaId = "11111111-1111-4111-8111-111111111111";
+      await db.businessEvent.create({
+        data: {
+          type: "payment.collected",
+          actorId: anaId,
+          actorName: "Ana R.",
+          occurredAt: new Date(Date.UTC(2026, 0, 15)),
+          summary: "pago dentro de rango",
+          payload: "{}"
+        }
+      });
+      await db.businessEvent.create({
+        data: {
+          type: "payment.collected",
+          actorId: anaId,
+          actorName: "Ana R.",
+          occurredAt: new Date(Date.UTC(2026, 2, 1)),
+          summary: "pago fuera de rango",
+          payload: "{}"
+        }
+      });
+      await db.businessEvent.create({
+        data: {
+          type: "customer.created",
+          actorId: anaId,
+          actorName: "Ana R.",
+          occurredAt: new Date(Date.UTC(2026, 0, 15)),
+          summary: "tipo distinto",
+          payload: "{}"
+        }
+      });
+
+      const res = await caller.listFeedEvents({
+        actorId: anaId,
+        types: ["payment.collected"],
+        from: new Date(Date.UTC(2026, 0, 1)),
+        to: new Date(Date.UTC(2026, 1, 1))
+      });
+      expect(res.items).to.have.lengthOf(1);
+      expect(res.items[0].summary).to.equal("pago dentro de rango");
+    });
+
+    it("rejects a malformed actorId (structured error, no query executed)", async () => {
+      await seedEvents(1);
+      try {
+        await caller.listFeedEvents({ actorId: "not-a-uuid" });
+        expect.fail("expected TRPCError");
+      } catch (err) {
+        expect(err).to.be.instanceOf(TRPCError);
+        expect((err as TRPCError).code).to.equal("BAD_REQUEST");
+      }
+      // Input validation happens before any query runs — the store is untouched.
+      expect(await db.businessEvent.count()).to.equal(1);
     });
 
     it("overlays live delivery status onto a message.sent card", async () => {
