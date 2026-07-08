@@ -5,7 +5,10 @@
  * collector. Enforced at the DB (NOT NULL), Zod (required uuid), and here at
  * the tRPC boundary for both customer creation and application conversion.
  */
+import path from "path";
+import { fileURLToPath } from "url";
 import { expect } from "chai";
+import { clearConfigCache } from "@mikro/common";
 import {
   createTestDb,
   createAuthenticatedCaller,
@@ -13,6 +16,14 @@ import {
   type TestDb,
   type AuthenticatedCaller
 } from "./setup.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Must match test/fixtures/mikro.json's accounting.disbursementAccountId, and
+// the fixed userId createAuthenticatedCaller sets as ctx.userId (mikro/#155:
+// disbursement transactions require a real account + a real creator user).
+const DISBURSEMENT_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1";
+const REVIEWER_ID = "00000000-0000-4000-8000-000000000001";
 
 describe("convertApplication collector assignment", () => {
   let db: TestDb;
@@ -31,14 +42,30 @@ describe("convertApplication collector assignment", () => {
   before(async () => {
     db = createTestDb();
     await applySchema(db);
+    await db.accountingAccount.create({
+      data: {
+        id: DISBURSEMENT_ACCOUNT_ID,
+        name: "Caja principal (test)",
+        kind: "CASH",
+        currentBalance: 100_000
+      }
+    });
   });
 
   beforeEach(async () => {
+    await db.accountingTransaction.deleteMany();
     await db.loanApplication.deleteMany();
     await db.loan.deleteMany();
     await db.customer.deleteMany();
     await db.userRole.deleteMany();
     await db.user.deleteMany();
+    await db.user.create({
+      data: { id: REVIEWER_ID, name: "Reviewer de prueba", phone: uniquePhone() }
+    });
+    await db.accountingAccount.update({
+      where: { id: DISBURSEMENT_ACCOUNT_ID },
+      data: { currentBalance: 100_000 }
+    });
     caller = createAuthenticatedCaller(db);
   });
 
@@ -143,5 +170,74 @@ describe("convertApplication collector assignment", () => {
     }
     expect(thrown).to.not.equal(undefined);
     expect(await db.customer.count()).to.equal(0);
+  });
+
+  describe("auto-disbursement (mikro/#155)", () => {
+    it("posts a WITHDRAWAL transaction for the principal and decrements the account balance", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication();
+
+      const result = await caller.convertApplication({
+        id: app.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        assignedCollectorId: collector.id
+      });
+
+      expect(result.disbursement).to.not.equal(undefined);
+      expect(result.disbursement!.amount).to.equal(5000);
+      expect(result.disbursement!.accountId).to.equal(DISBURSEMENT_ACCOUNT_ID);
+
+      const txn = await db.accountingTransaction.findUnique({
+        where: { id: result.disbursement!.transactionId }
+      });
+      expect(txn).to.not.equal(null);
+      expect(txn!.type).to.equal("WITHDRAWAL");
+      expect(Number(txn!.amount)).to.equal(5000);
+      expect(txn!.categoryId).to.equal(null);
+      expect(txn!.createdById).to.equal(REVIEWER_ID);
+
+      const account = await db.accountingAccount.findUnique({
+        where: { id: DISBURSEMENT_ACCOUNT_ID }
+      });
+      expect(Number(account!.currentBalance)).to.equal(95_000);
+    });
+
+    it("creates nothing when the server config has no disbursement account set", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication();
+
+      const originalConfigFile = process.env.MIKRO_CONFIG_FILE;
+      process.env.MIKRO_CONFIG_FILE = path.resolve(
+        __dirname,
+        "../fixtures/mikro-no-disbursement.json"
+      );
+      clearConfigCache();
+
+      let thrown: unknown;
+      try {
+        await caller.convertApplication({
+          id: app.id,
+          principal: 5000,
+          termLength: 10,
+          paymentAmount: 650,
+          paymentFrequency: "WEEKLY",
+          assignedCollectorId: collector.id
+        });
+      } catch (err) {
+        thrown = err;
+      } finally {
+        process.env.MIKRO_CONFIG_FILE = originalConfigFile;
+        clearConfigCache();
+      }
+
+      expect(thrown).to.not.equal(undefined);
+      expect(await db.loan.count()).to.equal(0);
+      expect(await db.accountingTransaction.count()).to.equal(0);
+      const unchangedApp = await db.loanApplication.findUnique({ where: { id: app.id } });
+      expect(unchangedApp!.status).to.equal("SIGNED");
+    });
   });
 });

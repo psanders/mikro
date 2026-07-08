@@ -43,6 +43,10 @@
     "enabled": false,
     "deepgramApiKey": ""
   },
+  "accounting": {
+    "attachmentsPath": "./data/attachments/accounting",
+    "disbursementAccountId": "REPLACE-WITH-AN-ACCOUNTINGACCOUNT-ID"
+  },
   "evals": {
     "similarityThreshold": 0.7,
     "vendors": {

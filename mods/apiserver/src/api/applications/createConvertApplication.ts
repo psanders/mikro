@@ -1,11 +1,13 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { resolveReviewTransition } from "@mikro/common";
+import { resolveReviewTransition, getConfig } from "@mikro/common";
 import type { DbClient, LoanApplication, ConvertApplicationInput } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { createCreateCustomer } from "../customers/createCreateCustomer.js";
 import { createCreateLoan } from "../loans/createCreateLoan.js";
+import { postTransactionCore } from "../accounting/postTransaction.js";
+import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 
 const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
@@ -15,6 +17,13 @@ export interface ConvertApplicationResult {
   customerId: string;
   loanId: number;
   reusedCustomer: boolean;
+  /** The disbursement transaction auto-posted to the ledger (mikro/#155). */
+  disbursement: {
+    transactionId: string;
+    accountId: string;
+    accountName: string;
+    amount: number;
+  };
 }
 
 async function loadByRef(
@@ -35,9 +44,7 @@ async function loadByRef(
 export function createConvertApplication(client: DbClient) {
   return async (
     input: ConvertApplicationInput,
-    // Kept for signature parity with the other review actions; not yet recorded.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _reviewerId: string
+    reviewerId: string
   ): Promise<ConvertApplicationResult> => {
     const app = await loadByRef(client, input);
 
@@ -80,6 +87,12 @@ export function createConvertApplication(client: DbClient) {
       });
     }
 
+    // mikro/#155: every conversion auto-deducts the disbursed principal from
+    // the ledger. `accounting.disbursementAccountId` is a required config
+    // field (mikro.json) — the apiserver refuses to boot without it, so
+    // there's nothing to validate here.
+    const disbursementAccountId = getConfig().accounting.disbursementAccountId;
+
     return client.$transaction(async (tx) => {
       // Reuse an existing customer by cédula, then phone; else create one.
       let customer = await tx.customer.findFirst({ where: { idNumber: app.idNumber! } });
@@ -113,6 +126,21 @@ export function createConvertApplication(client: DbClient) {
         moraRate: input.moraRate
       });
 
+      // Auto-deduct the disbursed principal from the ledger in the SAME
+      // transaction as the loan creation (mikro/#155): either both commit or
+      // neither does. WITHDRAWAL, not EXPENSE — disbursed principal is a
+      // capital movement (cash → loan receivable), not an operating expense,
+      // mirroring the DEPOSIT-not-INCOME treatment of loan repayments.
+      const disbursement = await postTransactionCore(tx as unknown as PrismaClient, {
+        type: "WITHDRAWAL",
+        accountId: disbursementAccountId,
+        amount: input.principal,
+        occurredAt: new Date(),
+        description: `Desembolso de préstamo #${loan.loanId} para ${name}`,
+        reference: `loan-disbursement:${loan.loanId}`,
+        createdById: reviewerId
+      });
+
       const updated = await tx.loanApplication.update({
         where: { id: app.id },
         data: { status: to, customerId: customer.id, loanId: loan.loanId }
@@ -122,9 +150,21 @@ export function createConvertApplication(client: DbClient) {
         id: app.id,
         customerId: customer.id,
         loanId: loan.loanId,
-        reusedCustomer
+        reusedCustomer,
+        disbursementTransactionId: disbursement.id
       });
-      return { application: updated, customerId: customer.id, loanId: loan.loanId, reusedCustomer };
+      return {
+        application: updated,
+        customerId: customer.id,
+        loanId: loan.loanId,
+        reusedCustomer,
+        disbursement: {
+          transactionId: disbursement.id,
+          accountId: disbursement.account.id,
+          accountName: disbursement.account.name,
+          amount: input.principal
+        }
+      };
     });
   };
 }
