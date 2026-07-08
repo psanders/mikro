@@ -39,4 +39,4 @@
 
 - [x] 6.1 Sync founder-feed delta spec into openspec/specs/founder-feed
 - [x] 6.2 Archive the change
-- [ ] 6.3 Open PR with description covering both the Pencil design and the shipped code
+- [x] 6.3 Open PR with description covering both the Pencil design and the shipped code — https://github.com/psanders/mikro/pull/159
