@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Mikro",
   slug: "mikro",
-  version: "0.1.0",
+  version: "1.35.3",
   orientation: "portrait",
   icon: "./assets/icon.png",
   scheme: "mikro",

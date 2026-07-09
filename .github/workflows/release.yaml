@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       # Lerna only cuts a version when commits touch a lerna package
-      # (mods/common|agents|apiserver|ctl). Dashboard/mobile/CI-only changes
+      # (mods/common|agents|apiserver|ctl|mobile). Dashboard/CI-only changes
       # never trigger one on their own — this forces a release that includes
       # them (version bump still derived from conventional commits).
       force_release:
