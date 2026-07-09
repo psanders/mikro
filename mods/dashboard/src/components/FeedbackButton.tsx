@@ -19,11 +19,14 @@
  * `hasDisplayMedia()` true covers web AND Windows Tauri (real screen+mic
  * video, muxed by the browser's own MediaRecorder); false means the Tauri
  * native path — a silent screen-only video via ScreenCaptureKit
- * (`start_feedback_recording`/`stop_feedback_recording`), no microphone
- * at all. ScreenCaptureKit can't capture the mic (only system/app audio
- * output), and muxing a separate mic track in would need a bundled/signed
- * ffmpeg — real distribution scope for a video whose point is "show what
- * happened," not narration.
+ * (`start_feedback_recording`/`stop_feedback_recording`). ScreenCaptureKit
+ * itself can't capture the mic (only system/app audio output), and muxing a
+ * mic track into the video would need a bundled/signed ffmpeg — out of
+ * scope. Instead (mikro/#156) the Tauri path records mic-only narration
+ * audio in parallel via `getUserMedia({ audio: true })` + `MediaRecorder`,
+ * same as the browser path's mic track, and submits it as a separate
+ * `audioBase64` field alongside the silent video — createSubmitFeedback.ts
+ * transcribes that instead of the (silent) video when it's present.
  *
  * The "recording" stage renders a floating, non-blocking pill (not a
  * full-screen modal) so the user can navigate the dashboard while recording
@@ -44,6 +47,14 @@ import { RecordingPill } from "./RecordingPill";
 
 type Stage = "idle" | "consent" | "recording" | "processing" | "result" | "error";
 type CaptureMode = "browser" | "tauri-native";
+
+/** Captured video plus optional mic-only narration audio (mikro/#156), same shape `submit.mutateAsync` expects. */
+type PendingRecording = {
+  base64: string;
+  mimeType: string;
+  audioBase64?: string;
+  audioMimeType?: string;
+};
 
 const hasDisplayMedia = (): boolean =>
   typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
@@ -82,7 +93,7 @@ export function FeedbackButton() {
   // The captured recording is kept after a submit failure so "Intentar de
   // nuevo" re-sends the same bytes instead of forcing a fresh recording
   // (mikro/#97). Null means nothing has been captured (or it already sent).
-  const pendingRecordingRef = useRef<{ base64: string; mimeType: string } | null>(null);
+  const pendingRecordingRef = useRef<PendingRecording | null>(null);
 
   const submit = trpc.submitFeedback.useMutation();
 
@@ -143,9 +154,23 @@ export function FeedbackButton() {
   }, []);
 
   // Tauri build only (WKWebView has no `getDisplayMedia`): a silent
-  // screen-only video recording via ScreenCaptureKit. No mic — see this
-  // file's header for why.
+  // screen-only video recording via ScreenCaptureKit, plus mic-only
+  // narration audio captured in parallel (mikro/#156) — see this file's
+  // header. The mic is acquired first: if permission is denied, nothing
+  // native has started yet, so the caller's catch block can clean up with
+  // a plain `cleanupStreams()` — no orphaned ScreenCaptureKit session to
+  // stop.
   const startTauriRecording = useCallback(async () => {
+    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStreamRef.current = micStream;
+    const recorder = new MediaRecorder(micStream, { mimeType: "audio/webm" });
+    chunksRef.current = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorderRef.current = recorder;
+    recorder.start();
+
     const { invoke } = await import("@tauri-apps/api/core");
     await invoke("start_feedback_recording");
   }, []);
@@ -180,12 +205,14 @@ export function FeedbackButton() {
   // in `pendingRecordingRef` until it actually lands so a manual retry can
   // re-send it without re-recording.
   const finishSubmit = useCallback(
-    async (recording: { base64: string; mimeType: string }) => {
+    async (recording: PendingRecording) => {
       pendingRecordingRef.current = recording;
       await submitFeedbackWithRetry(() =>
         submit.mutateAsync({
           videoBase64: recording.base64,
           videoMimeType: recording.mimeType,
+          audioBase64: recording.audioBase64,
+          audioMimeType: recording.audioMimeType,
           pageUrl: window.location.href,
           userAgent: navigator.userAgent
         })
@@ -217,10 +244,26 @@ export function FeedbackButton() {
   }, [cleanupStreams, finishSubmit]);
 
   const stopTauriRecording = useCallback(async () => {
+    const recorder = recorderRef.current;
+    const audioBlob = await new Promise<Blob | null>((resolve) => {
+      if (!recorder || recorder.state !== "recording") {
+        resolve(null);
+        return;
+      }
+      recorder.onstop = () => resolve(new Blob(chunksRef.current, { type: "audio/webm" }));
+      recorder.stop();
+    });
+    cleanupStreams();
+
     const { invoke } = await import("@tauri-apps/api/core");
     const recording = await invoke<{ base64: string; mimeType: string }>("stop_feedback_recording");
-    await finishSubmit(recording);
-  }, [finishSubmit]);
+    const audio = audioBlob ? await blobToBase64(audioBlob) : null;
+    await finishSubmit({
+      ...recording,
+      audioBase64: audio?.base64,
+      audioMimeType: audio?.mimeType
+    });
+  }, [cleanupStreams, finishSubmit]);
 
   const stopRecording = useCallback(async () => {
     clearTimer();
@@ -266,8 +309,15 @@ export function FeedbackButton() {
     clearTimer();
     try {
       if (captureModeRef.current === "tauri-native") {
-        // Stop the native session so ScreenCaptureKit releases the screen, but
-        // ignore the returned recording — nothing is submitted.
+        // Stop the mic recorder (mikro/#156) and the native session so
+        // ScreenCaptureKit releases the screen, but ignore both results —
+        // nothing is submitted.
+        const recorder = recorderRef.current;
+        if (recorder && recorder.state !== "inactive") {
+          recorder.onstop = null;
+          recorder.ondataavailable = null;
+          recorder.stop();
+        }
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("stop_feedback_recording");
       } else {

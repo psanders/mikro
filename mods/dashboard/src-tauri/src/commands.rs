@@ -1,12 +1,16 @@
 // Native screen video capture for the bug-report feature (mikro/#69,
 // extend-bug-report-native-capture). WKWebView on macOS doesn't implement
 // `getDisplayMedia`, so this records a short silent screen video natively
-// via ScreenCaptureKit instead. No microphone/audio track: ScreenCaptureKit
-// can't capture the mic (only system/app audio output), and muxing a
-// separately-recorded mic track in would require bundling and code-signing
-// an ffmpeg binary — real distribution scope for a video whose entire point
-// is "show what the user did," not narration. There's no screenshot capture
-// anymore either — the video is strictly more useful and is now the
+// via ScreenCaptureKit instead. No microphone/audio track on the video
+// itself: ScreenCaptureKit can't capture the mic (only system/app audio
+// output), and muxing a separately-recorded mic track into this video would
+// require bundling and code-signing an ffmpeg binary — real distribution
+// scope for a video whose entire point is "show what the user did," not
+// narration. Instead (mikro/#156), the TypeScript side captures mic-only
+// narration audio in parallel via `getUserMedia`/`MediaRecorder` (see
+// FeedbackButton.tsx) and submits it as a separate field for transcription —
+// no muxing, no ffmpeg, this file is unaffected. There's no screenshot
+// capture anymore either — the video is strictly more useful and is now the
 // default/only visual artifact. Windows Tauri builds keep using
 // `getDisplayMedia` (WebView2 supports it), so these commands only do real
 // work on macOS and return a clear error everywhere else.

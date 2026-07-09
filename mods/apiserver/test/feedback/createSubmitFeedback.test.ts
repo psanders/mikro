@@ -28,6 +28,15 @@ const WITH_SCREENSHOT_INPUT: SubmitFeedbackInput = {
   screenshotMimeType: "image/png"
 };
 
+// Tauri desktop sends this: the video is silent (ScreenCaptureKit has no mic
+// track), so the mic-only narration audio is what should actually get
+// transcribed (mikro/#156).
+const WITH_AUDIO_INPUT: SubmitFeedbackInput = {
+  ...BASE_INPUT,
+  audioBase64: Buffer.from("fake mic audio bytes").toString("base64"),
+  audioMimeType: "audio/webm"
+};
+
 const REPORTER = { userId: "user-1", name: "Ana Reviewer" };
 
 const STRUCTURED_REPLY = JSON.stringify({
@@ -109,6 +118,27 @@ describe("createSubmitFeedback", () => {
       octokit.repos.createOrUpdateFileContents as unknown as sinon.SinonStub
     ).getCalls();
     expect(uploadCalls).to.have.length(1);
+  });
+
+  it("transcribes the mic-only audio instead of the (silent) video when a client sends one (mikro/#156)", async () => {
+    const transcribe = sinon.stub().resolves("narración por micrófono en Tauri");
+    const createModel = stubModel(STRUCTURED_REPLY);
+    const octokit = stubOctokit();
+
+    const fn = createSubmitFeedback({ transcribe, createModel, octokit, repo: "psanders/mikro" });
+    await fn(WITH_AUDIO_INPUT, REPORTER);
+
+    expect(transcribe.calledOnce).to.be.true;
+    expect(transcribe.firstCall.args[0]).to.match(/^data:audio\/webm;base64,/);
+    expect(transcribe.firstCall.args[0]).to.not.match(/^data:video/);
+
+    // The video is still committed and linked — audio only changes what gets
+    // transcribed, not what's uploaded as the visual artifact.
+    const uploadCalls = (
+      octokit.repos.createOrUpdateFileContents as unknown as sinon.SinonStub
+    ).getCalls();
+    expect(uploadCalls).to.have.length(1);
+    expect(uploadCalls[0]!.args[0].path).to.match(/\.webm$/);
   });
 
   it("still commits the legacy screenshot when a client sends one, alongside the video", async () => {

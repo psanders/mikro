@@ -2,8 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * In-app feedback (mikro/#69): a short screen recording is transcribed
- * (best-effort — some clients, like the Tauri desktop build, send a silent
- * video with no audio track, see extend-bug-report-native-capture), the
+ * (best-effort — using the separate mic-only `audioBase64` when a client
+ * sends one, since its video has no audio track; the Tauri desktop build
+ * does this, see extend-bug-report-native-capture and mikro/#156), the
  * transcript is structured into a feedback write-up by an LLM, and a GitHub
  * issue is filed with the still-frame screenshot embedded inline and the
  * recording linked (mikro/#87). Feedback is generic on purpose — it can be a
@@ -105,12 +106,18 @@ export function createSubmitFeedback(deps: SubmitFeedbackDeps) {
 
     // Transcribe. Best-effort: a Deepgram outage shouldn't block filing the
     // issue — the user's screen recording plus screenshot still tell most of
-    // the story. Some clients (Tauri desktop) send a silent video, so an
-    // empty/near-empty transcript here is expected, not an error.
+    // the story. Prefer the separate mic-only audio when a client sends one
+    // (mikro/#156) — that's the actual narration; the video itself has no
+    // audio track on those clients (Tauri desktop's ScreenCaptureKit
+    // recording, see extend-bug-report-native-capture). Clients that mux mic
+    // audio into the video (browser, mobile) don't send `audioBase64`, so
+    // this falls back to transcribing the video as before.
     let transcript = "";
     try {
-      const videoDataUrl = `data:${input.videoMimeType};base64,${input.videoBase64}`;
-      transcript = await deps.transcribe(videoDataUrl);
+      const dataUrl = input.audioBase64
+        ? `data:${input.audioMimeType};base64,${input.audioBase64}`
+        : `data:${input.videoMimeType};base64,${input.videoBase64}`;
+      transcript = await deps.transcribe(dataUrl);
     } catch (err) {
       logger.error("feedback transcription failed", { error: (err as Error).message });
     }

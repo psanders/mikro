@@ -82301,7 +82301,7 @@
               "fill": "#8FA3C8",
               "textGrowth": "fixed-width",
               "width": 1440,
-              "content": "Obligaciones recurrentes que terminan en una acción del producto. Un catálogo cerrado de automatizaciones (pagar cobrador, cierre contable) se ata a un horario; al vencer aparece como tarjeta ámbar en el feed, pide solo lo que no puede calcular (el monto) y ejecuta la transacción al confirmar. Sin IA al disparar, confirmar o ejecutar.",
+              "content": "Obligaciones recurrentes que terminan en una acción del producto. Un catálogo cerrado de automatizaciones (pago, cierre contable) se ata a un horario; al vencer aparece como tarjeta ámbar en el feed, pide solo lo que no puede calcular (el monto) y ejecuta la transacción al confirmar. Sin IA al disparar, confirmar o ejecutar.",
               "fontFamily": "Geist",
               "fontSize": 18,
               "fontWeight": "500"
@@ -84164,7 +84164,7 @@
                                       "id": "oDZcp",
                                       "name": "m",
                                       "fill": "$ds.muted",
-                                      "content": "Pagar cobrador · semanal, viernes 8:00 · se pregunta el monto al confirmar",
+                                      "content": "Pago · semanal, viernes 8:00 · se pregunta el monto al confirmar",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "500"
@@ -84267,7 +84267,7 @@
                                       "id": "ncVyy",
                                       "name": "m",
                                       "fill": "$ds.muted",
-                                      "content": "Pagar cobrador · semanal, viernes 8:00 · se pregunta el monto al confirmar",
+                                      "content": "Pago · semanal, viernes 8:00 · se pregunta el monto al confirmar",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "500"
@@ -84949,7 +84949,7 @@
                                       "id": "IjeZF",
                                       "name": "m",
                                       "fill": "$ds.muted",
-                                      "content": "Pagar cobrador · semanal, viernes 8:00 · se pregunta el monto al confirmar",
+                                      "content": "Pago · semanal, viernes 8:00 · se pregunta el monto al confirmar",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "500"
@@ -85052,7 +85052,7 @@
                                       "id": "ybe9C",
                                       "name": "m",
                                       "fill": "$ds.muted",
-                                      "content": "Pagar cobrador · semanal, viernes 8:00 · se pregunta el monto al confirmar",
+                                      "content": "Pago · semanal, viernes 8:00 · se pregunta el monto al confirmar",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "500"
@@ -85413,7 +85413,7 @@
                                       "id": "LSo0v",
                                       "name": "t",
                                       "fill": "$brand.ink",
-                                      "content": "Pagar cobrador",
+                                      "content": "Pago",
                                       "fontFamily": "Geist",
                                       "fontSize": 14,
                                       "fontWeight": "500"
@@ -85637,7 +85637,7 @@
                               "width": "fill_container",
                               "descendants": {
                                 "UhGDu": {
-                                  "content": "Cobrador"
+                                  "content": "Empleado (opcional)"
                                 },
                                 "a5m9qo": {
                                   "type": "frame",
@@ -85669,8 +85669,8 @@
                                       "type": "text",
                                       "id": "rZQFX",
                                       "name": "t",
-                                      "fill": "$brand.ink",
-                                      "content": "Luis M.",
+                                      "fill": "$ds.muted",
+                                      "content": "Sin especificar",
                                       "fontFamily": "Geist",
                                       "fontSize": 14,
                                       "fontWeight": "500"
@@ -85840,6 +85840,25 @@
                               ]
                             },
                             {
+                              "id": "dOBaU",
+                              "type": "ref",
+                              "ref": "D4HQbZ",
+                              "name": "f-monto-sugerido",
+                              "width": "fill_container",
+                              "descendants": {
+                                "UhGDu": {
+                                  "content": "Monto sugerido (RD$, opcional)"
+                                },
+                                "JmSwo": {
+                                  "icon": "banknote"
+                                },
+                                "boM8z": {
+                                  "content": "2,500",
+                                  "fill": "$ds.muted"
+                                }
+                              }
+                            },
+                            {
                               "type": "frame",
                               "id": "jBvBX",
                               "name": "askNote",
@@ -85868,7 +85887,7 @@
                                   "id": "o078rQ",
                                   "name": "t",
                                   "fill": "$ds.amber",
-                                  "content": "El monto se preguntará al confirmar cada semana · requiere confirmación",
+                                  "content": "El monto se preguntará al confirmar cada semana (con el sugerido \nprecargado) · requiere confirmación",
                                   "fontFamily": "Geist",
                                   "fontSize": 12,
                                   "fontWeight": "500"

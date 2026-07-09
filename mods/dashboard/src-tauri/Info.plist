@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Copyright (C) 2026 by Mikro SRL. MIT License.
+
+  Merged into the generated Info.plist by tauri_build::build() (see
+  build.rs). NSMicrophoneUsageDescription is required for the in-app
+  feedback button's mic-only narration audio (mikro/#156) — WKWebView's
+  getUserMedia({ audio: true }) is gated by this key on macOS; without it,
+  the permission request fails instead of prompting the user.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mikro usa el micrófono para grabar tu narración cuando envías feedback con una grabación de pantalla.</string>
+</dict>
+</plist>
