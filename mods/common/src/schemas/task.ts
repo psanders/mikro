@@ -138,6 +138,8 @@ export interface TaskSlotDescriptor {
   source: TaskSlotSource;
   kind: "text" | "amount" | "collector" | "account" | "category";
   optional: boolean;
+  /** Name of a static/computed slot whose value pre-fills this ask slot's input at confirm time. */
+  defaultFrom?: string;
 }
 
 /** A catalog automation as described to clients. */

@@ -37,6 +37,14 @@ export interface SlotSpec {
   optional?: boolean;
   /** Deterministic resolver, required for computed slots. */
   resolve?: (ctx: ResolveContext) => Promise<unknown>;
+  /**
+   * For an `ask` slot: the name of a static/computed slot in this same
+   * automation whose gathered value pre-fills this slot's confirm-time
+   * input (still freely editable). E.g. amount's `defaultFrom:
+   * "suggestedAmount"` — the founder can pin a default at creation without
+   * making the slot itself non-editable per firing.
+   */
+  defaultFrom?: string;
 }
 
 /** Services an automation may execute through. Injected for testability. */

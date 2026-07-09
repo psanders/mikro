@@ -7,6 +7,7 @@
  * filter selections are remembered across sessions, defaulting to Hoy).
  */
 import type { BusinessEventType } from "@mikro/common";
+import { readJSON, writeJSON } from "../../lib/localStorageJson";
 import { ALERT_EVENT_TYPES } from "./types";
 
 export interface FeedTypeGroup {
@@ -96,33 +97,26 @@ export function resolveTypes(value: FeedFilterValue): BusinessEventType[] | unde
 
 const STORAGE_KEY = "founder-feed-filters";
 
+function isStoredFeedFilters(value: unknown): value is Partial<FeedFilterValue> {
+  const v = value as Partial<FeedFilterValue> | null;
+  return Array.isArray(v?.typeIds) && typeof v?.preset === "string";
+}
+
 /** Reads the remembered filter preference; falls back to the default on any parse failure. */
 export function loadStoredFeedFilters(): FeedFilterValue {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultFeedFilterValue();
-    const parsed = JSON.parse(raw) as Partial<FeedFilterValue>;
-    if (!Array.isArray(parsed.typeIds) || typeof parsed.preset !== "string") {
-      return defaultFeedFilterValue();
-    }
-    return {
-      typeIds: parsed.typeIds,
-      actorId: parsed.actorId,
-      preset: parsed.preset as FeedDatePreset,
-      from: parsed.from ?? defaultFeedFilterValue().from,
-      to: parsed.to ?? defaultFeedFilterValue().to
-    };
-  } catch {
-    return defaultFeedFilterValue();
-  }
+  const parsed = readJSON(STORAGE_KEY, isStoredFeedFilters);
+  if (!parsed) return defaultFeedFilterValue();
+  return {
+    typeIds: parsed.typeIds!,
+    actorId: parsed.actorId,
+    preset: parsed.preset as FeedDatePreset,
+    from: parsed.from ?? defaultFeedFilterValue().from,
+    to: parsed.to ?? defaultFeedFilterValue().to
+  };
 }
 
 export function storeFeedFilters(value: FeedFilterValue): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // Best-effort — a private-browsing quota error shouldn't break filtering.
-  }
+  writeJSON(STORAGE_KEY, value);
 }
 
 export function isFeedFilterActive(value: FeedFilterValue): boolean {

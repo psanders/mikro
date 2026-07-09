@@ -75,7 +75,8 @@ function toFiringView(firing: TaskFiring): TaskFiringView {
           label: spec.label,
           source: spec.source,
           kind: spec.kind,
-          optional: spec.optional ?? false
+          optional: spec.optional ?? false,
+          defaultFrom: spec.defaultFrom
         }))
     : [];
 

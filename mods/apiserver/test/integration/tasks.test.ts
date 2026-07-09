@@ -28,7 +28,7 @@ describe("Founder Tasks Integration", () => {
   let db: TestDb;
   let accountId: string;
   let categoryId: string;
-  let collectorId: string;
+  let employeeId: string;
 
   beforeEach(async () => {
     db = createTestDb();
@@ -37,10 +37,11 @@ describe("Founder Tasks Integration", () => {
     await db.user.create({
       data: { id: FOUNDER_ID, name: "Pedro S.", phone: "+18095550001" }
     });
-    const collector = await db.user.create({
+    const employee = await db.user.create({
       data: { name: "Luis M.", phone: "+18095550002" }
     });
-    collectorId = collector.id;
+    employeeId = employee.id;
+    await db.userRole.create({ data: { role: "COLLECTOR", userId: employeeId } });
 
     const account = await db.accountingAccount.create({
       data: { name: "Caja principal", kind: "CASH", currentBalance: 50_000 }
@@ -61,11 +62,11 @@ describe("Founder Tasks Integration", () => {
     return db.task.create({
       data: {
         name: "Pago semanal Ana",
-        automationId: "pay-collector",
+        automationId: "payment",
         frequency: "weekly",
         weekday: 5,
         timeOfDay: "08:00",
-        staticParamsJson: JSON.stringify({ collectorId, accountId, categoryId }),
+        staticParamsJson: JSON.stringify({ employeeId, accountId, categoryId }),
         gate: "confirm",
         nextFireAt: new Date(Date.now() - 60_000),
         createdById: FOUNDER_ID,
@@ -82,7 +83,7 @@ describe("Founder Tasks Integration", () => {
     const firing = await db.taskFiring.findFirstOrThrow({ where: { taskId: task.id } });
     expect(firing.status).to.equal("READY");
     const payload = JSON.parse(firing.payloadJson);
-    expect(payload.collectorId).to.equal(collectorId);
+    expect(payload.employeeId).to.equal(employeeId);
     const context = JSON.parse(firing.contextJson!);
     expect(context.collectorName).to.equal("Luis M.");
 
@@ -94,7 +95,7 @@ describe("Founder Tasks Integration", () => {
   });
 
   it("degrades to NEEDS_INPUT with its event when a static slot is missing", async () => {
-    await makeTask({ staticParamsJson: JSON.stringify({ collectorId }) });
+    await makeTask({ staticParamsJson: JSON.stringify({ employeeId }) });
     const result = await processDueTasks(db);
 
     expect(result.needsInput).to.equal(1);
@@ -273,7 +274,7 @@ describe("Founder Tasks Integration", () => {
 
     it("recovers a NEEDS_INPUT firing when confirm supplies the missing slot", async () => {
       // Fire with a missing static slot (account), then supply it on confirm.
-      await makeTask({ staticParamsJson: JSON.stringify({ collectorId, categoryId }) });
+      await makeTask({ staticParamsJson: JSON.stringify({ employeeId, categoryId }) });
       await processDueTasks(db);
       const firing = await db.taskFiring.findFirstOrThrow({ where: { status: "NEEDS_INPUT" } });
 
@@ -292,7 +293,7 @@ describe("Founder Tasks Integration", () => {
       const firing = await readyFiring();
       await db.taskFiring.update({
         where: { id: firing.id },
-        data: { payloadJson: JSON.stringify({ collectorId: "not-a-uuid" }) }
+        data: { payloadJson: JSON.stringify({ employeeId: "not-a-uuid" }) }
       });
       const stale = await db.taskFiring.findUniqueOrThrow({ where: { id: firing.id } });
 
@@ -322,11 +323,11 @@ describe("Founder Tasks Integration", () => {
     function createInput(overrides: Record<string, unknown> = {}) {
       return {
         name: "Pago semanal Ana",
-        automationId: "pay-collector",
+        automationId: "payment",
         frequency: "weekly" as const,
         weekday: 5,
         timeOfDay: "08:00",
-        staticParams: { collectorId, accountId, categoryId },
+        staticParams: { employeeId, accountId, categoryId },
         ...overrides
       };
     }
@@ -364,7 +365,7 @@ describe("Founder Tasks Integration", () => {
     it("rejects invalid static slots at creation", async () => {
       let threw = false;
       try {
-        await caller.tasks.create(createInput({ staticParams: { collectorId: "nope" } }));
+        await caller.tasks.create(createInput({ staticParams: { employeeId: "nope" } }));
       } catch {
         threw = true;
       }
@@ -376,7 +377,7 @@ describe("Founder Tasks Integration", () => {
       const descriptors = await caller.tasks.listAutomations();
       expect(descriptors.map((d) => d.id).sort()).to.deep.equal([
         "daily-close",
-        "pay-collector",
+        "payment",
         "record-expense"
       ]);
     });
@@ -500,12 +501,12 @@ describe("Founder Tasks Integration", () => {
                 name: "createTask",
                 args: {
                   name: "Pago semanal Ana",
-                  automationId: "pay-collector",
+                  automationId: "payment",
                   frequency: "weekly",
                   weekday: "5",
                   timeOfDay: "08:00",
                   staticParams: {
-                    collectorId: "Luis M.",
+                    employeeId: "Luis M.",
                     accountId: "Caja principal",
                     categoryId: "Comisiones"
                   }
@@ -522,7 +523,7 @@ describe("Founder Tasks Integration", () => {
 
       const task = await db.task.findFirstOrThrow({});
       const params = JSON.parse(task.staticParamsJson);
-      expect(params.collectorId).to.equal(collectorId);
+      expect(params.employeeId).to.equal(employeeId);
       expect(params.accountId).to.equal(accountId);
       expect(params.categoryId).to.equal(categoryId);
       expect(task.gate).to.equal("confirm");

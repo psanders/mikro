@@ -8,14 +8,21 @@ import type { TaskFiringInfo } from "./TaskActionCard";
 const readyFiring: TaskFiringInfo = {
   id: "11111111-1111-4111-8111-111111111111",
   taskName: "Pago semanal Ana",
-  automationId: "pay-collector",
+  automationId: "payment",
   status: "READY",
   askSlots: [
-    { name: "amount", label: "Monto (RD$)", kind: "amount", optional: false },
+    {
+      name: "amount",
+      label: "Monto (RD$)",
+      kind: "amount",
+      optional: false,
+      defaultFrom: "suggestedAmount"
+    },
     { name: "note", label: "Nota (opcional)", kind: "text", optional: true }
   ],
   missingSlots: [],
-  context: { collectorName: "Luis M.", weekCollected: 48300, weekPayments: 37 }
+  context: { collectorName: "Luis M.", weekCollected: 48300, weekPayments: 37 },
+  payload: { suggestedAmount: 3500 }
 };
 
 const dailyCloseFiring: TaskFiringInfo = {
@@ -31,7 +38,7 @@ const dailyCloseFiring: TaskFiringInfo = {
 const needsInputFiring: TaskFiringInfo = {
   id: "33333333-3333-4333-8333-333333333333",
   taskName: "Pago semanal Ana",
-  automationId: "pay-collector",
+  automationId: "payment",
   status: "NEEDS_INPUT",
   askSlots: [
     { name: "accountId", label: "Cuenta", kind: "account", optional: false },
@@ -61,7 +68,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ready: Story = {
-  name: "Ready — pay-collector (ask amount + note)",
+  name: "Ready — payment (ask amount + note)",
   args: { firing: readyFiring }
 };
 

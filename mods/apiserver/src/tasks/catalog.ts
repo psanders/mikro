@@ -7,11 +7,11 @@
  */
 import type { TaskAutomationDescriptor, TaskGate } from "@mikro/common";
 import type { Automation } from "./types.js";
-import { payCollector } from "./automations/payCollector.js";
+import { payment } from "./automations/payment.js";
 import { recordExpense } from "./automations/recordExpense.js";
 import { dailyClose } from "./automations/dailyClose.js";
 
-const AUTOMATIONS: readonly Automation[] = [payCollector, recordExpense, dailyClose];
+const AUTOMATIONS: readonly Automation[] = [payment, recordExpense, dailyClose];
 
 const byId = new Map(AUTOMATIONS.map((a) => [a.id, a]));
 
@@ -34,7 +34,8 @@ export function listAutomationDescriptors(): TaskAutomationDescriptor[] {
       label: spec.label,
       source: spec.source,
       kind: spec.kind,
-      optional: spec.optional ?? false
+      optional: spec.optional ?? false,
+      defaultFrom: spec.defaultFrom
     }))
   }));
 }

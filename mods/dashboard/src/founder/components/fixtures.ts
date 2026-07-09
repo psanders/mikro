@@ -244,7 +244,7 @@ export const taskDueEvent: FeedEvent = {
   summary: 'La tarea "Pago semanal Ana" está lista para confirmar.',
   payload: {
     taskFiringId: "11111111-1111-4111-8111-111111111111",
-    automationId: "pay-collector",
+    automationId: "payment",
     taskName: "Pago semanal Ana",
     dueAt: minutesAgo(5)
   }
@@ -258,7 +258,7 @@ export const taskNeedsInputEvent: FeedEvent = {
   summary: 'La tarea "Pago semanal Ana" necesita información: accountId.',
   payload: {
     taskFiringId: "33333333-3333-4333-8333-333333333333",
-    automationId: "pay-collector",
+    automationId: "payment",
     taskName: "Pago semanal Ana",
     missingSlots: ["accountId"]
   }
@@ -273,7 +273,7 @@ export const taskCompletedEvent: FeedEvent = {
   summary: "Pago de RD$3,500 a Luis M. registrado.",
   payload: {
     taskFiringId: "11111111-1111-4111-8111-111111111111",
-    automationId: "pay-collector",
+    automationId: "payment",
     taskName: "Pago semanal Ana",
     skipped: false,
     resultSummary: "Pago de RD$3,500 a Luis M. registrado."

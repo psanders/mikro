@@ -68,6 +68,7 @@ export function TaskFeedCard(props: TaskFeedCardProps) {
     askSlots: firing.askSlots,
     missingSlots: firing.missingSlots,
     context: firing.context as Record<string, unknown>,
+    payload: firing.payload as Record<string, unknown>,
     reason: firing.reason
   };
 

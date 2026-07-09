@@ -44,7 +44,7 @@ interface AutomationVisual {
 }
 
 const AUTOMATION_VISUALS: Record<string, AutomationVisual> = {
-  "pay-collector": { icon: HandCoins, chipBg: "bg-[#FDF1E3]", chipFg: "text-[#D97706]" },
+  payment: { icon: HandCoins, chipBg: "bg-[#FDF1E3]", chipFg: "text-[#D97706]" },
   "record-expense": { icon: Fuel, chipBg: "bg-[#FDF1E3]", chipFg: "text-[#D97706]" },
   "daily-close": { icon: BookCheck, chipBg: "bg-[#E8F7EE]", chipFg: "text-[#16A34A]" }
 };

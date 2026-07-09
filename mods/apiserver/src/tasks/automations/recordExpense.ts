@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * record-expense: a generic recurring operating expense (the founder's
- * weekly-gas case). Same shape as pay-collector minus the collector context:
+ * weekly-gas case). Same shape as payment minus the employee context:
  * concept/account/category are pinned at creation, the amount is asked at
  * confirmation.
  */
