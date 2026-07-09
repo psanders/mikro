@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.35.2](https://github.com/psanders/mikro/compare/v1.35.1...v1.35.2) (2026-07-09)
+
+### Bug Fixes
+
+- **mobile:** fix pull-to-refresh dead zone on blank space ([#71](https://github.com/psanders/mikro/issues/71)) ([#167](https://github.com/psanders/mikro/issues/167)) ([1bf4412](https://github.com/psanders/mikro/commit/1bf4412a8fe9d506a6486d56062c3d526bf53253))
+
 ## [1.35.1](https://github.com/psanders/mikro/compare/v1.35.0...v1.35.1) (2026-07-09)
 
 **Note:** Version bump only for package mikro
