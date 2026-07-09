@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.35.3](https://github.com/psanders/mikro/compare/v1.35.2...v1.35.3) (2026-07-09)
+
+### Bug Fixes
+
+- issue [#156](https://github.com/psanders/mikro/issues/156) ([99b3fd8](https://github.com/psanders/mikro/commit/99b3fd86987bcfc4db4333b11c47b04d8d879b02))
+
 ## [1.35.2](https://github.com/psanders/mikro/compare/v1.35.1...v1.35.2) (2026-07-09)
 
 **Note:** Version bump only for package @mikro/apiserver
