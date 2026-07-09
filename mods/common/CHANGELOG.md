@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.35.0](https://github.com/psanders/mikro/compare/v1.34.1...v1.35.0) (2026-07-09)
+
+### Features
+
+- **tasks:** generalize pay-collector to a generic payment automation ([#163](https://github.com/psanders/mikro/issues/163)) ([b42355e](https://github.com/psanders/mikro/commit/b42355e7707f00d637e7a8497f31be8cf503ce20))
+
 ## [1.34.1](https://github.com/psanders/mikro/compare/v1.34.0...v1.34.1) (2026-07-08)
 
 **Note:** Version bump only for package @mikro/common
