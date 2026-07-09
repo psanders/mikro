@@ -110,7 +110,7 @@ jobs:
           - **Desktop** (macOS \`.dmg\`, Windows \`.msi\`/\`.exe\`, updater files) — attached below by [Build Dashboard]($workflows/build-dashboard.yaml)
           - **Android APK** — attached below by [Build Android APK]($workflows/build-android.yaml)
           - **iOS** (\`.ipa\`, App Store distribution) — attached below by [Build iOS (EAS)]($workflows/build-ios.yaml); submit with \`eas submit --platform ios\` → [EAS builds page](https://expo.dev/accounts/psanders/projects/mikro/builds)
-          - **API server** — \`docker pull psanders/mikro:$version\` → [Docker Hub](https://hub.docker.com/r/psanders/mikro/tags)
+          - **API server** — \`docker pull ghcr.io/psanders/mikro:$version\` → [GitHub Container Registry](https://github.com/psanders/mikro/pkgs/container/mikro)
           EOF
           gh release create "$tag" --verify-tag --title "Mikro $tag" \
             --generate-notes --notes-file /tmp/build-outputs.md

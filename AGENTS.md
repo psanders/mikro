@@ -38,8 +38,13 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   sharp compile from source and fail. All `eas.json` build profiles set
   `SHARP_IGNORE_GLOBAL_LIBVIPS=1` to force the prebuilt binary. Keep that
   env in any new profile.
-- The Docker image `psanders/mikro` is published linux/amd64 only. On
-  Apple Silicon run it with `--platform linux/amd64`.
+- The Docker image `ghcr.io/psanders/mikro` (private package, GitHub
+  Container Registry — migrated off Docker Hub, see #51) is published
+  linux/amd64 only. On Apple Silicon run it with `--platform linux/amd64`.
+  publish-apiserver.yaml authenticates with the job's own `GITHUB_TOKEN`
+  (`packages: write`); deploy-apiserver.yaml forwards a `packages: read`
+  `GITHUB_TOKEN` over SSH so the droplet can pull the private image without
+  a long-lived registry secret.
 - **build-dashboard pins `macos-26`, not `macos-latest`.** The `-latest`
   label is a lottery during GitHub's macOS 15→26 migration (started
   2026-06-15), and `screencapturekit` → `apple-metal` needs the macOS 26

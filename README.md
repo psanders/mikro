@@ -5,13 +5,13 @@ This is the main repository for the Mikro project. It is a monorepo that contain
 Build a linux compatible docker image (tagged as both `latest` and the version from `package.json`):
 
 ```bash
-docker build --platform linux/amd64 -t psanders/mikro:latest -t psanders/mikro:$(node -p "require('./package.json').version") -f mods/apiserver/Dockerfile --push .
+docker build --platform linux/amd64 -t ghcr.io/psanders/mikro:latest -t ghcr.io/psanders/mikro:$(node -p "require('./package.json').version") -f mods/apiserver/Dockerfile --push .
 ```
 
 Run with either tag:
 
 ```bash
-docker run -p 3000:3000 psanders/mikro:latest
+docker run -p 3000:3000 ghcr.io/psanders/mikro:latest
 ```
 
 ## Docker Compose Setup
