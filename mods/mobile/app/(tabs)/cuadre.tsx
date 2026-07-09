@@ -81,6 +81,7 @@ export default function CuadreScreen() {
 
       <ScrollView
         contentContainerStyle={styles.content}
+        alwaysBounceVertical
         refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
       >
         <View style={styles.summaryCard}>

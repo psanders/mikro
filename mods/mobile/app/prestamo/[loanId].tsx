@@ -178,6 +178,7 @@ export default function PrestamoDetalleScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        alwaysBounceVertical
         refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
       >
         <View style={styles.metaPills}>

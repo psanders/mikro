@@ -80,6 +80,7 @@ export default function EvaluadorInicioScreen() {
     <ScrollView
       style={styles.screen}
       contentContainerStyle={{ paddingBottom: 20 }}
+      alwaysBounceVertical
       refreshControl={
         <RefreshControl
           refreshing={receivedQ.isRefetching || inReviewQ.isRefetching}

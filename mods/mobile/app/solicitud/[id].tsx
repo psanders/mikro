@@ -192,6 +192,7 @@ export default function SolicitudDetailScreen() {
       />
       <ScrollView
         contentContainerStyle={styles.body}
+        alwaysBounceVertical
         refreshControl={
           <RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} />
         }

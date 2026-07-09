@@ -71,6 +71,7 @@ export default function PerfilScreen() {
       <Header title="Mi cuenta" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
+        alwaysBounceVertical
         refreshControl={
           <RefreshControl
             refreshing={dashboard.isRefetching}

@@ -79,6 +79,7 @@ export default function ClienteDetalleScreen() {
       <Header title="Cliente" rightIcon={Phone} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        alwaysBounceVertical
         refreshControl={<RefreshControl refreshing={isPulling} onRefresh={pull} />}
       >
         <View style={styles.profileCard}>

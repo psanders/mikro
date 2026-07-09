@@ -124,6 +124,7 @@ export default function EvaluadorBuscarScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        alwaysBounceVertical
         refreshControl={
           <RefreshControl refreshing={listQ.isRefetching} onRefresh={() => listQ.refetch()} />
         }
