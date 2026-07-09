@@ -130,7 +130,7 @@ export const TaskDueOpen: Story = {
         firing={{
           id: "11111111-1111-4111-8111-111111111111",
           taskName: "Pago semanal Ana",
-          automationId: "pay-collector",
+          automationId: "payment",
           status: "READY",
           askSlots: [
             { name: "amount", label: "Monto (RD$)", kind: "amount", optional: false },

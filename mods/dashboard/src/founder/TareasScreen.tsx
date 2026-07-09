@@ -204,7 +204,7 @@ export function TareasScreen() {
       {modal && (
         <TaskFormModal
           automations={automations}
-          collectors={(usersQuery.data ?? []).map((u) => ({ id: u.id, name: u.name }))}
+          employees={(usersQuery.data ?? []).map((u) => ({ id: u.id, name: u.name }))}
           accounts={(accountsQuery.data ?? []).map((a) => ({ id: a.id, name: a.name }))}
           categories={(categoriesQuery.data ?? []).map((c) => ({ id: c.id, name: c.name }))}
           mode={modal.mode}

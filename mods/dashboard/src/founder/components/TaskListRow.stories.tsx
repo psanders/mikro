@@ -11,11 +11,11 @@ function inDays(days: number, hour: number): string {
   return d.toISOString();
 }
 
-const payCollectorTask: TaskListItem = {
+const paymentTask: TaskListItem = {
   id: "task-1",
   name: "Pago semanal Ana",
-  automationId: "pay-collector",
-  automationTitle: "Pagar cobrador",
+  automationId: "payment",
+  automationTitle: "Pago",
   frequency: "weekly",
   weekday: 5,
   dayOfMonth: null,
@@ -74,7 +74,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const PayCollectorWeekly: Story = {
-  args: { task: payCollectorTask }
+  args: { task: paymentTask }
 };
 
 export const DailyClose: Story = {
@@ -87,10 +87,10 @@ export const PausedExpense: Story = {
 };
 
 export const List: Story = {
-  args: { task: payCollectorTask },
+  args: { task: paymentTask },
   render: () => (
     <div style={{ width: 900 }}>
-      <TaskListRow task={payCollectorTask} onToggle={() => {}} />
+      <TaskListRow task={paymentTask} onToggle={() => {}} />
       <TaskListRow task={dailyCloseTask} onToggle={() => {}} />
       <TaskListRow task={pausedExpenseTask} onToggle={() => {}} />
     </div>

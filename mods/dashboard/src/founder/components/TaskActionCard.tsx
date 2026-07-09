@@ -19,6 +19,8 @@ export interface TaskAskSlot {
   label: string;
   kind: "text" | "amount" | "collector" | "account" | "category";
   optional: boolean;
+  /** Name of a gathered payload field whose value pre-fills this input (still editable). */
+  defaultFrom?: string;
 }
 
 /** Presentational shape for an open firing (mapped from tasks.getFiring). */
@@ -31,6 +33,8 @@ export interface TaskFiringInfo {
   missingSlots: string[];
   /** Display-only fire-time context (week collected, day totals, …). */
   context: Record<string, unknown>;
+  /** Gathered static/computed values — used only to seed ask-input defaults (e.g. suggestedAmount). */
+  payload?: Record<string, unknown>;
   reason?: string | null;
 }
 
@@ -85,7 +89,20 @@ export function TaskActionCard({
   onSkip,
   className
 }: TaskActionCardProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  // Any ask slot may declare `defaultFrom`, naming a gathered payload field
+  // whose value pre-fills its input (still freely editable) — e.g. payment's
+  // ask `amount` defaults from its static `suggestedAmount` slot.
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const defaults: Record<string, string> = {};
+    for (const slot of firing.askSlots) {
+      if (!slot.defaultFrom) continue;
+      const value = firing.payload?.[slot.defaultFrom];
+      if (typeof value === "number" || typeof value === "string") {
+        defaults[slot.name] = String(value);
+      }
+    }
+    return defaults;
+  });
 
   const sentence = contextSentence(firing);
   const needsInput = firing.status === "NEEDS_INPUT";

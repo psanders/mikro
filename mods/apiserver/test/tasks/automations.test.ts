@@ -1,13 +1,13 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Seed automation behavior with stubbed deps: pay-collector and
+ * Seed automation behavior with stubbed deps: payment and
  * record-expense post one expense; daily-close bridges per method, refuses a
  * double close, and completes a zero day without posting.
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { payCollector } from "../../src/tasks/automations/payCollector.js";
+import { payment } from "../../src/tasks/automations/payment.js";
 import { recordExpense } from "../../src/tasks/automations/recordExpense.js";
 import { dailyClose } from "../../src/tasks/automations/dailyClose.js";
 import type { AutomationDeps } from "../../src/tasks/types.js";
@@ -20,7 +20,9 @@ function makeDeps(overrides: Record<string, unknown> = {}): {
 } {
   const createTransaction = sinon.stub().resolves({});
   const db = {
-    user: { findUnique: sinon.stub().resolves({ name: "Luis M." }) },
+    user: {
+      findUnique: sinon.stub().resolves({ name: "Luis M.", roles: [{ role: "COLLECTOR" }] })
+    },
     payment: { findMany: sinon.stub().resolves([]) },
     accountingTransaction: { findFirst: sinon.stub().resolves(null) },
     ...overrides
@@ -31,14 +33,14 @@ function makeDeps(overrides: Record<string, unknown> = {}): {
   };
 }
 
-describe("pay-collector", () => {
+describe("payment", () => {
   afterEach(() => sinon.restore());
 
   it("posts one expense with the confirmed amount", async () => {
     const { deps, createTransaction } = makeDeps();
-    const result = await payCollector.execute(
+    const result = await payment.execute(
       {
-        collectorId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        employeeId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         amount: 3500
@@ -57,9 +59,9 @@ describe("pay-collector", () => {
 
   it("uses the founder's note as the description when given", async () => {
     const { deps, createTransaction } = makeDeps();
-    await payCollector.execute(
+    await payment.execute(
       {
-        collectorId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        employeeId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         amount: 3500,
@@ -73,9 +75,9 @@ describe("pay-collector", () => {
   it("buildContext sums the collector's trailing-week collections", async () => {
     const findMany = sinon.stub().resolves([{ amount: 1000 }, { amount: 2500 }]);
     const { deps } = makeDeps({ payment: { findMany } });
-    const ctx = await payCollector.buildContext!({
+    const ctx = await payment.buildContext!({
       db: deps.db,
-      staticParams: { collectorId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e" },
+      staticParams: { employeeId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e" },
       dueAt: new Date("2026-07-10T12:00:00Z"),
       now: new Date("2026-07-10T12:00:00Z")
     });
@@ -83,6 +85,46 @@ describe("pay-collector", () => {
     expect(ctx.weekPayments).to.equal(2);
     expect(ctx.collectorName).to.equal("Luis M.");
     expect(findMany.firstCall.args[0].where.status).to.deep.equal({ not: "REVERSED" });
+  });
+
+  it("buildContext skips week context when the employee isn't a collector", async () => {
+    const findUnique = sinon.stub().resolves({ name: "Rosa V.", roles: [] });
+    const findMany = sinon.stub().resolves([{ amount: 1000 }]);
+    const { deps } = makeDeps({ user: { findUnique }, payment: { findMany } });
+    const ctx = await payment.buildContext!({
+      db: deps.db,
+      staticParams: { employeeId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e" },
+      dueAt: new Date("2026-07-10T12:00:00Z"),
+      now: new Date("2026-07-10T12:00:00Z")
+    });
+    expect(ctx).to.deep.equal({});
+    expect(findMany.called).to.be.false;
+  });
+
+  it("posts a generic payment when no employee is configured (issue #163)", async () => {
+    const { deps, createTransaction } = makeDeps();
+    const result = await payment.execute(
+      {
+        accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        amount: 1200
+      },
+      deps
+    );
+
+    expect(createTransaction.firstCall.args[0].description).to.equal("Pago");
+    expect(result.summary).to.equal("Pago de RD$1,200 registrado.");
+  });
+
+  it("buildContext skips week context when no employee is configured", async () => {
+    const { deps } = makeDeps();
+    const ctx = await payment.buildContext!({
+      db: deps.db,
+      staticParams: {},
+      dueAt: new Date("2026-07-10T12:00:00Z"),
+      now: new Date("2026-07-10T12:00:00Z")
+    });
+    expect(ctx).to.deep.equal({});
   });
 });
 

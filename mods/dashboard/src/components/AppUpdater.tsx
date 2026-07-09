@@ -5,33 +5,57 @@
  * newer build has been staged. Renders nothing on the web build (the hook
  * no-ops off Tauri) or until an update is staged. Postpone (issue #162) is
  * persisted for 24h via `updateSnooze`, so it survives a restart — a newer
- * staged version always breaks through an earlier postpone. Snooze status is
- * re-polled every minute (not just when `readyVersion` changes) so the banner
- * comes back once the 24h window lapses, even in a session that runs that long
- * without a newer version showing up to trigger a recompute on its own.
+ * staged version always breaks through an earlier postpone. A single timer is
+ * scheduled at the stored snooze's exact expiry moment (not polled) so the
+ * banner reappears the instant the 24h window lapses, even in a session that
+ * runs that long without a newer version showing up to trigger a recompute.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppUpdater } from "../lib/updater";
-import { isUpdateSnoozed, snoozeUpdate } from "../lib/updateSnooze";
+import { isUpdateSnoozed, snoozeExpiry, snoozeUpdate } from "../lib/updateSnooze";
 import { UpdateBanner } from "./UpdateBanner";
-
-/** How often to re-check whether the 24h postpone window has lapsed. */
-const SNOOZE_POLL_MS = 60 * 1000;
 
 export function AppUpdater() {
   const { readyVersion, restart } = useAppUpdater();
   const [snoozed, setSnoozed] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearScheduled = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  // Recomputes snoozed state now, and — if still snoozed — schedules one
+  // precise timeout for the exact moment the postpone lapses.
+  const scheduleCheck = useCallback(
+    (version: string) => {
+      clearScheduled();
+      setSnoozed(isUpdateSnoozed(version));
+      const until = snoozeExpiry(version);
+      if (until !== null) {
+        timeoutRef.current = setTimeout(
+          () => {
+            timeoutRef.current = null;
+            setSnoozed(false);
+          },
+          Math.max(0, until - Date.now())
+        );
+      }
+    },
+    [clearScheduled]
+  );
 
   useEffect(() => {
     if (!readyVersion) {
+      clearScheduled();
       setSnoozed(false);
       return;
     }
-    const recompute = () => setSnoozed(isUpdateSnoozed(readyVersion));
-    recompute();
-    const id = setInterval(recompute, SNOOZE_POLL_MS);
-    return () => clearInterval(id);
-  }, [readyVersion]);
+    scheduleCheck(readyVersion);
+    return clearScheduled;
+  }, [readyVersion, scheduleCheck, clearScheduled]);
 
   if (!readyVersion || snoozed) return null;
 
@@ -41,7 +65,7 @@ export function AppUpdater() {
       onRestart={restart}
       onPostpone={() => {
         snoozeUpdate(readyVersion);
-        setSnoozed(true);
+        scheduleCheck(readyVersion);
       }}
     />
   );

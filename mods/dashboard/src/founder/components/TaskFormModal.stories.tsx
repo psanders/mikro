@@ -7,16 +7,16 @@ import type { TaskAutomationOption } from "./TaskFormModal";
 
 const automations: TaskAutomationOption[] = [
   {
-    id: "pay-collector",
-    title: "Pagar cobrador",
+    id: "payment",
+    title: "Pago",
     gateFloor: "confirm",
     slots: [
       {
-        name: "collectorId",
-        label: "Cobrador",
+        name: "employeeId",
+        label: "Empleado",
         source: "static",
         kind: "collector",
-        optional: false
+        optional: true
       },
       { name: "accountId", label: "Cuenta", source: "static", kind: "account", optional: false },
       {
@@ -25,6 +25,13 @@ const automations: TaskAutomationOption[] = [
         source: "static",
         kind: "category",
         optional: false
+      },
+      {
+        name: "suggestedAmount",
+        label: "Monto sugerido (RD$, opcional)",
+        source: "static",
+        kind: "amount",
+        optional: true
       },
       { name: "amount", label: "Monto (RD$)", source: "ask", kind: "amount", optional: false },
       { name: "note", label: "Nota (opcional)", source: "ask", kind: "text", optional: true }
@@ -71,7 +78,7 @@ const automations: TaskAutomationOption[] = [
   }
 ];
 
-const collectors = [
+const employees = [
   { id: "u-1", name: "Luis M." },
   { id: "u-2", name: "Marta R." }
 ];
@@ -90,7 +97,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
   args: {
     automations,
-    collectors,
+    employees,
     accounts,
     categories,
     onSubmit: () => {},
@@ -115,17 +122,17 @@ export const Edit: Story = {
     mode: "edit",
     initial: {
       name: "Pago semanal Ana",
-      automationId: "pay-collector",
+      automationId: "payment",
       frequency: "weekly",
       weekday: 5,
       timeOfDay: "08:00",
-      staticParams: { collectorId: "u-1", accountId: "a-1", categoryId: "c-1" }
+      staticParams: { employeeId: "u-1", accountId: "a-1", categoryId: "c-1" }
     }
   }
 };
 
 export const WithError: Story = {
-  args: { error: "Parámetros inválidos o faltantes: collectorId." }
+  args: { error: "Parámetros inválidos o faltantes: accountId." }
 };
 
 export const Submitting: Story = {

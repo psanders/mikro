@@ -14,7 +14,7 @@ import {
 
 const base = {
   name: "Pago semanal Ana",
-  automationId: "pay-collector",
+  automationId: "payment",
   timeOfDay: "08:00"
 };
 
@@ -98,7 +98,7 @@ describe("confirmTaskFiringSchema", () => {
 describe("task.* business-event payloads", () => {
   const firing = {
     taskFiringId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
-    automationId: "pay-collector",
+    automationId: "payment",
     taskName: "Pago semanal Ana"
   };
 

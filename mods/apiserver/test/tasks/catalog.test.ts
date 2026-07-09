@@ -15,11 +15,7 @@ import { validateSlots, slotNames } from "../../src/tasks/validatePayload.js";
 
 describe("automation catalog", () => {
   it("ships exactly the three v1 automations", () => {
-    expect(listAutomationIds().sort()).to.deep.equal([
-      "daily-close",
-      "pay-collector",
-      "record-expense"
-    ]);
+    expect(listAutomationIds().sort()).to.deep.equal(["daily-close", "payment", "record-expense"]);
   });
 
   it("returns undefined for an unknown automation", () => {
@@ -33,7 +29,7 @@ describe("automation catalog", () => {
   });
 
   it("descriptors expose slot names, labels, sources, and kinds", () => {
-    const pay = listAutomationDescriptors().find((d) => d.id === "pay-collector");
+    const pay = listAutomationDescriptors().find((d) => d.id === "payment");
     expect(pay).to.not.equal(undefined);
     const amount = pay!.slots.find((s) => s.name === "amount");
     expect(amount).to.deep.equal({
@@ -41,7 +37,8 @@ describe("automation catalog", () => {
       label: "Monto (RD$)",
       source: "ask",
       kind: "amount",
-      optional: false
+      optional: false,
+      defaultFrom: "suggestedAmount"
     });
   });
 
@@ -54,13 +51,13 @@ describe("automation catalog", () => {
 });
 
 describe("validateSlots", () => {
-  const payCollector = getAutomation("pay-collector")!;
+  const payment = getAutomation("payment")!;
 
   it("accepts valid static values and reports none missing", () => {
     const result = validateSlots(
-      payCollector,
+      payment,
       {
-        collectorId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        employeeId: "0d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
         categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e"
       },
@@ -70,34 +67,48 @@ describe("validateSlots", () => {
     expect(Object.keys(result.values).sort()).to.deep.equal([
       "accountId",
       "categoryId",
-      "collectorId"
+      "employeeId"
     ]);
   });
 
   it("flags a schema-invalid value as missing (no side effect possible)", () => {
-    const result = validateSlots(payCollector, { amount: -50 }, ["ask"]);
+    const result = validateSlots(payment, { amount: -50 }, ["ask"]);
     expect(result.missing).to.include("amount");
     expect(result.values).to.not.have.property("amount");
   });
 
   it("coerces ask amounts from form strings", () => {
-    const result = validateSlots(payCollector, { amount: "3500" }, ["ask"]);
+    const result = validateSlots(payment, { amount: "3500" }, ["ask"]);
     expect(result.missing).to.deep.equal([]);
     expect(result.values.amount).to.equal(3500);
   });
 
   it("lets optional ask slots be absent", () => {
-    const result = validateSlots(payCollector, { amount: 3500 }, ["ask"]);
+    const result = validateSlots(payment, { amount: 3500 }, ["ask"]);
     expect(result.missing).to.deep.equal([]);
   });
 
+  it("lets the optional employee slot be absent at creation", () => {
+    const result = validateSlots(
+      payment,
+      {
+        accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e"
+      },
+      ["static"]
+    );
+    expect(result.missing).to.deep.equal([]);
+    expect(result.values).to.not.have.property("employeeId");
+  });
+
   it("reports required slots missing when values are absent (drift degrade path)", () => {
-    const result = validateSlots(payCollector, {}, ["static", "ask"]);
-    expect(result.missing).to.include.members(["collectorId", "accountId", "amount"]);
+    const result = validateSlots(payment, {}, ["static", "ask"]);
+    expect(result.missing).to.include.members(["accountId", "amount"]);
+    expect(result.missing).to.not.include("employeeId");
   });
 
   it("slotNames partitions by source", () => {
-    expect(slotNames(payCollector, "ask").sort()).to.deep.equal(["amount", "note"]);
+    expect(slotNames(payment, "ask").sort()).to.deep.equal(["amount", "note"]);
     expect(slotNames(getAutomation("daily-close")!, "computed")).to.deep.equal(["closeDate"]);
   });
 });

@@ -44,8 +44,8 @@ export interface TaskFormValues {
 
 export interface TaskFormModalProps {
   automations: TaskAutomationOption[];
-  /** Options per slot kind, provided by the screen. */
-  collectors: SelectOption[];
+  /** Options for `kind: "collector"` slots — any system user, not collectors-only. */
+  employees: SelectOption[];
   accounts: SelectOption[];
   categories: SelectOption[];
   /** Prefill for edit; the automation select is locked in edit mode. */
@@ -83,7 +83,7 @@ const SELECT_CHEVRON =
 
 export function TaskFormModal({
   automations,
-  collectors,
+  employees,
   accounts,
   categories,
   initial,
@@ -116,7 +116,7 @@ export function TaskFormModal({
   const askSlots = automation?.slots.filter((s) => s.source === "ask") ?? [];
 
   function optionsFor(kind: string): SelectOption[] | null {
-    if (kind === "collector") return collectors;
+    if (kind === "collector") return employees;
     if (kind === "account") return accounts;
     if (kind === "category") return categories;
     return null;
