@@ -1,6 +1,6 @@
 services:
   apiserver:
-    image: ${MIKRO_IMAGE:-psanders/mikro:latest}
+    image: ${MIKRO_IMAGE:-ghcr.io/psanders/mikro:latest}
     container_name: mikro-apiserver
     restart: unless-stopped
     ports:

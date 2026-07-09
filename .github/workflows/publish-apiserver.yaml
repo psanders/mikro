@@ -21,6 +21,10 @@ concurrency:
   group: publish-apiserver
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -59,13 +63,20 @@ jobs:
             echo "LERNA_VERSION=$lerna_version" >> $GITHUB_ENV
           fi
 
-      - name: Publish to Docker Hub
-        uses: elgohr/Publish-Docker-Github-Action@v5
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: psanders/mikro
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          dockerfile: mods/apiserver/Dockerfile
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Container Registry
+        uses: docker/build-push-action@v6
+        with:
+          file: mods/apiserver/Dockerfile
           context: .
           platforms: linux/amd64
-          tags: "latest,${{ env.LERNA_VERSION }}"
+          push: true
+          tags: |
+            ghcr.io/psanders/mikro:latest
+            ghcr.io/psanders/mikro:${{ env.LERNA_VERSION }}
