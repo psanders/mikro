@@ -219,11 +219,12 @@ jobs:
             mv .env.next .env
 
             # Package is private; the job-scoped GITHUB_TOKEN forwarded above
-            # authenticates the pull. Log out afterward so it isn't left
-            # sitting in the droplet's docker config once the run ends.
+            # authenticates the pull. Log out on any exit (success, pull
+            # failure, or otherwise) so it isn't left sitting in the
+            # droplet's docker config once the run ends.
+            trap 'docker logout ghcr.io' EXIT
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
             docker compose pull apiserver
-            docker logout ghcr.io
             docker compose up -d apiserver
 
             # Wait for the new container to answer and (when reported) confirm
