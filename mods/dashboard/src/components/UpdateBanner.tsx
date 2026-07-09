@@ -3,9 +3,10 @@
  *
  * Presentational "update ready" banner for the desktop app. Shown once a newer
  * build has been downloaded + installed in the background; it tells the operator
- * the update applies on next launch and offers an immediate restart. Placement
- * mirrors the toast (bottom-center, floating). No-ops on the web build — it's
- * only rendered by {@link AppUpdater}, which is desktop-gated.
+ * the update applies on next launch and offers an immediate restart, or to
+ * postpone — which snoozes the banner for 24h (issue #162). Placement mirrors
+ * the toast (bottom-center, floating). No-ops on the web build — it's only
+ * rendered by {@link AppUpdater}, which is desktop-gated.
  */
 import { CircleCheck, RefreshCw, X } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -15,11 +16,11 @@ interface UpdateBannerProps {
   version: string;
   /** Relaunch now to apply it. */
   onRestart: () => void;
-  /** Hide the banner for this session. */
-  onDismiss: () => void;
+  /** Snooze the banner for this version for 24h. */
+  onPostpone: () => void;
 }
 
-export function UpdateBanner({ version, onRestart, onDismiss }: UpdateBannerProps) {
+export function UpdateBanner({ version, onRestart, onPostpone }: UpdateBannerProps) {
   return (
     <div
       role="status"
@@ -40,8 +41,9 @@ export function UpdateBanner({ version, onRestart, onDismiss }: UpdateBannerProp
       </Button>
       <button
         type="button"
-        onClick={onDismiss}
-        aria-label="Cerrar"
+        onClick={onPostpone}
+        aria-label="Recordar en 24 horas"
+        title="Recordar en 24 horas"
         className="shrink-0 text-ds-muted transition hover:text-brand-ink"
       >
         <X size={16} />
