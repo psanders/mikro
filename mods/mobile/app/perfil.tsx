@@ -61,7 +61,7 @@ export default function PerfilScreen() {
     router.replace(mode === "evaluator" ? EVALUATOR_HOME : COLLECTOR_HOME);
   }
 
-  const appVersion = Constants.expoConfig?.version ?? "0.1.0";
+  const appVersion = Constants.expoConfig?.version ?? "1.35.3";
   const data = dashboard.data;
   const name = data?.collector.name ?? "...";
   const activeLoans = data?.visits.length ?? 0;
