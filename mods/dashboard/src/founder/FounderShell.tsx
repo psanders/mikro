@@ -164,18 +164,18 @@ export function FounderShell() {
               onClick={() => navigate("/founder")}
             />
             <RailItem
+              icon={Search}
+              label="Búsqueda"
+              active={path.startsWith("/founder/buscar")}
+              onClick={() => navigate("/founder/buscar")}
+            />
+            <RailItem
               icon={Clock3}
               label="Tareas"
               active={path.startsWith("/founder/tareas")}
               onClick={() => navigate("/founder/tareas")}
             />
             <ExceptionsRailItem />
-            <RailItem
-              icon={Search}
-              label="Búsqueda"
-              active={path.startsWith("/founder/buscar")}
-              onClick={() => navigate("/founder/buscar")}
-            />
             <RailItem
               icon={FileText}
               label="Reportes"
