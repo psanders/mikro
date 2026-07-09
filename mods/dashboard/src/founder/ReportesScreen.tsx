@@ -44,11 +44,22 @@ interface MonthOption {
   label: string;
 }
 
-/** Rolling window of months ending at the current one — never a future month. */
+// Operations began January 2026 — no report data exists before this (issue #168).
+const OPS_START_YEAR = 2026;
+const OPS_START_MONTH = 1;
+
+/**
+ * Rolling window of months ending at the current one — never a future month,
+ * never earlier than operations start (Jan 2026).
+ */
 function buildMonthOptions(now: Date, count = 12): MonthOption[] {
   const options: MonthOption[] = [];
   for (let i = 0; i < count; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const beforeOpsStart =
+      d.getFullYear() < OPS_START_YEAR ||
+      (d.getFullYear() === OPS_START_YEAR && d.getMonth() + 1 < OPS_START_MONTH);
+    if (beforeOpsStart) break;
     options.push({
       year: d.getFullYear(),
       month: d.getMonth() + 1,
