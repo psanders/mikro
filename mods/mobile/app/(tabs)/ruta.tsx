@@ -81,7 +81,20 @@ export default function RutaScreen() {
   ];
 
   return (
-    <View style={styles.screen}>
+    // Header + chips live inside the scrollable region (not fixed above it)
+    // so pulling from blank space near the top still arms RefreshControl —
+    // see mikro/#71.
+    <ScrollView
+      style={styles.screen}
+      alwaysBounceVertical
+      refreshControl={
+        <RefreshControl
+          refreshing={isPulling}
+          onRefresh={pull}
+          tintColor={colors.brand.blue.primary}
+        />
+      }
+    >
       <Header title="Mi ruta" subtitle={`${formatDate()} · ${counts.all} cobros`} />
 
       <View style={styles.chipRow}>
@@ -103,17 +116,7 @@ export default function RutaScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isPulling}
-            onRefresh={pull}
-            tintColor={colors.brand.blue.primary}
-          />
-        }
-      >
+      <View style={styles.listContent}>
         {dashboard.isLoading && <Text style={styles.emptyText}>Cargando...</Text>}
         {!dashboard.isLoading && !dashboard.data && (
           <Text style={styles.emptyText}>Sin datos. Sincroniza para ver tu ruta.</Text>
@@ -146,8 +149,8 @@ export default function RutaScreen() {
             onPress={() => router.push(`/cliente/${v.customerId}`)}
           />
         ))}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -155,7 +158,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg.screen },
   chipRow: { height: 44 },
   chips: { paddingHorizontal: 20, paddingVertical: 6, gap: 8, alignItems: "center" },
-  list: { flex: 1 },
   listContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 10 },
   emptyText: {
     fontFamily: "Geist_500Medium",
