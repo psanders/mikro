@@ -66,6 +66,15 @@ function buildMonthOptions(now: Date, count = 12): MonthOption[] {
       label: `${MONTHS_ES[d.getMonth()]} ${d.getFullYear()}`
     });
   }
+  // Guard against a clock reading before ops start (misconfigured device,
+  // stale build) — never return an empty list, callers assume options[0] exists.
+  if (options.length === 0) {
+    options.push({
+      year: OPS_START_YEAR,
+      month: OPS_START_MONTH,
+      label: `${MONTHS_ES[OPS_START_MONTH - 1]} ${OPS_START_YEAR}`
+    });
+  }
   return options;
 }
 
