@@ -1,4 +1,10 @@
-## ADDED Requirements
+# no-referrals Specification
+
+## Purpose
+
+Mikro dropped referrals as a business concept in 2026-06 (`remove-referrals`): no referrer role, no `Customer.referredById`, no referrer-scoped reports or queries, and no "who referred you?" step in onboarding. This spec asserts that end state stays gone — a negative/absence spec, not a feature to build.
+
+## Requirements
 
 ### Requirement: No referrer role
 
