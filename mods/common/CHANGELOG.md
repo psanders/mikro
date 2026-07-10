@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.36.0](https://github.com/psanders/mikro/compare/v1.35.5...v1.36.0) (2026-07-10)
+
+### Features
+
+- **copilot:** generate ad-hoc loan contracts from the founder copilot ([#196](https://github.com/psanders/mikro/issues/196)) ([1145d95](https://github.com/psanders/mikro/commit/1145d9531dd254a0bbf82fc64a0cb1c90c59e253)), closes [#110](https://github.com/psanders/mikro/issues/110) [#161](https://github.com/psanders/mikro/issues/161) [#161](https://github.com/psanders/mikro/issues/161) [#10036](https://github.com/psanders/mikro/issues/10036)
+
 ## [1.35.5](https://github.com/psanders/mikro/compare/v1.35.4...v1.35.5) (2026-07-10)
 
 **Note:** Version bump only for package @mikro/common
