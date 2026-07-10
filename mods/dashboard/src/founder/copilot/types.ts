@@ -61,11 +61,49 @@ export interface RuleMessage {
   provenance?: CopilotProvenance;
 }
 
+export type ContractFrequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+
+/** A customer as the contract form's picker lists it (subset of the row). */
+export interface ContractCustomer {
+  id: string;
+  name: string;
+  phone: string;
+  idNumber: string;
+  /** Shown read-only as the "Reside en" hint; sourced from homeAddress. */
+  homeAddress?: string;
+}
+
+/** The values the contract form submits to `generateCustomerContract`. */
+export interface ContractFormValues {
+  customerId: string;
+  gender: "M" | "F";
+  principal: number;
+  installments: number;
+  frequency: ContractFrequency;
+  installmentAmount: number;
+  /** ISO date (yyyy-mm-dd from the date input). */
+  startDate: string;
+  maritalStatus?: string;
+  occupation?: string;
+}
+
+/** Lifecycle of the form card's generate action. */
+export type ContractFormStatus = "idle" | "generating" | "done" | "error";
+
+export interface ContractFormMessage {
+  kind: "contractForm";
+  id: string;
+  /** Optional name/phone the founder named, to pre-seed the picker search. */
+  customerHint?: string;
+  provenance?: CopilotProvenance;
+}
+
 export type CopilotMessage =
   | UserMessage
   | AssistantTextMessage
   | PendingActionMessage
-  | RuleMessage;
+  | RuleMessage
+  | ContractFormMessage;
 
 export type CapabilityVerb = "CONSULTAR" | "ACTUAR" | "VIGILAR" | "AUDITAR";
 

@@ -513,6 +513,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     const context: Record<string, unknown> = { userId, role: "ADMIN", name: actorName };
     const toolsUsed: string[] = [];
     let createdRule: WatchRuleView | undefined;
+    let contractForm: { customerHint?: string } | undefined;
     // Tracks the most recent failed/limited tool call so a githubFeedback call
     // right after it can attach that context automatically (design Decision 4).
     let lastFailedCall: FailedToolCall | undefined;
@@ -620,6 +621,16 @@ export function createCopilotChat(deps: CopilotChatDeps) {
         } else if (tc.name === "githubFeedback") {
           result = await handleGithubFeedback(tc.args, lastFailedCall);
           feedbackOutcome = { ok: result.success };
+        } else if (tc.name === "openContractForm") {
+          // Generates nothing: just opens the form card in the dock. The card
+          // collects the terms and calls generateCustomerContract directly.
+          const hint =
+            typeof tc.args?.customerHint === "string" ? tc.args.customerHint.trim() : undefined;
+          contractForm = hint ? { customerHint: hint } : {};
+          result = {
+            success: true,
+            message: "Formulario de contrato abierto. El fundador completará los datos."
+          };
         } else {
           // Existing business read tool → shared executor.
           result = await toolExecutor(tc.name, tc.args, context);
@@ -647,7 +658,11 @@ export function createCopilotChat(deps: CopilotChatDeps) {
 
     const modelReply =
       getText(response.content).trim() ||
-      (createdRule ? `Listo, creé la regla "${createdRule.name}".` : "");
+      (createdRule
+        ? `Listo, creé la regla "${createdRule.name}".`
+        : contractForm
+          ? "Listo. Completá los datos del préstamo y lo genero."
+          : "");
 
     // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
     // appended deterministically, not left to the model's own phrasing, so a
@@ -675,7 +690,8 @@ export function createCopilotChat(deps: CopilotChatDeps) {
               collectorId: createdRule.collectorId
             }
           }
-        : {})
+        : {}),
+      ...(contractForm ? { contractForm } : {})
     };
   };
 }

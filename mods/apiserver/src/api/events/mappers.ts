@@ -292,6 +292,44 @@ const customerCreated: EventMapper = async ({ result, ctx }) => {
   };
 };
 
+interface GenerateContractInput {
+  customerId: string;
+  principal: number;
+  installments: number;
+  frequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+  installmentAmount: number;
+  startDate: string;
+}
+
+const contractGenerated: EventMapper = async ({ input, ctx }) => {
+  const i = input as GenerateContractInput;
+  const client = db(ctx);
+  const actorName = await resolveActorName(client, ctx.userId);
+  const customer = await client.customer.findUnique({
+    where: { id: i.customerId },
+    select: { name: true }
+  });
+  const name = customer?.name ?? "un cliente";
+
+  return {
+    type: "contract.generated",
+    actorId: ctx.userId,
+    actorName,
+    customerId: i.customerId,
+    customerName: name,
+    amount: i.principal,
+    summary: `${actorName} generó un contrato para ${name} (${formatDop(i.principal)})`,
+    payload: {
+      customerId: i.customerId,
+      principal: i.principal,
+      installments: i.installments,
+      frequency: i.frequency,
+      installmentAmount: i.installmentAmount,
+      startDate: i.startDate
+    }
+  };
+};
+
 /**
  * Registry keyed by event type. Every catalog type has a mapper EXCEPT
  * `application.restored`, which createRestoreApplication writes itself.
@@ -305,5 +343,6 @@ export const eventMappers: Partial<Record<BusinessEventType, EventMapper>> = {
   "application.converted": applicationConverted,
   "application.deleted": applicationDeleted,
   "loan.status_changed": loanStatusChanged,
-  "customer.created": customerCreated
+  "customer.created": customerCreated,
+  "contract.generated": contractGenerated
 };

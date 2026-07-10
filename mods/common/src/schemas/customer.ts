@@ -121,9 +121,32 @@ export const exportCollectorCustomersSchema = z.object({
 export const exportAllCustomersSchema = z.object({});
 
 /**
+ * Schema for generating an ad-hoc loan contract for an existing customer.
+ * The debtor identity is sourced from the customer row; the debtor's gender and
+ * the negotiated terms are supplied by the founder in the copilot contract form.
+ */
+export const generateCustomerContractSchema = z.object({
+  customerId: z.uuid({ error: "Invalid customer ID" }),
+  gender: z.enum(["M", "F"]),
+  principal: z.number().positive(),
+  installments: z.number().int().positive(),
+  installmentAmount: z.number().positive(),
+  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  startDate: z.string().min(1),
+  /** Optional — the customer row carries neither. */
+  maritalStatus: z.string().trim().max(40).optional(),
+  occupation: z.string().trim().max(80).optional()
+});
+
+/**
  * Input type for creating a customer.
  */
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+
+/**
+ * Input type for generating a customer loan contract.
+ */
+export type GenerateCustomerContractInput = z.infer<typeof generateCustomerContractSchema>;
 
 /**
  * Input type for updating a customer.

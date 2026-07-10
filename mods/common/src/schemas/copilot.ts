@@ -92,9 +92,24 @@ export const copilotProvenanceSchema = z.object({
 export type CopilotProvenance = z.infer<typeof copilotProvenanceSchema>;
 
 /**
+ * The interactive contract form the copilot opens when the founder asks for a
+ * loan contract. Carries only an optional customer hint to pre-seed the picker —
+ * nothing is generated here; the card collects the terms and calls
+ * `generateCustomerContract` directly. Distinct from a pending action: the card
+ * is an editable form, not a verbatim confirm-and-execute.
+ */
+export const copilotContractFormSchema = z.object({
+  /** Free-text hint (name or phone) the founder named, to pre-seed the search. */
+  customerHint: z.string().optional()
+});
+
+export type CopilotContractForm = z.infer<typeof copilotContractFormSchema>;
+
+/**
  * One copilotChat response: the assistant's reply text, optional provenance,
  * and — when the model proposed a write — the pending action to confirm.
- * Rule cards render when `createdRule` is present (Vigilar creates directly).
+ * Rule cards render when `createdRule` is present (Vigilar creates directly);
+ * the contract form card renders when `contractForm` is present.
  */
 export const copilotChatReplySchema = z.object({
   reply: z.string(),
@@ -109,7 +124,8 @@ export const copilotChatReplySchema = z.object({
       threshold: z.number(),
       collectorId: z.uuid().nullable().optional()
     })
-    .optional()
+    .optional(),
+  contractForm: copilotContractFormSchema.optional()
 });
 
 export type CopilotChatReply = z.infer<typeof copilotChatReplySchema>;
