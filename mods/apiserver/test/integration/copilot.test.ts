@@ -557,6 +557,78 @@ describe("Founder Copilot Integration", () => {
     });
   });
 
+  describe("customer/loan form cards", () => {
+    // Two turns: the first proposes the DIRECT tool call, the second (no
+    // tool_calls) ends the loop — DIRECT tools don't short-circuit like
+    // WRITE tools do, so the model is re-invoked once with the tool result.
+    it("openCustomerForm opens the card and creates nothing", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "openCustomerForm", args: {} }] },
+        { content: "Listo, aquí tienes el formulario." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "creá un cliente nuevo" });
+
+      expect(calls, "no read/write tool executed").to.have.lengthOf(0);
+      expect(reply.customerForm).to.deep.equal({});
+      expect(reply.pendingAction).to.equal(undefined);
+      expect(await db.customer.count()).to.equal(0);
+    });
+
+    it("openLoanForm opens the card with a customer hint and creates nothing", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "openLoanForm", args: { customerHint: " Enersida " } }]
+        },
+        { content: "Listo, aquí tienes el formulario." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "creá un préstamo para Enersida" });
+
+      expect(calls, "no read/write tool executed").to.have.lengthOf(0);
+      expect(reply.loanForm).to.deep.equal({ customerHint: "Enersida" });
+      expect(reply.pendingAction).to.equal(undefined);
+      expect(await db.loan.count()).to.equal(0);
+    });
+
+    it("openLoanForm without a hint returns an empty loanForm", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "openLoanForm", args: {} }] },
+        { content: "Listo, aquí tienes el formulario." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "necesito abrir un préstamo" });
+
+      expect(calls, "no read/write tool executed").to.have.lengthOf(0);
+      expect(reply.loanForm).to.deep.equal({});
+      expect(await db.loan.count()).to.equal(0);
+    });
+
+    it("falls back to a form-specific reply when the model's own text is empty", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        { content: "", tool_calls: [{ id: "c1", name: "openCustomerForm", args: {} }] },
+        { content: "" }
+      ]);
+      const { executor } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({ message: "creá un cliente nuevo" });
+
+      expect(reply.reply).to.equal("Listo. Completá los datos del cliente y lo creo.");
+    });
+  });
+
   describe("confirm / reject lifecycle", () => {
     it("confirm executes the tool and records copilot.action", async () => {
       const { admin, adminCaller } = await makeAdmin();

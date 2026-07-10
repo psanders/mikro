@@ -40,25 +40,19 @@ const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
   { value: "MONTHLY", label: "Mensual" }
 ];
 
-const GENDER_OPTIONS = [
-  { value: "F", label: "Femenino" },
-  { value: "M", label: "Masculino" }
-];
-
 export default function GenerarContratoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const q = trpc.getApplication.useQuery({ id });
   const app = q.data;
 
-  const [gender, setGender] = useState<"M" | "F">("F");
   const [installments, setInstallments] = useState("");
   const [installmentAmount, setInstallmentAmount] = useState("");
   const [frequency, setFrequency] = useState<Frequency>("WEEKLY");
   const [startDate, setStartDate] = useState<Date>(() =>
     addPaymentPeriod(startOfToday(), "WEEKLY")
   );
-  const [openPicker, setOpenPicker] = useState<"gender" | "frequency" | "date" | null>(null);
+  const [openPicker, setOpenPicker] = useState<"frequency" | "date" | null>(null);
 
   // First cuota can't be sooner than one payment period out; default to it, and
   // snap back whenever the frequency changes (see convert screen for the same
@@ -93,13 +87,6 @@ export default function GenerarContratoScreen() {
         <Text style={styles.intro}>
           Términos negociados del préstamo. Se usan para el contrato (PDF).
         </Text>
-
-        <SelectField
-          label="Sexo (para el contrato)"
-          value={GENDER_OPTIONS.find((o) => o.value === gender)?.label}
-          onPress={() => setOpenPicker("gender")}
-          testID="field-gender"
-        />
 
         <View style={styles.row}>
           <View style={styles.half}>
@@ -151,7 +138,6 @@ export default function GenerarContratoScreen() {
           onPress={() =>
             generate.mutate({
               id,
-              gender,
               installments: Number(installments),
               installmentAmount: Number(installmentAmount),
               frequency,
@@ -169,14 +155,6 @@ export default function GenerarContratoScreen() {
         </Text>
       </View>
 
-      <PickerModal
-        visible={openPicker === "gender"}
-        title="Sexo (para el contrato)"
-        options={GENDER_OPTIONS}
-        value={gender}
-        onSelect={(v) => setGender(v as "M" | "F")}
-        onClose={() => setOpenPicker(null)}
-      />
       <PickerModal
         visible={openPicker === "frequency"}
         title="Frecuencia"

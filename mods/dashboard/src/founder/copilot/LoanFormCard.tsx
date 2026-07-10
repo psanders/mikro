@@ -1,19 +1,20 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * The interactive contract form card — Pencil `cp/contract-form-card`: a blue
- * file-text header over a body that collects a customer (search-as-you-type), the
- * debtor's gender, and the loan terms, then generates and downloads the PDF via
- * `onGenerate`. Unlike the pending-action confirm card, every field is editable.
- * Presentational: the container owns the customer search and the mutation.
+ * The interactive loan form card — Pencil `cp/loan-form-card`: a blue
+ * hand-coins header over a body that collects a customer (search-as-you-type),
+ * the loan terms, and a "generar contrato con estos términos" checkbox
+ * (checked by default), then creates the loan — and, if checked, generates a
+ * matching contract with the same terms in the same submit — via `onCreate`.
+ * Every field is editable, unlike the pending-action confirm card.
+ * Presentational: the container owns the customer search and the mutations.
  */
 import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   CheckCircle2,
   ChevronDown,
-  Download,
-  FileText,
+  HandCoins,
   Loader2,
   MapPin,
   Plus,
@@ -22,10 +23,10 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type {
-  ContractCustomer,
-  ContractFormStatus,
-  ContractFormValues,
-  ContractFrequency
+  ContractFrequency,
+  CreateFormStatus,
+  CustomerPickerResult,
+  LoanFormValues
 } from "./types";
 
 const FREQUENCIES: Array<{ value: ContractFrequency; label: string }> = [
@@ -35,21 +36,20 @@ const FREQUENCIES: Array<{ value: ContractFrequency; label: string }> = [
   { value: "MONTHLY", label: "Mensual" }
 ];
 
-/** Parse a money/count input tolerating thousands separators and spaces. */
 const parseNumeric = (value: string): number => Number(value.replace(/[\s,]/g, ""));
 
 const LABEL = "text-[12px] font-semibold text-[#14254A]";
 const INPUT =
   "w-full rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93] focus:border-[#1F4AA8]";
 
-export interface ContractFormCardProps {
+export interface LoanFormCardProps {
   /** Customer search results for the picker (from the container's listCustomers). */
-  customers: ContractCustomer[];
+  customers: CustomerPickerResult[];
   /** Called as the founder types in the picker. */
   onSearch: (query: string) => void;
-  /** Called with validated values when the founder hits generate. */
-  onGenerate: (values: ContractFormValues) => void;
-  status?: ContractFormStatus;
+  /** Called with validated values when the founder hits create. */
+  onCreate: (values: LoanFormValues) => void;
+  status?: CreateFormStatus;
   /** Error copy shown inline when status is "error". */
   error?: string;
   /** Optional pre-seed for the picker search box. */
@@ -57,47 +57,44 @@ export interface ContractFormCardProps {
   className?: string;
 }
 
-export function ContractFormCard({
+export function LoanFormCard({
   customers,
   onSearch,
-  onGenerate,
+  onCreate,
   status = "idle",
   error,
   customerHint,
   className
-}: ContractFormCardProps) {
+}: LoanFormCardProps) {
   const [query, setQuery] = useState(customerHint ?? "");
-  const [selected, setSelected] = useState<ContractCustomer | null>(null);
-  const [gender, setGender] = useState<"M" | "F" | null>(null);
+  const [selected, setSelected] = useState<CustomerPickerResult | null>(null);
   const [principal, setPrincipal] = useState("");
-  const [installments, setInstallments] = useState("");
+  const [termLength, setTermLength] = useState("");
   const [frequency, setFrequency] = useState<ContractFrequency>("WEEKLY");
-  const [installmentAmount, setInstallmentAmount] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [startingDate, setStartingDate] = useState("");
+  const [generateContract, setGenerateContract] = useState(true);
   const [showOptional, setShowOptional] = useState(false);
-  const [maritalStatus, setMaritalStatus] = useState("");
-  const [occupation, setOccupation] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [moraRate, setMoraRate] = useState("");
 
-  const generating = status === "generating";
+  const creating = status === "creating";
   const done = status === "done";
 
   // Pre-seed the picker search when the copilot passed a customer hint, so the
   // dropdown shows matches without the founder having to retype.
   useEffect(() => {
-    // Run once per hint; onSearch is stable from the container.
     if (customerHint && customerHint.trim().length >= 2) onSearch(customerHint.trim());
   }, [customerHint, onSearch]);
 
   const valid = useMemo(
     () =>
       !!selected &&
-      !!gender &&
       parseNumeric(principal) > 0 &&
-      Number.isInteger(parseNumeric(installments)) &&
-      parseNumeric(installments) > 0 &&
-      parseNumeric(installmentAmount) > 0 &&
-      startDate.length > 0,
-    [selected, gender, principal, installments, installmentAmount, startDate]
+      Number.isInteger(parseNumeric(termLength)) &&
+      parseNumeric(termLength) > 0 &&
+      parseNumeric(paymentAmount) > 0,
+    [selected, principal, termLength, paymentAmount]
   );
 
   const handleSearch = (value: string) => {
@@ -107,17 +104,17 @@ export function ContractFormCard({
   };
 
   const submit = () => {
-    if (!valid || !selected || !gender || generating) return;
-    onGenerate({
+    if (!valid || !selected || creating) return;
+    onCreate({
       customerId: selected.id,
-      gender,
       principal: parseNumeric(principal),
-      installments: parseNumeric(installments),
-      frequency,
-      installmentAmount: parseNumeric(installmentAmount),
-      startDate,
-      maritalStatus: maritalStatus.trim() || undefined,
-      occupation: occupation.trim() || undefined
+      termLength: parseNumeric(termLength),
+      paymentAmount: parseNumeric(paymentAmount),
+      paymentFrequency: frequency,
+      startingDate: startingDate.trim() || undefined,
+      nickname: nickname.trim() || undefined,
+      moraRate: moraRate.trim() ? parseNumeric(moraRate) : undefined,
+      generateContract
     });
   };
 
@@ -132,10 +129,10 @@ export function ContractFormCard({
     >
       <div className="flex items-center gap-[10px] border-b border-[#E5EAF1] bg-[#EEF3F9] px-[14px] py-[11px]">
         <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
-          <FileText size={14} strokeWidth={2} className="text-white" />
+          <HandCoins size={14} strokeWidth={2} className="text-white" />
         </span>
         <div className="flex min-w-0 flex-col gap-[1px]">
-          <span className="text-[14px] font-semibold text-[#14254A]">Nuevo contrato</span>
+          <span className="text-[14px] font-semibold text-[#14254A]">Nuevo préstamo</span>
           <span className="text-[11px] font-medium text-[#697A93]">
             Cliente existente · términos nuevos
           </span>
@@ -205,34 +202,7 @@ export function ContractFormCard({
           )}
         </div>
 
-        {/* Gender */}
-        <div className="flex flex-col gap-[7px]">
-          <span className={LABEL}>Género</span>
-          <div className="flex gap-[8px]">
-            {(
-              [
-                ["F", "Femenino"],
-                ["M", "Masculino"]
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setGender(value)}
-                className={cn(
-                  "flex-1 rounded-[8px] py-[9px] text-[13px] font-medium",
-                  gender === value
-                    ? "bg-[#1F4AA8] text-white"
-                    : "border border-[#E5EAF1] bg-white text-[#14254A]"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Principal + installments */}
+        {/* Principal + term length */}
         <div className="flex gap-[10px]">
           <div className="flex flex-1 flex-col gap-[7px]">
             <span className={LABEL}>Principal (RD$)</span>
@@ -248,15 +218,15 @@ export function ContractFormCard({
             <span className={LABEL}>Cuotas</span>
             <input
               inputMode="numeric"
-              value={installments}
-              onChange={(e) => setInstallments(e.target.value)}
+              value={termLength}
+              onChange={(e) => setTermLength(e.target.value)}
               placeholder="0"
               className={INPUT}
             />
           </div>
         </div>
 
-        {/* Frequency + installment amount */}
+        {/* Frequency + payment amount */}
         <div className="flex gap-[10px]">
           <div className="flex flex-1 flex-col gap-[7px]">
             <span className={LABEL}>Frecuencia</span>
@@ -283,15 +253,15 @@ export function ContractFormCard({
             <span className={LABEL}>Monto cuota (RD$)</span>
             <input
               inputMode="decimal"
-              value={installmentAmount}
-              onChange={(e) => setInstallmentAmount(e.target.value)}
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
               placeholder="0"
               className={INPUT}
             />
           </div>
         </div>
 
-        {/* Start date */}
+        {/* Starting date */}
         <div className="flex flex-col gap-[7px]">
           <span className={LABEL}>Fecha de inicio</span>
           <div className="relative">
@@ -302,31 +272,51 @@ export function ContractFormCard({
             />
             <input
               type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              value={startingDate}
+              onChange={(e) => setStartingDate(e.target.value)}
               className={cn(INPUT, "pl-[40px]")}
             />
           </div>
         </div>
 
+        {/* Contract checkbox (checked by default) */}
+        <button
+          type="button"
+          onClick={() => setGenerateContract((v) => !v)}
+          className="flex items-center gap-[8px] self-start"
+        >
+          <span
+            className={cn(
+              "flex h-[18px] w-[18px] items-center justify-center rounded-[5px]",
+              generateContract ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
+            )}
+          >
+            {generateContract && <CheckCircle2 size={13} strokeWidth={2} className="text-white" />}
+          </span>
+          <span className="text-[13px] font-medium text-[#14254A]">
+            Generar contrato con estos términos
+          </span>
+        </button>
+
         {/* Optional overrides */}
         {showOptional ? (
           <div className="flex gap-[10px]">
             <div className="flex flex-1 flex-col gap-[7px]">
-              <span className={LABEL}>Estado civil</span>
+              <span className={LABEL}>Apodo</span>
               <input
-                value={maritalStatus}
-                onChange={(e) => setMaritalStatus(e.target.value)}
-                placeholder="p. ej. casada"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="p. ej. La colmadera"
                 className={INPUT}
               />
             </div>
             <div className="flex flex-1 flex-col gap-[7px]">
-              <span className={LABEL}>Ocupación</span>
+              <span className={LABEL}>Tasa de mora</span>
               <input
-                value={occupation}
-                onChange={(e) => setOccupation(e.target.value)}
-                placeholder="p. ej. comerciante"
+                inputMode="decimal"
+                value={moraRate}
+                onChange={(e) => setMoraRate(e.target.value)}
+                placeholder="0.02"
                 className={INPUT}
               />
             </div>
@@ -338,7 +328,7 @@ export function ContractFormCard({
             className="flex items-center gap-[6px] text-[12px] font-medium text-[#697A93]"
           >
             <Plus size={13} strokeWidth={2} />
-            Estado civil y ocupación (opcional)
+            Apodo y tasa de mora (opcional)
           </button>
         )}
 
@@ -349,22 +339,22 @@ export function ContractFormCard({
         <button
           type="button"
           onClick={submit}
-          disabled={!valid || generating}
+          disabled={!valid || creating}
           className={cn(
             "flex w-full items-center justify-center gap-[7px] rounded-[9px] px-[18px] py-[11px] text-[14px] font-medium text-white transition",
-            valid && !generating
+            valid && !creating
               ? "bg-[#1F4AA8] hover:bg-[#103A8A]"
               : "cursor-not-allowed bg-[#9DB0D4]"
           )}
         >
-          {generating ? (
+          {creating ? (
             <Loader2 size={16} strokeWidth={2} className="animate-spin" />
           ) : done ? (
             <CheckCircle2 size={16} strokeWidth={2} />
           ) : (
-            <Download size={16} strokeWidth={2} />
+            <HandCoins size={16} strokeWidth={2} />
           )}
-          {generating ? "Generando…" : done ? "Contrato descargado" : "Generá el contrato"}
+          {creating ? "Creando…" : done ? "Préstamo creado" : "Crear préstamo"}
         </button>
       </div>
     </div>

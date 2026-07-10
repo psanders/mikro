@@ -122,12 +122,12 @@ export const exportAllCustomersSchema = z.object({});
 
 /**
  * Schema for generating an ad-hoc loan contract for an existing customer.
- * The debtor identity is sourced from the customer row; the debtor's gender and
- * the negotiated terms are supplied by the founder in the copilot contract form.
+ * The debtor identity is sourced from the customer row; the negotiated terms
+ * are supplied by the founder in the copilot contract form. The contract text
+ * is gender-neutral, so no gender field is collected.
  */
 export const generateCustomerContractSchema = z.object({
   customerId: z.uuid({ error: "Invalid customer ID" }),
-  gender: z.enum(["M", "F"]),
   principal: z.number().positive(),
   installments: z.number().int().positive(),
   installmentAmount: z.number().positive(),

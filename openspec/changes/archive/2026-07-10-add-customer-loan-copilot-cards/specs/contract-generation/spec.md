@@ -1,10 +1,4 @@
-# contract-generation Specification
-
-## Purpose
-
-On-demand loan-contract generation: render a gender-neutral loan-contract PDF for an existing customer merged with founder-supplied terms, via the shared renderer, returning it for download, persisting it as a `CustomerDocument` for auditing, and recording a Founder-feed event. Reachable from the founder app's loan form card (a checked-by-default step of loan creation) and, as a manual fallback, the `ctl` CLI. Changes no loan/customer/application record beyond creating that `CustomerDocument`.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Generate a loan contract from a customer plus supplied terms
 
@@ -45,28 +39,7 @@ The apiserver SHALL expose a founder-only `generateCustomerContract` procedure t
 - **WHEN** the input carries a non-positive principal, a non-positive installment count, or an unsupported frequency
 - **THEN** a structured validation error is returned, the generator is never invoked, and no `CustomerDocument` is created
 
-### Requirement: Generation is restricted to founders
-
-The `generateCustomerContract` procedure SHALL be restricted to authenticated ADMIN users; other callers SHALL be rejected as forbidden.
-
-#### Scenario: Non-admin is forbidden
-
-- **WHEN** an authenticated non-ADMIN user invokes `generateCustomerContract`
-- **THEN** the request is rejected with an authorization error and no PDF is produced
-
-### Requirement: Generation records a Founder-feed business event
-
-On a successful render, the procedure SHALL record a `contract.generated` business event carrying `{ customerId, customerName, principal, installments, frequency, installmentAmount, startDate }` and the acting founder — never the PDF bytes — so the action is a durable record in the Founder feed. The event SHALL be written after the render succeeds, following the event-log convention: an event-write failure SHALL be logged without failing the request, and no event SHALL be written when generation failed.
-
-#### Scenario: Successful generation is evented
-
-- **WHEN** a founder generates a contract for a customer
-- **THEN** a `contract.generated` event referencing that customer and the supplied terms appears in the feed, and the event payload contains no PDF bytes
-
-#### Scenario: Failed generation writes no event
-
-- **WHEN** generation fails validation or the customer is not found
-- **THEN** no `contract.generated` event is recorded
+## ADDED Requirements
 
 ### Requirement: Manual contract generation via ctl
 

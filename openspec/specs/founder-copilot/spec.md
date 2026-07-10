@@ -172,23 +172,57 @@ The copilot tool policy SHALL bind `approveApplication`, `rejectApplication`, an
 - **WHEN** an admin asks the copilot to turn down an applicant without indicating the flow is dead or spam
 - **THEN** the copilot proposes `rejectApplication` with a reason rather than `deleteApplication`, and `deleteApplication` is proposed only when the founder indicates the solicitud should be purged
 
-### Requirement: Contract form card
+### Requirement: Customer form card
 
-The copilot tool policy SHALL bind an `openContractForm` direct tool that the model calls when the founder asks to generate a loan contract (e.g. "generá un contrato", "necesito un contrato para …"). Executing the tool SHALL NOT generate anything: it returns a `contractForm` payload on the chat reply (a new reply field alongside `pendingAction`/`createdRule`), optionally seeded with a customer hint the founder named. The dock SHALL render this as a new `contractForm` thread-item kind — an interactive form card distinct from the verbatim `pendingAction` confirm card — with a customer picker, a gender control, term inputs (principal, installments, frequency, installment amount, start date), optional marital-status / occupation overrides, and a generate control.
+The copilot tool policy SHALL bind an `openCustomerForm` direct tool that the model calls when the founder asks to create a new customer (e.g. "creá un cliente nuevo", "agregá un cliente"). Executing the tool SHALL NOT create anything: it returns a `customerForm` payload on the chat reply (a reply field alongside `pendingAction`/`createdRule`). The dock SHALL render this as a `customerForm` thread-item kind — an interactive form card distinct from the verbatim `pendingAction` confirm card — with inputs for every `createCustomer` field (name, phone, cédula, home address, assigned collector required; nickname, collection point, job position, income, business-owner flag, notes, preferred payment day optional) and a create control. `createCustomer` SHALL remain reachable as a write tool with the confirm-card path as a fallback.
 
-#### Scenario: Asking for a contract opens the form card
+#### Scenario: Asking to create a customer opens the form card
 
-- **WHEN** an admin asks the copilot to generate a contract
-- **THEN** the copilot replies with a short acknowledgement and the dock renders an interactive contract form card, and no contract is generated yet
+- **WHEN** an admin asks the copilot to create a new customer
+- **THEN** the copilot replies with a short acknowledgement and the dock renders an interactive customer form card, and no customer is created yet
 
 #### Scenario: Form card is editable, unlike the confirm card
 
-- **WHEN** the contract form card is shown
-- **THEN** the founder can edit every field and pick a customer, rather than only confirming or rejecting pre-filled arguments
+- **WHEN** the customer form card is shown
+- **THEN** the founder can edit every field before submitting, rather than only confirming or rejecting pre-filled arguments
+
+#### Scenario: Customer creation runs off the LLM loop
+
+- **WHEN** the founder completes the form card and clicks create
+- **THEN** the card calls `createCustomer` directly; the model never executes the creation itself
+
+### Requirement: Loan form card
+
+The copilot tool policy SHALL bind an `openLoanForm` direct tool that the model calls when the founder asks to create a new loan for an existing customer (e.g. "creá un préstamo para Enersida", "necesito abrir un préstamo"). Executing the tool SHALL NOT create anything: it returns a `loanForm` payload on the chat reply, optionally seeded with a customer hint the founder named. The dock SHALL render this as a `loanForm` thread-item kind with a customer picker (reusing the `searchCustomers` read tool), inputs for every `createLoan` field (customer, principal, term length, payment amount, payment frequency required; starting date, nickname, type, mora rate optional), a "generar contrato con estos términos" checkbox (checked by default), and a create control. `createLoan` SHALL remain reachable as a write tool with the confirm-card path as a fallback. The contract text rendered by `generateCustomerContract` is gender-neutral, so the card collects no gender field.
+
+#### Scenario: Asking to create a loan opens the form card
+
+- **WHEN** an admin asks the copilot to create a loan
+- **THEN** the copilot replies with a short acknowledgement and the dock renders an interactive loan form card, and no loan is created yet
+
+#### Scenario: Form card is editable, unlike the confirm card
+
+- **WHEN** the loan form card is shown
+- **THEN** the founder can pick the customer and edit every term before submitting, rather than only confirming or rejecting pre-filled arguments
+
+#### Scenario: Loan creation runs off the LLM loop
+
+- **WHEN** the founder completes the form card and clicks create
+- **THEN** the card calls `createLoan` directly; the model never executes the creation itself
+
+#### Scenario: Checked box also generates a contract, in the same submit
+
+- **WHEN** the founder submits the loan form card with the contract checkbox checked (the default)
+- **THEN** the card calls `createLoan` and then `generateCustomerContract` with the same submitted terms, as one flow with no second step
+
+#### Scenario: Unchecked box creates the loan only
+
+- **WHEN** the founder unchecks the contract checkbox before submitting
+- **THEN** only `createLoan` is called; no contract is generated
 
 ### Requirement: Customer search for the form picker
 
-The copilot tool policy SHALL bind a `searchCustomers` read tool that resolves customers by name or phone, returning a bounded list of `{ id, name, phone, idNumber }`, so the contract form card's picker can search as the founder types and the model can answer "do you have customer X?" questions. The same search SHALL be reachable by the dashboard for the picker.
+The copilot tool policy SHALL bind a `searchCustomers` read tool that resolves customers by name or phone, returning a bounded list of `{ id, name, phone, idNumber }`, so a copilot form card's picker (e.g. the loan form card) can search as the founder types and the model can answer "do you have customer X?" questions. The same search SHALL be reachable by the dashboard for the picker.
 
 #### Scenario: Search returns matching customers
 
@@ -199,17 +233,3 @@ The copilot tool policy SHALL bind a `searchCustomers` read tool that resolves c
 
 - **WHEN** the search matches no customer
 - **THEN** an empty list is returned rather than an error
-
-### Requirement: Contract generation runs off the LLM loop
-
-Generating the contract SHALL be performed by the founder-only `generateCustomerContract` procedure invoked directly by the form card's generate control — never by the LLM tool loop. On success the dock SHALL download the returned PDF inline. The copilot model SHALL be able only to open an empty form; it SHALL NOT collect the terms itself nor execute generation.
-
-#### Scenario: Generate downloads the PDF
-
-- **WHEN** the founder completes the form card and clicks generate
-- **THEN** the card calls `generateCustomerContract`, and on success the PDF is downloaded in the browser
-
-#### Scenario: The model never generates the contract
-
-- **WHEN** the copilot processes the founder's contract request
-- **THEN** the only contract-related tool it can call is `openContractForm`; it has no tool that renders or returns the PDF

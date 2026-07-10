@@ -513,7 +513,8 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     const context: Record<string, unknown> = { userId, role: "ADMIN", name: actorName };
     const toolsUsed: string[] = [];
     let createdRule: WatchRuleView | undefined;
-    let contractForm: { customerHint?: string } | undefined;
+    let customerForm: Record<string, never> | undefined;
+    let loanForm: { customerHint?: string } | undefined;
     // Tracks the most recent failed/limited tool call so a githubFeedback call
     // right after it can attach that context automatically (design Decision 4).
     let lastFailedCall: FailedToolCall | undefined;
@@ -621,15 +622,23 @@ export function createCopilotChat(deps: CopilotChatDeps) {
         } else if (tc.name === "githubFeedback") {
           result = await handleGithubFeedback(tc.args, lastFailedCall);
           feedbackOutcome = { ok: result.success };
-        } else if (tc.name === "openContractForm") {
+        } else if (tc.name === "openCustomerForm") {
           // Generates nothing: just opens the form card in the dock. The card
-          // collects the terms and calls generateCustomerContract directly.
-          const hint =
-            typeof tc.args?.customerHint === "string" ? tc.args.customerHint.trim() : undefined;
-          contractForm = hint ? { customerHint: hint } : {};
+          // collects the fields and calls createCustomer directly.
+          customerForm = {};
           result = {
             success: true,
-            message: "Formulario de contrato abierto. El fundador completará los datos."
+            message: "Formulario de cliente abierto. El fundador completará los datos."
+          };
+        } else if (tc.name === "openLoanForm") {
+          // Generates nothing: just opens the form card in the dock. The card
+          // collects the terms and calls createLoan directly.
+          const hint =
+            typeof tc.args?.customerHint === "string" ? tc.args.customerHint.trim() : undefined;
+          loanForm = hint ? { customerHint: hint } : {};
+          result = {
+            success: true,
+            message: "Formulario de préstamo abierto. El fundador completará los datos."
           };
         } else {
           // Existing business read tool → shared executor.
@@ -660,9 +669,11 @@ export function createCopilotChat(deps: CopilotChatDeps) {
       getText(response.content).trim() ||
       (createdRule
         ? `Listo, creé la regla "${createdRule.name}".`
-        : contractForm
-          ? "Listo. Completá los datos del préstamo y lo genero."
-          : "");
+        : customerForm
+          ? "Listo. Completá los datos del cliente y lo creo."
+          : loanForm
+            ? "Listo. Completá los datos del préstamo y lo creo."
+            : "");
 
     // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
     // appended deterministically, not left to the model's own phrasing, so a
@@ -691,7 +702,8 @@ export function createCopilotChat(deps: CopilotChatDeps) {
             }
           }
         : {}),
-      ...(contractForm ? { contractForm } : {})
+      ...(customerForm ? { customerForm } : {}),
+      ...(loanForm ? { loanForm } : {})
     };
   };
 }

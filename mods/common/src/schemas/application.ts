@@ -324,13 +324,13 @@ export const promoteApplicationSchema = z.object(applicationRef).refine(requireR
 /**
  * Generate the loan contract PDF for an application. The applicant identity
  * comes from the application; the negotiated terms (principal from the request,
- * plus installments/amount/frequency/start) and the debtor's gender are
- * supplied by the reviewer at the post-approval "Generar contrato" step.
+ * plus installments/amount/frequency/start) are supplied by the reviewer at the
+ * post-approval "Generar contrato" step. The contract text is gender-neutral,
+ * so no gender field is collected.
  */
 export const generateApplicationContractSchema = z
   .object({
     ...applicationRef,
-    gender: z.enum(["M", "F"]),
     installments: z.number().int().positive(),
     installmentAmount: z.number().positive(),
     frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),

@@ -358,14 +358,16 @@ export {
   copilotPendingActionSchema,
   copilotProvenanceSchema,
   copilotChatReplySchema,
-  copilotContractFormSchema,
+  copilotCustomerFormSchema,
+  copilotLoanFormSchema,
   COPILOT_ACTION_EXPIRY_MINUTES,
   type WatchRuleMetric,
   type CreateWatchRuleInput,
   type CopilotPendingAction,
   type CopilotProvenance,
   type CopilotChatReply,
-  type CopilotContractForm,
+  type CopilotCustomerForm,
+  type CopilotLoanForm,
   type ClearCopilotHistoryResult
 } from "./copilot.js";
 

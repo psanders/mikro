@@ -2,8 +2,8 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * The customer -> ContractData mapper: identity is sourced from the customer
- * row, gender and terms from the founder input, occupation override wins over
- * the customer's job position, and dates are normalized.
+ * row, terms from the founder input, occupation override wins over the
+ * customer's job position, and dates are normalized.
  */
 import { expect } from "chai";
 import {
@@ -20,7 +20,6 @@ const customer: CustomerContractIdentity = {
 };
 
 const terms: CustomerContractTerms = {
-  gender: "F",
   principal: 8256,
   installments: 10,
   installmentAmount: 1100,
@@ -36,7 +35,6 @@ describe("buildContractDataFromCustomer", () => {
     expect(data.debtor.name).to.equal("Enersida Brito Estrella");
     expect(data.debtor.cedula).to.equal("071-0047001-7");
     expect(data.debtor.city).to.equal("San marco monterico");
-    expect(data.debtor.gender).to.equal("F");
     expect(data.debtor.occupation).to.equal("Comerciante");
     expect(data.principal).to.equal(8256);
     expect(data.installments).to.equal(10);
