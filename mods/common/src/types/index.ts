@@ -29,3 +29,4 @@ export type {
   AccountingTransactionAttachmentPayload
 } from "./accounting.js";
 export type { CustomerTag } from "./customerTag.js";
+export type { CustomerDocument } from "./customerDocument.js";

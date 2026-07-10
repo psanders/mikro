@@ -65,6 +65,7 @@ import {
   getApplicationContractSchema,
   generateApplicationContractSchema,
   generateCustomerContractSchema,
+  listCustomerDocumentsSchema,
   convertApplicationSchema,
   updateApplicationSchema,
   createApplicationSchema,
@@ -97,6 +98,7 @@ import { createListCustomersByCollector } from "../../api/customers/createListCu
 import { createExportCollectorCustomers } from "../../api/customers/createExportCollectorCustomers.js";
 import { createExportAllCustomers } from "../../api/customers/createExportAllCustomers.js";
 import { createGenerateCustomerContract } from "../../api/customers/createGenerateCustomerContract.js";
+import { createListCustomerDocuments } from "../../api/customers/createListCustomerDocuments.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -727,6 +729,17 @@ export const protectedRouter = router({
     .input(generateCustomerContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateCustomerContract(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * List a customer's documents (signed contracts, ID images), most-recent-
+   * first. ADMIN only — occasional/operator lookup via `ctl`, no dashboard UI.
+   */
+  listCustomerDocuments: adminProcedure
+    .input(listCustomerDocumentsSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListCustomerDocuments(ctx.db);
       return fn(input);
     }),
 

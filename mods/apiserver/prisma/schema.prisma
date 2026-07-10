@@ -82,6 +82,22 @@ enum AttachmentType {
   @@map("attachment_types")
 }
 
+enum CustomerDocumentType {
+  CONTRACT
+  ID_FRONT
+  ID_BACK
+  OTHER
+
+  @@map("customer_document_types")
+}
+
+enum CustomerDocumentSource {
+  DIRECT
+  MIGRATED_FROM_APPLICATION
+
+  @@map("customer_document_sources")
+}
+
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -199,6 +215,7 @@ model User {
   collectedPayments   Payment[]  @relation("CollectedPayments")
   createdLoanNotes    LoanNote[] @relation("CreatedLoanNotes")
   createdTransactions AccountingTransaction[] @relation("CreatedTransactions")
+  uploadedDocuments   CustomerDocument[]
 
   @@map("users")
 }
@@ -245,6 +262,7 @@ model Customer {
   loans               Loan[]
   messages            Message[]
   tags                CustomerTag[]
+  documents           CustomerDocument[]
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
@@ -267,6 +285,37 @@ model CustomerTag {
   @@unique([customerId, tag])
   @@index([tag])
   @@map("customer_tags")
+}
+
+// A document belonging to a customer directly (not a loan application) —
+// signed contracts, cédula images, etc. Bytes live on disk under
+// contractsPath as <sha256>.<ext>, same convention as LoanApplication's
+// contract*/idFront*/idBack* fields; this table is metadata only. Documents
+// are immutable once created — replacing one means creating a new row, never
+// updating in place. `source: MIGRATED_FROM_APPLICATION` rows are created by
+// createConvertApplication as a copy-by-reference of the application's own
+// document columns/files (which are left untouched); `DIRECT` rows come from
+// uploads/generation against the customer directly (e.g. generateCustomerContract).
+model CustomerDocument {
+  id           String                 @id @default(uuid())
+  type         CustomerDocumentType
+  filename     String                 @map("filename")
+  originalName String?                @map("original_name")
+  mimeType     String?                @map("mime_type")
+  size         Int?
+  sha256       String
+  source       CustomerDocumentSource
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById String? @map("uploaded_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([customerId])
+  @@map("customer_documents")
 }
 
 model Loan {

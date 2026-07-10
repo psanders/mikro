@@ -322,6 +322,15 @@ export {
 } from "./customerTag.js";
 
 export {
+  customerDocumentTypeEnum,
+  customerDocumentSourceEnum,
+  listCustomerDocumentsSchema,
+  type CustomerDocumentType,
+  type CustomerDocumentSource,
+  type ListCustomerDocumentsInput
+} from "./customerDocument.js";
+
+export {
   businessEventTypeEnum,
   businessEventPayloadSchemas,
   recordBusinessEventSchema,

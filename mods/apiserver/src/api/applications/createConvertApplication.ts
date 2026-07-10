@@ -2,7 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { resolveReviewTransition, getConfig } from "@mikro/common";
-import type { DbClient, LoanApplication, ConvertApplicationInput } from "@mikro/common";
+import type {
+  DbClient,
+  LoanApplication,
+  ConvertApplicationInput,
+  CustomerDocumentType
+} from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { createCreateCustomer } from "../customers/createCreateCustomer.js";
 import { createCreateLoan } from "../loans/createCreateLoan.js";
@@ -11,6 +16,57 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 
 const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
+
+/**
+ * Application document files are stored on disk as `<sha256>.<ext>`
+ * (see applications/storage.ts); ID front/back rows don't carry a separate
+ * sha256 column, so it's derived from the filename rather than duplicating it.
+ */
+function sha256FromFilename(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  return dot === -1 ? filename : filename.slice(0, dot);
+}
+
+interface ApplicationDocumentField {
+  type: CustomerDocumentType;
+  filename: string | null;
+  originalName: string | null;
+  mimeType: string | null;
+  size: number | null;
+}
+
+/**
+ * The application's stored documents (signed contract, ID front/back),
+ * filtered to only those actually present. Copied by reference (same
+ * filename/sha256, no file I/O) into CustomerDocument rows on conversion —
+ * see the migration step in createConvertApplication below.
+ */
+function applicationDocuments(app: LoanApplication): ApplicationDocumentField[] {
+  const fields: ApplicationDocumentField[] = [
+    {
+      type: "CONTRACT",
+      filename: app.contractFilename,
+      originalName: app.contractOriginalName,
+      mimeType: app.contractMimeType,
+      size: app.contractSize
+    },
+    {
+      type: "ID_FRONT",
+      filename: app.idFrontFilename,
+      originalName: app.idFrontOriginalName,
+      mimeType: app.idFrontMimeType,
+      size: app.idFrontSize
+    },
+    {
+      type: "ID_BACK",
+      filename: app.idBackFilename,
+      originalName: app.idBackOriginalName,
+      mimeType: app.idBackMimeType,
+      size: app.idBackSize
+    }
+  ];
+  return fields.filter((f) => f.filename != null);
+}
 
 export interface ConvertApplicationResult {
   application: LoanApplication;
@@ -126,6 +182,26 @@ export function createConvertApplication(client: DbClient) {
         moraRate: input.moraRate
       });
 
+      // Copy the application's stored documents (signed contract, ID
+      // front/back) onto the new customer, by reference — same filename/
+      // sha256, no file I/O, no change to the application's own document
+      // columns (they remain the immutable review-time audit record).
+      const documentsToMigrate = applicationDocuments(app);
+      if (documentsToMigrate.length > 0) {
+        await tx.customerDocument.createMany({
+          data: documentsToMigrate.map((doc) => ({
+            type: doc.type,
+            filename: doc.filename!,
+            originalName: doc.originalName,
+            mimeType: doc.mimeType,
+            size: doc.size,
+            sha256: sha256FromFilename(doc.filename!),
+            source: "MIGRATED_FROM_APPLICATION" as const,
+            customerId: customer.id
+          }))
+        });
+      }
+
       // Auto-deduct the disbursed principal from the ledger in the SAME
       // transaction as the loan creation (mikro/#155): either both commit or
       // neither does. WITHDRAWAL, not EXPENSE — disbursed principal is a
@@ -151,7 +227,8 @@ export function createConvertApplication(client: DbClient) {
         customerId: customer.id,
         loanId: loan.loanId,
         reusedCustomer,
-        disbursementTransactionId: disbursement.id
+        disbursementTransactionId: disbursement.id,
+        migratedDocuments: documentsToMigrate.length
       });
       return {
         application: updated,

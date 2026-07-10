@@ -13,6 +13,8 @@ import type { Loan, Payment } from "./loan.js";
 import type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
 import type { CustomerTag } from "./customerTag.js";
 import type { TagSource } from "../schemas/customerTag.js";
+import type { CustomerDocument } from "./customerDocument.js";
+import type { CustomerDocumentType, CustomerDocumentSource } from "../schemas/customerDocument.js";
 
 /**
  * UserRole entity type.
@@ -391,6 +393,39 @@ export interface DbClient {
     deleteMany(args: {
       where: { customerId: string; tag?: string | { in: string[] }; source?: TagSource };
     }): Promise<{ count: number }>;
+  };
+
+  customerDocument: {
+    create(args: {
+      data: {
+        type: CustomerDocumentType;
+        filename: string;
+        originalName?: string | null;
+        mimeType?: string | null;
+        size?: number | null;
+        sha256: string;
+        source: CustomerDocumentSource;
+        customerId: string;
+        uploadedById?: string | null;
+      };
+    }): Promise<CustomerDocument>;
+    createMany(args: {
+      data: {
+        type: CustomerDocumentType;
+        filename: string;
+        originalName?: string | null;
+        mimeType?: string | null;
+        size?: number | null;
+        sha256: string;
+        source: CustomerDocumentSource;
+        customerId: string;
+        uploadedById?: string | null;
+      }[];
+    }): Promise<{ count: number }>;
+    findMany(args: {
+      where: { customerId: string };
+      orderBy?: { createdAt: "asc" | "desc" };
+    }): Promise<CustomerDocument[]>;
   };
 
   /** Interactive transaction (Prisma). */

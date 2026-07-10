@@ -240,4 +240,115 @@ describe("convertApplication collector assignment", () => {
       expect(unchangedApp!.status).to.equal("SIGNED");
     });
   });
+
+  describe("document migration onto the resulting customer", () => {
+    it("copies the application's stored contract and ID images as CustomerDocument rows", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication({
+        contractFilename: "aaa111.pdf",
+        contractOriginalName: "contrato.pdf",
+        contractMimeType: "application/pdf",
+        contractSize: 12_345,
+        idFrontFilename: "bbb222.jpg",
+        idFrontOriginalName: "cedula-frente.jpg",
+        idFrontMimeType: "image/jpeg",
+        idFrontSize: 5_000,
+        idBackFilename: "ccc333.jpg",
+        idBackOriginalName: "cedula-atras.jpg",
+        idBackMimeType: "image/jpeg",
+        idBackSize: 5_100
+      });
+
+      const result = await caller.convertApplication({
+        id: app.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        assignedCollectorId: collector.id
+      });
+
+      const docs = await db.customerDocument.findMany({
+        where: { customerId: result.customerId },
+        orderBy: { type: "asc" }
+      });
+      expect(docs).to.have.lengthOf(3);
+
+      const contract = docs.find((d) => d.type === "CONTRACT")!;
+      expect(contract.filename).to.equal("aaa111.pdf");
+      expect(contract.sha256).to.equal("aaa111");
+      expect(contract.source).to.equal("MIGRATED_FROM_APPLICATION");
+      expect(contract.originalName).to.equal("contrato.pdf");
+
+      const idFront = docs.find((d) => d.type === "ID_FRONT")!;
+      expect(idFront.filename).to.equal("bbb222.jpg");
+      expect(idFront.sha256).to.equal("bbb222");
+
+      const idBack = docs.find((d) => d.type === "ID_BACK")!;
+      expect(idBack.filename).to.equal("ccc333.jpg");
+      expect(idBack.sha256).to.equal("ccc333");
+
+      // The application's own document columns are untouched by the migration.
+      const unchangedApp = await db.loanApplication.findUnique({ where: { id: app.id } });
+      expect(unchangedApp!.contractFilename).to.equal("aaa111.pdf");
+      expect(unchangedApp!.idFrontFilename).to.equal("bbb222.jpg");
+      expect(unchangedApp!.idBackFilename).to.equal("ccc333.jpg");
+    });
+
+    it("migrates nothing when the application has no stored documents", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication();
+
+      const result = await caller.convertApplication({
+        id: app.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        assignedCollectorId: collector.id
+      });
+
+      const docs = await db.customerDocument.findMany({
+        where: { customerId: result.customerId }
+      });
+      expect(docs).to.have.lengthOf(0);
+    });
+
+    it("leaves no CustomerDocument rows when conversion fails and rolls back", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication({
+        contractFilename: "ddd444.pdf",
+        contractOriginalName: "contrato.pdf",
+        contractMimeType: "application/pdf",
+        contractSize: 999
+      });
+
+      const originalConfigFile = process.env.MIKRO_CONFIG_FILE;
+      process.env.MIKRO_CONFIG_FILE = path.resolve(
+        __dirname,
+        "../fixtures/mikro-no-disbursement.json"
+      );
+      clearConfigCache();
+
+      let thrown: unknown;
+      try {
+        await caller.convertApplication({
+          id: app.id,
+          principal: 5000,
+          termLength: 10,
+          paymentAmount: 650,
+          paymentFrequency: "WEEKLY",
+          assignedCollectorId: collector.id
+        });
+      } catch (err) {
+        thrown = err;
+      } finally {
+        process.env.MIKRO_CONFIG_FILE = originalConfigFile;
+        clearConfigCache();
+      }
+
+      expect(thrown).to.not.equal(undefined);
+      expect(await db.customerDocument.count()).to.equal(0);
+    });
+  });
 });
