@@ -27,7 +27,8 @@ const TEST_CONFIG = {
     vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
     evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
   },
-  whatsapp: { phoneNumberId: "test", accessToken: "test" }
+  whatsapp: { phoneNumberId: "test", accessToken: "test" },
+  accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
 };
 
 describe("handleProspectMessage turn cap", () => {

@@ -25,6 +25,9 @@ function makeTestConfig(sessionTimeoutSeconds: number): object {
     whatsapp: {
       phoneNumberId: "test",
       accessToken: "test"
+    },
+    accounting: {
+      disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
     }
   };
 }
