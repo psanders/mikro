@@ -28,11 +28,6 @@ import { handleListCustomerLoansByPhone } from "./listCustomerLoansByPhone.js";
 import { handleListUsers } from "./listUsers.js";
 import { handleGetLoanByLoanId } from "./getLoanByLoanId.js";
 import { handlePreviewLateFee } from "./previewLateFee.js";
-import { handleExportCollectorCustomers } from "./exportCollectorCustomers.js";
-import { handleExportAllCustomers } from "./exportAllCustomers.js";
-import { handleGeneratePerformanceReport } from "./handleGeneratePerformanceReport.js";
-import { handleGenerateDefaultedReport } from "./handleGenerateDefaultedReport.js";
-import { handleGenerateRenewalCandidatesReport } from "./handleGenerateRenewalCandidatesReport.js";
 
 /**
  * Creates a tool executor that delegates to the provided API functions.
@@ -82,11 +77,6 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
     listUsers: handleListUsers,
     getLoanByLoanId: handleGetLoanByLoanId,
     previewLateFee: handlePreviewLateFee,
-    exportCollectorCustomers: handleExportCollectorCustomers,
-    exportAllCustomers: handleExportAllCustomers,
-    generatePerformanceReport: handleGeneratePerformanceReport,
-    generateDefaultedReport: handleGenerateDefaultedReport,
-    generateRenewalCandidatesReport: handleGenerateRenewalCandidatesReport,
     getApplicationState: async (d, _args, ctx) => {
       if (!d.joseGetApplicationState)
         return { success: false, message: "getApplicationState not configured" };
@@ -133,4 +123,4 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
 }
 
 // Re-export types for convenience
-export type { ToolExecutorDependencies, ExportedCustomer, ExportedLoan } from "./types.js";
+export type { ToolExecutorDependencies } from "./types.js";

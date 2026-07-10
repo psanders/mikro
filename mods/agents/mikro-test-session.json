@@ -1,0 +1,9 @@
+{
+  "sessionTimeoutSeconds": 1,
+  "llm": {
+    "text": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" },
+    "vision": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o" },
+    "evals": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" }
+  },
+  "whatsapp": { "phoneNumberId": "test", "accessToken": "test" }
+}

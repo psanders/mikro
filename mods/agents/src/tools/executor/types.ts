@@ -5,33 +5,6 @@
  */
 
 /**
- * Loan data for customer export reports.
- */
-export interface ExportedLoan {
-  loanId: number;
-  notes: string | null;
-  paymentFrequency: string;
-  createdAt: Date;
-  termLength: number;
-  payments: Array<{ paidAt: Date }>;
-  nickname?: string | null;
-}
-
-/**
- * Customer data for export reports. Used by all export functions.
- */
-export interface ExportedCustomer {
-  name: string;
-  /** Customer-level nickname (included in agent export payloads for reports). */
-  nickname?: string | null;
-  phone: string;
-  collectionPoint: string | null;
-  notes: string | null;
-  preferredPaymentDay?: string | null;
-  loans: ExportedLoan[];
-}
-
-/**
  * API functions required by the tool executor.
  */
 export interface ToolExecutorDependencies {
@@ -275,31 +248,6 @@ export interface ToolExecutorDependencies {
     }>
   >;
 
-  /** Export collector customers with loans and referrer for report generation */
-  exportCollectorCustomers: (params: {
-    assignedCollectorId: string;
-  }) => Promise<ExportedCustomer[]>;
-
-  /** Export all customers with loans for report generation (admin only) */
-  exportAllCustomers: () => Promise<ExportedCustomer[]>;
-
-  /** Generate performance report (metrics + LLM narrative + PNG). Returns base64 image. */
-  generatePerformanceReport: (params: {
-    startDate?: string;
-    endDate?: string;
-  }) => Promise<{ image: string }>;
-
-  /** Generate at-risk loans report (defaulted + late, PNG with AI note summaries). Optional filter. Returns base64 image. */
-  generateDefaultedReport: (params: { filter?: "all" | "defaulted" | "late" }) => Promise<{
-    image: string;
-  }>;
-
-  /** Generate renewal candidates report (near-completion + completed loans, rating, AI candidacy note). Returns base64 image. */
-  generateRenewalCandidatesReport: (params: Record<string, never>) => Promise<{ image: string }>;
-
-  /** Render customers report (grouped by payment health) to PNG buffer. Used for simplified format. */
-  renderCustomersReportToPng: (customers: ExportedCustomer[]) => Promise<Buffer>;
-
   // ── José prospect intake tools (optional — only wired in apiserver) ──────
   /** José: fetch current prospect application state + score simulation */
   joseGetApplicationState?: (
@@ -315,19 +263,4 @@ export interface ToolExecutorDependencies {
     args: Record<string, unknown>,
     context?: Record<string, unknown>
   ) => Promise<import("../../llm/types.js").ToolResult>;
-
-  /** Upload media to WhatsApp and get media ID */
-  uploadMedia: (fileBuffer: Buffer, mimeType: string) => Promise<string>;
-
-  /** Send a WhatsApp message (text, image, or document) */
-  sendWhatsAppMessage: (params: {
-    phone: string;
-    message?: string;
-    mediaId?: string;
-    mediaType?: "image" | "document" | "video" | "audio";
-    documentFilename?: string;
-    caption?: string;
-  }) => Promise<{
-    messages?: Array<{ id: string }>;
-  }>;
 }

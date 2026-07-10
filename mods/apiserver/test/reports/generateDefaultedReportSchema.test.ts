@@ -28,4 +28,14 @@ describe("generateDefaultedReportSchema", () => {
   it("should reject invalid filter value", () => {
     expect(() => generateDefaultedReportSchema.parse({ filter: "invalid" })).to.throw();
   });
+
+  it("should default format to 'pdf' when omitted", () => {
+    const result = generateDefaultedReportSchema.parse({});
+    expect(result.format).to.equal("pdf");
+  });
+
+  it("should accept format 'json'", () => {
+    const result = generateDefaultedReportSchema.parse({ format: "json" });
+    expect(result.format).to.equal("json");
+  });
 });

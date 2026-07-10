@@ -25,13 +25,7 @@ type MessageContent = TextContent | ImageUrlContent;
  * Tools that are known to be slow (I/O-heavy, external APIs, report generation).
  * When any of these appear in a tool-call batch we send a quick ack first.
  */
-const SLOW_TOOLS = new Set([
-  "createPayment",
-  "sendReceiptViaWhatsApp",
-  "exportAllCustomers",
-  "generatePerformanceReport",
-  "exportCollectorCustomers"
-]);
+const SLOW_TOOLS = new Set(["createPayment", "sendReceiptViaWhatsApp"]);
 
 /**
  * Result of invoking the LLM (text response and tools executed this turn).

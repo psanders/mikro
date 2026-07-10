@@ -5,11 +5,19 @@
  * unfiltered by status) from Prisma and feed it to the shared pure snapshot
  * builder. This is the ONLY place that resolves the mora policy from config; the
  * builder itself stays framework-agnostic so mobile can reuse it over SQLite.
+ *
+ * `fetchLoanSnapshotInput` is the Prisma-read + raw-mapping half, split out so
+ * other callers (the loan-statement report builder) can get the DB-free
+ * `BuildSnapshotInput` shape without a second, divergent Prisma query — they
+ * hand it to their own `buildLoanSnapshot`-consuming pipeline instead of the
+ * already-derived `LoanSnapshot`. `buildLoanSnapshotFromDb` stays a thin
+ * wrapper over it for existing callers.
  */
 import {
   buildLoanSnapshot,
   amountToNumber,
   getConfig,
+  type BuildSnapshotInput,
   type DbClient,
   type LoanSnapshot,
   type SnapshotPayment,
@@ -50,12 +58,17 @@ type LoanRow = {
   }>;
 };
 
-/** Build a canonical snapshot for one loan from the database. Returns null if not found. */
-export async function buildLoanSnapshotFromDb(
+/**
+ * Fetch a loan (+ customer + the complete payment ledger) from Prisma and map
+ * it into the DB-free `BuildSnapshotInput` shape — no derived numbers yet.
+ * Returns null if the loan does not exist. This is the ONLY place that
+ * resolves the mora policy from config; everything downstream is pure.
+ */
+export async function fetchLoanSnapshotInput(
   client: DbClient,
   loanId: number,
   asOf?: Date
-): Promise<LoanSnapshot | null> {
+): Promise<BuildSnapshotInput | null> {
   const loan = (await client.loan.findUnique({
     where: { loanId },
     include: {
@@ -88,7 +101,7 @@ export async function buildLoanSnapshotFromDb(
     notes: p.notes
   }));
 
-  return buildLoanSnapshot({
+  return {
     loanId: loan.loanId,
     customer: {
       id: loan.customer.id,
@@ -117,5 +130,15 @@ export async function buildLoanSnapshotFromDb(
       moraEffectiveFrom: cfg.loans.moraEffectiveFrom ?? null
     },
     asOf
-  });
+  };
+}
+
+/** Build a canonical snapshot for one loan from the database. Returns null if not found. */
+export async function buildLoanSnapshotFromDb(
+  client: DbClient,
+  loanId: number,
+  asOf?: Date
+): Promise<LoanSnapshot | null> {
+  const input = await fetchLoanSnapshotInput(client, loanId, asOf);
+  return input ? buildLoanSnapshot(input) : null;
 }

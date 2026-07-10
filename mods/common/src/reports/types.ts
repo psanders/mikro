@@ -46,36 +46,3 @@ export interface ReportNarrative {
   riskAreas: string[];
   recommendation: string;
 }
-
-// ---------------------------------------------------------------------------
-// Accounting snapshot report
-// ---------------------------------------------------------------------------
-
-export interface AccountingReportAccount {
-  name: string;
-  kind: string;
-  currency: string;
-  currentBalance: number;
-}
-
-export interface AccountingReportTransaction {
-  occurredAt: string;
-  type: string;
-  accountName: string;
-  categoryName: string | null;
-  vendor: string | null;
-  description: string | null;
-  amount: number;
-}
-
-export interface AccountingReportData {
-  period: { startDate: string; endDate: string };
-  accounts: AccountingReportAccount[];
-  transactions: AccountingReportTransaction[];
-  totals: {
-    totalIncome: number;
-    totalExpenses: number;
-    netFlow: number;
-    combinedBalance: number;
-  };
-}

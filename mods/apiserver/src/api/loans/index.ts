@@ -15,4 +15,4 @@ export {
   type LoanHealthResult,
   type GetLoanHealthOptions
 } from "./createGetLoanHealth.js";
-export { buildLoanSnapshotFromDb } from "./buildLoanSnapshotFromDb.js";
+export { buildLoanSnapshotFromDb, fetchLoanSnapshotInput } from "./buildLoanSnapshotFromDb.js";

@@ -1,73 +1,74 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Migrated to the shared `customersReport` definition (issue #110 / Phase E of
+ * unify-reporting-strategy): JSON or a branded PDF, same report the dashboard
+ * downloads. The pre-migration Excel/CSV/PNG export (with collector-id
+ * filtering) is retired per the reporting spec's "no PNG/Excel report output"
+ * requirement — `exportCollectorCustomers`/`exportAllCustomers` remain
+ * available directly via tRPC for any caller that still needs raw rows.
  */
 import { Flags } from "@oclif/core";
+import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { resolve } from "path";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
-import { handleCustomersOutput, outputCustomersAsTable } from "../../lib/exportUtils.js";
-import { promptUserSelectIfMissing } from "../../lib/prompts.js";
 
 export default class ReportsCustomers extends BaseCommand<typeof ReportsCustomers> {
   static override readonly description =
-    "export customers report (all or by collector). Default: all active customers (admin only).";
+    "generate the customers report (active customers' loans grouped by payment health) as JSON or a branded PDF — same report definition the dashboard uses";
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --collector-id <id>",
-    "<%= config.bin %> <%= command.id %> --output report.xlsx",
-    "<%= config.bin %> <%= command.id %> --collector-id <id> --output report.png"
+    "<%= config.bin %> <%= command.id %> --format json",
+    "<%= config.bin %> <%= command.id %> --output clientes.pdf"
   ];
 
   static override readonly flags = {
-    "collector-id": Flags.string({
-      description: "Filter by collector ID (prompts interactively if omitted)"
+    format: Flags.string({
+      description: "Output format",
+      options: ["json", "pdf"],
+      default: "pdf"
     }),
     output: Flags.string({
-      description:
-        "Write report to file. Extension determines format: .xlsx (Excel), .png (simplified image), .csv (extended CSV).",
-      char: "o"
+      char: "o",
+      description: "Output file path (default: derived from date and format)",
+      default: ""
     })
   };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(ReportsCustomers);
-    const client = this.createClient();
+    const format = flags.format as "json" | "pdf";
+
+    const date = new Date().toISOString().slice(0, 10);
+    const defaultExt = format === "json" ? "json" : "pdf";
+    const outputPath = flags.output
+      ? resolve(flags.output)
+      : resolve(`./clientes-${date}.${defaultExt}`);
 
     try {
-      let customers: Awaited<ReturnType<typeof client.exportAllCustomers.query>>;
+      const client = this.createClient();
+      this.log("Generando reporte de clientes...");
 
-      if (flags["collector-id"] !== undefined) {
-        const collectorId = await promptUserSelectIfMissing(
-          client,
-          flags["collector-id"] || undefined,
-          "Collector",
-          "collector-id",
-          { role: "COLLECTOR" }
-        );
-        customers = await client.exportCollectorCustomers.query({
-          assignedCollectorId: collectorId
-        });
-        if (customers.length === 0) {
-          this.log("No hay clientes asignados a este cobrador.");
-          return;
-        }
+      const result = await client.generateCustomersReport.mutate({ format });
+
+      const dir = resolve(outputPath, "..");
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      if (format === "json") {
+        writeFileSync(outputPath, JSON.stringify(result.data, null, 2));
       } else {
-        customers = await client.exportAllCustomers.query({});
-        if (customers.length === 0) {
-          this.log("No hay clientes activos en el sistema.");
+        if (!result.pdfBase64) {
+          this.error("El servidor no devolvió el PDF esperado.");
           return;
         }
+        writeFileSync(outputPath, Buffer.from(result.pdfBase64, "base64"));
       }
 
-      const handled = await handleCustomersOutput(
-        customers,
-        flags.output,
-        this.log.bind(this),
-        this.error.bind(this)
-      );
-      if (!handled) {
-        outputCustomersAsTable(customers, this.log.bind(this));
-      }
+      this.log(`\nReporte guardado: ${outputPath}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

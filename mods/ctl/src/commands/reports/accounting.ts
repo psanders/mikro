@@ -41,14 +41,15 @@ const TXN_TYPE_LABELS: Record<string, string> = {
 
 export default class Accounting extends BaseCommand<typeof Accounting> {
   static override readonly description =
-    "accounting snapshot: account balances and month-to-date transaction ledger (PNG or table)";
+    "accounting snapshot: account balances and period transaction ledger — JSON, a branded PDF, or a table (same report definition the dashboard uses)";
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --last-month",
     "<%= config.bin %> <%= command.id %> --format table",
+    "<%= config.bin %> <%= command.id %> --format json",
     "<%= config.bin %> <%= command.id %> --start-date 2026-04-01 --end-date 2026-04-30",
-    "<%= config.bin %> <%= command.id %> --output reporte-contable.png"
+    "<%= config.bin %> <%= command.id %> --output reporte-contable.pdf"
   ];
 
   static override readonly flags = {
@@ -64,12 +65,12 @@ export default class Accounting extends BaseCommand<typeof Accounting> {
     }),
     format: Flags.string({
       description: "Output format",
-      options: ["png", "table"],
-      default: "png"
+      options: ["pdf", "json", "table"],
+      default: "pdf"
     }),
     output: Flags.string({
       char: "o",
-      description: "Output file path for PNG",
+      description: "Output file path for PDF/JSON",
       default: ""
     })
   };
@@ -94,28 +95,40 @@ export default class Accounting extends BaseCommand<typeof Accounting> {
       this.log("Generating accounting report...");
       this.log(`  Period: ${toISODate(startDate)} to ${toISODate(endDate)}`);
 
+      const format = flags.format === "table" ? "json" : (flags.format as "json" | "pdf");
       const result = await client.accounting.generateAccountingReport.mutate({
         startDate: toISODate(startDate),
-        endDate: toISODate(endDate)
+        endDate: toISODate(endDate),
+        format
       });
 
       if (flags.format === "table") {
         this.renderTable(result.data);
-      } else {
-        const outputPath = flags.output
-          ? resolve(flags.output)
-          : resolve(
-              `./mikro-accounting-report-${toISODate(startDate)}-to-${toISODate(endDate)}.png`
-            );
-
-        const dir = resolve(outputPath, "..");
-        if (!existsSync(dir)) {
-          mkdirSync(dir, { recursive: true });
-        }
-
-        writeFileSync(outputPath, Buffer.from(result.image, "base64"));
-        this.log(`\nReport saved: ${outputPath}`);
+        return;
       }
+
+      const defaultExt = format === "json" ? "json" : "pdf";
+      const outputPath = flags.output
+        ? resolve(flags.output)
+        : resolve(
+            `./mikro-accounting-report-${toISODate(startDate)}-to-${toISODate(endDate)}.${defaultExt}`
+          );
+
+      const dir = resolve(outputPath, "..");
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      if (format === "json") {
+        writeFileSync(outputPath, JSON.stringify(result.data, null, 2));
+      } else {
+        if (!result.pdfBase64) {
+          this.error("El servidor no devolvió el PDF esperado.");
+          return;
+        }
+        writeFileSync(outputPath, Buffer.from(result.pdfBase64, "base64"));
+      }
+      this.log(`\nReport saved: ${outputPath}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

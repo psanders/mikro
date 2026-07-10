@@ -19,7 +19,6 @@ if (!process.env.MIKRO_CONFIG_FILE) {
 
 import {
   getConfig,
-  getLogoPath,
   getPromoBannerPath,
   getFollowUpTimerConfig,
   getWhatsAppFollowUpTemplate,
@@ -39,8 +38,6 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
 import {
   ValidationError,
-  renderCustomersReportToPng,
-  loadLogoDataUrl,
   MAX_TRPC_REQUEST_BYTES,
   applicationPayloadSchema,
   normalizeApplication
@@ -67,8 +64,7 @@ import {
   getWhatsAppPromoTemplate,
   type Message,
   type Profile,
-  type ToolExecutorDependencies,
-  type ExportedCustomer
+  type ToolExecutorDependencies
 } from "@mikro/agents";
 import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
 import { createTaskWorker } from "./tasks/index.js";
@@ -113,11 +109,6 @@ import {
   createCalculateLoan,
   createUpdateLoanStatus,
   createListUsers,
-  createExportCollectorCustomers,
-  createExportAllCustomers,
-  createGeneratePerformanceReport,
-  createGenerateDefaultedReport,
-  createGenerateRenewalCandidatesReport,
   createUpsertApplication,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
@@ -448,11 +439,6 @@ async function initializeMessageProcessor() {
     const calculateLoan = createCalculateLoan();
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
-    const exportCollectorCustomers = createExportCollectorCustomers(dbClient);
-    const exportAllCustomers = createExportAllCustomers(dbClient);
-    const generatePerformanceReport = createGeneratePerformanceReport(dbClient);
-    const generateDefaultedReport = createGenerateDefaultedReport(dbClient);
-    const generateRenewalCandidatesReport = createGenerateRenewalCandidatesReport(dbClient);
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
     const whatsAppClient = createWhatsAppClient();
     const sendWhatsAppMessage = createSendWhatsAppMessage(whatsAppClient);
@@ -498,39 +484,6 @@ async function initializeMessageProcessor() {
       },
       getAgentForProfile,
       findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient)
-    });
-
-    const toExportedCustomer = (customer: {
-      name: string;
-      nickname?: string | null;
-      phone: string;
-      collectionPoint?: string | null;
-      notes?: string | null;
-      preferredPaymentDay?: string | null;
-      loans: Array<{
-        loanId: number;
-        nickname?: string | null;
-        paymentFrequency: string;
-        createdAt: Date;
-        termLength: number;
-        payments: Array<{ paidAt: Date }>;
-      }>;
-    }): ExportedCustomer => ({
-      name: customer.name,
-      nickname: customer.nickname ?? null,
-      phone: customer.phone,
-      collectionPoint: customer.collectionPoint ?? null,
-      notes: customer.notes ?? null,
-      preferredPaymentDay: customer.preferredPaymentDay ?? null,
-      loans: customer.loans.map((loan) => ({
-        loanId: loan.loanId,
-        notes: null,
-        nickname: loan.nickname ?? null,
-        paymentFrequency: loan.paymentFrequency,
-        createdAt: loan.createdAt,
-        termLength: loan.termLength,
-        payments: loan.payments.map((p) => ({ paidAt: p.paidAt }))
-      }))
     });
 
     // mikro/#115: resolve a copilot-supplied accounting account/category
@@ -789,45 +742,6 @@ async function initializeMessageProcessor() {
       },
       previewLateFee: async (params: { loanId: number; asOf?: Date }) => {
         return previewLateFee(params);
-      },
-      exportCollectorCustomers: async (
-        params: Parameters<ToolExecutorDependencies["exportCollectorCustomers"]>[0]
-      ) => {
-        const customers = await exportCollectorCustomers(params);
-        return customers.map(toExportedCustomer);
-      },
-      exportAllCustomers: async () => {
-        const customers = await exportAllCustomers({});
-        return customers.map(toExportedCustomer);
-      },
-      generatePerformanceReport: async (params: { startDate?: string; endDate?: string }) => {
-        const result = await generatePerformanceReport({
-          startDate: params.startDate ? new Date(params.startDate) : undefined,
-          endDate: params.endDate ? new Date(params.endDate) : undefined
-        });
-        return { image: result.image };
-      },
-      generateDefaultedReport: async () => {
-        const result = await generateDefaultedReport({});
-        return { image: result.image };
-      },
-      generateRenewalCandidatesReport: async () => {
-        const result = await generateRenewalCandidatesReport({});
-        return { image: result.image };
-      },
-      renderCustomersReportToPng: async (
-        customers: Parameters<ToolExecutorDependencies["renderCustomersReportToPng"]>[0]
-      ) => {
-        const logoDataUrl = loadLogoDataUrl(getLogoPath());
-        return renderCustomersReportToPng(customers, undefined, logoDataUrl ?? undefined);
-      },
-      uploadMedia: async (fileBuffer: Buffer, mimeType: string) => {
-        return whatsAppClient.uploadMedia(fileBuffer, mimeType);
-      },
-      sendWhatsAppMessage: async (
-        params: Parameters<ToolExecutorDependencies["sendWhatsAppMessage"]>[0]
-      ) => {
-        return sendWhatsAppMessage(params);
       },
       // José intake tools
       joseGetApplicationState: createGetApplicationState(prisma as unknown as DbClient),

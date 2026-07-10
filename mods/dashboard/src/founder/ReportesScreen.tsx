@@ -1,19 +1,38 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Reports catalog (`/founder/reportes`) — Pencil "Reportes". Data-driven list
- * (RECURRENTES + PEDIDOS AL COPILOTO groups) with a month period picker.
- * Reports are exports of existing data — no authoring/BI. v1 wires the audit
- * log (month-scoped CSV from the event log via `exportAuditLog`); the other
- * catalog rows render per the design with an inert download (Próximamente).
+ * Reports catalog (`/founder/reportes`) — Pencil "Founder / Reportes" (node
+ * Gz8x7). Six reports, each produced from the shared `defineReport`
+ * definition in `@mikro/common` (issue #110 / unify-reporting-strategy):
+ * estado de cuenta, clientes, préstamos en riesgo, renovación, desempeño,
+ * contable. Every row downloads a branded PDF via the existing `saveFile`
+ * helper (JSON is available through the same tRPC procedure with
+ * `format: "json"` but the catalog's single "Descargar" button — same
+ * one-click convention as the loan-statement founder-feed card — defaults to
+ * PDF; the format chips are informational, matching the Pencil design).
+ *
+ * The audit log (month-scoped CSV, `exportAuditLog`) is NOT part of the
+ * updated Pencil catalog — its fate is being decided separately by the
+ * owner — so it is kept exactly as it was, under its own label below the
+ * six-report list, untouched by this migration.
+ *
+ * "Estado de cuenta" (loan-statement) is per-loan, not period-scoped, so it
+ * doesn't fit this catalog's one-click period download: rendered disabled
+ * with a short note instead of a broken/misleading download (see design.md
+ * risk note + task 9.3 guidance). Generate it from a loan's detail view or
+ * the founder-feed automation instead.
  */
 import { useMemo, useState } from "react";
 import {
   CalendarCheck,
   ChevronDown,
   Download,
+  Receipt,
+  Repeat,
   ScrollText,
   Sparkles,
+  TrendingUp,
+  TriangleAlert,
   Users,
   Wallet
 } from "lucide-react";
@@ -82,91 +101,125 @@ function monthValue(o: { year: number; month: number }): string {
   return `${o.year}-${String(o.month).padStart(2, "0")}`;
 }
 
-type ReportGroup = "recurrentes" | "copiloto";
+/** First/last ISO date (UTC) of the selected month — passed to period-scoped reports. */
+function monthBounds(o: { year: number; month: number }): { startDate: string; endDate: string } {
+  const start = new Date(Date.UTC(o.year, o.month - 1, 1));
+  const end = new Date(Date.UTC(o.year, o.month, 0));
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10)
+  };
+}
+
+/** Decode a base64 string (as returned by the report mutations) into raw bytes for saveFile. */
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+type ReportId =
+  | "estado-cuenta"
+  | "clientes"
+  | "prestamos-en-riesgo"
+  | "renovacion"
+  | "desempeno"
+  | "contable"
+  | "audit-log";
 
 interface ReportEntry {
-  id: string;
-  group: ReportGroup;
+  id: ReportId;
   icon: LucideIcon;
   chipBg: string;
   iconColor: string;
   title: string;
   description: string;
   formats: string[];
-  /** Only `available` rows have a wired download (v1: the audit log). */
+  /** false rows show a disabled "Descargar" with a note instead of a download. */
   available: boolean;
+  disabledNote?: string;
 }
 
-// Data-driven catalog (Pencil). Adding a future report is adding an entry here
-// (+ a case in handleDownload once its export exists) — the screen is static.
+// Data-driven catalog (Pencil node Gz8x7, "Founder / Reportes"). Adding a
+// future report is adding an entry here (+ a case in handleDownload) — the
+// screen is static.
 const CATALOG: ReportEntry[] = [
   {
-    id: "cierre-mensual",
-    group: "recurrentes",
-    icon: CalendarCheck,
+    id: "estado-cuenta",
+    icon: Receipt,
     chipBg: "bg-[#E9F2FF]",
     iconColor: "text-[#1F4AA8]",
-    title: "Cierre mensual",
-    description: "Cartera, cobranza, mora y P&L simple · se genera el 1 de cada mes",
-    formats: ["PDF", "Excel"],
-    available: false
+    title: "Estado de cuenta",
+    description: "Por préstamo · cronograma, mora y verificación del ledger",
+    formats: ["PDF", "JSON"],
+    available: false,
+    disabledNote: "Por préstamo — genéralo desde la ficha del préstamo o el copiloto."
   },
   {
-    id: "cartera-activa",
-    group: "recurrentes",
-    icon: Wallet,
-    chipBg: "bg-[#E8F7EE]",
-    iconColor: "text-[#16A34A]",
-    title: "Cartera activa",
-    description: "Corte de hoy · préstamos, balances y estados por ruta",
-    formats: ["PDF", "Excel"],
-    available: false
-  },
-  {
-    id: "cobranza-cobrador",
-    group: "recurrentes",
+    id: "clientes",
     icon: Users,
     chipBg: "bg-[#E9F2FF]",
     iconColor: "text-[#1F4AA8]",
-    title: "Cobranza por cobrador",
-    description: "Quincenal · efectividad, visitas y montos por ruta",
-    formats: ["PDF", "Excel"],
-    available: false
-  },
-  {
-    id: "audit-log",
-    group: "recurrentes",
-    icon: ScrollText,
-    chipBg: "bg-[#FDF1E3]",
-    iconColor: "text-[#D97706]",
-    title: "Registro de auditoría",
-    description: "Exportación completa de los eventos del mes · directo del event log",
-    formats: ["Excel"],
+    title: "Clientes",
+    description: "Cartera de clientes por estado de salud",
+    formats: ["PDF", "JSON"],
     available: true
   },
   {
-    id: "mora-ruta",
-    group: "copiloto",
-    icon: Sparkles,
-    chipBg: "bg-[#E9F2FF]",
-    iconColor: "text-[#1F4AA8]",
-    title: "Mora por ruta",
-    description: "Pedido en el chat · «desglosa la mora por ruta y cobrador»",
-    formats: ["PDF", "Excel"],
-    available: false
+    id: "prestamos-en-riesgo",
+    icon: TriangleAlert,
+    chipBg: "bg-[#FDF1E3]",
+    iconColor: "text-[#D97706]",
+    title: "Préstamos en riesgo",
+    description: "Atrasados y en incumplimiento · mora y notas",
+    formats: ["PDF", "JSON"],
+    available: true
   },
   {
-    id: "clientes-renovables",
-    group: "copiloto",
-    icon: Sparkles,
+    id: "renovacion",
+    icon: Repeat,
+    chipBg: "bg-[#E8F7EE]",
+    iconColor: "text-[#16A34A]",
+    title: "Renovación",
+    description: "Clientes elegibles para un nuevo ciclo",
+    formats: ["PDF", "JSON"],
+    available: true
+  },
+  {
+    id: "desempeno",
+    icon: TrendingUp,
     chipBg: "bg-[#E9F2FF]",
     iconColor: "text-[#1F4AA8]",
-    title: "Clientes renovables",
-    description: "Pedido en el chat · «quiénes terminan su préstamo este mes»",
-    formats: ["PDF", "Excel"],
-    available: false
+    title: "Desempeño",
+    description: "Salud de la cartera y proyección financiera",
+    formats: ["PDF", "JSON"],
+    available: true
+  },
+  {
+    id: "contable",
+    icon: Wallet,
+    chipBg: "bg-[#E8F7EE]",
+    iconColor: "text-[#16A34A]",
+    title: "Contable",
+    description: "Ingresos, gastos y balances del período",
+    formats: ["PDF", "JSON"],
+    available: true
   }
 ];
+
+// Kept exactly as it was — not part of the updated Pencil catalog; its fate
+// (CSV vs. JSON/PDF, or removal) is a separate decision for the owner.
+const AUDIT_LOG_ENTRY: ReportEntry = {
+  id: "audit-log",
+  icon: ScrollText,
+  chipBg: "bg-[#FDF1E3]",
+  iconColor: "text-[#D97706]",
+  title: "Registro de auditoría",
+  description: "Exportación completa de los eventos del mes · directo del event log",
+  formats: ["Excel"],
+  available: true
+};
 
 function GroupLabel({ children }: { children: string }) {
   return (
@@ -185,28 +238,76 @@ export function ReportesScreen() {
 
   const selected = monthOptions.find((o) => monthValue(o) === period) ?? monthOptions[0]!;
 
+  const generateCustomersReport = trpc.generateCustomersReport.useMutation();
+  const generateDefaultedReport = trpc.generateDefaultedReport.useMutation();
+  const generateRenewalCandidatesReport = trpc.generateRenewalCandidatesReport.useMutation();
+  const generatePerformanceReport = trpc.generatePerformanceReport.useMutation();
+  const generateAccountingReport = trpc.accounting.generateAccountingReport.useMutation();
+
   async function handleDownload(entry: ReportEntry) {
     if (!entry.available) return;
     setDownloadingId(entry.id);
     try {
-      if (entry.id === "audit-log") {
-        const result = await utils.exportAuditLog.fetch({
-          year: selected.year,
-          month: selected.month
-        });
-        const bytes = new TextEncoder().encode(result.csv);
-        await saveFile(bytes, result.filename, "text/csv");
-        toast.success("Reporte descargado.");
+      const { startDate, endDate } = monthBounds(selected);
+
+      switch (entry.id) {
+        case "audit-log": {
+          const result = await utils.exportAuditLog.fetch({
+            year: selected.year,
+            month: selected.month
+          });
+          const bytes = new TextEncoder().encode(result.csv);
+          await saveFile(bytes, result.filename, "text/csv");
+          break;
+        }
+        case "clientes": {
+          const result = await generateCustomersReport.mutateAsync({ format: "pdf" });
+          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          break;
+        }
+        case "prestamos-en-riesgo": {
+          const result = await generateDefaultedReport.mutateAsync({ format: "pdf" });
+          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          break;
+        }
+        case "renovacion": {
+          const result = await generateRenewalCandidatesReport.mutateAsync({ format: "pdf" });
+          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          break;
+        }
+        case "desempeno": {
+          const result = await generatePerformanceReport.mutateAsync({
+            startDate,
+            endDate,
+            format: "pdf"
+          });
+          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          break;
+        }
+        case "contable": {
+          const result = await generateAccountingReport.mutateAsync({
+            startDate,
+            endDate,
+            format: "pdf"
+          });
+          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          break;
+        }
+        default:
+          return;
       }
+      toast.success("Reporte descargado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el reporte.");
     } finally {
       setDownloadingId(null);
     }
   }
-
-  const recurrentes = CATALOG.filter((e) => e.group === "recurrentes");
-  const copiloto = CATALOG.filter((e) => e.group === "copiloto");
 
   function renderList(entries: ReportEntry[]) {
     return (
@@ -251,7 +352,7 @@ export function ReportesScreen() {
                 <button
                   type="button"
                   disabled={!entry.available || downloading}
-                  title={entry.available ? undefined : "Próximamente"}
+                  title={entry.available ? undefined : entry.disabledNote}
                   onClick={() => void handleDownload(entry)}
                   className={cn(
                     "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[14px] py-[9px] text-[13px] font-medium text-white transition hover:bg-[#183c88]",
@@ -301,17 +402,17 @@ export function ReportesScreen() {
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-[#F4F7FB] px-6 py-5">
         <div className="flex flex-col gap-4">
-          <GroupLabel>RECURRENTES</GroupLabel>
-          {renderList(recurrentes)}
+          <GroupLabel>REPORTES</GroupLabel>
+          {renderList(CATALOG)}
 
-          <GroupLabel>PEDIDOS AL COPILOTO</GroupLabel>
-          {renderList(copiloto)}
+          <GroupLabel>AUDITORÍA</GroupLabel>
+          {renderList([AUDIT_LOG_ENTRY])}
 
           <div className="flex items-center gap-[10px] rounded-[12px] bg-[#E9F2FF] px-4 py-[13px]">
             <Sparkles size={16} className="shrink-0 text-[#1F4AA8]" />
             <span className="flex-1 text-[13px] font-semibold text-[#1F4AA8]">
               ¿Necesitas otro corte? Pídeselo al copiloto — «dame la cobranza de Miguel en junio, en
-              Excel» — y el archivo aparece en esta lista.
+              PDF» — y el archivo aparece en esta lista.
             </span>
           </div>
         </div>

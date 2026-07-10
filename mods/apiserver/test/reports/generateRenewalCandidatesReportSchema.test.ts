@@ -5,8 +5,13 @@ import { expect } from "chai";
 import { generateRenewalCandidatesReportSchema } from "@mikro/common";
 
 describe("generateRenewalCandidatesReportSchema", () => {
-  it("accepts empty input", () => {
+  it("accepts empty input, defaulting format to pdf", () => {
     const result = generateRenewalCandidatesReportSchema.parse({});
-    expect(result).to.deep.equal({});
+    expect(result).to.deep.equal({ format: "pdf" });
+  });
+
+  it("accepts an explicit json format", () => {
+    const result = generateRenewalCandidatesReportSchema.parse({ format: "json" });
+    expect(result).to.deep.equal({ format: "json" });
   });
 });

@@ -112,6 +112,13 @@ export async function gatherPayload(
 export interface ExecuteFiringResult {
   status: "DONE" | "FAILED" | "NEEDS_INPUT";
   summary: string;
+  /**
+   * An in-memory generated document from this execution (e.g. the
+   * loan-statement PDF), passed through from `AutomationResult` for the
+   * confirm caller to offer as a download. Never written to the persisted
+   * `task.completed` event payload — that stays summary-only, as today.
+   */
+  attachment?: { filename: string; mimeType: string; base64: string };
 }
 
 /**
@@ -183,7 +190,9 @@ export async function executeFiring(
       summary: result.summary,
       payload: { ...taskEventPayload(firing), skipped: false, resultSummary: result.summary }
     });
-    return { status: "DONE", summary: result.summary };
+    // `result.attachment` (if any) travels only in this return value — the
+    // event payload above stays summary-only, no bytes ever hit the log.
+    return { status: "DONE", summary: result.summary, attachment: result.attachment };
   } catch (err) {
     const reason = (err as Error).message;
     await db.taskFiring.update({

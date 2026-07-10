@@ -3,11 +3,7 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import {
-  buildGroupedCustomerRows,
-  getCustomersReportHeight,
-  type CustomerForGrouping
-} from "@mikro/common";
+import { buildGroupedCustomerRows, type CustomerForGrouping } from "@mikro/common";
 
 describe("buildGroupedCustomerRows", () => {
   let clock: sinon.SinonFakeTimers;
@@ -199,56 +195,5 @@ describe("buildGroupedCustomerRows", () => {
     expect(result.alDia).to.have.length(0);
     expect(result.requiereAtencion).to.have.length(0);
     expect(result.critico).to.have.length(0);
-  });
-});
-
-describe("getCustomersReportHeight", () => {
-  it("returns minimum 1200 for empty groups", () => {
-    const grouped = {
-      critico: [],
-      requiereAtencion: [],
-      alDia: []
-    };
-    expect(getCustomersReportHeight(grouped)).to.equal(1200);
-  });
-
-  it("height grows with row count", () => {
-    const row = {
-      name: "X",
-      phone: "+1",
-      loanId: 1,
-      rating: 5 as const,
-      missedCount: 0
-    };
-    const base = {
-      critico: [] as (typeof row)[],
-      requiereAtencion: [] as (typeof row)[],
-      alDia: [] as (typeof row)[]
-    };
-    const manyRows = Array.from({ length: 25 }, (_, i) => ({ ...row, loanId: i + 1 }));
-    const moreRows = Array.from({ length: 30 }, (_, i) => ({ ...row, loanId: i + 1 }));
-    const h25 = getCustomersReportHeight({ ...base, alDia: manyRows });
-    const h30 = getCustomersReportHeight({ ...base, alDia: moreRows });
-    expect(h30).to.be.greaterThan(h25);
-  });
-
-  it("only counts non-empty sections for section headers", () => {
-    const row = {
-      name: "A",
-      phone: "+1",
-      loanId: 1,
-      rating: 5 as const,
-      missedCount: 0
-    };
-    const sevenRows = Array.from({ length: 7 }, (_, i) => ({ ...row, loanId: i + 1 }));
-    const oneSection = { critico: [], requiereAtencion: [], alDia: [row] };
-    const threeSections = {
-      critico: sevenRows,
-      requiereAtencion: sevenRows,
-      alDia: sevenRows
-    };
-    const hOne = getCustomersReportHeight(oneSection);
-    const hThree = getCustomersReportHeight(threeSections);
-    expect(hThree).to.be.greaterThan(hOne);
   });
 });

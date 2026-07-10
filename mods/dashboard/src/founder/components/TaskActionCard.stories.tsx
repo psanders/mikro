@@ -3,7 +3,7 @@
  */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { TaskActionCard } from "./TaskActionCard";
-import type { TaskFiringInfo } from "./TaskActionCard";
+import type { TaskFiringInfo, TaskResultAttachment } from "./TaskActionCard";
 
 const readyFiring: TaskFiringInfo = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -50,6 +50,25 @@ const needsInputFiring: TaskFiringInfo = {
   reason: "La automatización cambió desde que se disparó; falta: accountId."
 };
 
+const loanStatementFiring: TaskFiringInfo = {
+  id: "44444444-4444-4444-8444-444444444444",
+  taskName: "Estado de cuenta del préstamo",
+  automationId: "loan-statement",
+  status: "READY",
+  askSlots: [{ name: "loanId", label: "Préstamo (ID)", kind: "text", optional: false }],
+  missingSlots: [],
+  context: {}
+};
+
+// Stubbed attachment — the story never actually downloads, it just proves
+// the button renders once confirm resolves with an in-memory PDF (design D2:
+// the bytes travel only in the confirm mutation's result, never persisted).
+const loanStatementAttachment: TaskResultAttachment = {
+  filename: "estado-cuenta-10036-2026-07-09.pdf",
+  mimeType: "application/pdf",
+  base64: "JVBERi0xLjQK" // stub — not a full valid PDF, just non-empty for the story
+};
+
 const meta = {
   title: "Components/Feed/TaskActionCard",
   component: TaskActionCard,
@@ -89,4 +108,13 @@ export const Submitting: Story = {
 export const WithError: Story = {
   name: "Error — invalid value rejected, firing stays open",
   args: { firing: readyFiring, error: "Valores inválidos o faltantes: amount" }
+};
+
+export const ResolvedWithDownload: Story = {
+  name: "Resolved — loan-statement, download the generated PDF",
+  args: {
+    firing: loanStatementFiring,
+    resultAttachment: loanStatementAttachment,
+    onDownloadAttachment: () => {}
+  }
 };
