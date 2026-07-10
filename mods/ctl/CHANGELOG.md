@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.37.0](https://github.com/psanders/mikro/compare/v1.36.0...v1.37.0) (2026-07-10)
+
+### Features
+
+- **customers:** store customer documents independent of loan applications ([#197](https://github.com/psanders/mikro/issues/197)) ([dfa0397](https://github.com/psanders/mikro/commit/dfa0397f3198415a3612f26f8b82dbd6a588a0fd)), closes [#196](https://github.com/psanders/mikro/issues/196)
+
 # [1.36.0](https://github.com/psanders/mikro/compare/v1.35.5...v1.36.0) (2026-07-10)
 
 **Note:** Version bump only for package @mikro/ctl
