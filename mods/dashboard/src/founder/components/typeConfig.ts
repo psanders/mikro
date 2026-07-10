@@ -14,6 +14,7 @@ import {
   Repeat,
   UserPlus,
   Sparkles,
+  FileText,
   BellRing,
   AlarmClockCheck,
   CircleAlert,
@@ -76,6 +77,7 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.restored": { icon: RotateCcw, accent: "green" },
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
   "customer.created": { icon: UserPlus, accent: "blue" },
+  "contract.generated": { icon: FileText, accent: "blue" },
   "copilot.action": { icon: Sparkles, accent: "blue" },
   "rule.alert": { icon: BellRing, accent: "amber" },
   "task.due": { icon: AlarmClockCheck, accent: "amber" },
@@ -316,6 +318,14 @@ const LOAN_STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente"
 };
 
+/** Plural adverb per payment frequency, for the contract narrative. */
+const FREQUENCY_ADVERBS: Record<string, string> = {
+  DAILY: "diarias",
+  WEEKLY: "semanales",
+  BIWEEKLY: "quincenales",
+  MONTHLY: "mensuales"
+};
+
 const translate = (map: Record<string, string>, value: string) => map[value.toLowerCase()] ?? value;
 
 /**
@@ -410,6 +420,18 @@ export function resolveNarrative(event: FeedEvent): string | null {
     }
     case "customer.created":
       return null;
+    case "contract.generated": {
+      const principal = typeof payload.principal === "number" ? payload.principal : null;
+      const installments = typeof payload.installments === "number" ? payload.installments : null;
+      const adverb =
+        typeof payload.frequency === "string" ? (FREQUENCY_ADVERBS[payload.frequency] ?? "") : "";
+      const cuotas =
+        installments !== null
+          ? ` a ${installments} cuota${installments === 1 ? "" : "s"}${adverb ? ` ${adverb}` : ""}`
+          : "";
+      const monto = principal !== null ? ` por ${formatAmount(principal)}` : "";
+      return `${actorName} generó un contrato para ${customerName ?? "un cliente"}${monto}${cuotas}.`;
+    }
     case "copilot.action": {
       const resultSummary =
         typeof payload.resultSummary === "string" && payload.resultSummary
@@ -468,7 +490,8 @@ export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
       return event.loanId
         ? { label: "Ver préstamo", target: { kind: "loan", id: event.loanId } }
         : null;
-    case "customer.created": {
+    case "customer.created":
+    case "contract.generated": {
       const customerId = event.payload.customerId;
       return typeof customerId === "string"
         ? { label: "Ver cliente", target: { kind: "customer", id: customerId } }

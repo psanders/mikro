@@ -23,8 +23,13 @@ import { CopilotDock } from "./CopilotDock";
 import { useCopilot } from "./CopilotContext";
 import { PendingActionCard } from "./PendingActionCard";
 import { RuleCard } from "./RuleCard";
+import { ContractFormCard } from "./ContractFormCard";
 import { UserBubble } from "./UserBubble";
+import { saveFile } from "../../lib/saveFile";
 import type {
+  ContractCustomer,
+  ContractFormStatus,
+  ContractFormValues,
   CopilotMessage,
   CopilotPendingAction,
   CopilotProvenance,
@@ -48,6 +53,14 @@ const uid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random()}`;
+
+/** Decode a base64 string (as returned by generateCustomerContract) into bytes. */
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 function statusToState(status: string): PendingActionState {
   switch (status) {
@@ -144,6 +157,25 @@ export function CopilotDockContainer() {
   const rejectAction = trpc.copilotRejectAction.useMutation();
   const setRuleEnabled = trpc.setWatchRuleEnabled.useMutation();
   const clearHistory = trpc.clearCopilotHistory.useMutation();
+  const generateContract = trpc.generateCustomerContract.useMutation();
+
+  // Contract form card: one shared customer search (the dock holds at most one
+  // open form at a time), plus per-card generate status keyed by message id.
+  const [customerQuery, setCustomerQuery] = useState("");
+  const customerSearch = trpc.listCustomers.useQuery(
+    { search: customerQuery.trim() },
+    { enabled: customerQuery.trim().length >= 2 }
+  );
+  const contractCustomers: ContractCustomer[] = (customerSearch.data ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    idNumber: c.idNumber,
+    homeAddress: c.homeAddress
+  }));
+  const [contractStatus, setContractStatus] = useState<
+    Record<string, { status: ContractFormStatus; error?: string }>
+  >({});
 
   const appendReply = useCallback((res: ChatReply) => {
     setThread((prev) => {
@@ -169,6 +201,15 @@ export function CopilotDockContainer() {
           kind: "rule",
           id: uid(),
           rule: toRule(res.createdRule),
+          provenance: provUsed ? undefined : prov
+        });
+        provUsed = true;
+      }
+      if (res.contractForm) {
+        next.push({
+          kind: "contractForm",
+          id: uid(),
+          customerHint: res.contractForm.customerHint,
           provenance: provUsed ? undefined : prov
         });
       }
@@ -262,6 +303,36 @@ export function CopilotDockContainer() {
     setInput(`Edita la regla ${rule.name}: `);
   }, []);
 
+  const handleGenerateContract = useCallback(
+    (messageId: string, values: ContractFormValues) => {
+      setContractStatus((prev) => ({ ...prev, [messageId]: { status: "generating" } }));
+      generateContract.mutate(values, {
+        onSuccess: async (res) => {
+          try {
+            await saveFile(base64ToBytes(res.dataBase64), res.filename, res.mimeType);
+            setContractStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+            // A contract.generated event was recorded — refresh the feed.
+            void utils.listFeedEvents.invalidate();
+          } catch {
+            setContractStatus((prev) => ({
+              ...prev,
+              [messageId]: { status: "error", error: "No se pudo descargar el contrato." }
+            }));
+          }
+        },
+        onError: (err) =>
+          setContractStatus((prev) => ({
+            ...prev,
+            [messageId]: {
+              status: "error",
+              error: err.message || "No se pudo generar el contrato. Inténtalo de nuevo."
+            }
+          }))
+      });
+    },
+    [generateContract, utils]
+  );
+
   const handleClearHistory = useCallback(() => {
     clearHistory.mutate(
       {},
@@ -326,6 +397,19 @@ export function CopilotDockContainer() {
                   note={item.note}
                   onEdit={handleRuleEdit}
                   onDisable={handleRuleDisable}
+                />
+              </AssistantMessage>
+            );
+          case "contractForm":
+            return (
+              <AssistantMessage key={item.id} provenance={item.provenance}>
+                <ContractFormCard
+                  customers={contractCustomers}
+                  customerHint={item.customerHint}
+                  onSearch={setCustomerQuery}
+                  onGenerate={(values) => handleGenerateContract(item.id, values)}
+                  status={contractStatus[item.id]?.status ?? "idle"}
+                  error={contractStatus[item.id]?.error}
                 />
               </AssistantMessage>
             );

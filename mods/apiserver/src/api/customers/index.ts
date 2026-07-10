@@ -9,3 +9,4 @@ export { createListCustomers } from "./createListCustomers.js";
 export { createListCustomersByCollector } from "./createListCustomersByCollector.js";
 export { createExportCollectorCustomers } from "./createExportCollectorCustomers.js";
 export { createExportAllCustomers } from "./createExportAllCustomers.js";
+export { createGenerateCustomerContract } from "./createGenerateCustomerContract.js";

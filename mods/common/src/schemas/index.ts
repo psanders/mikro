@@ -72,6 +72,7 @@ export {
   listCustomersByCollectorSchema,
   exportCollectorCustomersSchema,
   exportAllCustomersSchema,
+  generateCustomerContractSchema,
   type CreateCustomerInput,
   type UpdateCustomerInput,
   type GetCustomerInput,
@@ -79,7 +80,8 @@ export {
   type ListCustomersInput,
   type ListCustomersByCollectorInput,
   type ExportCollectorCustomersInput,
-  type ExportAllCustomersInput
+  type ExportAllCustomersInput,
+  type GenerateCustomerContractInput
 } from "./customer.js";
 
 export {
@@ -347,12 +349,14 @@ export {
   copilotPendingActionSchema,
   copilotProvenanceSchema,
   copilotChatReplySchema,
+  copilotContractFormSchema,
   COPILOT_ACTION_EXPIRY_MINUTES,
   type WatchRuleMetric,
   type CreateWatchRuleInput,
   type CopilotPendingAction,
   type CopilotProvenance,
   type CopilotChatReply,
+  type CopilotContractForm,
   type ClearCopilotHistoryResult
 } from "./copilot.js";
 

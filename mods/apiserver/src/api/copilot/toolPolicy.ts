@@ -387,6 +387,32 @@ export const runPortfolioHealthCheckTool: ToolFunction = {
 };
 
 /**
+ * Open the interactive contract form card. A DIRECT tool: it generates nothing —
+ * it only opens the card in the dock, where the founder picks a customer, enters
+ * the terms, and generates the PDF via `generateCustomerContract`. The model must
+ * NOT try to collect the terms itself.
+ */
+export const openContractFormTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "openContractForm",
+    description:
+      "Abrir el formulario para generar un contrato de préstamo para un cliente existente. Úsalo cuando el fundador pida generar o crear un contrato (ej: 'generá un contrato para Enersida', 'necesito un contrato'). NO recopiles los términos tú mismo ni generes nada: esta herramienta solo abre una tarjeta-formulario donde el fundador elige el cliente e ingresa los términos (monto, cuotas, frecuencia, etc.) y genera el PDF. Si el fundador nombró a un cliente, pásalo en customerHint para pre-cargar la búsqueda.",
+    parameters: {
+      type: "object",
+      properties: {
+        customerHint: {
+          type: "string",
+          description:
+            "Nombre o teléfono del cliente mencionado, para pre-cargar la búsqueda. Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * Tool definitions owned by the copilot module (not by the WhatsApp agents).
  * Handled inline by createCopilotChat rather than the shared tool executor.
  */
@@ -397,6 +423,7 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   listWatchRulesTool,
   disableWatchRuleTool,
   githubFeedbackTool,
+  openContractFormTool,
   createTaskTool,
   listTasksTool,
   cancelTaskTool,
@@ -459,7 +486,10 @@ export const DIRECT_TOOLS: readonly string[] = [
   // Task definitions are reversible config (pause/cancel) like watch rules;
   // execution is gated separately by the firing confirm flow, never here.
   "createTask",
-  "cancelTask"
+  "cancelTask",
+  // Opens the contract form card; generates nothing itself (the card calls
+  // generateCustomerContract). Reversible/harmless, so no confirm step.
+  "openContractForm"
 ];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */
@@ -480,7 +510,9 @@ export const TOOL_NOTES: Record<string, string> = {
   listCustomerLoansByPhone:
     "para ubicar un cliente y sus préstamos por teléfono, prefiere esta sobre encadenar getCustomerByPhone + listLoansByCustomer.",
   createAccountingTransaction:
-    "account, toAccount y category aceptan el nombre exacto (ej: 'Caja principal') o el UUID; se resuelve automáticamente. No la confundas con createPayment (cobro de un préstamo) — esta es una entrada contable independiente."
+    "account, toAccount y category aceptan el nombre exacto (ej: 'Caja principal') o el UUID; se resuelve automáticamente. No la confundas con createPayment (cobro de un préstamo) — esta es una entrada contable independiente.",
+  openContractForm:
+    "es la ÚNICA herramienta para contratos: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge y genera el PDF."
 };
 
 export function isReadTool(name: string): boolean {

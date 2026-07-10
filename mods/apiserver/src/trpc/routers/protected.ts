@@ -64,6 +64,7 @@ import {
   uploadSignedContractSchema,
   getApplicationContractSchema,
   generateApplicationContractSchema,
+  generateCustomerContractSchema,
   convertApplicationSchema,
   updateApplicationSchema,
   createApplicationSchema,
@@ -95,6 +96,7 @@ import { createListCustomers } from "../../api/customers/createListCustomers.js"
 import { createListCustomersByCollector } from "../../api/customers/createListCustomersByCollector.js";
 import { createExportCollectorCustomers } from "../../api/customers/createExportCollectorCustomers.js";
 import { createExportAllCustomers } from "../../api/customers/createExportAllCustomers.js";
+import { createGenerateCustomerContract } from "../../api/customers/createGenerateCustomerContract.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -712,6 +714,19 @@ export const protectedRouter = router({
     .input(generateApplicationContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateApplicationContract(ctx.db);
+      return fn(input);
+    }),
+
+  /**
+   * Render an ad-hoc loan contract PDF for an existing customer (founder copilot
+   * contract form). ADMIN only. Stateless — stores no PDF, changes no record;
+   * records a `contract.generated` feed event on success.
+   */
+  generateCustomerContract: adminProcedure
+    .meta({ event: "contract.generated" })
+    .input(generateCustomerContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateCustomerContract(ctx.db);
       return fn(input);
     }),
 

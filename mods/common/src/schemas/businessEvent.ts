@@ -19,6 +19,7 @@ export const businessEventTypeEnum = z.enum([
   "application.restored",
   "loan.status_changed",
   "customer.created",
+  "contract.generated",
   "copilot.action",
   "rule.alert",
   "task.due",
@@ -92,6 +93,18 @@ const loanStatusChangedPayloadSchema = z.object({
 
 const customerCreatedPayloadSchema = z.object({
   customerId: z.uuid()
+});
+
+// An ad-hoc loan contract generated for an existing customer from the founder
+// copilot (issue: contract-copilot-card). Records the action, never the PDF
+// bytes — the generated document is ephemeral and stored nowhere.
+const contractGeneratedPayloadSchema = z.object({
+  customerId: z.uuid(),
+  principal: z.number(),
+  installments: z.number().int(),
+  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  installmentAmount: z.number(),
+  startDate: z.string()
 });
 
 // Written intrinsically by the copilot confirm flow (not an annotated procedure).
@@ -175,6 +188,7 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "application.restored": applicationRestoredPayloadSchema,
   "loan.status_changed": loanStatusChangedPayloadSchema,
   "customer.created": customerCreatedPayloadSchema,
+  "contract.generated": contractGeneratedPayloadSchema,
   "copilot.action": copilotActionPayloadSchema,
   "rule.alert": ruleAlertPayloadSchema,
   "task.due": taskDuePayloadSchema,
