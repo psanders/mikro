@@ -1,7 +1,7 @@
 # Ship checkpoint — add-customer-documents
 
 Started: 2026-07-10
-Current stage: DONE — shipped, archived; ready to commit
+Current stage: DONE — shipped, archived, committed, PR #197 open
 
 **Scope:** New `CustomerDocument` model gives any customer a document list independent of a loan application, primarily for storage/audit (not retrieval UX — physical copies are the day-to-day reference). Conversion copies (by reference, no file move/dup) the application's already-stored contract/ID-image documents onto the resulting customer inside its existing transaction. `generateCustomerContract` (PR #196) persists its rendered PDF as a customer document instead of download-only. Reviewer mobile app's application-scoped document view is untouched (reviewers still need it occasionally). Read surface is a `ctl` command (`customers:documentsList`), not dashboard UI — the founder dashboard has no customer-detail page and documents are checked occasionally, not a founder-facing flow.
 
@@ -23,6 +23,7 @@ Status values: `pending` · `in-progress` · `done` · `skipped` (with reason).
 
 Newest first. One line per meaningful decision or stage transition.
 
+- 2026-07-10 — Committed (`63e3270`) on new branch `feat/add-customer-documents`, pushed, PR #197 opened (base main). Discovered mid-flow that the prior branch `feat/contract-copilot-card` (and its base `feat/unify-reporting-strategy`, PR #195/#110) were both already merged — cleaned up per branch hygiene: stashed WIP, fast-forwarded local `main` to `origin/main`, deleted both merged local branches, branched fresh off `main`, popped the stash (no conflicts), re-verified green, then committed.
 - 2026-07-10 — Sync + Archive complete. Cleaned up the smoke-test artifact first (deleted the CustomerDocument row + PDF file) per user's choice. Change archived to `openspec/changes/archive/2026-07-10-add-customer-documents`. Not yet committed — awaiting user go-ahead.
 - 2026-07-10 — Build + Test complete, all green. Live smoke test run against the real dev DB (mikro.db) left one real `CustomerDocument` row + one `contracts/<sha256>.pdf` file for a seeded test customer — harmless, not cleaned up automatically, flagged to the user. → Stage 5 gate: confirm before syncing specs.
 - 2026-07-10 — User: priority is storage/audit, not retrieval UI — physical copies are the day-to-day reference; keep the reviewer app's document view as-is (still needed occasionally). Reflected in proposal.md Why.

@@ -92,24 +92,34 @@ export const copilotProvenanceSchema = z.object({
 export type CopilotProvenance = z.infer<typeof copilotProvenanceSchema>;
 
 /**
- * The interactive contract form the copilot opens when the founder asks for a
- * loan contract. Carries only an optional customer hint to pre-seed the picker —
- * nothing is generated here; the card collects the terms and calls
- * `generateCustomerContract` directly. Distinct from a pending action: the card
- * is an editable form, not a verbatim confirm-and-execute.
+ * The interactive customer form the copilot opens when the founder asks to
+ * create a new customer. Carries nothing — nothing is created here; the card
+ * collects every field and calls `createCustomer` directly.
  */
-export const copilotContractFormSchema = z.object({
+export const copilotCustomerFormSchema = z.object({});
+
+export type CopilotCustomerForm = z.infer<typeof copilotCustomerFormSchema>;
+
+/**
+ * The interactive loan form the copilot opens when the founder asks to create
+ * a new loan. Carries only an optional customer hint to pre-seed the picker —
+ * nothing is created here; the card collects the terms and calls `createLoan`
+ * directly (optionally followed by `generateCustomerContract` if the founder
+ * leaves the contract checkbox checked).
+ */
+export const copilotLoanFormSchema = z.object({
   /** Free-text hint (name or phone) the founder named, to pre-seed the search. */
   customerHint: z.string().optional()
 });
 
-export type CopilotContractForm = z.infer<typeof copilotContractFormSchema>;
+export type CopilotLoanForm = z.infer<typeof copilotLoanFormSchema>;
 
 /**
  * One copilotChat response: the assistant's reply text, optional provenance,
  * and — when the model proposed a write — the pending action to confirm.
  * Rule cards render when `createdRule` is present (Vigilar creates directly);
- * the contract form card renders when `contractForm` is present.
+ * the customer/loan form cards render when `customerForm`/`loanForm` is
+ * present.
  */
 export const copilotChatReplySchema = z.object({
   reply: z.string(),
@@ -125,7 +135,8 @@ export const copilotChatReplySchema = z.object({
       collectorId: z.uuid().nullable().optional()
     })
     .optional(),
-  contractForm: copilotContractFormSchema.optional()
+  customerForm: copilotCustomerFormSchema.optional(),
+  loanForm: copilotLoanFormSchema.optional()
 });
 
 export type CopilotChatReply = z.infer<typeof copilotChatReplySchema>;

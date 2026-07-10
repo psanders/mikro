@@ -9,8 +9,6 @@ export interface ContractData {
   debtor: {
     name: string;
     cedula: string;
-    /** Drives Spanish grammatical agreement (dominicano/a, domiciliado/a). */
-    gender: "M" | "F";
     /** e.g. "casada", "soltero" — lowercased. */
     maritalStatus?: string;
     /** e.g. "empleada privada", "comerciante". */

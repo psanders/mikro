@@ -20,8 +20,9 @@ export interface GeneratedContract {
 
 /**
  * Render an ad-hoc loan contract PDF for an existing customer. Debtor identity
- * comes from the customer row; the debtor's gender and the negotiated terms come
- * from the founder (copilot contract form). The rendered PDF is persisted as a
+ * comes from the customer row; the negotiated terms come from the founder
+ * (copilot contract form). The contract text is gender-neutral. The rendered
+ * PDF is persisted as a
  * `CustomerDocument` (`type: CONTRACT`, `source: DIRECT`) before returning, so
  * the digital record is durably captured for auditing even though the response
  * is download-only. The `contract.generated` feed event is written by the

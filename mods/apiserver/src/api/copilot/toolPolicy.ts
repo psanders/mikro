@@ -387,17 +387,36 @@ export const runPortfolioHealthCheckTool: ToolFunction = {
 };
 
 /**
- * Open the interactive contract form card. A DIRECT tool: it generates nothing —
- * it only opens the card in the dock, where the founder picks a customer, enters
- * the terms, and generates the PDF via `generateCustomerContract`. The model must
- * NOT try to collect the terms itself.
+ * Open the interactive customer form card. A DIRECT tool: it creates nothing —
+ * it only opens the card in the dock, where the founder fills in every field
+ * and submits. The model must NOT try to collect the fields itself.
  */
-export const openContractFormTool: ToolFunction = {
+export const openCustomerFormTool: ToolFunction = {
   type: "function",
   function: {
-    name: "openContractForm",
+    name: "openCustomerForm",
     description:
-      "Abrir el formulario para generar un contrato de préstamo para un cliente existente. Úsalo cuando el fundador pida generar o crear un contrato (ej: 'generá un contrato para Enersida', 'necesito un contrato'). NO recopiles los términos tú mismo ni generes nada: esta herramienta solo abre una tarjeta-formulario donde el fundador elige el cliente e ingresa los términos (monto, cuotas, frecuencia, etc.) y genera el PDF. Si el fundador nombró a un cliente, pásalo en customerHint para pre-cargar la búsqueda.",
+      "Abrir el formulario para crear un cliente nuevo. Úsalo cuando el fundador pida crear o agregar un cliente (ej: 'creá un cliente nuevo', 'agregá a Enersida como cliente'). NO recopiles los datos tú mismo ni crees nada: esta herramienta solo abre una tarjeta-formulario donde el fundador ingresa nombre, teléfono, cédula, dirección, cobrador asignado, y cualquier dato opcional, y crea el cliente.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
+ * Open the interactive loan form card. A DIRECT tool: it creates nothing — it
+ * only opens the card in the dock, where the founder picks a customer, enters
+ * the terms, and creates the loan (optionally generating a matching contract
+ * in the same submit). The model must NOT try to collect the terms itself.
+ */
+export const openLoanFormTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "openLoanForm",
+    description:
+      "Abrir el formulario para crear un préstamo nuevo para un cliente existente. Úsalo cuando el fundador pida crear o abrir un préstamo (ej: 'creá un préstamo para Enersida', 'necesito abrir un préstamo'). NO recopiles los términos tú mismo ni crees nada: esta herramienta solo abre una tarjeta-formulario donde el fundador elige el cliente, ingresa los términos (monto, cuotas, frecuencia, etc.) y crea el préstamo; el formulario también puede generar el contrato en el mismo paso si el fundador lo deja marcado. Si el fundador nombró a un cliente, pásalo en customerHint para pre-cargar la búsqueda.",
     parameters: {
       type: "object",
       properties: {
@@ -423,7 +442,8 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   listWatchRulesTool,
   disableWatchRuleTool,
   githubFeedbackTool,
-  openContractFormTool,
+  openCustomerFormTool,
+  openLoanFormTool,
   createTaskTool,
   listTasksTool,
   cancelTaskTool,
@@ -487,9 +507,11 @@ export const DIRECT_TOOLS: readonly string[] = [
   // execution is gated separately by the firing confirm flow, never here.
   "createTask",
   "cancelTask",
-  // Opens the contract form card; generates nothing itself (the card calls
-  // generateCustomerContract). Reversible/harmless, so no confirm step.
-  "openContractForm"
+  // Open the customer/loan form cards; create nothing themselves (the cards
+  // call createCustomer/createLoan directly). Reversible/harmless, so no
+  // confirm step.
+  "openCustomerForm",
+  "openLoanForm"
 ];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */
@@ -511,8 +533,10 @@ export const TOOL_NOTES: Record<string, string> = {
     "para ubicar un cliente y sus préstamos por teléfono, prefiere esta sobre encadenar getCustomerByPhone + listLoansByCustomer.",
   createAccountingTransaction:
     "account, toAccount y category aceptan el nombre exacto (ej: 'Caja principal') o el UUID; se resuelve automáticamente. No la confundas con createPayment (cobro de un préstamo) — esta es una entrada contable independiente.",
-  openContractForm:
-    "es la ÚNICA herramienta para contratos: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge y genera el PDF."
+  openCustomerForm:
+    "es la ÚNICA forma de crear un cliente: solo abre el formulario. No pidas ni inventes los datos (nombre, teléfono, cédula, dirección, cobrador) — el formulario los recoge y crea el cliente. No uses createCustomer directamente.",
+  openLoanForm:
+    "es la ÚNICA forma de crear un préstamo: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge, crea el préstamo y puede generar el contrato en el mismo paso. No uses createLoan directamente."
 };
 
 export function isReadTool(name: string): boolean {

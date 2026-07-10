@@ -29,9 +29,8 @@ function toStartDate(value: string | Date): Date {
   return new Date(value);
 }
 
-/** Founder-supplied gender + negotiated loan terms. */
+/** Founder-supplied negotiated loan terms. */
 export interface CustomerContractTerms {
-  gender: "M" | "F";
   principal: number;
   installments: number;
   installmentAmount: number;
@@ -44,8 +43,8 @@ export interface CustomerContractTerms {
 /**
  * Build ContractData from a customer and the supplied terms. Identity comes from
  * the customer (name, cédula ← idNumber, city ← homeAddress, occupation ←
- * override ?? jobPosition); gender and terms come from the founder. The contract
- * date defaults to now.
+ * override ?? jobPosition); terms come from the founder. The contract date
+ * defaults to now.
  */
 export function buildContractDataFromCustomer(
   customer: CustomerContractIdentity,
@@ -56,7 +55,6 @@ export function buildContractDataFromCustomer(
     debtor: {
       name: customer.name,
       cedula: customer.idNumber,
-      gender: terms.gender,
       maritalStatus: terms.maritalStatus ?? undefined,
       occupation: terms.occupation ?? customer.jobPosition ?? undefined,
       city: customer.homeAddress

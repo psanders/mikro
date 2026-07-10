@@ -19,8 +19,9 @@ export interface GeneratedContract {
 
 /**
  * Render the loan contract PDF for an application. Applicant identity comes from
- * the application; the negotiated terms + debtor gender come from the reviewer
- * (post-approval "Generar contrato" step). Stateless — does not persist anything.
+ * the application; the negotiated terms come from the reviewer (post-approval
+ * "Generar contrato" step). The contract text is gender-neutral. Stateless —
+ * does not persist anything.
  */
 export function createGenerateApplicationContract(client: DbClient) {
   return async (input: GenerateApplicationContractInput): Promise<GeneratedContract> => {
@@ -41,7 +42,6 @@ export function createGenerateApplicationContract(client: DbClient) {
       debtor: {
         name,
         cedula: app.idNumber,
-        gender: input.gender,
         maritalStatus: input.maritalStatus ?? app.maritalStatus?.toLowerCase() ?? undefined,
         occupation:
           input.occupation ??

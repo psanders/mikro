@@ -63,8 +63,10 @@ export interface RuleMessage {
 
 export type ContractFrequency = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 
-/** A customer as the contract form's picker lists it (subset of the row). */
-export interface ContractCustomer {
+/** A customer as a form picker lists it (subset of the row). Shared by any
+ *  copilot form card that needs to resolve an existing customer (e.g. the
+ *  loan form card). */
+export interface CustomerPickerResult {
   id: string;
   name: string;
   phone: string;
@@ -73,25 +75,14 @@ export interface ContractCustomer {
   homeAddress?: string;
 }
 
-/** The values the contract form submits to `generateCustomerContract`. */
-export interface ContractFormValues {
-  customerId: string;
-  gender: "M" | "F";
-  principal: number;
-  installments: number;
-  frequency: ContractFrequency;
-  installmentAmount: number;
-  /** ISO date (yyyy-mm-dd from the date input). */
-  startDate: string;
-  maritalStatus?: string;
-  occupation?: string;
+export interface CustomerFormMessage {
+  kind: "customerForm";
+  id: string;
+  provenance?: CopilotProvenance;
 }
 
-/** Lifecycle of the form card's generate action. */
-export type ContractFormStatus = "idle" | "generating" | "done" | "error";
-
-export interface ContractFormMessage {
-  kind: "contractForm";
+export interface LoanFormMessage {
+  kind: "loanForm";
   id: string;
   /** Optional name/phone the founder named, to pre-seed the picker search. */
   customerHint?: string;
@@ -103,7 +94,57 @@ export type CopilotMessage =
   | AssistantTextMessage
   | PendingActionMessage
   | RuleMessage
-  | ContractFormMessage;
+  | CustomerFormMessage
+  | LoanFormMessage;
+
+export type DayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+/** A collector as the assigned-collector picker lists it. */
+export interface CollectorOption {
+  id: string;
+  name: string;
+}
+
+/** The values the customer form submits to `createCustomer`. */
+export interface CustomerFormValues {
+  name: string;
+  phone: string;
+  idNumber: string;
+  homeAddress: string;
+  assignedCollectorId: string;
+  nickname?: string;
+  collectionPoint?: string;
+  jobPosition?: string;
+  income?: number;
+  isBusinessOwner?: boolean;
+  notes?: string;
+  preferredPaymentDay?: DayOfWeek | null;
+}
+
+/** Lifecycle of a create-form card's submit action. */
+export type CreateFormStatus = "idle" | "creating" | "done" | "error";
+
+/** The values the loan form submits to `createLoan`. */
+export interface LoanFormValues {
+  customerId: string;
+  principal: number;
+  termLength: number;
+  paymentAmount: number;
+  paymentFrequency: ContractFrequency;
+  startingDate?: string;
+  nickname?: string;
+  type?: "SAN";
+  moraRate?: number;
+  /** Whether to also call `generateCustomerContract` with these same terms. */
+  generateContract: boolean;
+}
 
 export type CapabilityVerb = "CONSULTAR" | "ACTUAR" | "VIGILAR" | "AUDITAR";
 

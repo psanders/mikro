@@ -76,9 +76,6 @@ export function renderContractPdf(data: ContractData): Promise<Buffer> {
   doc.on("data", (c: Buffer) => chunks.push(c));
   const done = new Promise<Buffer>((res) => doc.on("end", () => res(Buffer.concat(chunks))));
 
-  const tratamiento = data.debtor.gender === "F" ? "la señora" : "el señor";
-  const dominicano = data.debtor.gender === "F" ? "dominicana" : "dominicano";
-  const g = data.debtor.gender === "F" ? "a" : "o";
   const end = endDate(data.startDate, data.frequency, data.installments);
   const rep = K.creditor.representative;
   const deudorNombre = data.debtor.name.toUpperCase();
@@ -98,9 +95,9 @@ export function renderContractPdf(data: ContractData): Promise<Buffer> {
       `Gerente, el señor ${rep.name}, dominicano, mayor de edad, titular de la cédula de identidad y electoral ` +
       `No. ${rep.cedula}, domiciliado y residente en esta ciudad de ${rep.city}, República Dominicana, quien en ` +
       `lo adelante y para los fines del presente contrato se denominará EL ACREEDOR; Y de la otra parte, ` +
-      `${tratamiento} ${deudorNombre}, ${dominicano}, mayor de edad, ` +
+      `${deudorNombre}, de nacionalidad dominicana, mayor de edad, ` +
       joinParts([data.debtor.maritalStatus, data.debtor.occupation]) +
-      `titular de la cédula de identidad No. ${data.debtor.cedula}, domiciliad${g} y residente en ` +
+      `titular de la cédula de identidad No. ${data.debtor.cedula}, con domicilio y residencia en ` +
       `${data.debtor.city}, quien en lo adelante y para los fines del presente contrato se denominará EL DEUDOR.`
   );
   doc.moveDown(0.6);

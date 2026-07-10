@@ -14,7 +14,7 @@
  *   - rule cards disable via `setWatchRuleEnabled`; "Editar regla" prefills the
  *     composer. Errors surface as an assistant-style error message, never a toast.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "../../lib/trpc";
 import type { RouterOutputs } from "../../lib/trpc";
 import { AssistantMessage } from "./AssistantMessage";
@@ -23,17 +23,18 @@ import { CopilotDock } from "./CopilotDock";
 import { useCopilot } from "./CopilotContext";
 import { PendingActionCard } from "./PendingActionCard";
 import { RuleCard } from "./RuleCard";
-import { ContractFormCard } from "./ContractFormCard";
+import { CustomerFormCard } from "./CustomerFormCard";
+import { LoanFormCard } from "./LoanFormCard";
 import { UserBubble } from "./UserBubble";
-import { saveFile } from "../../lib/saveFile";
 import type {
-  ContractCustomer,
-  ContractFormStatus,
-  ContractFormValues,
   CopilotMessage,
   CopilotPendingAction,
   CopilotProvenance,
   CopilotRule,
+  CreateFormStatus,
+  CustomerFormValues,
+  CustomerPickerResult,
+  LoanFormValues,
   PendingActionState
 } from "./types";
 
@@ -53,14 +54,6 @@ const uid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random()}`;
-
-/** Decode a base64 string (as returned by generateCustomerContract) into bytes. */
-function base64ToBytes(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
 
 function statusToState(status: string): PendingActionState {
   switch (status) {
@@ -157,24 +150,40 @@ export function CopilotDockContainer() {
   const rejectAction = trpc.copilotRejectAction.useMutation();
   const setRuleEnabled = trpc.setWatchRuleEnabled.useMutation();
   const clearHistory = trpc.clearCopilotHistory.useMutation();
+  const createCustomer = trpc.createCustomer.useMutation();
+  const createLoan = trpc.createLoan.useMutation();
   const generateContract = trpc.generateCustomerContract.useMutation();
 
-  // Contract form card: one shared customer search (the dock holds at most one
-  // open form at a time), plus per-card generate status keyed by message id.
-  const [customerQuery, setCustomerQuery] = useState("");
-  const customerSearch = trpc.listCustomers.useQuery(
-    { search: customerQuery.trim() },
-    { enabled: customerQuery.trim().length >= 2 }
+  // Loan form card's customer picker (the dock holds at most one open form at
+  // a time), plus per-card create status keyed by message id.
+  const [loanCustomerQuery, setLoanCustomerQuery] = useState("");
+  const loanCustomerSearch = trpc.listCustomers.useQuery(
+    { search: loanCustomerQuery.trim() },
+    { enabled: loanCustomerQuery.trim().length >= 2 }
   );
-  const contractCustomers: ContractCustomer[] = (customerSearch.data ?? []).map((c) => ({
+  const loanFormCustomers: CustomerPickerResult[] = (loanCustomerSearch.data ?? []).map((c) => ({
     id: c.id,
     name: c.name,
     phone: c.phone,
     idNumber: c.idNumber,
     homeAddress: c.homeAddress
   }));
-  const [contractStatus, setContractStatus] = useState<
-    Record<string, { status: ContractFormStatus; error?: string }>
+
+  // Customer form card's collector select — every COLLECTOR-role user.
+  const usersQuery = trpc.listUsers.useQuery({ limit: 100 });
+  const collectorOptions = useMemo(
+    () =>
+      (usersQuery.data ?? [])
+        .filter((u) => u.roles?.some((r) => r.role === "COLLECTOR"))
+        .map((u) => ({ id: u.id, name: u.name })),
+    [usersQuery.data]
+  );
+
+  const [customerFormStatus, setCustomerFormStatus] = useState<
+    Record<string, { status: CreateFormStatus; error?: string }>
+  >({});
+  const [loanFormStatus, setLoanFormStatus] = useState<
+    Record<string, { status: CreateFormStatus; error?: string }>
   >({});
 
   const appendReply = useCallback((res: ChatReply) => {
@@ -205,11 +214,15 @@ export function CopilotDockContainer() {
         });
         provUsed = true;
       }
-      if (res.contractForm) {
+      if (res.customerForm) {
+        next.push({ kind: "customerForm", id: uid(), provenance: provUsed ? undefined : prov });
+        provUsed = true;
+      }
+      if (res.loanForm) {
         next.push({
-          kind: "contractForm",
+          kind: "loanForm",
           id: uid(),
-          customerHint: res.contractForm.customerHint,
+          customerHint: res.loanForm.customerHint,
           provenance: provUsed ? undefined : prov
         });
       }
@@ -303,34 +316,76 @@ export function CopilotDockContainer() {
     setInput(`Edita la regla ${rule.name}: `);
   }, []);
 
-  const handleGenerateContract = useCallback(
-    (messageId: string, values: ContractFormValues) => {
-      setContractStatus((prev) => ({ ...prev, [messageId]: { status: "generating" } }));
-      generateContract.mutate(values, {
-        onSuccess: async (res) => {
-          try {
-            await saveFile(base64ToBytes(res.dataBase64), res.filename, res.mimeType);
-            setContractStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
-            // A contract.generated event was recorded — refresh the feed.
-            void utils.listFeedEvents.invalidate();
-          } catch {
-            setContractStatus((prev) => ({
-              ...prev,
-              [messageId]: { status: "error", error: "No se pudo descargar el contrato." }
-            }));
-          }
+  const handleCreateCustomer = useCallback(
+    (messageId: string, values: CustomerFormValues) => {
+      setCustomerFormStatus((prev) => ({ ...prev, [messageId]: { status: "creating" } }));
+      createCustomer.mutate(values, {
+        onSuccess: () => {
+          setCustomerFormStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+          void utils.listFeedEvents.invalidate();
         },
         onError: (err) =>
-          setContractStatus((prev) => ({
+          setCustomerFormStatus((prev) => ({
             ...prev,
             [messageId]: {
               status: "error",
-              error: err.message || "No se pudo generar el contrato. Inténtalo de nuevo."
+              error: err.message || "No se pudo crear el cliente. Inténtalo de nuevo."
             }
           }))
       });
     },
-    [generateContract, utils]
+    [createCustomer, utils]
+  );
+
+  const handleCreateLoan = useCallback(
+    (messageId: string, values: LoanFormValues) => {
+      setLoanFormStatus((prev) => ({ ...prev, [messageId]: { status: "creating" } }));
+      const { generateContract: shouldGenerateContract, ...loanInput } = values;
+      createLoan.mutate(loanInput, {
+        onSuccess: () => {
+          void utils.listFeedEvents.invalidate();
+          if (!shouldGenerateContract) {
+            setLoanFormStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+            return;
+          }
+          generateContract.mutate(
+            {
+              customerId: values.customerId,
+              principal: values.principal,
+              installments: values.termLength,
+              installmentAmount: values.paymentAmount,
+              frequency: values.paymentFrequency,
+              startDate: values.startingDate || new Date().toISOString().slice(0, 10)
+            },
+            {
+              onSuccess: () => {
+                setLoanFormStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+                void utils.listFeedEvents.invalidate();
+              },
+              onError: (err) =>
+                setLoanFormStatus((prev) => ({
+                  ...prev,
+                  [messageId]: {
+                    status: "error",
+                    error:
+                      err.message ||
+                      "El préstamo se creó, pero no se pudo generar el contrato. Inténtalo de nuevo desde ctl."
+                  }
+                }))
+            }
+          );
+        },
+        onError: (err) =>
+          setLoanFormStatus((prev) => ({
+            ...prev,
+            [messageId]: {
+              status: "error",
+              error: err.message || "No se pudo crear el préstamo. Inténtalo de nuevo."
+            }
+          }))
+      });
+    },
+    [createLoan, generateContract, utils]
   );
 
   const handleClearHistory = useCallback(() => {
@@ -400,16 +455,27 @@ export function CopilotDockContainer() {
                 />
               </AssistantMessage>
             );
-          case "contractForm":
+          case "customerForm":
             return (
               <AssistantMessage key={item.id} provenance={item.provenance}>
-                <ContractFormCard
-                  customers={contractCustomers}
+                <CustomerFormCard
+                  collectors={collectorOptions}
+                  onCreate={(values) => handleCreateCustomer(item.id, values)}
+                  status={customerFormStatus[item.id]?.status ?? "idle"}
+                  error={customerFormStatus[item.id]?.error}
+                />
+              </AssistantMessage>
+            );
+          case "loanForm":
+            return (
+              <AssistantMessage key={item.id} provenance={item.provenance}>
+                <LoanFormCard
+                  customers={loanFormCustomers}
                   customerHint={item.customerHint}
-                  onSearch={setCustomerQuery}
-                  onGenerate={(values) => handleGenerateContract(item.id, values)}
-                  status={contractStatus[item.id]?.status ?? "idle"}
-                  error={contractStatus[item.id]?.error}
+                  onSearch={setLoanCustomerQuery}
+                  onCreate={(values) => handleCreateLoan(item.id, values)}
+                  status={loanFormStatus[item.id]?.status ?? "idle"}
+                  error={loanFormStatus[item.id]?.error}
                 />
               </AssistantMessage>
             );

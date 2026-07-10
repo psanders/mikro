@@ -14,7 +14,6 @@ import { ValidationError } from "@mikro/common";
 
 const validInput = {
   customerId: "aacd7997-8ebc-4875-8d70-6b1db5ef7bf1",
-  gender: "F" as const,
   principal: 8256,
   installments: 10,
   installmentAmount: 1100,
