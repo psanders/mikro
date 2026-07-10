@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.35.5](https://github.com/psanders/mikro/compare/v1.35.4...v1.35.5) (2026-07-10)
+
+### Bug Fixes
+
+- **dashboard:** floor founder reports month picker at Jan 2026 ([#174](https://github.com/psanders/mikro/issues/174)) ([4f89071](https://github.com/psanders/mikro/commit/4f890714fea4b0d01b7ebff001cb116d59e4784d)), closes [#168](https://github.com/psanders/mikro/issues/168)
+
 ## [1.35.4](https://github.com/psanders/mikro/compare/v1.35.3...v1.35.4) (2026-07-09)
 
 ### Bug Fixes

@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.35.5](https://github.com/psanders/mikro/compare/v1.35.4...v1.35.5) (2026-07-10)
+
+**Note:** Version bump only for package @mikro/common
+
 ## [1.35.3](https://github.com/psanders/mikro/compare/v1.35.2...v1.35.3) (2026-07-09)
 
 ### Bug Fixes
