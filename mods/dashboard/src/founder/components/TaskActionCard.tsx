@@ -9,7 +9,7 @@
  * to the firing confirm endpoint, which executes catalog code.
  */
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Download } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { formatAmount } from "./format";
 
@@ -38,6 +38,13 @@ export interface TaskFiringInfo {
   reason?: string | null;
 }
 
+/** An in-memory generated document from a resolved firing (e.g. the loan-statement PDF). */
+export interface TaskResultAttachment {
+  filename: string;
+  mimeType: string;
+  base64: string;
+}
+
 export interface TaskActionCardProps {
   firing: TaskFiringInfo;
   submitting?: boolean;
@@ -46,6 +53,14 @@ export interface TaskActionCardProps {
   onConfirm?: (values: Record<string, string>) => void;
   onSkip?: () => void;
   className?: string;
+  /**
+   * Present once confirm resolved with an in-memory document (e.g. the
+   * loan-statement automation's PDF) — the card renders a download action
+   * instead of the confirm/skip form. The bytes never touch the event log;
+   * they only ever live in the confirm mutation's result.
+   */
+  resultAttachment?: TaskResultAttachment | null;
+  onDownloadAttachment?: () => void;
 }
 
 /**
@@ -87,7 +102,9 @@ export function TaskActionCard({
   error,
   onConfirm,
   onSkip,
-  className
+  className,
+  resultAttachment,
+  onDownloadAttachment
 }: TaskActionCardProps) {
   // Any ask slot may declare `defaultFrom`, naming a gathered payload field
   // whose value pre-fills its input (still freely editable) — e.g. payment's
@@ -103,6 +120,23 @@ export function TaskActionCard({
     }
     return defaults;
   });
+
+  // A resolved firing that produced an in-memory document (loan-statement)
+  // renders only the download action — confirm/skip no longer apply.
+  if (resultAttachment) {
+    return (
+      <div className={cn("flex flex-col gap-[12px]", className)}>
+        <button
+          type="button"
+          onClick={onDownloadAttachment}
+          className="inline-flex w-fit items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]"
+        >
+          <Download size={16} />
+          Descargar estado de cuenta
+        </button>
+      </div>
+    );
+  }
 
   const sentence = contextSentence(firing);
   const needsInput = firing.status === "NEEDS_INPUT";

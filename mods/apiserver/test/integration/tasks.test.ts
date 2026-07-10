@@ -377,6 +377,7 @@ describe("Founder Tasks Integration", () => {
       const descriptors = await caller.tasks.listAutomations();
       expect(descriptors.map((d) => d.id).sort()).to.deep.equal([
         "daily-close",
+        "loan-statement",
         "payment",
         "record-expense"
       ]);

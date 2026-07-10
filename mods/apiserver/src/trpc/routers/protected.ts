@@ -48,6 +48,8 @@ import {
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateModeloReportSchema,
+  generateLoanStatementSchema,
+  generateCustomersReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
   listLoanNotesByLoanSchema,
@@ -170,6 +172,8 @@ import { createGenerateDefaultedReport } from "../../api/reports/createGenerateD
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
 import { createGenerateModeloReport } from "../../api/reports/createGenerateModeloReport.js";
+import { createGenerateLoanStatement } from "../../api/reports/createGenerateLoanStatement.js";
+import { createGenerateCustomersReport } from "../../api/reports/createGenerateCustomersReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -1059,15 +1063,21 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Generate full performance report (metrics + LLM narrative + PNG).
-   * Returns base64-encoded PNG image.
+   * Generate the performance report (metrics + LLM narrative) as JSON or a
+   * branded PDF via the shared `performanceReport` definition
+   * (`@mikro/common`) — same definition the CLI command runs.
    */
   generatePerformanceReport: protectedProcedure
     .input(generatePerformanceReportSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGeneratePerformanceReport(ctx.db);
       const result = await fn(input);
-      return { image: result.image };
+      return {
+        data: result.data,
+        pdfBase64: result.pdfBase64,
+        filename: result.filename,
+        mimeType: result.mimeType
+      };
     }),
 
   /**
@@ -1082,25 +1092,78 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Generate at-risk loans report (PNG). Defaulted + red-highlighted late; optional filter.
+   * Generate the at-risk loans report (defaulted + red-highlighted late;
+   * optional filter) as JSON or a branded PDF via the shared `defaultedReport`
+   * definition (`@mikro/common`).
    */
   generateDefaultedReport: protectedProcedure
     .input(generateDefaultedReportSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateDefaultedReport(ctx.db);
       const result = await fn(input);
-      return { image: result.image };
+      return {
+        data: result.data,
+        pdfBase64: result.pdfBase64,
+        filename: result.filename,
+        mimeType: result.mimeType
+      };
     }),
 
   /**
-   * Generate renewal candidates report (PNG). Near-completion and completed loans with rating and AI candidacy note.
+   * Generate the renewal candidates report (near-completion and completed
+   * loans with rating and AI candidacy note) as JSON or a branded PDF via the
+   * shared `renewalReport` definition (`@mikro/common`).
    */
   generateRenewalCandidatesReport: protectedProcedure
     .input(generateRenewalCandidatesReportSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateRenewalCandidatesReport(ctx.db);
       const result = await fn(input);
-      return { image: result.image };
+      return {
+        data: result.data,
+        pdfBase64: result.pdfBase64,
+        filename: result.filename,
+        mimeType: result.mimeType
+      };
+    }),
+
+  /**
+   * Generate the customers report (active customers' loans grouped by
+   * payment health) as JSON or a branded PDF via the shared `customersReport`
+   * definition (`@mikro/common`). Mirrors `exportAllCustomers`'s scope (all
+   * active customers, admin-visible) — no collector-scoped variant.
+   */
+  generateCustomersReport: protectedProcedure
+    .input(generateCustomersReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateCustomersReport(ctx.db);
+      const result = await fn(input);
+      return {
+        data: result.data,
+        pdfBase64: result.pdfBase64,
+        filename: result.filename,
+        mimeType: result.mimeType
+      };
+    }),
+
+  /**
+   * Generate the loan-statement report (JSON + branded 2-page PDF) for one
+   * loan. Founder/admin only — matches the founder-tasks spec's automation
+   * gating. Runs the same shared `loanStatementReport` definition the CLI
+   * command and the `loan-statement` automation call, so all three surfaces
+   * produce equivalent output for the same loan + format.
+   */
+  generateLoanStatement: adminProcedure
+    .input(generateLoanStatementSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateLoanStatement(ctx.db);
+      const result = await fn(input);
+      return {
+        data: result.data,
+        pdfBase64: result.pdfBase64,
+        filename: result.filename,
+        mimeType: result.mimeType
+      };
     }),
 
   // ==================== Events / Feed procedures ====================
@@ -1345,11 +1408,22 @@ export const protectedRouter = router({
         return fn(input);
       }),
 
+    /**
+     * Generate the accounting snapshot report (account balances + period
+     * transaction ledger) as JSON or a branded PDF via the shared
+     * `accountingReport` definition (`@mikro/common`).
+     */
     generateAccountingReport: protectedProcedure
       .input(generateAccountingReportSchema)
       .mutation(async ({ ctx, input }) => {
         const fn = createGenerateAccountingReport(ctx.db as unknown as PrismaClient);
-        return fn(input);
+        const result = await fn(input);
+        return {
+          data: result.data,
+          pdfBase64: result.pdfBase64,
+          filename: result.filename,
+          mimeType: result.mimeType
+        };
       })
   })
 });

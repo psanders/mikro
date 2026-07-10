@@ -696,119 +696,6 @@ export const listUsersTool: ToolFunction = {
   }
 };
 
-/**
- * Tool definition for exporting collector customers.
- * Used by Juan (collector) to generate a report of assigned customers.
- */
-export const exportCollectorCustomersTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "exportCollectorCustomers",
-    description:
-      "Generar un reporte de los clientes asignados al cobrador. Incluye: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: []
-    }
-  }
-};
-
-/**
- * Tool definition for exporting all customers (admin only).
- * Used by admin to generate a report of all active customers.
- */
-export const exportAllCustomersTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "exportAllCustomers",
-    description:
-      "Generar un reporte de todos los clientes activos (solo admin). Por defecto envia una imagen agrupada por estado de pago (simplified). Con format 'detailed' envia Excel con todos los datos: Nombre, Telefono, Prestamo, Rating, Pagos atrasados, Tendencia, Referidor, Punto de Cobro y Notas.",
-    parameters: {
-      type: "object",
-      properties: {
-        format: {
-          type: "string",
-          enum: ["simplified", "detailed"],
-          description:
-            "Formato del reporte: 'simplified' (imagen para WhatsApp, por defecto) o 'detailed' (Excel con todos los datos)"
-        }
-      },
-      required: []
-    }
-  }
-};
-
-/**
- * Tool definition for generating a one-page performance report (portfolio metrics + narrative + PNG).
- * Admin only. Sends the report image via WhatsApp.
- */
-export const generatePerformanceReportTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "generatePerformanceReport",
-    description:
-      "Generar un reporte de rendimiento del portafolio (una pagina con metricas, resumen ejecutivo y graficos). Solo admin. Se envia por WhatsApp como imagen.",
-    parameters: {
-      type: "object",
-      properties: {
-        startDate: {
-          type: "string",
-          description: "Fecha de inicio del periodo (YYYY-MM-DD). Opcional."
-        },
-        endDate: {
-          type: "string",
-          description: "Fecha de fin del periodo (YYYY-MM-DD). Opcional."
-        }
-      },
-      required: []
-    }
-  }
-};
-
-/**
- * Tool definition for generating the at-risk loans report (PNG sent via WhatsApp).
- * Admin only. Includes DEFAULTED loans and/or ACTIVE loans with 3+ missed payments (red). Optional filter.
- */
-export const generateDefaultedReportTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "generateDefaultedReport",
-    description:
-      "Generar el reporte de cartera en riesgo. Incluye prestamos en default (DEFAULTED) y prestamos activos con 3+ pagos atrasados (en rojo). Opcional: filtrar por 'all' (ambos), 'defaulted' (solo default) o 'late' (solo atrasados). Solo admin. Se envia por WhatsApp como imagen.",
-    parameters: {
-      type: "object",
-      properties: {
-        filter: {
-          type: "string",
-          enum: ["all", "defaulted", "late"],
-          description:
-            "Filtro: 'all' (ambos, por defecto), 'defaulted' (solo en default) o 'late' (solo atrasados)"
-        }
-      },
-      required: []
-    }
-  }
-};
-
-/**
- * Tool definition for generating the renewal candidates report (near-completion and completed loans with rating and AI note).
- * Admin only. Sent via WhatsApp as image.
- */
-export const generateRenewalCandidatesReportTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "generateRenewalCandidatesReport",
-    description:
-      "Generar el reporte de candidatos a renovacion. Incluye prestamos por terminar (cerca de completar) y prestamos ya completados, con calificacion de pago y una nota breve de si son buen candidato para otro prestamo. Solo admin. Se envia por WhatsApp como imagen.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: []
-    }
-  }
-};
-
 // ── José intake tools ──────────────────────────────────────────────────────
 
 export const getApplicationStateTool: ToolFunction = {
@@ -892,11 +779,6 @@ export const allTools: ToolFunction[] = [
   listUsersTool,
   getLoanByLoanIdTool,
   previewLateFeeTool,
-  exportCollectorCustomersTool,
-  exportAllCustomersTool,
-  generatePerformanceReportTool,
-  generateDefaultedReportTool,
-  generateRenewalCandidatesReportTool,
   getApplicationStateTool,
   saveAnswerTool,
   finalizeApplicationTool

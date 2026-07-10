@@ -60,6 +60,12 @@ export interface AutomationResult {
   summary: string;
   /** Denormalized onto the event row when the flow moved money. */
   amount?: number;
+  /**
+   * An in-memory generated document (e.g. the loan-statement PDF) carried back
+   * to the confirm caller only — NEVER persisted onto the event row/log. The
+   * feed card offers it as a download; storage is deliberately out of scope.
+   */
+  attachment?: { filename: string; mimeType: string; base64: string };
 }
 
 export interface Automation {

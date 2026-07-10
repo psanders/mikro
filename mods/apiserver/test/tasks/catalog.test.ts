@@ -14,8 +14,13 @@ import {
 import { validateSlots, slotNames } from "../../src/tasks/validatePayload.js";
 
 describe("automation catalog", () => {
-  it("ships exactly the three v1 automations", () => {
-    expect(listAutomationIds().sort()).to.deep.equal(["daily-close", "payment", "record-expense"]);
+  it("ships exactly the four v1 automations", () => {
+    expect(listAutomationIds().sort()).to.deep.equal([
+      "daily-close",
+      "loan-statement",
+      "payment",
+      "record-expense"
+    ]);
   });
 
   it("returns undefined for an unknown automation", () => {

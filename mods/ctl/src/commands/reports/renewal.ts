@@ -9,39 +9,59 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Renewal extends BaseCommand<typeof Renewal> {
   static override readonly description =
-    "generate the renewal candidates report (near-completion and completed loans with rating and AI candidacy note) as PNG";
+    "generate the renewal candidates report (near-completion and completed loans with rating and AI candidacy note) as JSON or a branded PDF — same report definition the dashboard uses";
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --output mikro-renewal-report.png"
+    "<%= config.bin %> <%= command.id %> --format json",
+    "<%= config.bin %> <%= command.id %> --output renovacion.pdf"
   ];
 
   static override readonly flags = {
+    format: Flags.string({
+      description: "Output format",
+      options: ["json", "pdf"],
+      default: "pdf"
+    }),
     output: Flags.string({
       char: "o",
-      description: "Output file path (default: mikro-renewal-report.png)",
+      description: "Output file path (default: derived from date and format)",
       default: ""
     })
   };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(Renewal);
+    const format = flags.format as "json" | "pdf";
 
-    const outputPath = flags.output ? resolve(flags.output) : resolve("./mikro-renewal-report.png");
+    const date = new Date().toISOString().slice(0, 10);
+    const defaultExt = format === "json" ? "json" : "pdf";
+    const outputPath = flags.output
+      ? resolve(flags.output)
+      : resolve(`./renovacion-${date}.${defaultExt}`);
 
     try {
       const client = this.createClient();
-      this.log("Generating renewal candidates report...");
+      this.log("Generando reporte de renovación...");
 
-      const result = await client.generateRenewalCandidatesReport.mutate({});
+      const result = await client.generateRenewalCandidatesReport.mutate({ format });
 
       const dir = resolve(outputPath, "..");
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
 
-      writeFileSync(outputPath, Buffer.from(result.image, "base64"));
-      this.log(`\nReport saved: ${outputPath}`);
+      if (format === "json") {
+        writeFileSync(outputPath, JSON.stringify(result.data, null, 2));
+      } else {
+        if (!result.pdfBase64) {
+          this.error("El servidor no devolvió el PDF esperado.");
+          return;
+        }
+        writeFileSync(outputPath, Buffer.from(result.pdfBase64, "base64"));
+      }
+
+      this.log(`\nReporte guardado: ${outputPath}`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));
     }

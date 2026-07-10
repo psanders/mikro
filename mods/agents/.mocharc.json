@@ -1,5 +1,6 @@
 {
   "extension": ["ts"],
   "node-option": ["import=tsx"],
+  "require": ["./test/globalSetup.ts"],
   "spec": "test/**/*.test.ts"
 }

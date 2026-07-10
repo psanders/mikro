@@ -352,12 +352,16 @@ export {
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateModeloReportSchema,
+  generateLoanStatementSchema,
+  generateCustomersReportSchema,
   type GeneratePerformanceReportInput,
   type GeneratePortfolioMetricsInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
   type GenerateModeloReportInput,
+  type GenerateLoanStatementInput,
+  type GenerateCustomersReportInput,
   // Dashboard schemas
   getCollectorDashboardSchema,
   type GetCollectorDashboardInput,
@@ -481,7 +485,9 @@ export {
   type TaskFiringView
 } from "./schemas/index.js";
 
-// Report types and helpers
+// Report narrative helpers (LLM prompt builders + parsers). The PNG report
+// generators/layouts were retired in the unify-reporting-strategy Phase F
+// cleanup — reports now render via the `reporting/` foundation (JSON + PDF).
 export type {
   PortfolioMetrics,
   LoansByStatus,
@@ -491,41 +497,12 @@ export type {
 export {
   buildReportNarrativePrompt,
   parseReportNarrativeResponse,
-  renderPerformanceReportToPng,
-  loadLogoDataUrl,
-  createPerformanceReportLayout,
-  REPORT_WIDTH,
-  REPORT_HEIGHT,
-  createCustomersReportLayout,
-  getCustomersReportHeight,
-  CUSTOMERS_REPORT_WIDTH,
-  renderCustomersReportToPng,
   buildLoanNotesSummaryPrompt,
   parseLoanNotesSummaryResponse,
-  createDefaultedReportLayout,
-  getDefaultedReportHeight,
-  DEFAULTED_REPORT_WIDTH,
-  renderDefaultedReportToPng,
   buildRenewalCandidateNotePrompt,
-  parseRenewalCandidateNoteResponse,
-  createRenewalReportLayout,
-  getRenewalReportHeight,
-  RENEWAL_REPORT_WIDTH,
-  renderRenewalReportToPng,
-  createAccountingReportLayout,
-  getAccountingReportHeight,
-  ACCOUNTING_REPORT_WIDTH,
-  renderAccountingReportToPng
+  parseRenewalCandidateNoteResponse
 } from "./reports/index.js";
-export type {
-  NoteForSummary,
-  DefaultedReportRow,
-  RenewalCandidateContext,
-  RenewalReportRow,
-  AccountingReportAccount,
-  AccountingReportTransaction,
-  AccountingReportData
-} from "./reports/index.js";
+export type { NoteForSummary, RenewalCandidateContext } from "./reports/index.js";
 
 // Types (entities and client)
 export type { Customer } from "./types/index.js";
@@ -609,3 +586,6 @@ export {
 
 // Collections evaluation framework (canonical snapshot + spec-as-code checks)
 export * from "./eval/index.js";
+
+// Reporting foundation (shared Report contract, branded PDF renderer, helpers)
+export * from "./reporting/index.js";

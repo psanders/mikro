@@ -12,3 +12,6 @@ node_modules/
 # PM2 logs
 pm2-error.log
 pm2-out.log
+
+# Ephemeral per-suite test configs (written + unlinked by the tests themselves)
+mikro-test-*.json
