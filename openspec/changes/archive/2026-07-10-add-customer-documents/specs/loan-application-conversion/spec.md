@@ -1,10 +1,4 @@
-# loan-application-conversion Specification
-
-## Purpose
-
-TBD - created by archiving change add-application-conversion. Update Purpose after archive.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Convert a signed application into a Customer and Loan
 

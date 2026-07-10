@@ -427,6 +427,13 @@ export {
   type SetCustomerTagInput,
   type ClearCustomerTagInput,
   type ListCustomerTagsInput,
+  // Customer document schemas
+  customerDocumentTypeEnum,
+  customerDocumentSourceEnum,
+  listCustomerDocumentsSchema,
+  type CustomerDocumentType,
+  type CustomerDocumentSource,
+  type ListCustomerDocumentsInput,
   // Business event log schemas
   businessEventTypeEnum,
   businessEventPayloadSchemas,
@@ -536,6 +543,7 @@ export type {
   AccountingTransactionAttachmentPayload
 } from "./types/index.js";
 export type { CustomerTag } from "./types/index.js";
+export type { CustomerDocument } from "./types/index.js";
 
 // Loan application scoring (deterministic Mikro Score engine)
 export {
