@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.39.0](https://github.com/psanders/mikro/compare/v1.38.0...v1.39.0) (2026-07-11)
+
+### Features
+
+- **reporting:** Pencil-fidelity report redesign, derived pagination, offline smoke tests ([#208](https://github.com/psanders/mikro/issues/208)) ([9f58d32](https://github.com/psanders/mikro/commit/9f58d32baec85bf5a6212487cfd41348734bd760)), closes [#202](https://github.com/psanders/mikro/issues/202) [#201](https://github.com/psanders/mikro/issues/201)
+
 # [1.38.0](https://github.com/psanders/mikro/compare/v1.37.2...v1.38.0) (2026-07-11)
 
 ### Features
