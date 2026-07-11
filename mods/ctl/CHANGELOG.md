@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.38.0](https://github.com/psanders/mikro/compare/v1.37.2...v1.38.0) (2026-07-11)
+
+### Features
+
+- **copilot:** move loan-statement generation from automation to on-demand tool ([#206](https://github.com/psanders/mikro/issues/206)) ([3661487](https://github.com/psanders/mikro/commit/3661487a569def5db49b93a6946e78dc5f0ae2bb)), closes [#201](https://github.com/psanders/mikro/issues/201) [#202](https://github.com/psanders/mikro/issues/202) [#201](https://github.com/psanders/mikro/issues/201) [#202](https://github.com/psanders/mikro/issues/202)
+
 ## [1.37.2](https://github.com/psanders/mikro/compare/v1.37.1...v1.37.2) (2026-07-11)
 
 **Note:** Version bump only for package @mikro/ctl
