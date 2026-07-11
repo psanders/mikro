@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.37.2](https://github.com/psanders/mikro/compare/v1.37.1...v1.37.2) (2026-07-11)
+
+### Bug Fixes
+
+- **founder:** loan/contract copilot cards, reports UX, Tauri download crash ([#199](https://github.com/psanders/mikro/issues/199)) ([90fdcd6](https://github.com/psanders/mikro/commit/90fdcd62c120ee8bf3fcddcc7ae4108a16fab870))
+
 ## [1.37.1](https://github.com/psanders/mikro/compare/v1.37.0...v1.37.1) (2026-07-10)
 
 **Note:** Version bump only for package mikro
