@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   HandCoins,
@@ -291,7 +292,7 @@ export function LoanFormCard({
               generateContract ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
             )}
           >
-            {generateContract && <CheckCircle2 size={13} strokeWidth={2} className="text-white" />}
+            {generateContract && <Check size={12} strokeWidth={2} className="text-white" />}
           </span>
           <span className="text-[13px] font-medium text-[#14254A]">
             Generar contrato con estos términos

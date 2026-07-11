@@ -75,6 +75,7 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.converted": { icon: BadgeCheck, accent: "blue" },
   "application.deleted": { icon: Trash2, accent: "red" },
   "application.restored": { icon: RotateCcw, accent: "green" },
+  "loan.created": { icon: HandCoins, accent: "blue" },
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
   "customer.created": { icon: UserPlus, accent: "blue" },
   "contract.generated": { icon: FileText, accent: "blue" },
@@ -226,6 +227,23 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
     }
     case "customer.created":
       return { text: "Nuevo cliente registrado", tone: "muted" };
+    // The loan.created summary already spells out the amount, cuotas, and
+    // frequency, so the meta line just labels the row (parallel to
+    // customer.created) instead of repeating the cuota phrase.
+    case "loan.created":
+      return { text: "Nuevo préstamo", tone: "muted" };
+    // Historical only (retired). Its summary names the amount but NOT the
+    // cuotas, so the meta line adds them.
+    case "contract.generated": {
+      const installments = typeof payload.installments === "number" ? payload.installments : null;
+      const adverb =
+        typeof payload.frequency === "string" ? (FREQUENCY_ADVERBS[payload.frequency] ?? "") : "";
+      if (installments === null) return { text: "", tone: "muted" };
+      return {
+        text: `${installments} cuota${installments === 1 ? "" : "s"}${adverb ? ` ${adverb}` : ""}`,
+        tone: "muted"
+      };
+    }
     case "copilot.action": {
       const tool = typeof payload.toolName === "string" ? payload.toolName : "";
       return { text: tool ? `Copiloto · ${tool}` : "Copiloto", tone: "muted" };
@@ -420,18 +438,13 @@ export function resolveNarrative(event: FeedEvent): string | null {
     }
     case "customer.created":
       return null;
-    case "contract.generated": {
-      const principal = typeof payload.principal === "number" ? payload.principal : null;
-      const installments = typeof payload.installments === "number" ? payload.installments : null;
-      const adverb =
-        typeof payload.frequency === "string" ? (FREQUENCY_ADVERBS[payload.frequency] ?? "") : "";
-      const cuotas =
-        installments !== null
-          ? ` a ${installments} cuota${installments === 1 ? "" : "s"}${adverb ? ` ${adverb}` : ""}`
-          : "";
-      const monto = principal !== null ? ` por ${formatAmount(principal)}` : "";
-      return `${actorName} generó un contrato para ${customerName ?? "un cliente"}${monto}${cuotas}.`;
-    }
+    // Both cards' summary line already names the actor, customer, and amount;
+    // the compact meta line (resolveCompactMeta) already adds cuotas/frequency.
+    // No narrative needed — one used to restate the summary in different
+    // wording, which read as duplicated text when expanded.
+    case "loan.created":
+    case "contract.generated":
+      return null;
     case "copilot.action": {
       const resultSummary =
         typeof payload.resultSummary === "string" && payload.resultSummary
@@ -475,6 +488,7 @@ export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
   switch (event.type) {
     case "payment.collected":
     case "payment.reversed":
+    case "loan.created":
     case "loan.status_changed":
       return event.loanId
         ? { label: "Ver préstamo", target: { kind: "loan", id: event.loanId } }

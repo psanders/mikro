@@ -12,6 +12,7 @@ import {
   withErrorHandlingAndValidation,
   customersReport,
   generateCustomersReportSchema,
+  amountToNumber,
   type GenerateCustomersReportInput,
   type DbClient,
   type CustomersReportData,
@@ -61,7 +62,21 @@ export function createGenerateCustomersReport(
       }
     });
 
-    const input = { customers };
+    // Prisma returns `paymentAmount`/`payments[].amount` as Decimal — the report's
+    // input schema (and every JSON/PDF consumer downstream) expects plain
+    // numbers, so convert before validation (mikro/#... customers-report
+    // Decimal/Zod mismatch, only surfaced once JSON format became reachable
+    // from the dashboard).
+    const normalizedCustomers = customers.map((c) => ({
+      ...c,
+      loans: c.loans.map((loan) => ({
+        ...loan,
+        paymentAmount:
+          loan.paymentAmount != null ? amountToNumber(loan.paymentAmount) : loan.paymentAmount,
+        payments: loan.payments.map((p) => ({ ...p, amount: amountToNumber(p.amount) }))
+      }))
+    }));
+    const input = { customers: normalizedCustomers };
     const data = await customersReport.toJson(input);
     const date = new Date().toISOString().slice(0, 10);
 

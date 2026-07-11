@@ -27,12 +27,18 @@ interface ToastState {
   id: number;
   variant: ToastVariant;
   message: string;
+  durationMs: number;
+}
+
+/** Optional per-toast overrides (e.g. a longer window for a message the user must read, like a saved-file path). */
+interface ToastOptions {
+  durationMs?: number;
 }
 
 interface ToastApi {
-  notify: (toast: { variant: ToastVariant; message: string }) => void;
-  success: (message: string) => void;
-  error: (message: string) => void;
+  notify: (toast: { variant: ToastVariant; message: string; durationMs?: number }) => void;
+  success: (message: string, options?: ToastOptions) => void;
+  error: (message: string, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -49,17 +55,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Single active toast: a new one replaces the current and resets the timeout.
-  const notify = useCallback<ToastApi["notify"]>(({ variant, message }) => {
+  const notify = useCallback<ToastApi["notify"]>(({ variant, message, durationMs }) => {
     if (timer.current) clearTimeout(timer.current);
-    setToast({ id: Date.now(), variant, message });
+    setToast({ id: Date.now(), variant, message, durationMs: durationMs ?? AUTO_DISMISS_MS });
   }, []);
 
   const success = useCallback<ToastApi["success"]>(
-    (message) => notify({ variant: "success", message }),
+    (message, options) => notify({ variant: "success", message, durationMs: options?.durationMs }),
     [notify]
   );
   const error = useCallback<ToastApi["error"]>(
-    (message) => notify({ variant: "error", message }),
+    (message, options) => notify({ variant: "error", message, durationMs: options?.durationMs }),
     [notify]
   );
 
@@ -69,7 +75,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!toast) return;
-    timer.current = setTimeout(() => setToast(null), AUTO_DISMISS_MS);
+    timer.current = setTimeout(() => setToast(null), toast.durationMs);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };

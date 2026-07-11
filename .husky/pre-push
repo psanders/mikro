@@ -1,0 +1,12 @@
+echo "Checking package-lock.json is in sync..."
+npm install --package-lock-only --ignore-scripts >/dev/null 2>&1
+
+if ! git diff --quiet -- package-lock.json; then
+  git checkout -- package-lock.json
+  echo ""
+  echo "package-lock.json is out of sync with package.json files."
+  echo "Run 'npm install' locally and commit the updated lock file."
+  exit 1
+fi
+
+node .scripts/check-lockfile-platforms.mjs || exit 1

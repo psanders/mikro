@@ -82,4 +82,47 @@ describe("createGenerateCustomersReport", () => {
     expect(result.data.activeCustomers).to.equal(0);
     expect(result.data.rows).to.have.length(0);
   });
+
+  it("converts Prisma Decimal paymentAmount/payment amounts to numbers before validation", async () => {
+    // Mimics Prisma's Decimal wrapper (decimal.js): not a plain number, but
+    // `Number(decimal.toString())` recovers the value — real rows never
+    // return a JS `number` for these columns. Unit fixtures elsewhere in this
+    // file use plain numbers, which let this slip through untested until a
+    // real DB row hit the report's Zod input schema (`expected number,
+    // received Decimal`).
+    class FakeDecimal {
+      constructor(private readonly value: string) {}
+      toString() {
+        return this.value;
+      }
+    }
+    const customer = makeCustomer({
+      loans: [
+        {
+          loanId: 20002,
+          paymentFrequency: "WEEKLY",
+          createdAt: new Date("2026-01-01T00:00:00Z"),
+          startingDate: new Date("2026-01-01T00:00:00Z"),
+          termLength: 4,
+          paymentAmount: new FakeDecimal("1000"),
+          nickname: null,
+          payments: [
+            {
+              paidAt: new Date("2026-01-08T00:00:00Z"),
+              status: "COMPLETED",
+              amount: new FakeDecimal("1000")
+            }
+          ]
+        }
+      ]
+    });
+    const findMany = sinon.stub().resolves([customer]);
+    const client = { customer: { findMany } };
+    const fn = createGenerateCustomersReport(client as never);
+
+    const result = await fn({ format: "json" });
+
+    expect(result.data.rows).to.have.length(1);
+    expect(result.data.rows[0]?.loanId).to.equal(20002);
+  });
 });

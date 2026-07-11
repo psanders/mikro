@@ -86,7 +86,19 @@ export function brandHeader(params: {
                     borderRadius: "12px",
                     backgroundColor: BRAND.blueDeep
                   },
-                  children: [txt("m", { fontSize: "34px", fontWeight: 900, color: BRAND.white })]
+                  children: [
+                    txt("m", {
+                      fontSize: "34px",
+                      fontWeight: 900,
+                      color: BRAND.white,
+                      lineHeight: 1,
+                      // satori positions text on its baseline within the line
+                      // box, so an ascender/descender-free glyph like "m" sits
+                      // visually low; nudge it up to optically center it in the
+                      // tile (measured: -6px zeroes the top/bottom gap here).
+                      marginTop: "-6px"
+                    })
+                  ]
                 }
               },
               {
