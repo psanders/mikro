@@ -19,8 +19,12 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
+  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
-  type TableRow
+  type TableRow,
+  type TableColumn,
+  type ReportElement
 } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatDateEs } from "./format.js";
@@ -184,48 +188,85 @@ function buildTransactionRows(data: AccountingReportSnapshot): TableRow[] {
   }));
 }
 
-/** Compose the 1-page accounting-report document from the canonical data model. */
+const BALANCE_COLUMNS: TableColumn[] = [
+  { key: "cuenta", header: "Cuenta", weight: 1.6 },
+  { key: "tipo", header: "Tipo", weight: 1 },
+  { key: "balance", header: "Balance (DOP)", weight: 1.2, align: "right" }
+];
+
+const TRANSACTION_COLUMNS: TableColumn[] = [
+  { key: "fecha", header: "Fecha", weight: 0.9 },
+  { key: "tipo", header: "Tipo", weight: 1 },
+  { key: "cuenta", header: "Cuenta", weight: 1.3 },
+  { key: "categoria", header: "Categoría", weight: 1.2 },
+  { key: "monto", header: "Monto (DOP)", weight: 1.1, align: "right" }
+];
+
+/**
+ * Rows of the movimientos table that fit alongside the balance table on page
+ * 1, on top of brandHeader + kpiGrid — well under
+ * {@link TABLE_ROWS_FIRST_PAGE}'s margin to leave room for the (always
+ * small, but non-zero) balance table above it.
+ */
+const TRANSACTIONS_ON_PAGE_1 = 15;
+
+/**
+ * Compose the accounting-report document from the canonical data model.
+ * Balance rows are bounded by account count (always small) and stay on page
+ * 1 alongside the first chunk of movements; a long period's movements table
+ * can grow large, so any rows beyond page 1's budget spill onto continuation
+ * pages (see {@link paginateRows} — same overflow/crash class as issue #202).
+ */
 export function buildAccountingReportDocument(data: AccountingReportSnapshot): ReportDocument {
   const meta = [
     `Generado ${formatDateEs(data.generatedAt)}`,
     `Periodo ${data.period.startDate} — ${data.period.endDate}`
   ];
 
-  const p1 = page([
-    brandHeader({
-      title: "Reporte Contable",
-      subtitle: "Balance de cuentas y movimientos del periodo",
-      meta
-    }),
-    kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Balance de cuentas", [
-      dataTable({
-        columns: [
-          { key: "cuenta", header: "Cuenta", weight: 1.6 },
-          { key: "tipo", header: "Tipo", weight: 1 },
-          { key: "balance", header: "Balance (DOP)", weight: 1.2, align: "right" }
-        ],
-        rows: buildBalanceRows(data)
-      })
-    ]),
-    section("Movimientos", [
-      dataTable({
-        columns: [
-          { key: "fecha", header: "Fecha", weight: 0.9 },
-          { key: "tipo", header: "Tipo", weight: 1 },
-          { key: "cuenta", header: "Cuenta", weight: 1.3 },
-          { key: "categoria", header: "Categoría", weight: 1.2 },
-          { key: "monto", header: "Monto (DOP)", weight: 1.1, align: "right" }
-        ],
-        rows: buildTransactionRows(data)
-      })
-    ]),
-    footerNote([
-      `Reporte contable · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
-  ]);
+  const txnRowPages = paginateRows(
+    buildTransactionRows(data),
+    TRANSACTIONS_ON_PAGE_1,
+    TABLE_ROWS_CONTINUATION_PAGE
+  );
+  const totalPages = txnRowPages.length;
 
-  return { pages: [{ layout: p1 }] };
+  const pages = txnRowPages.map((rows, i) => {
+    const isFirst = i === 0;
+    const isLast = i === totalPages - 1;
+    const children: ReportElement[] = [];
+
+    if (isFirst) {
+      children.push(
+        brandHeader({
+          title: "Reporte Contable",
+          subtitle: "Balance de cuentas y movimientos del periodo",
+          meta
+        }),
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
+        section("Balance de cuentas", [
+          dataTable({ columns: BALANCE_COLUMNS, rows: buildBalanceRows(data) })
+        ])
+      );
+    }
+
+    children.push(
+      section(totalPages > 1 ? `Movimientos (${i + 1}/${totalPages})` : "Movimientos", [
+        dataTable({ columns: TRANSACTION_COLUMNS, rows })
+      ])
+    );
+
+    if (isLast) {
+      children.push(
+        footerNote([
+          `Reporte contable · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
+        ])
+      );
+    }
+
+    return { layout: page(children) };
+  });
+
+  return { pages };
 }
 
 /** The accounting report: validated account balances + transactions in, JSON/PDF out. */

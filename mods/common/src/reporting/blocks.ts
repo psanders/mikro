@@ -238,6 +238,15 @@ export interface TableColumn {
   /** flex weight for column width. */
   weight?: number;
   align?: "left" | "right" | "center";
+  /**
+   * Max lines this column's body cells may wrap onto before clipping with an
+   * ellipsis (default 1 — the single-line clamp everywhere else). Only raise
+   * this for a column that genuinely needs it (e.g. free-text notes) — every
+   * column sharing a row still shares that row's height, and `dataTable`
+   * gives the whole row an explicit fixed height once any column asks for
+   * more than 1 line (see the comment above `ROW_LINE_HEIGHT_PX`).
+   */
+  wrapLines?: number;
 }
 
 /** A table row: cell text keyed by column, plus an optional status pill value. */
@@ -281,12 +290,69 @@ function pill(value: string, tone: string): ReportElement {
   };
 }
 
+/**
+ * Forces a cell's text onto a single line (no wrap), clipping overflow with an
+ * ellipsis instead of letting the line grow the row's height. Free-text cells
+ * (e.g. an LLM-generated notes summary) are otherwise unbounded in length —
+ * without this, a long value wraps into many lines and the row's height grows
+ * with it. Enough overflowing rows on a fixed-height page eventually forces
+ * Yoga to shrink the layout into degenerate (zero/negative) geometry, which
+ * crashes the native resvg rasterizer with an unrecoverable process abort
+ * (issue #202). Clamping every cell to one line makes row height fixed and
+ * predictable, which is what makes the table-pagination math in
+ * `paginateRows` safe to rely on.
+ */
+const SINGLE_LINE_CLAMP: Record<string, unknown> = {
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  minWidth: "0px"
+};
+
+/**
+ * A body-cell text box bounded to `lines` lines, clipping any remainder with
+ * an ellipsis via satori's `-webkit-line-clamp` support — same idea as
+ * {@link SINGLE_LINE_CLAMP} but for a column (e.g. free-text notes) that
+ * needs more than one line to avoid clipping most real values. Intrinsic
+ * height still varies with actual line count (1..`lines`); it's `dataTable`
+ * giving the *row* an explicit fixed height (see `ROW_LINE_HEIGHT_PX` below)
+ * that keeps geometry deterministic across rows, not this clamp alone.
+ */
+function multiLineClamp(lines: number): Record<string, unknown> {
+  return {
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp: lines,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    minWidth: "0px"
+  };
+}
+
+// Matches the 12px body-cell font at the layout's implicit ~1.25 line-height
+// (measured against the existing single-line row calibration below).
+const ROW_LINE_HEIGHT_PX = 15;
+const ROW_VERTICAL_PADDING_PX = 18; // "9px 12px" top+bottom, see bodyRows padding.
+
 /** Data table with a header row and text status pills (no icons). */
 export function dataTable(params: { columns: TableColumn[]; rows: TableRow[] }): ReportElement {
   const { columns, rows } = params;
   const flexFor = (col: TableColumn) => ({ flexGrow: col.weight ?? 1, flexBasis: "0px" });
   const justify = (align?: string) =>
     align === "right" ? "flex-end" : align === "center" ? "center" : "flex-start";
+  const clampFor = (col: TableColumn) =>
+    col.wrapLines && col.wrapLines > 1 ? multiLineClamp(col.wrapLines) : SINGLE_LINE_CLAMP;
+
+  // When any column wraps onto more than one line, every row (regardless of
+  // that row's actual text) gets the same explicit fixed height — sized for
+  // the tallest allowed column — instead of an intrinsic, content-driven
+  // height. This is what keeps `paginateRows`' row-count budget reliable:
+  // Yoga never needs to flex-shrink a row into degenerate geometry (the
+  // resvg crash root cause, issue #202) because every row's height is fixed
+  // up front rather than derived from its own content.
+  const maxWrapLines = Math.max(1, ...columns.map((c) => c.wrapLines ?? 1));
+  const fixedRowHeightPx =
+    maxWrapLines > 1 ? ROW_VERTICAL_PADDING_PX + maxWrapLines * ROW_LINE_HEIGHT_PX : undefined;
 
   const headerRow: ReportElement = {
     type: "div",
@@ -303,7 +369,12 @@ export function dataTable(params: { columns: TableColumn[]; rows: TableRow[] }):
       children: columns.map((col) => ({
         type: "div",
         props: {
-          style: { display: "flex", justifyContent: justify(col.align), ...flexFor(col) },
+          style: {
+            display: "flex",
+            justifyContent: justify(col.align),
+            ...flexFor(col),
+            ...SINGLE_LINE_CLAMP
+          },
           children: [
             txt(col.header.toUpperCase(), {
               fontSize: "10px",
@@ -327,21 +398,36 @@ export function dataTable(params: { columns: TableColumn[]; rows: TableRow[] }):
         gap: "16px",
         padding: "9px 12px",
         backgroundColor: i % 2 === 0 ? BRAND.white : "#F7F9FC",
-        borderBottom: `1px solid ${BRAND.border}`
+        borderBottom: `1px solid ${BRAND.border}`,
+        ...(fixedRowHeightPx
+          ? {
+              height: `${fixedRowHeightPx}px`,
+              minHeight: `${fixedRowHeightPx}px`,
+              overflow: "hidden",
+              alignItems: "center"
+            }
+          : {})
       },
       children: columns.map((col) => {
         const isStatus = r.status && r.status.column === col.key;
         return {
           type: "div",
           props: {
-            style: { display: "flex", justifyContent: justify(col.align), ...flexFor(col) },
+            style: {
+              display: "flex",
+              justifyContent: justify(col.align),
+              ...flexFor(col),
+              minWidth: "0px"
+            },
             children: [
               isStatus
                 ? pill(r.status!.value, r.status!.tone ?? "upcoming")
                 : txt(r.cells[col.key] ?? "", {
                     fontSize: "12px",
                     fontWeight: 400,
-                    color: BRAND.ink
+                    color: BRAND.ink,
+                    width: "100%",
+                    ...clampFor(col)
                   })
             ]
           }
@@ -419,4 +505,63 @@ export function page(children: ReportElement[]): ReportElement {
       children
     }
   };
+}
+
+/**
+ * Max `dataTable` rows a page can hold before Yoga's flex-shrink pushes some
+ * row/cell into degenerate (zero/negative) geometry that crashes the native
+ * resvg rasterizer (issue #202 — an unrecoverable process abort, not a
+ * catchable JS error). Calibrated empirically against a real render: with
+ * `SINGLE_LINE_CLAMP` guaranteeing uniform row height, a page shaped like
+ * brandHeader + one-row kpiGrid + table + footerNote (the common report
+ * shape) crashes at 46 rows and is clean at 44; these constants stay well
+ * under that with a safety margin so future block tweaks don't tip it over.
+ * A page carrying a `verificationBanner` has less room (fewer rows fit); a
+ * continuation page with no header/KPI/banner has more.
+ */
+export const TABLE_ROWS_FIRST_PAGE = 28;
+export const TABLE_ROWS_FIRST_PAGE_WITH_BANNER = 20;
+export const TABLE_ROWS_CONTINUATION_PAGE = 34;
+
+/**
+ * Row budget for a table with a `wrapLines`-bounded column (currently only
+ * the defaulted report's Notas column, wrapLines: 4) — each row is roughly
+ * 4x the height of a single-line row via `dataTable`'s fixed-row-height path,
+ * so far fewer rows fit per page. Calibrated the same way as
+ * {@link TABLE_ROWS_FIRST_PAGE}: empirically found the real crash boundary
+ * (pathologically long notes — well beyond the ~110-char prompt target — on
+ * every row, brandHeader+kpiGrid+table+footerNote layout): first-page-shaped
+ * layout is clean at 22 rows and crashes at 23; a continuation-shaped layout
+ * (no header/kpi/footer, more headroom) is clean at 25 and crashes at 26.
+ * These constants stay well under both with the same ~35% margin
+ * {@link TABLE_ROWS_FIRST_PAGE} uses. See
+ * `mods/common/test/reporting/defaultedReport.test.ts` for the regression
+ * test that exercises this boundary.
+ */
+export const TABLE_ROWS_FIRST_PAGE_NOTES = 14;
+export const TABLE_ROWS_CONTINUATION_PAGE_NOTES = 18;
+
+/**
+ * Splits `rows` into page-sized chunks so a table's rows never overflow a
+ * single fixed-height page (see {@link TABLE_ROWS_FIRST_PAGE} for why that
+ * matters). The first chunk is capped at `firstPageMax`; every subsequent
+ * chunk at `otherPagesMax` (a continuation page has more headroom since it
+ * skips the brandHeader/kpiGrid/banner). Always returns at least one
+ * (possibly empty) chunk so callers can render a table with zero rows.
+ */
+export function paginateRows<T>(
+  rows: T[],
+  firstPageMax: number,
+  otherPagesMax: number = firstPageMax
+): T[][] {
+  if (rows.length === 0) return [[]];
+  const pages: T[][] = [];
+  let i = 0;
+  let max = firstPageMax;
+  while (i < rows.length) {
+    pages.push(rows.slice(i, i + max));
+    i += max;
+    max = otherPagesMax;
+  }
+  return pages;
 }
