@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.2](https://github.com/psanders/mikro/compare/v1.39.1...v1.39.2) (2026-07-11)
+
+### Bug Fixes
+
+- **ctl:** add missing lib/dates.ts ([#212](https://github.com/psanders/mikro/issues/212)) ([207fa5f](https://github.com/psanders/mikro/commit/207fa5ff0002777dccf931759bc00422d9f696bd)), closes [#206](https://github.com/psanders/mikro/issues/206)
+
 ## [1.39.1](https://github.com/psanders/mikro/compare/v1.39.0...v1.39.1) (2026-07-11)
 
 ### Bug Fixes
