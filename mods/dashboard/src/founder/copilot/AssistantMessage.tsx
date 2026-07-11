@@ -3,9 +3,10 @@
  *
  * A left-aligned assistant turn — Pencil `asst`: the reply text (optionally
  * arbitrary children such as a rule/action card) with a provenance source line
- * underneath when the reply used tools. The model isn't instructed to avoid
- * markdown, so replies render through `markdown-to-jsx` — bold/lists/etc.
- * display instead of showing literal `**`/`-` characters.
+ * underneath when the reply used tools. The system prompt governs when the
+ * model reaches for markdown — prose for analysis, bullet lists for
+ * enumerable facts — and replies render through `markdown-to-jsx` so that
+ * markup displays as intended instead of showing literal `**`/`-` characters.
  */
 import type { ReactNode } from "react";
 import Markdown from "markdown-to-jsx";

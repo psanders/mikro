@@ -55,4 +55,13 @@ describe("buildCopilotSystemPrompt", () => {
     // bound to the copilot policy — it must never appear in the prompt.
     expect(prompt).to.not.include("getApplicationState");
   });
+
+  it("distinguishes prose analysis from enumerable-facts lists (issue #192)", () => {
+    const prompt = buildCopilotSystemPrompt({ today: "5 de julio de 2026" });
+
+    expect(prompt).to.include("Análisis o insight");
+    expect(prompt).to.include("NUNCA vuelques los datos crudos");
+    expect(prompt).to.include("Hechos enumerables");
+    expect(prompt).to.include("lista compacta");
+  });
 });
