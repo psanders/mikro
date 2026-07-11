@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { AppUpdater } from "./components/AppUpdater";
 import { WindowTitle } from "./components/WindowTitle";
+import { CustomTitleBar } from "./components/CustomTitleBar";
 import { LoginPage } from "./pages/LoginPage";
 import { AccessScreen } from "./founder/AccessScreen";
 import { FounderShell } from "./founder/FounderShell";
@@ -86,9 +87,14 @@ export function App() {
           <ToastProvider>
             <AppUpdater />
             <WindowTitle />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
+            <div className="flex flex-col h-screen bg-white">
+              <CustomTitleBar />
+              <div className="flex-1 overflow-hidden">
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </div>
+            </div>
           </ToastProvider>
         </AuthProvider>
       </trpc.Provider>
