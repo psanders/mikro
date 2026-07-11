@@ -101,3 +101,25 @@ export async function renderReportToPdf(
 
   return done;
 }
+
+/**
+ * Render a {@link ReportDocument} to one PNG Buffer per page — the same
+ * rasterization the PDF path uses, exposed directly for sample-rendering /
+ * visual QA (see `mods/common/scripts/render-samples.mjs`) without paying for
+ * the pdfkit assembly step.
+ *
+ * @param doc - the document to render (must have at least one page)
+ * @returns one PNG Buffer per page, in order
+ */
+export async function renderReportToPngs(
+  doc: ReportDocument,
+  deps: RenderReportDeps = {}
+): Promise<Buffer[]> {
+  if (!doc.pages || doc.pages.length === 0) {
+    throw new Error("renderReportToPngs: document has no pages");
+  }
+
+  const fonts = await (deps.loadFonts ?? loadFonts)();
+  const rendered = await Promise.all(doc.pages.map((p) => renderPageToPng(p, fonts)));
+  return rendered.map((r) => r.png);
+}

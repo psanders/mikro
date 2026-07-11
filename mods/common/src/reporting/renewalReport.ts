@@ -17,21 +17,19 @@
  */
 import { z } from "zod/v4";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
   brandHeader,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
   paginateRows,
-  TABLE_ROWS_FIRST_PAGE,
-  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
   type TableRow,
   type TableColumn,
   type ReportElement
 } from "./blocks.js";
+import { headerHeight, kpiGridHeight, tableRowBudget } from "./layout.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatDateEs } from "./format.js";
 
@@ -154,12 +152,26 @@ const STATUS_TONES: Record<RenewalRowStatus, "info" | "paid" | "partial"> = {
   porTerminar: "partial"
 };
 
-const STAR = "★";
+/** Month + year, e.g. "Julio 2026" — the Pencil header's "Período" meta value. Purely a display of `generatedAt`; no new data. */
+function formatMonthYearEs(d: string | Date): string {
+  const label = new Date(d).toLocaleDateString("es-DO", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 function buildKpiCells(data: RenewalReportData): KpiCell[] {
   return [
     { label: "Candidatos", value: `${data.candidateCount}` },
-    { label: "Por terminar", value: `${data.pendingCount}` },
+    {
+      label: "Por terminar",
+      value: `${data.pendingCount}`,
+      // "Máx." rather than "≤" — Inter has no glyph for U+2264 (confirmed
+      // via opentype.js, same check as the star-rating fix above).
+      subtext: `Máx. ${NEAR_COMPLETION_REMAINING_CUOTAS} cuota${NEAR_COMPLETION_REMAINING_CUOTAS === 1 ? "" : "s"} restante${NEAR_COMPLETION_REMAINING_CUOTAS === 1 ? "" : "s"}`
+    },
     {
       label: "Calif. promedio",
       value: data.averageRating !== null ? data.averageRating.toFixed(1) : "—"
@@ -175,10 +187,14 @@ function buildRows(data: RenewalReportData): TableRow[] {
   return data.rows.map((r) => ({
     cells: {
       nombre: r.name,
-      prestamo: `${r.loanId}`,
+      prestamo: `#${r.loanId}`,
       estado: "",
-      cuotas: `${r.paymentsMade}/${r.termLength}`,
-      calif: STAR.repeat(r.paymentRating),
+      cuotas: `${r.paymentsMade} / ${r.termLength}`,
+      // Plain "N/5" rather than a repeated star glyph (e.g. "★") — Inter has
+      // no glyph for U+2605 (confirmed via opentype.js: charToGlyph returns
+      // the .notdef/index-0 glyph), so a star rating rendered as tofu boxes
+      // in every environment, not just the offline test font.
+      calif: `${r.paymentRating}/5`,
       nota: r.candidateNote
     },
     status: { column: "estado", value: STATUS_LABELS[r.status], tone: STATUS_TONES[r.status] }
@@ -186,68 +202,53 @@ function buildRows(data: RenewalReportData): TableRow[] {
 }
 
 const TABLE_COLUMNS: TableColumn[] = [
-  { key: "nombre", header: "Nombre", weight: 1.4 },
-  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-  { key: "estado", header: "Estado", weight: 1 },
-  { key: "cuotas", header: "Cuotas", weight: 0.7, align: "right" },
-  { key: "calif", header: "Calif.", weight: 0.8 },
-  { key: "nota", header: "Nota de renovación", weight: 2.4 }
+  { key: "nombre", header: "Nombre", weight: 1.5, variant: "primary" },
+  { key: "prestamo", header: "Préstamo", weight: 0.8, align: "right", variant: "secondary" },
+  { key: "estado", header: "Estado", weight: 1.1 },
+  { key: "cuotas", header: "Cuotas", weight: 0.8, align: "right", variant: "secondary" },
+  { key: "calif", header: "Calif.", weight: 0.9, variant: "secondary" },
+  { key: "nota", header: "Nota de renovación", weight: 2.6, variant: "secondary" }
 ];
 
 /**
  * Compose the renewal-report document from the canonical data model. Usually
- * 1 page; splits into more when the candidate table overflows a fixed page
- * (see {@link paginateRows} — same overflow/crash class as issue #202).
+ * 1 page; the candidates table paginates when it overflows a fixed page (see
+ * `layout.ts`'s `tableRowBudget`).
  */
 export function buildRenewalReportDocument(data: RenewalReportData): ReportDocument {
   const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    `${data.candidateCount} candidato${data.candidateCount !== 1 ? "s" : ""}`
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    { label: "Período", value: formatMonthYearEs(data.generatedAt) }
   ];
 
+  const firstPageAbove = [headerHeight(meta.length), kpiGridHeight(1, true)];
   const rowPages = paginateRows(
     buildRows(data),
-    TABLE_ROWS_FIRST_PAGE,
-    TABLE_ROWS_CONTINUATION_PAGE
+    tableRowBudget({ aboveHeights: firstPageAbove }),
+    tableRowBudget({ includeSectionTitle: false })
   );
 
-  const pages = rowPages.map((rows, i) => {
-    const isFirst = i === 0;
-    const isLast = i === rowPages.length - 1;
-    const children: ReportElement[] = [];
-
-    if (isFirst) {
-      children.push(
+  const pageBodies: ReportElement[][] = rowPages.map((rows, i) => {
+    const body: ReportElement[] = [];
+    if (i === 0) {
+      body.push(
         brandHeader({
+          eyebrow: "Reporte",
           title: "Reporte de Renovación",
-          subtitle: "Préstamos cerca de terminar o completados",
+          subtitle: "Clientes elegibles para un nuevo ciclo",
           meta
         }),
-        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
+        section("Candidatos a renovación", [dataTable({ columns: TABLE_COLUMNS, rows })])
       );
+    } else {
+      body.push(dataTable({ columns: TABLE_COLUMNS, rows }));
     }
-
-    children.push(
-      section(
-        rowPages.length > 1
-          ? `Candidatos de renovación (${i + 1}/${rowPages.length})`
-          : "Candidatos de renovación",
-        [dataTable({ columns: TABLE_COLUMNS, rows })]
-      )
-    );
-
-    if (isLast) {
-      children.push(
-        footerNote([
-          `Reporte de renovación · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-        ])
-      );
-    }
-
-    return { layout: page(children) };
+    return body;
   });
 
-  return { pages };
+  const footerContext = `Mikro SRL — Reporte de renovación · Generado ${formatDateEs(data.generatedAt)}`;
+  return composeReportPages(pageBodies, () => [footerContext]);
 }
 
 /** The renewal report: validated candidate rows in, JSON/PDF out. */

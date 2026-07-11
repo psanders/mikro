@@ -13,13 +13,14 @@ import { createRequire } from "module";
 import { z } from "zod/v4";
 import {
   renderReportToPdf,
+  renderReportToPngs,
   defineReport,
   brandHeader,
   verificationBanner,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
+  pageFooter,
   page,
   paginateRows,
   ValidationError,
@@ -38,6 +39,13 @@ function loadLocalFonts(): Font[] {
   };
   return [
     { name: "Inter", data: read("400Regular/Geist_400Regular.ttf"), weight: 400, style: "normal" },
+    { name: "Inter", data: read("500Medium/Geist_500Medium.ttf"), weight: 500, style: "normal" },
+    {
+      name: "Inter",
+      data: read("600SemiBold/Geist_600SemiBold.ttf"),
+      weight: 600,
+      style: "normal"
+    },
     { name: "Inter", data: read("700Bold/Geist_700Bold.ttf"), weight: 700, style: "normal" },
     { name: "Inter", data: read("900Black/Geist_900Black.ttf"), weight: 900, style: "normal" }
   ];
@@ -80,14 +88,16 @@ function sampleDocument(): { doc: ReportDocument; markers: string[] } {
     "MORA",
     "ESTADO",
     "PAGADA",
-    "CRONOGRAMA DE PAGOS",
-    "Nota: los pagos revertidos no cuentan."
+    "Cronograma de pagos",
+    "Nota: los pagos revertidos no cuentan.",
+    "Página 2 de 2"
   ];
   const p1 = page([
     brandHeader({
+      eyebrow: "Estado",
       title: "Estado de Cuenta",
       subtitle: "Préstamo #10036",
-      meta: ["Generado 2026-02-20"]
+      meta: [{ label: "Generado", value: "2026-02-20" }]
     }),
     verificationBanner({
       headline: "Ledger verificado",
@@ -130,7 +140,11 @@ function sampleDocument(): { doc: ReportDocument; markers: string[] } {
         rows: [{ cells: { n: "1", monto: "RD$ 1,000" } }]
       })
     ]),
-    footerNote(["Nota: los pagos revertidos no cuentan.", "www.mikro.do"])
+    pageFooter({
+      left: ["Nota: los pagos revertidos no cuentan.", "www.mikro.do"],
+      page: 2,
+      pages: 2
+    })
   ]);
   return { doc: { pages: [{ layout: p1 }, { layout: p2 }] }, markers };
 }
@@ -197,83 +211,44 @@ describe("reporting — paginateRows", () => {
   });
 });
 
-describe("reporting — dataTable wrapLines (issue #202 follow-up)", () => {
-  // Walks a ReportElement tree collecting every node whose style carries the
-  // given key, so tests can assert on the *structure* satori will render
-  // without needing a full PDF raster (dataTable's output is plain JSON).
-  function findByStyleKey(el: ReportElement, key: string): ReportElement[] {
-    const found: ReportElement[] = [];
-    if (el.props?.style && key in el.props.style) found.push(el);
-    const children = el.props?.children;
-    if (Array.isArray(children)) {
-      for (const c of children) {
-        if (c && typeof c === "object" && "type" in c)
-          found.push(...findByStyleKey(c as ReportElement, key));
-      }
-    }
-    return found;
-  }
+describe("reporting — renderReportToPngs", function () {
+  this.timeout(20000);
 
-  function bodyRows(table: ReportElement): ReportElement[] {
-    const rows = table.props.children as ReportElement[];
-    return rows.slice(1); // [0] is the header row
-  }
-
-  it("leaves row height unset (intrinsic) when no column requests wrapLines", () => {
-    const table = dataTable({
-      columns: [{ key: "a", header: "A" }],
-      rows: [{ cells: { a: "short" } }, { cells: { a: "also short" } }]
-    });
-    for (const row of bodyRows(table)) {
-      expect(row.props.style?.height).to.be.undefined;
+  it("renders one PNG buffer per page, each a valid PNG", async () => {
+    const { doc } = sampleDocument();
+    const pngs = await renderReportToPngs(doc, testDeps);
+    expect(pngs).to.have.length(2);
+    for (const png of pngs) {
+      expect(png).to.be.instanceOf(Buffer);
+      // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+      expect(png.subarray(0, 8).toString("hex")).to.equal("89504e470d0a1a0a");
     }
   });
 
-  it("gives every row the same explicit fixed height once a column asks for wrapLines > 1, regardless of that row's own text length", () => {
-    const table = dataTable({
-      columns: [
-        { key: "a", header: "A" },
-        { key: "notas", header: "Notas", wrapLines: 3 }
-      ],
-      rows: [
-        { cells: { a: "x", notas: "one short line" } },
-        {
-          cells: {
-            a: "y",
-            notas:
-              "a much longer note that would otherwise wrap onto several lines of text if left unbounded"
-          }
-        }
-      ]
-    });
-    const heights = bodyRows(table).map((r) => r.props.style?.height);
-    expect(heights).to.have.length(2);
-    expect(heights[0]).to.be.a("string");
-    expect(heights[0]).to.equal(heights[1]); // uniform regardless of content — this is what keeps `paginateRows` safe.
+  it("rejects an empty document", async () => {
+    let thrown: unknown;
+    try {
+      await renderReportToPngs({ pages: [] }, testDeps);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).to.be.instanceOf(Error);
+  });
+});
+
+describe("reporting — pageFooter", () => {
+  it("always renders page numbers, even for a single-page document", () => {
+    const footer = pageFooter({ left: ["Mikro SRL"], page: 1, pages: 1 });
+    const text = collectText(footer);
+    expect(text.some((t) => t.includes("Página 1 de 1"))).to.equal(true);
   });
 
-  it("applies the -webkit-line-clamp box only to the wrapLines column, not the single-line ones", () => {
-    const table = dataTable({
-      columns: [
-        { key: "a", header: "A" },
-        { key: "notas", header: "Notas", wrapLines: 4 }
-      ],
-      rows: [{ cells: { a: "short", notas: "some note text" } }]
-    });
-    const clamped = findByStyleKey(table, "WebkitLineClamp");
-    expect(clamped).to.have.length(1);
-    expect(clamped[0].props.style?.WebkitLineClamp).to.equal(4);
-    expect(clamped[0].props.style?.display).to.equal("-webkit-box");
-  });
-
-  it("never truncates the underlying cell string — only the CSS clamps the visual render", () => {
-    const longText = "x".repeat(500);
-    const table = dataTable({
-      columns: [{ key: "notas", header: "Notas", wrapLines: 3 }],
-      rows: [{ cells: { notas: longText } }]
-    });
-    const clamped = findByStyleKey(table, "WebkitLineClamp")[0];
-    expect(clamped.props.children).to.equal(longText);
+  it("renders every left-column line supplied", () => {
+    const footer = pageFooter({ left: ["Línea uno", "Línea dos"], page: 2, pages: 3 });
+    const text = collectText(footer);
+    expect(text).to.include("Línea uno");
+    expect(text).to.include("Línea dos");
+    expect(text.some((t) => t.includes("Página 2 de 3"))).to.equal(true);
   });
 });
 

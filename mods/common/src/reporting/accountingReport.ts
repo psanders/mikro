@@ -12,20 +12,28 @@
  */
 import { z } from "zod/v4";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
   brandHeader,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
   paginateRows,
-  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
   type TableRow,
   type TableColumn,
-  type ReportElement
+  type ReportElement,
+  type CellVariant
 } from "./blocks.js";
+import {
+  headerHeight,
+  kpiGridHeight,
+  tableRowBudget,
+  SECTION_TITLE_HEIGHT,
+  TABLE_HEADER_HEIGHT,
+  TABLE_ROW_HEIGHT,
+  TABLE_CARD_BORDER_PX
+} from "./layout.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatDateEs } from "./format.js";
 
@@ -147,126 +155,132 @@ const TXN_TYPE_TONES: Record<string, "paid" | "overdue" | "info" | "partial" | "
   TRANSFER: "upcoming"
 };
 
+/** Money-out transaction types render with a leading "−" and the emphasis (orange) money treatment. */
+const OUTFLOW_TYPES = new Set(["EXPENSE", "WITHDRAWAL"]);
+
+/** Month + year, e.g. "Julio 2026" — the Pencil header's "Período" meta value; purely a display of `period.startDate`. */
+function formatMonthYearEs(d: string): string {
+  const label = new Date(`${d}T00:00:00Z`).toLocaleDateString("es-DO", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function buildKpiCells(data: AccountingReportSnapshot): KpiCell[] {
   const { totals } = data;
   return [
     { label: "Ingresos", value: formatDop(totals.totalIncome) },
     { label: "Gastos", value: formatDop(totals.totalExpenses), emphasize: true },
     { label: "Flujo neto", value: formatDop(totals.netFlow) },
-    { label: "Balance total", value: formatDop(totals.combinedBalance) }
+    {
+      label: "Balance total",
+      value: formatDop(totals.combinedBalance),
+      subtext: `${data.accounts.length} cuenta${data.accounts.length === 1 ? "" : "s"}`
+    }
   ];
 }
 
 function buildBalanceRows(data: AccountingReportSnapshot): TableRow[] {
-  const rows: TableRow[] = data.accounts.map((a) => ({
+  return data.accounts.map((a) => ({
     cells: {
       cuenta: a.name,
       tipo: ACCOUNT_KIND_LABELS[a.kind] ?? a.kind,
       balance: formatDop(a.currentBalance)
     }
   }));
-  rows.push({
-    cells: { cuenta: "Total", tipo: "", balance: formatDop(data.totals.combinedBalance) }
-  });
-  return rows;
 }
 
 function buildTransactionRows(data: AccountingReportSnapshot): TableRow[] {
-  return data.transactions.map((t) => ({
-    cells: {
-      fecha: formatDateEs(t.occurredAt),
-      tipo: "",
-      cuenta: t.accountName,
-      categoria: t.categoryName ?? "—",
-      monto: formatDop(t.amount)
-    },
-    status: {
-      column: "tipo",
-      value: TXN_TYPE_LABELS[t.type] ?? t.type,
-      tone: TXN_TYPE_TONES[t.type] ?? "upcoming"
-    }
-  }));
+  return data.transactions.map((t) => {
+    const isOutflow = OUTFLOW_TYPES.has(t.type);
+    const montoVariant: CellVariant = isOutflow ? "moneyEmphasis" : "money";
+    return {
+      cells: {
+        fecha: formatDateEs(t.occurredAt),
+        tipo: "",
+        cuenta: t.accountName,
+        categoria: t.categoryName ?? "—",
+        monto: `${isOutflow ? "−" : ""}${formatDop(Math.abs(t.amount))}`
+      },
+      status: {
+        column: "tipo",
+        value: TXN_TYPE_LABELS[t.type] ?? t.type,
+        tone: TXN_TYPE_TONES[t.type] ?? "upcoming"
+      },
+      cellVariants: { monto: montoVariant }
+    };
+  });
 }
 
 const BALANCE_COLUMNS: TableColumn[] = [
-  { key: "cuenta", header: "Cuenta", weight: 1.6 },
-  { key: "tipo", header: "Tipo", weight: 1 },
-  { key: "balance", header: "Balance (DOP)", weight: 1.2, align: "right" }
+  { key: "cuenta", header: "Cuenta", weight: 1.6, variant: "primary" },
+  { key: "tipo", header: "Tipo", weight: 1, variant: "secondary" },
+  { key: "balance", header: "Balance (DOP)", weight: 1.2, align: "right", variant: "money" }
 ];
 
 const TRANSACTION_COLUMNS: TableColumn[] = [
-  { key: "fecha", header: "Fecha", weight: 0.9 },
+  { key: "fecha", header: "Fecha", weight: 0.9, variant: "secondary" },
   { key: "tipo", header: "Tipo", weight: 1 },
-  { key: "cuenta", header: "Cuenta", weight: 1.3 },
-  { key: "categoria", header: "Categoría", weight: 1.2 },
+  { key: "cuenta", header: "Cuenta", weight: 1.3, variant: "secondary" },
+  { key: "categoria", header: "Categoría", weight: 1.2, variant: "secondary" },
   { key: "monto", header: "Monto (DOP)", weight: 1.1, align: "right" }
 ];
-
-/**
- * Rows of the movimientos table that fit alongside the balance table on page
- * 1, on top of brandHeader + kpiGrid — well under
- * {@link TABLE_ROWS_FIRST_PAGE}'s margin to leave room for the (always
- * small, but non-zero) balance table above it.
- */
-const TRANSACTIONS_ON_PAGE_1 = 15;
 
 /**
  * Compose the accounting-report document from the canonical data model.
  * Balance rows are bounded by account count (always small) and stay on page
  * 1 alongside the first chunk of movements; a long period's movements table
  * can grow large, so any rows beyond page 1's budget spill onto continuation
- * pages (see {@link paginateRows} — same overflow/crash class as issue #202).
+ * pages (see `layout.ts`'s `tableRowBudget` — the balance table's own
+ * height, computed from its real row count, is folded in as one of the
+ * "blocks above" the movimientos table on page 1).
  */
 export function buildAccountingReportDocument(data: AccountingReportSnapshot): ReportDocument {
   const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    `Periodo ${data.period.startDate} — ${data.period.endDate}`
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    { label: "Período", value: formatMonthYearEs(data.period.startDate) }
   ];
 
+  const balanceRows = buildBalanceRows(data);
+  const balanceTableHeight =
+    SECTION_TITLE_HEIGHT +
+    TABLE_HEADER_HEIGHT +
+    balanceRows.length * TABLE_ROW_HEIGHT +
+    TABLE_CARD_BORDER_PX;
+
+  const firstPageAbove = [headerHeight(meta.length), kpiGridHeight(1, true), balanceTableHeight];
   const txnRowPages = paginateRows(
     buildTransactionRows(data),
-    TRANSACTIONS_ON_PAGE_1,
-    TABLE_ROWS_CONTINUATION_PAGE
+    tableRowBudget({ aboveHeights: firstPageAbove }),
+    tableRowBudget({ includeSectionTitle: false })
   );
-  const totalPages = txnRowPages.length;
 
-  const pages = txnRowPages.map((rows, i) => {
-    const isFirst = i === 0;
-    const isLast = i === totalPages - 1;
-    const children: ReportElement[] = [];
+  const pageBodies: ReportElement[][] = txnRowPages.map((rows, i) => {
+    const body: ReportElement[] = [];
 
-    if (isFirst) {
-      children.push(
+    if (i === 0) {
+      body.push(
         brandHeader({
+          eyebrow: "Reporte",
           title: "Reporte Contable",
-          subtitle: "Balance de cuentas y movimientos del periodo",
+          subtitle: "Ingresos, gastos y balances del período",
           meta
         }),
         kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-        section("Balance de cuentas", [
-          dataTable({ columns: BALANCE_COLUMNS, rows: buildBalanceRows(data) })
-        ])
+        section("Balance de cuentas", [dataTable({ columns: BALANCE_COLUMNS, rows: balanceRows })]),
+        section("Movimientos del período", [dataTable({ columns: TRANSACTION_COLUMNS, rows })])
       );
+    } else {
+      body.push(dataTable({ columns: TRANSACTION_COLUMNS, rows }));
     }
 
-    children.push(
-      section(totalPages > 1 ? `Movimientos (${i + 1}/${totalPages})` : "Movimientos", [
-        dataTable({ columns: TRANSACTION_COLUMNS, rows })
-      ])
-    );
-
-    if (isLast) {
-      children.push(
-        footerNote([
-          `Reporte contable · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-        ])
-      );
-    }
-
-    return { layout: page(children) };
+    return body;
   });
 
-  return { pages };
+  const footerContext = `Mikro SRL — Reporte contable · Generado ${formatDateEs(data.generatedAt)}`;
+  return composeReportPages(pageBodies, () => [footerContext]);
 }
 
 /** The accounting report: validated account balances + transactions in, JSON/PDF out. */

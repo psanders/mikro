@@ -1,10 +1,10 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * The loan-statement report: a customer-facing 2-page PDF (+ canonical JSON)
- * built ONLY from the eval framework's canonical snapshot + the reporting
- * foundation's schedule/allocation helpers — never a hand-derived schedule
- * (the #10036 dispute script violated that rule; this is the fix).
+ * The loan-statement report: a customer-facing multi-page PDF (+ canonical
+ * JSON) built ONLY from the eval framework's canonical snapshot + the
+ * reporting foundation's schedule/allocation helpers — never a hand-derived
+ * schedule (the #10036 dispute script violated that rule; this is the fix).
  *
  * Input is DB-free and snapshot-shaped (loan terms + customer + payments +
  * policy — the same shape `buildLoanSnapshot` takes). The apiserver resolves
@@ -12,33 +12,33 @@
  * `buildLoanSnapshot` → `buildRepaymentSchedule` → `evaluateSnapshot` and
  * assembles the full typed statement model (JSON = canonical). `toDocument`
  * is presentation-only: it composes the shared layout blocks into the
- * 2-page layout matching the issue #161 look/feel.
+ * Pencil "Estado de Cuenta" layout.
  */
 import { z } from "zod/v4";
 import { buildLoanSnapshot, type BuildSnapshotInput, type LoanSnapshot } from "../eval/snapshot.js";
 import { evaluateSnapshot, type EvalReport } from "../eval/runChecks.js";
-import { formatMoney } from "../utils/formatMoney.js";
 import { paymentKindEnum, paymentStatusEnum, type PaymentKind } from "../schemas/payment.js";
 import { loanStatusEnum } from "../schemas/loan.js";
 import { buildRepaymentSchedule, type RepaymentScheduleRow } from "./schedule.js";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
   brandHeader,
   verificationBanner,
+  noteCard,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
   paginateRows,
-  TABLE_ROWS_FIRST_PAGE_WITH_BANNER,
-  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
   type TableRow,
   type TableColumn,
-  type ReportElement
+  type ReportElement,
+  type BrandHeaderMeta
 } from "./blocks.js";
+import { headerHeight, verificationBannerHeight, kpiGridHeight, tableRowBudget } from "./layout.js";
 import type { ReportDocument } from "./renderer.js";
+import { formatDop, formatDateEs } from "./format.js";
 
 // ==================== Input schema (DB-free, snapshot-shaped) ====================
 
@@ -218,20 +218,20 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   TRANSFER: "Transferencia"
 };
 
-function formatDop(n: number): string {
-  return `RD$${formatMoney(n)}`;
-}
-
-function formatDateEs(d: string | Date): string {
-  // Date-only business values are stored at UTC midnight; format on the UTC
-  // calendar day so a negative-offset runtime timezone doesn't shift them a
-  // day earlier (e.g. a 13 may disbursement rendering as 12 may).
-  return new Date(d).toLocaleDateString("es-DO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC"
-  });
+/**
+ * "Pagos recibidos" needs date + time (the Pencil ledger shows "27 may 2026,
+ * 3:00 p.m."), unlike every other date cell in this report which is
+ * date-only — a dedicated formatter local to this table.
+ */
+function formatDateTimeEs(d: string | Date): string {
+  const date = new Date(d);
+  const datePart = formatDateEs(date);
+  // es-DO renders "3:00 p. m." (space before the period) — Pencil's "3:00
+  // p.m." drops that space; normalize it rather than hand-roll AM/PM math.
+  const timePart = date
+    .toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit", hour12: true })
+    .replace(/([ap])\.\s?m\./i, "$1.m.");
+  return `${datePart}, ${timePart}`;
 }
 
 function isSameUtcDay(a: string, b: string): boolean {
@@ -298,13 +298,13 @@ function buildKpiCells(data: LoanStatementData): KpiCell[] {
     {
       label: "Mora acumulada",
       value: formatDop(kpis.moraAccrued),
-      subtext: `${formatDop(kpis.grossMora)} bruto − ${formatDop(kpis.collectedMora)} cobrado`,
+      subtext: `${formatDop(kpis.grossMora)} generada − ${formatDop(kpis.collectedMora)} pagada`,
       emphasize: true
     },
     {
       label: "Días de atraso",
-      value: `${kpis.daysOverdue} días`,
-      subtext: kpis.sinceDate ? `desde ${formatDateEs(kpis.sinceDate)}` : "Al día",
+      value: `${kpis.daysOverdue}`,
+      subtext: kpis.sinceDate ? `desde el ${formatDateEs(kpis.sinceDate)}` : "Al día",
       emphasize: true
     },
     { label: "Ciclos atrasados", value: `${kpis.missedCycles}` }
@@ -320,7 +320,7 @@ function buildVerificationBanner(data: LoanStatementData) {
     return verificationBanner({
       headline,
       explanation:
-        "El saldo, las cuotas cubiertas y la mora se recalculan de forma independiente contra el historial de pagos y coinciden.",
+        "El libro de pagos es consistente — cada peso recibido está correctamente sumado y ninguna cuota pagada falta por contar.",
       tone: "pass"
     });
   }
@@ -342,6 +342,7 @@ function buildVerificationBanner(data: LoanStatementData) {
 function buildScheduleRows(data: LoanStatementData): TableRow[] {
   return data.schedule.map((row) => {
     const estado = estadoFor(row, data.snapshot.asOf);
+    const aplicado = row.amountApplied;
     return {
       cells: {
         cuota: `${row.cuota}`,
@@ -349,9 +350,11 @@ function buildScheduleRows(data: LoanStatementData): TableRow[] {
         estado: "",
         cubierta: cubiertaElFor(row, data.kpis.cuota),
         monto: formatDop(data.kpis.cuota),
-        aplicado: formatDop(row.amountApplied)
+        aplicado: formatDop(aplicado)
       },
-      status: { column: "estado", value: estado.label, tone: estado.tone }
+      status: { column: "estado", value: estado.label, tone: estado.tone },
+      cellVariants: aplicado === 0 ? { aplicado: "moneyMuted" } : undefined,
+      highlight: row.status === "PARTIAL"
     };
   });
 }
@@ -359,7 +362,7 @@ function buildScheduleRows(data: LoanStatementData): TableRow[] {
 function buildReceivedPaymentsRows(data: LoanStatementData): TableRow[] {
   return data.receivedPayments.map((p) => ({
     cells: {
-      fecha: formatDateEs(p.paidAt),
+      fecha: formatDateTimeEs(p.paidAt),
       tipo: PAYMENT_KIND_LABELS[p.kind] ?? p.kind,
       monto: formatDop(p.amount),
       metodo: p.method ? (PAYMENT_METHOD_LABELS[p.method] ?? p.method) : "—"
@@ -367,7 +370,7 @@ function buildReceivedPaymentsRows(data: LoanStatementData): TableRow[] {
   }));
 }
 
-function buildReconciliationNote(data: LoanStatementData): string[] {
+function buildReconciliationNoteLines(data: LoanStatementData): string[] {
   const receivedTotal = data.receivedPayments.reduce((sum, p) => sum + p.amount, 0);
   const lines: string[] = [];
   if (data.reversedCount > 0) {
@@ -382,100 +385,118 @@ function buildReconciliationNote(data: LoanStatementData): string[] {
   lines.push(
     `Total recibido (no revertido): ${formatDop(receivedTotal)} en ${data.receivedPayments.length} pago(s).`
   );
+  lines.push("Cifras generadas por el motor de cálculo del sistema, no estimadas a mano.");
   return lines;
 }
 
 const SCHEDULE_COLUMNS: TableColumn[] = [
-  { key: "cuota", header: "Cuota", weight: 0.6 },
-  { key: "due", header: "Vence", weight: 1.1 },
+  { key: "cuota", header: "Cuota", weight: 0.6, variant: "primary" },
+  { key: "due", header: "Vence", weight: 1.1, variant: "secondary" },
   { key: "estado", header: "Estado", weight: 1 },
-  { key: "cubierta", header: "Cubierta el", weight: 1.6 },
-  { key: "monto", header: "Monto cuota", weight: 1.1, align: "right" },
-  { key: "aplicado", header: "Aplicado", weight: 1.1, align: "right" }
+  { key: "cubierta", header: "Cubierta el", weight: 1.9, variant: "secondary" },
+  { key: "monto", header: "Monto cuota", weight: 1.1, align: "right", variant: "money" },
+  { key: "aplicado", header: "Aplicado", weight: 1.1, align: "right", variant: "money" }
 ];
 
 const RECEIVED_PAYMENTS_COLUMNS: TableColumn[] = [
-  { key: "fecha", header: "Fecha", weight: 1 },
-  { key: "tipo", header: "Tipo", weight: 1 },
-  { key: "monto", header: "Monto", weight: 1, align: "right" },
-  { key: "metodo", header: "Método", weight: 1 }
+  { key: "fecha", header: "Fecha", weight: 1.4, variant: "secondary" },
+  { key: "tipo", header: "Tipo", weight: 0.9, variant: "secondary" },
+  { key: "monto", header: "Monto", weight: 1, align: "right", variant: "money" },
+  { key: "metodo", header: "Método", weight: 1, variant: "secondary" }
 ];
+
+const SCHEDULE_ANNOTATION =
+  '"Cubierta el" = fecha en que el total abonado alcanzó ese número de cuota.';
 
 /**
  * Compose the loan-statement document from the canonical data model. Usually
  * 2 pages, but both tables can grow large over a long loan's life — the
  * schedule with `termLength` (hundreds of installments for a daily-frequency
  * loan) and the received-payments ledger with every payment ever made — so
- * both paginate from their own start (see {@link paginateRows} — same
- * overflow/crash class as issue #202).
+ * both paginate from their own start, budgeted from real block geometry via
+ * `layout.ts` (see that file's header for why: an unbudgeted overflow
+ * crashes the renderer, issue #202's root cause).
  */
 export function buildLoanStatementDocument(data: LoanStatementData): ReportDocument {
   const freqLabel = FREQ_LABELS[data.paymentFrequency] ?? data.paymentFrequency;
-  const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    data.disbursementDate ? `Desembolso ${formatDateEs(data.disbursementDate)}` : "Desembolso —",
-    `Frecuencia ${freqLabel} · ${data.termLength} cuotas`
+  const meta: BrandHeaderMeta[] = [
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    {
+      label: "Desembolso",
+      value: data.disbursementDate ? formatDateEs(data.disbursementDate) : "—"
+    },
+    { label: "Frecuencia", value: freqLabel, tail: `· ${data.termLength} cuotas` }
   ];
 
+  const firstPageAbove = [
+    headerHeight(meta.length),
+    verificationBannerHeight(2),
+    kpiGridHeight(2, true)
+  ];
   const scheduleRowPages = paginateRows(
     buildScheduleRows(data),
-    TABLE_ROWS_FIRST_PAGE_WITH_BANNER,
-    TABLE_ROWS_CONTINUATION_PAGE
+    tableRowBudget({ aboveHeights: firstPageAbove }),
+    tableRowBudget({ includeSectionTitle: false })
   );
 
-  const schedulePages = scheduleRowPages.map((rows, i) => {
-    const isFirst = i === 0;
-    const children: ReportElement[] = [];
-    if (isFirst) {
-      children.push(
+  // brandHeader/verificationBanner/kpiGrid AND the "Calendario de pagos"
+  // section title only appear on the schedule's first page — continuation
+  // pages are the bare table (its own header row repeats automatically) so
+  // "Página N de M" in the footer is the only pagination indicator.
+  const schedulePages: ReportElement[][] = scheduleRowPages.map((rows, i) => {
+    const body: ReportElement[] = [];
+    if (i === 0) {
+      body.push(
         brandHeader({
+          eyebrow: "Estado de cuenta",
           title: `Préstamo #${data.loanId}`,
-          subtitle: `ESTADO DE CUENTA — ${data.customerName}`,
+          subtitle: data.customerName,
           meta
         }),
         buildVerificationBanner(data),
-        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
+        section("Calendario de pagos", [dataTable({ columns: SCHEDULE_COLUMNS, rows })], {
+          annotation: SCHEDULE_ANNOTATION
+        })
       );
+    } else {
+      body.push(dataTable({ columns: SCHEDULE_COLUMNS, rows }));
     }
-    children.push(
-      section(
-        scheduleRowPages.length > 1
-          ? `Cronograma de pagos (${i + 1}/${scheduleRowPages.length})`
-          : "Cronograma de pagos",
-        [dataTable({ columns: SCHEDULE_COLUMNS, rows })]
-      )
-    );
-    return { layout: page(children) };
+    return body;
   });
 
+  // The reconciliation card only appears once, on the very last "received
+  // payments" page — reserve its height on every received page (order
+  // doesn't affect the arithmetic; see `tableRowBudget`) so it always fits
+  // regardless of which chunk ends up last.
+  const receivedAbove = [verificationBannerHeight(3)];
+  const receivedFirstBudget = tableRowBudget({ aboveHeights: receivedAbove });
+  const receivedContinuationBudget = tableRowBudget({
+    aboveHeights: receivedAbove,
+    includeSectionTitle: false
+  });
   const receivedRowPages = paginateRows(
     buildReceivedPaymentsRows(data),
-    TABLE_ROWS_CONTINUATION_PAGE,
-    TABLE_ROWS_CONTINUATION_PAGE
+    receivedFirstBudget,
+    receivedContinuationBudget
   );
 
-  const receivedPages = receivedRowPages.map((rows, i) => {
+  const receivedPages: ReportElement[][] = receivedRowPages.map((rows, i) => {
     const isLast = i === receivedRowPages.length - 1;
-    const children: ReportElement[] = [
-      section(
-        receivedRowPages.length > 1
-          ? `Historial de pagos recibidos (${i + 1}/${receivedRowPages.length})`
-          : "Historial de pagos recibidos",
-        [dataTable({ columns: RECEIVED_PAYMENTS_COLUMNS, rows })]
-      )
-    ];
+    const body: ReportElement[] =
+      i === 0
+        ? [section("Pagos recibidos", [dataTable({ columns: RECEIVED_PAYMENTS_COLUMNS, rows })])]
+        : [dataTable({ columns: RECEIVED_PAYMENTS_COLUMNS, rows })];
     if (isLast) {
-      children.push(
-        footerNote([
-          ...buildReconciliationNote(data),
-          `Préstamo #${data.loanId} · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-        ])
-      );
+      body.push(noteCard({ lines: buildReconciliationNoteLines(data) }));
     }
-    return { layout: page(children) };
+    return body;
   });
 
-  return { pages: [...schedulePages, ...receivedPages] };
+  const allPageBodies = [...schedulePages, ...receivedPages];
+  const footerContext = `Mikro SRL — Préstamo #${data.loanId} · Generado ${formatDateEs(data.generatedAt)}`;
+
+  return composeReportPages(allPageBodies, () => [footerContext]);
 }
 
 /** The loan-statement report: validated `{ ...BuildSnapshotInput }` in, JSON/PDF out. */

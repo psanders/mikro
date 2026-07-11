@@ -17,23 +17,20 @@ import {
   buildGroupedCustomerRows,
   type CustomerForGrouping
 } from "../utils/customerReportGrouping.js";
-import { formatPaymentFrequency } from "../utils/customerReportHelpers.js";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
   brandHeader,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
   paginateRows,
-  TABLE_ROWS_FIRST_PAGE,
-  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
   type TableRow,
   type TableColumn,
   type ReportElement
 } from "./blocks.js";
+import { headerHeight, kpiGridHeight, tableRowBudget } from "./layout.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDateEs } from "./format.js";
 
@@ -154,9 +151,16 @@ const HEALTH_TONES: Record<CustomerHealth, "overdue" | "partial" | "paid"> = {
 };
 
 function buildKpiCells(data: CustomersReportData): KpiCell[] {
+  const criticoPct =
+    data.activeCustomers > 0 ? (data.criticoCount / data.activeCustomers) * 100 : 0;
   return [
     { label: "Clientes activos", value: `${data.activeCustomers}` },
-    { label: "Crítico", value: `${data.criticoCount}`, emphasize: true },
+    {
+      label: "Crítico",
+      value: `${data.criticoCount}`,
+      subtext: `${criticoPct.toFixed(1)}% de la cartera`,
+      emphasize: true
+    },
     { label: "Requiere atención", value: `${data.requiereAtencionCount}` },
     { label: "Al día", value: `${data.alDiaCount}` }
   ];
@@ -167,9 +171,13 @@ function buildRows(data: CustomersReportData): TableRow[] {
     cells: {
       nombre: r.name,
       telefono: r.phone,
-      prestamo: `${r.loanId}`,
-      ciclo: formatPaymentFrequency(r.paymentFrequency),
-      pagos: `${Math.min(r.paymentsMade, r.termLength)}/${r.termLength}`,
+      prestamo: `#${r.loanId}`,
+      // "Ciclo" is the cuota-progress fraction (data has no distinct
+      // cycle-vs-payment concept beyond `paymentsMade`/`termLength`); "Pagos"
+      // is the plain count of that same figure — two views of one datum, not
+      // two new fields.
+      ciclo: `${Math.min(r.paymentsMade, r.termLength)} / ${r.termLength}`,
+      pagos: `${r.paymentsMade}`,
       estado: ""
     },
     status: { column: "estado", value: HEALTH_LABELS[r.health], tone: HEALTH_TONES[r.health] }
@@ -177,67 +185,55 @@ function buildRows(data: CustomersReportData): TableRow[] {
 }
 
 const TABLE_COLUMNS: TableColumn[] = [
-  { key: "nombre", header: "Nombre", weight: 1.7 },
-  { key: "telefono", header: "Teléfono", weight: 1.1 },
-  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-  { key: "ciclo", header: "Ciclo", weight: 0.9 },
-  { key: "pagos", header: "Pagos", weight: 0.8, align: "right" },
-  { key: "estado", header: "Estado", weight: 1.1 }
+  { key: "nombre", header: "Nombre", weight: 1.7, variant: "primary" },
+  { key: "telefono", header: "Teléfono", weight: 1.1, variant: "secondary" },
+  { key: "prestamo", header: "Préstamo", weight: 0.8, align: "right", variant: "secondary" },
+  { key: "ciclo", header: "Ciclo", weight: 0.8, variant: "secondary" },
+  { key: "pagos", header: "Pagos", weight: 0.7, align: "right", variant: "secondary" },
+  { key: "estado", header: "Estado", weight: 1.2 }
 ];
 
 /**
  * Compose the customers-report document from the canonical data model.
- * Usually 1 page; splits into more when the customer table has enough rows
- * to overflow a fixed page (see {@link paginateRows} — this is the fix for
- * issue #201, where only the first page's worth of customers ever showed up
- * in the PDF; the rest silently overflowed past the visible page).
+ * Usually 1 page; the customer table paginates when it overflows a fixed
+ * page (see `layout.ts`'s `tableRowBudget` — the fix for issue #201, where
+ * only the first page's worth of customers ever showed up in the PDF; the
+ * rest silently overflowed past the visible page).
  */
 export function buildCustomersReportDocument(data: CustomersReportData): ReportDocument {
   const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    `${data.activeCustomers} clientes · ${data.totalLoans} préstamos`
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    { label: "Total", value: `${data.activeCustomers} clientes` }
   ];
 
+  const firstPageAbove = [headerHeight(meta.length), kpiGridHeight(1, true)];
   const rowPages = paginateRows(
     buildRows(data),
-    TABLE_ROWS_FIRST_PAGE,
-    TABLE_ROWS_CONTINUATION_PAGE
+    tableRowBudget({ aboveHeights: firstPageAbove }),
+    tableRowBudget({ includeSectionTitle: false })
   );
 
-  const pages = rowPages.map((rows, i) => {
-    const isFirst = i === 0;
-    const isLast = i === rowPages.length - 1;
-    const children: ReportElement[] = [];
-
-    if (isFirst) {
-      children.push(
+  const pageBodies: ReportElement[][] = rowPages.map((rows, i) => {
+    const body: ReportElement[] = [];
+    if (i === 0) {
+      body.push(
         brandHeader({
+          eyebrow: "Reporte",
           title: "Reporte de Clientes",
-          subtitle: "Salud de pagos por préstamo",
+          subtitle: "Cartera de clientes por estado de salud",
           meta
         }),
-        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
+        section("Clientes por estado", [dataTable({ columns: TABLE_COLUMNS, rows })])
       );
+    } else {
+      body.push(dataTable({ columns: TABLE_COLUMNS, rows }));
     }
-
-    children.push(
-      section(rowPages.length > 1 ? `Clientes (${i + 1}/${rowPages.length})` : "Clientes", [
-        dataTable({ columns: TABLE_COLUMNS, rows })
-      ])
-    );
-
-    if (isLast) {
-      children.push(
-        footerNote([
-          `Reporte de clientes · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-        ])
-      );
-    }
-
-    return { layout: page(children) };
+    return body;
   });
 
-  return { pages };
+  const footerContext = `Mikro SRL — Reporte de clientes · Generado ${formatDateEs(data.generatedAt)}`;
+  return composeReportPages(pageBodies, () => [footerContext]);
 }
 
 /** The customers report: validated `CustomerForGrouping[]` in, JSON/PDF out. */
