@@ -38,7 +38,7 @@ export interface TaskFiringInfo {
   reason?: string | null;
 }
 
-/** An in-memory generated document from a resolved firing (e.g. the loan-statement PDF). */
+/** An in-memory generated document from a resolved firing, if the automation produces one. */
 export interface TaskResultAttachment {
   filename: string;
   mimeType: string;
@@ -54,10 +54,13 @@ export interface TaskActionCardProps {
   onSkip?: () => void;
   className?: string;
   /**
-   * Present once confirm resolved with an in-memory document (e.g. the
-   * loan-statement automation's PDF) — the card renders a download action
-   * instead of the confirm/skip form. The bytes never touch the event log;
-   * they only ever live in the confirm mutation's result.
+   * Present once confirm resolved with an in-memory document — the card
+   * renders a download action instead of the confirm/skip form. The bytes
+   * never touch the event log; they only ever live in the confirm mutation's
+   * result. No v1 automation currently produces one (loan-statement, the
+   * only automation that did, moved to an on-demand founder-copilot tool —
+   * see mikro/loan-statement-report spec); this stays as generic capability
+   * for a future document-producing automation.
    */
   resultAttachment?: TaskResultAttachment | null;
   onDownloadAttachment?: () => void;
@@ -121,8 +124,8 @@ export function TaskActionCard({
     return defaults;
   });
 
-  // A resolved firing that produced an in-memory document (loan-statement)
-  // renders only the download action — confirm/skip no longer apply.
+  // A resolved firing that produced an in-memory document renders only the
+  // download action — confirm/skip no longer apply.
   if (resultAttachment) {
     return (
       <div className={cn("flex flex-col gap-[12px]", className)}>

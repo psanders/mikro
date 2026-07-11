@@ -4,6 +4,7 @@
 import { Flags } from "@oclif/core";
 import { MutationCommand } from "../../MutationCommand.js";
 import { validateDate } from "../../BaseCommand.js";
+import { localDateString, parseDateOnly } from "../../lib/dates.js";
 import errorHandler from "../../errorHandler.js";
 import {
   promptTextIfMissing,
@@ -90,7 +91,7 @@ export default class Create extends MutationCommand<typeof Create> {
       "Payment Amount (per period)",
       "payment-amount"
     );
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateString();
     const startingDateStr = await promptTextIfMissing(
       flags["starting-date"],
       "Starting date (YYYY-MM-DD)",
@@ -98,10 +99,7 @@ export default class Create extends MutationCommand<typeof Create> {
       { default: today }
     );
     validateDate(startingDateStr);
-    const startingDate = new Date(startingDateStr);
-    if (Number.isNaN(startingDate.getTime())) {
-      this.error(`Invalid starting date: ${startingDateStr}. Use YYYY-MM-DD.`);
-    }
+    const startingDate = parseDateOnly(startingDateStr);
     const nicknameStr = await promptTextIfMissing(
       flags.nickname,
       "Nickname (optional, press Enter to skip)",

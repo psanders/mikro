@@ -26,8 +26,13 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
+  TABLE_ROWS_FIRST_PAGE,
+  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
-  type TableRow
+  type TableRow,
+  type TableColumn,
+  type ReportElement
 } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDateEs } from "./format.js";
@@ -171,39 +176,68 @@ function buildRows(data: CustomersReportData): TableRow[] {
   }));
 }
 
-/** Compose the 1-page customers-report document from the canonical data model. */
+const TABLE_COLUMNS: TableColumn[] = [
+  { key: "nombre", header: "Nombre", weight: 1.7 },
+  { key: "telefono", header: "Teléfono", weight: 1.1 },
+  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
+  { key: "ciclo", header: "Ciclo", weight: 0.9 },
+  { key: "pagos", header: "Pagos", weight: 0.8, align: "right" },
+  { key: "estado", header: "Estado", weight: 1.1 }
+];
+
+/**
+ * Compose the customers-report document from the canonical data model.
+ * Usually 1 page; splits into more when the customer table has enough rows
+ * to overflow a fixed page (see {@link paginateRows} — this is the fix for
+ * issue #201, where only the first page's worth of customers ever showed up
+ * in the PDF; the rest silently overflowed past the visible page).
+ */
 export function buildCustomersReportDocument(data: CustomersReportData): ReportDocument {
   const meta = [
     `Generado ${formatDateEs(data.generatedAt)}`,
     `${data.activeCustomers} clientes · ${data.totalLoans} préstamos`
   ];
 
-  const p1 = page([
-    brandHeader({
-      title: "Reporte de Clientes",
-      subtitle: "Salud de pagos por préstamo",
-      meta
-    }),
-    kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Clientes", [
-      dataTable({
-        columns: [
-          { key: "nombre", header: "Nombre", weight: 1.7 },
-          { key: "telefono", header: "Teléfono", weight: 1.1 },
-          { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-          { key: "ciclo", header: "Ciclo", weight: 0.9 },
-          { key: "pagos", header: "Pagos", weight: 0.8, align: "right" },
-          { key: "estado", header: "Estado", weight: 1.1 }
-        ],
-        rows: buildRows(data)
-      })
-    ]),
-    footerNote([
-      `Reporte de clientes · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
-  ]);
+  const rowPages = paginateRows(
+    buildRows(data),
+    TABLE_ROWS_FIRST_PAGE,
+    TABLE_ROWS_CONTINUATION_PAGE
+  );
 
-  return { pages: [{ layout: p1 }] };
+  const pages = rowPages.map((rows, i) => {
+    const isFirst = i === 0;
+    const isLast = i === rowPages.length - 1;
+    const children: ReportElement[] = [];
+
+    if (isFirst) {
+      children.push(
+        brandHeader({
+          title: "Reporte de Clientes",
+          subtitle: "Salud de pagos por préstamo",
+          meta
+        }),
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+      );
+    }
+
+    children.push(
+      section(rowPages.length > 1 ? `Clientes (${i + 1}/${rowPages.length})` : "Clientes", [
+        dataTable({ columns: TABLE_COLUMNS, rows })
+      ])
+    );
+
+    if (isLast) {
+      children.push(
+        footerNote([
+          `Reporte de clientes · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
+        ])
+      );
+    }
+
+    return { layout: page(children) };
+  });
+
+  return { pages };
 }
 
 /** The customers report: validated `CustomerForGrouping[]` in, JSON/PDF out. */

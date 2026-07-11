@@ -19,8 +19,13 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
+  TABLE_ROWS_FIRST_PAGE_NOTES,
+  TABLE_ROWS_CONTINUATION_PAGE_NOTES,
   type KpiCell,
-  type TableRow
+  type TableRow,
+  type TableColumn,
+  type ReportElement
 } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatPct, formatDateEs } from "./format.js";
@@ -148,39 +153,79 @@ function buildRows(data: DefaultedReportData): TableRow[] {
   }));
 }
 
-/** Compose the 1-page defaulted-report document from the canonical data model. */
+const TABLE_COLUMNS: TableColumn[] = [
+  { key: "nombre", header: "Nombre", weight: 1.5 },
+  { key: "telefono", header: "Teléfono", weight: 1 },
+  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
+  { key: "estado", header: "Estado", weight: 0.9 },
+  { key: "mora", header: "Mora", weight: 1, align: "right" },
+  // Full text, not a one-line-and-cut preview (issue #202 follow-up): the
+  // LLM summary prompt was also tightened to ~1 short sentence, so 4 lines
+  // comfortably fits the vast majority of real summaries; only pathological
+  // outliers still ellipsize. wrapLines>1 makes `dataTable` give every row a
+  // fixed height (see blocks.ts), which is what keeps this safe from the
+  // original resvg crash — see TABLE_ROWS_FIRST_PAGE_NOTES for the
+  // recalibrated (smaller) row budget that goes with the taller row.
+  { key: "notas", header: "Notas", weight: 2.5, wrapLines: 4 }
+];
+
+/**
+ * Compose the defaulted-report document from the canonical data model.
+ * Usually 1 page; splits into more when the at-risk table has enough rows to
+ * overflow a fixed page (see {@link paginateRows} — this is the fix for the
+ * resvg crash in issue #202). Uses the `_NOTES` row-budget constants (not the
+ * generic ones) because the Notas column wraps onto multiple lines, making
+ * each row taller than the single-line tables in the other reports.
+ */
 export function buildDefaultedReportDocument(data: DefaultedReportData): ReportDocument {
   const meta = [
     `Generado ${formatDateEs(data.generatedAt)}`,
     `${data.totalAtRisk} préstamo${data.totalAtRisk !== 1 ? "s" : ""} en riesgo`
   ];
 
-  const p1 = page([
-    brandHeader({
-      title: "Préstamos en Riesgo",
-      subtitle: "Cartera en mora y atrasada",
-      meta
-    }),
-    kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Préstamos en riesgo", [
-      dataTable({
-        columns: [
-          { key: "nombre", header: "Nombre", weight: 1.5 },
-          { key: "telefono", header: "Teléfono", weight: 1 },
-          { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-          { key: "estado", header: "Estado", weight: 0.9 },
-          { key: "mora", header: "Mora", weight: 1, align: "right" },
-          { key: "notas", header: "Notas", weight: 2.5 }
-        ],
-        rows: buildRows(data)
-      })
-    ]),
-    footerNote([
-      `Reporte de cartera en riesgo · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
-  ]);
+  const rowPages = paginateRows(
+    buildRows(data),
+    TABLE_ROWS_FIRST_PAGE_NOTES,
+    TABLE_ROWS_CONTINUATION_PAGE_NOTES
+  );
 
-  return { pages: [{ layout: p1 }] };
+  const pages = rowPages.map((rows, i) => {
+    const isFirst = i === 0;
+    const isLast = i === rowPages.length - 1;
+    const children: ReportElement[] = [];
+
+    if (isFirst) {
+      children.push(
+        brandHeader({
+          title: "Préstamos en Riesgo",
+          subtitle: "Cartera en mora y atrasada",
+          meta
+        }),
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+      );
+    }
+
+    children.push(
+      section(
+        rowPages.length > 1
+          ? `Préstamos en riesgo (${i + 1}/${rowPages.length})`
+          : "Préstamos en riesgo",
+        [dataTable({ columns: TABLE_COLUMNS, rows })]
+      )
+    );
+
+    if (isLast) {
+      children.push(
+        footerNote([
+          `Reporte de cartera en riesgo · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
+        ])
+      );
+    }
+
+    return { layout: page(children) };
+  });
+
+  return { pages };
 }
 
 /** The defaulted report: validated at-risk rows in, JSON/PDF out. */

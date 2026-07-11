@@ -3,6 +3,7 @@
  */
 import { formatMoney, type ApplicationStatus } from "@mikro/common";
 import { input, password, select, number } from "@inquirer/prompts";
+import { localDateString } from "./dates.js";
 
 /**
  * Parse a numeric loan ID from a positional argument or flag value.
@@ -130,7 +131,7 @@ export async function promptDateIfMissing(
   flagName: string,
   options?: { default?: string }
 ): Promise<string> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateString();
   return promptIfMissing(
     value,
     () =>

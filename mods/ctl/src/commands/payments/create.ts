@@ -7,6 +7,7 @@ import { Args, Flags } from "@oclif/core";
 import { MutationCommand } from "../../MutationCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { parseSingleDate, validateDate } from "../../BaseCommand.js";
+import { localDateString } from "../../lib/dates.js";
 import {
   promptNumberIfMissing,
   promptSelectIfMissing,
@@ -108,7 +109,7 @@ export default class Create extends MutationCommand<typeof Create> {
     const expected = Number(loan.paymentAmount);
 
     if (paidAt) {
-      this.log(`Fecha de pago: ${paidAt.toISOString().slice(0, 10)}`);
+      this.log(`Fecha de pago: ${localDateString(paidAt)}`);
     }
     const preview = await client.previewLateFee.query({
       loanId,

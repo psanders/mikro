@@ -13,6 +13,7 @@ import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, resolve } from "path";
 import { MutationCommand } from "../../MutationCommand.js";
 import { validateDate } from "../../BaseCommand.js";
+import { localDateString } from "../../lib/dates.js";
 import errorHandler from "../../errorHandler.js";
 import {
   promptCustomerSelectIfMissing,
@@ -101,7 +102,7 @@ export default class GenerateContract extends MutationCommand<typeof GenerateCon
         { name: "Monthly (Mensual)", value: "MONTHLY" as const }
       ]
     );
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateString();
     const startDate = await promptTextIfMissing(
       flags["start-date"],
       "First-payment date (YYYY-MM-DD)",

@@ -164,3 +164,47 @@ describe("customers report — JSON/PDF parity", () => {
     expect(text).to.include("Al día");
   });
 });
+
+describe("customers report — pagination (issue #201)", () => {
+  function manyCustomers(count: number): CustomersReportInput {
+    return {
+      asOf: ASOF,
+      generatedAt: ASOF,
+      customers: Array.from({ length: count }, (_, i) => ({
+        name: `Cliente Numero ${i}`,
+        phone: "809-000-0000",
+        loans: [
+          {
+            loanId: i + 1,
+            paymentFrequency: "WEEKLY",
+            createdAt: new Date("2026-01-01T00:00:00Z"),
+            startingDate: new Date("2026-01-01T00:00:00Z"),
+            termLength: 10,
+            paymentAmount: 1000,
+            payments: []
+          }
+        ]
+      }))
+    };
+  }
+
+  it("spills onto more than one PDF page instead of silently dropping customers past the fold", async () => {
+    const input = manyCustomers(60);
+    const pdf = await customersReport.toPdf(input, testDeps);
+    const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
+    expect(pageCount).to.be.greaterThan(1);
+
+    const data = buildCustomersReportData(input);
+    const text = documentText(data).join(" ");
+    // The last customer used to render past the visible page boundary and
+    // never appear in the rasterized PDF at all — now it's on a later page.
+    expect(text).to.include("Cliente Numero 59");
+  });
+
+  it("renders a single page unchanged when the table comfortably fits", async () => {
+    const input = manyCustomers(5);
+    const pdf = await customersReport.toPdf(input, testDeps);
+    const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
+    expect(pageCount).to.equal(1);
+  });
+});

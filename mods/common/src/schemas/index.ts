@@ -360,6 +360,7 @@ export {
   copilotChatReplySchema,
   copilotCustomerFormSchema,
   copilotLoanFormSchema,
+  copilotDocumentSchema,
   COPILOT_ACTION_EXPIRY_MINUTES,
   type WatchRuleMetric,
   type CreateWatchRuleInput,
@@ -368,6 +369,7 @@ export {
   type CopilotChatReply,
   type CopilotCustomerForm,
   type CopilotLoanForm,
+  type CopilotDocument,
   type ClearCopilotHistoryResult
 } from "./copilot.js";
 

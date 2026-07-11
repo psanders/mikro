@@ -24,8 +24,13 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
+  TABLE_ROWS_FIRST_PAGE,
+  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
-  type TableRow
+  type TableRow,
+  type TableColumn,
+  type ReportElement
 } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatDateEs } from "./format.js";
@@ -180,39 +185,69 @@ function buildRows(data: RenewalReportData): TableRow[] {
   }));
 }
 
-/** Compose the 1-page renewal-report document from the canonical data model. */
+const TABLE_COLUMNS: TableColumn[] = [
+  { key: "nombre", header: "Nombre", weight: 1.4 },
+  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
+  { key: "estado", header: "Estado", weight: 1 },
+  { key: "cuotas", header: "Cuotas", weight: 0.7, align: "right" },
+  { key: "calif", header: "Calif.", weight: 0.8 },
+  { key: "nota", header: "Nota de renovación", weight: 2.4 }
+];
+
+/**
+ * Compose the renewal-report document from the canonical data model. Usually
+ * 1 page; splits into more when the candidate table overflows a fixed page
+ * (see {@link paginateRows} — same overflow/crash class as issue #202).
+ */
 export function buildRenewalReportDocument(data: RenewalReportData): ReportDocument {
   const meta = [
     `Generado ${formatDateEs(data.generatedAt)}`,
     `${data.candidateCount} candidato${data.candidateCount !== 1 ? "s" : ""}`
   ];
 
-  const p1 = page([
-    brandHeader({
-      title: "Reporte de Renovación",
-      subtitle: "Préstamos cerca de terminar o completados",
-      meta
-    }),
-    kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Candidatos de renovación", [
-      dataTable({
-        columns: [
-          { key: "nombre", header: "Nombre", weight: 1.4 },
-          { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-          { key: "estado", header: "Estado", weight: 1 },
-          { key: "cuotas", header: "Cuotas", weight: 0.7, align: "right" },
-          { key: "calif", header: "Calif.", weight: 0.8 },
-          { key: "nota", header: "Nota de renovación", weight: 2.4 }
-        ],
-        rows: buildRows(data)
-      })
-    ]),
-    footerNote([
-      `Reporte de renovación · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
-  ]);
+  const rowPages = paginateRows(
+    buildRows(data),
+    TABLE_ROWS_FIRST_PAGE,
+    TABLE_ROWS_CONTINUATION_PAGE
+  );
 
-  return { pages: [{ layout: p1 }] };
+  const pages = rowPages.map((rows, i) => {
+    const isFirst = i === 0;
+    const isLast = i === rowPages.length - 1;
+    const children: ReportElement[] = [];
+
+    if (isFirst) {
+      children.push(
+        brandHeader({
+          title: "Reporte de Renovación",
+          subtitle: "Préstamos cerca de terminar o completados",
+          meta
+        }),
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+      );
+    }
+
+    children.push(
+      section(
+        rowPages.length > 1
+          ? `Candidatos de renovación (${i + 1}/${rowPages.length})`
+          : "Candidatos de renovación",
+        [dataTable({ columns: TABLE_COLUMNS, rows })]
+      )
+    );
+
+    if (isLast) {
+      children.push(
+        footerNote([
+          `Reporte de renovación · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
+        ])
+      );
+    }
+
+    return { layout: page(children) };
+  });
+
+  return { pages };
 }
 
 /** The renewal report: validated candidate rows in, JSON/PDF out. */

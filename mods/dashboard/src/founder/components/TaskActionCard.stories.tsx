@@ -50,21 +50,26 @@ const needsInputFiring: TaskFiringInfo = {
   reason: "La automatización cambió desde que se disparó; falta: accountId."
 };
 
-const loanStatementFiring: TaskFiringInfo = {
+// Illustrative only — no v1 automation currently produces a resultAttachment
+// (loan-statement, the only one that did, moved to an on-demand
+// founder-copilot tool; see mikro/loan-statement-report spec). This fixture
+// exercises the generic download-card capability against a hypothetical
+// document-producing automation, kept for a future one.
+const documentFiring: TaskFiringInfo = {
   id: "44444444-4444-4444-8444-444444444444",
-  taskName: "Estado de cuenta del préstamo",
-  automationId: "loan-statement",
+  taskName: "Documento generado (ejemplo)",
+  automationId: "example-document-automation",
   status: "READY",
-  askSlots: [{ name: "loanId", label: "Préstamo (ID)", kind: "text", optional: false }],
+  askSlots: [],
   missingSlots: [],
   context: {}
 };
 
 // Stubbed attachment — the story never actually downloads, it just proves
-// the button renders once confirm resolves with an in-memory PDF (design D2:
-// the bytes travel only in the confirm mutation's result, never persisted).
-const loanStatementAttachment: TaskResultAttachment = {
-  filename: "estado-cuenta-10036-2026-07-09.pdf",
+// the button renders once confirm resolves with an in-memory document (design
+// D2: the bytes travel only in the confirm mutation's result, never persisted).
+const documentAttachment: TaskResultAttachment = {
+  filename: "documento-generado-2026-07-09.pdf",
   mimeType: "application/pdf",
   base64: "JVBERi0xLjQK" // stub — not a full valid PDF, just non-empty for the story
 };
@@ -111,10 +116,10 @@ export const WithError: Story = {
 };
 
 export const ResolvedWithDownload: Story = {
-  name: "Resolved — loan-statement, download the generated PDF",
+  name: "Resolved — download a generated document (illustrative, no live automation)",
   args: {
-    firing: loanStatementFiring,
-    resultAttachment: loanStatementAttachment,
+    firing: documentFiring,
+    resultAttachment: documentAttachment,
     onDownloadAttachment: () => {}
   }
 };

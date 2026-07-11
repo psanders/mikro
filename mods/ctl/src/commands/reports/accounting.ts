@@ -7,6 +7,7 @@ import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve } from "path";
 import cliui from "cliui";
 import { BaseCommand } from "../../BaseCommand.js";
+import { localDateString, parseDateOnly } from "../../lib/dates.js";
 import errorHandler from "../../errorHandler.js";
 import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
 
@@ -20,9 +21,7 @@ function lastMonth(d: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+const toISODate = localDateString;
 
 const ACCOUNT_KIND_LABELS: Record<string, string> = {
   BANK: "Banco",
@@ -86,8 +85,10 @@ export default class Accounting extends BaseCommand<typeof Accounting> {
       startDate = lm.start;
       endDate = lm.end;
     } else {
-      endDate = flags["end-date"] ? new Date(flags["end-date"]) : new Date();
-      startDate = flags["start-date"] ? new Date(flags["start-date"]) : firstDayOfMonth(endDate);
+      endDate = flags["end-date"] ? parseDateOnly(flags["end-date"]) : new Date();
+      startDate = flags["start-date"]
+        ? parseDateOnly(flags["start-date"])
+        : firstDayOfMonth(endDate);
     }
 
     try {

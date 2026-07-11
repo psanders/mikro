@@ -61,9 +61,13 @@ export interface AutomationResult {
   /** Denormalized onto the event row when the flow moved money. */
   amount?: number;
   /**
-   * An in-memory generated document (e.g. the loan-statement PDF) carried back
-   * to the confirm caller only — NEVER persisted onto the event row/log. The
-   * feed card offers it as a download; storage is deliberately out of scope.
+   * An in-memory generated document carried back to the confirm caller only —
+   * NEVER persisted onto the event row/log. The feed card offers it as a
+   * download; storage is deliberately out of scope. No v1 automation
+   * currently produces one (the loan-statement PDF, the only prior example,
+   * moved to an on-demand founder-copilot tool — see mikro/loan-statement-report
+   * spec); this stays as generic capability for a future document-producing
+   * automation.
    */
   attachment?: { filename: string; mimeType: string; base64: string };
 }

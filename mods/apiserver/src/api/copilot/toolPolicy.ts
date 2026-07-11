@@ -335,6 +335,41 @@ export const cancelTaskTool: ToolFunction = {
 };
 
 /**
+ * Generate a loan's statement (estado de cuenta) on demand. A DIRECT tool:
+ * read-only (never mutates the ledger), so it executes inline with no confirm
+ * step — there is nothing to confirm, the model is producing a document, not
+ * proposing a mutation. Calls the same `createGenerateLoanStatement` report
+ * definition the CLI `reports loan-statement` command and the tRPC
+ * `generateLoanStatement` mutation already use, so all three stay equivalent
+ * for the same loan and format. Retired the prior `loan-statement` task
+ * automation (mikro: loan-statement-report spec) — statements are always a
+ * one-off request, never something a founder schedules.
+ */
+export const generateLoanStatementTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "generateLoanStatement",
+    description:
+      "Generar el estado de cuenta de un préstamo (cronograma, mora y verificación del ledger) como documento descargable, en el momento. Úsala cuando el fundador pida el estado de cuenta, el PDF, o que le 'des'/'descargues'/'envíes' el documento del préstamo — no para preguntas sobre por qué el saldo o la mora se ven de cierta forma (para eso usa getLoanHealth). Se ejecuta directamente porque es de solo lectura: no modifica el préstamo ni el ledger.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "string",
+          description: "Número de préstamo (loanId, ej: 10034)."
+        },
+        format: {
+          type: "string",
+          description: "Formato del documento: 'pdf' (por defecto) o 'json'.",
+          enum: ["pdf", "json"]
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+/**
  * Single-loan health check (collections evaluation framework). A read tool: runs
  * the spec checks over the loan and, when `explain` is set, returns an LLM
  * narration of how the numbers were reached. Numbers are deterministic.
@@ -448,7 +483,8 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   listTasksTool,
   cancelTaskTool,
   getLoanHealthTool,
-  runPortfolioHealthCheckTool
+  runPortfolioHealthCheckTool,
+  generateLoanStatementTool
 ];
 
 /**
@@ -511,7 +547,10 @@ export const DIRECT_TOOLS: readonly string[] = [
   // call createCustomer/createLoan directly). Reversible/harmless, so no
   // confirm step.
   "openCustomerForm",
-  "openLoanForm"
+  "openLoanForm",
+  // Read-only document generation — nothing to confirm, so it executes
+  // inline like the form-opener tools above.
+  "generateLoanStatement"
 ];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */
@@ -536,7 +575,9 @@ export const TOOL_NOTES: Record<string, string> = {
   openCustomerForm:
     "es la ÚNICA forma de crear un cliente: solo abre el formulario. No pidas ni inventes los datos (nombre, teléfono, cédula, dirección, cobrador) — el formulario los recoge y crea el cliente. No uses createCustomer directamente.",
   openLoanForm:
-    "es la ÚNICA forma de crear un préstamo: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge, crea el préstamo y puede generar el contrato en el mismo paso. No uses createLoan directamente."
+    "es la ÚNICA forma de crear un préstamo: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge, crea el préstamo y puede generar el contrato en el mismo paso. No uses createLoan directamente.",
+  generateLoanStatement:
+    "úsala cuando el fundador quiera el documento/estado de cuenta/PDF en sí (ej: 'dame el estado de cuenta del préstamo 10034', 'descárgame el PDF'). Si en cambio pregunta por qué un saldo, mora o pago pendiente se ve de cierta forma, sin pedir el documento, usa getLoanHealth — no generes el documento para responder una pregunta de estado."
 };
 
 export function isReadTool(name: string): boolean {

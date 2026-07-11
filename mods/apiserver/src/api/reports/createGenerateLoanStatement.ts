@@ -6,8 +6,8 @@
  * `buildLoanSnapshotFromDb` uses — no second, divergent read) and hands the
  * DB-free snapshot input to the shared `loanStatementReport` definition
  * (`@mikro/common`) for JSON and/or PDF. This is the ONE code path the tRPC
- * procedure, the CLI command, and the `loan-statement` automation all run
- * through — CLI/tRPC/automation parity by construction, per design.
+ * procedure, the CLI command, and the founder-copilot's `generateLoanStatement`
+ * direct tool all run through — CLI/tRPC/copilot parity by construction.
  */
 import {
   loanStatementReport,
@@ -36,7 +36,7 @@ export interface GenerateLoanStatementOptions {
 }
 
 /**
- * Build the loan-statement automation/tRPC/CLI response for one loan. Read-only:
+ * Build the loan-statement copilot-tool/tRPC/CLI response for one loan. Read-only:
  * never mutates the loan or its payment ledger. Rejects an unknown loan id with
  * a clear "not found" error before any report code runs (no document produced).
  */

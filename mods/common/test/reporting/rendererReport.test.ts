@@ -21,6 +21,7 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
   ValidationError,
   type Font,
   type ReportElement,
@@ -164,6 +165,115 @@ describe("reporting — multi-page PDF renderer", function () {
       thrown = e;
     }
     expect(thrown).to.be.instanceOf(Error);
+  });
+});
+
+describe("reporting — paginateRows", () => {
+  it("returns a single empty chunk for zero rows", () => {
+    expect(paginateRows([], 10)).to.deep.equal([[]]);
+  });
+
+  it("returns a single chunk when everything fits the first-page budget", () => {
+    const rows = [1, 2, 3];
+    expect(paginateRows(rows, 10)).to.deep.equal([[1, 2, 3]]);
+  });
+
+  it("splits the first chunk at firstPageMax, then chunks the rest at otherPagesMax", () => {
+    const rows = Array.from({ length: 25 }, (_, i) => i);
+    const pages = paginateRows(rows, 10, 8);
+    expect(pages).to.have.length(3);
+    expect(pages[0]).to.have.length(10);
+    expect(pages[1]).to.have.length(8);
+    expect(pages[2]).to.have.length(7);
+    expect(pages.flat()).to.deep.equal(rows);
+  });
+
+  it("defaults otherPagesMax to firstPageMax when omitted", () => {
+    const rows = Array.from({ length: 15 }, (_, i) => i);
+    const pages = paginateRows(rows, 10);
+    expect(pages).to.have.length(2);
+    expect(pages[0]).to.have.length(10);
+    expect(pages[1]).to.have.length(5);
+  });
+});
+
+describe("reporting — dataTable wrapLines (issue #202 follow-up)", () => {
+  // Walks a ReportElement tree collecting every node whose style carries the
+  // given key, so tests can assert on the *structure* satori will render
+  // without needing a full PDF raster (dataTable's output is plain JSON).
+  function findByStyleKey(el: ReportElement, key: string): ReportElement[] {
+    const found: ReportElement[] = [];
+    if (el.props?.style && key in el.props.style) found.push(el);
+    const children = el.props?.children;
+    if (Array.isArray(children)) {
+      for (const c of children) {
+        if (c && typeof c === "object" && "type" in c)
+          found.push(...findByStyleKey(c as ReportElement, key));
+      }
+    }
+    return found;
+  }
+
+  function bodyRows(table: ReportElement): ReportElement[] {
+    const rows = table.props.children as ReportElement[];
+    return rows.slice(1); // [0] is the header row
+  }
+
+  it("leaves row height unset (intrinsic) when no column requests wrapLines", () => {
+    const table = dataTable({
+      columns: [{ key: "a", header: "A" }],
+      rows: [{ cells: { a: "short" } }, { cells: { a: "also short" } }]
+    });
+    for (const row of bodyRows(table)) {
+      expect(row.props.style?.height).to.be.undefined;
+    }
+  });
+
+  it("gives every row the same explicit fixed height once a column asks for wrapLines > 1, regardless of that row's own text length", () => {
+    const table = dataTable({
+      columns: [
+        { key: "a", header: "A" },
+        { key: "notas", header: "Notas", wrapLines: 3 }
+      ],
+      rows: [
+        { cells: { a: "x", notas: "one short line" } },
+        {
+          cells: {
+            a: "y",
+            notas:
+              "a much longer note that would otherwise wrap onto several lines of text if left unbounded"
+          }
+        }
+      ]
+    });
+    const heights = bodyRows(table).map((r) => r.props.style?.height);
+    expect(heights).to.have.length(2);
+    expect(heights[0]).to.be.a("string");
+    expect(heights[0]).to.equal(heights[1]); // uniform regardless of content — this is what keeps `paginateRows` safe.
+  });
+
+  it("applies the -webkit-line-clamp box only to the wrapLines column, not the single-line ones", () => {
+    const table = dataTable({
+      columns: [
+        { key: "a", header: "A" },
+        { key: "notas", header: "Notas", wrapLines: 4 }
+      ],
+      rows: [{ cells: { a: "short", notas: "some note text" } }]
+    });
+    const clamped = findByStyleKey(table, "WebkitLineClamp");
+    expect(clamped).to.have.length(1);
+    expect(clamped[0].props.style?.WebkitLineClamp).to.equal(4);
+    expect(clamped[0].props.style?.display).to.equal("-webkit-box");
+  });
+
+  it("never truncates the underlying cell string — only the CSS clamps the visual render", () => {
+    const longText = "x".repeat(500);
+    const table = dataTable({
+      columns: [{ key: "notas", header: "Notas", wrapLines: 3 }],
+      rows: [{ cells: { notas: longText } }]
+    });
+    const clamped = findByStyleKey(table, "WebkitLineClamp")[0];
+    expect(clamped.props.children).to.equal(longText);
   });
 });
 
