@@ -316,7 +316,12 @@ export function ReportesScreen() {
         default:
           return;
       }
-      toast.success(savedMessage("Reporte", saved, filename), { durationMs: SAVED_TOAST_MS });
+      // "cancelled": the user backed out of the native save dialog — do
+      // nothing. "picked": they chose the destination themselves, no toast
+      // needed. Only the fallback/web "saved" case needs a confirmation.
+      if (saved.status === "saved") {
+        toast.success(savedMessage("Reporte", saved, filename), { durationMs: SAVED_TOAST_MS });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el reporte.");
     } finally {
