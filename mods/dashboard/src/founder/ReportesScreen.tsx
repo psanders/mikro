@@ -113,14 +113,30 @@ function monthValue(o: { year: number; month: number }): string {
   return `${o.year}-${String(o.month).padStart(2, "0")}`;
 }
 
-/** First/last ISO date (UTC) of the selected month — passed to period-scoped reports. */
-function monthBounds(o: { year: number; month: number }): { startDate: string; endDate: string } {
-  const start = new Date(Date.UTC(o.year, o.month - 1, 1));
-  const end = new Date(Date.UTC(o.year, o.month, 0));
-  return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10)
-  };
+/**
+ * Period bounds for the selected month — passed to period-scoped reports
+ * (desempeño, contable) as full ISO instants in local time.
+ *
+ * Date-only strings would be coerced to UTC midnight by the server schema,
+ * shifting the window in negative-UTC-offset timezones (the month's last
+ * day fell outside the server's local end-of-day clamp). Local midnight
+ * instants keep "day" meaning the local day end-to-end, matching the CLI's
+ * date helpers.
+ *
+ * The current month is capped at today (month-to-date): the server treats
+ * endDate as "as of" for cycle math, so a future month-end would count
+ * payment cycles that haven't come due yet.
+ */
+function monthBounds(
+  o: { year: number; month: number },
+  now: Date = new Date()
+): { startDate: string; endDate: string } {
+  const start = new Date(o.year, o.month - 1, 1);
+  const isCurrentMonth = now.getFullYear() === o.year && now.getMonth() + 1 === o.month;
+  const end = isCurrentMonth
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    : new Date(o.year, o.month, 0);
+  return { startDate: start.toISOString(), endDate: end.toISOString() };
 }
 
 type ReportId =
