@@ -29,6 +29,13 @@ function loadLocalFonts(): Font[] {
   };
   return [
     { name: "Inter", data: read("400Regular/Geist_400Regular.ttf"), weight: 400, style: "normal" },
+    { name: "Inter", data: read("500Medium/Geist_500Medium.ttf"), weight: 500, style: "normal" },
+    {
+      name: "Inter",
+      data: read("600SemiBold/Geist_600SemiBold.ttf"),
+      weight: 600,
+      style: "normal"
+    },
     { name: "Inter", data: read("700Bold/Geist_700Bold.ttf"), weight: 700, style: "normal" },
     { name: "Inter", data: read("900Black/Geist_900Black.ttf"), weight: 900, style: "normal" }
   ];
@@ -127,12 +134,15 @@ describe("defaulted report — JSON/PDF parity", () => {
     expect(json.rows[1].notes).to.equal("Sin notas");
   });
 
-  it("toPdf renders a 1-page PDF composing the KPI grid and the Atrasado/Default status-pill table", async () => {
+  it("toPdf renders the at-risk table plus a 'Notas de cobro' page (row 0 has a real note) composing the KPI grid and the Atrasado/Default status-pill table", async () => {
     const input = baseInput();
     const pdf = await defaultedReport.toPdf(input, testDeps);
     expect(pdf.subarray(0, 5).toString("latin1")).to.equal("%PDF-");
     const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
-    expect(pageCount).to.equal(1);
+    // Row 0 has a real (non-"Sin notas") summary, so "Notas de cobro" always
+    // starts on its own fresh page (user-approved design) on top of the
+    // at-risk table's page — 2 pages total.
+    expect(pageCount).to.equal(2);
 
     const data = buildDefaultedReportData(input);
     const text = documentText(data).join(" ");
@@ -140,7 +150,26 @@ describe("defaulted report — JSON/PDF parity", () => {
     expect(text).to.include("Default");
     expect(text).to.include("Atrasado");
     expect(text).to.include("Juana Pérez");
-    expect(text).to.include("Sin notas");
+    expect(text).to.include("Notas de cobro");
+    expect(text).to.include("Cliente reporta problemas de ingresos temporales.");
+  });
+
+  it("omits the 'Notas de cobro' section entirely when every row is 'Sin notas'", async () => {
+    const input = baseInput({
+      rows: baseInput().rows.map((r) => ({ ...r, summary: null }))
+    });
+    const pdf = await defaultedReport.toPdf(input, testDeps);
+    const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
+    expect(pageCount).to.equal(1);
+
+    // "Sin notas" is a JSON-model fallback (see the JSON/PDF parity test
+    // above); the Pencil redesign drops the Notas column from the table
+    // entirely, so with no row carrying a real note there's no note text
+    // anywhere in the PDF at all — just the table and KPIs.
+    const data = buildDefaultedReportData(input);
+    expect(data.rows.every((r) => r.notes === "Sin notas")).to.equal(true);
+    const text = documentText(data).join(" ");
+    expect(text).to.not.include("Notas de cobro");
   });
 });
 
@@ -185,8 +214,11 @@ describe("defaulted report — pagination (issue #202)", function () {
     expect(text).to.include("Cliente Numero 79");
   });
 
-  it("renders a single page unchanged when the table comfortably fits", async () => {
+  it("renders a single page unchanged when the table comfortably fits and no row has notes", async () => {
     const input = manyRows(5, false);
+    input.rows.forEach((r) => {
+      r.summary = null;
+    });
     const pdf = await defaultedReport.toPdf(input, testDeps);
     const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
     expect(pageCount).to.equal(1);

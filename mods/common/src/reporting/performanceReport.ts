@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * The performance report: a 2-page branded PDF (+ canonical JSON) built from
+ * The performance report: a branded PDF (+ canonical JSON) built from
  * already-computed portfolio metrics and an already-generated narrative — the
  * narrative's LLM call happens upstream (apiserver), never here; this
  * definition only normalizes and lays out data it is handed.
@@ -14,19 +14,28 @@
  */
 import { z } from "zod/v4";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
+  BRAND,
   brandHeader,
-  verificationBanner,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
-  BRAND,
+  noteCard,
   type KpiCell,
   type TableRow,
   type ReportElement
 } from "./blocks.js";
+import {
+  SECTION_TITLE_HEIGHT,
+  FOOTER_HEIGHT,
+  CONTENT_WIDTH,
+  estimateWrappedLines,
+  paginateByEstimatedHeight,
+  verificationBannerHeight,
+  SAFETY_FACTOR
+} from "./layout.js";
+import { PAGE_HEIGHT, PAGE_PADDING, PAGE_GAP } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatPct, formatDateEs } from "./format.js";
 
@@ -178,17 +187,32 @@ export function buildPerformanceReportData(input: PerformanceReportInput): Perfo
 
 // ==================== Presentation (page composition) ====================
 
+/** Month + year, e.g. "Julio 2026" — the Pencil header's "Período" meta value; purely a display of `period.startDate`. */
+function formatMonthYearEs(d: string): string {
+  const label = new Date(`${d}T00:00:00Z`).toLocaleDateString("es-DO", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function buildKpiCells(data: PerformanceReportData): KpiCell[] {
   const { kpis } = data;
   return [
     { label: "Préstamos emitidos", value: `${kpis.loansIssued}` },
     { label: "Principal desembolsado", value: formatDop(kpis.principalDisbursedDop) },
-    { label: "Tasa de cobro", value: formatPct(kpis.collectionRatePct) },
+    { label: "Tasa de cobro", value: formatPct(kpis.collectionRatePct), subtext: "proyectada" },
     { label: "Posición neta proyectada", value: formatDop(kpis.projectedNetPositionDop) },
     { label: "Tasa de mora por N°", value: formatPct(kpis.defaultRateByCountPct) },
     { label: "Tasa de mora por capital", value: formatPct(kpis.defaultRateByCapitalPct) },
     { label: "Cobrado a la fecha", value: formatDop(kpis.collectedToDateDop) },
-    { label: "Pérdida estimada", value: formatDop(kpis.estimatedLossDop), emphasize: true }
+    {
+      label: "Pérdida estimada",
+      value: formatDop(kpis.estimatedLossDop),
+      subtext: "capital en default",
+      emphasize: true
+    }
   ];
 }
 
@@ -213,9 +237,26 @@ function paragraph(text: string): ReportElement {
         fontFamily: "Inter",
         display: "flex",
         fontSize: "12px",
-        fontWeight: 400,
+        fontWeight: 500,
         color: BRAND.ink,
         lineHeight: 1.5
+      },
+      children: text
+    }
+  };
+}
+
+/** Small bold sub-heading (e.g. "Resumen ejecutivo") under a `section()`'s 16px title. */
+function subheading(text: string): ReportElement {
+  return {
+    type: "div",
+    props: {
+      style: {
+        fontFamily: "Inter",
+        display: "flex",
+        fontSize: "13px",
+        fontWeight: 700,
+        color: BRAND.ink
       },
       children: text
     }
@@ -235,7 +276,7 @@ function bulletList(items: string[], accentColor: string): ReportElement {
             fontFamily: "Inter",
             display: "flex",
             fontSize: "12px",
-            fontWeight: 400,
+            fontWeight: 500,
             color: BRAND.ink,
             lineHeight: 1.4,
             paddingLeft: "14px",
@@ -248,73 +289,188 @@ function bulletList(items: string[], accentColor: string): ReportElement {
   };
 }
 
-/** Compose the 2-page performance-report document from the canonical data model. */
+/** Two columns of equal width, side by side (e.g. "Puntos clave" / "Áreas de riesgo"). */
+function sideBySide(children: ReportElement[]): ReportElement {
+  return {
+    type: "div",
+    props: {
+      style: { display: "flex", flexDirection: "row", gap: "24px", width: "100%" },
+      children: children.map((c) => ({
+        type: "div",
+        props: {
+          style: { display: "flex", flexDirection: "column", flexGrow: 1, flexBasis: "0px" },
+          children: [c]
+        }
+      }))
+    }
+  };
+}
+
+function bulletColumn(title: string, items: string[], accentColor: string): ReportElement {
+  return {
+    type: "div",
+    props: {
+      style: { display: "flex", flexDirection: "column", gap: "8px", width: "100%" },
+      children: [subheading(title), bulletList(items, accentColor)]
+    }
+  };
+}
+
+const HALF_CONTENT_WIDTH = (CONTENT_WIDTH - 24) / 2; // minus the sideBySide gap, split in two
+
+/** Estimated height of the "Puntos clave"/"Áreas de riesgo" bullet-list row (the taller of the two columns). */
+function estimateBulletColumnHeight(items: string[]): number {
+  if (items.length === 0) return 0;
+  const subheadingHeight = 16 + 8; // 13px line + gap to the list
+  const itemsHeight = items.reduce(
+    (sum, item) => sum + estimateWrappedLines(item, HALF_CONTENT_WIDTH) * 17 + 6,
+    -6 // last item has no trailing gap
+  );
+  return subheadingHeight + itemsHeight;
+}
+
+/** Estimated height of the "Resumen ejecutivo" sub-heading + paragraph. */
+function estimateParagraphSectionHeight(text: string): number {
+  const subheadingHeight = 16 + 10;
+  const lines = estimateWrappedLines(text, CONTENT_WIDTH);
+  return subheadingHeight + lines * 18; // 12px/1.5 line-height, rounded up
+}
+
+/** Estimated height of a `noteCard` with a heading + one paragraph of `text`. */
+function estimateNoteCardHeight(text: string): number {
+  return verificationBannerHeight(estimateWrappedLines(text, CONTENT_WIDTH));
+}
+
+/**
+ * Compose the performance-report document from the canonical data model.
+ * Page 1 is fixed-size (header, KPI grid, the two small breakdown tables —
+ * neither ever grows past a handful of rows). The narrative (executive
+ * summary, key insights, risk areas, recommendation) is LLM-generated and of
+ * unknown length, so it's laid out on its own page(s) and paginated by
+ * estimated height (see `layout.ts`'s `paginateByEstimatedHeight`) instead of
+ * being squeezed to fit — a long narrative spills onto a further page rather
+ * than risking the fixed-page overflow that crashes the renderer (#202).
+ */
 export function buildPerformanceReportDocument(data: PerformanceReportData): ReportDocument {
   const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    `Periodo ${data.period.startDate} — ${data.period.endDate}`
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    { label: "Período", value: formatMonthYearEs(data.period.startDate) }
   ];
 
-  const p1 = page([
+  const page1: ReportElement[] = [
     brandHeader({
+      eyebrow: "Reporte",
       title: "Reporte de Desempeño",
-      subtitle: "Cartera de préstamos — Mikro",
+      subtitle: "Salud de la cartera y proyección financiera",
       meta
     }),
     kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Principal por estado", [
-      dataTable({
-        columns: [
-          { key: "status", header: "Estado", weight: 1.4 },
-          { key: "count", header: "Cantidad", weight: 0.8, align: "right" },
-          { key: "principal", header: "Principal (DOP)", weight: 1.3, align: "right" }
-        ],
-        rows: buildStatusRows(data)
-      })
-    ]),
-    section("Principal por categoría", [
-      dataTable({
-        columns: [
-          { key: "size", header: "Categoría", weight: 1.4 },
-          { key: "count", header: "Cantidad", weight: 0.8, align: "right" },
-          { key: "principal", header: "Principal (DOP)", weight: 1.3, align: "right" }
-        ],
-        rows: buildSizeRows(data)
-      })
+    section("Distribución de cartera", [
+      sideBySide([
+        section("Principal por estado", [
+          dataTable({
+            columns: [
+              // 1.9: "Completamente pagado" is the widest status label and
+              // ellipsized at 1.4 in a half-page table — Cant. is 1-2 digits
+              // and never needs more than 0.5.
+              { key: "status", header: "Categoría", weight: 1.9, variant: "primary" },
+              { key: "count", header: "Cant.", weight: 0.5, align: "right", variant: "secondary" },
+              {
+                key: "principal",
+                header: "Principal (DOP)",
+                weight: 1.3,
+                align: "right",
+                variant: "money"
+              }
+            ],
+            rows: buildStatusRows(data)
+          })
+        ]),
+        section("Principal por categoría", [
+          dataTable({
+            columns: [
+              { key: "size", header: "Categoría", weight: 1.9, variant: "primary" },
+              { key: "count", header: "Cant.", weight: 0.5, align: "right", variant: "secondary" },
+              {
+                key: "principal",
+                header: "Principal (DOP)",
+                weight: 1.3,
+                align: "right",
+                variant: "money"
+              }
+            ],
+            rows: buildSizeRows(data)
+          })
+        ])
+      ])
     ])
-  ]);
-
-  const p2Children: ReportElement[] = [
-    section("Resumen ejecutivo", [paragraph(data.narrative.executiveSummary)])
   ];
-  if (data.narrative.keyInsights.length > 0) {
-    p2Children.push(
-      section("Puntos clave", [bulletList(data.narrative.keyInsights, BRAND.blueDeep)])
+
+  // Two narrative units: the analysis (executive summary + key
+  // insights/risk-areas bullets) and the recommendation card. Neither splits
+  // internally — each is paginated as a whole unit onto page 2+.
+  type NarrativeItem = { el: ReportElement; height: number };
+  const items: NarrativeItem[] = [];
+
+  const hasInsightsOrRisks =
+    data.narrative.keyInsights.length > 0 || data.narrative.riskAreas.length > 0;
+  const analysisChildren: ReportElement[] = [
+    subheading("Resumen ejecutivo"),
+    paragraph(data.narrative.executiveSummary)
+  ];
+  let analysisHeight = estimateParagraphSectionHeight(data.narrative.executiveSummary);
+  if (hasInsightsOrRisks) {
+    analysisChildren.push(
+      sideBySide([
+        data.narrative.keyInsights.length > 0
+          ? bulletColumn("Puntos clave", data.narrative.keyInsights, BRAND.blueDeep)
+          : {
+              type: "div",
+              props: { style: { display: "flex", flexBasis: "0px", flexGrow: 1 }, children: [] }
+            },
+        data.narrative.riskAreas.length > 0
+          ? bulletColumn("Áreas de riesgo", data.narrative.riskAreas, BRAND.orangeDeep)
+          : {
+              type: "div",
+              props: { style: { display: "flex", flexBasis: "0px", flexGrow: 1 }, children: [] }
+            }
+      ])
     );
+    analysisHeight +=
+      24 + // gap between the resumen paragraph and the bullets row
+      Math.max(
+        estimateBulletColumnHeight(data.narrative.keyInsights),
+        estimateBulletColumnHeight(data.narrative.riskAreas)
+      );
   }
-  if (data.narrative.riskAreas.length > 0) {
-    p2Children.push(
-      section("Áreas de riesgo", [bulletList(data.narrative.riskAreas, BRAND.orangeDeep)])
-    );
-  }
-  p2Children.push(
-    section("Recomendación", [
-      verificationBanner({
-        headline: "Recomendación",
-        explanation: data.narrative.recommendation,
-        tone: "info"
-      })
-    ])
+  items.push({
+    el: section("Análisis del período", analysisChildren),
+    height: SECTION_TITLE_HEIGHT + analysisHeight
+  });
+
+  items.push({
+    el: noteCard({ heading: "Recomendación", lines: [data.narrative.recommendation] }),
+    height: estimateNoteCardHeight(data.narrative.recommendation)
+  });
+
+  const narrativePageBudget = Math.floor(
+    (PAGE_HEIGHT - 2 * PAGE_PADDING - FOOTER_HEIGHT - PAGE_GAP) * SAFETY_FACTOR
   );
-  p2Children.push(
-    footerNote([
-      `Reporte de desempeño · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
+  const narrativePages = paginateByEstimatedHeight(
+    items,
+    (item) => item.height,
+    narrativePageBudget,
+    narrativePageBudget,
+    PAGE_GAP
   );
 
-  const p2 = page(p2Children);
+  const pageBodies: ReportElement[][] = [
+    page1,
+    ...narrativePages.map((page) => page.map((it) => it.el))
+  ];
 
-  return { pages: [{ layout: p1 }, { layout: p2 }] };
+  const footerContext = `Mikro SRL — Reporte de desempeño · Generado ${formatDateEs(data.generatedAt)}`;
+  return composeReportPages(pageBodies, () => [footerContext]);
 }
 
 /** The performance report: validated `PortfolioMetrics` + `ReportNarrative` in, JSON/PDF out. */

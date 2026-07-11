@@ -25,6 +25,7 @@ export { defineReport, type Report, type ReportSpec } from "./report.js";
 
 export {
   renderReportToPdf,
+  renderReportToPngs,
   type ReportDocument,
   type ReportPage,
   type RenderReportDeps
@@ -34,24 +35,47 @@ export {
   BRAND,
   PAGE_WIDTH,
   PAGE_HEIGHT,
+  PAGE_PADDING,
+  PAGE_GAP,
   brandHeader,
   verificationBanner,
+  noteCard,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
+  pageFooter,
   page,
   paginateRows,
-  TABLE_ROWS_FIRST_PAGE,
-  TABLE_ROWS_FIRST_PAGE_WITH_BANNER,
-  TABLE_ROWS_CONTINUATION_PAGE,
-  TABLE_ROWS_FIRST_PAGE_NOTES,
-  TABLE_ROWS_CONTINUATION_PAGE_NOTES,
   type ReportElement,
   type KpiCell,
   type TableColumn,
-  type TableRow
+  type TableRow,
+  type CellVariant,
+  type PillTone,
+  type BrandHeaderMeta
 } from "./blocks.js";
+
+export {
+  SAFETY_FACTOR,
+  headerHeight,
+  headerRightColumnHeight,
+  HEADER_HEIGHT,
+  kpiGridHeight,
+  verificationBannerHeight,
+  SECTION_TITLE_HEIGHT,
+  TABLE_HEADER_HEIGHT,
+  TABLE_ROW_HEIGHT,
+  TABLE_CARD_BORDER_PX,
+  footerHeight,
+  FOOTER_HEIGHT,
+  tableRowBudget,
+  CONTENT_WIDTH,
+  estimateWrappedLines,
+  estimateNoteEntryHeight,
+  NOTES_ENTRY_SEPARATOR_PX,
+  paginateByEstimatedHeight,
+  type TableRowBudgetParams
+} from "./layout.js";
 
 export {
   loanStatementReport,

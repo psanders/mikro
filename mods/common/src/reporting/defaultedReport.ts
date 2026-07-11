@@ -12,21 +12,33 @@
  */
 import { z } from "zod/v4";
 import { defineReport, type Report } from "./report.js";
+import { composeReportPages } from "./compose.js";
 import {
+  BRAND,
   brandHeader,
   kpiGrid,
   dataTable,
   section,
-  footerNote,
-  page,
   paginateRows,
-  TABLE_ROWS_FIRST_PAGE_NOTES,
-  TABLE_ROWS_CONTINUATION_PAGE_NOTES,
+  PAGE_HEIGHT,
+  PAGE_PADDING,
+  PAGE_GAP,
   type KpiCell,
   type TableRow,
   type TableColumn,
   type ReportElement
 } from "./blocks.js";
+import {
+  headerHeight,
+  kpiGridHeight,
+  tableRowBudget,
+  SECTION_TITLE_HEIGHT,
+  FOOTER_HEIGHT,
+  estimateNoteEntryHeight,
+  paginateByEstimatedHeight,
+  NOTES_ENTRY_SEPARATOR_PX,
+  SAFETY_FACTOR
+} from "./layout.js";
 import type { ReportDocument } from "./renderer.js";
 import { formatDop, formatPct, formatDateEs } from "./format.js";
 
@@ -131,6 +143,10 @@ function buildKpiCells(data: DefaultedReportData): KpiCell[] {
       emphasize: true
     },
     { label: "Mora acumulada", value: formatDop(data.moraCollectedTotalDop), emphasize: true },
+    // The Pencil design's "N de M préstamos" sub only makes sense with a
+    // total-portfolio-loan-count datum this model doesn't carry (only
+    // at-risk rows are in scope here) — omitted rather than inventing a new
+    // input field (JSON model stays exactly as-is, see module doc).
     { label: "Tasa de mora", value: formatPct(data.defaultRatePct), emphasize: true }
   ];
 }
@@ -140,10 +156,9 @@ function buildRows(data: DefaultedReportData): TableRow[] {
     cells: {
       nombre: r.nickname ?? r.name,
       telefono: r.phone,
-      prestamo: `${r.loanId}`,
+      prestamo: `#${r.loanId}`,
       estado: "",
-      mora: formatDop(r.moraCollected),
-      notas: r.notes
+      mora: formatDop(r.moraCollected)
     },
     status: {
       column: "estado",
@@ -154,78 +169,144 @@ function buildRows(data: DefaultedReportData): TableRow[] {
 }
 
 const TABLE_COLUMNS: TableColumn[] = [
-  { key: "nombre", header: "Nombre", weight: 1.5 },
-  { key: "telefono", header: "Teléfono", weight: 1 },
-  { key: "prestamo", header: "Préstamo", weight: 0.7, align: "right" },
-  { key: "estado", header: "Estado", weight: 0.9 },
-  { key: "mora", header: "Mora", weight: 1, align: "right" },
-  // Full text, not a one-line-and-cut preview (issue #202 follow-up): the
-  // LLM summary prompt was also tightened to ~1 short sentence, so 4 lines
-  // comfortably fits the vast majority of real summaries; only pathological
-  // outliers still ellipsize. wrapLines>1 makes `dataTable` give every row a
-  // fixed height (see blocks.ts), which is what keeps this safe from the
-  // original resvg crash — see TABLE_ROWS_FIRST_PAGE_NOTES for the
-  // recalibrated (smaller) row budget that goes with the taller row.
-  { key: "notas", header: "Notas", weight: 2.5, wrapLines: 4 }
+  { key: "nombre", header: "Nombre", weight: 1.6, variant: "primary" },
+  { key: "telefono", header: "Teléfono", weight: 1.2, variant: "secondary" },
+  { key: "prestamo", header: "Préstamo", weight: 0.9, align: "right", variant: "secondary" },
+  { key: "estado", header: "Estado", weight: 1 },
+  { key: "mora", header: "Mora", weight: 1, align: "right", variant: "moneyEmphasis" }
 ];
+
+/** One "Notas de cobro" entry: "Nombre — #loanId" + the full, unclamped note text. */
+function buildNoteEntry(row: DefaultedReportRowData, isLast: boolean): ReportElement {
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+        width: "100%",
+        paddingBottom: "14px",
+        ...(isLast ? {} : { borderBottom: `1px solid ${BRAND.border}` })
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: {
+              fontFamily: "Inter",
+              display: "flex",
+              fontSize: "12px",
+              fontWeight: 600,
+              color: BRAND.ink
+            },
+            children: `${row.nickname ?? row.name} — #${row.loanId}`
+          }
+        },
+        {
+          type: "div",
+          props: {
+            style: {
+              fontFamily: "Inter",
+              display: "flex",
+              fontSize: "11px",
+              fontWeight: 500,
+              color: BRAND.muted,
+              lineHeight: 1.4
+            },
+            children: row.notes
+          }
+        }
+      ]
+    }
+  };
+}
 
 /**
  * Compose the defaulted-report document from the canonical data model.
- * Usually 1 page; splits into more when the at-risk table has enough rows to
- * overflow a fixed page (see {@link paginateRows} — this is the fix for the
- * resvg crash in issue #202). Uses the `_NOTES` row-budget constants (not the
- * generic ones) because the Notas column wraps onto multiple lines, making
- * each row taller than the single-line tables in the other reports.
+ * Usually 1 page; the at-risk table paginates when it overflows a fixed page
+ * (see `layout.ts`'s `tableRowBudget` — the fix for the resvg crash in issue
+ * #202). The Notas column left the table entirely (per the Pencil redesign
+ * — a 4-line-clamped table cell was the #202-follow-up mitigation, not the
+ * target shape) for its own "Notas de cobro" section, which ALWAYS starts on
+ * a fresh page (user-approved) and paginates its variable-length entries by
+ * estimated height instead of a row count.
  */
 export function buildDefaultedReportDocument(data: DefaultedReportData): ReportDocument {
   const meta = [
-    `Generado ${formatDateEs(data.generatedAt)}`,
-    `${data.totalAtRisk} préstamo${data.totalAtRisk !== 1 ? "s" : ""} en riesgo`
+    { label: "Generado", value: formatDateEs(data.generatedAt) },
+    // No distinct "as of" cutoff exists in this model separate from
+    // `generatedAt` — the Pencil "Corte" row mirrors it rather than
+    // inventing a second timestamp the JSON model doesn't have.
+    { label: "Corte", value: formatDateEs(data.generatedAt) }
   ];
 
+  const firstPageAbove = [headerHeight(meta.length), kpiGridHeight(1, false)];
   const rowPages = paginateRows(
     buildRows(data),
-    TABLE_ROWS_FIRST_PAGE_NOTES,
-    TABLE_ROWS_CONTINUATION_PAGE_NOTES
+    tableRowBudget({ aboveHeights: firstPageAbove }),
+    tableRowBudget({ includeSectionTitle: false })
   );
 
-  const pages = rowPages.map((rows, i) => {
-    const isFirst = i === 0;
-    const isLast = i === rowPages.length - 1;
-    const children: ReportElement[] = [];
-
-    if (isFirst) {
-      children.push(
+  const tablePages: ReportElement[][] = rowPages.map((rows, i) => {
+    const body: ReportElement[] = [];
+    if (i === 0) {
+      body.push(
         brandHeader({
+          eyebrow: "Reporte",
           title: "Préstamos en Riesgo",
-          subtitle: "Cartera en mora y atrasada",
+          subtitle: "Cartera atrasada y en incumplimiento",
           meta
         }),
-        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
+        section("Préstamos atrasados", [dataTable({ columns: TABLE_COLUMNS, rows })])
       );
+    } else {
+      body.push(dataTable({ columns: TABLE_COLUMNS, rows }));
     }
-
-    children.push(
-      section(
-        rowPages.length > 1
-          ? `Préstamos en riesgo (${i + 1}/${rowPages.length})`
-          : "Préstamos en riesgo",
-        [dataTable({ columns: TABLE_COLUMNS, rows })]
-      )
-    );
-
-    if (isLast) {
-      children.push(
-        footerNote([
-          `Reporte de cartera en riesgo · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-        ])
-      );
-    }
-
-    return { layout: page(children) };
+    return body;
   });
 
-  return { pages };
+  // "Notas de cobro" always starts on its own fresh page (user-approved), so
+  // its first entry-page uses the section-title-inclusive budget and any
+  // further continuation page reclaims that height like the table pages do.
+  const notesRows = data.rows.filter((r) => r.notes !== "Sin notas");
+  const notesPages: ReportElement[][] = [];
+  if (notesRows.length > 0) {
+    const firstBudget = Math.floor(
+      (PAGE_HEIGHT - 2 * PAGE_PADDING - SECTION_TITLE_HEIGHT - FOOTER_HEIGHT - PAGE_GAP) *
+        SAFETY_FACTOR
+    );
+    const continuationBudget = Math.floor(
+      (PAGE_HEIGHT - 2 * PAGE_PADDING - FOOTER_HEIGHT - PAGE_GAP) * SAFETY_FACTOR
+    );
+    const entryPages = paginateByEstimatedHeight(
+      notesRows,
+      (r) => estimateNoteEntryHeight(r.notes),
+      firstBudget,
+      continuationBudget,
+      NOTES_ENTRY_SEPARATOR_PX
+    );
+    entryPages.forEach((rows, i) => {
+      // A single flex-column wrapper (no extra gap — each entry already
+      // carries its own separator via paddingBottom+borderBottom) used both
+      // bare (continuation pages) and inside `section()` (first page), so
+      // entry-to-entry spacing is identical either way.
+      const entriesColumn: ReportElement = {
+        type: "div",
+        props: {
+          style: { display: "flex", flexDirection: "column", width: "100%" },
+          children: rows.map((r, ri) => buildNoteEntry(r, ri === rows.length - 1))
+        }
+      };
+      notesPages.push(i === 0 ? [section("Notas de cobro", [entriesColumn])] : [entriesColumn]);
+    });
+  }
+
+  const allPageBodies = [...tablePages, ...notesPages];
+  const footerContext = `Mikro SRL — Reporte de cartera en riesgo · Generado ${formatDateEs(data.generatedAt)}`;
+
+  return composeReportPages(allPageBodies, () => [footerContext]);
 }
 
 /** The defaulted report: validated at-risk rows in, JSON/PDF out. */

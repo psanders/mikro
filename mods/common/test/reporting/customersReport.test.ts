@@ -29,6 +29,13 @@ function loadLocalFonts(): Font[] {
   };
   return [
     { name: "Inter", data: read("400Regular/Geist_400Regular.ttf"), weight: 400, style: "normal" },
+    { name: "Inter", data: read("500Medium/Geist_500Medium.ttf"), weight: 500, style: "normal" },
+    {
+      name: "Inter",
+      data: read("600SemiBold/Geist_600SemiBold.ttf"),
+      weight: 600,
+      style: "normal"
+    },
     { name: "Inter", data: read("700Bold/Geist_700Bold.ttf"), weight: 700, style: "normal" },
     { name: "Inter", data: read("900Black/Geist_900Black.ttf"), weight: 900, style: "normal" }
   ];

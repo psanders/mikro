@@ -2,10 +2,10 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Reports catalog (`/founder/reportes`) — Pencil "Founder / Reportes" (node
- * Gz8x7). Six reports, each produced from the shared `defineReport`
+ * Gz8x7). Five reports, each produced from the shared `defineReport`
  * definition in `@mikro/common` (issue #110 / unify-reporting-strategy):
- * estado de cuenta, clientes, préstamos en riesgo, renovación, desempeño,
- * contable. "Descargar" is a split button: the main half always names the
+ * clientes, préstamos en riesgo, renovación, desempeño, contable.
+ * "Descargar" is a split button: the main half always names the
  * format it will fetch (e.g. "Descargar PDF", `selectedFormat` state,
  * defaults to PDF) and downloads immediately via `saveFile`/
  * `downloadReportResult` (PDF: base64 bytes; JSON: the mutation's raw `data`,
@@ -22,13 +22,11 @@
  * stale pre-migration "Excel"), under its own label below the six-report
  * list, untouched by this migration.
  *
- * "Estado de cuenta" (loan-statement) is per-loan, not period-scoped, so it
- * doesn't fit this catalog's one-click period download: rendered disabled
- * with a short note instead of a broken/misleading download (see design.md
- * risk note + task 9.3 guidance). It is generated on demand via the founder
- * copilot (`generateLoanStatement` direct tool) instead — never a scheduled
- * founder-feed automation (mikro/move-loan-statement-to-copilot: statements
- * are always a one-off request, not something a founder schedules).
+ * "Estado de cuenta" (loan-statement) is deliberately NOT in this catalog:
+ * it is per-loan, not period-scoped, and is generated on demand via the
+ * founder copilot (`generateLoanStatement` direct tool) — never a one-click
+ * period download and never a scheduled founder-feed automation
+ * (mikro/move-loan-statement-to-copilot).
  */
 import { useMemo, useState } from "react";
 import {
@@ -36,7 +34,6 @@ import {
   Check,
   ChevronDown,
   Download,
-  Receipt,
   Repeat,
   ScrollText,
   Sparkles,
@@ -127,7 +124,6 @@ function monthBounds(o: { year: number; month: number }): { startDate: string; e
 }
 
 type ReportId =
-  | "estado-cuenta"
   | "clientes"
   | "prestamos-en-riesgo"
   | "renovacion"
@@ -143,9 +139,6 @@ interface ReportEntry {
   title: string;
   description: string;
   formats: string[];
-  /** false rows show a disabled "Descargar" with a note instead of a download. */
-  available: boolean;
-  disabledNote?: string;
 }
 
 // Data-driven catalog (Pencil node Gz8x7, "Founder / Reportes"). Adding a
@@ -153,25 +146,13 @@ interface ReportEntry {
 // screen is static.
 const CATALOG: ReportEntry[] = [
   {
-    id: "estado-cuenta",
-    icon: Receipt,
-    chipBg: "bg-[#E9F2FF]",
-    iconColor: "text-[#1F4AA8]",
-    title: "Estado de cuenta",
-    description: "Por préstamo · cronograma, mora y verificación del ledger",
-    formats: ["PDF", "JSON"],
-    available: false,
-    disabledNote: "Por préstamo — genéralo desde la ficha del préstamo o el copiloto."
-  },
-  {
     id: "clientes",
     icon: Users,
     chipBg: "bg-[#E9F2FF]",
     iconColor: "text-[#1F4AA8]",
     title: "Clientes",
     description: "Cartera de clientes por estado de salud",
-    formats: ["PDF", "JSON"],
-    available: true
+    formats: ["PDF", "JSON"]
   },
   {
     id: "prestamos-en-riesgo",
@@ -180,8 +161,7 @@ const CATALOG: ReportEntry[] = [
     iconColor: "text-[#D97706]",
     title: "Préstamos en riesgo",
     description: "Atrasados y en incumplimiento · mora y notas",
-    formats: ["PDF", "JSON"],
-    available: true
+    formats: ["PDF", "JSON"]
   },
   {
     id: "renovacion",
@@ -190,8 +170,7 @@ const CATALOG: ReportEntry[] = [
     iconColor: "text-[#16A34A]",
     title: "Renovación",
     description: "Clientes elegibles para un nuevo ciclo",
-    formats: ["PDF", "JSON"],
-    available: true
+    formats: ["PDF", "JSON"]
   },
   {
     id: "desempeno",
@@ -200,8 +179,7 @@ const CATALOG: ReportEntry[] = [
     iconColor: "text-[#1F4AA8]",
     title: "Desempeño",
     description: "Salud de la cartera y proyección financiera",
-    formats: ["PDF", "JSON"],
-    available: true
+    formats: ["PDF", "JSON"]
   },
   {
     id: "contable",
@@ -210,8 +188,7 @@ const CATALOG: ReportEntry[] = [
     iconColor: "text-[#16A34A]",
     title: "Contable",
     description: "Ingresos, gastos y balances del período",
-    formats: ["PDF", "JSON"],
-    available: true
+    formats: ["PDF", "JSON"]
   }
 ];
 
@@ -224,8 +201,7 @@ const AUDIT_LOG_ENTRY: ReportEntry = {
   iconColor: "text-[#D97706]",
   title: "Registro de auditoría",
   description: "Exportación completa de los eventos del mes · directo del event log",
-  formats: ["CSV"],
-  available: true
+  formats: ["CSV"]
 };
 
 function GroupLabel({ children }: { children: string }) {
@@ -288,7 +264,6 @@ export function ReportesScreen() {
   const generateAccountingReport = trpc.accounting.generateAccountingReport.useMutation();
 
   async function handleDownload(entry: ReportEntry) {
-    if (!entry.available) return;
     setDownloadingId(entry.id);
     try {
       const { startDate, endDate } = monthBounds(selected);
@@ -385,9 +360,9 @@ export function ReportesScreen() {
               </div>
               <div className="relative shrink-0">
                 {(() => {
-                  const multiFormat = entry.available && entry.formats.length > 1;
+                  const multiFormat = entry.formats.length > 1;
                   const format = entry.formats.length > 1 ? formatFor(entry.id) : entry.formats[0];
-                  const idle = entry.available && !downloading;
+                  const idle = !downloading;
                   const menuOpen = openMenuId === entry.id;
                   // One pill: the two halves share a background and rounded
                   // shell, split only by a hairline translucent divider so it
@@ -401,8 +376,7 @@ export function ReportesScreen() {
                     >
                       <button
                         type="button"
-                        disabled={!entry.available || downloading}
-                        title={entry.available ? undefined : entry.disabledNote}
+                        disabled={downloading}
                         onClick={() => void handleDownload(entry)}
                         className={cn(
                           "inline-flex items-center gap-[7px] px-[14px] py-[9px] text-[13px] font-medium transition",
@@ -435,7 +409,7 @@ export function ReportesScreen() {
                     </div>
                   );
                 })()}
-                {entry.available && entry.formats.length > 1 && openMenuId === entry.id && (
+                {entry.formats.length > 1 && openMenuId === entry.id && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
                     <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[120px] overflow-hidden rounded-[10px] border border-[#E5EAF1] bg-white p-1 shadow-lg">
