@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.3](https://github.com/psanders/mikro/compare/v1.39.2...v1.39.3) (2026-07-11)
+
+### Bug Fixes
+
+- **copilot:** concise conversational insights, lists for enumerable facts ([#211](https://github.com/psanders/mikro/issues/211)) ([6aacdcb](https://github.com/psanders/mikro/commit/6aacdcb42189a8a9f7525070fdb16f6c18b57356)), closes [#192](https://github.com/psanders/mikro/issues/192) [#192](https://github.com/psanders/mikro/issues/192)
+
 ## [1.39.1](https://github.com/psanders/mikro/compare/v1.39.0...v1.39.1) (2026-07-11)
 
 ### Bug Fixes

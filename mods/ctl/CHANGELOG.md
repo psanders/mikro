@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.3](https://github.com/psanders/mikro/compare/v1.39.2...v1.39.3) (2026-07-11)
+
+**Note:** Version bump only for package @mikro/ctl
+
 ## [1.39.2](https://github.com/psanders/mikro/compare/v1.39.1...v1.39.2) (2026-07-11)
 
 ### Bug Fixes
