@@ -18,6 +18,8 @@ export interface FeedEvent {
   actorName: string;
   customerName?: string;
   loanId?: string;
+  /** Human loan number (`Loan.loanId`) — see `enrichLoanNumbers` on the apiserver. */
+  loanNumber?: number;
   applicationId?: string;
   amount?: number;
   /** Human, Spanish one-liner — rendered as-is as the card's main line. */
@@ -63,6 +65,7 @@ export function toFeedEvent(item: FeedItem): FeedEvent {
     actorName: item.actorName,
     customerName: item.customerName ?? undefined,
     loanId: item.loanId ?? undefined,
+    loanNumber: item.loanNumber ?? undefined,
     applicationId: item.applicationId ?? undefined,
     amount: item.amount ?? undefined,
     summary: item.summary,

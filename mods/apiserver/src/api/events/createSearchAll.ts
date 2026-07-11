@@ -4,7 +4,7 @@
 import { z } from "zod/v4";
 import { withErrorHandlingAndValidation, searchAllSchema, amountToNumber } from "@mikro/common";
 import type { EventClient } from "./recordEvent.js";
-import type { FeedEventItem } from "./createListFeedEvents.js";
+import { enrichLoanNumbers, type FeedEventItem } from "./createListFeedEvents.js";
 
 type SearchAllInput = z.infer<typeof searchAllSchema>;
 
@@ -79,6 +79,24 @@ export function createSearchAll(client: EventClient) {
       take: limit
     });
 
+    const events: FeedEventItem[] = eventRows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      occurredAt: row.occurredAt,
+      actorId: row.actorId,
+      actorName: row.actorName,
+      customerId: row.customerId,
+      customerName: row.customerName,
+      loanId: row.loanId,
+      loanNumber: null,
+      applicationId: row.applicationId,
+      amount: row.amount == null ? null : amountToNumber(row.amount),
+      summary: row.summary,
+      payload: JSON.parse(row.payload)
+    }));
+    // Same read-time enrichment as createListFeedEvents — see enrichLoanNumbers.
+    await enrichLoanNumbers(client, events);
+
     return {
       customers: customerRows,
       loans: loanRows.map((l) => ({
@@ -88,20 +106,7 @@ export function createSearchAll(client: EventClient) {
         customerId: l.customerId,
         customerName: l.customer?.name ?? null
       })),
-      events: eventRows.map((row) => ({
-        id: row.id,
-        type: row.type,
-        occurredAt: row.occurredAt,
-        actorId: row.actorId,
-        actorName: row.actorName,
-        customerId: row.customerId,
-        customerName: row.customerName,
-        loanId: row.loanId,
-        applicationId: row.applicationId,
-        amount: row.amount == null ? null : amountToNumber(row.amount),
-        summary: row.summary,
-        payload: JSON.parse(row.payload)
-      }))
+      events
     };
   };
 

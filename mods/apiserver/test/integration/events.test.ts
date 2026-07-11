@@ -616,6 +616,44 @@ describe("Founder Feed Integration", () => {
       expect(payload.status).to.equal("read");
     });
 
+    it("enriches loan-linked events with the numeric loanNumber (issue #193)", async () => {
+      // Copilot loan tools take the numeric Loan.loanId, never the Loan.id
+      // UUID stored on the event row — listFeedEvents must resolve it at read
+      // time so "Ver préstamo" links can ask the copilot a question it can
+      // actually answer.
+      const { collector, loan } = await makeCustomerWithLoan();
+      await caller.createPayment({ loanId: loan.loanId, amount: 650, collectedById: collector.id });
+
+      const res = await caller.listFeedEvents({ types: ["payment.collected"] });
+      expect(res.items).to.have.lengthOf(1);
+      expect(res.items[0].loanId).to.equal(loan.id);
+      expect(res.items[0].loanNumber).to.equal(loan.loanId);
+    });
+
+    it("leaves loanNumber null for events with no loan (and doesn't error)", async () => {
+      await seedEvents(1);
+      const res = await caller.listFeedEvents({ types: ["customer.created"] });
+      expect(res.items).to.have.lengthOf(1);
+      expect(res.items[0].loanId).to.equal(null);
+      expect(res.items[0].loanNumber).to.equal(null);
+    });
+
+    it("leaves loanNumber null when the linked loan no longer exists", async () => {
+      const deletedLoanId = "44444444-4444-4444-8444-444444444444";
+      await recordEvent(db, {
+        type: "loan.status_changed",
+        actorName: "Sistema",
+        loanId: deletedLoanId,
+        summary: "test",
+        payload: { loanId: deletedLoanId, from: "active", to: "completed" }
+      });
+
+      const res = await caller.listFeedEvents({ types: ["loan.status_changed"] });
+      expect(res.items).to.have.lengthOf(1);
+      expect(res.items[0].loanId).to.equal(deletedLoanId);
+      expect(res.items[0].loanNumber).to.equal(null);
+    });
+
     it("surfaces a failed delivery with its error title on the card", async () => {
       await recordEvent(db, {
         type: "message.sent",
@@ -735,6 +773,17 @@ describe("Founder Feed Integration", () => {
       // Loan lookup by numeric loan id.
       const byNumber = await caller.searchAll({ query: String(loan.loanId) });
       expect(byNumber.loans.map((l) => l.id)).to.include(loan.id);
+    });
+
+    it("enriches loan-linked events in the events group with loanNumber (issue #193)", async () => {
+      const { collector, loan } = await makeCustomerWithLoan();
+      await caller.createPayment({ loanId: loan.loanId, amount: 650, collectedById: collector.id });
+
+      const res = await caller.searchAll({ query: "cobró" });
+      const paymentEvent = res.events.find((e) => e.type === "payment.collected");
+      expect(paymentEvent, "expected a payment.collected event in results").to.not.equal(undefined);
+      expect(paymentEvent!.loanId).to.equal(loan.id);
+      expect(paymentEvent!.loanNumber).to.equal(loan.loanId);
     });
 
     it("caps each group at limitPerGroup", async () => {

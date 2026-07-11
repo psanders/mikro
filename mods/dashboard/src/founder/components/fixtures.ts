@@ -26,6 +26,7 @@ export const paymentCollectedEvent: FeedEvent = {
   actorName: "Rosa Méndez",
   customerName: "Juan Pérez",
   loanId: "loan-10001",
+  loanNumber: 10001,
   amount: 2500,
   summary: "Rosa Méndez registró un pago de Juan Pérez",
   payload: { paymentId: "pay-001", method: "cash", kind: "installment" }
@@ -39,6 +40,7 @@ export const paymentCollectedWithLateFeeEvent: FeedEvent = {
   actorName: "Carlos Díaz",
   customerName: "Ana Cruz",
   loanId: "loan-10004",
+  loanNumber: 10004,
   amount: 3200,
   summary: "Carlos Díaz registró un pago de Ana Cruz",
   payload: { paymentId: "pay-004", method: "transfer", kind: "installment", lateFeeAmount: 150 }
@@ -51,6 +53,7 @@ export const paymentReversedEvent: FeedEvent = {
   actorName: "Rosa Méndez",
   customerName: "Juan Pérez",
   loanId: "loan-10001",
+  loanNumber: 10001,
   amount: 2500,
   summary: "Rosa Méndez reversó un pago de Juan Pérez",
   payload: { paymentId: "pay-001", reason: "Monto duplicado por error de captura" }
@@ -111,6 +114,7 @@ export const applicationConvertedEvent: FeedEvent = {
   actorName: "Rosa Méndez",
   customerName: "Elena Ramírez",
   loanId: "loan-10010",
+  loanNumber: 10010,
   applicationId: "app-2001",
   amount: 25000,
   summary: "Rosa Méndez convirtió la solicitud de Elena Ramírez en el préstamo #10010",
@@ -177,6 +181,7 @@ export const loanStatusChangedEvent: FeedEvent = {
   actorName: "Sistema",
   customerName: "Juan Pérez",
   loanId: "loan-10001",
+  loanNumber: 10001,
   summary: "El préstamo #10001 de Juan Pérez cambió de estado",
   payload: { loanId: "loan-10001", from: "current", to: "overdue" }
 };
@@ -194,6 +199,7 @@ export const loanStatusChangedNoFromEvent: FeedEvent = {
   actorName: "Sistema",
   customerName: "Ana Cruz",
   loanId: "loan-10004",
+  loanNumber: 10004,
   summary: "El préstamo #10004 de Ana Cruz cambió de estado",
   payload: { loanId: "loan-10004", from: "", to: "completed" }
 };
