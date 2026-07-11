@@ -143,3 +143,52 @@ describe("defaulted report — JSON/PDF parity", () => {
     expect(text).to.include("Sin notas");
   });
 });
+
+describe("defaulted report — pagination (issue #202)", function () {
+  this.timeout(20000);
+
+  function manyRows(count: number, longNotes: boolean): DefaultedReportInput {
+    const longNote =
+      "Cliente reporta problemas de ingresos temporales por la temporada baja en su negocio. ".repeat(
+        10
+      );
+    return {
+      totalPrincipalAtRiskDop: 500000,
+      generatedAt: new Date("2026-03-01T00:00:00Z"),
+      rows: Array.from({ length: count }, (_, i) => ({
+        name: `Cliente Numero ${i}`,
+        nickname: null,
+        phone: "809-000-0000",
+        loanId: 100 + i,
+        paymentFrequency: "WEEKLY",
+        totalPaid: 2000,
+        moraCollected: 300,
+        summary: longNotes ? longNote : "Nota corta",
+        isDefaulted: i % 2 === 0
+      }))
+    };
+  }
+
+  // A row count/notes-length combination that used to crash the whole Node
+  // process with a native resvg panic (unrecoverable, not a catchable JS
+  // error) instead of throwing — see the module doc on `dataTable`'s
+  // SINGLE_LINE_CLAMP and `paginateRows` for the two-part fix.
+  it("renders a many-page PDF instead of crashing on a large, long-notes at-risk portfolio", async () => {
+    const input = manyRows(80, true);
+    const pdf = await defaultedReport.toPdf(input, testDeps);
+    expect(pdf.subarray(0, 5).toString("latin1")).to.equal("%PDF-");
+    const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
+    expect(pageCount).to.be.greaterThan(1);
+
+    const data = buildDefaultedReportData(input);
+    const text = documentText(data).join(" ");
+    expect(text).to.include("Cliente Numero 79");
+  });
+
+  it("renders a single page unchanged when the table comfortably fits", async () => {
+    const input = manyRows(5, false);
+    const pdf = await defaultedReport.toPdf(input, testDeps);
+    const pageCount = (pdf.toString("latin1").match(/\/Type\s*\/Page(?![s])/g) ?? []).length;
+    expect(pageCount).to.equal(1);
+  });
+});

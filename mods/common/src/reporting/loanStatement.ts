@@ -30,8 +30,13 @@ import {
   section,
   footerNote,
   page,
+  paginateRows,
+  TABLE_ROWS_FIRST_PAGE_WITH_BANNER,
+  TABLE_ROWS_CONTINUATION_PAGE,
   type KpiCell,
-  type TableRow
+  type TableRow,
+  type TableColumn,
+  type ReportElement
 } from "./blocks.js";
 import type { ReportDocument } from "./renderer.js";
 
@@ -380,7 +385,30 @@ function buildReconciliationNote(data: LoanStatementData): string[] {
   return lines;
 }
 
-/** Compose the 2-page loan-statement document from the canonical data model. */
+const SCHEDULE_COLUMNS: TableColumn[] = [
+  { key: "cuota", header: "Cuota", weight: 0.6 },
+  { key: "due", header: "Vence", weight: 1.1 },
+  { key: "estado", header: "Estado", weight: 1 },
+  { key: "cubierta", header: "Cubierta el", weight: 1.6 },
+  { key: "monto", header: "Monto cuota", weight: 1.1, align: "right" },
+  { key: "aplicado", header: "Aplicado", weight: 1.1, align: "right" }
+];
+
+const RECEIVED_PAYMENTS_COLUMNS: TableColumn[] = [
+  { key: "fecha", header: "Fecha", weight: 1 },
+  { key: "tipo", header: "Tipo", weight: 1 },
+  { key: "monto", header: "Monto", weight: 1, align: "right" },
+  { key: "metodo", header: "Método", weight: 1 }
+];
+
+/**
+ * Compose the loan-statement document from the canonical data model. Usually
+ * 2 pages, but both tables can grow large over a long loan's life — the
+ * schedule with `termLength` (hundreds of installments for a daily-frequency
+ * loan) and the received-payments ledger with every payment ever made — so
+ * both paginate from their own start (see {@link paginateRows} — same
+ * overflow/crash class as issue #202).
+ */
 export function buildLoanStatementDocument(data: LoanStatementData): ReportDocument {
   const freqLabel = FREQ_LABELS[data.paymentFrequency] ?? data.paymentFrequency;
   const meta = [
@@ -389,48 +417,65 @@ export function buildLoanStatementDocument(data: LoanStatementData): ReportDocum
     `Frecuencia ${freqLabel} · ${data.termLength} cuotas`
   ];
 
-  const p1 = page([
-    brandHeader({
-      title: `Préstamo #${data.loanId}`,
-      subtitle: `ESTADO DE CUENTA — ${data.customerName}`,
-      meta
-    }),
-    buildVerificationBanner(data),
-    kpiGrid({ cells: buildKpiCells(data), columns: 4 }),
-    section("Cronograma de pagos", [
-      dataTable({
-        columns: [
-          { key: "cuota", header: "Cuota", weight: 0.6 },
-          { key: "due", header: "Vence", weight: 1.1 },
-          { key: "estado", header: "Estado", weight: 1 },
-          { key: "cubierta", header: "Cubierta el", weight: 1.6 },
-          { key: "monto", header: "Monto cuota", weight: 1.1, align: "right" },
-          { key: "aplicado", header: "Aplicado", weight: 1.1, align: "right" }
-        ],
-        rows: buildScheduleRows(data)
-      })
-    ])
-  ]);
+  const scheduleRowPages = paginateRows(
+    buildScheduleRows(data),
+    TABLE_ROWS_FIRST_PAGE_WITH_BANNER,
+    TABLE_ROWS_CONTINUATION_PAGE
+  );
 
-  const p2 = page([
-    section("Historial de pagos recibidos", [
-      dataTable({
-        columns: [
-          { key: "fecha", header: "Fecha", weight: 1 },
-          { key: "tipo", header: "Tipo", weight: 1 },
-          { key: "monto", header: "Monto", weight: 1, align: "right" },
-          { key: "metodo", header: "Método", weight: 1 }
-        ],
-        rows: buildReceivedPaymentsRows(data)
-      })
-    ]),
-    footerNote([
-      ...buildReconciliationNote(data),
-      `Préstamo #${data.loanId} · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
-    ])
-  ]);
+  const schedulePages = scheduleRowPages.map((rows, i) => {
+    const isFirst = i === 0;
+    const children: ReportElement[] = [];
+    if (isFirst) {
+      children.push(
+        brandHeader({
+          title: `Préstamo #${data.loanId}`,
+          subtitle: `ESTADO DE CUENTA — ${data.customerName}`,
+          meta
+        }),
+        buildVerificationBanner(data),
+        kpiGrid({ cells: buildKpiCells(data), columns: 4 })
+      );
+    }
+    children.push(
+      section(
+        scheduleRowPages.length > 1
+          ? `Cronograma de pagos (${i + 1}/${scheduleRowPages.length})`
+          : "Cronograma de pagos",
+        [dataTable({ columns: SCHEDULE_COLUMNS, rows })]
+      )
+    );
+    return { layout: page(children) };
+  });
 
-  return { pages: [{ layout: p1 }, { layout: p2 }] };
+  const receivedRowPages = paginateRows(
+    buildReceivedPaymentsRows(data),
+    TABLE_ROWS_CONTINUATION_PAGE,
+    TABLE_ROWS_CONTINUATION_PAGE
+  );
+
+  const receivedPages = receivedRowPages.map((rows, i) => {
+    const isLast = i === receivedRowPages.length - 1;
+    const children: ReportElement[] = [
+      section(
+        receivedRowPages.length > 1
+          ? `Historial de pagos recibidos (${i + 1}/${receivedRowPages.length})`
+          : "Historial de pagos recibidos",
+        [dataTable({ columns: RECEIVED_PAYMENTS_COLUMNS, rows })]
+      )
+    ];
+    if (isLast) {
+      children.push(
+        footerNote([
+          ...buildReconciliationNote(data),
+          `Préstamo #${data.loanId} · Generado ${formatDateEs(data.generatedAt)} · Documento generado automáticamente por Mikro.`
+        ])
+      );
+    }
+    return { layout: page(children) };
+  });
+
+  return { pages: [...schedulePages, ...receivedPages] };
 }
 
 /** The loan-statement report: validated `{ ...BuildSnapshotInput }` in, JSON/PDF out. */

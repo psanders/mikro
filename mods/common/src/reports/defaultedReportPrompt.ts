@@ -20,7 +20,7 @@ export function buildLoanNotesSummaryPrompt(notes: NoteForSummary[]): string {
 ${lines.join("\n")}
 
 ## Tarea
-Escribe un resumen de 1 o 2 oraciones en español que capture el estado del cobro y los acuerdos o pasos siguientes. Sé conciso y factual. Responde solo con el texto del resumen, sin encabezados ni markdown.`;
+Escribe UNA sola oración en español (máximo ~110 caracteres) que capture el estado del cobro y el próximo paso o acuerdo, si lo hay. Ve directo al grano: sin introducciones, sin repetir el nombre del cliente, sin relleno. Si no hay próximo paso claro, describe solo el estado actual. Responde solo con el texto del resumen, sin encabezados, comillas ni markdown.`;
 }
 
 /**
