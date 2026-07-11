@@ -10,9 +10,8 @@ import type { Automation } from "./types.js";
 import { payment } from "./automations/payment.js";
 import { recordExpense } from "./automations/recordExpense.js";
 import { dailyClose } from "./automations/dailyClose.js";
-import { loanStatement } from "./automations/loanStatement.js";
 
-const AUTOMATIONS: readonly Automation[] = [payment, recordExpense, dailyClose, loanStatement];
+const AUTOMATIONS: readonly Automation[] = [payment, recordExpense, dailyClose];
 
 const byId = new Map(AUTOMATIONS.map((a) => [a.id, a]));
 

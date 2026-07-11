@@ -25,8 +25,10 @@
  * "Estado de cuenta" (loan-statement) is per-loan, not period-scoped, so it
  * doesn't fit this catalog's one-click period download: rendered disabled
  * with a short note instead of a broken/misleading download (see design.md
- * risk note + task 9.3 guidance). Generate it from a loan's detail view or
- * the founder-feed automation instead.
+ * risk note + task 9.3 guidance). It is generated on demand via the founder
+ * copilot (`generateLoanStatement` direct tool) instead — never a scheduled
+ * founder-feed automation (mikro/move-loan-statement-to-copilot: statements
+ * are always a one-off request, not something a founder schedules).
  */
 import { useMemo, useState } from "react";
 import {

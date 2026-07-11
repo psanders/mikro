@@ -115,11 +115,27 @@ export const copilotLoanFormSchema = z.object({
 export type CopilotLoanForm = z.infer<typeof copilotLoanFormSchema>;
 
 /**
+ * A generated document (currently: a loan statement) delivered directly in a
+ * copilotChat reply. Read-only by construction — nothing is created or
+ * mutated to produce it, unlike `pendingAction`. `base64` carries the file
+ * bytes (PDF) or the UTF-8 JSON text, matching what the tRPC
+ * `generateLoanStatement` mutation and the CLI already produce.
+ */
+export const copilotDocumentSchema = z.object({
+  filename: z.string(),
+  mimeType: z.string(),
+  base64: z.string()
+});
+
+export type CopilotDocument = z.infer<typeof copilotDocumentSchema>;
+
+/**
  * One copilotChat response: the assistant's reply text, optional provenance,
  * and — when the model proposed a write — the pending action to confirm.
  * Rule cards render when `createdRule` is present (Vigilar creates directly);
  * the customer/loan form cards render when `customerForm`/`loanForm` is
- * present.
+ * present; a generated document (e.g. a loan statement) renders when
+ * `document` is present.
  */
 export const copilotChatReplySchema = z.object({
   reply: z.string(),
@@ -136,7 +152,8 @@ export const copilotChatReplySchema = z.object({
     })
     .optional(),
   customerForm: copilotCustomerFormSchema.optional(),
-  loanForm: copilotLoanFormSchema.optional()
+  loanForm: copilotLoanFormSchema.optional(),
+  document: copilotDocumentSchema.optional()
 });
 
 export type CopilotChatReply = z.infer<typeof copilotChatReplySchema>;

@@ -5,6 +5,7 @@ import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve } from "path";
 import { BaseCommand } from "../../BaseCommand.js";
+import { localDateString } from "../../lib/dates.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class Defaulted extends BaseCommand<typeof Defaulted> {
@@ -41,7 +42,7 @@ export default class Defaulted extends BaseCommand<typeof Defaulted> {
     const { flags } = await this.parse(Defaulted);
     const format = flags.format as "json" | "pdf";
 
-    const date = new Date().toISOString().slice(0, 10);
+    const date = localDateString();
     const defaultExt = format === "json" ? "json" : "pdf";
     const outputPath = flags.output
       ? resolve(flags.output)

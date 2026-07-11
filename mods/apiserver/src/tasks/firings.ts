@@ -113,10 +113,12 @@ export interface ExecuteFiringResult {
   status: "DONE" | "FAILED" | "NEEDS_INPUT";
   summary: string;
   /**
-   * An in-memory generated document from this execution (e.g. the
-   * loan-statement PDF), passed through from `AutomationResult` for the
-   * confirm caller to offer as a download. Never written to the persisted
-   * `task.completed` event payload — that stays summary-only, as today.
+   * An in-memory generated document from this execution, passed through from
+   * `AutomationResult` for the confirm caller to offer as a download. No v1
+   * automation currently produces one (see `AutomationResult.attachment`'s
+   * doc comment); stays generic for a future document-producing automation.
+   * Never written to the persisted `task.completed` event payload — that
+   * stays summary-only, as today.
    */
   attachment?: { filename: string; mimeType: string; base64: string };
 }

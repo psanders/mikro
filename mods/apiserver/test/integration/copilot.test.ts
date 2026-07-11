@@ -629,6 +629,131 @@ describe("Founder Copilot Integration", () => {
     });
   });
 
+  describe("generateLoanStatement", () => {
+    // DIRECT tool (read-only, no confirm gate) — moved off the retired
+    // `loan-statement` task automation onto an on-demand copilot tool
+    // (mikro/move-loan-statement-to-copilot). Calls the same
+    // `createGenerateLoanStatement` builder the tRPC mutation and CLI use.
+    async function seedLoan(loanId: number) {
+      const collector = await caller.createUser({
+        name: "Cobrador",
+        phone: uniquePhone(),
+        role: "COLLECTOR"
+      });
+      const customer = await caller.createCustomer({
+        name: "Cliente Prueba",
+        phone: uniquePhone(),
+        idNumber: `001-${String(Date.now()).slice(-7)}-9`,
+        collectionPoint: "https://example.com/p",
+        homeAddress: "Calle 1",
+        assignedCollectorId: collector.id
+      });
+      const loan = await db.loan.create({
+        data: {
+          loanId,
+          principal: 4000,
+          termLength: 4,
+          paymentAmount: 1000,
+          paymentFrequency: "WEEKLY",
+          status: "ACTIVE",
+          startingDate: new Date("2026-06-01T00:00:00.000Z"),
+          customerId: customer.id
+        }
+      });
+      await db.payment.create({
+        data: {
+          amount: 1000,
+          paidAt: new Date("2026-06-02T10:00:00Z"),
+          loanId: loan.id,
+          collectedById: collector.id
+        }
+      });
+      return loan;
+    }
+
+    it("generates the statement inline and delivers it as a document in the same turn", async () => {
+      const { adminCaller } = await makeAdmin();
+      await seedLoan(90010);
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "generateLoanStatement", args: { loanId: "90010" } }]
+        },
+        { content: "Aquí tienes el estado de cuenta." }
+      ]);
+      const { executor, calls } = makeRecordingExecutor();
+      setCopilotDeps({ toolExecutor: executor, createModel: fake.factory });
+
+      const reply = await adminCaller.copilotChat({
+        message: "dame el estado de cuenta del préstamo 90010"
+      });
+
+      // generateLoanStatement is copilot-local — the shared executor is NOT used.
+      expect(calls, "no shared read/write tool executed").to.have.lengthOf(0);
+      expect(reply.pendingAction, "read-only: nothing to confirm").to.equal(undefined);
+      expect(reply.document).to.not.equal(undefined);
+      expect(reply.document!.filename).to.match(/^estado-cuenta-90010-.*\.pdf$/);
+      expect(reply.document!.mimeType).to.equal("application/pdf");
+      expect(reply.document!.base64.length).to.be.greaterThan(0);
+      expect(reply.provenance?.tools).to.include("generateLoanStatement");
+    });
+
+    it("defaults to pdf but honors an explicit json format", async () => {
+      const { adminCaller } = await makeAdmin();
+      await seedLoan(90011);
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [
+            { id: "c1", name: "generateLoanStatement", args: { loanId: "90011", format: "json" } }
+          ]
+        },
+        { content: "Aquí tienes el estado de cuenta en JSON." }
+      ]);
+      setCopilotDeps({
+        toolExecutor: makeRecordingExecutor().executor,
+        createModel: fake.factory
+      });
+
+      const reply = await adminCaller.copilotChat({
+        message: "dame el estado de cuenta del préstamo 90011 en JSON"
+      });
+
+      expect(reply.document!.filename).to.match(/^estado-cuenta-90011-.*\.json$/);
+      expect(reply.document!.mimeType).to.equal("application/json");
+      const decoded = JSON.parse(Buffer.from(reply.document!.base64, "base64").toString("utf-8"));
+      expect(decoded.loanId).to.equal(90011);
+    });
+
+    it("unknown loan id produces no document — validation-failure case", async () => {
+      const { adminCaller } = await makeAdmin();
+      const fake = makeFakeModel([
+        {
+          content: "",
+          tool_calls: [{ id: "c1", name: "generateLoanStatement", args: { loanId: "99999" } }]
+        },
+        { content: "No se encontró el préstamo #99999." }
+      ]);
+      setCopilotDeps({
+        toolExecutor: makeRecordingExecutor().executor,
+        createModel: fake.factory
+      });
+
+      const reply = await adminCaller.copilotChat({
+        message: "dame el estado de cuenta del préstamo 99999"
+      });
+
+      expect(reply.document).to.equal(undefined);
+      const toolResult = findToolResult(fake.record.invokedMessages, "generateLoanStatement");
+      expect(toolResult.success).to.equal(false);
+    });
+
+    it("is bound as a direct tool — read, not write", () => {
+      expect(isWriteTool("generateLoanStatement")).to.equal(false);
+      expect(getBoundToolNames()).to.include("generateLoanStatement");
+    });
+  });
+
   describe("confirm / reject lifecycle", () => {
     it("confirm executes the tool and records copilot.action", async () => {
       const { admin, adminCaller } = await makeAdmin();

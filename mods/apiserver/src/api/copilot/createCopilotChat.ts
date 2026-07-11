@@ -26,7 +26,7 @@ import {
 } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ToolExecutor, ToolResult } from "@mikro/agents";
-import type { CopilotChatReply, DbClient } from "@mikro/common";
+import type { CopilotChatReply, CopilotDocument, DbClient } from "@mikro/common";
 import { amountToNumber } from "@mikro/common";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
@@ -37,6 +37,7 @@ import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from
 import { createTask, listTasks, cancelTask, getAutomation } from "../../tasks/index.js";
 import { createGetLoanHealth } from "../loans/createGetLoanHealth.js";
 import { createRunPortfolioHealthCheck } from "../reports/createRunPortfolioHealthCheck.js";
+import { createGenerateLoanStatement } from "../reports/createGenerateLoanStatement.js";
 import { computeWatchMetric } from "./metrics.js";
 
 const MAX_TOOL_ITERATIONS = 10;
@@ -409,6 +410,50 @@ export function createCopilotChat(deps: CopilotChatDeps) {
   }
 
   /**
+   * Generate a loan statement on demand (copilot DIRECT tool). Read-only —
+   * calls the same `createGenerateLoanStatement` report definition the CLI
+   * and the tRPC `generateLoanStatement` mutation use. Returns the document
+   * (filename/mimeType/base64) for the dock to render as a download, never a
+   * pending action — there is nothing to confirm.
+   */
+  async function handleGenerateLoanStatement(
+    args: Record<string, unknown>
+  ): Promise<{ result: ToolResult; document?: CopilotDocument }> {
+    const loanId = Number(args.loanId);
+    if (!Number.isFinite(loanId)) {
+      return { result: { success: false, message: "loanId inválido." } };
+    }
+    const format = args.format === "json" ? "json" : "pdf";
+    try {
+      const generate = createGenerateLoanStatement(db as unknown as DbClient);
+      const generated = await generate({ loanId, format });
+      const document: CopilotDocument =
+        format === "json"
+          ? {
+              filename: generated.filename,
+              mimeType: generated.mimeType,
+              base64: Buffer.from(JSON.stringify(generated.data, null, 2), "utf-8").toString(
+                "base64"
+              )
+            }
+          : {
+              filename: generated.filename,
+              mimeType: generated.mimeType,
+              base64: generated.pdfBase64 ?? ""
+            };
+      return {
+        result: {
+          success: true,
+          message: `Estado de cuenta del préstamo #${loanId} generado (${generated.data.evalReport.passCount}/${generated.data.evalReport.results.length} controles superados).`
+        },
+        document
+      };
+    } catch (error) {
+      return { result: { success: false, message: (error as Error).message } };
+    }
+  }
+
+  /**
    * File a GitHub issue for a bug, missing capability, or UI idea (copilot
    * DIRECT tool, design Decision 4). `reasoning` is required — a call missing
    * it is rejected without filing anything. `lastFailedCall`, if present, is
@@ -515,6 +560,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     let createdRule: WatchRuleView | undefined;
     let customerForm: Record<string, never> | undefined;
     let loanForm: { customerHint?: string } | undefined;
+    let document: CopilotDocument | undefined;
     // Tracks the most recent failed/limited tool call so a githubFeedback call
     // right after it can attach that context automatically (design Decision 4).
     let lastFailedCall: FailedToolCall | undefined;
@@ -619,6 +665,10 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           result = await handleGetLoanHealth(tc.args);
         } else if (tc.name === "runPortfolioHealthCheck") {
           result = await handleRunPortfolioHealthCheck(tc.args);
+        } else if (tc.name === "generateLoanStatement") {
+          const outcome = await handleGenerateLoanStatement(tc.args);
+          result = outcome.result;
+          if (outcome.document) document = outcome.document;
         } else if (tc.name === "githubFeedback") {
           result = await handleGithubFeedback(tc.args, lastFailedCall);
           feedbackOutcome = { ok: result.success };
@@ -673,7 +723,9 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           ? "Listo. Completá los datos del cliente y lo creo."
           : loanForm
             ? "Listo. Completá los datos del préstamo y lo creo."
-            : "");
+            : document
+              ? `Aquí tienes el estado de cuenta: ${document.filename}.`
+              : "");
 
     // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
     // appended deterministically, not left to the model's own phrasing, so a
@@ -703,7 +755,8 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           }
         : {}),
       ...(customerForm ? { customerForm } : {}),
-      ...(loanForm ? { loanForm } : {})
+      ...(loanForm ? { loanForm } : {}),
+      ...(document ? { document } : {})
     };
   };
 }

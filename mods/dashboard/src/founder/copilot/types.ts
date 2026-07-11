@@ -89,13 +89,28 @@ export interface LoanFormMessage {
   provenance?: CopilotProvenance;
 }
 
+/** A generated document (e.g. a loan statement) delivered directly in the reply — read-only, nothing to confirm. */
+export interface CopilotDocumentResult {
+  filename: string;
+  mimeType: string;
+  base64: string;
+}
+
+export interface DocumentMessage {
+  kind: "document";
+  id: string;
+  document: CopilotDocumentResult;
+  provenance?: CopilotProvenance;
+}
+
 export type CopilotMessage =
   | UserMessage
   | AssistantTextMessage
   | PendingActionMessage
   | RuleMessage
   | CustomerFormMessage
-  | LoanFormMessage;
+  | LoanFormMessage
+  | DocumentMessage;
 
 export type DayOfWeek =
   | "MONDAY"

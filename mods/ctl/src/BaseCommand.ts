@@ -5,6 +5,7 @@ import { confirm } from "@inquirer/prompts";
 import { Command, Interfaces } from "@oclif/core";
 import { createClient } from "./lib/trpc.js";
 import { loadConfig } from "./lib/config.js";
+import { localDateString, parseDateOnly, endOfDayLocal } from "./lib/dates.js";
 
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
 
@@ -32,17 +33,21 @@ export type ParsedDateRange = {
 
 /**
  * Parse --start-date / --end-date with optional defaults (last N days ending today).
+ * Dates are handled in local time throughout: an explicit --end-date covers the
+ * whole local day (inclusive), and "today" means the local calendar date.
  */
 export function parseDateRange(
   startDateFlag: string | undefined,
   endDateFlag: string | undefined,
   options?: { defaultDays?: number }
 ): ParsedDateRange {
-  const today = new Date();
-  const end = endDateFlag ? new Date(endDateFlag) : today;
+  if (startDateFlag) validateDate(startDateFlag);
+  if (endDateFlag) validateDate(endDateFlag);
+
+  const end = endDateFlag ? endOfDayLocal(endDateFlag) : new Date();
   let start: Date;
   if (startDateFlag) {
-    start = new Date(startDateFlag);
+    start = parseDateOnly(startDateFlag);
   } else if (options?.defaultDays !== undefined) {
     start = new Date(end);
     start.setDate(start.getDate() - options.defaultDays);
@@ -50,10 +55,8 @@ export function parseDateRange(
     start = new Date(end.getFullYear(), end.getMonth(), 1, 0, 0, 0, 0);
   }
 
-  const startDateStr = start.toISOString().slice(0, 10);
-  const endDateStr = end.toISOString().slice(0, 10);
-  validateDate(startDateStr);
-  validateDate(endDateStr);
+  const startDateStr = localDateString(start);
+  const endDateStr = localDateString(end);
 
   return {
     startDate: start,
@@ -64,16 +67,14 @@ export function parseDateRange(
 }
 
 /**
- * Parse a single --date flag (YYYY-MM-DD). Defaults to today.
+ * Parse a single --date flag (YYYY-MM-DD). Defaults to today (local time).
  */
 export function parseSingleDate(dateFlag: string | undefined): Date {
-  const str = dateFlag ?? new Date().toISOString().slice(0, 10);
+  const str = dateFlag ?? localDateString();
   validateDate(str);
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str.trim());
-  if (!m) {
-    throw new Error(`Invalid date: ${str}. Use YYYY-MM-DD.`);
-  }
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0);
+  const d = parseDateOnly(str);
+  d.setHours(12, 0, 0, 0);
+  return d;
 }
 
 export abstract class BaseCommand<T extends typeof Command> extends Command {

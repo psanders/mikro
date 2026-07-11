@@ -34,9 +34,11 @@ export function TaskFeedCard(props: TaskFeedCardProps) {
   const utils = trpc.useUtils();
   const [error, setError] = useState<string | null>(null);
   // Confirm resolves the firing (its live query flips to DONE and the card
-  // would normally fall back to a plain row) but a loan-statement confirm
-  // carries its PDF back only in the mutation result — captured here so the
-  // download button survives the firing going resolved. Never persisted.
+  // would normally fall back to a plain row), but a document-producing
+  // automation's confirm carries its file back only in the mutation result —
+  // captured here so the download button survives the firing going resolved.
+  // Never persisted. No v1 automation currently produces one (see
+  // TaskActionCard's resultAttachment doc comment); this stays generic.
   const [resolved, setResolved] = useState<{
     firing: TaskFiringInfo;
     attachment: TaskResultAttachment;

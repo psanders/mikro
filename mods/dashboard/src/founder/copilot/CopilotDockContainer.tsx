@@ -31,6 +31,7 @@ import { PendingActionCard } from "./PendingActionCard";
 import { RuleCard } from "./RuleCard";
 import { CustomerFormCard } from "./CustomerFormCard";
 import { LoanFormCard } from "./LoanFormCard";
+import { DocumentCard, type DocumentDownloadStatus } from "./DocumentCard";
 import { UserBubble } from "./UserBubble";
 import type {
   CopilotMessage,
@@ -192,6 +193,9 @@ export function CopilotDockContainer() {
   const [loanFormStatus, setLoanFormStatus] = useState<
     Record<string, { status: CreateFormStatus; error?: string }>
   >({});
+  const [documentStatus, setDocumentStatus] = useState<
+    Record<string, { status: DocumentDownloadStatus; error?: string }>
+  >({});
 
   const appendReply = useCallback((res: ChatReply) => {
     setThread((prev) => {
@@ -230,6 +234,15 @@ export function CopilotDockContainer() {
           kind: "loanForm",
           id: uid(),
           customerHint: res.loanForm.customerHint,
+          provenance: provUsed ? undefined : prov
+        });
+        provUsed = true;
+      }
+      if (res.document) {
+        next.push({
+          kind: "document",
+          id: uid(),
+          document: res.document,
           provenance: provUsed ? undefined : prov
         });
       }
@@ -414,6 +427,34 @@ export function CopilotDockContainer() {
     [createLoan, generateContract, utils, toast]
   );
 
+  const handleDownloadDocument = useCallback(
+    (messageId: string, document: { filename: string; mimeType: string; base64: string }) => {
+      setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "saving" } }));
+      void (async () => {
+        try {
+          const saved = await saveFile(
+            base64ToBytes(document.base64),
+            document.filename,
+            document.mimeType
+          );
+          setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+          toast.success(savedMessage("Documento", saved, document.filename), {
+            durationMs: SAVED_TOAST_MS
+          });
+        } catch {
+          setDocumentStatus((prev) => ({
+            ...prev,
+            [messageId]: {
+              status: "error",
+              error: "No se pudo guardar el archivo. Inténtalo de nuevo."
+            }
+          }));
+        }
+      })();
+    },
+    [toast]
+  );
+
   const handleClearHistory = useCallback(() => {
     clearHistory.mutate(
       {},
@@ -502,6 +543,17 @@ export function CopilotDockContainer() {
                   onCreate={(values) => handleCreateLoan(item.id, values)}
                   status={loanFormStatus[item.id]?.status ?? "idle"}
                   error={loanFormStatus[item.id]?.error}
+                />
+              </AssistantMessage>
+            );
+          case "document":
+            return (
+              <AssistantMessage key={item.id} provenance={item.provenance}>
+                <DocumentCard
+                  filename={item.document.filename}
+                  status={documentStatus[item.id]?.status ?? "idle"}
+                  error={documentStatus[item.id]?.error}
+                  onDownload={() => handleDownloadDocument(item.id, item.document)}
                 />
               </AssistantMessage>
             );

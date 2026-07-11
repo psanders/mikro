@@ -1181,10 +1181,10 @@ export const protectedRouter = router({
 
   /**
    * Generate the loan-statement report (JSON + branded 2-page PDF) for one
-   * loan. Founder/admin only — matches the founder-tasks spec's automation
-   * gating. Runs the same shared `loanStatementReport` definition the CLI
-   * command and the `loan-statement` automation call, so all three surfaces
-   * produce equivalent output for the same loan + format.
+   * loan. Founder/admin only. Runs the same shared `loanStatementReport`
+   * definition the CLI command and the founder-copilot's `generateLoanStatement`
+   * direct tool call, so all three surfaces produce equivalent output for the
+   * same loan + format.
    */
   generateLoanStatement: adminProcedure
     .input(generateLoanStatementSchema)

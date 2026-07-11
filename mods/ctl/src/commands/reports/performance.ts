@@ -4,7 +4,8 @@
 import { Flags } from "@oclif/core";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve } from "path";
-import { BaseCommand, parseDateRange } from "../../BaseCommand.js";
+import { BaseCommand, validateDate } from "../../BaseCommand.js";
+import { localDateString, parseDateOnly } from "../../lib/dates.js";
 import errorHandler from "../../errorHandler.js";
 
 export default class Performance extends BaseCommand<typeof Performance> {
@@ -41,16 +42,17 @@ export default class Performance extends BaseCommand<typeof Performance> {
     const { flags } = await this.parse(Performance);
     const format = flags.format as "json" | "pdf";
 
-    const end = flags["end-date"] ? new Date(flags["end-date"]) : new Date();
-    const start = flags["start-date"]
-      ? new Date(flags["start-date"])
-      : new Date(end.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const { startDateStr, endDateStr } = parseDateRange(
-      start.toISOString().slice(0, 10),
-      end.toISOString().slice(0, 10)
-    );
+    if (flags["start-date"]) validateDate(flags["start-date"]);
+    if (flags["end-date"]) validateDate(flags["end-date"]);
 
-    const date = new Date().toISOString().slice(0, 10);
+    const end = flags["end-date"] ? parseDateOnly(flags["end-date"]) : new Date();
+    const start = flags["start-date"]
+      ? parseDateOnly(flags["start-date"])
+      : new Date(end.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const startDateStr = localDateString(start);
+    const endDateStr = localDateString(end);
+
+    const date = localDateString();
     const defaultExt = format === "json" ? "json" : "pdf";
     const outputPath = flags.output
       ? resolve(flags.output)

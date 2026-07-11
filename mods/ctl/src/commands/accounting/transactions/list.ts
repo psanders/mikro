@@ -7,6 +7,7 @@ import cliui from "cliui";
 import moment from "moment";
 import { ListCommand } from "../../../ListCommand.js";
 import { validateDate } from "../../../BaseCommand.js";
+import { parseDateOnly, endOfDayLocal } from "../../../lib/dates.js";
 import errorHandler from "../../../errorHandler.js";
 import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../../lib/cliTableLayout.js";
 
@@ -40,8 +41,8 @@ export default class List extends ListCommand<typeof List> {
 
     try {
       const txns = await client.accounting.listTransactions.query({
-        startDate: new Date(flags["start-date"]!),
-        endDate: new Date(flags["end-date"]!),
+        startDate: parseDateOnly(flags["start-date"]!),
+        endDate: endOfDayLocal(flags["end-date"]!),
         ...(flags["account-id"] ? { accountId: flags["account-id"] } : {}),
         ...(flags["category-id"] ? { categoryId: flags["category-id"] } : {}),
         ...(flags.type
