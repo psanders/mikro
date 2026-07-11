@@ -390,9 +390,14 @@ export function CopilotDockContainer() {
                       contract.filename,
                       contract.mimeType
                     );
-                    toast.success(savedMessage("Contrato", saved, contract.filename), {
-                      durationMs: SAVED_TOAST_MS
-                    });
+                    // "cancelled": user backed out of the save dialog, nothing
+                    // to confirm. "picked": they chose the destination
+                    // themselves, no toast needed either.
+                    if (saved.status === "saved") {
+                      toast.success(savedMessage("Contrato", saved, contract.filename), {
+                        durationMs: SAVED_TOAST_MS
+                      });
+                    }
                   } catch {
                     toast.error(
                       "El préstamo se creó y el contrato se generó, pero no se pudo guardar el archivo."
@@ -437,10 +442,20 @@ export function CopilotDockContainer() {
             document.filename,
             document.mimeType
           );
+          if (saved.status === "cancelled") {
+            // User backed out of the native save dialog — back to idle, no
+            // toast, no error, so the download button is ready to retry.
+            setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "idle" } }));
+            return;
+          }
           setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
-          toast.success(savedMessage("Documento", saved, document.filename), {
-            durationMs: SAVED_TOAST_MS
-          });
+          // "picked": the user chose the destination themselves — they
+          // already know where it went, no toast needed.
+          if (saved.status === "saved") {
+            toast.success(savedMessage("Documento", saved, document.filename), {
+              durationMs: SAVED_TOAST_MS
+            });
+          }
         } catch {
           setDocumentStatus((prev) => ({
             ...prev,

@@ -21,6 +21,12 @@ tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Async main-thread hop for the native save-location picker (see
+# src/save_dialog.rs `pick_save_path`): NSSavePanel/rfd's dialogs must run
+# synchronously on the main thread, so the command awaits a oneshot from
+# inside `AppHandle::run_on_main_thread` instead of blocking a worker thread.
+tokio = { version = "1", default-features = false, features = ["sync"] }
+
 # Auto-update: the updater plugin checks the apiserver manifest endpoint and
 # installs signed releases; the process plugin relaunches the app afterwards.
 # Desktop-only — gated on the OS triple (Cargo dependency tables can't use
@@ -40,3 +46,28 @@ tauri-plugin-process = "2"
 [target.'cfg(target_os = "macos")'.dependencies]
 screencapturekit = { version = "8", features = ["macos_15_0"] }
 base64 = "0.22"
+
+# Native, nil-safe save-location picker (mikro/#204): `@tauri-apps/plugin-dialog`'s
+# `save()` goes through objc2-app-kit's safe `NSSavePanel::savePanel()` binding,
+# which force-unwraps the panel — and on macOS 26 Tahoe the panel XPC service
+# can make that call return NULL, panicking the whole app (tauri-apps/tauri#13047,
+# no upstream fix yet). These are already deep in this binary's dependency tree
+# (wry alone requests the exact NSSavePanel/NSPanel/NSResponder/NSWindow/
+# NSApplication features below) — declaring them directly just lets
+# src/save_dialog.rs call the raw `savePanel` selector ourselves with an
+# `Option<Retained<_>>` return type, sidestepping the unwrap entirely.
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", features = [
+    "NSSavePanel",
+    "NSPanel",
+    "NSResponder",
+    "NSWindow",
+    "NSApplication"
+] }
+objc2-foundation = { version = "0.3.2", features = ["NSString", "NSURL"] }
+
+# Windows counterpart of the same picker: no NSSavePanel-style crash risk on
+# Windows, so the plain `rfd` save dialog (already vendored via
+# tauri-plugin-dialog) is used directly instead of hand-rolled bindings.
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+rfd = { version = "0.16", default-features = false, features = ["common-controls-v6"] }

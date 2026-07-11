@@ -12,36 +12,66 @@ export function base64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
-/**
- * Toast duration for a saved-file confirmation. Longer than the default so the
- * user has time to read the destination path (the desktop build writes
- * silently to Downloads with no OS "download complete" chrome of its own).
- */
-export const SAVED_TOAST_MS = 12000;
-
-export interface SaveResult {
-  /**
-   * Where the file landed, for a user-facing confirmation. On desktop this is
-   * the absolute path with the home dir abbreviated to `~` (e.g.
-   * `~/Downloads/clientes-2026-07-11.pdf`). On web it's `null` — the browser
-   * owns the download location and doesn't expose it — so callers should fall
-   * back to a filename-only message there.
-   */
-  location: string | null;
+/** Encode raw bytes to base64, for handing off to the Rust `write_saved_file` command. */
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+  return btoa(binary);
 }
 
 /**
- * Download/save the given bytes. On the web this triggers a browser download
- * straight to the Downloads folder with no prompt; inside Tauri it writes
- * directly to the OS Downloads folder the same way, with no native save
- * dialog. Returns where the file landed so callers can tell the user (the
- * desktop build gives no OS "download complete" chrome of its own).
+ * Toast duration for a saved-file confirmation. Longer than the default so the
+ * user has time to read the destination path (the desktop build's fallback
+ * path writes silently to Downloads with no OS "download complete" chrome of
+ * its own).
+ */
+export const SAVED_TOAST_MS = 12000;
+
+/**
+ * Result of `saveFile`. Three shapes:
+ *  - `"saved"` — the file landed somewhere the caller should confirm with a
+ *    toast: `location` names the exact desktop path when the native dialog
+ *    was unavailable and this fell back to writing straight to Downloads, or
+ *    is `null` on the web (the browser owns the download location).
+ *  - `"picked"` — desktop only: the user chose the destination themselves via
+ *    the native save dialog, so no confirmation toast is needed (they already
+ *    know where it went).
+ *  - `"cancelled"` — desktop only: the user backed out of the save dialog.
+ *    Not an error — callers should do nothing (no toast, no error message).
+ */
+export type SaveResult =
+  | { status: "saved"; location: string | null }
+  | { status: "picked" }
+  | { status: "cancelled" };
+
+interface PickSavePathPicked {
+  status: "picked";
+  path: string;
+}
+interface PickSavePathCancelled {
+  status: "cancelled";
+}
+interface PickSavePathUnavailable {
+  status: "unavailable";
+}
+type PickSavePathResult = PickSavePathPicked | PickSavePathCancelled | PickSavePathUnavailable;
+
+/**
+ * Download/save the given bytes.
  *
- * (The native save dialog previously used here — `@tauri-apps/plugin-dialog`'s
- * `save()` — panics on some macOS setups: `NSSavePanel.savePanel()` can return
- * NULL, which the Rust binding `unwrap()`s, killing the whole app. Writing
- * straight to Downloads sidesteps that native call entirely and also matches
- * the web build's no-picker behavior.)
+ * On the web this triggers a browser download straight to the Downloads
+ * folder with no prompt — the browser owns that choice.
+ *
+ * Inside Tauri, this asks the user where to save via a native "Save As"
+ * dialog: a custom, nil-safe Rust command (`pick_save_path` /
+ * `write_saved_file`, see `src-tauri/src/save_dialog.rs`) rather than
+ * `@tauri-apps/plugin-dialog`'s `save()`. That plugin call panics the whole
+ * app on some macOS 26 Tahoe setups — `NSSavePanel.savePanel()` can return
+ * NULL there, and the Rust binding underneath the plugin `unwrap()`s it
+ * (tauri-apps/tauri#13047, no upstream fix yet). The custom command asks for
+ * the panel nil-safely instead, and falls back to writing straight to
+ * Downloads (today's previous workaround) only when the panel truly isn't
+ * available.
  */
 export async function saveFile(
   bytes: Uint8Array,
@@ -49,8 +79,30 @@ export async function saveFile(
   mimeType: string
 ): Promise<SaveResult> {
   if (isTauri()) {
-    const { downloadDir, homeDir, join } = await import("@tauri-apps/api/path");
+    const { invoke } = await import("@tauri-apps/api/core");
     const { writeFile } = await import("@tauri-apps/plugin-fs");
+    const pick = await invoke<PickSavePathResult>("pick_save_path", { filename });
+
+    if (pick.status === "picked") {
+      // Written by the Rust command itself (bytes travel as base64) rather
+      // than via `@tauri-apps/plugin-fs`'s `writeFile` here, so the write
+      // isn't limited by this app's `fs:scope` capability (rooted at
+      // `$HOME/**` — see capabilities/default.json), which wouldn't cover
+      // every location the native panel lets the user navigate to (an
+      // external volume, /tmp, etc). The panel itself is already the
+      // permission gate for a user-picked destination.
+      await invoke("write_saved_file", { path: pick.path, base64: bytesToBase64(bytes) });
+      return { status: "picked" };
+    }
+
+    if (pick.status === "cancelled") {
+      return { status: "cancelled" };
+    }
+
+    // "unavailable": the native panel couldn't be shown at all — fall back
+    // to today's behavior of writing silently to Downloads so the toast can
+    // still tell the user where the file landed.
+    const { downloadDir, homeDir, join } = await import("@tauri-apps/api/path");
     const path = await join(await downloadDir(), filename);
     await writeFile(path, bytes);
     let location = path;
@@ -60,7 +112,7 @@ export async function saveFile(
     } catch {
       // Keep the full absolute path if the home dir can't be resolved.
     }
-    return { location };
+    return { status: "saved", location };
   }
 
   // Copy into a fresh ArrayBuffer-backed view so the Blob part type is concrete
@@ -71,15 +123,20 @@ export async function saveFile(
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  return { location: null };
+  return { status: "saved", location: null };
 }
 
 /**
- * Build a Spanish "saved" confirmation for a toast. On desktop it names the
- * exact path (`~/Downloads/…`); on web, where the browser owns the location,
- * it names just the file.
+ * Build a Spanish "saved" confirmation for a toast. Only valid for the
+ * `"saved"` result shape — `"picked"` needs no toast (the user chose the
+ * location themselves) and `"cancelled"` needs no toast either; callers
+ * should check `result.status` before calling this.
  */
-export function savedMessage(subject: string, result: SaveResult, filename: string): string {
+export function savedMessage(
+  subject: string,
+  result: Extract<SaveResult, { status: "saved" }>,
+  filename: string
+): string {
   return result.location
     ? `${subject} guardado en ${result.location}`
     : `${subject} descargado: ${filename}`;
