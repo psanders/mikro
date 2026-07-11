@@ -35,7 +35,9 @@ const FINANCIAL_SUMMARY_GROSS_RATE = 1.2;
 
 /**
  * Creates a function to compute portfolio metrics for a date range.
- * Metrics are computed as of endDate; startDate/endDate are used for period labeling.
+ * Metrics are computed as of endDate; startDate/endDate also scope loan
+ * selection (only loans created within the range are included) in addition
+ * to being used for period labeling.
  *
  * @param client - The database client (Prisma)
  * @returns A validated function that returns PortfolioMetrics
@@ -45,15 +47,20 @@ export function createGeneratePortfolioMetrics(client: DbClient) {
     const endDate = params.endDate ?? new Date();
     const startDate = params.startDate ?? new Date(endDate.getFullYear(), 0, 1, 0, 0, 0, 0); // year-to-date
 
+    const endOfDay = new Date(endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     logger.verbose("computing portfolio metrics", {
       startDate: startDate.toISOString().slice(0, 10),
       endDate: endDate.toISOString().slice(0, 10)
     });
 
     // Cash totals include COMPLETED + PARTIAL; cycle counts use COMPLETED only.
+    // A loan is "in range" when it was created within [startDate, endOfDay].
     const allLoans = await (
       client as unknown as { loan: { findMany: (args: unknown) => Promise<LoanWithPayments[]> } }
     ).loan.findMany({
+      where: { createdAt: { gte: startDate, lte: endOfDay } },
       include: {
         payments: {
           where: { status: { in: ["COMPLETED", "PARTIAL"] } },

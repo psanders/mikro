@@ -113,6 +113,51 @@ describe("createGeneratePortfolioMetrics", () => {
 
       expect(result.totalCollectedDop).to.equal(1200);
     });
+
+    it("should scope loan.findMany by createdAt using the provided startDate/endDate (issue #200)", async () => {
+      const startDate = new Date("2026-01-01");
+      const endDate = new Date("2026-02-28");
+      const mockClient = {
+        loan: { findMany: sinon.stub().resolves([]) }
+      };
+      const getMetrics = createGeneratePortfolioMetrics(mockClient as any);
+
+      await getMetrics({ startDate, endDate });
+
+      expect(mockClient.loan.findMany.calledOnce).to.be.true;
+      const args = mockClient.loan.findMany.firstCall.args[0];
+      expect(args.where).to.exist;
+      expect(args.where.createdAt.gte.getTime()).to.equal(startDate.getTime());
+      const expectedEndOfDay = new Date(endDate);
+      expectedEndOfDay.setHours(23, 59, 59, 999);
+      expect(args.where.createdAt.lte.getTime()).to.equal(expectedEndOfDay.getTime());
+      // Sanity: end-of-day clamp actually moved the time forward.
+      expect(args.where.createdAt.lte.getTime()).to.be.greaterThan(endDate.getTime());
+    });
+
+    it("should default loan.findMany createdAt filter to year-to-date start and today's end-of-day", async () => {
+      const clock = sinon.useFakeTimers(new Date("2026-07-11T15:30:00.000Z").getTime());
+      try {
+        const mockClient = {
+          loan: { findMany: sinon.stub().resolves([]) }
+        };
+        const getMetrics = createGeneratePortfolioMetrics(mockClient as any);
+
+        await getMetrics({});
+
+        expect(mockClient.loan.findMany.calledOnce).to.be.true;
+        const args = mockClient.loan.findMany.firstCall.args[0];
+        const now = new Date();
+        const expectedStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        const expectedEndOfDay = new Date(now);
+        expectedEndOfDay.setHours(23, 59, 59, 999);
+
+        expect(args.where.createdAt.gte.getTime()).to.equal(expectedStart.getTime());
+        expect(args.where.createdAt.lte.getTime()).to.equal(expectedEndOfDay.getTime());
+      } finally {
+        clock.restore();
+      }
+    });
   });
 
   describe("with invalid input", () => {
