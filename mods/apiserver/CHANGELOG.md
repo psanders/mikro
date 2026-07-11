@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.4](https://github.com/psanders/mikro/compare/v1.39.3...v1.39.4) (2026-07-11)
+
+### Bug Fixes
+
+- **reports:** scope performance report loans to requested date range ([#213](https://github.com/psanders/mikro/issues/213)) ([b586db6](https://github.com/psanders/mikro/commit/b586db6172676dfce63fcd96d63acc69de7e5da8)), closes [#200](https://github.com/psanders/mikro/issues/200)
+
 ## [1.39.3](https://github.com/psanders/mikro/compare/v1.39.2...v1.39.3) (2026-07-11)
 
 ### Bug Fixes

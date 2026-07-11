@@ -1,5 +1,5 @@
 {
-  "version": "1.39.3",
+  "version": "1.39.4",
   "npmClient": "npm",
   "packages": ["mods/common", "mods/agents", "mods/apiserver", "mods/ctl", "mods/mobile"],
   "command": {
