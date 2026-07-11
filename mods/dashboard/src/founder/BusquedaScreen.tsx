@@ -34,6 +34,7 @@ function toFeedEvent(item: SearchEventItem): FeedEvent {
     actorName: item.actorName,
     customerName: item.customerName ?? undefined,
     loanId: item.loanId ?? undefined,
+    loanNumber: item.loanNumber ?? undefined,
     applicationId: item.applicationId ?? undefined,
     amount: item.amount ?? undefined,
     summary: item.summary,

@@ -23,6 +23,12 @@ export interface FeedEventItem {
   customerId: string | null;
   customerName: string | null;
   loanId: string | null;
+  /**
+   * Human loan number (`Loan.loanId`), resolved at read time from the row's
+   * `loanId` UUID (`Loan.id`) — see {@link enrichLoanNumbers}. `null` when the
+   * event has no loan, or the loan was deleted after the event was recorded.
+   */
+  loanNumber: number | null;
   applicationId: string | null;
   amount: number | null;
   summary: string;
@@ -57,11 +63,41 @@ function mapRow(row: {
     customerId: row.customerId,
     customerName: row.customerName,
     loanId: row.loanId,
+    loanNumber: null,
     applicationId: row.applicationId,
     amount: row.amount == null ? null : amountToNumber(row.amount),
     summary: row.summary,
     payload: JSON.parse(row.payload)
   };
+}
+
+/**
+ * Resolves each item's `loanId` (UUID) to its human `loanNumber` (`Loan.loanId`,
+ * the 10000-series id every copilot loan tool takes) in place, with one batched
+ * query for the page's distinct loan ids. Read-time enrichment on purpose: the
+ * event payload never carries the numeric number, so this is what lets
+ * historical events (recorded before or without a numeric ref) resolve too,
+ * with no payload backfill. A `loanId` with no matching row (loan deleted since
+ * the event was recorded) is left `null` rather than surfaced as an error.
+ */
+export async function enrichLoanNumbers(
+  client: EventClient,
+  items: FeedEventItem[]
+): Promise<void> {
+  const loanIds = [
+    ...new Set(items.map((item) => item.loanId).filter((id): id is string => id != null))
+  ];
+  if (loanIds.length === 0) return;
+
+  const loans = await client.loan.findMany({
+    where: { id: { in: loanIds } },
+    select: { id: true, loanId: true }
+  });
+  const byId = new Map(loans.map((l) => [l.id, l.loanId]));
+
+  for (const item of items) {
+    if (item.loanId) item.loanNumber = byId.get(item.loanId) ?? null;
+  }
 }
 
 /**
@@ -141,6 +177,7 @@ export function createListFeedEvents(client: EventClient) {
     // append-only; the mutable truth lives in `outbound_messages`, keyed by the
     // payload's `waMessageId`. One batched lookup keeps this O(1) queries/page.
     await overlayMessageStatus(client, items);
+    await enrichLoanNumbers(client, items);
 
     const last = items[items.length - 1];
     const nextCursor = hasMore && last ? encodeCursor(last.occurredAt, last.id) : null;

@@ -483,6 +483,21 @@ interface SubjectLink {
   target: NavigateTarget;
 }
 
+/**
+ * The numeric loan number (`Loan.loanId`) for an event, if resolvable — the
+ * id every copilot loan tool actually takes (never the `Loan.id` UUID on
+ * `event.loanId`). Sourced from the read-time `loanNumber` enrichment
+ * (`enrichLoanNumbers` on the apiserver); `application.converted` also has it
+ * denormalized onto its own payload.
+ */
+function resolveLoanNumber(event: FeedEvent): number | null {
+  if (typeof event.loanNumber === "number") return event.loanNumber;
+  if (event.type === "application.converted" && typeof event.payload.loanNumber === "number") {
+    return event.payload.loanNumber;
+  }
+  return null;
+}
+
 /** The "Ver X" link for the event's subject — null once the subject is gone (deletions). */
 export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
   switch (event.type) {
@@ -490,19 +505,21 @@ export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
     case "payment.reversed":
     case "loan.created":
     case "loan.status_changed":
-      return event.loanId
-        ? { label: "Ver préstamo", target: { kind: "loan", id: event.loanId } }
+    case "application.converted": {
+      // A UUID prefill is worse than no link: the copilot's loan tools only
+      // accept the numeric loanId, so without a resolved number there's
+      // nothing useful to link to.
+      const loanNumber = resolveLoanNumber(event);
+      return loanNumber !== null
+        ? { label: "Ver préstamo", target: { kind: "loan", id: String(loanNumber) } }
         : null;
+    }
     case "application.approved":
     case "application.rejected":
     case "application.signed":
     case "application.restored":
       return event.applicationId
         ? { label: "Ver solicitud", target: { kind: "application", id: event.applicationId } }
-        : null;
-    case "application.converted":
-      return event.loanId
-        ? { label: "Ver préstamo", target: { kind: "loan", id: event.loanId } }
         : null;
     case "customer.created":
     case "contract.generated": {
