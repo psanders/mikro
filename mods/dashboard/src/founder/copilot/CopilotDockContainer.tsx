@@ -12,11 +12,17 @@
  *   - `copilotConfirmAction` / `copilotRejectAction` update the card in place
  *     and invalidate the feed (a confirmed action becomes a feed event);
  *   - rule cards disable via `setWatchRuleEnabled`; "Editar regla" prefills the
- *     composer. Errors surface as an assistant-style error message, never a toast.
+ *     composer. Conversational errors surface as an assistant-style error
+ *     message, never a toast. The one exception is the loan-card contract
+ *     download: saving the PDF is an OS-level file action (not a copilot turn),
+ *     so its "saved to …" confirmation uses the global toast — the same one the
+ *     reports screen raises for the identical save.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "../../lib/trpc";
 import type { RouterOutputs } from "../../lib/trpc";
+import { base64ToBytes, saveFile, savedMessage, SAVED_TOAST_MS } from "../../lib/saveFile";
+import { useToast } from "../../components/ui/ToastProvider";
 import { AssistantMessage } from "./AssistantMessage";
 import { CapabilityChips } from "./CapabilityChips";
 import { CopilotDock } from "./CopilotDock";
@@ -118,6 +124,7 @@ function toRule(created: NonNullable<ChatReply["createdRule"]>): CopilotRule {
 export function CopilotDockContainer() {
   const { open, prefill, close } = useCopilot();
   const utils = trpc.useUtils();
+  const toast = useToast();
 
   const [thread, setThread] = useState<ThreadItem[]>([]);
   const [input, setInput] = useState("");
@@ -358,8 +365,27 @@ export function CopilotDockContainer() {
               startDate: values.startingDate || new Date().toISOString().slice(0, 10)
             },
             {
-              onSuccess: () => {
+              onSuccess: (contract) => {
                 setLoanFormStatus((prev) => ({ ...prev, [messageId]: { status: "done" } }));
+                // Save the contract PDF and confirm WHERE it landed — the
+                // desktop build writes silently to Downloads, so without this
+                // toast the founder has no signal the contract was produced.
+                void (async () => {
+                  try {
+                    const saved = await saveFile(
+                      base64ToBytes(contract.dataBase64),
+                      contract.filename,
+                      contract.mimeType
+                    );
+                    toast.success(savedMessage("Contrato", saved, contract.filename), {
+                      durationMs: SAVED_TOAST_MS
+                    });
+                  } catch {
+                    toast.error(
+                      "El préstamo se creó y el contrato se generó, pero no se pudo guardar el archivo."
+                    );
+                  }
+                })();
                 void utils.listFeedEvents.invalidate();
               },
               onError: (err) =>
@@ -385,7 +411,7 @@ export function CopilotDockContainer() {
           }))
       });
     },
-    [createLoan, generateContract, utils]
+    [createLoan, generateContract, utils, toast]
   );
 
   const handleClearHistory = useCallback(() => {

@@ -255,6 +255,45 @@ describe("Founder Feed Integration", () => {
       expect(still).to.equal(null);
     });
 
+    it("loan.created on createLoan", async () => {
+      const collector = await caller.createUser({
+        name: "María Collector",
+        phone: uniquePhone(),
+        role: "COLLECTOR"
+      });
+      const customer = await caller.createCustomer({
+        name: "Enersida Brito",
+        phone: uniquePhone(),
+        idNumber: `001-${String(Date.now()).slice(-7)}-2`,
+        collectionPoint: "https://example.com/p",
+        homeAddress: "Calle 4",
+        assignedCollectorId: collector.id
+      });
+      const loan = await caller.createLoan({
+        customerId: customer.id,
+        principal: 8256,
+        termLength: 10,
+        paymentAmount: 950,
+        paymentFrequency: "WEEKLY",
+        startingDate: new Date()
+      });
+
+      const events = await db.businessEvent.findMany({ where: { type: "loan.created" } });
+      expect(events).to.have.lengthOf(1);
+      const e = events[0];
+      expect(e.loanId).to.equal(loan.id);
+      expect(e.customerId).to.equal(customer.id);
+      expect(e.customerName).to.equal("Enersida Brito");
+      expect(Number(e.amount)).to.equal(8256);
+      expect(e.summary).to.contain("préstamo");
+      expect(e.summary).to.contain("Enersida Brito");
+      expect(e.summary).not.to.contain("contrato");
+      const payload = JSON.parse(e.payload);
+      expect(payload.installments).to.equal(10);
+      expect(payload.frequency).to.equal("WEEKLY");
+      expect(payload.installmentAmount).to.equal(950);
+    });
+
     it("loan.status_changed on updateLoanStatus", async () => {
       const { loan } = await makeCustomerWithLoan();
       await caller.updateLoanStatus({ loanId: loan.loanId, status: "COMPLETED" });
@@ -341,16 +380,18 @@ describe("Founder Feed Integration", () => {
   });
 
   describe("mapper registry coverage", () => {
-    it("registers a mapper for every catalog type except intrinsically-written ones", () => {
-      // These are written intrinsically (never by a boundary mapper):
-      // application.restored by createRestoreApplication; copilot.action by the
-      // copilot confirm flow; rule.alert by the watch-rule evaluator; task.* by
-      // the task worker and firing confirm/skip flow; qcobro.synced by the
-      // QCobro cron worker's tick(); message.sent by the outbound-message
-      // recorder at WhatsApp send time. They must be the only types without a
-      // registered mapper.
-      const intrinsic = new Set([
+    it("registers a mapper for every catalog type except intrinsic and retired ones", () => {
+      // Types with no boundary mapper. Written intrinsically (never by a
+      // boundary mapper): application.restored by createRestoreApplication;
+      // copilot.action by the copilot confirm flow; rule.alert by the watch-rule
+      // evaluator; task.* by the task worker and firing confirm/skip flow;
+      // qcobro.synced by the QCobro cron worker's tick(); message.sent by the
+      // outbound-message recorder at WhatsApp send time. Plus contract.generated,
+      // RETIRED — no longer produced (loan.created covers it), kept only so
+      // historical rows read/render. These must be the only types without a mapper.
+      const noBoundaryMapper = new Set([
         "application.restored",
+        "contract.generated",
         "copilot.action",
         "rule.alert",
         "task.due",
@@ -361,7 +402,7 @@ describe("Founder Feed Integration", () => {
         "message.sent"
       ]);
       for (const type of businessEventTypeEnum.options) {
-        if (intrinsic.has(type)) {
+        if (noBoundaryMapper.has(type)) {
           expect(eventMappers[type], `${type} should NOT have a mapper`).to.equal(undefined);
         } else {
           expect(eventMappers[type], `${type} must have a registered mapper`).to.be.a("function");

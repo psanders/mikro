@@ -4,43 +4,63 @@
 
 const isTauri = (): boolean => typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-const extFor = (mimeType: string): string => {
-  switch (mimeType) {
-    case "application/pdf":
-      return "pdf";
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "text/csv":
-      return "csv";
-    default:
-      return "bin";
-  }
-};
+/** Decode a base64 string (as returned by base64-carrying tRPC mutations) into raw bytes for saveFile. */
+export function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 /**
- * Download/save the given bytes. On the web this triggers a browser download;
- * inside Tauri it opens a native save dialog and writes the file.
+ * Toast duration for a saved-file confirmation. Longer than the default so the
+ * user has time to read the destination path (the desktop build writes
+ * silently to Downloads with no OS "download complete" chrome of its own).
+ */
+export const SAVED_TOAST_MS = 12000;
+
+export interface SaveResult {
+  /**
+   * Where the file landed, for a user-facing confirmation. On desktop this is
+   * the absolute path with the home dir abbreviated to `~` (e.g.
+   * `~/Downloads/clientes-2026-07-11.pdf`). On web it's `null` — the browser
+   * owns the download location and doesn't expose it — so callers should fall
+   * back to a filename-only message there.
+   */
+  location: string | null;
+}
+
+/**
+ * Download/save the given bytes. On the web this triggers a browser download
+ * straight to the Downloads folder with no prompt; inside Tauri it writes
+ * directly to the OS Downloads folder the same way, with no native save
+ * dialog. Returns where the file landed so callers can tell the user (the
+ * desktop build gives no OS "download complete" chrome of its own).
+ *
+ * (The native save dialog previously used here — `@tauri-apps/plugin-dialog`'s
+ * `save()` — panics on some macOS setups: `NSSavePanel.savePanel()` can return
+ * NULL, which the Rust binding `unwrap()`s, killing the whole app. Writing
+ * straight to Downloads sidesteps that native call entirely and also matches
+ * the web build's no-picker behavior.)
  */
 export async function saveFile(
   bytes: Uint8Array,
   filename: string,
   mimeType: string
-): Promise<void> {
+): Promise<SaveResult> {
   if (isTauri()) {
-    const { save } = await import("@tauri-apps/plugin-dialog");
+    const { downloadDir, homeDir, join } = await import("@tauri-apps/api/path");
     const { writeFile } = await import("@tauri-apps/plugin-fs");
-    const ext = extFor(mimeType);
-    const path = await save({
-      defaultPath: filename,
-      filters: [{ name: ext.toUpperCase(), extensions: [ext] }]
-    });
-    if (!path) return; // user cancelled
+    const path = await join(await downloadDir(), filename);
     await writeFile(path, bytes);
-    return;
+    let location = path;
+    try {
+      const home = await homeDir();
+      if (path.startsWith(home)) location = `~${path.slice(home.length)}`;
+    } catch {
+      // Keep the full absolute path if the home dir can't be resolved.
+    }
+    return { location };
   }
 
   // Copy into a fresh ArrayBuffer-backed view so the Blob part type is concrete
@@ -51,4 +71,16 @@ export async function saveFile(
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return { location: null };
+}
+
+/**
+ * Build a Spanish "saved" confirmation for a toast. On desktop it names the
+ * exact path (`~/Downloads/…`); on web, where the browser owns the location,
+ * it names just the file.
+ */
+export function savedMessage(subject: string, result: SaveResult, filename: string): string {
+  return result.location
+    ? `${subject} guardado en ${result.location}`
+    : `${subject} descargado: ${filename}`;
 }

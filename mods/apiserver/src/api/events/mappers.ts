@@ -277,6 +277,66 @@ const loanStatusChanged: EventMapper = async ({ result, ctx }) => {
   };
 };
 
+/** Spanish plural adverbs for a loan's payment frequency, matching the dashboard's FREQUENCY_ADVERBS. */
+const FREQUENCY_ADVERBS: Record<string, string> = {
+  DAILY: "diarias",
+  WEEKLY: "semanales",
+  BIWEEKLY: "quincenales",
+  MONTHLY: "mensuales"
+};
+
+interface CreateLoanInput {
+  customerId: string;
+  principal: number;
+  termLength: number;
+  paymentAmount: number;
+  paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+}
+
+interface CreatedLoanRow {
+  id: string;
+  loanId: number;
+  customerId: string;
+}
+
+/**
+ * A loan created directly (not via application conversion) — e.g. the
+ * founder copilot's "Nuevo préstamo" form. This is the single event for that
+ * action: if the founder also opted to generate a contract, that's implied by
+ * the loan and does NOT get its own event (the retired `contract.generated`
+ * added only noise).
+ */
+const loanCreated: EventMapper = async ({ input, result, ctx }) => {
+  const i = input as CreateLoanInput;
+  const loan = result as CreatedLoanRow;
+  const client = db(ctx);
+  const actorName = await resolveActorName(client, ctx.userId);
+  const customer = await client.customer.findUnique({
+    where: { id: i.customerId },
+    select: { name: true }
+  });
+  const name = customer?.name ?? "un cliente";
+  const adverb = FREQUENCY_ADVERBS[i.paymentFrequency] ?? "";
+
+  return {
+    type: "loan.created",
+    actorId: ctx.userId,
+    actorName,
+    customerId: i.customerId,
+    customerName: name,
+    loanId: loan.id,
+    amount: i.principal,
+    summary: `${actorName} creó un préstamo de ${formatDop(i.principal)} a ${i.termLength} cuota${i.termLength === 1 ? "" : "s"}${adverb ? ` ${adverb}` : ""} para ${name}`,
+    payload: {
+      loanId: loan.id,
+      principal: i.principal,
+      installments: i.termLength,
+      frequency: i.paymentFrequency,
+      installmentAmount: i.paymentAmount
+    }
+  };
+};
+
 const customerCreated: EventMapper = async ({ result, ctx }) => {
   const c = result as { id: string; name: string };
   const actorName = await resolveActorName(db(ctx), ctx.userId);
@@ -292,47 +352,12 @@ const customerCreated: EventMapper = async ({ result, ctx }) => {
   };
 };
 
-interface GenerateContractInput {
-  customerId: string;
-  principal: number;
-  installments: number;
-  frequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
-  installmentAmount: number;
-  startDate: string;
-}
-
-const contractGenerated: EventMapper = async ({ input, ctx }) => {
-  const i = input as GenerateContractInput;
-  const client = db(ctx);
-  const actorName = await resolveActorName(client, ctx.userId);
-  const customer = await client.customer.findUnique({
-    where: { id: i.customerId },
-    select: { name: true }
-  });
-  const name = customer?.name ?? "un cliente";
-
-  return {
-    type: "contract.generated",
-    actorId: ctx.userId,
-    actorName,
-    customerId: i.customerId,
-    customerName: name,
-    amount: i.principal,
-    summary: `${actorName} generó un contrato para ${name} (${formatDop(i.principal)})`,
-    payload: {
-      customerId: i.customerId,
-      principal: i.principal,
-      installments: i.installments,
-      frequency: i.frequency,
-      installmentAmount: i.installmentAmount,
-      startDate: i.startDate
-    }
-  };
-};
-
 /**
- * Registry keyed by event type. Every catalog type has a mapper EXCEPT
- * `application.restored`, which createRestoreApplication writes itself.
+ * Registry keyed by event type. Every catalog type has a mapper EXCEPT the ones
+ * not written at the tRPC boundary: `application.restored` (createRestoreApplication
+ * writes it) and `contract.generated` (RETIRED — a contract is created as part of
+ * a loan, so `loan.created` covers it; the standalone event was redundant noise.
+ * Kept in the catalog only so historical rows still read/render).
  */
 export const eventMappers: Partial<Record<BusinessEventType, EventMapper>> = {
   "payment.collected": paymentCollected,
@@ -342,7 +367,7 @@ export const eventMappers: Partial<Record<BusinessEventType, EventMapper>> = {
   "application.signed": applicationSigned,
   "application.converted": applicationConverted,
   "application.deleted": applicationDeleted,
+  "loan.created": loanCreated,
   "loan.status_changed": loanStatusChanged,
-  "customer.created": customerCreated,
-  "contract.generated": contractGenerated
+  "customer.created": customerCreated
 };

@@ -8,7 +8,7 @@
  * Presentational: the container owns the collector list and the mutation.
  */
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronDown, Loader2, Plus, UserPlus } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, Loader2, Plus, UserPlus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { CollectorOption, CreateFormStatus, CustomerFormValues, DayOfWeek } from "./types";
 
@@ -260,9 +260,7 @@ export function CustomerFormCard({
                   isBusinessOwner ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
                 )}
               >
-                {isBusinessOwner && (
-                  <CheckCircle2 size={13} strokeWidth={2} className="text-white" />
-                )}
+                {isBusinessOwner && <Check size={12} strokeWidth={2} className="text-white" />}
               </span>
               <span className="text-[13px] font-medium text-[#14254A]">
                 Es propietario de un negocio

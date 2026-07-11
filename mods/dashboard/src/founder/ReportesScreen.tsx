@@ -5,16 +5,22 @@
  * Gz8x7). Six reports, each produced from the shared `defineReport`
  * definition in `@mikro/common` (issue #110 / unify-reporting-strategy):
  * estado de cuenta, clientes, préstamos en riesgo, renovación, desempeño,
- * contable. Every row downloads a branded PDF via the existing `saveFile`
- * helper (JSON is available through the same tRPC procedure with
- * `format: "json"` but the catalog's single "Descargar" button — same
- * one-click convention as the loan-statement founder-feed card — defaults to
- * PDF; the format chips are informational, matching the Pencil design).
+ * contable. "Descargar" is a split button: the main half always names the
+ * format it will fetch (e.g. "Descargar PDF", `selectedFormat` state,
+ * defaults to PDF) and downloads immediately via `saveFile`/
+ * `downloadReportResult` (PDF: base64 bytes; JSON: the mutation's raw `data`,
+ * stringified); rows with more than one format get a small chevron half that
+ * opens a two-item menu to switch the format (a checkmark marks the active
+ * one). Single-format rows (audit log) render a plain button with no
+ * chevron — nothing to choose. An earlier version rendered the formats as two
+ * standalone toggle chips next to the button, which read as two competing
+ * controls rather than one action; the split button collapses it back to one.
  *
  * The audit log (month-scoped CSV, `exportAuditLog`) is NOT part of the
  * updated Pencil catalog — its fate is being decided separately by the
- * owner — so it is kept exactly as it was, under its own label below the
- * six-report list, untouched by this migration.
+ * owner — so it is kept exactly as it was (format label now says CSV, not the
+ * stale pre-migration "Excel"), under its own label below the six-report
+ * list, untouched by this migration.
  *
  * "Estado de cuenta" (loan-statement) is per-loan, not period-scoped, so it
  * doesn't fit this catalog's one-click period download: rendered disabled
@@ -25,6 +31,7 @@
 import { useMemo, useState } from "react";
 import {
   CalendarCheck,
+  Check,
   ChevronDown,
   Download,
   Receipt,
@@ -40,7 +47,13 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
-import { saveFile } from "../lib/saveFile";
+import {
+  base64ToBytes,
+  saveFile,
+  savedMessage,
+  SAVED_TOAST_MS,
+  type SaveResult
+} from "../lib/saveFile";
 
 const MONTHS_ES = [
   "Enero",
@@ -109,14 +122,6 @@ function monthBounds(o: { year: number; month: number }): { startDate: string; e
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10)
   };
-}
-
-/** Decode a base64 string (as returned by the report mutations) into raw bytes for saveFile. */
-function base64ToBytes(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
 }
 
 type ReportId =
@@ -217,7 +222,7 @@ const AUDIT_LOG_ENTRY: ReportEntry = {
   iconColor: "text-[#D97706]",
   title: "Registro de auditoría",
   description: "Exportación completa de los eventos del mes · directo del event log",
-  formats: ["Excel"],
+  formats: ["CSV"],
   available: true
 };
 
@@ -229,12 +234,48 @@ function GroupLabel({ children }: { children: string }) {
   );
 }
 
+/** Base64-PDF or raw-JSON report result, as returned by every `generate*Report` mutation. */
+interface ReportMutationResult {
+  data?: unknown;
+  pdfBase64?: string;
+  filename: string;
+  mimeType: string;
+}
+
+/** Save a report result in whichever format was selected — PDF bytes are already base64; JSON is the raw `data` object. Returns where it landed. */
+async function downloadReportResult(
+  result: ReportMutationResult,
+  format: "pdf" | "json"
+): Promise<{ saved: SaveResult; filename: string }> {
+  if (format === "json") {
+    // Guard symmetrically with the PDF branch: without this, a missing `data`
+    // would `JSON.stringify` to `undefined` and silently save a file whose
+    // contents are the literal text "undefined".
+    if (result.data === undefined) throw new Error("El servidor no devolvió los datos esperados.");
+    const bytes = new TextEncoder().encode(JSON.stringify(result.data, null, 2));
+    const saved = await saveFile(bytes, result.filename, result.mimeType);
+    return { saved, filename: result.filename };
+  }
+  if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
+  const saved = await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+  return { saved, filename: result.filename };
+}
+
 export function ReportesScreen() {
   const toast = useToast();
   const utils = trpc.useUtils();
   const monthOptions = useMemo(() => buildMonthOptions(new Date()), []);
   const [period, setPeriod] = useState(() => monthValue(monthOptions[0]!));
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // Per-row PDF/JSON pick for reports that support both — defaults to PDF
+  // (issue: format was previously hardcoded to PDF with no way to pick JSON
+  // from the UI). The button's main label always names the selected format,
+  // so there's nothing hidden about what a click downloads.
+  const [selectedFormat, setSelectedFormat] = useState<Record<string, "PDF" | "JSON">>({});
+  const formatFor = (id: string): "PDF" | "JSON" => selectedFormat[id] ?? "PDF";
+  // Which row's format-switch menu is open, if any — closed by the backdrop
+  // click-catcher or by picking a format.
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const selected = monthOptions.find((o) => monthValue(o) === period) ?? monthOptions[0]!;
 
@@ -249,6 +290,11 @@ export function ReportesScreen() {
     setDownloadingId(entry.id);
     try {
       const { startDate, endDate } = monthBounds(selected);
+      // The selected PDF/JSON format for the multi-format report rows (the
+      // audit-log row ignores it — it's always CSV).
+      const format = formatFor(entry.id).toLowerCase() as "pdf" | "json";
+      let saved: SaveResult;
+      let filename: string;
 
       switch (entry.id) {
         case "audit-log": {
@@ -257,51 +303,43 @@ export function ReportesScreen() {
             month: selected.month
           });
           const bytes = new TextEncoder().encode(result.csv);
-          await saveFile(bytes, result.filename, "text/csv");
+          saved = await saveFile(bytes, result.filename, "text/csv");
+          filename = result.filename;
           break;
         }
         case "clientes": {
-          const result = await generateCustomersReport.mutateAsync({ format: "pdf" });
-          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
-          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          const result = await generateCustomersReport.mutateAsync({ format });
+          ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
         case "prestamos-en-riesgo": {
-          const result = await generateDefaultedReport.mutateAsync({ format: "pdf" });
-          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
-          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          const result = await generateDefaultedReport.mutateAsync({ format });
+          ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
         case "renovacion": {
-          const result = await generateRenewalCandidatesReport.mutateAsync({ format: "pdf" });
-          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
-          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          const result = await generateRenewalCandidatesReport.mutateAsync({ format });
+          ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
         case "desempeno": {
           const result = await generatePerformanceReport.mutateAsync({
             startDate,
             endDate,
-            format: "pdf"
+            format
           });
-          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
-          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
         case "contable": {
-          const result = await generateAccountingReport.mutateAsync({
-            startDate,
-            endDate,
-            format: "pdf"
-          });
-          if (!result.pdfBase64) throw new Error("El servidor no devolvió el PDF esperado.");
-          await saveFile(base64ToBytes(result.pdfBase64), result.filename, result.mimeType);
+          const result = await generateAccountingReport.mutateAsync({ startDate, endDate, format });
+          ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
         default:
           return;
       }
-      toast.success("Reporte descargado.");
+      toast.success(savedMessage("Reporte", saved, filename), { durationMs: SAVED_TOAST_MS });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el reporte.");
     } finally {
@@ -311,7 +349,10 @@ export function ReportesScreen() {
 
   function renderList(entries: ReportEntry[]) {
     return (
-      <div className="overflow-hidden rounded-[14px] border border-[#E5EAF1] bg-white">
+      <div className="rounded-[14px] border border-[#E5EAF1] bg-white">
+        {/* No overflow-hidden here: rows have no distinct background to
+            clip against the rounded corners, and the format-switch menu
+            (absolutely positioned within a row) needs to escape this box. */}
         {entries.map((entry, i) => {
           const Icon = entry.icon;
           const downloading = downloadingId === entry.id;
@@ -340,29 +381,90 @@ export function ReportesScreen() {
                   {entry.description}
                 </span>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {entry.formats.map((f) => (
-                  <span
-                    key={f}
-                    className="rounded-[7px] bg-[#EEF3F9] px-[10px] py-[5px] text-[11px] font-semibold text-[#697A93]"
-                  >
-                    {f}
-                  </span>
-                ))}
-                <button
-                  type="button"
-                  disabled={!entry.available || downloading}
-                  title={entry.available ? undefined : entry.disabledNote}
-                  onClick={() => void handleDownload(entry)}
-                  className={cn(
-                    "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[14px] py-[9px] text-[13px] font-medium text-white transition hover:bg-[#183c88]",
-                    (!entry.available || downloading) &&
-                      "cursor-not-allowed opacity-60 hover:bg-[#1F4AA8]"
-                  )}
-                >
-                  <Download size={14} />
-                  {downloading ? "Generando…" : "Descargar"}
-                </button>
+              <div className="relative shrink-0">
+                {(() => {
+                  const multiFormat = entry.available && entry.formats.length > 1;
+                  const format = entry.formats.length > 1 ? formatFor(entry.id) : entry.formats[0];
+                  const idle = entry.available && !downloading;
+                  const menuOpen = openMenuId === entry.id;
+                  // One pill: the two halves share a background and rounded
+                  // shell, split only by a hairline translucent divider so it
+                  // reads as a single control rather than two glued buttons.
+                  return (
+                    <div
+                      className={cn(
+                        "inline-flex items-stretch overflow-hidden rounded-[9px] bg-[#1F4AA8] text-white",
+                        !idle && "opacity-60"
+                      )}
+                    >
+                      <button
+                        type="button"
+                        disabled={!entry.available || downloading}
+                        title={entry.available ? undefined : entry.disabledNote}
+                        onClick={() => void handleDownload(entry)}
+                        className={cn(
+                          "inline-flex items-center gap-[7px] px-[14px] py-[9px] text-[13px] font-medium transition",
+                          idle ? "hover:bg-[#183c88]" : "cursor-not-allowed"
+                        )}
+                      >
+                        <Download size={14} />
+                        {downloading ? "Generando…" : `Descargar ${format}`}
+                      </button>
+                      {multiFormat && (
+                        <button
+                          type="button"
+                          disabled={downloading}
+                          onClick={() =>
+                            setOpenMenuId((prev) => (prev === entry.id ? null : entry.id))
+                          }
+                          aria-label={`Cambiar formato de ${entry.title}`}
+                          aria-expanded={menuOpen}
+                          className={cn(
+                            "inline-flex items-center justify-center border-l border-white/20 px-[8px] transition",
+                            downloading ? "cursor-not-allowed" : "hover:bg-[#183c88]"
+                          )}
+                        >
+                          <ChevronDown
+                            size={14}
+                            className={cn("transition-transform", menuOpen && "rotate-180")}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+                {entry.available && entry.formats.length > 1 && openMenuId === entry.id && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                    <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[120px] overflow-hidden rounded-[10px] border border-[#E5EAF1] bg-white p-1 shadow-lg">
+                      {entry.formats.map((f) => {
+                        const active = formatFor(entry.id) === f;
+                        return (
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => {
+                              setSelectedFormat((prev) => ({
+                                ...prev,
+                                [entry.id]: f as "PDF" | "JSON"
+                              }));
+                              setOpenMenuId(null);
+                            }}
+                            className={cn(
+                              "flex w-full items-center justify-between rounded-[6px] px-[10px] py-[7px] text-[13px] font-medium transition",
+                              active
+                                ? "bg-[#E9F2FF] text-[#1F4AA8]"
+                                : "text-[#14254A] hover:bg-[#F4F7FB]"
+                            )}
+                          >
+                            {f}
+                            {active && <Check size={14} className="text-[#1F4AA8]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           );

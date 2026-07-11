@@ -25,8 +25,9 @@ export interface GeneratedContract {
  * PDF is persisted as a
  * `CustomerDocument` (`type: CONTRACT`, `source: DIRECT`) before returning, so
  * the digital record is durably captured for auditing even though the response
- * is download-only. The `contract.generated` feed event is written by the
- * event-capture middleware after the procedure succeeds, not here.
+ * is download-only. No feed event is written for this: generating a contract is
+ * part of creating a loan, which the `loan.created` event already covers (the
+ * standalone `contract.generated` event was retired as redundant noise).
  */
 export function createGenerateCustomerContract(client: DbClient) {
   const fn = async (input: GenerateCustomerContractInput): Promise<GeneratedContract> => {

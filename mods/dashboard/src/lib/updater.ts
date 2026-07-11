@@ -22,6 +22,14 @@ const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 const isTauri = (): boolean => typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
+// Local escape hatch for testing a Tauri build against a dev apiserver: the
+// updater targets a fixed production endpoint baked into the compiled app,
+// independent of whichever apiserver is running locally, so a real staged
+// release can legitimately swap the bundle and relaunch mid-session — which
+// looks exactly like an unrelated crash while testing something else. Set
+// VITE_DISABLE_AUTO_UPDATE=1 in the dashboard's .env to skip it entirely.
+const isDisabledForTesting = (): boolean => import.meta.env.VITE_DISABLE_AUTO_UPDATE === "1";
+
 export interface AppUpdaterState {
   /**
    * Version that has been downloaded + installed and is waiting to apply on the
@@ -62,7 +70,7 @@ export function useAppUpdater(): AppUpdaterState {
   const [readyVersion, setReadyVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isTauri()) return;
+    if (!isTauri() || isDisabledForTesting()) return;
 
     let cancelled = false;
     const tick = async () => {

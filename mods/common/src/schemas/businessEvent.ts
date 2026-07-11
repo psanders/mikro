@@ -17,8 +17,12 @@ export const businessEventTypeEnum = z.enum([
   "application.converted",
   "application.deleted",
   "application.restored",
+  "loan.created",
   "loan.status_changed",
   "customer.created",
+  // RETIRED: a contract is created as part of a loan, so `loan.created` covers
+  // it and a standalone contract event was redundant noise. No longer produced;
+  // kept in the catalog so historical rows still read/validate/render.
   "contract.generated",
   "copilot.action",
   "rule.alert",
@@ -85,6 +89,18 @@ const applicationRestoredPayloadSchema = z.object({
   deletionEventId: z.uuid()
 });
 
+// A loan created directly (not via application conversion) — e.g. the founder
+// copilot's "Nuevo préstamo" form. Previously the only trace of this action in
+// the feed was contract.generated (when a contract was also requested), which
+// never mentioned the loan itself. This event carries the loan's own story.
+const loanCreatedPayloadSchema = z.object({
+  loanId: z.uuid(),
+  principal: z.number(),
+  installments: z.number().int(),
+  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  installmentAmount: z.number()
+});
+
 const loanStatusChangedPayloadSchema = z.object({
   loanId: z.uuid(),
   from: z.string(),
@@ -95,9 +111,9 @@ const customerCreatedPayloadSchema = z.object({
   customerId: z.uuid()
 });
 
-// An ad-hoc loan contract generated for an existing customer from the founder
-// copilot (issue: contract-copilot-card). Records the action, never the PDF
-// bytes — the generated document is ephemeral and stored nowhere.
+// RETIRED (no longer produced; kept for historical rows). An ad-hoc loan
+// contract generated for an existing customer — superseded by `loan.created`,
+// which implies the contract when the founder opts into generating one.
 const contractGeneratedPayloadSchema = z.object({
   customerId: z.uuid(),
   principal: z.number(),
@@ -186,6 +202,7 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "application.converted": applicationConvertedPayloadSchema,
   "application.deleted": applicationDeletedPayloadSchema,
   "application.restored": applicationRestoredPayloadSchema,
+  "loan.created": loanCreatedPayloadSchema,
   "loan.status_changed": loanStatusChangedPayloadSchema,
   "customer.created": customerCreatedPayloadSchema,
   "contract.generated": contractGeneratedPayloadSchema,

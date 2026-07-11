@@ -461,10 +461,13 @@ export const protectedRouter = router({
   /**
    * Create a new loan for a customer.
    */
-  createLoan: protectedProcedure.input(createLoanSchema).mutation(async ({ ctx, input }) => {
-    const fn = createCreateLoan(ctx.db);
-    return fn(input);
-  }),
+  createLoan: protectedProcedure
+    .meta({ event: "loan.created" })
+    .input(createLoanSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createCreateLoan(ctx.db);
+      return fn(input);
+    }),
 
   /**
    * Calculate loan repayment options from principal, interest rate and duration.
@@ -721,11 +724,13 @@ export const protectedRouter = router({
 
   /**
    * Render an ad-hoc loan contract PDF for an existing customer (founder copilot
-   * contract form). ADMIN only. Stateless — stores no PDF, changes no record;
-   * records a `contract.generated` feed event on success.
+   * loan form, or `ctl` backfill). ADMIN only. Persists the PDF as a
+   * `CustomerDocument` but writes NO feed event: generating a contract is part
+   * of creating a loan (the `loan.created` event already covers it) and a
+   * standalone `contract.generated` event was redundant noise, so it was
+   * retired. Historical `contract.generated` rows still render in the feed.
    */
   generateCustomerContract: adminProcedure
-    .meta({ event: "contract.generated" })
     .input(generateCustomerContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateCustomerContract(ctx.db);

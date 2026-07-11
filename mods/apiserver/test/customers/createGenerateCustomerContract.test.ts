@@ -106,8 +106,7 @@ describe("createGenerateCustomerContract", () => {
       expect.fail("expected ValidationError");
     } catch (error) {
       expect(error).to.be.instanceOf(ValidationError);
-      // No side effect: the customer was never looked up, so nothing rendered
-      // and no contract.generated event can be produced for this call.
+      // No side effect: the customer was never looked up, so nothing rendered.
       expect(findUnique.called).to.be.false;
     }
   });
