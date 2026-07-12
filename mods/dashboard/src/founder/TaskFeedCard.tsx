@@ -54,6 +54,7 @@ export function TaskFeedCard(props: TaskFeedCardProps) {
 
   const invalidate = () => {
     void utils.tasks.getFiring.invalidate({ id: taskFiringId ?? "" });
+    void utils.tasks.listOpenFirings.invalidate();
     void utils.listFeedEvents.invalidate();
   };
 

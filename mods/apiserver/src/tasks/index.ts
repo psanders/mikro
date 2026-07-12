@@ -27,6 +27,7 @@ export {
   setTaskEnabled,
   cancelTask,
   getTaskFiring,
+  listOpenFirings,
   confirmTaskFiring,
   skipTaskFiring
 } from "./service.js";

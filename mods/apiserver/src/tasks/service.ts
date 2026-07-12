@@ -264,6 +264,22 @@ export async function getTaskFiring(db: PrismaClient, rawInput: unknown): Promis
   return toFiringView(firing);
 }
 
+/**
+ * Every firing still awaiting the founder (READY/NEEDS_INPUT), oldest due
+ * date first. Independent of the feed's date-range filter on purpose: a
+ * `task.due`/`task.needs_input` event that scrolled out of the founder's
+ * "Hoy"/"7d" window is otherwise undiscoverable — this is what lets the
+ * dashboard surface a stale card regardless of when it fired (issue #215:
+ * a firing left unconfirmed for days had no other way back into view).
+ */
+export async function listOpenFirings(db: PrismaClient): Promise<TaskFiringView[]> {
+  const firings = await db.taskFiring.findMany({
+    where: { status: { in: [...OPEN_FIRING_STATUSES] } },
+    orderBy: { dueAt: "asc" }
+  });
+  return firings.map(toFiringView);
+}
+
 async function loadOpenFiring(db: PrismaClient, id: string): Promise<TaskFiring> {
   const firing = await db.taskFiring.findUnique({ where: { id } });
   if (!firing) throw new Error("Tarea (ocurrencia) no encontrada.");

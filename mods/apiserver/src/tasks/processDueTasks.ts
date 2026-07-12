@@ -3,10 +3,11 @@
  *
  * One pass of the task worker (design D4), pure so it can be unit-tested
  * without a timer. For each enabled task with nextFireAt <= now: create one
- * firing (unless one is still open — missed periods collapse into a single
- * late firing), run the gathering phase, emit the lifecycle event, execute
- * immediately when the gate is auto, and advance the schedule. A failure on
- * one task never blocks the others.
+ * firing (unless one is still open AND the automation doesn't opt into
+ * `stackFirings` — missed periods then collapse into a single late firing
+ * instead of stacking), run the gathering phase, emit the lifecycle event,
+ * execute immediately when the gate is auto, and advance the schedule. A
+ * failure on one task never blocks the others.
  */
 import type { PrismaClient } from "../generated/prisma/client.js";
 import { logger } from "../logger.js";
@@ -44,18 +45,24 @@ export async function processDueTasks(
           ? { nextFireAt: null, enabled: false }
           : { nextFireAt: computeNextFireAt(schedule, now) };
 
-      const open = await db.taskFiring.count({
-        where: { taskId: task.id, status: { in: [...OPEN_FIRING_STATUSES] } }
-      });
-      if (open > 0) {
-        // Never stack firings: the open card already represents the
-        // obligation; the schedule still advances past the missed period.
-        await db.task.update({ where: { id: task.id }, data: advance });
-        continue;
+      const automation = getAutomation(task.automationId);
+
+      if (!automation?.stackFirings) {
+        const open = await db.taskFiring.count({
+          where: { taskId: task.id, status: { in: [...OPEN_FIRING_STATUSES] } }
+        });
+        if (open > 0) {
+          // Never stack firings for fungible obligations: the open card
+          // already represents it; the schedule still advances past the
+          // missed period. Automations that opt into `stackFirings` (each
+          // firing bound to a distinct unit of work) skip this collapse —
+          // see the Automation.stackFirings doc comment.
+          await db.task.update({ where: { id: task.id }, data: advance });
+          continue;
+        }
       }
 
       const dueAt = task.nextFireAt as Date;
-      const automation = getAutomation(task.automationId);
       const staticParams = JSON.parse(task.staticParamsJson) as Record<string, unknown>;
 
       const gathered = automation

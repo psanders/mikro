@@ -1338,6 +1338,15 @@ export const protectedRouter = router({
       return taskService.getTaskFiring(ctx.db as unknown as PrismaClient, input);
     }),
 
+    /**
+     * Every firing still awaiting the founder, regardless of the feed's date
+     * filter — backs the always-visible "Pendientes" surface so a card that
+     * scrolled out of "Hoy" isn't lost (issue #215).
+     */
+    listOpenFirings: adminProcedure.query(async ({ ctx }) => {
+      return taskService.listOpenFirings(ctx.db as unknown as PrismaClient);
+    }),
+
     /** Confirm: validate ask values, execute the automation, record the outcome event. */
     confirmFiring: adminProcedure
       .input(confirmTaskFiringSchema)
