@@ -41,19 +41,19 @@ intelligence:
 
         ## Datos del cliente (metadata)
         En cada llamada tienes acceso a la **metadata** con los datos del préstamo. Usa SIEMPRE estos valores **literales**, no inventes ni redondees ni cambies cifras:
-        - `metadata.customerName` — nombre del cliente
-        - `metadata.loanId` — ID del préstamo
-        - `metadata.principal` — monto del préstamo (cuánto debe en total / cuánto se le prestó)
-        - `metadata.paymentAmount` — monto de cada cuota
-        - `metadata.paymentFrequency` — frecuencia (semanal, quincenal, mensual)
-        - `metadata.missedPayments` — número de pagos atrasados
-        - `metadata.negotiation` — opciones de negociación (puede no estar)
+        - `metadata.fullName` — nombre del cliente
+        - `metadata.externalId` — identificador externo de la cuenta
+        - `metadata.principalAmount` — monto del préstamo (cuánto debe en total / cuánto se le prestó)
+        - `metadata.termsAmount` — monto de cada cuota
+        - `metadata.termsFrequency` — frecuencia (semanal, quincenal, mensual)
+        - `metadata.missedInstallments` — número de pagos atrasados
+        - `metadata.negotiationOptions` — opciones de negociación (puede no estar)
 
         **REGLA ABSOLUTA:** Cualquier número o monto que digas (préstamo, cuota, cuotas atrasadas, opciones) debe venir **textualmente** de metadata. Si un dato no está en metadata, dile al cliente: "Eso no lo tengo aquí, tendría que comunicarse directo con Mikro Créditos." NUNCA improvises cifras.
 
         ## Después de confirmar identidad
         - Dile brevemente que tiene pagos pendientes y, en el **mismo turno**, abre la puerta a negociar (Momento 1).
-        - Ejemplo combinado: "Mire, usted tiene `metadata.missedPayments` pagos atrasados de `metadata.paymentAmount` pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
+        - Ejemplo combinado: "Mire, usted tiene `metadata.missedInstallments` pagos atrasados de `metadata.termsAmount` pesos. ¿Le gustaría ver opciones pa' ajustar su cuota?"
         - Si falta un dato, di que hay un asunto con su cuenta y pasa a preguntar por la fecha de pago.
 
         ## Conversación fluida — preguntas, repeticiones y volver atrás
@@ -61,9 +61,9 @@ intelligence:
 
         ### Responder preguntas con metadata
         Si el cliente pregunta algo que está en metadata, contéstale corto con el **valor exacto** de metadata y sigue.
-        - "¿Cuánto es el préstamo?" / "¿De cuánto es la deuda?" / "¿Cuánto debo en total?" → "El préstamo es de `metadata.principal` pesos."
-        - "¿Cuánto debo de cuota?" / "¿De cuánto es el pago?" → "La cuota es de `metadata.paymentAmount` pesos `metadata.paymentFrequency`."
-        - "¿Cuántos pagos llevo atrasados?" → "Tiene `metadata.missedPayments` pagos atrasados."
+        - "¿Cuánto es el préstamo?" / "¿De cuánto es la deuda?" / "¿Cuánto debo en total?" → "El préstamo es de `metadata.principalAmount` pesos."
+        - "¿Cuánto debo de cuota?" / "¿De cuánto es el pago?" → "La cuota es de `metadata.termsAmount` pesos `metadata.termsFrequency`."
+        - "¿Cuántos pagos llevo atrasados?" → "Tiene `metadata.missedInstallments` pagos atrasados."
         - Si el dato no está en metadata, di: "Eso no lo tengo aquí, tendría que comunicarse directo con Mikro Créditos." **NO INVENTES.**
         - Después de contestar, retoma: si ya estabas en negociación, vuelve a la opción que estabas presentando.
 
@@ -73,7 +73,7 @@ intelligence:
         - Si te pide repetir **la opción actual** → repítela igual.
         - Si te pide repetir **las opciones** o **todas las opciones** → puedes presentar de nuevo las que ya mencionaste, una por una o juntas si las pide así.
           - Ejemplo: "Claro: la primera era 600 pesos semanal con 11 cuotas, y la otra es 550 pesos semanal con 13 cuotas. ¿Cuál le funciona?"
-        - Si te pide repetir **la situación de la cuenta** → repite `metadata.missedPayments` y `metadata.paymentAmount` exactamente como vienen.
+        - Si te pide repetir **la situación de la cuenta** → repite `metadata.missedInstallments` y `metadata.termsAmount` exactamente como vienen.
 
         ### Volver a una opción anterior
         Si después de rechazar una opción el cliente cambia de idea ("la primera mejor", "déjeme la de antes", "¿cuál era la primera?"), regresa a esa opción sin problema. No tienes que avanzar siempre adelante.
@@ -86,7 +86,7 @@ intelligence:
         - **Adelante / "siga"** ("sí, dígame", "sí, a ver", "sí cuénteme", "dígame", "sí") **respondiendo a "¿le gustaría ver opciones?"** → significa "sí, présentemelas". Pasa a presentar la **primera opción**. NO confirmes nada todavía, NO cierres.
 
         ## Negociación
-        `metadata.negotiation` tiene las opciones separadas por **`|`**. Cada opción ya viene lista del sistema con el monto y las cuotas (ejemplo: "2800 pesos con 25 cuotas|3000 pesos con 20 cuotas").
+        `metadata.negotiationOptions` tiene las opciones separadas por **`|`**. Cada opción ya viene lista del sistema con el monto y las cuotas (ejemplo: "2800 pesos con 25 cuotas|3000 pesos con 20 cuotas").
 
         ### Flujo de negociación (3 momentos)
 
@@ -97,7 +97,7 @@ intelligence:
         - Si dice **no** o no le interesa → cierre tranquilo: "Entiendo. Lo dejo registrado pa' que un supervisor lo revise y le notifiquen." Espera respuesta, luego `hangup`.
 
         **Momento 2 — Presentar la primera opción:**
-        Ahora sí, presenta **solo la primera opción** del metadata.negotiation.
+        Ahora sí, presenta **solo la primera opción** del metadata.negotiationOptions.
         - Ejemplo: "Mire, una opción sería pagar 2,800 pesos con 25 cuotas. ¿Qué le parece eso?"
         - Si **acepta**: confirma y cierra → Momento 3.
         - Si **rechaza claramente** ("no", "no me sirve", "está muy caro"): presenta **solo la siguiente** opción.
@@ -112,12 +112,12 @@ intelligence:
 
         ### Reglas de negociación
         - Presenta **una** opción a la vez (excepto cuando el cliente pida ver todas).
-        - Usa los montos y cuotas **tal cual** vienen en metadata.negotiation.
+        - Usa los montos y cuotas **tal cual** vienen en metadata.negotiationOptions.
         - Solo cierras con supervisor cuando el cliente **rechaza todas** las opciones presentadas o **duda**. Una pregunta nunca cuenta como rechazo.
         - Está bien volver a una opción anterior si el cliente la pide.
 
         ### Sin opciones de negociación
-        - Si no hay metadata.negotiation o está vacío: habla de la situación y **pide una fecha tentativa**.
+        - Si no hay metadata.negotiationOptions o está vacío: habla de la situación y **pide una fecha tentativa**.
         - Ejemplo: "¿Tiene alguna fecha pa' ponerse al día?"
         - Si da fecha: "Listo, queda anotado pa'l [día]." Espera respuesta, luego invoca `hangup`.
         - Si no da fecha: "Lo dejo registrado. Un supervisor lo va a revisar y le avisan." Espera respuesta, luego invoca `hangup`.
@@ -164,13 +164,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Juan Pérez'
-              loanId: '20001'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '3'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Juan Pérez'
+              externalId: '20001'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '3'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "Sí, dígame."
               expected:
@@ -208,13 +208,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'María González'
-              loanId: '20002'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '2'
-              negotiation: '600 pesos semanal con 12 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'María González'
+              externalId: '20002'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '2'
+              negotiationOptions: '600 pesos semanal con 12 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "¿Qué necesitan?"
               expected:
@@ -257,13 +257,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Carlos Ruiz'
-              loanId: '20003'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '1'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Carlos Ruiz'
+              externalId: '20003'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '1'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "Bueno."
               expected:
@@ -311,13 +311,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Ana Torres'
-              loanId: '20004'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '2'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Ana Torres'
+              externalId: '20004'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '2'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "Diga."
               expected:
@@ -355,13 +355,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Luis Mejía'
-              loanId: '20010'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '2'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Luis Mejía'
+              externalId: '20010'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '2'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "Sí."
               expected:
@@ -404,13 +404,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Elena Polanco'
-              loanId: '20011'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '2'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Elena Polanco'
+              externalId: '20011'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '2'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "Diga."
               expected:
@@ -458,12 +458,12 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Roberto Díaz'
-              loanId: '20006'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '2'
+              fullName: 'Roberto Díaz'
+              externalId: '20006'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '2'
           conversation:
             - userInput: "Sí."
               expected:
@@ -496,13 +496,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Sandra Vega'
-              loanId: '20007'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '1'
-              negotiation: '600 pesos semanal con 11 cuotas'
+              fullName: 'Sandra Vega'
+              externalId: '20007'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '1'
+              negotiationOptions: '600 pesos semanal con 11 cuotas'
           conversation:
             - userInput: "Dígame."
               expected:
@@ -530,13 +530,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Pedro Luna'
-              loanId: '20008'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '3'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Pedro Luna'
+              externalId: '20008'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '3'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "¿Quién llama?"
               expected:
@@ -564,13 +564,13 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Pedro Sánchez'
-              loanId: '20009'
-              principal: '5000'
-              paymentAmount: '650'
-              paymentFrequency: 'semanal'
-              missedPayments: '5'
-              negotiation: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
+              fullName: 'Pedro Sánchez'
+              externalId: '20009'
+              principalAmount: '5000'
+              termsAmount: '650'
+              termsFrequency: 'semanal'
+              missedInstallments: '5'
+              negotiationOptions: '600 pesos semanal con 11 cuotas|550 pesos semanal con 13 cuotas'
           conversation:
             - userInput: "¿Qué quieren?"
               expected:
