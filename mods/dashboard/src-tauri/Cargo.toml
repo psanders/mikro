@@ -21,6 +21,10 @@ tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Used by save_dialog.rs::write_saved_file, which runs on every desktop
+# platform (not just macOS) — keep this in the shared dependency table.
+base64 = "0.22"
+
 # Async main-thread hop for the native save-location picker (see
 # src/save_dialog.rs `pick_save_path`): NSSavePanel/rfd's dialogs must run
 # synchronously on the main thread, so the command awaits a oneshot from
@@ -45,7 +49,6 @@ tauri-plugin-process = "2"
 # needed there.
 [target.'cfg(target_os = "macos")'.dependencies]
 screencapturekit = { version = "8", features = ["macos_15_0"] }
-base64 = "0.22"
 
 # Native, nil-safe save-location picker (mikro/#204): `@tauri-apps/plugin-dialog`'s
 # `save()` goes through objc2-app-kit's safe `NSSavePanel::savePanel()` binding,
