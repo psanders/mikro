@@ -38,6 +38,13 @@ export const dailyClose: Automation = {
   id: "daily-close",
   title: "Cierre contable del día",
   gateFloor: "confirm",
+  // Each firing closes one specific calendar date (baked into its payload at
+  // fire time, see resolveCloseDate) — never a stand-in for a different
+  // day's close. Collapsing a missed day into the next open card would
+  // silently skip that date's ledger entry forever; `execute`'s own
+  // `daily-close:<date>` reference already guards against double-posting the
+  // same date twice, so stacking is safe.
+  stackFirings: true,
   params: {
     accountId: {
       label: "Cuenta destino",

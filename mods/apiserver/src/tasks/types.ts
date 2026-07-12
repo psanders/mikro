@@ -79,6 +79,19 @@ export interface Automation {
   /** Tasks may tighten the gate to confirm, never loosen below this. */
   gateFloor: TaskGate;
   params: Record<string, SlotSpec>;
+  /**
+   * When true, a new firing is created every due period even while a prior
+   * firing for this task is still open (READY/NEEDS_INPUT) — the default
+   * (false/unset) collapses missed periods into the one open card instead,
+   * correct for automations whose firings represent the SAME fungible
+   * obligation (e.g. `payment`, `record-expense` — confirming two would
+   * double-pay). Set this when firings are NOT interchangeable — each one
+   * is bound to a distinct unit of work (e.g. `daily-close`'s firing closes
+   * one specific calendar date, baked into its payload at fire time) — so
+   * collapsing them would silently drop that date's work forever instead of
+   * just deduplicating a stale reminder.
+   */
+  stackFirings?: boolean;
   /** Optional display-only fire-time context for the feed card. */
   buildContext?: (ctx: ResolveContext) => Promise<Record<string, unknown>>;
   execute: (payload: Record<string, unknown>, deps: AutomationDeps) => Promise<AutomationResult>;

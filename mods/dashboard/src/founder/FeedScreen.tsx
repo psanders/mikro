@@ -37,12 +37,41 @@ import {
   type FeedFilterValue
 } from "./components/feedFilters";
 import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/types";
+import type { RouterOutputs } from "../lib/trpc";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
 /** Task lifecycle events whose card may carry the live action widget — never grouped. */
 function isTaskEvent(event: FeedEvent): boolean {
   return event.type === "task.due" || event.type === "task.needs_input";
+}
+
+type OpenFiring = RouterOutputs["tasks"]["listOpenFirings"][number];
+
+/**
+ * Synthesizes a `FeedEvent`-shaped wrapper around an open firing so it can
+ * render through the existing `TaskFeedCard` (which only reads
+ * `payload.taskFiringId` off the event to fetch live state) outside the
+ * date-filtered feed. Never sent to the server — display-only.
+ */
+function firingToFeedEvent(firing: OpenFiring): FeedEvent {
+  return {
+    id: `pending-${firing.id}`,
+    type: firing.status === "NEEDS_INPUT" ? "task.needs_input" : "task.due",
+    occurredAt: new Date(firing.dueAt).toISOString(),
+    actorName: "Sistema",
+    summary: `La tarea "${firing.taskName}" está lista para confirmar.`,
+    payload: {
+      taskFiringId: firing.id,
+      automationId: firing.automationId,
+      taskName: firing.taskName
+    }
+  };
+}
+
+function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 interface FeedNavState {
@@ -120,6 +149,15 @@ export function FeedScreen() {
     { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
   );
 
+  // Always-visible safety net (issue #215): a firing left unconfirmed past
+  // the day it fired otherwise has no way back into view once it scrolls out
+  // of the "Hoy"-default feed filter. Independent of `filterValue` on purpose.
+  const openFiringsQuery = trpc.tasks.listOpenFirings.useQuery();
+  const staleOpenFirings = useMemo(() => {
+    const cutoff = startOfToday();
+    return (openFiringsQuery.data ?? []).filter((f) => new Date(f.dueAt) < cutoff);
+  }, [openFiringsQuery.data]);
+
   const actorsQuery = trpc.listUsers.useQuery({ limit: 100 });
   const actors = useMemo(
     () => (actorsQuery.data ?? []).map((u) => ({ id: u.id, name: u.name })),
@@ -170,6 +208,22 @@ export function FeedScreen() {
       </header>
 
       <FilterBar value={filterValue} actors={actors} onApply={applyFilter} />
+
+      {staleOpenFirings.length > 0 && (
+        <div className="shrink-0 border-b border-[#E5EAF1] bg-[#FFF9EE] px-6 py-3">
+          <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#8A6D1D]">
+            Pendientes ({staleOpenFirings.length})
+          </p>
+          {staleOpenFirings.map((firing) => (
+            <TaskFeedCard
+              key={firing.id}
+              event={firingToFeedEvent(firing)}
+              onNavigate={() => {}}
+              onAskCopilot={(question) => copilot.openWith(question)}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {feed.isPending && (

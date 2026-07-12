@@ -144,6 +144,36 @@ describe("Founder Tasks Integration", () => {
     expect(updated.nextFireAt!.getTime()).to.be.greaterThan(Date.now());
   });
 
+  it("stacks firings for an automation that opts in (daily-close): a new firing is created per date even while the prior one stays open (issue #215)", async () => {
+    const task = await makeTask({
+      automationId: "daily-close",
+      name: "Cierre contable del día",
+      frequency: "daily",
+      weekday: null,
+      gate: "confirm",
+      staticParamsJson: JSON.stringify({ accountId })
+    });
+
+    const first = await processDueTasks(db);
+    expect(first.fired).to.equal(1);
+    const firstFiring = await db.taskFiring.findFirstOrThrow({ where: { taskId: task.id } });
+    expect(firstFiring.status).to.equal("READY");
+
+    // Force the task due again (next day) while the first firing is still
+    // unconfirmed — unlike `payment`/`record-expense`, daily-close must NOT
+    // collapse this into the open card: each firing closes a distinct date.
+    await db.task.update({
+      where: { id: task.id },
+      data: { nextFireAt: new Date(Date.now() - 1000) }
+    });
+    const second = await processDueTasks(db);
+
+    expect(second.fired).to.equal(1);
+    const firings = await db.taskFiring.findMany({ where: { taskId: task.id } });
+    expect(firings).to.have.lengthOf(2);
+    expect(firings.every((f) => f.status === "READY")).to.equal(true);
+  });
+
   it("collapses long downtime into a single late firing", async () => {
     // Three missed weeks ago.
     const task = await makeTask({
