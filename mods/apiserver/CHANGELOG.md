@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.5](https://github.com/psanders/mikro/compare/v1.39.4...v1.39.5) (2026-07-12)
+
+### Bug Fixes
+
+- **tasks:** daily-close stacks firings, stale cards surface regardless of feed filter ([#216](https://github.com/psanders/mikro/issues/216)) ([4494022](https://github.com/psanders/mikro/commit/4494022e812c412d229ef23cd6723f0ee54c0546)), closes [#215](https://github.com/psanders/mikro/issues/215)
+
 ## [1.39.4](https://github.com/psanders/mikro/compare/v1.39.3...v1.39.4) (2026-07-11)
 
 ### Bug Fixes
