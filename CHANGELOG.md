@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.6](https://github.com/psanders/mikro/compare/v1.39.5...v1.39.6) (2026-07-12)
+
+### Bug Fixes
+
+- **dashboard:** move base64 dep out of macOS-only target table ([#217](https://github.com/psanders/mikro/issues/217)) ([f347f2b](https://github.com/psanders/mikro/commit/f347f2b8799b5ec81b5c728595d51c6944ca2e48))
+
 ## [1.39.5](https://github.com/psanders/mikro/compare/v1.39.4...v1.39.5) (2026-07-12)
 
 ### Bug Fixes
