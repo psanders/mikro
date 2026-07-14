@@ -20,7 +20,7 @@ intelligence:
         Asistente virtual de Mikro Créditos. Objetivo: informar que hay un asunto pendiente con la cuenta, invitar a contactar a Mikro Créditos si necesita opciones, y pedir una fecha tentativa de pago si puede.
 
         ## Llamada saliente
-        - firstMessage ya se reprodujo. Tu primera respuesta: confirmar identidad (con metadata.customerName: "¿Hablo con [nombre]?"; sin nombre: "¿Con quién tengo el gusto?"). Si responden con su nombre, es confirmación; sigue al siguiente paso.
+        - firstMessage ya se reprodujo. Tu primera respuesta: confirmar identidad (con metadata.fullName: "¿Hablo con [nombre]?"; sin nombre: "¿Con quién tengo el gusto?"). Si responden con su nombre, es confirmación; sigue al siguiente paso.
         - Respuestas cortas (1–2 oraciones). Identifícate como asistente de Mikro Créditos.
         - Interpreta la intención del cliente aunque use otras palabras, titubeos o frases distintas; responde al sentido, no a la frase exacta.
 
@@ -41,7 +41,7 @@ intelligence:
         Amable y cercano. Sin lenguaje legal ni amenazas. Una pregunta a la vez.
 
         ## Metadata (préstamo)
-        Tienes: loanId, principal, paymentAmount, paymentFrequency, missedPayments, customerName. Es importante usarlos al informar: con nombre (customerName) personaliza; al explicar la situación menciona pagos pendientes (missedPayments), monto (paymentAmount) y frecuencia (paymentFrequency) si están disponibles. Solo si falta metadata usa mensaje genérico: asunto pendiente con su cuenta, invitar a contactar a Mikro Créditos. No inventes datos.
+        Tienes: externalId, principalAmount, termsAmount, termsFrequency, missedInstallments, fullName. Es importante usarlos al informar: con nombre (fullName) personaliza; al explicar la situación menciona pagos pendientes (missedInstallments), monto (termsAmount) y frecuencia (termsFrequency) si están disponibles. Solo si falta metadata usa mensaje genérico: asunto pendiente con su cuenta, invitar a contactar a Mikro Créditos. No inventes datos.
 
         ## Flujo
         1. **Identidad**: Confirmar con nombre (metadata) o "¿Con quién tengo el gusto?"
@@ -84,12 +84,12 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Juan Pérez'
-              loanId: '10010'
-              principal: '25000'
-              paymentAmount: '5000'
-              paymentFrequency: 'mensual'
-              missedPayments: '3'
+              fullName: 'Juan Pérez'
+              externalId: '10010'
+              principalAmount: '25000'
+              termsAmount: '5000'
+              termsFrequency: 'mensual'
+              missedInstallments: '3'
           conversation:
             - userInput: "Sí, dígame."
               expected:
@@ -122,11 +122,11 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'María González'
-              loanId: '10011'
-              paymentAmount: '3500'
-              paymentFrequency: 'quincenal'
-              missedPayments: '2'
+              fullName: 'María González'
+              externalId: '10011'
+              termsAmount: '3500'
+              termsFrequency: 'quincenal'
+              missedInstallments: '2'
           conversation:
             - userInput: "Sí, ¿qué desean?"
               expected:
@@ -159,12 +159,12 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Carlos Rodríguez'
-              loanId: '10012'
-              principal: '15000'
-              paymentAmount: '2500'
-              paymentFrequency: 'mensual'
-              missedPayments: '4'
+              fullName: 'Carlos Rodríguez'
+              externalId: '10012'
+              principalAmount: '15000'
+              termsAmount: '2500'
+              termsFrequency: 'mensual'
+              missedInstallments: '4'
           conversation:
             - userInput: "Sí, diga."
               expected:
@@ -197,10 +197,10 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Ana Martínez'
-              loanId: '10013'
-              paymentAmount: '4000'
-              missedPayments: '2'
+              fullName: 'Ana Martínez'
+              externalId: '10013'
+              termsAmount: '4000'
+              missedInstallments: '2'
           conversation:
             - userInput: "Sí, ¿quién habla?"
               expected:
@@ -264,11 +264,11 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Roberto Silva'
-              loanId: '10014'
-              paymentAmount: '6000'
-              paymentFrequency: 'mensual'
-              missedPayments: '1'
+              fullName: 'Roberto Silva'
+              externalId: '10014'
+              termsAmount: '6000'
+              termsFrequency: 'mensual'
+              missedInstallments: '1'
           conversation:
             - userInput: "Buenas, dígame."
               expected:
@@ -301,10 +301,10 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Pedro Sánchez'
-              loanId: '10015'
-              paymentAmount: '8000'
-              missedPayments: '5'
+              fullName: 'Pedro Sánchez'
+              externalId: '10015'
+              termsAmount: '8000'
+              missedInstallments: '5'
           conversation:
             - userInput: "Sí, ¿qué quieren?"
               expected:
@@ -337,11 +337,11 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Luis Hernández'
-              loanId: '10016'
-              paymentAmount: '5000'
-              paymentFrequency: 'mensual'
-              missedPayments: '2'
+              fullName: 'Luis Hernández'
+              externalId: '10016'
+              termsAmount: '5000'
+              termsFrequency: 'mensual'
+              missedInstallments: '2'
           conversation:
             - userInput: "Sí, dígame."
               expected:
@@ -369,11 +369,11 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Sandra López'
-              loanId: '10017'
-              paymentAmount: '4500'
-              paymentFrequency: 'quincenal'
-              missedPayments: '1'
+              fullName: 'Sandra López'
+              externalId: '10017'
+              termsAmount: '4500'
+              termsFrequency: 'quincenal'
+              missedInstallments: '1'
           conversation:
             - userInput: "Buenas tardes."
               expected:
@@ -406,9 +406,9 @@ intelligence:
             ingressNumber: '+18091234567'
             callerNumber: '+18091234567'
             metadata:
-              customerName: 'Laura Méndez'
-              paymentAmount: '3000'
-              missedPayments: '2'
+              fullName: 'Laura Méndez'
+              termsAmount: '3000'
+              missedInstallments: '2'
           conversation:
             - userInput: "Sí, diga."
               expected:
