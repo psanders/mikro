@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.7](https://github.com/psanders/mikro/compare/v1.39.6...v1.39.7) (2026-07-14)
+
+### Bug Fixes
+
+- **apiserver:** post daily-close collections as DEPOSIT not INCOME ([#220](https://github.com/psanders/mikro/issues/220)) ([aa4d3dd](https://github.com/psanders/mikro/commit/aa4d3dd277fa661ba0f95e76ce1fd09d933da44a))
+
 ## [1.39.6](https://github.com/psanders/mikro/compare/v1.39.5...v1.39.6) (2026-07-12)
 
 **Note:** Version bump only for package @mikro/apiserver

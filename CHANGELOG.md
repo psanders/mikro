@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.7](https://github.com/psanders/mikro/compare/v1.39.6...v1.39.7) (2026-07-14)
+
+### Bug Fixes
+
+- **apiserver:** post daily-close collections as DEPOSIT not INCOME ([#220](https://github.com/psanders/mikro/issues/220)) ([aa4d3dd](https://github.com/psanders/mikro/commit/aa4d3dd277fa661ba0f95e76ce1fd09d933da44a))
+- **autopilot:** rename metadata.\* fields to canonical QCobro variable names ([#219](https://github.com/psanders/mikro/issues/219)) ([bf305b2](https://github.com/psanders/mikro/commit/bf305b205d477bbaec4017fa8a134f303128bd89))
+
 ## [1.39.6](https://github.com/psanders/mikro/compare/v1.39.5...v1.39.6) (2026-07-12)
 
 ### Bug Fixes
