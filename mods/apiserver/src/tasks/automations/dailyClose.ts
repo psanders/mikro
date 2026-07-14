@@ -3,7 +3,7 @@
  *
  * daily-close: bridges one calendar day's collected loan payments into the
  * accounting ledger — the manual process ACCOUNTING.md documents as awaiting
- * "future automation". Posts one INCOME deposit per payment method to the
+ * "future automation". Posts one DEPOSIT per payment method to the
  * configured account. Idempotent per close date via the transaction
  * `reference` marker `daily-close:<date>`: a date already bridged refuses
  * (surfaced as task.failed), never double-posts. A day with no collections
@@ -105,7 +105,7 @@ export const dailyClose: Automation = {
     for (const [method, amount] of byMethod) {
       total += amount;
       await deps.createTransaction({
-        type: "INCOME",
+        type: "DEPOSIT",
         amount,
         occurredAt: end,
         description: `Cierre diario ${closeDate} — cobranza en ${METHOD_LABELS[method] ?? method}`,
