@@ -82,6 +82,7 @@ export {
   loanStatementInputSchema,
   buildLoanStatementData,
   buildLoanStatementDocument,
+  buildKpiCells,
   type LoanStatementInput,
   type LoanStatementData,
   type LoanStatementKpis,

@@ -43,6 +43,9 @@ receipts stay consistent.
 - Policy defaults live under `loans` in `mikro.json` (see `mikro.json.example`):
   `defaultMoraRate`, `moraGraceDays`, `moraCapInCuotas`, `moraMinDop`,
   `moraStopOnDefault`, `moraEffectiveFrom`.
+- `moraGraceDays` is a waiver window, not a deductible: at or below it no mora accrues and
+  the loan tags as `status:pre_mora`; once passed, mora bills **every** elapsed day, grace
+  days included. It is global — there is no per-loan grace. Default `0` (mora from day one).
 - Optional per-loan override: `moraRate` on the loan.
 - API: `previewLateFee` (read-only) and `createPayment` (returns `{ installment, lateFee }`).
 - Mora preview and the auto-split **net out** already-collected (non-reversed) `LATE_FEE`

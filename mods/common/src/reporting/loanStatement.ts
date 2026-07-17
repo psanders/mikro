@@ -109,6 +109,9 @@ export interface LoanStatementKpis {
   moraAccrued: number;
   grossMora: number;
   collectedMora: number;
+  /** True when the loan is late but still inside the grace window, so mora is zero. */
+  graceApplied: boolean;
+  moraGraceDays: number;
   daysOverdue: number;
   /** ISO date the customer first fell behind, or null when current. */
   sinceDate: string | null;
@@ -189,6 +192,8 @@ export function buildLoanStatementData(input: LoanStatementInput): LoanStatement
       moraAccrued: derived.moraAccrued,
       grossMora: derived.grossMora,
       collectedMora: derived.collectedMora,
+      graceApplied: derived.graceApplied,
+      moraGraceDays: snapshot.terms.moraPolicy.moraGraceDays,
       daysOverdue: derived.daysOverdue,
       sinceDate,
       missedCycles: derived.missedCycles
@@ -279,7 +284,7 @@ function cubiertaElFor(row: RepaymentScheduleRow, cuota: number): string {
   return "—";
 }
 
-function buildKpiCells(data: LoanStatementData): KpiCell[] {
+export function buildKpiCells(data: LoanStatementData): KpiCell[] {
   const { kpis } = data;
   return [
     { label: "Capital prestado", value: formatDop(kpis.principal) },
@@ -298,8 +303,14 @@ function buildKpiCells(data: LoanStatementData): KpiCell[] {
     {
       label: "Mora acumulada",
       value: formatDop(kpis.moraAccrued),
-      subtext: `${formatDop(kpis.grossMora)} generada − ${formatDop(kpis.collectedMora)} pagada`,
-      emphasize: true
+      // A late loan inside the grace window shows RD$0.00 next to a non-zero "días de
+      // atraso"; without naming the grace the two figures read as a contradiction.
+      // Orange is the report's alarm colour, so a grace-waived zero must not wear it.
+      subtext: kpis.graceApplied
+        ? `Sin mora — dentro del período de gracia de ${kpis.moraGraceDays} ${kpis.moraGraceDays === 1 ? "día" : "días"}`
+        : `${formatDop(kpis.grossMora)} generada − ${formatDop(kpis.collectedMora)} pagada`,
+      emphasize: !kpis.graceApplied,
+      ...(kpis.graceApplied ? { pill: { value: "En gracia", tone: "info" as const } } : {})
     },
     {
       label: "Días de atraso",
