@@ -72,6 +72,44 @@ describe("computeAccruedMora", () => {
     expect(r.moraAmount).to.equal(0);
   });
 
+  it("applies grace when daysLate equals moraGraceDays", () => {
+    const r = computeAccruedMora(
+      makeInput({
+        asOfDate: new Date("2026-01-09T12:00:00Z"),
+        policy: { ...policy, moraGraceDays: 1 }
+      })
+    );
+    expect(r.daysLate).to.equal(1);
+    expect(r.missedCycles).to.equal(1);
+    expect(r.graceApplied).to.be.true;
+    expect(r.moraAmount).to.equal(0);
+  });
+
+  it("accrues once daysLate passes moraGraceDays", () => {
+    const r = computeAccruedMora(
+      makeInput({
+        asOfDate: new Date("2026-01-10T12:00:00Z"),
+        policy: { ...policy, moraGraceDays: 1 }
+      })
+    );
+    expect(r.daysLate).to.equal(2);
+    expect(r.graceApplied).to.be.false;
+    expect(r.moraAmount).to.be.greaterThan(0);
+  });
+
+  // Grace is a waiver window, not a deductible: once passed, mora bills every
+  // elapsed day including the grace day itself.
+  it("bills the grace day too once grace is passed", () => {
+    const r = computeAccruedMora(
+      makeInput({
+        asOfDate: new Date("2026-01-10T12:00:00Z"),
+        policy: { ...policy, moraGraceDays: 1 }
+      })
+    );
+    expect(r.moraAmount).to.be.closeTo(0.1 * (2 / 30) * 650, 0.005);
+    expect(r.moraAmount).to.not.be.closeTo(0.1 * (1 / 30) * 650, 0.005);
+  });
+
   it("caps mora at moraCapInCuotas * paymentAmount", () => {
     const r = computeAccruedMora(
       makeInput({

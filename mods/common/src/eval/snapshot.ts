@@ -99,6 +99,8 @@ export interface SnapshotDerived {
   moraAccrued: number;
   grossMora: number;
   collectedMora: number;
+  /** True when daysLate is within moraGraceDays, so no mora accrued despite being late. */
+  graceApplied: boolean;
   daysLate: number;
   missedCycles: number;
   nextDueDate: string;
@@ -240,6 +242,7 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     moraAccrued: mora.moraAmount,
     grossMora: mora.grossMoraAmount,
     collectedMora: mora.collectedMora,
+    graceApplied: mora.graceApplied,
     daysLate: mora.daysLate,
     missedCycles: mora.missedCycles,
     nextDueDate: nextDue.toISOString(),

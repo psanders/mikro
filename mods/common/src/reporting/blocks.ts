@@ -302,6 +302,8 @@ export interface KpiCell {
   subtext?: string;
   /** When true the value is rendered in orange for emphasis. */
   emphasize?: boolean;
+  /** Status pill rendered under the value — for state the figure alone can't convey. */
+  pill?: { value: string; tone: PillTone };
 }
 
 /** Bordered card of KPI cells — `columns` per row, internal dividers between cells and rows. */
@@ -348,6 +350,10 @@ export function kpiGrid(params: { cells: KpiCell[]; columns?: number }): ReportE
           width: "100%",
           minWidth: "0px"
         }),
+        // Spread rather than a zero-height placeholder: the cell has `gap`, which
+        // applies between every child, so an empty node would still add 5px to
+        // each cell of every kpiGrid in every report.
+        ...(c.pill ? [pill(c.pill.value, c.pill.tone)] : []),
         c.subtext
           ? txt(c.subtext, {
               fontSize: "11px",

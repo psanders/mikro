@@ -13,6 +13,7 @@ import {
   loanStatementReport,
   buildLoanStatementData,
   buildLoanStatementDocument,
+  buildKpiCells,
   evaluateSnapshot,
   ValidationError,
   type Font,
@@ -126,6 +127,49 @@ function documentText(data: LoanStatementData): string[] {
   const doc = buildLoanStatementDocument(data);
   return doc.pages.flatMap((p) => collectText(p.layout));
 }
+
+describe("loan-statement report — mora explanation", () => {
+  it("names the grace window when a late loan shows zero mora", () => {
+    const data = buildLoanStatementData(baseInput({ policy: { ...POLICY, moraGraceDays: 60 } }));
+    expect(data.kpis.graceApplied).to.be.true;
+    expect(data.kpis.moraAccrued).to.equal(0);
+    expect(data.kpis.daysOverdue).to.be.greaterThan(0);
+    const text = documentText(data).join(" | ");
+    expect(text).to.include("período de gracia de 60 días");
+  });
+
+  it("singularizes a one-day grace window", () => {
+    const data = buildLoanStatementData(baseInput({ policy: { ...POLICY, moraGraceDays: 60 } }));
+    data.kpis.moraGraceDays = 1;
+    const text = documentText(data).join(" | ");
+    expect(text).to.include("período de gracia de 1 día");
+    expect(text).to.not.include("1 días");
+  });
+
+  it("keeps the generada/pagada breakdown when mora actually accrued", () => {
+    const data = buildLoanStatementData(baseInput());
+    expect(data.kpis.graceApplied).to.be.false;
+    const text = documentText(data).join(" | ");
+    expect(text).to.include("generada");
+    expect(text).to.not.include("período de gracia");
+    expect(text).to.not.include("En gracia");
+  });
+
+  // Orange is this report's alarm colour; a zero waived by grace is the opposite
+  // of an alarm, so it must render calm and wear a pill instead.
+  it("shows an 'En gracia' pill and drops the orange emphasis when grace applies", () => {
+    const grace = buildLoanStatementData(baseInput({ policy: { ...POLICY, moraGraceDays: 60 } }));
+    const moraCell = buildKpiCells(grace).find((c) => c.label === "Mora acumulada");
+    expect(moraCell?.emphasize).to.equal(false);
+    expect(moraCell?.pill?.value).to.equal("En gracia");
+    expect(documentText(grace).join(" | ")).to.include("En gracia");
+
+    const accrued = buildLoanStatementData(baseInput());
+    const accruedCell = buildKpiCells(accrued).find((c) => c.label === "Mora acumulada");
+    expect(accruedCell?.emphasize).to.equal(true);
+    expect(accruedCell?.pill).to.equal(undefined);
+  });
+});
 
 describe("loan-statement report — validation", () => {
   it("rejects invalid/missing input with a structured ValidationError and produces no document", async () => {
