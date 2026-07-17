@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.39.8](https://github.com/psanders/mikro/compare/v1.39.7...v1.39.8) (2026-07-17)
+
+### Bug Fixes
+
+- **reporting:** explain a grace-waived zero on the loan statement ([#221](https://github.com/psanders/mikro/issues/221)) ([24970fa](https://github.com/psanders/mikro/commit/24970fa245c4e63414dd3bc997217db5049319f3))
+
 ## [1.39.6](https://github.com/psanders/mikro/compare/v1.39.5...v1.39.6) (2026-07-12)
 
 **Note:** Version bump only for package @mikro/common
