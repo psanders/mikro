@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod/v4";
+import { tagShapeSchema } from "./schemas/customerTag.js";
 
 /** Supported LLM vendors. */
 export const LLM_VENDORS = ["openai", "anthropic", "google"] as const;
@@ -172,17 +173,18 @@ export const QCOBRO_BALANCE_BASES = [
 ] as const;
 export type QCobroBalanceBasis = (typeof QCOBRO_BALANCE_BASES)[number];
 
-/** `namespace:value` tag, e.g. `status:past_due`, `dpd:8_30`, `risk:premium`. */
-const qcobroTagSchema = z
-  .string()
-  .regex(/^(status|dpd|risk):[a-z0-9_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
-
-/** A `portfolios[]` entry: tag predicate (all/any/none, ANDed) -> target QCobro portfolio id. */
+/**
+ * A `portfolios[]` entry: tag predicate (all/any/none, ANDed) -> target QCobro
+ * portfolio id. Tags are validated with the shared `tagShapeSchema` (the single
+ * source of truth for the `namespace:value` shape across all four namespaces) —
+ * do NOT reintroduce a local copy of the regex here: it drifted once and shipped
+ * a validator that rejected `due:` tags after they were added to the taxonomy.
+ */
 const qcobroPortfolioMatchSchema = z
   .object({
-    all: z.array(qcobroTagSchema).optional(),
-    any: z.array(qcobroTagSchema).optional(),
-    none: z.array(qcobroTagSchema).optional()
+    all: z.array(tagShapeSchema).optional(),
+    any: z.array(tagShapeSchema).optional(),
+    none: z.array(tagShapeSchema).optional()
   })
   .strict();
 

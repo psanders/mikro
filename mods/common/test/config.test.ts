@@ -56,3 +56,38 @@ describe("mikroConfigSchema — accounting.disbursementAccountId", () => {
     }
   });
 });
+
+describe("mikroConfigSchema — qcobro.portfolios[].match tag shapes", () => {
+  const withAccounting = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+  };
+
+  const withPortfolio = (matchTags: string[]) => ({
+    ...withAccounting,
+    // Every other qcobro field defaults; the schema is .strict(), so only send `portfolios`.
+    qcobro: {
+      portfolios: [{ id: "por-vencer", match: { any: matchTags } }]
+    }
+  });
+
+  // Regression (prod incident, v1.40.0): config.ts kept its own copy of the tag
+  // regex that never learned `due:`, so a portfolio referencing due: tags failed
+  // config validation at boot. The shape check now shares customerTag's schema.
+  it("accepts due: tags in a portfolio match rule", () => {
+    const parsed = mikroConfigSchema.safeParse(withPortfolio(["due:today", "due:1_3"]));
+    expect(parsed.success).to.equal(true);
+  });
+
+  it("accepts status:, dpd:, due:, and risk: tags together", () => {
+    const parsed = mikroConfigSchema.safeParse(
+      withPortfolio(["status:current", "dpd:8_30", "due:4_7", "risk:premium"])
+    );
+    expect(parsed.success).to.equal(true);
+  });
+
+  it("rejects a tag in an unknown namespace", () => {
+    const parsed = mikroConfigSchema.safeParse(withPortfolio(["bogus:whatever"]));
+    expect(parsed.success).to.equal(false);
+  });
+});
