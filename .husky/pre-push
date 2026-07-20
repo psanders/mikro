@@ -1,8 +1,14 @@
+# Verify package-lock.json is in sync with every workspace package.json.
+# `npm ci --dry-run` validates sync WITHOUT writing anything (node_modules and
+# the lock are untouched) and exits non-zero only on a real mismatch — a dep in
+# a package.json the lock does not satisfy. It deliberately does NOT diff a
+# regenerated lock: `npm install --package-lock-only` stamps a cosmetic
+# `"peer": true` flag on os/cpu-gated optional binaries (esbuild, rolldown, …)
+# differently on macOS vs Linux, so the old diff gate here always passed on a
+# Mac and then failed on Linux CI on pure noise. See AGENTS.md → "Lockfile
+# discipline". CI runs the same check via `npm ci`.
 echo "Checking package-lock.json is in sync..."
-npm install --package-lock-only --ignore-scripts >/dev/null 2>&1
-
-if ! git diff --quiet -- package-lock.json; then
-  git checkout -- package-lock.json
+if ! npm ci --dry-run --ignore-scripts --no-audit --no-fund >/dev/null 2>&1; then
   echo ""
   echo "package-lock.json is out of sync with package.json files."
   echo "Run 'npm install' locally and commit the updated lock file."

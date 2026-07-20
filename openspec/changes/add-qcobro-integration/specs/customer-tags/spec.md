@@ -12,7 +12,7 @@ string SHALL exist at most once per customer.
 
 - **WHEN** the tag engine recomputes a customer that has a `MANUAL` `risk:premium` tag
 - **THEN** `risk:premium` remains on the customer after the recompute
-- **AND** only `AUTO` tags (`status:` / `dpd:`) are added or removed
+- **AND** only `AUTO` tags (`status:` / `dpd:` / `due:`) are added or removed
 
 #### Scenario: Duplicate tag is idempotent
 
@@ -68,6 +68,25 @@ When a customer's worst loan is delinquent (mora accruing), the system SHALL der
 
 - **WHEN** the customer's worst loan is current
 - **THEN** the customer has no `dpd:` tag
+
+### Requirement: Pre-due reminder buckets
+
+When a customer is not delinquent (winning `status:` is `new` or `current`), the system SHALL derive
+at most one `due:` tag from the **soonest** upcoming installment across the customer's non-delinquent
+loans, measured in calendar days-to-due: `due:today` (0), `due:1_3` (1–3), `due:4_7` (4–7). No `due:`
+tag SHALL be present when the soonest installment is more than 7 days out, and none SHALL be present
+for a delinquent customer (`pre_mora`, `past_due`, `defaulted`, `written_off`) or a `completed` one.
+Unlike `status:`/`dpd:` (worst loan), the `due:` tag follows the loan with the nearest next payment.
+
+#### Scenario: Imminent installment tags the customer
+
+- **WHEN** a `current` customer's soonest upcoming installment falls due in 2 days
+- **THEN** the customer carries `due:1_3`
+
+#### Scenario: No reminder for a delinquent customer
+
+- **WHEN** the customer's worst loan is `past_due` while another loan has an installment due tomorrow
+- **THEN** the customer has no `due:` tag (the collection flow owns them)
 
 ### Requirement: Payments recompute tags immediately
 

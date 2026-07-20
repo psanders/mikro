@@ -8,13 +8,16 @@
 import {
   computeAccruedMora,
   getCycleMetrics,
+  getDueDateForCycle,
   toLoanPaymentData,
   toCollectedLateFeePayments,
   amountToNumber,
+  MS_PER_DAY,
   type Loan,
   type LoansConfig,
   type StatusTag,
-  type DpdTag
+  type DpdTag,
+  type DueTag
 } from "@mikro/common";
 
 /** Loan shape the tag engine needs: a Loan plus the payments/customer context computeAccruedMora requires. */
@@ -26,6 +29,13 @@ export type LoanForTagEngine = Loan & {
 export interface ComputedCustomerTags {
   statusTag: StatusTag | null;
   dpdTag: DpdTag | null;
+  /**
+   * Pre-due reminder bucket for the customer's soonest upcoming installment.
+   * Only set when the winning status is `new` or `current` (a delinquent
+   * customer is driven by the collection flow, not a courtesy reminder) and
+   * that installment falls due within 7 days. `null` otherwise.
+   */
+  dueTag: DueTag | null;
   /** Calendar days past due on the worst loan (0 when not delinquent). For QCobro's `daysPastDue`. */
   daysPastDue: number;
   /** Missed cycles on the worst loan (0 when current). For QCobro's `missedInstallments`. */
@@ -43,6 +53,12 @@ interface LoanSeverity {
   /** Tie-break within past_due/written_off: higher days-late wins. */
   daysLate: number;
   missedCycles: number;
+  /**
+   * Calendar days until this loan's next unpaid installment, or `null` when the
+   * loan is not a reminder candidate (delinquent, completed, or no installment
+   * left). Non-negative when set. Drives the customer's `due:` tag.
+   */
+  daysToDue: number | null;
 }
 
 const SEVERITY: Record<StatusTag, number> = {
@@ -64,6 +80,46 @@ function dpdBucket(daysLate: number): DpdTag {
   return "dpd:91_180";
 }
 
+/** Pre-due reminder bucket for a non-negative days-to-due; `null` past the 7-day window. */
+function dueBucket(daysToDue: number): DueTag | null {
+  if (daysToDue === 0) return "due:today";
+  if (daysToDue <= 3) return "due:1_3";
+  if (daysToDue <= 7) return "due:4_7";
+  return null;
+}
+
+/** Whole calendar days from `from` to `to` (UTC date granularity; negative when `to` is earlier). */
+function calendarDaysUntil(from: Date, to: Date): number {
+  const f = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate());
+  const t = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate());
+  return Math.round((t - f) / MS_PER_DAY);
+}
+
+/**
+ * Calendar days until a non-delinquent loan's next unpaid installment, or `null`
+ * when it is not a reminder candidate. The next obligation is cuota
+ * `paymentsMade + 1` (0-based cycle index `paymentsMade`); a loan whose
+ * installments are all covered has none left. A negative result (installment
+ * already past due) also returns `null` — that case is owned by the past_due path.
+ */
+function daysToNextDue(
+  loan: LoanForTagEngine,
+  termLength: number | undefined,
+  paymentsMade: number,
+  asOf: Date
+): number | null {
+  if (termLength !== undefined && termLength > 0 && paymentsMade >= termLength) return null;
+  const loanStart = new Date(loan.startingDate ?? loan.createdAt);
+  const nextDue = getDueDateForCycle(
+    loanStart,
+    paymentsMade,
+    loan.paymentFrequency,
+    loan.customer.preferredPaymentDay ?? null
+  );
+  const days = calendarDaysUntil(asOf, nextDue);
+  return days >= 0 ? days : null;
+}
+
 /**
  * Derive one loan's severity state. CANCELLED loans are filtered out by the
  * caller before this runs. DEFAULTED is trusted verbatim from ops and never
@@ -81,7 +137,8 @@ function computeLoanSeverity(
       dpdTag: null,
       severity: SEVERITY["status:completed"],
       daysLate: 0,
-      missedCycles: 0
+      missedCycles: 0,
+      daysToDue: null
     };
   }
 
@@ -90,7 +147,7 @@ function computeLoanSeverity(
   // missedInstallments are informational fields QCobro's account row wants
   // regardless of which status tag won (see design.md decision 3).
   const loanData = toLoanPaymentData(loan);
-  const { cyclesElapsed, missedCycles } = getCycleMetrics(loanData, asOf);
+  const { cyclesElapsed, missedCycles, paymentsMade } = getCycleMetrics(loanData, asOf);
 
   if (loan.status === "DEFAULTED") {
     // moraRate forced non-zero — see note below; only daysLate is consumed here.
@@ -113,7 +170,8 @@ function computeLoanSeverity(
       dpdTag: null,
       severity: SEVERITY["status:defaulted"],
       daysLate: accrued.daysLate,
-      missedCycles
+      missedCycles,
+      daysToDue: null
     };
   }
 
@@ -125,7 +183,8 @@ function computeLoanSeverity(
       dpdTag: null,
       severity: SEVERITY["status:new"],
       daysLate: 0,
-      missedCycles: 0
+      missedCycles: 0,
+      daysToDue: daysToNextDue(loan, loanData.termLength, paymentsMade, asOf)
     };
   }
   if (missedCycles <= 0) {
@@ -135,7 +194,8 @@ function computeLoanSeverity(
       dpdTag: null,
       severity: SEVERITY["status:current"],
       daysLate: 0,
-      missedCycles: 0
+      missedCycles: 0,
+      daysToDue: daysToNextDue(loan, loanData.termLength, paymentsMade, asOf)
     };
   }
 
@@ -164,7 +224,8 @@ function computeLoanSeverity(
       dpdTag: null,
       severity: SEVERITY["status:pre_mora"],
       daysLate: accrued.daysLate,
-      missedCycles
+      missedCycles,
+      daysToDue: null
     };
   }
   if (accrued.daysLate >= 180) {
@@ -174,7 +235,8 @@ function computeLoanSeverity(
       dpdTag: "dpd:180_plus",
       severity: SEVERITY["status:written_off"],
       daysLate: accrued.daysLate,
-      missedCycles
+      missedCycles,
+      daysToDue: null
     };
   }
   return {
@@ -183,15 +245,25 @@ function computeLoanSeverity(
     dpdTag: dpdBucket(accrued.daysLate),
     severity: SEVERITY["status:past_due"],
     daysLate: accrued.daysLate,
-    missedCycles
+    missedCycles,
+    daysToDue: null
   };
 }
 
+/** Status values where a pre-due reminder makes sense (customer not delinquent). */
+const REMINDER_STATUSES: ReadonlySet<StatusTag> = new Set(["status:new", "status:current"]);
+
 /**
  * Worst-loan aggregation across a customer's loans (CANCELLED loans excluded).
- * Returns `{ statusTag: null, dpdTag: null }` when the customer has no
- * eligible loan (no loans, or all CANCELLED) — the caller clears any stale
- * AUTO tags in that case.
+ * Returns `{ statusTag: null, dpdTag: null, dueTag: null }` when the customer
+ * has no eligible loan (no loans, or all CANCELLED) — the caller clears any
+ * stale AUTO tags in that case.
+ *
+ * The `status:`/`dpd:` result is driven by the *worst* loan; the `due:` reminder
+ * is driven independently by the *soonest* upcoming installment across the
+ * customer's non-delinquent loans, and is only surfaced when the winning status
+ * is itself `new`/`current` (a delinquent customer belongs to the collection
+ * flow, not a courtesy reminder).
  */
 export function computeCustomerTags(
   loans: LoanForTagEngine[],
@@ -199,6 +271,7 @@ export function computeCustomerTags(
   asOf: Date = new Date()
 ): ComputedCustomerTags {
   let best: LoanSeverity | null = null;
+  let soonestDue: number | null = null;
 
   for (const loan of loans) {
     if (loan.status === "CANCELLED") continue;
@@ -210,20 +283,29 @@ export function computeCustomerTags(
     ) {
       best = candidate;
     }
+    if (candidate.daysToDue !== null && (soonestDue === null || candidate.daysToDue < soonestDue)) {
+      soonestDue = candidate.daysToDue;
+    }
   }
 
   if (!best) {
     return {
       statusTag: null,
       dpdTag: null,
+      dueTag: null,
       daysPastDue: 0,
       missedInstallments: 0,
       worstLoanId: null
     };
   }
+
+  const dueTag =
+    REMINDER_STATUSES.has(best.statusTag) && soonestDue !== null ? dueBucket(soonestDue) : null;
+
   return {
     statusTag: best.statusTag,
     dpdTag: best.dpdTag,
+    dueTag,
     daysPastDue: best.daysLate,
     missedInstallments: best.missedCycles,
     worstLoanId: best.loanId

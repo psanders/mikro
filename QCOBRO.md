@@ -38,8 +38,9 @@ separate concern).
 │           ┌─────────────────────────────────────────────────────┐    │
 │  for every│                  TAG ENGINE (per customer)           │   │
 │  active   │  worst-loan rule across customer loans               │   │
-│  customer:│  status:*  (one, AUTO)   dpd:* (one, AUTO if past_due)│  │
-│           │  risk:*    (many, untouched, MANUAL)                 │   │
+│  customer:│  status:* (one, AUTO)    dpd:* (one, AUTO if past_due)│  │
+│           │  due:*    (one, AUTO if due soon & not delinquent)   │   │
+│           │  risk:*   (many, untouched, MANUAL)                  │   │
 │           └────────────────────────┬────────────────────────────┘    │
 │                                    ▼                                 │
 │                evaluate portfolios[] rules (all/any/none) per        │
@@ -99,8 +100,9 @@ not a loan. Tags are **hybrid**:
 - **MANUAL** — asserted by a human, never touched by the engine. Set/cleared via **tRPC API and
   CTL only** (no dashboard UI in v1).
 
-Tags are organized into three namespaces. A customer carries at most one `status:`, at most one
-`dpd:` (only when delinquent), and any number of `risk:` tags.
+Tags are organized into four namespaces. A customer carries at most one `status:`, at most one
+`dpd:` (only when delinquent), at most one `due:` (only when a payment is imminent and the
+customer is not delinquent), and any number of `risk:` tags.
 
 ### `status:` — lifecycle (AUTO, mutually exclusive)
 
@@ -142,6 +144,35 @@ Notes:
   rules are ever needed.
 - These buckets are the same ones used to report **PAR** (Portfolio at Risk — PAR1/30/60/90), the
   microfinance standard; existing portfolio metrics could later emit PAR off this.
+
+### `due:` — pre-due reminder window / _días para vencer_ (AUTO, only when not delinquent)
+
+The mirror image of `dpd:`. Where `dpd:` counts days **past** due, `due:` counts days **to** due
+(industry term **DTD**, days-to-due) so QCobro can send a courtesy reminder _before_ the borrower
+falls behind. `dpd:` stays strictly "past due" — the negative side of the timeline lives in its own
+namespace so the PAR / NPL / charge-off math is never polluted.
+
+| Tag         | DTD range | Meaning                      |
+| ----------- | --------- | ---------------------------- |
+| `due:today` | 0         | next installment due today   |
+| `due:1_3`   | 1–3       | due in 1–3 days (day-before) |
+| `due:4_7`   | 4–7       | due this week                |
+
+Rules:
+
+- **Driven by the soonest upcoming installment**, not the worst loan — a reminder is about the next
+  payment, so the tag engine takes the minimum days-to-due across the customer's non-delinquent
+  loans (contrast `status:`/`dpd:`, which follow the _worst_ loan).
+- **Only set when the winning `status:` is `new` or `current`.** A delinquent customer belongs to
+  the collection flow (`dpd:`), not a courtesy reminder, so `due:` is suppressed for
+  `pre_mora`/`past_due`/`defaulted`/`written_off`.
+- **DTD is measured in calendar days**, like `dpd:`. No installment more than 7 days out gets a tag.
+- Cadence note: for short-cycle products the next payment is intrinsically near — a **daily** loan's
+  current borrower is always `due:today`, a **weekly** borrower always within 7 days. The
+  granularity is the point: a reminder portfolio matches the tight buckets (`due:1_3`, `due:today`)
+  so exactly one nudge fires ~a day out, not every day. `due:today` while still `current` only lands
+  in the morning-of window (before the installment's due moment tips the loan into the past-due
+  cycle count); the day-before `due:1_3` reminder is the dependable one.
 
 ### `risk:` — relationship / consent (MANUAL, API + CTL only)
 
@@ -210,6 +241,10 @@ A customer is assigned to a portfolio when its tag set satisfies the rule. A cus
 multiple portfolios. The original "overdue and not premium" idea is expressed as
 `{ any: ["dpd:..."], none: ["risk:premium", "risk:do_not_contact"] }`. Aging-tiered portfolios
 (soft vs hard collection) fall out naturally by matching different `dpd:` buckets.
+
+A **pre-due reminder** portfolio is the mirror of that — match the imminent-payment buckets and
+still honor consent: `{ any: ["due:today", "due:1_3"], none: ["risk:do_not_contact"] }`. Matching
+the tight buckets (not `due:4_7`) keeps it to a single day-before nudge rather than a daily one.
 
 ## Balance basis
 

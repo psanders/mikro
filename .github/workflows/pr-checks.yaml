@@ -22,30 +22,22 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Enable Corepack
-        run: corepack enable
+      # Verify the lock is in sync with every workspace package.json. `npm ci`
+      # is the right gate: it FAILS when a dependency in a package.json is not
+      # satisfied by the lock, but never rewrites the lock, so it is immune to
+      # the cross-platform nondeterminism that made the old "regenerate + git
+      # diff" gate flap forever. That gate ran `npm install --package-lock-only`
+      # and diffed the result — but npm's arborist stamps a cosmetic `"peer":
+      # true` flag on os/cpu-gated optional binaries (esbuild, rolldown, …)
+      # differently on macOS vs Linux. The committed lock is generated on a
+      # contributor's Mac (with the flag); this Linux runner stripped it and the
+      # diff "failed" on pure noise, even though the lock installed cleanly. See
+      # AGENTS.md → "Lockfile discipline".
+      - name: Check lock file is in sync
+        run: npm ci --ignore-scripts
 
-      # Corepack does not manage npm itself (only yarn/pnpm), so the
-      # `packageManager` pin in package.json is silently ignored for npm and
-      # CI falls back to whatever npm ships with the Node image. That version
-      # skew makes `npm install --package-lock-only` regenerate optional
-      # dependency metadata (e.g. esbuild platform packages' `peer` flag)
-      # differently than a contributor's pinned-npm machine, so this check
-      # flaps between "in sync" and "out of sync" depending on which npm ran
-      # last — install the pinned version explicitly to make it deterministic.
-      - name: Install pinned npm
-        run: npm install -g npm@$(node -e "console.log(require('./package.json').packageManager.split('@')[1])")
-
-      - name: Check lock file is up to date
-        run: |
-          npm install --package-lock-only --ignore-scripts
-          if ! git diff --exit-code package-lock.json; then
-            echo ""
-            echo "package-lock.json is out of sync with package.json files."
-            echo "Run 'npm install' locally and commit the updated lock file."
-            exit 1
-          fi
-
+      # The genuinely valuable, deterministic check npm itself does not do:
+      # guard against platform narrowing and unresolvable edges (see the script).
       - name: Check lock file platform coverage
         run: node .scripts/check-lockfile-platforms.mjs
 

@@ -26,9 +26,10 @@ interface LoanFixtureInput {
   termLength?: number;
   paymentAmount?: number;
   completedPayments?: number;
+  paymentFrequency?: "WEEKLY" | "MONTHLY";
 }
 
-/** WEEKLY loan, no preferredPaymentDay, so cycle 0 is due exactly 7 days after start. */
+/** WEEKLY loan (default), no preferredPaymentDay, so cycle 0 is due exactly 7 days after start. */
 function makeLoan(input: LoanFixtureInput): LoanForTagEngine {
   const completed = input.completedPayments ?? 0;
   const payments = Array.from({ length: completed }, (_, i) => ({
@@ -45,7 +46,7 @@ function makeLoan(input: LoanFixtureInput): LoanForTagEngine {
     principal: 10000,
     termLength: input.termLength ?? 52,
     paymentAmount: input.paymentAmount ?? 650,
-    paymentFrequency: "WEEKLY",
+    paymentFrequency: input.paymentFrequency ?? "WEEKLY",
     startingDate: input.startingDate,
     nickname: null,
     moraRate: null,
@@ -188,5 +189,84 @@ describe("computeCustomerTags", () => {
     const result = computeCustomerTags([loanA, loanB], defaultPolicy, asOf);
     expect(result.statusTag).to.equal("status:past_due");
     expect(result.dpdTag).to.equal("dpd:61_90");
+  });
+
+  describe("due: pre-due reminder tags", () => {
+    it("tags a status:new loan whose first installment is 6 days out as due:4_7", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = new Date(start.getTime() + 1 * MS_PER_DAY); // first due at start+7d → 6 days out
+      const loan = makeLoan({ startingDate: start });
+      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:new");
+      expect(result.dueTag).to.equal("due:4_7");
+    });
+
+    it("tags a status:new loan whose first installment is 2 days out as due:1_3", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = new Date(start.getTime() + 5 * MS_PER_DAY); // first due at start+7d → 2 days out
+      const loan = makeLoan({ startingDate: start });
+      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:new");
+      expect(result.dueTag).to.equal("due:1_3");
+    });
+
+    it("tags a not-yet-elapsed installment due today (same calendar day) as due:today", () => {
+      const start = new Date("2026-01-01T12:00:00Z");
+      // First due at start+7d (2026-01-08T12:00Z); asOf earlier that same day → cycle not yet elapsed.
+      const asOf = new Date("2026-01-08T06:00:00Z");
+      const loan = makeLoan({ startingDate: start });
+      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:new");
+      expect(result.dueTag).to.equal("due:today");
+    });
+
+    it("emits no due: tag when the soonest installment is more than 7 days out (MONTHLY)", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = new Date(start.getTime() + 5 * MS_PER_DAY); // first due ~1 month out
+      const loan = makeLoan({ startingDate: start, paymentFrequency: "MONTHLY", termLength: 12 });
+      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:new");
+      expect(result.dueTag).to.be.null;
+    });
+
+    it("emits no due: tag for a MONTHLY current loan whose next installment is weeks out", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = new Date("2026-02-01T00:00:00Z"); // cycle-0 due date; cuota 1 paid → current
+      const loan = makeLoan({
+        startingDate: start,
+        paymentFrequency: "MONTHLY",
+        termLength: 12,
+        completedPayments: 1
+      });
+      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:current");
+      // Next unpaid installment (cuota 2) is due ~2026-03-01, i.e. weeks out → outside the window.
+      expect(result.dueTag).to.be.null;
+    });
+
+    it("suppresses due: entirely when the customer is delinquent (collection flow owns them)", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = asOfForDaysLate(start, 40);
+      // A current loan with an upcoming installment, plus a past-due loan that wins the status.
+      const current = makeLoan({ id: "loan-current", startingDate: start, completedPayments: 6 });
+      const pastDue = makeLoan({ id: "loan-past-due", startingDate: start });
+      const result = computeCustomerTags([current, pastDue], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:past_due");
+      expect(result.dueTag).to.be.null;
+    });
+
+    it("drives due: from the soonest upcoming installment across several new/current loans", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = new Date(start.getTime() + 1 * MS_PER_DAY);
+      // loanFar's first installment is 6 days out (due:4_7); loanNear's is 2 days out (due:1_3).
+      const loanFar = makeLoan({ id: "loan-far", startingDate: start });
+      const loanNear = makeLoan({
+        id: "loan-near",
+        startingDate: new Date(start.getTime() - 4 * MS_PER_DAY)
+      });
+      const result = computeCustomerTags([loanFar, loanNear], defaultPolicy, asOf);
+      expect(result.statusTag).to.equal("status:new");
+      expect(result.dueTag).to.equal("due:1_3");
+    });
   });
 });
