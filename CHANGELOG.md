@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.40.1](https://github.com/psanders/mikro/compare/v1.40.0...v1.40.1) (2026-07-20)
+
+### Bug Fixes
+
+- **config:** validate qcobro portfolio tags with the shared tag schema ([#227](https://github.com/psanders/mikro/issues/227)) ([1eff8ee](https://github.com/psanders/mikro/commit/1eff8eefa5c540ea20d395b48c654ccd3e1afc63)), closes [#226](https://github.com/psanders/mikro/issues/226)
+
 # [1.40.0](https://github.com/psanders/mikro/compare/v1.39.8...v1.40.0) (2026-07-20)
 
 ### Features
