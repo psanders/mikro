@@ -8,7 +8,18 @@ or a build. Keep entries short; link the enforcing check when one exists.
 - **One lockfile.** All workspaces (`mods/*`, `site`) resolve through the
   root `package-lock.json`. After editing ANY workspace `package.json`, run
   `npm install` at the repo root and commit the lock change with it.
-  Enforced by the "Lock file in sync" PR check.
+  Enforced by the "Lock file in sync" PR check (`npm ci --ignore-scripts`)
+  and the `pre-push` hook (`npm ci --dry-run`).
+- **The sync gate is `npm ci`, never "regenerate + git diff".** `npm ci`
+  fails when a `package.json` dependency is not satisfied by the lock but
+  never rewrites the lock. Do NOT reintroduce a
+  `npm install --package-lock-only && git diff` gate: npm's arborist stamps
+  a cosmetic `"peer": true` flag on os/cpu-gated optional binaries (esbuild,
+  rolldown, @tailwindcss/oxide, …) **differently on macOS vs Linux**. The
+  committed lock is generated on a contributor's Mac (flag present); a Linux
+  CI runner regenerating it strips the flag, so a diff gate "fails" on pure
+  noise while the lock installs cleanly — this is the flapping that plagued
+  the old gate. The cosmetic churn is safe to leave in the committed lock.
 - **Platform narrowing is the recurring disease.** npm installs on one
   platform can drop other platforms' prebuilt-binary entries from the lock
   (npm/cli#4828). The lock then only carries `darwin-arm64` binaries for
