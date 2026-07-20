@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.40.0](https://github.com/psanders/mikro/compare/v1.39.8...v1.40.0) (2026-07-20)
+
+### Features
+
+- **tags:** add due: pre-due reminder tag namespace ([#226](https://github.com/psanders/mikro/issues/226)) ([ee0fd13](https://github.com/psanders/mikro/commit/ee0fd131229e4de79ad24d19cffe05d1e1d4de91))
+
 ## [1.39.8](https://github.com/psanders/mikro/compare/v1.39.7...v1.39.8) (2026-07-17)
 
 ### Bug Fixes
