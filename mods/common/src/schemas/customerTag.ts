@@ -3,9 +3,9 @@
  *
  * Customer tag taxonomy + schemas. See QCOBRO.md for the full model: tags are
  * hybrid (AUTO, owned by the tag engine; MANUAL, asserted by humans) and live in
- * three namespaces. `status:` and `dpd:` are AUTO-only and recomputed by the
- * engine (mods/apiserver/src/tags); `risk:` is the only namespace settable via
- * the MANUAL API/CLI path.
+ * four namespaces. `status:`, `dpd:`, and `due:` are AUTO-only and recomputed by
+ * the engine (mods/apiserver/src/tags); `risk:` is the only namespace settable
+ * via the MANUAL API/CLI path.
  */
 import { z } from "zod/v4";
 
@@ -36,6 +36,20 @@ export const DPD_TAGS = [
 ] as const;
 export type DpdTag = (typeof DPD_TAGS)[number];
 
+/**
+ * `due:` — days-to-due / pre-due reminder window (AUTO, only set when the
+ * customer is NOT delinquent, i.e. winning status is `new` or `current`).
+ * Mutually exclusive, one per customer, driven by the soonest upcoming
+ * installment. Industry term: DTD (days to due). Mirror image of `dpd:`; the
+ * `dpd:` namespace stays strictly "past due" for PAR / NPL / Basel reporting.
+ */
+export const DUE_TAGS = [
+  "due:today", // next installment due today (DTD 0)
+  "due:1_3", // due in 1–3 days
+  "due:4_7" // due in 4–7 days
+] as const;
+export type DueTag = (typeof DUE_TAGS)[number];
+
 /** `risk:` — relationship/consent (MANUAL, many per customer, API+CLI only). */
 export const RISK_TAGS = [
   "risk:premium",
@@ -47,14 +61,17 @@ export const RISK_TAGS = [
 ] as const;
 export type RiskTag = (typeof RISK_TAGS)[number];
 
-/** Every tag value Mikro knows about, across all three namespaces. */
-export const ALL_TAGS = [...STATUS_TAGS, ...DPD_TAGS, ...RISK_TAGS] as const;
-export type CustomerTagValue = StatusTag | DpdTag | RiskTag;
+/** Every tag value Mikro knows about, across all four namespaces. */
+export const ALL_TAGS = [...STATUS_TAGS, ...DPD_TAGS, ...DUE_TAGS, ...RISK_TAGS] as const;
+export type CustomerTagValue = StatusTag | DpdTag | DueTag | RiskTag;
 
 /** A loose `namespace:value` shape check, used by config (qcobro.portfolios[] rules). */
 export const tagShapeSchema = z
   .string()
-  .regex(/^(status|dpd|risk):[a-z0-9_]+$/, "Tag must look like status:x, dpd:x, or risk:x");
+  .regex(
+    /^(status|dpd|due|risk):[a-z0-9_]+$/,
+    "Tag must look like status:x, dpd:x, due:x, or risk:x"
+  );
 
 const riskTagEnum = z.enum(RISK_TAGS);
 

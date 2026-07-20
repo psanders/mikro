@@ -6,7 +6,8 @@ import {
   type DbClient,
   type ResolvedMikroConfig,
   type StatusTag,
-  type DpdTag
+  type DpdTag,
+  type DueTag
 } from "@mikro/common";
 import {
   computeCustomerTags,
@@ -49,8 +50,8 @@ export function createReconcileCustomerTags(
     const existing = await client.customerTag.findMany({ where: { customerId } });
     const existingAuto = existing.filter((t) => t.source === "AUTO");
 
-    const desired = [computed.statusTag, computed.dpdTag].filter(
-      (t): t is StatusTag | DpdTag => t !== null
+    const desired = [computed.statusTag, computed.dpdTag, computed.dueTag].filter(
+      (t): t is StatusTag | DpdTag | DueTag => t !== null
     );
 
     const stale = existingAuto.filter((t) => !desired.some((d) => d === t.tag)).map((t) => t.tag);
@@ -72,6 +73,7 @@ export function createReconcileCustomerTags(
       customerId,
       statusTag: computed.statusTag,
       dpdTag: computed.dpdTag,
+      dueTag: computed.dueTag,
       removed: stale
     });
 
