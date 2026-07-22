@@ -191,6 +191,53 @@ describe("computeCustomerTags", () => {
     expect(result.dpdTag).to.equal("dpd:61_90");
   });
 
+  describe("moraEffectiveFrom does not shift delinquency classification", () => {
+    // Regression: a fee-waiver date (moraEffectiveFrom) must only zero the mora
+    // *amount*, never reclassify a delinquent customer. Routing classification
+    // through the fee engine once clamped days-late to the effective date, so
+    // long-delinquent customers collapsed into status:pre_mora and fell out of
+    // every QCobro dpd:/status:defaulted portfolio (0 portfolios pushed).
+    it("keeps a 200-days-past-due loan as written_off even with a recent moraEffectiveFrom", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = asOfForDaysLate(start, 200);
+      // Effective date set to just 5 days before asOf — under the old bug this
+      // clamped daysLate to 5 and (with grace) produced status:pre_mora.
+      const effectiveFrom = new Date(asOf.getTime() - 5 * MS_PER_DAY);
+      const iso = effectiveFrom.toISOString().slice(0, 10);
+      const policy: LoansConfig = { ...defaultPolicy, moraGraceDays: 7, moraEffectiveFrom: iso };
+      const loan = makeLoan({ startingDate: start, termLength: 52 });
+      const result = computeCustomerTags([loan], policy, asOf);
+      expect(result.statusTag).to.equal("status:written_off");
+      expect(result.dpdTag).to.equal("dpd:180_plus");
+      expect(result.daysPastDue).to.equal(200);
+    });
+
+    it("keeps a 20-days-past-due loan in its real dpd: bucket regardless of moraEffectiveFrom", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = asOfForDaysLate(start, 20);
+      const effectiveFrom = new Date(asOf.getTime() - 2 * MS_PER_DAY);
+      const iso = effectiveFrom.toISOString().slice(0, 10);
+      const policy: LoansConfig = { ...defaultPolicy, moraGraceDays: 7, moraEffectiveFrom: iso };
+      const loan = makeLoan({ startingDate: start });
+      const result = computeCustomerTags([loan], policy, asOf);
+      expect(result.statusTag).to.equal("status:past_due");
+      expect(result.dpdTag).to.equal("dpd:8_30");
+      expect(result.daysPastDue).to.equal(20);
+    });
+
+    it("reports real days-past-due for a DEFAULTED loan even with moraEffectiveFrom set", () => {
+      const start = new Date("2026-01-01T00:00:00Z");
+      const asOf = asOfForDaysLate(start, 90);
+      const effectiveFrom = new Date(asOf.getTime() - 3 * MS_PER_DAY);
+      const iso = effectiveFrom.toISOString().slice(0, 10);
+      const policy: LoansConfig = { ...defaultPolicy, moraGraceDays: 7, moraEffectiveFrom: iso };
+      const loan = makeLoan({ startingDate: start, status: "DEFAULTED" });
+      const result = computeCustomerTags([loan], policy, asOf);
+      expect(result.statusTag).to.equal("status:defaulted");
+      expect(result.daysPastDue).to.equal(90);
+    });
+  });
+
   describe("due: pre-due reminder tags", () => {
     it("tags a status:new loan whose first installment is 6 days out as due:4_7", () => {
       const start = new Date("2026-01-01T00:00:00Z");

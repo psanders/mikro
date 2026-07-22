@@ -6,12 +6,10 @@
  * ordering rationale.
  */
 import {
-  computeAccruedMora,
   getCycleMetrics,
   getDueDateForCycle,
+  daysLateFromOldestDue,
   toLoanPaymentData,
-  toCollectedLateFeePayments,
-  amountToNumber,
   MS_PER_DAY,
   type Loan,
   type LoansConfig,
@@ -20,7 +18,7 @@ import {
   type DueTag
 } from "@mikro/common";
 
-/** Loan shape the tag engine needs: a Loan plus the payments/customer context computeAccruedMora requires. */
+/** Loan shape the tag engine needs: a Loan plus the payments/customer context the cycle metrics require. */
 export type LoanForTagEngine = Loan & {
   customer: { preferredPaymentDay: string | null };
   payments: Array<{ paidAt: Date; status: string; kind?: string | null; amount?: unknown }>;
@@ -121,6 +119,30 @@ function daysToNextDue(
 }
 
 /**
+ * Real calendar days from the loan's oldest unpaid installment due date to
+ * `asOf`, used to drive delinquency classification (grace / dpd: bucket /
+ * written_off threshold). This is intentionally the *unclamped* delinquency age
+ * — unlike the mora fee, it is never shifted by `moraEffectiveFrom` — so a
+ * fee-waiver date can only zero the money owed, never launder a long-delinquent
+ * customer into a lower-severity status. Returns 0 when the loan is not past due.
+ */
+function daysLateForClassification(
+  loan: LoanForTagEngine,
+  paymentsMade: number,
+  missedCycles: number,
+  asOf: Date
+): number {
+  return daysLateFromOldestDue(
+    new Date(loan.startingDate ?? loan.createdAt),
+    loan.paymentFrequency,
+    loan.customer.preferredPaymentDay ?? null,
+    paymentsMade,
+    missedCycles,
+    asOf
+  );
+}
+
+/**
  * Derive one loan's severity state. CANCELLED loans are filtered out by the
  * caller before this runs. DEFAULTED is trusted verbatim from ops and never
  * derived from days-past-due (design.md decision 3).
@@ -150,26 +172,16 @@ function computeLoanSeverity(
   const { cyclesElapsed, missedCycles, paymentsMade } = getCycleMetrics(loanData, asOf);
 
   if (loan.status === "DEFAULTED") {
-    // moraRate forced non-zero — see note below; only daysLate is consumed here.
-    const accrued = computeAccruedMora({
-      loanData,
-      moraRate: 1,
-      paymentAmount: amountToNumber(loan.paymentAmount),
-      paymentFrequency: loan.paymentFrequency,
-      preferredPaymentDay: loan.customer.preferredPaymentDay ?? null,
-      loanStart: new Date(loan.startingDate ?? loan.createdAt),
-      asOfDate: asOf,
-      loanStatus: loan.status,
-      loanUpdatedAt: new Date(loan.updatedAt),
-      policy: loansPolicy,
-      collectedLateFeePayments: toCollectedLateFeePayments(loan)
-    });
+    // Real days-past-due from the oldest unpaid due date — an informational
+    // field for QCobro's account row. Deliberately NOT routed through the mora
+    // fee engine: fee policy (moraEffectiveFrom / grace) must never shift a
+    // customer's delinquency classification. See daysLateForClassification.
     return {
       loanId: loan.id,
       statusTag: "status:defaulted",
       dpdTag: null,
       severity: SEVERITY["status:defaulted"],
-      daysLate: accrued.daysLate,
+      daysLate: daysLateForClassification(loan, paymentsMade, missedCycles, asOf),
       missedCycles,
       daysToDue: null
     };
@@ -199,42 +211,33 @@ function computeLoanSeverity(
     };
   }
 
-  // moraRate is forced non-zero here on purpose: we only consume daysLate /
-  // graceApplied below, never the money amount, and computeAccruedMora
-  // short-circuits daysLate to 0 when moraRate <= 0 (interest-free product),
-  // which would misclassify a genuinely past-due loan as current.
-  const accrued = computeAccruedMora({
-    loanData,
-    moraRate: 1,
-    paymentAmount: amountToNumber(loan.paymentAmount),
-    paymentFrequency: loan.paymentFrequency,
-    preferredPaymentDay: loan.customer.preferredPaymentDay ?? null,
-    loanStart: new Date(loan.startingDate ?? loan.createdAt),
-    asOfDate: asOf,
-    loanStatus: loan.status,
-    loanUpdatedAt: new Date(loan.updatedAt),
-    policy: loansPolicy,
-    collectedLateFeePayments: toCollectedLateFeePayments(loan)
-  });
+  // Classification runs on the REAL days-past-due (oldest unpaid due date -> asOf),
+  // computed directly rather than through computeAccruedMora. The fee engine
+  // clamps its own daysLate to moraEffectiveFrom (so pre-policy arrears aren't
+  // billed); routing classification through it let a fee-waiver date silently
+  // reclassify long-delinquent customers as status:pre_mora and drop them out of
+  // every QCobro dpd:/status:defaulted portfolio. Fee policy is money-only here.
+  const daysLate = daysLateForClassification(loan, paymentsMade, missedCycles, asOf);
+  const graceApplied = daysLate <= loansPolicy.moraGraceDays;
 
-  if (accrued.graceApplied) {
+  if (graceApplied) {
     return {
       loanId: loan.id,
       statusTag: "status:pre_mora",
       dpdTag: null,
       severity: SEVERITY["status:pre_mora"],
-      daysLate: accrued.daysLate,
+      daysLate,
       missedCycles,
       daysToDue: null
     };
   }
-  if (accrued.daysLate >= 180) {
+  if (daysLate >= 180) {
     return {
       loanId: loan.id,
       statusTag: "status:written_off",
       dpdTag: "dpd:180_plus",
       severity: SEVERITY["status:written_off"],
-      daysLate: accrued.daysLate,
+      daysLate,
       missedCycles,
       daysToDue: null
     };
@@ -242,9 +245,9 @@ function computeLoanSeverity(
   return {
     loanId: loan.id,
     statusTag: "status:past_due",
-    dpdTag: dpdBucket(accrued.daysLate),
+    dpdTag: dpdBucket(daysLate),
     severity: SEVERITY["status:past_due"],
-    daysLate: accrued.daysLate,
+    daysLate,
     missedCycles,
     daysToDue: null
   };
