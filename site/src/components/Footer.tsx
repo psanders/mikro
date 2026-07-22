@@ -19,7 +19,8 @@ const SOCIAL = [
 const PRODUCT_LINKS = [
   { label: "Solicitar préstamo", to: "/solicitud" },
   { label: "Cómo funciona", to: "/#como-funciona" },
-  { label: "Preguntas frecuentes", to: "/faq" }
+  { label: "Preguntas frecuentes", to: "/faq" },
+  { label: "Marca", to: "/marca" }
 ] as const;
 
 const LEGAL_LINKS = [

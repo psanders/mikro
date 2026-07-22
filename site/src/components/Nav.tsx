@@ -11,7 +11,8 @@ const NAV_LINKS = [
   { label: "Préstamos", to: "/solicitud" },
   { label: "Cómo funciona", to: "/#como-funciona" },
   { label: "Quiénes somos", to: "/#quienes-somos" },
-  { label: "Soporte", to: "/faq" }
+  { label: "Soporte", to: "/faq" },
+  { label: "Marca", to: "/marca" }
 ] as const;
 
 export function Nav() {
