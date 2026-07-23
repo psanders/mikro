@@ -64,21 +64,30 @@ export function defaultFeedFilterValue(now: Date = new Date()): FeedFilterValue 
   return { typeIds: [], actorId: undefined, preset: "hoy", from: today, to: today };
 }
 
-/** Resolves a filter value's `preset`/`from`/`to` into concrete query bounds. */
+/**
+ * Resolves a filter value's `preset`/`from`/`to` into concrete query bounds.
+ * The rolling presets (`hoy`/`7d`/`30d`) deliberately return `to: undefined`
+ * — a concrete "up to now" bound would freeze at whatever instant this ran
+ * and then silently exclude every event recorded after it. That's what made
+ * the feed need a manual re-navigation to show new events (issue #223): no
+ * event can have `occurredAt` in the future, so "no upper bound" and "up to
+ * now" mean the same thing, and only the former survives a poll tick without
+ * changing the query key (and re-triggering the loading state). Only
+ * `custom` has a real, user-chosen end date worth bounding.
+ */
 export function resolveDateRange(
   value: FeedFilterValue,
   now: Date = new Date()
-): { from: Date; to: Date } {
-  const to = now;
+): { from: Date; to: Date | undefined } {
   switch (value.preset) {
     case "hoy": {
       const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      return { from, to };
+      return { from, to: undefined };
     }
     case "7d":
-      return { from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), to };
+      return { from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), to: undefined };
     case "30d":
-      return { from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000), to };
+      return { from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000), to: undefined };
     case "custom":
     default: {
       const from = new Date(`${value.from}T00:00:00`);

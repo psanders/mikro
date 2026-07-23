@@ -9,6 +9,13 @@
  * (issue #131). Consecutive same-type/same-actor runs collapse into a
  * `GroupedFeedRow`. The copilot sparkles button ships inert (a later change
  * owns the dock).
+ *
+ * Polls on `FEED_POLL_INTERVAL_MS` so new events show up without a manual
+ * re-navigation (issue #223). `refetchInterval` only sets `isFetching`, not
+ * `isPending` — the query key isn't changing — so the background refresh
+ * never re-triggers the initial "Cargando…" state, and React Query already
+ * pauses the interval while the tab is hidden/unfocused
+ * (`refetchIntervalInBackground` defaults to `false`).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -40,6 +47,15 @@ import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/t
 import type { RouterOutputs } from "../lib/trpc";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Auto-refresh cadence for the live feed (issue #223). The issue suggests
+ * 5-10s, but the apiserver event log is a plain query endpoint, not a push
+ * or change-feed — polling that fast is pure load on the apiserver with no
+ * fidelity gain given the data isn't real-time to begin with. 60s is what
+ * the data actually warrants; see the PR description for the deviation.
+ */
+const FEED_POLL_INTERVAL_MS = 60_000;
 
 /** Task lifecycle events whose card may carry the live action widget — never grouped. */
 function isTaskEvent(event: FeedEvent): boolean {
@@ -136,7 +152,8 @@ export function FeedScreen() {
   // alone (not recomputed every render) so the query's `from`/`to` stay
   // stable between renders. Recomputing `to` fresh on every render would
   // change it by milliseconds each time, giving React Query a new query key
-  // every render and the feed would never settle out of "Cargando…".
+  // every render and the feed would never settle out of "Cargando…". `to` is
+  // `undefined` for every preset except `custom` — see resolveDateRange.
   const { from, to } = useMemo(() => resolveDateRange(filterValue), [filterValue]);
 
   const feed = trpc.listFeedEvents.useInfiniteQuery(
@@ -144,9 +161,13 @@ export function FeedScreen() {
       ...(types ? { types } : {}),
       ...(filterValue.actorId ? { actorId: filterValue.actorId } : {}),
       from,
-      to
+      ...(to ? { to } : {})
     },
-    { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      refetchInterval: FEED_POLL_INTERVAL_MS,
+      refetchOnWindowFocus: true
+    }
   );
 
   // Always-visible safety net (issue #215): a firing left unconfirmed past
