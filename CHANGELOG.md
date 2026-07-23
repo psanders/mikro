@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.41.1](https://github.com/psanders/mikro/compare/v1.41.0...v1.41.1) (2026-07-23)
+
+### Bug Fixes
+
+- **dashboard:** auto-refresh founder feed without manual navigation ([#237](https://github.com/psanders/mikro/issues/237)) ([641e524](https://github.com/psanders/mikro/commit/641e5240216c7aa8d59bebfa42653e8bfa21430d)), closes [#223](https://github.com/psanders/mikro/issues/223)
+
 # [1.41.0](https://github.com/psanders/mikro/compare/v1.40.2...v1.41.0) (2026-07-23)
 
 ### Features
