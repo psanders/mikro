@@ -64,8 +64,7 @@ import {
   defaultedFixture,
   customersFixture,
   renewalFixture,
-  accountingFixture,
-  performanceFixture
+  accountingFixture
 } from "./sampleFixtures.mjs";
 
 // ==================== Render + write ====================
@@ -94,9 +93,6 @@ async function main() {
   );
   const { buildAccountingReportData, buildAccountingReportDocument } = await import(
     pathToFileURL(join(here, "..", "dist", "reporting", "accountingReport.js")).href
-  );
-  const { buildPerformanceReportData, buildPerformanceReportDocument } = await import(
-    pathToFileURL(join(here, "..", "dist", "reporting", "performanceReport.js")).href
   );
 
   await writePages(
@@ -147,12 +143,6 @@ async function main() {
     "accounting-large",
     (input) => buildAccountingReportDocument(buildAccountingReportData(input)),
     accountingFixture(60)
-  );
-
-  await writePages(
-    "performance",
-    (input) => buildPerformanceReportDocument(buildPerformanceReportData(input)),
-    performanceFixture()
   );
 
   console.log(`\nWrote samples to ${outputDir}`);
