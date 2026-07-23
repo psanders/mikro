@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.41.0](https://github.com/psanders/mikro/compare/v1.40.2...v1.41.0) (2026-07-23)
+
+### Features
+
+- **reports:** replace single-month performance report with over-time "Desempeño en el Tiempo" ([#236](https://github.com/psanders/mikro/issues/236)) ([5687576](https://github.com/psanders/mikro/commit/5687576c2878ed58b884a3bb11ceaf76597bfa95))
+- **site:** add brand kit page with downloadable logos ([#234](https://github.com/psanders/mikro/issues/234)) ([1672212](https://github.com/psanders/mikro/commit/167221292682445d5b6784a36f35191c3cc4c585))
+
 ## [1.40.2](https://github.com/psanders/mikro/compare/v1.40.1...v1.40.2) (2026-07-22)
 
 ### Bug Fixes
