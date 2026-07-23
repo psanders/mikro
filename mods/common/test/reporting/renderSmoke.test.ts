@@ -32,14 +32,11 @@ import {
   buildRenewalReportDocument,
   buildAccountingReportData,
   buildAccountingReportDocument,
-  buildPerformanceReportData,
-  buildPerformanceReportDocument,
   loanStatementInputSchema,
   defaultedReportInputSchema,
   customersReportInputSchema,
   renewalReportInputSchema,
   accountingReportInputSchema,
-  performanceReportInputSchema,
   type Font,
   type ReportDocument,
   type ReportElement
@@ -49,8 +46,7 @@ import {
   defaultedFixture,
   customersFixture,
   renewalFixture,
-  accountingFixture,
-  performanceFixture
+  accountingFixture
 } from "../../scripts/sampleFixtures.mjs";
 
 /** Load local Geist TTFs and label them "Inter" so satori matches fontFamily. */
@@ -158,15 +154,6 @@ const CASES: SmokeCase[] = [
       ),
     lastRowMarker: "Movimientos",
     expectMultiPage: true
-  },
-  {
-    name: "performance (narrative)",
-    build: () =>
-      buildPerformanceReportDocument(
-        buildPerformanceReportData(performanceReportInputSchema.parse(performanceFixture()))
-      ),
-    lastRowMarker: "Recomendación",
-    expectMultiPage: false
   }
 ];
 

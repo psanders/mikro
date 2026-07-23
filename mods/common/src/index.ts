@@ -348,16 +348,14 @@ export {
   type SubmitFeedbackInput,
   type SubmitFeedbackResult,
   // Report schemas
-  generatePerformanceReportSchema,
-  generatePortfolioMetricsSchema,
+  generatePerformanceTrendReportSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateModeloReportSchema,
   generateLoanStatementSchema,
   generateCustomersReportSchema,
-  type GeneratePerformanceReportInput,
-  type GeneratePortfolioMetricsInput,
+  type GeneratePerformanceTrendReportInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
@@ -502,18 +500,9 @@ export {
   type TaskFiringView
 } from "./schemas/index.js";
 
-// Report narrative helpers (LLM prompt builders + parsers). The PNG report
-// generators/layouts were retired in the unify-reporting-strategy Phase F
-// cleanup — reports now render via the `reporting/` foundation (JSON + PDF).
-export type {
-  PortfolioMetrics,
-  LoansByStatus,
-  LoansBySize,
-  ReportNarrative
-} from "./reports/index.js";
+// Report narrative helpers (LLM prompt builders + parsers) for the defaulted
+// and renewal reports. Reports render via the `reporting/` foundation.
 export {
-  buildReportNarrativePrompt,
-  parseReportNarrativeResponse,
   buildLoanNotesSummaryPrompt,
   parseLoanNotesSummaryResponse,
   buildRenewalCandidateNotePrompt,

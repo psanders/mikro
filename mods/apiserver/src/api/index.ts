@@ -111,8 +111,7 @@ export {
 
 // Report operations
 export {
-  createGeneratePortfolioMetrics,
-  createGeneratePerformanceReport,
+  createGeneratePerformanceTrend,
   createGenerateDefaultedReport,
   createGenerateRenewalCandidatesReport,
   createRunPortfolioHealthCheck

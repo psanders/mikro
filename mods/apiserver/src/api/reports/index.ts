@@ -2,8 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
-export { createGeneratePortfolioMetrics } from "./createGeneratePortfolioMetrics.js";
-export { createGeneratePerformanceReport } from "./createGeneratePerformanceReport.js";
+export {
+  createGeneratePerformanceTrend,
+  computePerformanceTrendInput,
+  type GeneratedPerformanceTrendReport,
+  type GeneratePerformanceTrendOptions
+} from "./createGeneratePerformanceTrend.js";
 export { createGenerateDefaultedReport } from "./createGenerateDefaultedReport.js";
 export { createGenerateRenewalCandidatesReport } from "./createGenerateRenewalCandidatesReport.js";
 export { createGenerateAccountingReport } from "./createGenerateAccountingReport.js";

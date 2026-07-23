@@ -8,26 +8,19 @@ import { safeOptionalDate } from "./dates.js";
 const reportFormatSchema = z.enum(["json", "pdf"]).default("pdf").optional();
 
 /**
- * Schema for generating a performance report.
- * Optional date range; defaults to current month on the server.
+ * Schema for generating the performance-trend report ("Desempeño en el
+ * Tiempo"). `endDate` is the as-of end of the window (defaults to now);
+ * `months` is how many trailing monthly snapshots to compute (default 12).
  */
-export const generatePerformanceReportSchema = z.object({
-  startDate: safeOptionalDate,
+export const generatePerformanceTrendReportSchema = z.object({
   endDate: safeOptionalDate,
+  months: z.number().int().min(2).max(24).default(12).optional(),
   format: reportFormatSchema
 });
 
-export type GeneratePerformanceReportInput = z.infer<typeof generatePerformanceReportSchema>;
-
-/**
- * Schema for portfolio metrics query (same date semantics as report).
- */
-export const generatePortfolioMetricsSchema = z.object({
-  startDate: safeOptionalDate,
-  endDate: safeOptionalDate
-});
-
-export type GeneratePortfolioMetricsInput = z.infer<typeof generatePortfolioMetricsSchema>;
+export type GeneratePerformanceTrendReportInput = z.infer<
+  typeof generatePerformanceTrendReportSchema
+>;
 
 /**
  * Schema for generating the at-risk loans report (defaulted + red-highlighted late).

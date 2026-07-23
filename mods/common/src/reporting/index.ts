@@ -92,20 +92,6 @@ export {
 export { formatDop, formatPct, formatDateEs } from "./format.js";
 
 export {
-  performanceReport,
-  performanceReportInputSchema,
-  buildPerformanceReportData,
-  buildPerformanceReportDocument,
-  type PerformanceReportInput,
-  type PerformanceReportData,
-  type PerformanceReportKpis,
-  type PerformanceReportStatusRow,
-  type PerformanceReportSizeRow,
-  type PerformanceLoanStatus,
-  type PerformanceLoanSize
-} from "./performanceReport.js";
-
-export {
   customersReport,
   customersReportInputSchema,
   buildCustomersReportData,
@@ -151,3 +137,14 @@ export {
   type AccountingReportAccountRow,
   type AccountingReportTransactionRow
 } from "./accountingReport.js";
+
+export {
+  performanceTrendReport,
+  performanceTrendReportInputSchema,
+  buildPerformanceTrendReportData,
+  buildPerformanceTrendReportDocument,
+  type PerformanceTrendReportInput,
+  type PerformanceTrendData,
+  type PerformanceTrendMonth,
+  type PerformanceTrendBreakevenMarker
+} from "./performanceTrendReport.js";

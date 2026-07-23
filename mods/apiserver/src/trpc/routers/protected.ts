@@ -42,8 +42,7 @@ import {
   sendReceiptViaWhatsAppSchema,
   sendPaymentConfirmationSchema,
   // Report schemas
-  generatePortfolioMetricsSchema,
-  generatePerformanceReportSchema,
+  generatePerformanceTrendReportSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
@@ -170,8 +169,7 @@ import { createSendReceiptViaWhatsApp } from "../../api/receipts/createSendRecei
 import { createSendPaymentConfirmation } from "../../api/receipts/createSendPaymentConfirmation.js";
 import { createRecordOutboundMessage } from "../../api/messages/index.js";
 // Report API functions
-import { createGeneratePortfolioMetrics } from "../../api/reports/createGeneratePortfolioMetrics.js";
-import { createGeneratePerformanceReport } from "../../api/reports/createGeneratePerformanceReport.js";
+import { createGeneratePerformanceTrend } from "../../api/reports/createGeneratePerformanceTrend.js";
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
@@ -1086,24 +1084,15 @@ export const protectedRouter = router({
   // ==================== Report procedures ====================
 
   /**
-   * Get portfolio metrics for a date range (for reports).
+   * Generate the performance-trend report ("Desempeño en el Tiempo"): a
+   * monthly time series of portfolio metrics with a linear break-even
+   * projection, as JSON or a branded 2-page PDF via the shared
+   * `performanceTrendReport` definition (`@mikro/common`).
    */
-  generatePortfolioMetrics: protectedProcedure
-    .input(generatePortfolioMetricsSchema)
-    .query(async ({ ctx, input }) => {
-      const fn = createGeneratePortfolioMetrics(ctx.db);
-      return fn(input);
-    }),
-
-  /**
-   * Generate the performance report (metrics + LLM narrative) as JSON or a
-   * branded PDF via the shared `performanceReport` definition
-   * (`@mikro/common`) — same definition the CLI command runs.
-   */
-  generatePerformanceReport: protectedProcedure
-    .input(generatePerformanceReportSchema)
+  generatePerformanceTrendReport: protectedProcedure
+    .input(generatePerformanceTrendReportSchema)
     .mutation(async ({ ctx, input }) => {
-      const fn = createGeneratePerformanceReport(ctx.db);
+      const fn = createGeneratePerformanceTrend(ctx.db);
       const result = await fn(input);
       return {
         data: result.data,

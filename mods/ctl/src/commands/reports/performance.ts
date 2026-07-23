@@ -10,21 +10,22 @@ import errorHandler from "../../errorHandler.js";
 
 export default class Performance extends BaseCommand<typeof Performance> {
   static override readonly description =
-    "generate the performance report (metrics + narrative) as JSON or a branded PDF — same report definition the dashboard uses";
+    "generate the over-time performance report (Desempeño en el Tiempo) as JSON or a branded PDF — the same report definition the dashboard uses";
 
   static override readonly examples = [
     "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --start-date 2026-01-01 --end-date 2026-02-28",
+    "<%= config.bin %> <%= command.id %> --end-date 2026-07-31 --months 12",
     "<%= config.bin %> <%= command.id %> --format json",
-    "<%= config.bin %> <%= command.id %> --output desempeno.pdf"
+    "<%= config.bin %> <%= command.id %> --output desempeno-tiempo.pdf"
   ];
 
   static override readonly flags = {
-    "start-date": Flags.string({
-      description: "Start of report period (default: first day of current year, YTD)"
-    }),
     "end-date": Flags.string({
-      description: "End of report period (default: today)"
+      description: "As-of end of the window (default: today)"
+    }),
+    months: Flags.integer({
+      description: "Number of trailing monthly snapshots (2–24)",
+      default: 12
     }),
     format: Flags.string({
       description: "Output format",
@@ -42,30 +43,25 @@ export default class Performance extends BaseCommand<typeof Performance> {
     const { flags } = await this.parse(Performance);
     const format = flags.format as "json" | "pdf";
 
-    if (flags["start-date"]) validateDate(flags["start-date"]);
     if (flags["end-date"]) validateDate(flags["end-date"]);
 
     const end = flags["end-date"] ? parseDateOnly(flags["end-date"]) : new Date();
-    const start = flags["start-date"]
-      ? parseDateOnly(flags["start-date"])
-      : new Date(end.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const startDateStr = localDateString(start);
     const endDateStr = localDateString(end);
 
     const date = localDateString();
     const defaultExt = format === "json" ? "json" : "pdf";
     const outputPath = flags.output
       ? resolve(flags.output)
-      : resolve(`./desempeno-${date}.${defaultExt}`);
+      : resolve(`./desempeno-tiempo-${date}.${defaultExt}`);
 
     try {
       const client = this.createClient();
-      this.log("Generando reporte de desempeño...");
-      this.log(`  Periodo: ${startDateStr} a ${endDateStr}`);
+      this.log("Generando reporte de desempeño en el tiempo...");
+      this.log(`  Hasta: ${endDateStr} · ${flags.months} meses`);
 
-      const result = await client.generatePerformanceReport.mutate({
-        startDate: startDateStr,
+      const result = await client.generatePerformanceTrendReport.mutate({
         endDate: endDateStr,
+        months: flags.months,
         format
       });
 

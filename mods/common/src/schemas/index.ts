@@ -237,16 +237,14 @@ export {
 } from "./feedback.js";
 
 export {
-  generatePerformanceReportSchema,
-  generatePortfolioMetricsSchema,
+  generatePerformanceTrendReportSchema,
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateModeloReportSchema,
   generateLoanStatementSchema,
   generateCustomersReportSchema,
-  type GeneratePerformanceReportInput,
-  type GeneratePortfolioMetricsInput,
+  type GeneratePerformanceTrendReportInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,

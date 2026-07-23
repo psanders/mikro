@@ -34,10 +34,10 @@ import {
   Check,
   ChevronDown,
   Download,
+  LineChart,
   Repeat,
   ScrollText,
   Sparkles,
-  TrendingUp,
   TriangleAlert,
   Users,
   Wallet
@@ -143,7 +143,7 @@ type ReportId =
   | "clientes"
   | "prestamos-en-riesgo"
   | "renovacion"
-  | "desempeno"
+  | "desempeno-tiempo"
   | "contable"
   | "audit-log";
 
@@ -189,12 +189,12 @@ const CATALOG: ReportEntry[] = [
     formats: ["PDF", "JSON"]
   },
   {
-    id: "desempeno",
-    icon: TrendingUp,
+    id: "desempeno-tiempo",
+    icon: LineChart,
     chipBg: "bg-[#E9F2FF]",
     iconColor: "text-[#1F4AA8]",
-    title: "Desempeño",
-    description: "Salud de la cartera y proyección financiera",
+    title: "Desempeño en el tiempo",
+    description: "Momentum del negocio y punto de ganancia",
     formats: ["PDF", "JSON"]
   },
   {
@@ -276,7 +276,7 @@ export function ReportesScreen() {
   const generateCustomersReport = trpc.generateCustomersReport.useMutation();
   const generateDefaultedReport = trpc.generateDefaultedReport.useMutation();
   const generateRenewalCandidatesReport = trpc.generateRenewalCandidatesReport.useMutation();
-  const generatePerformanceReport = trpc.generatePerformanceReport.useMutation();
+  const generatePerformanceTrendReport = trpc.generatePerformanceTrendReport.useMutation();
   const generateAccountingReport = trpc.accounting.generateAccountingReport.useMutation();
 
   async function handleDownload(entry: ReportEntry) {
@@ -315,10 +315,12 @@ export function ReportesScreen() {
           ({ saved, filename } = await downloadReportResult(result, format));
           break;
         }
-        case "desempeno": {
-          const result = await generatePerformanceReport.mutateAsync({
-            startDate,
+        case "desempeno-tiempo": {
+          // Trailing 12-month trend ending at the selected month — the trend
+          // report takes an as-of end + a month count, not a single-month window.
+          const result = await generatePerformanceTrendReport.mutateAsync({
             endDate,
+            months: 12,
             format
           });
           ({ saved, filename } = await downloadReportResult(result, format));
