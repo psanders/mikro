@@ -9,8 +9,11 @@
  * them without explicit instruction.
  *
  * Browser-safe: pure arithmetic, no `fs`/Node bindings. Lives in @mikro/common
- * behind the `./projection` subpath so the dashboard (Modelo page) and the
- * server (modelo report PDF) compute the identical result from one source.
+ * behind the `./projection` subpath. The original dashboard "Modelo" page and
+ * its PDF export were retired with the ops-dashboard UI (see
+ * openspec/changes/archive/2026-07-04-retire-ops-dashboard-ui); this engine's
+ * only current consumer is the `model-simulation` CLI (`../modelo/cli.ts`),
+ * which calibrates its inputs from real mikro.db data instead of a form.
  *
  * DEVELOPER NOTE — randomness: the Python engine seeds `random.seed(loanId *
  * 1000 + week)` (Mersenne Twister) per payment event. We keep the same seeding

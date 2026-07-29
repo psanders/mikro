@@ -46,7 +46,6 @@ import {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
-  generateModeloReportSchema,
   generateLoanStatementSchema,
   generateCustomersReportSchema,
   // Loan note schemas
@@ -173,7 +172,6 @@ import { createGeneratePerformanceTrend } from "../../api/reports/createGenerate
 import { createGenerateDefaultedReport } from "../../api/reports/createGenerateDefaultedReport.js";
 import { createGenerateRenewalCandidatesReport } from "../../api/reports/createGenerateRenewalCandidatesReport.js";
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
-import { createGenerateModeloReport } from "../../api/reports/createGenerateModeloReport.js";
 import { createGenerateLoanStatement } from "../../api/reports/createGenerateLoanStatement.js";
 import { createGenerateCustomersReport } from "../../api/reports/createGenerateCustomersReport.js";
 // Loan note API functions
@@ -1100,17 +1098,6 @@ export const protectedRouter = router({
         filename: result.filename,
         mimeType: result.mimeType
       };
-    }),
-
-  /**
-   * Generate the Modelo de negocio (projection model) PDF from the supplied
-   * parameters. Stateless — no DB; returns the base64 PDF + filename.
-   */
-  generateModeloReport: protectedProcedure
-    .input(generateModeloReportSchema)
-    .mutation(async ({ input }) => {
-      const fn = createGenerateModeloReport();
-      return fn(input);
     }),
 
   /**

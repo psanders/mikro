@@ -69,28 +69,6 @@ export const generateCustomersReportSchema = z.object({
 export type GenerateCustomersReportInput = z.infer<typeof generateCustomersReportSchema>;
 
 /**
- * Schema for generating the Modelo de negocio (projection model) PDF. The input
- * is the projection parameters as shown on the page; the server runs the shared
- * projection engine and renders the PDF. Bounds mirror the page's parseForm
- * validation so a request that the page would not run is rejected.
- */
-export const generateModeloReportSchema = z.object({
-  inversionInicial: z.number().nonnegative(),
-  gastosFijosMensuales: z.number().nonnegative(),
-  inversionMensual: z.number().nonnegative(),
-  prestamoPromedio: z.number().positive(),
-  tasaInteres: z.number().min(0).max(1),
-  frecuenciaPago: z.enum(["DIARIO", "SEMANAL", "QUINCENAL", "MENSUAL"]),
-  plazoBase: z.number().int().min(1),
-  prestamosPorSemana: z.number().int().min(1),
-  tasaMorosidad: z.number().min(0).max(1),
-  tasaDefault: z.number().min(0).max(1),
-  horizonteMeses: z.number().int().min(1).max(60)
-});
-
-export type GenerateModeloReportInput = z.infer<typeof generateModeloReportSchema>;
-
-/**
  * Schema for generating the loan-statement report (issue #161 / #110). Just the
  * loan id + desired output — the apiserver resolves the loan, maps it into the
  * report's DB-free snapshot input, and runs the shared `loanStatementReport`

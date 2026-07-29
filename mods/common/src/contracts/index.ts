@@ -8,8 +8,6 @@ export { renderContractPdf } from "./generator.js";
 export { buildContractDataFromCustomer } from "./customerContract.js";
 export type { CustomerContractIdentity, CustomerContractTerms } from "./customerContract.js";
 export { renderSummaryPdf } from "./summaryGenerator.js";
-export { renderModeloReportPdf } from "./modeloReportGenerator.js";
-export type { ModeloReportData } from "./modeloReportGenerator.js";
 export type { ContractData, ContractFrequency } from "./types.js";
 export type {
   SolicitudSummaryData,
