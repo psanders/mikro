@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.42.0](https://github.com/psanders/mikro/compare/v1.41.1...v1.42.0) (2026-07-30)
+
+### Features
+
+- **common:** offline break-even simulator (model-simulation) + retire dead modelo PDF ([#238](https://github.com/psanders/mikro/issues/238)) ([de6799c](https://github.com/psanders/mikro/commit/de6799c78f1c8dcbcf447e0ff24d35ef452a062f))
+
 ## [1.41.1](https://github.com/psanders/mikro/compare/v1.41.0...v1.41.1) (2026-07-23)
 
 ### Bug Fixes
