@@ -241,14 +241,12 @@ export {
   generateDefaultedReportSchema,
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
-  generateModeloReportSchema,
   generateLoanStatementSchema,
   generateCustomersReportSchema,
   type GeneratePerformanceTrendReportInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
-  type GenerateModeloReportInput,
   type GenerateLoanStatementInput,
   type GenerateCustomersReportInput
 } from "./report.js";

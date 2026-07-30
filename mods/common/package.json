@@ -6,6 +6,9 @@
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "model-simulation": "./bin/model-simulation.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,6 +33,10 @@
     "./projection": {
       "types": "./dist/projection/index.d.ts",
       "default": "./dist/projection/index.js"
+    },
+    "./modelo": {
+      "types": "./dist/modelo/index.d.ts",
+      "default": "./dist/modelo/index.js"
     }
   },
   "scripts": {
