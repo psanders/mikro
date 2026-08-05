@@ -49,4 +49,4 @@
       against the pre-change baseline
 - [x] 5.2 Regenerate a statement for a loan with a frozen window and confirm
       "generada" is never below "pagada" (needs a seeded DB + mikro.json fixture)
-- [ ] 5.3 Sync the delta specs into `openspec/specs/` and archive the change
+- [x] 5.3 Sync the delta specs into `openspec/specs/` and archive the change
