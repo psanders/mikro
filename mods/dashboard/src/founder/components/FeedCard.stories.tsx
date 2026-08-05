@@ -23,8 +23,7 @@ import {
   loanStatusChangedNoFromEvent,
   paymentCollectedEvent,
   paymentCollectedWithLateFeeEvent,
-  paymentReversedEvent,
-  ruleAlertEvent
+  paymentReversedEvent
 } from "./fixtures";
 
 const meta = {
@@ -109,11 +108,6 @@ export const CopilotAction: Story = {
   args: { event: copilotActionEvent, defaultExpanded: true }
 };
 
-export const RuleAlert: Story = {
-  name: "Rule Alert — no narrative row (compact summary already states rule/metric/threshold)",
-  args: { event: ruleAlertEvent, defaultExpanded: true }
-};
-
 export const PaymentCollectedExpandedWithLateFee: Story = {
   name: "Expanded — payment with late fee detail",
   args: { event: paymentCollectedWithLateFeeEvent, defaultExpanded: true }
@@ -178,8 +172,7 @@ export const Feed: Story = {
       paymentCollectedWithLateFeeEvent,
       paymentReversedEvent,
       applicationApprovedEvent,
-      applicationConvertedEvent,
-      ruleAlertEvent
+      applicationConvertedEvent
     ];
     const older = [
       applicationRejectedEvent,
