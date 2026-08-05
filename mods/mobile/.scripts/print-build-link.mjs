@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-// Prints where the newest EAS build for a platform landed — build page and
-// direct artifact download — so nobody has to hunt through expo.dev after a
-// build finishes. Chained after the cloud `eas build` npm scripts and used by
-// CI to append the same note to $GITHUB_STEP_SUMMARY (output is markdown that
-// also reads fine in a terminal).
-//
-// Usage: node .scripts/print-build-link.mjs <ios|android>
+/**
+ * Copyright (C) 2026 by Mikro SRL. MIT License.
+ *
+ * Prints where the newest EAS build for a platform landed — build page and
+ * direct artifact download — so nobody has to hunt through expo.dev after a
+ * build finishes. Chained after the cloud `eas build` npm scripts and used by
+ * CI to append the same note to $GITHUB_STEP_SUMMARY (output is markdown that
+ * also reads fine in a terminal).
+ *
+ * Usage: node .scripts/print-build-link.mjs <ios|android>
+ */
 import { execFileSync } from "node:child_process";
 
 const platform = process.argv[2];
@@ -41,8 +45,7 @@ const page =
   account && slug
     ? `https://expo.dev/accounts/${account}/projects/${slug}/builds/${build.id}`
     : undefined;
-const artifact =
-  build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl;
+const artifact = build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl;
 
 console.log(`### 📦 EAS build (${platform})`);
 console.log(`- Status: ${build.status}`);

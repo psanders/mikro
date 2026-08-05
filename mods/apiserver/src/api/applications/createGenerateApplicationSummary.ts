@@ -1,11 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type {
-  ApplicationScore,
-  DbClient,
-  GenerateApplicationSummaryInput
-} from "@mikro/common";
+import type { ApplicationScore, DbClient, GenerateApplicationSummaryInput } from "@mikro/common";
 import { renderSummaryPdf, type SolicitudSummaryData } from "@mikro/common/contracts";
 import { TRPCError } from "@trpc/server";
 import { existsSync, readFileSync } from "fs";
