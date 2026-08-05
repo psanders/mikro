@@ -76,8 +76,8 @@ Persisting the fact is worth the column.
 
 ### Anchor selection: earliest anchor in the window
 
-When several LATE_FEE rows fall inside the current window, gross is measured
-from the _earliest_ stored anchor. That keeps gross ≥ the sum of the charges
+When several LATE*FEE rows fall inside the current window, gross is measured
+from the \_earliest* stored anchor. That keeps gross ≥ the sum of the charges
 that were computed against it, which is precisely the invariant we want. Taking
 the latest anchor would reintroduce the bug one charge later.
 
