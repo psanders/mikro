@@ -342,11 +342,6 @@ export {
 } from "./businessEvent.js";
 
 export {
-  watchRuleMetricEnum,
-  watchRuleComparatorEnum,
-  createWatchRuleSchema,
-  listWatchRulesSchema,
-  setWatchRuleEnabledSchema,
   copilotChatSchema,
   copilotActionDecisionSchema,
   getCopilotHistorySchema,
@@ -360,8 +355,6 @@ export {
   copilotLoanFormSchema,
   copilotDocumentSchema,
   COPILOT_ACTION_EXPIRY_MINUTES,
-  type WatchRuleMetric,
-  type CreateWatchRuleInput,
   type CopilotPendingAction,
   type CopilotProvenance,
   type CopilotChatReply,

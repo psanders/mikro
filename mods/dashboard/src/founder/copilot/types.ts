@@ -4,32 +4,15 @@
  * Presentational types for the copilot dock. The thread renders a union of
  * message kinds; pages/wiring map the tRPC copilot response onto these so the
  * dock and its stories stay independent of the wire schema. Only the shared
- * `CopilotPendingAction` / `CopilotProvenance` / `WatchRuleMetric` types come
- * from "@mikro/common/schemas" — never the root barrel (breaks the Vite bundle).
+ * `CopilotPendingAction` / `CopilotProvenance` types come from
+ * "@mikro/common/schemas" — never the root barrel (breaks the Vite bundle).
  */
-import type {
-  CopilotPendingAction,
-  CopilotProvenance,
-  WatchRuleMetric
-} from "@mikro/common/schemas";
+import type { CopilotPendingAction, CopilotProvenance } from "@mikro/common/schemas";
 
-export type { CopilotPendingAction, CopilotProvenance, WatchRuleMetric };
-
-export type WatchRuleComparator = "gt" | "lt";
+export type { CopilotPendingAction, CopilotProvenance };
 
 /** Lifecycle of a proposed write, mirrored by the confirm card's visual state. */
 export type PendingActionState = "pending" | "confirmed" | "rejected" | "expired";
-
-/** A watch rule as the rule card renders it (subset of the wire shape). */
-export interface CopilotRule {
-  id: string;
-  name: string;
-  metric: WatchRuleMetric;
-  comparator: WatchRuleComparator;
-  threshold: number;
-  /** Defaults to true; the disabled variant renders muted with an "Activar" toggle. */
-  enabled?: boolean;
-}
 
 export interface UserMessage {
   kind: "user";
@@ -49,15 +32,6 @@ export interface PendingActionMessage {
   id: string;
   action: CopilotPendingAction;
   state: PendingActionState;
-  provenance?: CopilotProvenance;
-}
-
-export interface RuleMessage {
-  kind: "rule";
-  id: string;
-  rule: CopilotRule;
-  /** Optional evaluation note shown in the card body (e.g. "ninguna ruta la supera"). */
-  note?: string;
   provenance?: CopilotProvenance;
 }
 
@@ -107,7 +81,6 @@ export type CopilotMessage =
   | UserMessage
   | AssistantTextMessage
   | PendingActionMessage
-  | RuleMessage
   | CustomerFormMessage
   | LoanFormMessage
   | DocumentMessage;
@@ -161,7 +134,7 @@ export interface LoanFormValues {
   generateContract: boolean;
 }
 
-export type CapabilityVerb = "CONSULTAR" | "ACTUAR" | "VIGILAR" | "AUDITAR";
+export type CapabilityVerb = "CONSULTAR" | "ACTUAR" | "PROGRAMAR" | "AUDITAR";
 
 /** A single suggestion chip: the visible label doubles as the prompt to send. */
 export interface CapabilityChip {

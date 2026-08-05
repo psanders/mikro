@@ -25,8 +25,8 @@
 
 ## 5. Retention and interval worker
 
-- [ ] 5.1 Create `mods/apiserver/src/api/copilot/createSignalDigestEvaluator.ts`, modeled directly on `createWatchRuleEvaluator.ts`: daily tick that checks whether the configured cadence (default weekly for patterns, monthly for dormancy) has elapsed since the last run (tracked via last-run timestamp(s) — new small table or a reused config row, whichever is simpler in this schema), prunes `ToolCallLog` rows past the retention window (default 120 days) before evaluating, calls `evaluateSignalDigest` when due, returns a stop function
-- [ ] 5.2 Start the worker at apiserver boot (`mods/apiserver/src/index.ts`) alongside the existing watch-rule evaluator and QCobro worker, wired into the same `SIGTERM`/`SIGINT` shutdown handling
+- [ ] 5.1 Create `mods/apiserver/src/api/copilot/createSignalDigestEvaluator.ts`, modeled directly on `createQCobroWorker.ts`: daily tick that checks whether the configured cadence (default weekly for patterns, monthly for dormancy) has elapsed since the last run (tracked via last-run timestamp(s) — new small table or a reused config row, whichever is simpler in this schema), prunes `ToolCallLog` rows past the retention window (default 120 days) before evaluating, calls `evaluateSignalDigest` when due, returns a stop function
+- [ ] 5.2 Start the worker at apiserver boot (`mods/apiserver/src/index.ts`) alongside the existing QCobro and task workers, wired into the same `SIGTERM`/`SIGINT` shutdown handling
 - [ ] 5.3 Unit test the tick logic (weekly/monthly cadence gating, retention prune) without relying on real timers
 
 ## 6. Verification

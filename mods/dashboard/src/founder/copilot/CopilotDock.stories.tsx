@@ -7,9 +7,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AssistantMessage } from "./AssistantMessage";
 import { CapabilityChips } from "./CapabilityChips";
 import { CopilotDock } from "./CopilotDock";
-import { RuleCard } from "./RuleCard";
 import { UserBubble } from "./UserBubble";
-import { activeRule, activeRuleNote, ruleProvenance } from "./fixtures";
+import { collectionProvenance } from "./fixtures";
 
 /**
  * The dock is height-constrained here so the thread scrolls and the composer
@@ -73,16 +72,17 @@ export const EmptyWithCapabilities: Story = {
 
 /**
  * The export's full thread: capability chips → founder question → assistant
- * reply carrying the "Regla activa" card and the crear_regla provenance line.
+ * reply carrying the answer and its provenance line.
  */
-export const RuleConversation: Story = {
+export const AnsweredQuestion: Story = {
   render: () => (
     <DockFrame>
       <CapabilityChips onPick={() => {}} />
-      <UserBubble text="Avísame si la mora de una ruta pasa de 9%" />
-      <AssistantMessage provenance={ruleProvenance}>
-        <RuleCard rule={activeRule} note={activeRuleNote} />
-      </AssistantMessage>
+      <UserBubble text="¿Cuánto se cobró hoy?" />
+      <AssistantMessage
+        text="Hoy se han cobrado RD$18,400 en 11 pagos."
+        provenance={collectionProvenance}
+      />
     </DockFrame>
   )
 };
@@ -91,7 +91,7 @@ export const RuleConversation: Story = {
 export const BusyWithPrefill: Story = {
   render: () => (
     <DockFrame busy initialValue="¿Cómo cerró la cobranza?">
-      <UserBubble text="Mora por ruta" />
+      <UserBubble text="¿Cómo cerró la cobranza?" />
     </DockFrame>
   )
 };
@@ -100,10 +100,11 @@ export const BusyWithPrefill: Story = {
 export const WithClearHistoryButton: Story = {
   render: () => (
     <DockFrame onClearHistory={() => {}}>
-      <UserBubble text="Avísame si la mora de una ruta pasa de 9%" />
-      <AssistantMessage provenance={ruleProvenance}>
-        <RuleCard rule={activeRule} note={activeRuleNote} />
-      </AssistantMessage>
+      <UserBubble text="¿Cuánto se cobró hoy?" />
+      <AssistantMessage
+        text="Hoy se han cobrado RD$18,400 en 11 pagos."
+        provenance={collectionProvenance}
+      />
     </DockFrame>
   )
 };
@@ -112,10 +113,11 @@ export const WithClearHistoryButton: Story = {
 export const ClearHistoryConfirm: Story = {
   render: () => (
     <DockFrame onClearHistory={() => {}} initialConfirmingClear>
-      <UserBubble text="Avísame si la mora de una ruta pasa de 9%" />
-      <AssistantMessage provenance={ruleProvenance}>
-        <RuleCard rule={activeRule} note={activeRuleNote} />
-      </AssistantMessage>
+      <UserBubble text="¿Cuánto se cobró hoy?" />
+      <AssistantMessage
+        text="Hoy se han cobrado RD$18,400 en 11 pagos."
+        provenance={collectionProvenance}
+      />
     </DockFrame>
   )
 };

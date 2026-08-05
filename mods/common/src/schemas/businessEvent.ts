@@ -25,7 +25,6 @@ export const businessEventTypeEnum = z.enum([
   // kept in the catalog so historical rows still read/validate/render.
   "contract.generated",
   "copilot.action",
-  "rule.alert",
   "task.due",
   "task.needs_input",
   "task.completed",
@@ -130,15 +129,6 @@ const copilotActionPayloadSchema = z.object({
   resultSummary: z.string().optional()
 });
 
-// Written intrinsically by the watch-rule evaluator on a state change.
-const ruleAlertPayloadSchema = z.object({
-  ruleId: z.uuid(),
-  ruleName: z.string(),
-  metric: z.string(),
-  value: z.number(),
-  threshold: z.number()
-});
-
 // Task lifecycle events, written intrinsically by the task worker and the
 // firing confirm/skip flow. They carry the firing/automation refs plus the
 // task name denormalized — like every event, no foreign keys, so the row
@@ -207,7 +197,6 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "customer.created": customerCreatedPayloadSchema,
   "contract.generated": contractGeneratedPayloadSchema,
   "copilot.action": copilotActionPayloadSchema,
-  "rule.alert": ruleAlertPayloadSchema,
   "task.due": taskDuePayloadSchema,
   "task.needs_input": taskNeedsInputPayloadSchema,
   "task.completed": taskCompletedPayloadSchema,

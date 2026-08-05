@@ -130,7 +130,6 @@ describe("Founder Copilot Integration", () => {
 
   beforeEach(async () => {
     await db.copilotPendingAction.deleteMany();
-    await db.watchRule.deleteMany();
     await db.businessEvent.deleteMany();
     await db.loanApplication.deleteMany();
     await db.message.deleteMany();
@@ -165,7 +164,6 @@ describe("Founder Copilot Integration", () => {
       expect(bound).to.include("listCustomerLoansByPhone"); // read (#119)
       expect(bound).to.include("createPayment"); // write
       expect(bound).to.include("sendReceiptViaWhatsApp"); // write (#118)
-      expect(bound).to.include("createWatchRule"); // direct
       expect(bound).to.include("githubFeedback"); // direct
       // Tools that exist in the agents registry but are NOT in any list.
       expect(bound).to.not.include("saveAnswer");
@@ -1632,7 +1630,7 @@ describe("Founder Copilot Integration", () => {
       });
     });
 
-    it("rejects non-admins on all seven procedures", async () => {
+    it("rejects non-admins on all five procedures", async () => {
       const c = nonAdminCaller();
       const id = "33333333-3333-4333-8333-333333333333";
       const attempts: Array<Promise<unknown>> = [
@@ -1640,9 +1638,7 @@ describe("Founder Copilot Integration", () => {
         c.copilotConfirmAction({ actionId: id }),
         c.copilotRejectAction({ actionId: id }),
         c.getCopilotHistory({}),
-        c.clearCopilotHistory({}),
-        c.listWatchRules({}),
-        c.setWatchRuleEnabled({ id, enabled: false })
+        c.clearCopilotHistory({})
       ];
 
       const results = await Promise.allSettled(attempts);

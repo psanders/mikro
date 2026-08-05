@@ -2,7 +2,7 @@
 
 `add-copilot-tool-awareness-feedback` introduces two per-turn signals: a `reason` code on failed lookups (`NOT_FOUND` today; `UNSUPPORTED`/`VALIDATION_ERROR` reserved) and a `githubFeedback` tool call carrying a `category`. Both are currently ephemeral — visible in a single turn, then gone except as a one-off filed issue. There's no place these accumulate, so "the same gap happened 8 times this month" is invisible; only "it happened once, right now" is captured.
 
-The repo already has the exact worker shape needed to run a periodic pass: `createWatchRuleEvaluator.ts` — an interval timer created at apiserver startup, `unref()`'d so it doesn't hold the process open, wired into shutdown, with the actual logic factored into a pure, unit-testable function (`evaluateWatchRules`). `createQCobroWorker.ts` follows the same shape for portfolio sync. This change adds a third worker of the same lifecycle, not a new pattern.
+The repo already has the exact worker shape needed to run a periodic pass: `createQCobroWorker.ts` — an interval timer created at apiserver startup, `unref()`'d so it doesn't hold the process open, wired into shutdown, with the actual logic factored into a pure, unit-testable function. `createTaskWorker.ts` follows the same shape for scheduled automations. This change adds a third worker of the same lifecycle, not a new pattern. (An earlier draft cited `createWatchRuleEvaluator` as the model; watch rules were retired, so the surviving workers are the reference.)
 
 ## Goals / Non-Goals
 
@@ -32,9 +32,9 @@ Schema: `{id, toolName, signal: string | null, userId, createdAt}`. For lookup t
 
 ### 2. One evaluator, weekly cadence, threshold-gated digest
 
-`evaluateSignalDigest(db, {windowDays, threshold})` groups `ToolCallLog` rows from the trailing window by `(toolName, signal)`, keeps groups at or above `threshold` (default: 3), and — only if at least one group qualifies — renders a digest body (pattern, count, first/last seen) and calls `fileGithubIssue`. `createSignalDigestEvaluator(db, options)` wraps it in a `setInterval` sized to check daily whether the weekly cadence has elapsed (same polling-vs-precise-scheduling tradeoff already accepted by `createWatchRuleEvaluator`'s 5-minute tick), tracking last-run via a single timestamp row rather than a cron dependency.
+`evaluateSignalDigest(db, {windowDays, threshold})` groups `ToolCallLog` rows from the trailing window by `(toolName, signal)`, keeps groups at or above `threshold` (default: 3), and — only if at least one group qualifies — renders a digest body (pattern, count, first/last seen) and calls `fileGithubIssue`. `createSignalDigestEvaluator(db, options)` wraps it in a `setInterval` sized to check daily whether the weekly cadence has elapsed (same polling-vs-precise-scheduling tradeoff already accepted by the QCobro and task workers' ticks), tracking last-run via a single timestamp row rather than a cron dependency.
 
-- _Alternative considered_: a real cron schedule (e.g. `node-cron`). Rejected — no cron dependency exists elsewhere in apiserver; the watch-rule/QCobro workers both use plain interval timers with in-process cadence tracking, and matching that keeps this change dependency-free.
+- _Alternative considered_: a real cron schedule (e.g. `node-cron`). Rejected — no cron dependency exists elsewhere in apiserver; the QCobro/task workers both use plain interval timers with in-process cadence tracking, and matching that keeps this change dependency-free.
 - _Alternative considered_: mine directly from GitHub (list issues filed by `githubFeedback`, count by title/category). Rejected — requires tagging or parsing filed issues back out of GitHub (no label is used, per `feedback-submission`'s existing convention of unlabeled issues), turning a local counting problem into a remote API dependency. `ToolCallLog` already captures everything needed locally.
 
 ### 3. Digest is one issue, not one-per-pattern
@@ -69,7 +69,7 @@ Gating this to monthly (not every weekly tick) matters: a 90-day dormancy fact b
 2. Add logging call in `createCopilotChat.ts`'s tool-dispatch branch (after `add-copilot-tool-awareness-feedback` lands, so `reason` exists to log).
 3. Add `evaluateSignalDigest` (pattern detection + retention prune) + tests.
 4. Add dormancy detection to the same evaluator, gated to monthly + tests.
-5. Add `createSignalDigestEvaluator` worker, start it at apiserver boot next to `createWatchRuleEvaluator`/QCobro worker, wire into the same shutdown stop-function list.
+5. Add `createSignalDigestEvaluator` worker, start it at apiserver boot next to the QCobro/task workers, wire into the same shutdown stop-function list.
    Fully additive; disabling is just not starting the worker (no data loss, no rollback complexity).
 
 ## Open Questions

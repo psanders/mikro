@@ -15,7 +15,6 @@ import {
   UserPlus,
   Sparkles,
   FileText,
-  BellRing,
   AlarmClockCheck,
   CircleAlert,
   CalendarCheck,
@@ -27,16 +26,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
 import { formatAmount } from "./format";
-import { METRIC_LABELS, formatThreshold } from "../copilot/ruleLabels";
-import type { WatchRuleMetric } from "../copilot/types";
-
-/** Metric-aware value formatting for `rule.alert` cards. */
-function ruleMetricValue(metric: string, value: number): string {
-  return metric in METRIC_LABELS
-    ? formatThreshold(metric as WatchRuleMetric, value)
-    : String(value);
-}
-
 export type FeedAccent = "green" | "amber" | "red" | "blue" | "neutral";
 
 interface TypeVisual {
@@ -80,7 +69,6 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "customer.created": { icon: UserPlus, accent: "blue" },
   "contract.generated": { icon: FileText, accent: "blue" },
   "copilot.action": { icon: Sparkles, accent: "blue" },
-  "rule.alert": { icon: BellRing, accent: "amber" },
   "task.due": { icon: AlarmClockCheck, accent: "amber" },
   "task.needs_input": { icon: CircleAlert, accent: "amber" },
   "task.completed": { icon: CalendarCheck, accent: "green" },
@@ -121,7 +109,11 @@ export function resolveVisual(event: FeedEvent): TypeVisual {
     const accent = messageStatusAccent(event.payload.status);
     return { icon: accent === "red" ? MessageSquareX : MessageSquare, accent };
   }
-  return BASE_VISUALS[event.type];
+  // The event log is append-only and long-lived, so a row can outlast the
+  // build's knowledge of its type — a type retired later, or a row written by
+  // a newer server than the client. Fall back to a neutral visual rather than
+  // returning undefined and crashing the entire feed on one unrecognized row.
+  return BASE_VISUALS[event.type] ?? { icon: CircleAlert, accent: "neutral" };
 }
 
 /**
@@ -247,16 +239,6 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
     case "copilot.action": {
       const tool = typeof payload.toolName === "string" ? payload.toolName : "";
       return { text: tool ? `Copiloto · ${tool}` : "Copiloto", tone: "muted" };
-    }
-    case "rule.alert": {
-      const name = typeof payload.ruleName === "string" ? payload.ruleName : "Regla";
-      const metric = typeof payload.metric === "string" ? payload.metric : "";
-      if (typeof payload.value === "number" && typeof payload.threshold === "number") {
-        const value = ruleMetricValue(metric, payload.value);
-        const threshold = ruleMetricValue(metric, payload.threshold);
-        return { text: `${name} · valor ${value} vs umbral ${threshold}`, tone: "muted" };
-      }
-      return { text: name, tone: "muted" };
     }
     case "task.due":
       return { text: "Tarea programada · lista para confirmar", tone: "muted" };
@@ -454,8 +436,6 @@ export function resolveNarrative(event: FeedEvent): string | null {
       const toolName = typeof payload.toolName === "string" ? payload.toolName : "";
       return toolName ? `Herramienta ejecutada: ${toolName}.` : null;
     }
-    case "rule.alert":
-      return null;
     case "task.due":
     case "task.needs_input":
       // The live action widget (TaskActionCard) carries the substance while
@@ -556,7 +536,7 @@ export function subjectQuestion(target: NavigateTarget, customerName?: string): 
  * link — deeper, record-specific synthesis, distinct from the (deletion-only)
  * ask-copilot chip's broader weekly question. Reuses `subjectQuestion` for
  * every type that already resolves a subject link; type-specific fallbacks
- * otherwise (deletions, loan status changes, copilot actions, rule alerts).
+ * otherwise (deletions, loan status changes, copilot actions).
  */
 export function resolveInsightsQuestion(event: FeedEvent): string {
   const subject = resolveSubjectLink(event);
@@ -572,12 +552,6 @@ export function resolveInsightsQuestion(event: FeedEvent): string {
       return "Cuéntame más sobre este cambio de estado del préstamo.";
     case "copilot.action":
       return "Cuéntame más sobre esta acción del copiloto.";
-    case "rule.alert": {
-      const ruleName = typeof event.payload.ruleName === "string" ? event.payload.ruleName : "";
-      return ruleName
-        ? `Cuéntame más sobre esta alerta: ${ruleName}.`
-        : "Cuéntame más sobre esta alerta.";
-    }
     case "task.due":
     case "task.needs_input":
     case "task.completed":

@@ -222,9 +222,7 @@ import {
   copilotChatSchema,
   copilotActionDecisionSchema,
   getCopilotHistorySchema,
-  clearCopilotHistorySchema,
-  listWatchRulesSchema,
-  setWatchRuleEnabledSchema
+  clearCopilotHistorySchema
 } from "@mikro/common";
 // Founder copilot API functions
 import {
@@ -233,8 +231,6 @@ import {
   createRejectCopilotAction,
   createGetCopilotHistory,
   createClearCopilotHistory,
-  listWatchRules as listWatchRulesFn,
-  setWatchRuleEnabled as setWatchRuleEnabledFn,
   getCopilotDeps
 } from "../../api/copilot/index.js";
 // Founder task schemas + service (Tasks tab, feed task cards, copilot tools)
@@ -1265,18 +1261,6 @@ export const protectedRouter = router({
     const fn = createClearCopilotHistory({ db: ctx.db as unknown as PrismaClient });
     return fn({ userId: ctx.userId });
   }),
-
-  /** List watch rules (active by default). */
-  listWatchRules: adminProcedure.input(listWatchRulesSchema).query(async ({ ctx, input }) => {
-    return listWatchRulesFn(ctx.db as unknown as PrismaClient, input);
-  }),
-
-  /** Enable or disable a watch rule. */
-  setWatchRuleEnabled: adminProcedure
-    .input(setWatchRuleEnabledSchema)
-    .mutation(async ({ ctx, input }) => {
-      return setWatchRuleEnabledFn(ctx.db as unknown as PrismaClient, input);
-    }),
 
   // ==================== Founder task procedures ====================
   //

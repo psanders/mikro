@@ -327,21 +327,6 @@ CREATE UNIQUE INDEX "outbound_messages_wa_message_id_key" ON "outbound_messages"
 CREATE INDEX "outbound_messages_feed_event_id_idx" ON "outbound_messages"("feed_event_id");
 
 -- Watch rules (founder copilot)
-CREATE TABLE "watch_rules" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "metric" TEXT NOT NULL,
-    "comparator" TEXT NOT NULL,
-    "threshold" REAL NOT NULL,
-    "collector_id" TEXT,
-    "enabled" BOOLEAN NOT NULL DEFAULT true,
-    "created_by_id" TEXT NOT NULL,
-    "last_state" TEXT,
-    "last_evaluated_at" DATETIME,
-    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" DATETIME NOT NULL
-);
-CREATE INDEX "watch_rules_enabled_idx" ON "watch_rules"("enabled");
 
 -- Copilot pending actions (founder copilot)
 CREATE TABLE "copilot_pending_actions" (

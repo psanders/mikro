@@ -3,40 +3,6 @@
  */
 import { z } from "zod/v4";
 
-/**
- * Metrics a watch rule can observe in v1 — limited to what is computable from
- * current business data. Extending this enum is how new rules become possible.
- */
-export const watchRuleMetricEnum = z.enum([
-  "mora_pct_portfolio",
-  "mora_pct_collector",
-  "cobranza_diaria"
-]);
-
-export type WatchRuleMetric = z.infer<typeof watchRuleMetricEnum>;
-
-export const watchRuleComparatorEnum = z.enum(["gt", "lt"]);
-
-export const createWatchRuleSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  metric: watchRuleMetricEnum,
-  comparator: watchRuleComparatorEnum,
-  threshold: z.number().finite(),
-  // Required when metric is collector-scoped (mora_pct_collector).
-  collectorId: z.uuid().optional()
-});
-
-export type CreateWatchRuleInput = z.infer<typeof createWatchRuleSchema>;
-
-export const listWatchRulesSchema = z.object({
-  includeDisabled: z.boolean().optional()
-});
-
-export const setWatchRuleEnabledSchema = z.object({
-  id: z.uuid(),
-  enabled: z.boolean()
-});
-
 export const copilotChatSchema = z.object({
   message: z.string().trim().min(1).max(4000)
 });
@@ -132,8 +98,7 @@ export type CopilotDocument = z.infer<typeof copilotDocumentSchema>;
 /**
  * One copilotChat response: the assistant's reply text, optional provenance,
  * and — when the model proposed a write — the pending action to confirm.
- * Rule cards render when `createdRule` is present (Vigilar creates directly);
- * the customer/loan form cards render when `customerForm`/`loanForm` is
+ * The customer/loan form cards render when `customerForm`/`loanForm` is
  * present; a generated document (e.g. a loan statement) renders when
  * `document` is present.
  */
@@ -141,16 +106,6 @@ export const copilotChatReplySchema = z.object({
   reply: z.string(),
   provenance: copilotProvenanceSchema.optional(),
   pendingAction: copilotPendingActionSchema.optional(),
-  createdRule: z
-    .object({
-      id: z.uuid(),
-      name: z.string(),
-      metric: watchRuleMetricEnum,
-      comparator: watchRuleComparatorEnum,
-      threshold: z.number(),
-      collectorId: z.uuid().nullable().optional()
-    })
-    .optional(),
   customerForm: copilotCustomerFormSchema.optional(),
   loanForm: copilotLoanFormSchema.optional(),
   document: copilotDocumentSchema.optional()
