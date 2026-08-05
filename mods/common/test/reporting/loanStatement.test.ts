@@ -256,6 +256,106 @@ describe("loan-statement report — verification banner", () => {
   });
 });
 
+describe("loan-statement report — frozen mora window (loan #10029)", () => {
+  // Anonymized from a real bug report: BIWEEKLY, cuota 1,200, term 10,
+  // disbursed 2026-03-15. The 5 ago charge (RD$76, 19 days from the
+  // then-oldest missed due) is the one that froze its window — the same
+  // 1,200 payment closed cuota 8 and moved the oldest missed due to 19 jul,
+  // which would silently re-derive the charge as RD$68 without the anchor.
+  // This regenerates the statement through the REAL validated entrypoint
+  // (`loanStatementReport.toJson`, the one path tRPC/CLI/copilot all use —
+  // not `buildLoanStatementData` called directly) because the anchor's
+  // journey through this report's own Zod input schema is exactly what a
+  // unit test on the engine alone (moraAccrualAnchor.test.ts) cannot see.
+  const CUOTA = 1200;
+  const LOAN_START = new Date(2026, 2, 15);
+  const on = (m: number, d: number, h = 12) => new Date(2026, m - 1, d, h);
+  const CHARGE_ANCHOR = on(7, 17);
+
+  function loan10029Input(overrides: { anchored: boolean }): LoanStatementInput {
+    return {
+      loanId: 10029,
+      customer: { id: "c1", name: "Cliente 10029", nickname: null, preferredPaymentDay: null },
+      loan: {
+        principal: CUOTA * 10,
+        paymentAmount: CUOTA,
+        termLength: 10,
+        paymentFrequency: "BIWEEKLY",
+        status: "ACTIVE",
+        createdAt: LOAN_START,
+        startingDate: LOAN_START,
+        updatedAt: on(8, 5),
+        nickname: null
+      },
+      payments: [
+        { id: "i1", kind: "INSTALLMENT", status: "COMPLETED", amount: 1200, paidAt: on(3, 15) },
+        { id: "i2", kind: "INSTALLMENT", status: "COMPLETED", amount: 1200, paidAt: on(4, 2) },
+        { id: "i3", kind: "INSTALLMENT", status: "COMPLETED", amount: 1200, paidAt: on(4, 16) },
+        { id: "i4", kind: "INSTALLMENT", status: "COMPLETED", amount: 1200, paidAt: on(5, 1) },
+        { id: "i5", kind: "INSTALLMENT", status: "COMPLETED", amount: 1176, paidAt: on(5, 30) },
+        { id: "i6", kind: "INSTALLMENT", status: "COMPLETED", amount: 1128, paidAt: on(6, 17) },
+        { id: "i7", kind: "INSTALLMENT", status: "COMPLETED", amount: 1140, paidAt: on(7, 2) },
+        { id: "i8", kind: "INSTALLMENT", status: "COMPLETED", amount: 1200, paidAt: on(7, 17) },
+        { id: "i9", kind: "INSTALLMENT", status: "COMPLETED", amount: 1124, paidAt: on(8, 5) },
+        { id: "f1", kind: "LATE_FEE", status: "COMPLETED", amount: 24, paidAt: on(5, 30) },
+        { id: "f2", kind: "LATE_FEE", status: "COMPLETED", amount: 72, paidAt: on(6, 17) },
+        { id: "f3", kind: "LATE_FEE", status: "COMPLETED", amount: 60, paidAt: on(7, 2) },
+        {
+          id: "f4",
+          kind: "LATE_FEE",
+          status: "COMPLETED",
+          amount: 76,
+          paidAt: on(8, 5),
+          ...(overrides.anchored ? { moraAccrualFrom: CHARGE_ANCHOR } : {})
+        }
+      ],
+      policy: {
+        moraRate: 0.1,
+        moraGraceDays: 0,
+        moraCapInCuotas: 1,
+        moraMinDop: 0,
+        moraStopOnDefault: true,
+        moraEffectiveFrom: null
+      },
+      asOf: on(8, 5, 23)
+    };
+  }
+
+  it("regenerated through toJson, gross mora is never below collected — 76 generada, 76 pagada", async () => {
+    const data = await loanStatementReport.toJson(loan10029Input({ anchored: true }));
+    expect(data.kpis.grossMora).to.equal(76);
+    expect(data.kpis.collectedMora).to.equal(76);
+    expect(data.kpis.grossMora).to.be.at.least(data.kpis.collectedMora);
+    expect(data.kpis.moraAccrued).to.equal(0);
+
+    const moraCell = buildKpiCells(data).find((c) => c.label === "Mora acumulada");
+    expect(moraCell?.subtext).to.equal("RD$76.00 generada − RD$76.00 pagada");
+  });
+
+  it("without the anchor reaching the row, the statement reproduces the original bug (68 generada, 8.00 clamped away)", async () => {
+    const data = await loanStatementReport.toJson(loan10029Input({ anchored: false }));
+    expect(data.kpis.grossMora).to.equal(68);
+    expect(data.kpis.collectedMora).to.equal(76);
+    expect(data.kpis.moraAccrued).to.equal(0);
+
+    const moraCell = buildKpiCells(data).find((c) => c.label === "Mora acumulada");
+    expect(moraCell?.subtext).to.equal("RD$68.00 generada − RD$76.00 pagada");
+  });
+
+  it("the over-collected window fails the statement's verification banner, not a clean bill of health", async () => {
+    const data = await loanStatementReport.toJson(loan10029Input({ anchored: false }));
+    expect(data.evalReport.results.find((r) => r.id === "mora-not-over-collected")?.pass).to.equal(
+      false
+    );
+    expect(data.evalReport.criticalFailures).to.not.include("mora-not-over-collected");
+
+    const anchoredData = await loanStatementReport.toJson(loan10029Input({ anchored: true }));
+    expect(
+      anchoredData.evalReport.results.find((r) => r.id === "mora-not-over-collected")?.pass
+    ).to.equal(true);
+  });
+});
+
 describe("loan-statement report — reversed entries excluded from the page-2 ledger", () => {
   it("excludes reversed rows from receivedPayments and explains them in the reconciliation note", () => {
     const input = baseInput({

@@ -52,7 +52,12 @@ const snapshotPaymentInputSchema = z.object({
   collectedById: z.string().nullish(),
   collectedByName: z.string().nullish(),
   linkedPaymentId: z.string().nullish(),
-  notes: z.string().nullish()
+  notes: z.string().nullish(),
+  // LATE_FEE only: frozen accrual start (freeze-mora-accrual-window). Without
+  // this the schema silently strips the field on every validated entrypoint
+  // (toJson/toPdf) and the statement re-derives gross mora from the live
+  // oldest missed due — reproducing the #10029 bug even after the engine fix.
+  moraAccrualFrom: z.coerce.date().nullish()
 });
 
 const moraPolicyInputSchema = z.object({

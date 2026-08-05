@@ -40,13 +40,13 @@
       the sync-pull payload
 - [x] 4.2 Carry it into the local snapshot builder so the app and the server
       compute the same mora offline
-- [ ] 4.3 Test the local snapshot against the same #10029 ledger used server-side
+- [x] 4.3 Test the local snapshot against the same #10029 ledger used server-side
       (engine is shared and covered server-side; the SQLite round-trip is not)
 
 ## 5. Verify and land
 
 - [x] 5.1 Run the common, apiserver and mobile suites; confirm no new failures
       against the pre-change baseline
-- [ ] 5.2 Regenerate a statement for a loan with a frozen window and confirm
+- [x] 5.2 Regenerate a statement for a loan with a frozen window and confirm
       "generada" is never below "pagada" (needs a seeded DB + mikro.json fixture)
 - [ ] 5.3 Sync the delta specs into `openspec/specs/` and archive the change
