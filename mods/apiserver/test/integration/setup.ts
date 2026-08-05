@@ -104,6 +104,7 @@ CREATE TABLE "payments" (
     "status" TEXT NOT NULL DEFAULT 'COMPLETED',
     "kind" TEXT NOT NULL DEFAULT 'INSTALLMENT',
     "notes" TEXT,
+    "mora_accrual_from" DATETIME,
     "linked_payment_id" TEXT UNIQUE,
     "loan_id" TEXT NOT NULL,
     "collected_by_id" TEXT,

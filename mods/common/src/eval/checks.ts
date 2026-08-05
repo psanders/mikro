@@ -274,6 +274,27 @@ export const COLLECTIONS_CHECKS: Check[] = [
     }
   },
   {
+    id: "mora-not-over-collected",
+    title: "Mora collected never exceeds the mora generated for the window",
+    rationale:
+      "The customer must not have paid more mora than the window generated. The net is clamped at zero, so an over-collection is invisible in moraAccrued alone — this reads gross against collected directly. Fires when a payment shortened the window it was charged against, or when a fee was taken twice for the same days.",
+    severity: "warning",
+    class: "consistency",
+    run(s) {
+      const { grossMora, collectedMora } = s.derived;
+      const over = collectedMora - grossMora;
+      const pass = over <= EPS;
+      return {
+        pass,
+        expected: `collected ≤ ${grossMora.toFixed(2)}`,
+        actual: collectedMora.toFixed(2),
+        explanation: pass
+          ? `Collected ${collectedMora.toFixed(2)} of ${grossMora.toFixed(2)} generated.`
+          : `Collected ${collectedMora.toFixed(2)} against ${grossMora.toFixed(2)} generated — ${over.toFixed(2)} more than the window produced.`
+      };
+    }
+  },
+  {
     id: "fully-paid-has-no-dues",
     title: "A fully paid loan owes nothing further",
     rationale:

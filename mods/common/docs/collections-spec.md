@@ -36,6 +36,13 @@ Only COMPLETED and PARTIAL INSTALLMENT rows count. Money paid must exclude REVER
 
 Cycle metrics and totals are as-of a date. A payment recorded with a future paidAt must not advance the loan or reduce the balance for an earlier evaluation instant.
 
+### Mora collected never exceeds the mora generated for the window
+
+- **id:** `mora-not-over-collected`
+- **severity:** warning
+
+The customer must not have paid more mora than the window generated. The net is clamped at zero, so an over-collection is invisible in moraAccrued alone — this reads gross against collected directly. Fires when a payment shortened the window it was charged against, or when a fee was taken twice for the same days.
+
 ## Invariant rules
 
 Pure arithmetic and policy assertions over the derived numbers. These catch engine bugs the engine cannot catch about itself.

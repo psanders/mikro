@@ -165,6 +165,7 @@ interface SnapshotPaymentRow {
   collected_by_id?: string | null;
   linked_payment_id?: string | null;
   notes?: string | null;
+  mora_accrual_from?: string | null;
 }
 
 /**
@@ -184,7 +185,8 @@ function toSnapshotInput(l: LoanRow, rows: SnapshotPaymentRow[], asOf: Date): Bu
     method: p.method ?? null,
     collectedById: p.collected_by_id ?? null,
     linkedPaymentId: p.linked_payment_id ?? null,
-    notes: p.notes ?? null
+    notes: p.notes ?? null,
+    moraAccrualFrom: p.mora_accrual_from ?? null
   }));
   return {
     loanId: l.loan_id,
@@ -753,7 +755,7 @@ export function buildLoanSnapshotLocal(
   if (!l) return null;
 
   const rows = db.getAllSync<SnapshotPaymentRow>(
-    `SELECT id, paid_at, status, kind, amount, method, collected_by_id, linked_payment_id, notes
+    `SELECT id, paid_at, status, kind, amount, method, collected_by_id, linked_payment_id, notes, mora_accrual_from
      FROM payments WHERE loan_id = ? ORDER BY paid_at ASC`,
     [l.id]
   );

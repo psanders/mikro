@@ -84,7 +84,13 @@ ALTER TABLE customers ADD COLUMN assigned_collector_id TEXT;
 CREATE INDEX IF NOT EXISTS idx_customers_assigned_collector ON customers(assigned_collector_id);
 `;
 
-const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2];
+// Frozen accrual start on LATE_FEE rows, so the offline snapshot measures mora
+// over the same window the server charged it over.
+const MIGRATION_V3 = `
+ALTER TABLE payments ADD COLUMN mora_accrual_from TEXT;
+`;
+
+const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2, MIGRATION_V3];
 
 export function runMigrations(db: SQLiteDatabase): void {
   const result = db.getFirstSync<{ user_version: number }>("PRAGMA user_version");

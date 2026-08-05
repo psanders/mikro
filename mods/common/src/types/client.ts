@@ -247,6 +247,8 @@ export interface DbClient {
         method?: PaymentMethod;
         status?: PaymentStatus;
         kind?: "INSTALLMENT" | "LATE_FEE";
+        /** LATE_FEE only: accrual start this mora was measured from, frozen at charge time. */
+        moraAccrualFrom?: Date | null;
         linkedPaymentId?: string | null;
         collectedById: string;
         notes?: string | null;

@@ -41,6 +41,8 @@ export interface SnapshotPayment {
   collectedByName?: string | null;
   linkedPaymentId?: string | null;
   notes?: string | null;
+  /** LATE_FEE only: frozen accrual start this mora was measured from. */
+  moraAccrualFrom?: Date | string | null;
 }
 
 /** Resolved mora policy (loan override already folded into `moraRate`). */
@@ -99,6 +101,8 @@ export interface SnapshotDerived {
   moraAccrued: number;
   grossMora: number;
   collectedMora: number;
+  /** Accrual start gross mora was measured from; null when no window is open. */
+  moraAccrualFrom: string | null;
   /** True when daysLate is within moraGraceDays, so no mora accrued despite being late. */
   graceApplied: boolean;
   daysLate: number;
@@ -200,7 +204,12 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
 
   const collectedLateFeePayments = payments
     .filter((p) => p.kind === "LATE_FEE" && p.status !== "REVERSED")
-    .map((p) => ({ paidAt: new Date(p.paidAt), amount: p.amount, status: p.status }));
+    .map((p) => ({
+      paidAt: new Date(p.paidAt),
+      amount: p.amount,
+      status: p.status,
+      moraAccrualFrom: p.moraAccrualFrom != null ? new Date(p.moraAccrualFrom) : null
+    }));
 
   const mora = computeAccruedMora({
     loanData,
@@ -242,6 +251,7 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     moraAccrued: mora.moraAmount,
     grossMora: mora.grossMoraAmount,
     collectedMora: mora.collectedMora,
+    moraAccrualFrom: mora.accrualFrom ? mora.accrualFrom.toISOString() : null,
     graceApplied: mora.graceApplied,
     daysLate: mora.daysLate,
     missedCycles: mora.missedCycles,

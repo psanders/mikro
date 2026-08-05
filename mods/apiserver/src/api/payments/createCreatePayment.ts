@@ -21,7 +21,13 @@ import { logger } from "../../logger.js";
 
 type LoanMoraContext = Loan & {
   customer: { preferredPaymentDay: string | null };
-  payments: Array<{ paidAt: Date; status: string; kind: string; amount?: unknown }>;
+  payments: Array<{
+    paidAt: Date;
+    status: string;
+    kind: string;
+    amount?: unknown;
+    moraAccrualFrom?: Date | null;
+  }>;
 };
 
 export interface CreatePaymentResult {
@@ -186,6 +192,10 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
             method,
             status: "COMPLETED",
             kind: "LATE_FEE",
+            // Freeze the window this charge was measured over. Taken from the
+            // `accrued` result that produced it — never recomputed here, or the
+            // anchor would already reflect money this payment is about to apply.
+            moraAccrualFrom: accrued.accrualFrom,
             collectedById: params.collectedById,
             notes
           }
