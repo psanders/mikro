@@ -30,6 +30,8 @@ export interface LoanWithPaymentsForMora {
     status: string;
     kind?: string | null;
     amount?: unknown;
+    /** Frozen accrual start on a LATE_FEE row; null on rows predating anchoring. */
+    moraAccrualFrom?: Date | null;
   }>;
   customer: { preferredPaymentDay: string | null };
 }
@@ -70,6 +72,7 @@ export function toCollectedLateFeePayments(
     .map((p) => ({
       paidAt: new Date(p.paidAt),
       amount: p.amount != null ? amountToNumber(p.amount) : 0,
-      status: p.status
+      status: p.status,
+      moraAccrualFrom: p.moraAccrualFrom != null ? new Date(p.moraAccrualFrom) : null
     }));
 }

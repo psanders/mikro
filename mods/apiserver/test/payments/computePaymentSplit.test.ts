@@ -124,4 +124,70 @@ describe("computePaymentSplit", () => {
     expect(r.installmentStatus).to.equal("COMPLETED");
     expect(r.rowCount).to.equal(1);
   });
+
+  it("cuotaRemaining: closing a half-covered cuota is COMPLETED, not PARTIAL", () => {
+    // 1,044 of 1,250 already sits on this cuota, so 206 closes it.
+    const r = computePaymentSplit({
+      amount: 206,
+      expectedCuota: 1250,
+      cuotaRemaining: 206,
+      accruedMora: 0
+    });
+    expect(r.installmentPortion).to.equal(206);
+    expect(r.installmentStatus).to.equal("COMPLETED");
+  });
+
+  it("cuotaRemaining: paying past the remainder into the next cuota is COMPLETED", () => {
+    const r = computePaymentSplit({
+      amount: 1124,
+      expectedCuota: 1200,
+      cuotaRemaining: 156,
+      accruedMora: 0
+    });
+    expect(r.installmentStatus).to.equal("COMPLETED");
+  });
+
+  it("cuotaRemaining: still PARTIAL when the payment falls short of the remainder", () => {
+    const r = computePaymentSplit({
+      amount: 100,
+      expectedCuota: 1250,
+      cuotaRemaining: 206,
+      accruedMora: 0
+    });
+    expect(r.installmentStatus).to.equal("PARTIAL");
+  });
+
+  it("cuotaRemaining omitted → judged against a full cuota (unchanged behaviour)", () => {
+    const r = computePaymentSplit({ amount: 206, expectedCuota: 1250, accruedMora: 0 });
+    expect(r.installmentStatus).to.equal("PARTIAL");
+  });
+
+  it("cuotaRemaining <= 0 or larger than a cuota falls back to the full cuota", () => {
+    expect(
+      computePaymentSplit({ amount: 206, expectedCuota: 1250, cuotaRemaining: 0, accruedMora: 0 })
+        .installmentStatus
+    ).to.equal("PARTIAL");
+    expect(
+      computePaymentSplit({
+        amount: 206,
+        expectedCuota: 1250,
+        cuotaRemaining: 9999,
+        accruedMora: 0
+      }).installmentStatus
+    ).to.equal("PARTIAL");
+  });
+
+  it("mora comes off the top before the remainder is judged", () => {
+    // Hands over 232; 76 is mora, leaving 156 — exactly what closes the cuota.
+    const r = computePaymentSplit({
+      amount: 232,
+      expectedCuota: 1200,
+      cuotaRemaining: 156,
+      accruedMora: 76
+    });
+    expect(r.lateFeePortion).to.equal(76);
+    expect(r.installmentPortion).to.equal(156);
+    expect(r.installmentStatus).to.equal("COMPLETED");
+    expect(r.rowCount).to.equal(2);
+  });
 });

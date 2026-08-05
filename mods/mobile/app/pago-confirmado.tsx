@@ -2,7 +2,6 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { useState, useRef, useMemo } from "react";
-import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
 import {
   View,
   Text,
@@ -67,6 +66,7 @@ export default function PagoConfirmadoScreen() {
     loanId?: string;
     paymentNumber?: string;
     pendingPayments?: string;
+    isPartial?: string;
     collectorName?: string;
   }>();
 
@@ -93,14 +93,10 @@ export default function PagoConfirmadoScreen() {
     });
   }, []);
 
+  // `cuota` and `mora` arrive already split by the collection screen — the money
+  // as actually applied, so cuota + mora === amount on the receipt.
   const isMoraOnly = paymentNumber === 0;
-  const split = computePaymentSplit({
-    amount,
-    expectedCuota: cuota,
-    accruedMora: mora,
-    kind: isMoraOnly ? "LATE_FEE" : undefined
-  });
-  const isPartial = !isMoraOnly && split.installmentStatus === "PARTIAL";
+  const isPartial = !isMoraOnly && params.isPartial === "1";
 
   const paymentLabel = isMoraOnly
     ? "Mora"

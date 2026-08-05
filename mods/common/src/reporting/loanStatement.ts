@@ -322,18 +322,28 @@ export function buildKpiCells(data: LoanStatementData): KpiCell[] {
   ];
 }
 
-function buildVerificationBanner(data: LoanStatementData) {
-  const { evalReport } = data;
+/**
+ * The verification banner's wording and tone for a health-check result.
+ *
+ * Split out from rendering so the claim itself is testable: the banner must
+ * never read "el libro de pagos es consistente" while the KPI grid below it
+ * shows a control that did not pass.
+ */
+export function verificationBannerCopy(evalReport: LoanStatementData["evalReport"]): {
+  headline: string;
+  explanation: string;
+  tone: "pass" | "fail" | "info";
+} {
   const total = evalReport.results.length;
   const headline = `Verificación del sistema: ${evalReport.passCount}/${total} controles superados.`;
 
-  if (evalReport.criticalFailures.length === 0) {
-    return verificationBanner({
+  if (!evalReport.results.some((r) => !r.pass)) {
+    return {
       headline,
       explanation:
         "El libro de pagos es consistente — cada peso recibido está correctamente sumado y ninguna cuota pagada falta por contar.",
       tone: "pass"
-    });
+    };
   }
 
   const failing =
@@ -341,13 +351,31 @@ function buildVerificationBanner(data: LoanStatementData) {
       (r) => !r.pass && r.severity === "critical" && evalReport.criticalFailures.includes(r.id)
     ) ?? evalReport.results.find((r) => !r.pass);
 
-  return verificationBanner({
+  // A non-critical failure must not read as alarming as a broken ledger, but it
+  // must not read as "todo consistente" either — the KPI grid right below shows
+  // the discrepancy, and the banner claiming otherwise is what made the original
+  // statement contradict itself.
+  if (evalReport.criticalFailures.length === 0) {
+    return {
+      headline,
+      explanation: failing
+        ? `El dinero recibido cuadra, pero un control quedó pendiente de revisión: "${failing.title}" — ${failing.explanation}`
+        : "El dinero recibido cuadra, pero un control quedó pendiente de revisión.",
+      tone: "info"
+    };
+  }
+
+  return {
     headline,
     explanation: failing
       ? `No se puede confirmar que el ledger esté completamente conciliado: "${failing.title}" — ${failing.explanation}`
       : "No se puede confirmar que el ledger esté completamente conciliado.",
     tone: "fail"
-  });
+  };
+}
+
+function buildVerificationBanner(data: LoanStatementData) {
+  return verificationBanner(verificationBannerCopy(data.evalReport));
 }
 
 function buildScheduleRows(data: LoanStatementData): TableRow[] {

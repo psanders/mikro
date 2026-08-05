@@ -26,6 +26,10 @@ import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { queuePayment } from "../../lib/offline/mutations";
 import { getLastCustomerPaymentAt } from "../../lib/offline/queries";
 import { computePaymentSplit } from "@mikro/common/utils/paymentSplit";
+import {
+  countCuotasCovered,
+  cuotaRemainingToClose
+} from "@mikro/common/utils/calculatePaymentStatus";
 import { getRoles, canManagePayments } from "../../lib/auth";
 
 // Collectors are blocked from charging the same customer twice within this
@@ -79,6 +83,9 @@ export default function CobrarPagoScreen() {
   // Never charge more cuota than what's left on the loan.
   const cuotaDue = Math.min(cuota, remainingBalance);
   const settleAmount = remainingBalance + mora;
+  // What still closes the cuota in flight — a cuota carrying partials needs
+  // less than a full one, so PARTIAL/COMPLETED is judged against this.
+  const cuotaRemaining = cuotaRemainingToClose(d?.totalInstallmentPaid ?? 0, cuota);
 
   const displayName =
     snap?.customer.nickname ??
@@ -141,10 +148,11 @@ export default function CobrarPagoScreen() {
       computePaymentSplit({
         amount: amount ?? 0,
         expectedCuota: cuota,
+        cuotaRemaining,
         accruedMora: effectiveOption === "mora" ? 0 : mora,
         kind: effectiveOption === "mora" ? "LATE_FEE" : undefined
       }),
-    [amount, cuota, mora, effectiveOption]
+    [amount, cuota, cuotaRemaining, mora, effectiveOption]
   );
 
   const breakdownRows = useMemo(() => {
@@ -218,7 +226,9 @@ export default function CobrarPagoScreen() {
       amount,
       method: payMethod,
       collectedById: collectorId,
-      ...(effectiveOption === "mora" ? { kind: "LATE_FEE" as const } : { cuota, mora })
+      ...(effectiveOption === "mora"
+        ? { kind: "LATE_FEE" as const }
+        : { cuota, mora, cuotaRemaining })
     };
 
     try {
@@ -234,23 +244,27 @@ export default function CobrarPagoScreen() {
         refreshState();
       }
 
+      // The receipt must show the money as it was actually split and applied —
+      // scheduled cuota and full accrued mora would not add up to what the
+      // customer handed over.
+      const coveredAfter = countCuotasCovered(
+        (d?.totalInstallmentPaid ?? 0) + split.installmentPortion,
+        cuota
+      );
+
       router.replace({
         pathname: "/pago-confirmado",
         params: {
           customerName: displayName,
           amount: String(amount),
-          mora: String(effectiveOption === "cuota" ? 0 : mora),
-          cuota: String(effectiveOption === "custom" && mora === 0 ? 0 : cuota),
+          mora: String(split.lateFeePortion),
+          cuota: String(split.installmentPortion),
           method: methodLabel,
           loanId: String(loanId),
           paymentNumber: String(effectiveOption === "mora" ? 0 : paidCount + 1),
-          pendingPayments: String(
-            effectiveOption === "settle"
-              ? 0
-              : effectiveOption === "mora" || split.installmentStatus === "PARTIAL"
-                ? remainingCuotas
-                : Math.max(0, remainingCuotas - 1)
-          ),
+          isPartial:
+            split.installmentPortion > 0 && split.installmentStatus === "PARTIAL" ? "1" : "",
+          pendingPayments: String(Math.max(0, termLength - coveredAfter)),
           collectorName: collectorQuery.data?.name ?? ""
         }
       });

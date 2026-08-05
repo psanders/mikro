@@ -400,6 +400,14 @@ model Payment {
   kind      PaymentKind   @default(INSTALLMENT)
   notes     String?
 
+  /**
+   * When kind=LATE_FEE, the accrual start this mora was computed from. Frozen at
+   * charge time so applying the payment cannot retroactively shrink the window
+   * the mora was charged against. Null on rows written before anchoring existed —
+   * those fall back to the loan's current oldest missed due date.
+   */
+  moraAccrualFrom DateTime? @map("mora_accrual_from")
+
   /** When kind=INSTALLMENT and created with a paired LATE_FEE row, points to that LATE_FEE payment. */
   linkedPaymentId String? @unique @map("linked_payment_id")
   linkedLateFee     Payment? @relation("InstallmentLateFee", fields: [linkedPaymentId], references: [id], onDelete: SetNull)

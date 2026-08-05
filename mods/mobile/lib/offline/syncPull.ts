@@ -68,8 +68,8 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
 
       for (const p of l.payments) {
         db.runSync(
-          `INSERT OR IGNORE INTO payments (id, amount, paid_at, method, status, kind, linked_payment_id, notes, loan_id, collected_by_id, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR IGNORE INTO payments (id, amount, paid_at, method, status, kind, mora_accrual_from, linked_payment_id, notes, loan_id, collected_by_id, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             p.id,
             p.amount,
@@ -77,6 +77,7 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
             p.method,
             p.status,
             p.kind,
+            p.moraAccrualFrom ?? null,
             p.linkedPaymentId,
             p.notes,
             p.loanId,

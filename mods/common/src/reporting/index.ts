@@ -83,6 +83,7 @@ export {
   buildLoanStatementData,
   buildLoanStatementDocument,
   buildKpiCells,
+  verificationBannerCopy,
   type LoanStatementInput,
   type LoanStatementData,
   type LoanStatementKpis,

@@ -25,6 +25,8 @@ export interface PaymentSnapshot {
   method: string;
   status: string;
   kind: string;
+  /** LATE_FEE only: frozen accrual start, so the offline snapshot measures the same window. */
+  moraAccrualFrom: string | null;
   linkedPaymentId: string | null;
   notes: string | null;
   loanId: string;
@@ -139,6 +141,7 @@ export function createCollectorSync(client: DbClient) {
         method: string;
         status: string;
         kind: string;
+        moraAccrualFrom: Date | null;
         linkedPaymentId: string | null;
         notes: string | null;
         loanId: string;
@@ -187,6 +190,7 @@ export function createCollectorSync(client: DbClient) {
               method: p.method,
               status: p.status,
               kind: p.kind,
+              moraAccrualFrom: p.moraAccrualFrom ? p.moraAccrualFrom.toISOString() : null,
               linkedPaymentId: p.linkedPaymentId,
               notes: p.notes,
               loanId: p.loanId,

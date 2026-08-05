@@ -12,6 +12,7 @@ import {
   type ResolvedMikroConfig,
   computeAccruedMora,
   computePaymentSplit,
+  cuotaRemainingToClose,
   amountToNumber,
   toLoanPaymentData,
   toCollectedLateFeePayments
@@ -20,7 +21,13 @@ import { logger } from "../../logger.js";
 
 type LoanMoraContext = Loan & {
   customer: { preferredPaymentDay: string | null };
-  payments: Array<{ paidAt: Date; status: string; kind: string; amount?: unknown }>;
+  payments: Array<{
+    paidAt: Date;
+    status: string;
+    kind: string;
+    amount?: unknown;
+    moraAccrualFrom?: Date | null;
+  }>;
 };
 
 export interface CreatePaymentResult {
@@ -151,9 +158,16 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });
 
+    // Money already applied to installments decides how much is left on the
+    // cuota in flight — a half-covered cuota closes on less than a full one.
+    const totalInstallmentPaid = loanData.payments
+      .filter((p) => p.status !== "REVERSED" && p.status !== "PENDING")
+      .reduce((sum, p) => sum + (p.amount ?? 0), 0);
+
     const split = computePaymentSplit({
       amount: amountNum,
       expectedCuota: expected,
+      cuotaRemaining: cuotaRemainingToClose(totalInstallmentPaid, expected),
       accruedMora: accrued.moraAmount,
       kind: params.kind,
       lateFeeOverride: params.lateFeeOverride,
@@ -178,6 +192,10 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
             method,
             status: "COMPLETED",
             kind: "LATE_FEE",
+            // Freeze the window this charge was measured over. Taken from the
+            // `accrued` result that produced it — never recomputed here, or the
+            // anchor would already reflect money this payment is about to apply.
+            moraAccrualFrom: accrued.accrualFrom,
             collectedById: params.collectedById,
             notes
           }

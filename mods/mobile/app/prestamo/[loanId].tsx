@@ -11,6 +11,7 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
+import { amountPastDue, cuotaRemainingToClose } from "@mikro/common/utils/calculatePaymentStatus";
 import { getRoles, canManagePayments } from "../../lib/auth";
 import { useLocalLoan, useLocalLoanSnapshot } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
@@ -132,10 +133,24 @@ export default function PrestamoDetalleScreen() {
       : null;
 
   const moraAmount = d?.moraAccrued ?? 0;
-  // Never quote more cuota than what's left on the loan (final stretch may owe
-  // less than a full cuota once partials are accumulated).
-  const cuotaDue = Math.min(paymentAmount, balance);
-  const todayTotal = cuotaDue + moraAmount;
+  // What the schedule says is already overdue — the remainder on every cuota
+  // past its due date, not one cuota. Quoting a single cuota leaves the
+  // shortfall on an older partial uncollected.
+  const pastDue = Math.min(
+    amountPastDue({
+      totalInstallmentPaid: totalPaid,
+      cuotasCovered: paidCount,
+      missedCycles: d?.missedCycles ?? 0,
+      cuota: paymentAmount
+    }),
+    balance
+  );
+  // Up to date: quote what still closes the cuota in flight, never more than the
+  // loan owes (the final stretch may need less than a full cuota).
+  const cuotaDue = Math.min(cuotaRemainingToClose(totalPaid, paymentAmount), balance);
+  const dueLabel = pastDue > 0 ? "Cuotas vencidas" : "Cuota pendiente";
+  const dueAmount = pastDue > 0 ? pastDue : cuotaDue;
+  const todayTotal = dueAmount + moraAmount;
 
   const cuotas = useMemo(() => {
     if (!loanStart || termLength === 0) return [];
@@ -215,7 +230,7 @@ export default function PrestamoDetalleScreen() {
               </View>
             </View>
 
-            {(cuotaDue > 0 || moraAmount > 0) && (
+            {(dueAmount > 0 || moraAmount > 0) && (
               <View style={styles.totalCard}>
                 <View style={styles.totalHeader}>
                   <View style={{ gap: 2 }}>
@@ -228,7 +243,7 @@ export default function PrestamoDetalleScreen() {
                   </View>
                 </View>
                 <View style={styles.totalDivider} />
-                <KvRow label="Cuota pendiente" value={formatRD(cuotaDue)} />
+                <KvRow label={dueLabel} value={formatRD(dueAmount)} />
                 {moraAmount > 0 && <KvRow label="Cargo por mora" value={formatRD(moraAmount)} />}
               </View>
             )}

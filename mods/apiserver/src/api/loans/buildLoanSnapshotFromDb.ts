@@ -54,6 +54,7 @@ type LoanRow = {
     collectedById: string | null;
     linkedPaymentId: string | null;
     notes: string | null;
+    moraAccrualFrom: Date | null;
     collectedBy: { name: string } | null;
   }>;
 };
@@ -98,7 +99,8 @@ export async function fetchLoanSnapshotInput(
     collectedById: p.collectedById,
     collectedByName: p.collectedBy?.name ?? null,
     linkedPaymentId: p.linkedPaymentId,
-    notes: p.notes
+    notes: p.notes,
+    moraAccrualFrom: p.moraAccrualFrom
   }));
 
   return {

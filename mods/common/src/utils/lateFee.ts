@@ -15,6 +15,12 @@ export interface CollectedLateFeePayment {
   paidAt: Date;
   amount: number;
   status: string;
+  /**
+   * Accrual start this charge was computed from, frozen when the row was written.
+   * Undefined on rows predating anchoring — those contribute no anchor and the
+   * window falls back to the loan's current oldest missed due date.
+   */
+  moraAccrualFrom?: Date | null;
 }
 
 export interface ComputeAccruedMoraInput {
@@ -51,6 +57,11 @@ export interface ComputeAccruedMoraResult {
   missedCycles: number;
   capApplied: boolean;
   graceApplied: boolean;
+  /**
+   * Accrual start gross was measured from. Persist this on a LATE_FEE row when
+   * charging, so a later read reproduces the same window.
+   */
+  accrualFrom: Date | null;
 }
 
 function parseEffectiveFrom(iso: string | null | undefined): Date | null {
@@ -100,6 +111,55 @@ function sumCollectedMoraForWindow(
 }
 
 /**
+ * Where accrual for the current spell starts.
+ *
+ * Normally the oldest missed due date. But a LATE_FEE row charged earlier in the
+ * same spell froze the window it was measured over, and applying its payment may
+ * since have pushed the oldest missed due forward — so the earliest anchor among
+ * the rows in the window wins when it predates that due date. Rows written
+ * before anchoring existed carry no anchor and are simply not consulted, which
+ * leaves historical loans behaving exactly as they did.
+ *
+ * Widening the window can pull in rows that were previously outside it, and
+ * those may carry earlier anchors still, so this walks back to a fixpoint.
+ */
+function resolveAccrualStart(input: {
+  oldestMissedDue: Date;
+  effectiveFrom: Date | null;
+  asOf: Date;
+  collectedLateFeePayments?: CollectedLateFeePayment[];
+}): Date {
+  const { oldestMissedDue, effectiveFrom, asOf, collectedLateFeePayments } = input;
+
+  const floor = effectiveFrom ? Math.max(oldestMissedDue.getTime(), effectiveFrom.getTime()) : null;
+  const clamp = (ms: number) => (floor != null ? Math.max(ms, floor) : ms);
+
+  let startMs = clamp(oldestMissedDue.getTime());
+  if (!collectedLateFeePayments?.length) return new Date(startMs);
+
+  const asOfMs = asOf.getTime();
+
+  // Bounded by the number of rows: each pass either settles or moves the window
+  // start strictly earlier, which can only happen once per row.
+  for (let pass = 0; pass <= collectedLateFeePayments.length; pass++) {
+    let earliest = startMs;
+
+    for (const p of collectedLateFeePayments) {
+      if (p.status === "REVERSED" || p.moraAccrualFrom == null) continue;
+      const paidMs = new Date(p.paidAt).getTime();
+      if (paidMs < startMs || paidMs > asOfMs) continue;
+      const anchorMs = clamp(new Date(p.moraAccrualFrom).getTime());
+      if (anchorMs < earliest) earliest = anchorMs;
+    }
+
+    if (earliest >= startMs) break;
+    startMs = earliest;
+  }
+
+  return new Date(startMs);
+}
+
+/**
  * Accrued mora as of `asOfDate`. When `collectedLateFeePayments` is provided, `moraAmount` is net
  * of LATE_FEE already collected for the current missed-cycle window.
  */
@@ -129,7 +189,8 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     daysLate,
     missedCycles,
     capApplied: false,
-    graceApplied
+    graceApplied,
+    accrualFrom: null
   });
 
   let asOf = new Date(asOfDate);
@@ -143,26 +204,25 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     return zeroMora(missedCycles, 0, false);
   }
 
-  let daysLate = daysLateFromOldestDue(
+  const oldestMissedDue = getDueDateForCycle(
     loanStart,
-    paymentFrequency,
-    preferredPaymentDay,
     paymentsMade,
-    missedCycles,
-    asOf
+    paymentFrequency,
+    preferredPaymentDay
   );
-
   const effectiveFrom = parseEffectiveFrom(policy.moraEffectiveFrom ?? null);
-  if (effectiveFrom) {
-    const oldestDue = getDueDateForCycle(
-      loanStart,
-      paymentsMade,
-      paymentFrequency,
-      preferredPaymentDay
-    );
-    const accrualStart = new Date(Math.max(oldestDue.getTime(), effectiveFrom.getTime()));
-    daysLate = Math.max(0, Math.floor((asOf.getTime() - accrualStart.getTime()) / MS_PER_DAY));
-  }
+
+  // Mora already charged in this spell froze the window it was measured over.
+  // Honouring those anchors is what stops the payment that carried the mora
+  // from retroactively shortening the window it was charged against.
+  const accrualStart = resolveAccrualStart({
+    oldestMissedDue,
+    effectiveFrom,
+    asOf,
+    collectedLateFeePayments
+  });
+
+  const daysLate = Math.max(0, Math.floor((asOf.getTime() - accrualStart.getTime()) / MS_PER_DAY));
 
   const graceApplied = daysLate <= policy.moraGraceDays;
   if (graceApplied) {
@@ -180,13 +240,9 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
   }
   grossMoraAmount = Number(grossMoraAmount.toFixed(2));
 
-  const oldestMissedDue = getDueDateForCycle(
-    loanStart,
-    paymentsMade,
-    paymentFrequency,
-    preferredPaymentDay
-  );
-  const collectedMora = sumCollectedMoraForWindow(collectedLateFeePayments, oldestMissedDue, asOf);
+  // Same window on both sides: gross is measured from `accrualStart`, so mora
+  // collected from that instant onward is what nets against it.
+  const collectedMora = sumCollectedMoraForWindow(collectedLateFeePayments, accrualStart, asOf);
   const netMora = Math.max(0, grossMoraAmount - collectedMora);
 
   return {
@@ -196,6 +252,7 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     daysLate,
     missedCycles,
     capApplied,
-    graceApplied: false
+    graceApplied: false,
+    accrualFrom: accrualStart
   };
 }

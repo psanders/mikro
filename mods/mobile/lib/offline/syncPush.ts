@@ -4,10 +4,22 @@
 import type { TRPCClient } from "@trpc/client";
 import type { AppRouter } from "@mikro/apiserver";
 import { getDatabase } from "./database";
+import { installmentRowId, lateFeeRowId } from "./mutations";
 
 type ApiClient = TRPCClient<AppRouter>;
 
 const MAX_AUTO_RETRIES = 5;
+
+/**
+ * Drop the optimistic rows a queued payment wrote locally. A payment split into
+ * mora + installment leaves two, so both go when the server rows supersede them.
+ */
+function clearOptimisticRows(db: ReturnType<typeof getDatabase>, mutationId: number): void {
+  db.runSync("DELETE FROM payments WHERE id IN (?, ?)", [
+    installmentRowId(mutationId),
+    lateFeeRowId(mutationId)
+  ]);
+}
 
 export interface PushSyncResult {
   succeeded: number;
@@ -45,7 +57,7 @@ export async function pushSync(api: ApiClient): Promise<PushSyncResult> {
       }
 
       db.runSync("DELETE FROM pending_mutations WHERE id = ?", [row.id]);
-      db.runSync("DELETE FROM payments WHERE id = ?", [`pending_${row.id}`]);
+      clearOptimisticRows(db, row.id);
       succeeded++;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -55,7 +67,7 @@ export async function pushSync(api: ApiClient): Promise<PushSyncResult> {
       // false failure — the post-push pull will bring the canonical row down.
       if (message.includes("DUPLICATE_PAYMENT")) {
         db.runSync("DELETE FROM pending_mutations WHERE id = ?", [row.id]);
-        db.runSync("DELETE FROM payments WHERE id = ?", [`pending_${row.id}`]);
+        clearOptimisticRows(db, row.id);
         succeeded++;
         continue;
       }
