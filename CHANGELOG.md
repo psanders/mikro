@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.4](https://github.com/psanders/mikro/compare/v2.0.3...v2.0.4) (2026-08-05)
+
+### Bug Fixes
+
+- **dashboard:** drop leftover ruleAlertEvent import in FeedCard.stories ([#251](https://github.com/psanders/mikro/issues/251)) ([087cca3](https://github.com/psanders/mikro/commit/087cca34fca65d0479db29480c2d25d0a6eceda1)), closes [#244](https://github.com/psanders/mikro/issues/244)
+
 ## [2.0.3](https://github.com/psanders/mikro/compare/v2.0.2...v2.0.3) (2026-08-05)
 
 **Note:** Version bump only for package mikro
