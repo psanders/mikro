@@ -66,7 +66,7 @@ import {
   type Profile,
   type ToolExecutorDependencies
 } from "@mikro/agents";
-import { setCopilotDeps, createWatchRuleEvaluator } from "./api/copilot/index.js";
+import { setCopilotDeps } from "./api/copilot/index.js";
 import { createTaskWorker } from "./tasks/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
@@ -932,20 +932,17 @@ async function initializeMessageProcessor() {
 const followUpTemplate = getWhatsAppFollowUpTemplate();
 let stopFollowUpWorker: (() => void) | undefined;
 let stopQCobroWorker: (() => void) | undefined;
-let stopWatchRuleEvaluator: (() => void) | undefined;
 let stopTaskWorker: (() => void) | undefined;
 
 process.on("SIGTERM", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
-  stopWatchRuleEvaluator?.();
   stopTaskWorker?.();
   process.exit(0);
 });
 process.on("SIGINT", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
-  stopWatchRuleEvaluator?.();
   stopTaskWorker?.();
   process.exit(0);
 });
@@ -1003,11 +1000,6 @@ initializeMessageProcessor()
 
       // Start QCobro cron worker (recompute + sync deterioration on qcobro.schedule)
       stopQCobroWorker = createQCobroWorker(dbClient);
-
-      // Start the watch-rule evaluator (founder copilot alerts on state change)
-      stopWatchRuleEvaluator = createWatchRuleEvaluator(
-        prisma as unknown as Parameters<typeof createWatchRuleEvaluator>[0]
-      );
 
       // Start the founder-task worker (fires scheduled automations)
       stopTaskWorker = createTaskWorker(

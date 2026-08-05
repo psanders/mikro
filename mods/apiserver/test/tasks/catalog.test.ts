@@ -111,4 +111,45 @@ describe("validateSlots", () => {
     expect(slotNames(payment, "ask").sort()).to.deep.equal(["amount", "note"]);
     expect(slotNames(getAutomation("daily-close")!, "computed")).to.deep.equal(["closeDate"]);
   });
+
+  // Issue #224: a recurring operating expense is usually the same figure every
+  // period, so record-expense carries the same optional suggestedAmount ->
+  // amount prefill that payment does.
+  it("record-expense pre-fills its ask amount from an optional static suggestedAmount", () => {
+    const expense = listAutomationDescriptors().find((d) => d.id === "record-expense");
+    expect(expense, "record-expense descriptor").to.not.equal(undefined);
+
+    expect(expense!.slots.find((s) => s.name === "suggestedAmount")).to.deep.equal({
+      name: "suggestedAmount",
+      label: "Monto sugerido (RD$, opcional)",
+      source: "static",
+      kind: "amount",
+      optional: true,
+      defaultFrom: undefined
+    });
+
+    expect(expense!.slots.find((s) => s.name === "amount")).to.deep.equal({
+      name: "amount",
+      label: "Monto (RD$)",
+      source: "ask",
+      kind: "amount",
+      optional: false,
+      defaultFrom: "suggestedAmount"
+    });
+  });
+
+  it("record-expense still requires a confirmed amount when no suggestion was pinned", () => {
+    const expense = getAutomation("record-expense")!;
+    const result = validateSlots(
+      expense,
+      {
+        concept: "Gasolina",
+        accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e"
+      },
+      ["static", "ask"]
+    );
+    expect(result.missing).to.include("amount");
+    expect(result.missing).to.not.include("suggestedAmount");
+  });
 });

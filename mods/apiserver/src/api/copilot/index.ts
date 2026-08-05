@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Founder copilot module: chat loop, pending-action lifecycle, watch rules, and
- * their evaluator. See design.md Decisions 1–7.
+ * Founder copilot module: chat loop and pending-action lifecycle. See design.md
+ * Decisions 1–7. (Watch rules and their evaluator were retired — never used.)
  */
 export {
   READ_TOOLS,
@@ -17,19 +17,7 @@ export {
   isDirectTool,
   isLocalTool
 } from "./toolPolicy.js";
-export { computeWatchMetric, isBreached, type MetricComputationInput } from "./metrics.js";
-export {
-  createWatchRule,
-  listWatchRules,
-  setWatchRuleEnabled,
-  disableWatchRule,
-  type WatchRuleView
-} from "./watchRules.js";
-export { evaluateWatchRules, type EvaluateWatchRulesResult } from "./evaluateWatchRules.js";
-export {
-  createWatchRuleEvaluator,
-  type WatchRuleEvaluatorOptions
-} from "./createWatchRuleEvaluator.js";
+export { computeDailyCashCollected } from "./metrics.js";
 export {
   createCopilotChat,
   type CopilotChatDeps,

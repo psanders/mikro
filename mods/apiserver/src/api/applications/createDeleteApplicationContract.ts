@@ -33,7 +33,10 @@ export function createDeleteApplicationContract(client: DbClient) {
     }
 
     if (!app.contractFilename) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "No contract stored for this application." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No contract stored for this application."
+      });
     }
 
     const prev = app.contractFilename;

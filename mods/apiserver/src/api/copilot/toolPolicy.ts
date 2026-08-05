@@ -81,93 +81,6 @@ export const getDailyCashCollectedTool: ToolFunction = {
 };
 
 /**
- * Create a watch rule directly (design Decision 5). A DIRECT tool — executes
- * inline; the dock renders the rule card immediately.
- */
-export const createWatchRuleTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "createWatchRule",
-    description:
-      "Crear una regla de vigilancia que avisa cuando una métrica cruza un umbral. Se ejecuta directamente (sin confirmación) porque es reversible con Desactivar. La métrica DEBE ser una de: mora_pct_portfolio (% de préstamos activos con atraso), mora_pct_collector (igual pero por cobrador, requiere collectorId), cobranza_diaria (total cobrado hoy).",
-    parameters: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: "Nombre corto y descriptivo de la regla (ej: 'Mora de la ruta de Juan')."
-        },
-        metric: {
-          type: "string",
-          description: "Métrica a vigilar.",
-          enum: ["mora_pct_portfolio", "mora_pct_collector", "cobranza_diaria"]
-        },
-        comparator: {
-          type: "string",
-          description: "Comparador: 'gt' (mayor que el umbral) o 'lt' (menor que el umbral).",
-          enum: ["gt", "lt"]
-        },
-        threshold: {
-          type: "string",
-          description:
-            "Umbral numérico. Para métricas de porcentaje usa el número directo (ej: 9 para 9%)."
-        },
-        collectorId: {
-          type: "string",
-          description:
-            "ID (UUID) del cobrador a vigilar. Obligatorio solo para la métrica mora_pct_collector."
-        }
-      },
-      required: ["name", "metric", "comparator", "threshold"]
-    }
-  }
-};
-
-/**
- * List the founder's watch rules. A read tool.
- */
-export const listWatchRulesTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "listWatchRules",
-    description:
-      "Listar las reglas de vigilancia existentes. Por defecto solo las activas; usa includeDisabled='true' para incluir las desactivadas.",
-    parameters: {
-      type: "object",
-      properties: {
-        includeDisabled: {
-          type: "string",
-          description: "Si es 'true', incluye también las reglas desactivadas. Opcional."
-        }
-      },
-      required: []
-    }
-  }
-};
-
-/**
- * Disable a watch rule. A DIRECT tool.
- */
-export const disableWatchRuleTool: ToolFunction = {
-  type: "function",
-  function: {
-    name: "disableWatchRule",
-    description:
-      "Desactivar una regla de vigilancia por su ID (UUID). Una regla desactivada deja de evaluarse y no produce más alertas.",
-    parameters: {
-      type: "object",
-      properties: {
-        id: {
-          type: "string",
-          description: "ID (UUID) de la regla a desactivar."
-        }
-      },
-      required: ["id"]
-    }
-  }
-};
-
-/**
  * File a GitHub issue mid-conversation (design Decision 4, issue #111): a bug,
  * a missing capability, or a UI/UX idea the copilot notices. A DIRECT tool —
  * executes inline, no confirmation gate, because filing an internal,
@@ -221,7 +134,15 @@ function automationCatalogDoc(): { ids: string[]; doc: string } {
     .map((d) => {
       const statics = d.slots
         .filter((s) => s.source === "static")
-        .map((s) => `${s.name} (${s.label})`)
+        // Mark optional slots explicitly: the model must be able to omit them
+        // rather than invent a value. Relying on the Spanish label happening to
+        // contain "opcional" only covered `suggestedAmount` — `employeeId` is
+        // optional in schema and read as required. Skip the suffix when the label
+        // already says it, so `suggestedAmount` doesn't read "opcional" twice.
+        .map((s) => {
+          const saysOptional = s.label.toLowerCase().includes("opcional");
+          return `${s.name} (${s.label}${s.optional && !saysOptional ? ", opcional" : ""})`;
+        })
         .join(", ");
       const asks = d.slots
         .filter((s) => s.source === "ask")
@@ -473,9 +394,6 @@ export const openLoanFormTool: ToolFunction = {
 export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   queryFeedEventsTool,
   getDailyCashCollectedTool,
-  createWatchRuleTool,
-  listWatchRulesTool,
-  disableWatchRuleTool,
   githubFeedbackTool,
   openCustomerFormTool,
   openLoanFormTool,
@@ -504,7 +422,6 @@ export const READ_TOOLS: readonly string[] = [
   "previewLateFee",
   "queryFeedEvents",
   "getDailyCashCollected",
-  "listWatchRules",
   "listTasks",
   "getLoanHealth",
   "runPortfolioHealthCheck"
@@ -529,18 +446,15 @@ export const WRITE_TOOLS: readonly string[] = [
 ];
 
 /**
- * Direct tools: executed inline, no confirmation. Watch-rule management is
- * reversible business config; githubFeedback is an external, non-business
- * side effect (an internal issue, not a mutation) — issue #111 explicitly
- * asks for it to be callable in the moment, which a confirm-first flow would
- * defeat.
+ * Direct tools: executed inline, no confirmation. githubFeedback is an
+ * external, non-business side effect (an internal issue, not a mutation) —
+ * issue #111 explicitly asks for it to be callable in the moment, which a
+ * confirm-first flow would defeat.
  */
 export const DIRECT_TOOLS: readonly string[] = [
-  "createWatchRule",
-  "disableWatchRule",
   "githubFeedback",
-  // Task definitions are reversible config (pause/cancel) like watch rules;
-  // execution is gated separately by the firing confirm flow, never here.
+  // Task definitions are reversible config (pause/cancel); execution is gated
+  // separately by the firing confirm flow, never here.
   "createTask",
   "cancelTask",
   // Open the customer/loan form cards; create nothing themselves (the cards

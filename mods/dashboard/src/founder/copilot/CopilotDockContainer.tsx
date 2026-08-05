@@ -7,13 +7,11 @@
  *     chronologically into the thread (pending-action cards render from their
  *     records with their live status);
  *   - `copilotChat` sends with an optimistic user bubble + typing indicator,
- *     then appends the reply / pending action / created rule as the matching
- *     component;
+ *     then appends the reply / pending action as the matching component;
  *   - `copilotConfirmAction` / `copilotRejectAction` update the card in place
  *     and invalidate the feed (a confirmed action becomes a feed event);
- *   - rule cards disable via `setWatchRuleEnabled`; "Editar regla" prefills the
- *     composer. Conversational errors surface as an assistant-style error
- *     message, never a toast. The one exception is the loan-card contract
+ *   - conversational errors surface as an assistant-style error message,
+ *     never a toast. The one exception is the loan-card contract
  *     download: saving the PDF is an OS-level file action (not a copilot turn),
  *     so its "saved to …" confirmation uses the global toast — the same one the
  *     reports screen raises for the identical save.
@@ -28,7 +26,6 @@ import { CapabilityChips } from "./CapabilityChips";
 import { CopilotDock } from "./CopilotDock";
 import { useCopilot } from "./CopilotContext";
 import { PendingActionCard } from "./PendingActionCard";
-import { RuleCard } from "./RuleCard";
 import { CustomerFormCard } from "./CustomerFormCard";
 import { LoanFormCard } from "./LoanFormCard";
 import { DocumentCard, type DocumentDownloadStatus } from "./DocumentCard";
@@ -37,7 +34,6 @@ import type {
   CopilotMessage,
   CopilotPendingAction,
   CopilotProvenance,
-  CopilotRule,
   CreateFormStatus,
   CustomerFormValues,
   CustomerPickerResult,
@@ -111,17 +107,6 @@ function buildThread(data: HistoryResult): ThreadItem[] {
   return dated.map((d) => d.item);
 }
 
-function toRule(created: NonNullable<ChatReply["createdRule"]>): CopilotRule {
-  return {
-    id: created.id,
-    name: created.name,
-    metric: created.metric,
-    comparator: created.comparator,
-    threshold: created.threshold,
-    enabled: true
-  };
-}
-
 export function CopilotDockContainer() {
   const { open, prefill, close } = useCopilot();
   const utils = trpc.useUtils();
@@ -156,7 +141,6 @@ export function CopilotDockContainer() {
   const chat = trpc.copilotChat.useMutation();
   const confirmAction = trpc.copilotConfirmAction.useMutation();
   const rejectAction = trpc.copilotRejectAction.useMutation();
-  const setRuleEnabled = trpc.setWatchRuleEnabled.useMutation();
   const clearHistory = trpc.clearCopilotHistory.useMutation();
   const createCustomer = trpc.createCustomer.useMutation();
   const createLoan = trpc.createLoan.useMutation();
@@ -212,15 +196,6 @@ export function CopilotDockContainer() {
           id: uid(),
           action: { ...res.pendingAction, createdAt: new Date(res.pendingAction.createdAt) },
           state: "pending",
-          provenance: provUsed ? undefined : prov
-        });
-        provUsed = true;
-      }
-      if (res.createdRule) {
-        next.push({
-          kind: "rule",
-          id: uid(),
-          rule: toRule(res.createdRule),
           provenance: provUsed ? undefined : prov
         });
         provUsed = true;
@@ -309,32 +284,6 @@ export function CopilotDockContainer() {
     },
     [rejectAction, setActionState, appendError]
   );
-
-  const handleRuleDisable = useCallback(
-    (rule: CopilotRule) => {
-      const nextEnabled = !(rule.enabled ?? true);
-      setRuleEnabled.mutate(
-        { id: rule.id, enabled: nextEnabled },
-        {
-          onSuccess: () => {
-            setThread((prev) =>
-              prev.map((item) =>
-                item.kind === "rule" && item.rule.id === rule.id
-                  ? { ...item, rule: { ...item.rule, enabled: nextEnabled } }
-                  : item
-              )
-            );
-          },
-          onError: (err) => appendError(err.message || "No se pudo actualizar la regla.")
-        }
-      );
-    },
-    [setRuleEnabled, appendError]
-  );
-
-  const handleRuleEdit = useCallback((rule: CopilotRule) => {
-    setInput(`Edita la regla ${rule.name}: `);
-  }, []);
 
   const handleCreateCustomer = useCallback(
     (messageId: string, values: CustomerFormValues) => {
@@ -523,17 +472,6 @@ export function CopilotDockContainer() {
                   state={item.state}
                   onConfirm={handleConfirm}
                   onReject={handleReject}
-                />
-              </AssistantMessage>
-            );
-          case "rule":
-            return (
-              <AssistantMessage key={item.id} provenance={item.provenance}>
-                <RuleCard
-                  rule={item.rule}
-                  note={item.note}
-                  onEdit={handleRuleEdit}
-                  onDisable={handleRuleDisable}
                 />
               </AssistantMessage>
             );

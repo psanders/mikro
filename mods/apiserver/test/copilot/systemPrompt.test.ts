@@ -10,11 +10,18 @@ describe("buildCopilotSystemPrompt", () => {
 
     expect(prompt).to.include("Hoy es 5 de julio de 2026.");
     expect(prompt).to.include("CONSULTAR");
-    expect(prompt).to.include("VIGILAR");
     expect(prompt).to.include("PROGRAMAR");
     expect(prompt).to.include("MEJORAR");
     expect(prompt).to.include("githubFeedback");
     expect(prompt).to.include("createTask");
+  });
+
+  it("no longer offers the retired watch-rule verb", () => {
+    const prompt = buildCopilotSystemPrompt({ today: "5 de julio de 2026" });
+
+    expect(prompt).to.not.include("VIGILAR");
+    expect(prompt).to.not.include("createWatchRule");
+    expect(prompt).to.not.include("mora_pct_portfolio");
   });
 
   it("includes receipt-sending guidance (issue #118)", () => {

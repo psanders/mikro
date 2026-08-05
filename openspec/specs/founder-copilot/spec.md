@@ -8,7 +8,7 @@ Conversational copilot for the founder app: a collapsible dock backed by the api
 
 ### Requirement: Copilot dock in the founder shell
 
-The founder app SHALL provide a collapsible copilot dock rendered by the founder shell on all founder routes, visually matching the Pencil design (screens `Uljd6` and the dock in `YrWVt`): open state is a right panel with header (copilot name and close control — no online/presence indicator), message thread, and input; closed state is the plain sparkles icon-button in the feed header (no presence dot). The dock SHALL open with a prefilled question when an event card's ask-copilot chip is clicked. Capability suggestion chips (CONSULTAR / ACTUAR / VIGILAR / AUDITAR groups) SHALL be offered when the thread is empty.
+The founder app SHALL provide a collapsible copilot dock rendered by the founder shell on all founder routes, visually matching the Pencil design (screens `Uljd6` and the dock in `YrWVt`): open state is a right panel with header (copilot name and close control — no online/presence indicator), message thread, and input; closed state is the plain sparkles icon-button in the feed header (no presence dot). The dock SHALL open with a prefilled question when an event card's ask-copilot chip is clicked. Capability suggestion chips (CONSULTAR / ACTUAR / PROGRAMAR / AUDITAR groups) SHALL be offered when the thread is empty.
 
 #### Scenario: Open and close the dock
 
@@ -27,7 +27,7 @@ The founder app SHALL provide a collapsible copilot dock rendered by the founder
 
 ### Requirement: Chat with immediate read answers and provenance
 
-The apiserver SHALL expose an admin-only `copilotChat` procedure that runs the LLM tool loop with the copilot tool policy: read tools (queries, reports, event-log queries, rule listing) execute during the loop and the founder receives the final answer in the same response. Each assistant answer that used tools SHALL carry provenance (tool name(s) and elapsed time) rendered under the message. Conversation history SHALL persist per founder on the copilot channel and reload with the dock, excluding messages that have been cleared (soft-deleted).
+The apiserver SHALL expose an admin-only `copilotChat` procedure that runs the LLM tool loop with the copilot tool policy: read tools (queries, reports, event-log queries) execute during the loop and the founder receives the final answer in the same response. Each assistant answer that used tools SHALL carry provenance (tool name(s) and elapsed time) rendered under the message. Conversation history SHALL persist per founder on the copilot channel and reload with the dock, excluding messages that have been cleared (soft-deleted).
 
 #### Scenario: Business question answered with provenance
 
@@ -126,12 +126,17 @@ The copilot's system prompt SHALL be assembled per turn (not a static constant) 
 
 ### Requirement: Task management tools
 
-The copilot SHALL expose three DIRECT tools — `createTask`, `listTasks`, `cancelTask` — executed inline without a confirmation gate, because task definitions are reversible configuration (mirroring the watch-rule tools). `createTask` SHALL constrain `automationId` to an enum of the registered catalog ids and describe each automation's static and ask slots in its parameter documentation, so the model can bind only automations and slots that exist; its inputs are validated by the same rules as manual creation (schema-valid static slots, gate clamped to the automation's floor). Task _execution_ SHALL never pass through the copilot loop: firing, gathering, confirmation, and execute involve no LLM.
+The copilot SHALL expose three DIRECT tools — `createTask`, `listTasks`, `cancelTask` — executed inline without a confirmation gate, because task definitions are reversible configuration. `createTask` SHALL constrain `automationId` to an enum of the registered catalog ids and describe each automation's static and ask slots in its parameter documentation, so the model can bind only automations and slots that exist; its inputs are validated by the same rules as manual creation (schema-valid static slots, gate clamped to the automation's floor). A static slot the automation declares optional MAY be omitted by the model, and the tool documentation SHALL mark it optional so the model does not invent a value for it. Task _execution_ SHALL never pass through the copilot loop: firing, gathering, confirmation, and execute involve no LLM.
 
 #### Scenario: Natural-language task creation
 
 - **WHEN** the founder tells the copilot to remind them every Friday at 8am to pay a named collector
-- **THEN** the copilot calls `createTask` with `automationId: "pay-collector"`, a weekly Friday 8:00 schedule, and the resolved collector as a static slot, and the dock shows the created task
+- **THEN** the copilot calls `createTask` with `automationId: "payment"`, a weekly Friday 8:00 schedule, and the resolved collector as a static slot, and the dock shows the created task
+
+#### Scenario: Fixed amount captured at creation
+
+- **WHEN** the founder tells the copilot to set up a weekly RD$3,500 payment to a named collector
+- **THEN** the copilot binds `suggestedAmount` as a static slot so the amount is pre-filled at confirm time, and the amount is still confirmed by the founder rather than charged automatically
 
 #### Scenario: Model cannot invent an automation
 
@@ -174,7 +179,7 @@ The copilot tool policy SHALL bind `approveApplication`, `rejectApplication`, an
 
 ### Requirement: Customer form card
 
-The copilot tool policy SHALL bind an `openCustomerForm` direct tool that the model calls when the founder asks to create a new customer (e.g. "creá un cliente nuevo", "agregá un cliente"). Executing the tool SHALL NOT create anything: it returns a `customerForm` payload on the chat reply (a reply field alongside `pendingAction`/`createdRule`). The dock SHALL render this as a `customerForm` thread-item kind — an interactive form card distinct from the verbatim `pendingAction` confirm card — with inputs for every `createCustomer` field (name, phone, cédula, home address, assigned collector required; nickname, collection point, job position, income, business-owner flag, notes, preferred payment day optional) and a create control. `createCustomer` SHALL remain reachable as a write tool with the confirm-card path as a fallback.
+The copilot tool policy SHALL bind an `openCustomerForm` direct tool that the model calls when the founder asks to create a new customer (e.g. "creá un cliente nuevo", "agregá un cliente"). Executing the tool SHALL NOT create anything: it returns a `customerForm` payload on the chat reply (a reply field alongside `pendingAction`). The dock SHALL render this as a `customerForm` thread-item kind — an interactive form card distinct from the verbatim `pendingAction` confirm card — with inputs for every `createCustomer` field (name, phone, cédula, home address, assigned collector required; nickname, collection point, job position, income, business-owner flag, notes, preferred payment day optional) and a create control. `createCustomer` SHALL remain reachable as a write tool with the confirm-card path as a fallback.
 
 #### Scenario: Asking to create a customer opens the form card
 

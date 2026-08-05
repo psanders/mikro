@@ -76,7 +76,7 @@ const FREQUENCY_OPTIONS = [
 
 const FIELD_LABEL = "text-[13px] font-medium text-[#14254A]";
 const FIELD_INPUT =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] focus:border-[#1F4AA8] focus:outline-none";
+  "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] placeholder:text-[#697A93] focus:border-[#1F4AA8] focus:outline-none";
 const FIELD_SELECT = cn(FIELD_INPUT, "appearance-none pr-[36px]");
 const SELECT_CHEVRON =
   "pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2 text-[#697A93]";
@@ -294,6 +294,23 @@ export function TaskFormModal({
                       </select>
                       <ChevronDown size={14} className={SELECT_CHEVRON} />
                     </div>
+                  ) : slot.kind === "amount" ? (
+                    // A money slot (payment's `suggestedAmount`) gets numeric entry
+                    // instead of a free-text box. The currency lives in the slot's
+                    // label — Pencil `aMH1d`/`dOBaU` shows no in-field RD$ prefix,
+                    // just a formatted placeholder. Value stays a string so empty
+                    // keeps meaning "unset"; the server's `z.coerce.number()` owns
+                    // coercion and bounds.
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      placeholder="2,500"
+                      value={staticParams[slot.name] ?? ""}
+                      onChange={(e) => setParam(slot.name, e.target.value)}
+                      className={FIELD_INPUT}
+                    />
                   ) : (
                     <input
                       type="text"

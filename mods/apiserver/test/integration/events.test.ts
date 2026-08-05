@@ -383,8 +383,8 @@ describe("Founder Feed Integration", () => {
     it("registers a mapper for every catalog type except intrinsic and retired ones", () => {
       // Types with no boundary mapper. Written intrinsically (never by a
       // boundary mapper): application.restored by createRestoreApplication;
-      // copilot.action by the copilot confirm flow; rule.alert by the watch-rule
-      // evaluator; task.* by the task worker and firing confirm/skip flow;
+      // copilot.action by the copilot confirm flow; task.* by the task worker
+      // and firing confirm/skip flow;
       // qcobro.synced by the QCobro cron worker's tick(); message.sent by the
       // outbound-message recorder at WhatsApp send time. Plus contract.generated,
       // RETIRED — no longer produced (loan.created covers it), kept only so
@@ -393,7 +393,6 @@ describe("Founder Feed Integration", () => {
         "application.restored",
         "contract.generated",
         "copilot.action",
-        "rule.alert",
         "task.due",
         "task.needs_input",
         "task.completed",

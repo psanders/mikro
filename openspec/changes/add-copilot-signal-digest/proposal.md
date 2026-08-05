@@ -9,7 +9,7 @@ This change adds that aggregation, modeled directly on the OpenClaw "Capability 
 ## What Changes
 
 - Add a lightweight `ToolCallLog` record: every copilot READ/DIRECT tool call is logged with `toolName`, an optional coarse `signal` (the `reason` code for lookup tools, or the `category` for `githubFeedback` calls — never full arguments, to avoid a new PII surface), `userId`, and a timestamp.
-- Add a periodic (weekly, configurable) deterministic evaluator — same interval-worker shape as `createWatchRuleEvaluator` — that counts `(toolName, signal)` occurrences in the trailing window, and when any pair crosses a threshold, compiles them into a single digest.
+- Add a periodic (weekly, configurable) deterministic evaluator — same interval-worker shape as `createQCobroWorker` — that counts `(toolName, signal)` occurrences in the trailing window, and when any pair crosses a threshold, compiles them into a single digest.
 - Add a longer-window (default 90-day), monthly-gated check for bound tools with **zero** logged calls at all — a complementary "possibly dead capability" signal, distinct from the failure-pattern signal above, folded into the same digest issue when due.
 - The digest is filed as **one** GitHub issue via the existing `fileGithubIssue` helper (no new GitHub integration) — a template-rendered summary of recurring patterns, not an LLM-authored write-up. Nothing is filed when nothing crosses the threshold (no empty-digest spam).
 - `ToolCallLog` rows are pruned past a retention window (default 120 days — comfortably past the longest detection window) in the same tick, so the table doesn't grow unbounded.
@@ -29,5 +29,5 @@ This change adds that aggregation, modeled directly on the OpenClaw "Capability 
 
 - New Prisma model (`ToolCallLog`) + migration.
 - `mods/apiserver/src/api/copilot/createCopilotChat.ts` (log each executed READ/DIRECT tool call).
-- New: `mods/apiserver/src/api/copilot/evaluateSignalDigest.ts` (pure, testable) + `createSignalDigestEvaluator.ts` (interval worker), wired at apiserver startup alongside the existing watch-rule and QCobro workers.
+- New: `mods/apiserver/src/api/copilot/evaluateSignalDigest.ts` (pure, testable) + `createSignalDigestEvaluator.ts` (interval worker), wired at apiserver startup alongside the existing QCobro and task workers.
 - Reuses `fileGithubIssue` (from `add-copilot-tool-awareness-feedback`) — no new GitHub client code.

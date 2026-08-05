@@ -227,21 +227,6 @@ export const copilotActionEvent: FeedEvent = {
   }
 };
 
-export const ruleAlertEvent: FeedEvent = {
-  id: "evt-rule-alert",
-  type: "rule.alert",
-  occurredAt: minutesAgo(25),
-  actorName: "Sistema",
-  summary: 'La regla "Mora alta" se activó: mora de la cartera = 18% (umbral > 15%).',
-  payload: {
-    ruleId: "rule-001",
-    ruleName: "Mora alta",
-    metric: "mora_pct_portfolio",
-    value: 18,
-    threshold: 15
-  }
-};
-
 export const taskDueEvent: FeedEvent = {
   id: "evt-task-due",
   type: "task.due",
@@ -387,6 +372,5 @@ export const allFeedEvents: FeedEvent[] = [
   applicationRejectedEvent,
   loanStatusChangedEvent,
   customerCreatedEvent,
-  copilotActionEvent,
-  ruleAlertEvent
+  copilotActionEvent
 ];

@@ -2,12 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * The empty-thread intro — Pencil `intro`: a lead line plus the four verb
- * groups (CONSULTAR / ACTUAR / VIGILAR / AUDITAR), each an icon+label header
+ * groups (CONSULTAR / ACTUAR / PROGRAMAR / AUDITAR), each an icon+label header
  * over a row of example-prompt chips. Clicking a chip emits its prompt so the
  * parent can prefill the composer.
  */
 import type { LucideIcon } from "lucide-react";
-import { Bell, ChartColumn, ScrollText, Zap } from "lucide-react";
+import { CalendarClock, ChartColumn, ScrollText, Zap } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { CapabilityGroup, CapabilityVerb } from "./types";
 
@@ -16,7 +16,7 @@ const INTRO_TEXT = "¿Qué necesitas? Puedo hacer todo lo que harías en las app
 const VERB_ICON: Record<CapabilityVerb, LucideIcon> = {
   CONSULTAR: ChartColumn,
   ACTUAR: Zap,
-  VIGILAR: Bell,
+  PROGRAMAR: CalendarClock,
   AUDITAR: ScrollText
 };
 
@@ -31,8 +31,11 @@ export const DEFAULT_CAPABILITY_GROUPS: CapabilityGroup[] = [
     chips: [{ label: "Registrar un pago" }, { label: "Firmar la excepción #487" }]
   },
   {
-    verb: "VIGILAR",
-    chips: [{ label: "Avísame si la mora sube" }, { label: "Resumen diario 6 p. m." }]
+    verb: "PROGRAMAR",
+    chips: [
+      { label: "Recuérdame pagar al cobrador los viernes" },
+      { label: "Cierra la caja todos los días" }
+    ]
   },
   {
     verb: "AUDITAR",

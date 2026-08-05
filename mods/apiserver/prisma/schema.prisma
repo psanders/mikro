@@ -680,32 +680,8 @@ model OutboundMessage {
 }
 
 // =============================================================================
-// Copilot & watch rules (Founder Copilot)
+// Copilot (Founder Copilot)
 // =============================================================================
-
-// A founder-defined alert: "watch metric M and tell me when it crosses T". The
-// evaluator recomputes each enabled rule's metric on an interval and records a
-// `rule.alert` business event only on an ok→breached transition. `lastState`
-// ("ok"/"breached") is the anti-spam latch. `metric` is a value of the v1
-// watchRuleMetricEnum; `comparator` is "gt"/"lt". `collectorId` scopes
-// collector-level metrics (mora_pct_collector).
-model WatchRule {
-  id              String    @id @default(uuid())
-  name            String
-  metric          String
-  comparator      String
-  threshold       Float
-  collectorId     String?   @map("collector_id")
-  enabled         Boolean   @default(true)
-  createdById     String    @map("created_by_id")
-  lastState       String?   @map("last_state")
-  lastEvaluatedAt DateTime? @map("last_evaluated_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  @@index([enabled])
-  @@map("watch_rules")
-}
 
 // A write the copilot proposed and is waiting for the founder to confirm. Nothing
 // executes until confirmed: `argsJson` is the serialized tool arguments shown

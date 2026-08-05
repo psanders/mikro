@@ -52,11 +52,11 @@ Each event SHALL render as a compact card (icon, summary line, actor, relative t
 
 Expanded cards SHALL show a per-type narrative sentence (when the event carries fields beyond its compact summary line), a "Metadata" link, an "IA insights" link, and type-specific actions — matching the Pencil catalog (board section `zmif2`, exploration row `VIflA`). `application.deleted` cards render with the destructive (red) treatment and a "Restaurar" action that calls the restore mutation (shown only while the 30-day window is open); policy-exception approvals render with the warning (amber) treatment; cards whose subject still exists offer a "Ver …" action that opens the copilot dock prefilled with a question about that entity (the retired operations detail views are no longer navigation targets). Actions that write MUST reflect the result in the UI (success or structured error).
 
-The narrative sentence SHALL be composed client-side from fields already present on the event (`FeedEvent` top-level fields and `payload`) — no LLM call, no network request, no persistence. When an event type has no fields beyond what its compact summary line already shows (`application.signed`, `application.restored`, `customer.created`, `rule.alert`), the narrative sentence SHALL be omitted rather than repeating the compact summary a second time.
+The narrative sentence SHALL be composed client-side from fields already present on the event (`FeedEvent` top-level fields and `payload`) — no LLM call, no network request, no persistence. When an event type has no fields beyond what its compact summary line already shows (`application.signed`, `application.restored`, `customer.created`), the narrative sentence SHALL be omitted rather than repeating the compact summary a second time.
 
 The "Metadata" link SHALL open a view of the event's raw `payload` (plus `type`, `occurredAt`, `actorName`) as formatted JSON — the same link and rendering for every event type, no per-type logic. The "IA insights" link SHALL open the copilot dock prefilled with a question about that specific record (reusing `subjectQuestion()` for event types that already resolve a subject link; a type-specific question otherwise) — this replaces the KV-grid's generic unhandled-payload-key fallback, which is removed.
 
-`copilot.action` events render with the copilot (sparkles) treatment showing the tool provenance from the payload; `rule.alert` events render with the alert (bell) treatment showing rule name, observed value, and threshold. Every card's ask-copilot chip SHALL be functional: clicking it opens the copilot dock with the chip's question prefilled.
+`copilot.action` events render with the copilot (sparkles) treatment showing the tool provenance from the payload. Every card's ask-copilot chip SHALL be functional: clicking it opens the copilot dock with the chip's question prefilled.
 
 The `application.deleted` narrative SHALL NOT include a deletion reason — no reason is captured by the delete flow today; adding one is out of scope for this change. The `loan.status_changed` narrative SHALL degrade to naming only the resulting status when the prior status is unavailable (`payload.from` empty), matching current behavior.
 
@@ -80,11 +80,6 @@ The `application.deleted` narrative SHALL NOT include a deletion reason — no r
 - **WHEN** an admin expands a `copilot.action` card
 - **THEN** the executed tool's result is shown as the narrative sentence (falling back to the tool name when no result summary was recorded), and the full arguments are available via the Metadata link
 
-#### Scenario: Rule alert card shows the breach
-
-- **WHEN** an admin views a `rule.alert` card
-- **THEN** the compact summary already states the rule name, observed value, and threshold, so no separate narrative sentence is shown — only the Metadata and IA insights links plus any actions
-
 #### Scenario: Ask-chip opens the dock
 
 - **WHEN** an admin clicks a card's ask-copilot chip
@@ -92,7 +87,7 @@ The `application.deleted` narrative SHALL NOT include a deletion reason — no r
 
 #### Scenario: Event type with no extra fields omits the narrative
 
-- **WHEN** an admin expands an `application.signed`, `application.restored`, `customer.created`, or `rule.alert` card
+- **WHEN** an admin expands an `application.signed`, `application.restored`, or `customer.created` card
 - **THEN** no narrative sentence row is rendered — the card goes directly from the head to the Metadata/IA-insights links (and any actions)
 
 #### Scenario: Metadata link shows the raw event
@@ -117,7 +112,7 @@ The `application.deleted` narrative SHALL NOT include a deletion reason — no r
 
 ### Requirement: Open task firings render as amber action cards in the feed
 
-`task.due` and `task.needs_input` events whose firing is still unresolved SHALL render in the feed with the amber (warning) accent and an action widget; all other `task.*` events, and `task.due`/`task.needs_input` events whose firing was since resolved, SHALL render as plain event rows using the payload's denormalized fields. The action widget SHALL fetch the firing's live state by the `taskFiringId` in the event payload (the event row itself renders without any fetch), and present: the resolved payload for review, one input per pending `ask` slot, a confirm action, and a skip action. Confirm and skip SHALL reflect success or a structured error in place, and a resolved firing's card SHALL drop the widget. If the firing state fetch fails, the card SHALL degrade to a plain event row rather than blocking the feed.
+`task.due` and `task.needs_input` events whose firing is still unresolved SHALL render in the feed with the amber (warning) accent and an action widget; all other `task.*` events, and `task.due`/`task.needs_input` events whose firing was since resolved, SHALL render as plain event rows using the payload's denormalized fields. The action widget SHALL fetch the firing's live state by the `taskFiringId` in the event payload (the event row itself renders without any fetch), and present: the resolved payload for review, one input per pending `ask` slot, a confirm action, and a skip action. An `ask` slot whose descriptor declares `defaultFrom` SHALL have its input seeded from the named payload field, editable by the founder, per the catalog's prefill contract. Confirm and skip SHALL reflect success or a structured error in place, and a resolved firing's card SHALL drop the widget. If the firing state fetch fails, the card SHALL degrade to a plain event row rather than blocking the feed.
 
 #### Scenario: Due task shows the confirm widget
 
@@ -126,8 +121,13 @@ The `application.deleted` narrative SHALL NOT include a deletion reason — no r
 
 #### Scenario: Confirming from the card completes the task
 
-- **WHEN** the founder fills the amount on a `pay-collector` task card and confirms
+- **WHEN** the founder fills the amount on a `payment` task card and confirms
 - **THEN** the widget reflects success, the card drops its action affordance, and the resulting `task.completed` event appears in the feed
+
+#### Scenario: Prefilled amount can be confirmed unchanged
+
+- **WHEN** the founder opens a `payment` task card whose task pinned a `suggestedAmount` and confirms without editing the amount input
+- **THEN** the suggested value is the amount submitted, validated, and posted
 
 #### Scenario: Resolved firing renders as a plain row
 

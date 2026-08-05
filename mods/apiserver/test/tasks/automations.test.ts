@@ -146,6 +146,26 @@ describe("record-expense", () => {
     expect(createTransaction.firstCall.args[0].description).to.equal("Gasolina de la semana");
     expect(result.summary).to.include("Gasolina");
   });
+
+  // Issue #224: suggestedAmount only seeds the confirm-time input. Whatever the
+  // founder actually confirms is what posts — a stale suggestion must never
+  // override an edited amount.
+  it("posts the confirmed amount, not the pinned suggestion", async () => {
+    const { deps, createTransaction } = makeDeps();
+    const result = await recordExpense.execute(
+      {
+        concept: "Gasolina de la semana",
+        accountId: "1d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        categoryId: "2d4bb054-8b4c-4c53-9241-7b3a37dbfb2e",
+        suggestedAmount: 2000,
+        amount: 2350
+      },
+      deps
+    );
+    expect(createTransaction.firstCall.args[0].amount).to.equal(2350);
+    expect(result.amount).to.equal(2350);
+    expect(result.summary).to.include("2,350");
+  });
 });
 
 describe("daily-close", () => {

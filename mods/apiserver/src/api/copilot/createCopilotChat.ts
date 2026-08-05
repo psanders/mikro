@@ -32,13 +32,12 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 import { buildCopilotSystemPrompt } from "./systemPrompt.js";
 import { summarizeAction } from "./summarizeAction.js";
-import { createWatchRule, disableWatchRule, type WatchRuleView } from "./watchRules.js";
 import { getCopilotToolDefinitions, isReadTool, isWriteTool, isDirectTool } from "./toolPolicy.js";
 import { createTask, listTasks, cancelTask, getAutomation } from "../../tasks/index.js";
 import { createGetLoanHealth } from "../loans/createGetLoanHealth.js";
 import { createRunPortfolioHealthCheck } from "../reports/createRunPortfolioHealthCheck.js";
 import { createGenerateLoanStatement } from "../reports/createGenerateLoanStatement.js";
-import { computeWatchMetric } from "./metrics.js";
+import { computeDailyCashCollected } from "./metrics.js";
 
 const MAX_TOOL_ITERATIONS = 10;
 const HISTORY_WINDOW = 20;
@@ -155,11 +154,9 @@ export function createCopilotChat(deps: CopilotChatDeps) {
   }
 
   /**
-   * Today's total cash collected (copilot read tool, mikro/#115). Wraps the
-   * same `cobranza_diaria` computation the watch-rule evaluator uses
-   * (`computeWatchMetric`), so this number always matches what a watch rule on
-   * that metric would see. `date` lets the founder ask about a prior day
-   * during reconciliation ("¿y ayer?"); defaults to now.
+   * Today's total cash collected (copilot read tool, mikro/#115). `date` lets
+   * the founder ask about a prior day during reconciliation ("¿y ayer?");
+   * defaults to now.
    */
   async function handleGetDailyCashCollected(args: Record<string, unknown>): Promise<ToolResult> {
     let asOf = new Date();
@@ -173,73 +170,13 @@ export function createCopilotChat(deps: CopilotChatDeps) {
       }
       asOf = parsed;
     }
-    const total = await computeWatchMetric(db, { metric: "cobranza_diaria" }, asOf);
+    const total = await computeDailyCashCollected(db, asOf);
     const dateLabel = asOf.toISOString().slice(0, 10);
     return {
       success: true,
       message: `Total cobrado el ${dateLabel}: RD$${total}.`,
       data: { date: dateLabel, totalCollected: total }
     };
-  }
-
-  /** List watch rules (copilot read tool). */
-  async function handleListWatchRules(args: Record<string, unknown>): Promise<ToolResult> {
-    const includeDisabled = String(args.includeDisabled) === "true";
-    const rows = await db.watchRule.findMany({
-      where: includeDisabled ? {} : { enabled: true },
-      orderBy: { createdAt: "desc" }
-    });
-    return {
-      success: true,
-      message: `${rows.length} regla(s).`,
-      data: {
-        rules: rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          metric: r.metric,
-          comparator: r.comparator,
-          threshold: r.threshold,
-          collectorId: r.collectorId,
-          enabled: r.enabled
-        }))
-      }
-    };
-  }
-
-  /** Create a watch rule (copilot DIRECT tool). Coerces string args to numbers. */
-  async function handleCreateWatchRule(
-    args: Record<string, unknown>,
-    userId: string
-  ): Promise<{ result: ToolResult; rule?: WatchRuleView }> {
-    try {
-      const rule = await createWatchRule(
-        db,
-        {
-          name: args.name,
-          metric: args.metric,
-          comparator: args.comparator,
-          threshold: args.threshold !== undefined ? Number(args.threshold) : undefined,
-          collectorId: args.collectorId ? String(args.collectorId) : undefined
-        },
-        userId
-      );
-      return {
-        result: { success: true, message: `Regla "${rule.name}" creada.`, data: { rule } },
-        rule
-      };
-    } catch (error) {
-      return { result: { success: false, message: (error as Error).message } };
-    }
-  }
-
-  /** Disable a watch rule (copilot DIRECT tool). */
-  async function handleDisableWatchRule(args: Record<string, unknown>): Promise<ToolResult> {
-    try {
-      const rule = await disableWatchRule(db, String(args.id));
-      return { success: true, message: `Regla "${rule.name}" desactivada.`, data: { rule } };
-    } catch (error) {
-      return { success: false, message: (error as Error).message };
-    }
   }
 
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -557,7 +494,6 @@ export function createCopilotChat(deps: CopilotChatDeps) {
 
     const context: Record<string, unknown> = { userId, role: "ADMIN", name: actorName };
     const toolsUsed: string[] = [];
-    let createdRule: WatchRuleView | undefined;
     let customerForm: Record<string, never> | undefined;
     let loanForm: { customerHint?: string } | undefined;
     let document: CopilotDocument | undefined;
@@ -647,14 +583,6 @@ export function createCopilotChat(deps: CopilotChatDeps) {
           result = await handleQueryFeedEvents(tc.args);
         } else if (tc.name === "getDailyCashCollected") {
           result = await handleGetDailyCashCollected(tc.args);
-        } else if (tc.name === "listWatchRules") {
-          result = await handleListWatchRules(tc.args);
-        } else if (tc.name === "createWatchRule") {
-          const outcome = await handleCreateWatchRule(tc.args, userId);
-          result = outcome.result;
-          if (outcome.rule) createdRule = outcome.rule;
-        } else if (tc.name === "disableWatchRule") {
-          result = await handleDisableWatchRule(tc.args);
         } else if (tc.name === "createTask") {
           result = await handleCreateTask(tc.args, userId);
         } else if (tc.name === "listTasks") {
@@ -717,15 +645,13 @@ export function createCopilotChat(deps: CopilotChatDeps) {
 
     const modelReply =
       getText(response.content).trim() ||
-      (createdRule
-        ? `Listo, creé la regla "${createdRule.name}".`
-        : customerForm
-          ? "Listo. Completá los datos del cliente y lo creo."
-          : loanForm
-            ? "Listo. Completá los datos del préstamo y lo creo."
-            : document
-              ? `Aquí tienes el estado de cuenta: ${document.filename}.`
-              : "");
+      (customerForm
+        ? "Listo. Completá los datos del cliente y lo creo."
+        : loanForm
+          ? "Listo. Completá los datos del préstamo y lo creo."
+          : document
+            ? `Aquí tienes el estado de cuenta: ${document.filename}.`
+            : "");
 
     // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
     // appended deterministically, not left to the model's own phrasing, so a
@@ -742,18 +668,6 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     return {
       reply,
       ...(provenance() ? { provenance: provenance() } : {}),
-      ...(createdRule
-        ? {
-            createdRule: {
-              id: createdRule.id,
-              name: createdRule.name,
-              metric: createdRule.metric,
-              comparator: createdRule.comparator,
-              threshold: createdRule.threshold,
-              collectorId: createdRule.collectorId
-            }
-          }
-        : {}),
       ...(customerForm ? { customerForm } : {}),
       ...(loanForm ? { loanForm } : {}),
       ...(document ? { document } : {})

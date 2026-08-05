@@ -51,6 +51,13 @@ const automations: TaskAutomationOption[] = [
         kind: "category",
         optional: false
       },
+      {
+        name: "suggestedAmount",
+        label: "Monto sugerido (RD$, opcional)",
+        source: "static",
+        kind: "amount",
+        optional: true
+      },
       { name: "amount", label: "Monto (RD$)", source: "ask", kind: "amount", optional: false },
       { name: "note", label: "Nota (opcional)", source: "ask", kind: "text", optional: true }
     ]
@@ -109,6 +116,56 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Create: Story = {};
+
+/**
+ * `payment`'s `suggestedAmount` is a `kind: "amount"` static slot, so it renders as a
+ * numeric money input rather than a free-text box. `Create` above shows it empty (the
+ * "no pre-fill" case); this one shows it carrying a fixed amount, which is what seeds
+ * the confirm-time `amount` input via `defaultFrom`.
+ */
+export const CreateWithSuggestedAmount: Story = {
+  name: "Create — payment with a fixed suggested amount",
+  args: {
+    initial: {
+      name: "Pago semanal Luis M.",
+      automationId: "payment",
+      frequency: "weekly",
+      weekday: 5,
+      timeOfDay: "08:00",
+      staticParams: {
+        employeeId: "u-1",
+        accountId: "a-1",
+        categoryId: "c-1",
+        suggestedAmount: "2500"
+      }
+    }
+  }
+};
+
+/**
+ * The real driver of issue #224: a recurring operating expense whose figure is
+ * the same every period. `record-expense` carries the same optional money slot
+ * as `payment`, so the founder pins it once instead of retyping it at every
+ * confirmation.
+ */
+export const CreateExpenseWithSuggestedAmount: Story = {
+  name: "Create — record-expense with a fixed suggested amount",
+  args: {
+    initial: {
+      name: "Gasolina de la semana",
+      automationId: "record-expense",
+      frequency: "weekly",
+      weekday: 1,
+      timeOfDay: "07:00",
+      staticParams: {
+        concept: "Gasolina de la semana",
+        accountId: "a-1",
+        categoryId: "c-2",
+        suggestedAmount: "2000"
+      }
+    }
+  }
+};
 
 export const CreateDailyClose: Story = {
   name: "Create — daily-close (computed date, no ask slots)",
