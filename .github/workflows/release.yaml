@@ -58,16 +58,19 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Before npm ci: the rebase needs no dependencies, and installing first
+      # can dirty the tree (npm chmods workspace bin targets to 755), which
+      # makes `git pull --rebase` abort with "You have unstaged changes".
       - name: Pull latest (avoid EBEHIND if commits land during runner startup)
         run: git pull --rebase origin main
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Version and tag
         run: npx lerna version --conventional-commits --yes ${{ inputs.force_release && '--force-publish' || '' }}
