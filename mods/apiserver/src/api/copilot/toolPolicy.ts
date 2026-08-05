@@ -221,7 +221,15 @@ function automationCatalogDoc(): { ids: string[]; doc: string } {
     .map((d) => {
       const statics = d.slots
         .filter((s) => s.source === "static")
-        .map((s) => `${s.name} (${s.label})`)
+        // Mark optional slots explicitly: the model must be able to omit them
+        // rather than invent a value. Relying on the Spanish label happening to
+        // contain "opcional" only covered `suggestedAmount` — `employeeId` is
+        // optional in schema and read as required. Skip the suffix when the label
+        // already says it, so `suggestedAmount` doesn't read "opcional" twice.
+        .map((s) => {
+          const saysOptional = s.label.toLowerCase().includes("opcional");
+          return `${s.name} (${s.label}${s.optional && !saysOptional ? ", opcional" : ""})`;
+        })
         .join(", ");
       const asks = d.slots
         .filter((s) => s.source === "ask")

@@ -1,10 +1,6 @@
-# task-automation-catalog Specification
+# task-automation-catalog — delta
 
-## Purpose
-
-The closed, code-defined catalog of automations a founder task may bind: the registry contract (slot sources, gate floors, deterministic execute) and the v1 automations payment, record-expense, and daily-close (the ACCOUNTING.md collections-to-ledger bridge). Automations are shipped code — never user- or model-defined.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Automations are a closed, code-defined catalog
 
@@ -64,31 +60,3 @@ The confirm card context SHALL include the configured employee's name and the cu
 
 - **WHEN** a founder creates and confirms a `payment` task with no `employeeId` — a provider invoice
 - **THEN** the task is accepted, the expense posts to the configured account, and the transaction description falls back to the founder's note or a generic payment label
-
-### Requirement: record-expense automation records a recurring operating expense
-
-The catalog SHALL include `record-expense` with gate floor `confirm`. Slots: `concept` (static, display text such as "Gasolina de la semana"), `accountId`, `categoryId` (static); `amount` (ask, positive, bounded); `note` (ask, optional). Execute SHALL create an expense `AccountingTransaction` from the configured account via the existing accounting service and succeed or fail atomically.
-
-#### Scenario: Confirmed expense posts a transaction
-
-- **WHEN** a founder confirms a `record-expense` firing for the weekly gas task with amount 2000
-- **THEN** an expense transaction of 2000 exists on the configured account and category, attributed to the founder
-
-### Requirement: daily-close automation bridges the day's collections into the ledger
-
-The catalog SHALL include `daily-close` with gate floor `confirm`. Slots: `closeDate` (computed: the previous business day); `accountId` (static). Execute SHALL sum the close date's collected loan `Payment` rows, grouped per payment method, and post the bridging deposit transaction(s) to the configured ledger account. Execution MUST be idempotent per close date: if that date was already bridged, execute SHALL refuse with a clear reason (surfaced as `task.failed`) and post nothing.
-
-#### Scenario: Close posts the day's bridge
-
-- **WHEN** a founder confirms a `daily-close` firing for a date with collected payments
-- **THEN** deposit transactions matching the day's per-method collected totals exist on the ledger account
-
-#### Scenario: Double close is refused
-
-- **WHEN** a `daily-close` firing is confirmed for a date already bridged
-- **THEN** no transaction is posted and the firing records `task.failed` with a reason naming the prior close
-
-#### Scenario: Empty day closes without posting
-
-- **WHEN** a `daily-close` firing is confirmed for a date with no collected payments
-- **THEN** no transaction is posted and the firing completes successfully noting a zero day

@@ -110,6 +110,31 @@ type Story = StoryObj<typeof meta>;
 
 export const Create: Story = {};
 
+/**
+ * `payment`'s `suggestedAmount` is a `kind: "amount"` static slot, so it renders as a
+ * numeric money input rather than a free-text box. `Create` above shows it empty (the
+ * "no pre-fill" case); this one shows it carrying a fixed amount, which is what seeds
+ * the confirm-time `amount` input via `defaultFrom`.
+ */
+export const CreateWithSuggestedAmount: Story = {
+  name: "Create — payment with a fixed suggested amount",
+  args: {
+    initial: {
+      name: "Pago semanal Luis M.",
+      automationId: "payment",
+      frequency: "weekly",
+      weekday: 5,
+      timeOfDay: "08:00",
+      staticParams: {
+        employeeId: "u-1",
+        accountId: "a-1",
+        categoryId: "c-1",
+        suggestedAmount: "2500"
+      }
+    }
+  }
+};
+
 export const CreateDailyClose: Story = {
   name: "Create — daily-close (computed date, no ask slots)",
   args: {
