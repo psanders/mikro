@@ -17,9 +17,11 @@ dist/
 .env.local
 .env.*.local
 
-# Config (contains secrets)
-mikro.json
-mikro-prod.json
+# Config (contains secrets) — root-anchored: the real deployment config only.
+# Test fixtures named mikro.json (e.g. mods/apiserver/test/fixtures/mikro.json)
+# hold dummy values and are intentionally tracked.
+/mikro.json
+/mikro-prod.json
 
 # Keys
 .keys/*.pem

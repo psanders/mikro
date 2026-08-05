@@ -176,7 +176,7 @@ describe("daily-close", () => {
     closeDate: "2026-07-05"
   };
 
-  it("posts one INCOME deposit per payment method", async () => {
+  it("posts one DEPOSIT per payment method", async () => {
     const findMany = sinon.stub().resolves([
       { amount: 1000, method: "CASH" },
       { amount: 500, method: "CASH" },
@@ -193,7 +193,9 @@ describe("daily-close", () => {
       "daily-close:2026-07-05:TRANSFER"
     ]);
     for (const call of createTransaction.getCalls()) {
-      expect(call.args[0].type).to.equal("INCOME");
+      // PR #220: a repayment is mostly returned principal, not earned
+      // revenue, so daily-close bridges collections as DEPOSIT, not INCOME.
+      expect(call.args[0].type).to.equal("DEPOSIT");
     }
     expect(result.amount).to.equal(3500);
   });
