@@ -51,6 +51,13 @@ const automations: TaskAutomationOption[] = [
         kind: "category",
         optional: false
       },
+      {
+        name: "suggestedAmount",
+        label: "Monto sugerido (RD$, opcional)",
+        source: "static",
+        kind: "amount",
+        optional: true
+      },
       { name: "amount", label: "Monto (RD$)", source: "ask", kind: "amount", optional: false },
       { name: "note", label: "Nota (opcional)", source: "ask", kind: "text", optional: true }
     ]
@@ -130,6 +137,31 @@ export const CreateWithSuggestedAmount: Story = {
         accountId: "a-1",
         categoryId: "c-1",
         suggestedAmount: "2500"
+      }
+    }
+  }
+};
+
+/**
+ * The real driver of issue #224: a recurring operating expense whose figure is
+ * the same every period. `record-expense` carries the same optional money slot
+ * as `payment`, so the founder pins it once instead of retyping it at every
+ * confirmation.
+ */
+export const CreateExpenseWithSuggestedAmount: Story = {
+  name: "Create — record-expense with a fixed suggested amount",
+  args: {
+    initial: {
+      name: "Gasolina de la semana",
+      automationId: "record-expense",
+      frequency: "weekly",
+      weekday: 1,
+      timeOfDay: "07:00",
+      staticParams: {
+        concept: "Gasolina de la semana",
+        accountId: "a-1",
+        categoryId: "c-2",
+        suggestedAmount: "2000"
       }
     }
   }

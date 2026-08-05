@@ -67,12 +67,24 @@ The confirm card context SHALL include the configured employee's name and the cu
 
 ### Requirement: record-expense automation records a recurring operating expense
 
-The catalog SHALL include `record-expense` with gate floor `confirm`. Slots: `concept` (static, display text such as "Gasolina de la semana"), `accountId`, `categoryId` (static); `amount` (ask, positive, bounded); `note` (ask, optional). Execute SHALL create an expense `AccountingTransaction` from the configured account via the existing accounting service and succeed or fail atomically.
+The catalog SHALL include `record-expense` with gate floor `confirm`. Slots: `concept` (static, display text such as "Gasolina de la semana"), `accountId`, `categoryId` (static, required), `suggestedAmount` (static, optional, positive, bounded); `amount` (ask, positive, bounded, `defaultFrom: "suggestedAmount"`); `note` (ask, optional). Execute SHALL create an expense `AccountingTransaction` from the configured account via the existing accounting service and succeed or fail atomically.
+
+As with `payment`, `suggestedAmount` SHALL pin nothing: a recurring operating expense is usually the same figure every period, so the value seeds the confirm-time `amount` input while leaving `amount` a required, editable, founder-supplied ask value. Leaving `suggestedAmount` unset SHALL be valid and SHALL produce no prefill.
 
 #### Scenario: Confirmed expense posts a transaction
 
 - **WHEN** a founder confirms a `record-expense` firing for the weekly gas task with amount 2000
 - **THEN** an expense transaction of 2000 exists on the configured account and category, attributed to the founder
+
+#### Scenario: Suggested amount pre-fills a recurring expense
+
+- **WHEN** a founder confirms a `record-expense` firing whose task pinned `suggestedAmount` 2000
+- **THEN** the card's amount input is pre-filled with 2000, the founder may change it before confirming, and the amount actually confirmed is the one posted
+
+#### Scenario: Expense without a suggested amount still asks
+
+- **WHEN** a founder creates a `record-expense` task supplying no `suggestedAmount`
+- **THEN** the task is accepted and its firings present the amount input empty, still requiring a schema-valid value
 
 ### Requirement: daily-close automation bridges the day's collections into the ledger
 
