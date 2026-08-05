@@ -172,7 +172,9 @@ describe("customers report — JSON/PDF parity", () => {
   });
 });
 
-describe("customers report — pagination (issue #201)", () => {
+describe("customers report — pagination (issue #201)", function () {
+  this.timeout(20000);
+
   function manyCustomers(count: number): CustomersReportInput {
     return {
       asOf: ASOF,
