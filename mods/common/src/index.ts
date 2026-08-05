@@ -57,6 +57,8 @@ export {
   validatePhone,
   getCycleMetrics,
   countCuotasCovered,
+  cuotaRemainingToClose,
+  amountPastDue,
   getDueDateForCycle,
   getLateDaysThreshold,
   dayOfWeekToNumber,

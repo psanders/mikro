@@ -6,6 +6,8 @@ export { validatePhone } from "./validatePhone.js";
 export {
   getCycleMetrics,
   countCuotasCovered,
+  cuotaRemainingToClose,
+  amountPastDue,
   getDueDateForCycle,
   getLateDaysThreshold,
   dayOfWeekToNumber,

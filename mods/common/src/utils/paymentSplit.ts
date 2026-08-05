@@ -15,6 +15,14 @@ export interface PaymentSplitInput {
   amount: number;
   expectedCuota: number;
   accruedMora: number;
+  /**
+   * Money still needed to bring the currently open cuota to full coverage.
+   * Partials accumulate, so a cuota already half-covered needs less than a full
+   * cuota to close. Omit (or pass <= 0) for a fresh cuota, which needs
+   * `expectedCuota`. Drives PARTIAL vs COMPLETED — without it, a payment that
+   * finishes a half-covered cuota is mislabelled PARTIAL.
+   */
+  cuotaRemaining?: number;
   kind?: "INSTALLMENT" | "LATE_FEE";
   lateFeeOverride?: number;
   statusOverride?: "COMPLETED" | "PARTIAL";
@@ -46,9 +54,18 @@ export function computePaymentSplit(input: PaymentSplitInput): PaymentSplitResul
     installmentPortion = amount - lateFeePortion;
   }
 
+  // A cuota already carrying accumulated partials closes on less than a full
+  // cuota; only a fresh one needs the whole thing.
+  const remainingToClose =
+    input.cuotaRemaining != null && input.cuotaRemaining > 0
+      ? Math.min(input.cuotaRemaining, expectedCuota)
+      : expectedCuota;
+
   const installmentStatus =
     statusOverride ??
-    (installmentPortion > 0 && installmentPortion + 1e-9 < expectedCuota ? "PARTIAL" : "COMPLETED");
+    (installmentPortion > 0 && installmentPortion + 1e-9 < remainingToClose
+      ? "PARTIAL"
+      : "COMPLETED");
 
   const rowCount = (lateFeePortion > 0 ? 1 : 0) + (installmentPortion > 0 ? 1 : 0);
 

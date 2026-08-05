@@ -220,6 +220,38 @@ export function countCuotasCovered(totalInstallmentPaid: number, cuota: number):
 }
 
 /**
+ * Money still needed to bring the currently open cuota to full coverage.
+ * Returns a whole cuota when nothing is carried over (no partial in flight).
+ * Works in cents so a half-covered cuota is not lost to floating-point error.
+ */
+export function cuotaRemainingToClose(totalInstallmentPaid: number, cuota: number): number {
+  if (cuota <= 0) return 0;
+  const cuotaCents = Math.round(cuota * 100);
+  const paidCents = Math.max(0, Math.round(totalInstallmentPaid * 100));
+  const carried = paidCents % cuotaCents;
+  return carried === 0 ? cuota : (cuotaCents - carried) / 100;
+}
+
+/**
+ * Money the schedule says should have been paid by now but hasn't been —
+ * the remainder on every cuota already due, partials accounted for.
+ *
+ * Cycles due = cuotas covered + cycles missed, so this stays correct whether the
+ * customer is mid-cuota or several cycles behind. Returns 0 when up to date.
+ */
+export function amountPastDue(input: {
+  totalInstallmentPaid: number;
+  cuotasCovered: number;
+  missedCycles: number;
+  cuota: number;
+}): number {
+  const { totalInstallmentPaid, cuotasCovered, missedCycles, cuota } = input;
+  if (cuota <= 0) return 0;
+  const cyclesDue = Math.max(0, cuotasCovered + missedCycles);
+  return Math.max(0, Number((cyclesDue * cuota - totalInstallmentPaid).toFixed(2)));
+}
+
+/**
  * Payments made as of a date. Money-based when the data allows it (see
  * `LoanPaymentData.payments` doc); otherwise falls back to counting
  * COMPLETED rows. REVERSED and PENDING rows never count in money mode.
