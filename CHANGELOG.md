@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.0.0](https://github.com/psanders/mikro/compare/v1.42.0...v2.0.0) (2026-08-05)
+
+### Bug Fixes
+
+- **ci:** unbreak Release — commit model-simulation bin as executable ([#245](https://github.com/psanders/mikro/issues/245)) ([bf6ffed](https://github.com/psanders/mikro/commit/bf6ffed17135272a18326b8e99ebb7a3b9cf01ce)), closes [#238](https://github.com/psanders/mikro/issues/238)
+
+- Retire watch rules, reconcile payment-automation specs, and unblock `npm run lint` (#244) ([53bc914](https://github.com/psanders/mikro/commit/53bc914fa4412301078f592a714b17fbd8c044a8)), closes [#244](https://github.com/psanders/mikro/issues/244) [#224](https://github.com/psanders/mikro/issues/224) [#224](https://github.com/psanders/mikro/issues/224) [#163](https://github.com/psanders/mikro/issues/163) [#163](https://github.com/psanders/mikro/issues/163) [#163](https://github.com/psanders/mikro/issues/163) [#163](https://github.com/psanders/mikro/issues/163) [#224](https://github.com/psanders/mikro/issues/224) [#224](https://github.com/psanders/mikro/issues/224) [#224](https://github.com/psanders/mikro/issues/224) [#163](https://github.com/psanders/mikro/issues/163)
+
+### BREAKING CHANGES
+
+- the listWatchRules and setWatchRuleEnabled tRPC procedures
+  are removed, and `rule.alert` is no longer a valid business event type.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
 # [1.42.0](https://github.com/psanders/mikro/compare/v1.41.1...v1.42.0) (2026-07-30)
 
 ### Features
