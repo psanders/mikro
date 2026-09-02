@@ -49,6 +49,22 @@ jobs:
       # Only needed for the .maestro flows; the APK comes from build-android.
       - uses: actions/checkout@v6
 
+      # The API-34 emulator needs ~7.4GB free for its userdata partition and
+      # the runner's root partition no longer has that after preinstalled
+      # tooling + the system-image download (seen 2026-09-02: "FATAL | Not
+      # enough space to create userdata partition. Available: 7367 MB,
+      # need 7372 MB" — a 5MB miss). Same fix as build-android: delete
+      # toolchains this job never touches. Kept: Android SDK, Java, Node.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk-bundle \
+            /opt/ghc /usr/local/.ghcup /usr/local/share/powershell \
+            /usr/local/share/chromium /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/google-cloud-sdk /opt/az
+          sudo docker image prune --all --force
+          df -h /
+
       - name: Download APK from build-android
         env:
           GH_TOKEN: ${{ github.token }}
