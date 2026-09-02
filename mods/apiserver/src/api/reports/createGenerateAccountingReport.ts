@@ -62,7 +62,13 @@ export function createGenerateAccountingReport(
       client.accountingTransaction.findMany({
         where: {
           occurredAt: { gte: startDate, lte: endOfDay },
-          status: "POSTED"
+          // status: "POSTED" drops the reversed originals (flipped to
+          // REVERSED). reversalOfId: null then drops the reversal entries
+          // themselves — those are created status: "POSTED" with the original's
+          // type/amount, so they'd otherwise land in the ledger and be counted
+          // into the period totals with the wrong sign.
+          status: "POSTED",
+          reversalOfId: null
         },
         include: {
           account: { select: { id: true, name: true } },
