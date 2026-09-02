@@ -1,6 +1,6 @@
 {
   "name": "@mikro/apiserver",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Mikro API Server - REST APIs, webhooks, and admin functionality",
   "type": "module",
   "main": "dist/index.js",

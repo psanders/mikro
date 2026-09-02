@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.5](https://github.com/psanders/mikro/compare/v2.0.4...v2.0.5) (2026-09-02)
+
+**Note:** Version bump only for package @mikro/mobile
+
 ## [2.0.4](https://github.com/psanders/mikro/compare/v2.0.3...v2.0.4) (2026-08-05)
 
 **Note:** Version bump only for package @mikro/mobile
