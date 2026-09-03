@@ -146,7 +146,12 @@ jobs:
             adb install "$APK_PATH"
             # Android applicationId is do_.mikro.app (expo prebuild sanitizes
             # the "do" segment — Java keyword); the flow defaults to the iOS id.
-            maestro test -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml
+            # --flaky-retry: the 2-core hosted emulator is CPU-starved during
+            # the RN release app's cold launch — the Pixel Launcher ANRs and
+            # its system dialog covers the view, so an otherwise-rendered
+            # login screen misses the assert (seen 2026-09-02, passed on a
+            # plain re-run). Retry the whole flow up to twice before failing.
+            maestro test --flaky-retry 2 -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml
 
       - name: Upload Maestro artifacts
         if: failure()
