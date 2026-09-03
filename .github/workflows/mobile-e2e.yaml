@@ -143,26 +143,19 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
+          # android-emulator-runner runs `script` ONE LINE AT A TIME (each
+          # line is a separate `sh -c`), so the retry loop MUST be a single
+          # line — a multi-line `for … done` fails with "end of file
+          # unexpected". App id is do_.mikro.app (expo prebuild sanitizes
+          # "do" — a Java keyword); the flow defaults to the iOS id.
+          # Retry rationale: the 2-core hosted emulator is CPU-starved on
+          # the RN release app's cold launch — the Pixel Launcher ANRs and
+          # its dialog covers the otherwise-rendered login screen, so the
+          # assert misses (seen 2026-09-02/03, passes on re-run). Shell
+          # loop, not `maestro --flaky-retry` (the cached CLI predates it).
           script: |
             adb install "$APK_PATH"
-            # Android applicationId is do_.mikro.app (expo prebuild sanitizes
-            # the "do" segment — Java keyword); the flow defaults to the iOS id.
-            #
-            # Retry loop: the 2-core hosted emulator is CPU-starved during the
-            # RN release app's cold launch — the Pixel Launcher ANRs and its
-            # "isn't responding" dialog covers the view, so an otherwise-
-            # rendered login screen misses the assert (seen 2026-09-02, passed
-            # on a plain re-run). A shell loop rather than `maestro
-            # --flaky-retry` because the cached CLI predates that flag.
-            for attempt in 1 2 3; do
-              if maestro test -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml; then
-                exit 0
-              fi
-              echo "::warning::Maestro attempt $attempt failed; retrying"
-              adb shell am force-stop do_.mikro.app || true
-              sleep 10
-            done
-            exit 1
+            for attempt in 1 2 3; do echo "--- Maestro attempt $attempt ---"; maestro test -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml && exit 0; adb shell am force-stop do_.mikro.app || true; sleep 10; done; exit 1
 
       - name: Upload Maestro artifacts
         if: failure()
