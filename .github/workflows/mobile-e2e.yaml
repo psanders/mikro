@@ -90,14 +90,15 @@ jobs:
           fi
           echo "APK_PATH=$apk_path" >> "$GITHUB_ENV"
 
-      # Key includes -v2 to evict a stale cached CLI whose env handling
-      # shadowed -e parameters with flow-header env values.
+      # Bump the -vN suffix to evict a stale cached CLI. -v2: a build whose
+      # env handling shadowed -e parameters with flow-header env values.
+      # -v3: refresh a long-cached CLI (2026-09).
       - name: Cache Maestro CLI
         id: maestro-cache
         uses: actions/cache@v5
         with:
           path: ${{ env.HOME }}/.maestro
-          key: maestro-${{ runner.os }}-v2
+          key: maestro-${{ runner.os }}-v3
 
       - name: Install Maestro
         if: steps.maestro-cache.outputs.cache-hit != 'true'
@@ -146,12 +147,22 @@ jobs:
             adb install "$APK_PATH"
             # Android applicationId is do_.mikro.app (expo prebuild sanitizes
             # the "do" segment — Java keyword); the flow defaults to the iOS id.
-            # --flaky-retry: the 2-core hosted emulator is CPU-starved during
-            # the RN release app's cold launch — the Pixel Launcher ANRs and
-            # its system dialog covers the view, so an otherwise-rendered
-            # login screen misses the assert (seen 2026-09-02, passed on a
-            # plain re-run). Retry the whole flow up to twice before failing.
-            maestro test --flaky-retry 2 -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml
+            #
+            # Retry loop: the 2-core hosted emulator is CPU-starved during the
+            # RN release app's cold launch — the Pixel Launcher ANRs and its
+            # "isn't responding" dialog covers the view, so an otherwise-
+            # rendered login screen misses the assert (seen 2026-09-02, passed
+            # on a plain re-run). A shell loop rather than `maestro
+            # --flaky-retry` because the cached CLI predates that flag.
+            for attempt in 1 2 3; do
+              if maestro test -e APP_ID=do_.mikro.app mods/mobile/.maestro/login-screen.yaml; then
+                exit 0
+              fi
+              echo "::warning::Maestro attempt $attempt failed; retrying"
+              adb shell am force-stop do_.mikro.app || true
+              sleep 10
+            done
+            exit 1
 
       - name: Upload Maestro artifacts
         if: failure()
