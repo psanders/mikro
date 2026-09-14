@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
+import { trackLead } from "../lib/metaPixel";
 
 // Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
 const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
@@ -507,6 +508,7 @@ export function SolicitudPage() {
         throw new Error(data?.error ?? "Respuesta inesperada del servidor.");
       }
 
+      trackLead();
       setSubmitted(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
