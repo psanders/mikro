@@ -7,11 +7,13 @@ import { FAQPage } from "./pages/FAQPage";
 import { SolicitudPage } from "./pages/SolicitudPage";
 import { BrandPage } from "./pages/BrandPage";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { MetaPixelPageViews } from "./components/MetaPixelPageViews";
 
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ScrollToTop />
+      <MetaPixelPageViews />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/faq" element={<FAQPage />} />
