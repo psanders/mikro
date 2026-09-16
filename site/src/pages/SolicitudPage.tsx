@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   User,
   Store,
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
-import { trackLead } from "../lib/metaPixel";
+import { trackLead, trackViewContent } from "../lib/metaPixel";
 
 // Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
 const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
@@ -462,6 +462,10 @@ export function SolicitudPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    trackViewContent();
+  }, []);
 
   const set = (name: string, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
