@@ -40,7 +40,8 @@ import {
   ValidationError,
   MAX_TRPC_REQUEST_BYTES,
   applicationPayloadSchema,
-  normalizeApplication
+  normalizeApplication,
+  extractTracking
 } from "@mikro/common";
 import type { CalculateLoanInput, DbClient } from "@mikro/common";
 import {
@@ -71,6 +72,7 @@ import { createTaskWorker } from "./tasks/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
 import { createCreateTransaction } from "./api/accounting/index.js";
+import { createSendLeadConversion } from "./api/marketing/index.js";
 import {
   createApproveApplication,
   createRejectApplication,
@@ -293,6 +295,13 @@ const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
 const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
 const upsertApplication = createUpsertApplication(dbClient, { scheduleFollowUpJob });
 const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
+// Server-side twin of the site's browser pixel. No-ops unless metaConversions is
+// configured, so local and dev never reach Meta.
+const sendLeadConversion = createSendLeadConversion({
+  pixelId: cfg.metaConversions.pixelId,
+  accessToken: cfg.metaConversions.accessToken,
+  testEventCode: cfg.metaConversions.testEventCode
+});
 
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
 // production hardening (shared store, WAF, captcha) is a follow-up.
@@ -334,6 +343,27 @@ app.post("/v1/applications", async (req, res) => {
     const normalized = normalizeApplication(parsed.data);
     await upsertApplication(normalized);
     res.json({ result: "ok" });
+
+    // Only a completed submission is a Lead — partial autosaves fire on every
+    // section and would report the same applicant many times. Deliberately after
+    // res.json and not awaited: Meta must never delay or fail an application.
+    if (!normalized.partial) {
+      const tracking = extractTracking(parsed.data);
+      sendLeadConversion({
+        eventId: tracking.eventId ?? "",
+        phone: normalized.phone,
+        firstName: normalized.firstName,
+        lastName: normalized.lastName,
+        fbc: tracking.fbc,
+        fbp: tracking.fbp,
+        // From the request, not the body: a client could put anything in the body.
+        clientIpAddress: req.ip ?? null,
+        clientUserAgent: req.get("user-agent") ?? null,
+        eventSourceUrl: tracking.eventSourceUrl
+      }).catch((err: Error) => {
+        logger.error("meta capi: unexpected send failure", { error: err.message });
+      });
+    }
   } catch (err) {
     logger.error("application intake: upsert failed", {
       sessionId: parsed.data.sessionId,

@@ -117,5 +117,10 @@
   "githubFeedback": {
     "token": "",
     "repo": ""
+  },
+  "metaConversions": {
+    "pixelId": "",
+    "accessToken": "",
+    "testEventCode": ""
   }
 }

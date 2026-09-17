@@ -6,6 +6,9 @@ export { safeOptionalDate, safeRequiredDate, MIN_ACCEPTED_DATE_MS } from "./date
 export {
   applicationPayloadSchema,
   normalizeApplication,
+  extractTracking,
+  APPLICATION_TRACKING_KEYS,
+  type ApplicationTracking,
   applicationStatusEnum,
   listApplicationsSchema,
   getApplicationSchema,

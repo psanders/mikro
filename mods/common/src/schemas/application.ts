@@ -56,6 +56,18 @@ const RAW_ONLY_KEYS = [
 const ALL_CONTENT_KEYS = [...STABLE_KEYS, ...RAW_ONLY_KEYS] as const;
 
 /**
+ * Ad-attribution fields the form sends alongside the answers. They describe the
+ * visit, not the applicant, and exist only so the server can send Meta the same
+ * `Lead` the browser sends (see `metaConversions` in config).
+ *
+ * They are declared here rather than left to `.loose()` on purpose: unknown keys
+ * fall through into `rawData` and get persisted with the application, and
+ * tracking cookies have no business in a stored loan application. Declaring them
+ * lets `normalizeApplication` strip them instead.
+ */
+const TRACKING_KEYS = ["eventId", "fbp", "fbc", "eventSourceUrl"] as const;
+
+/**
  * Lenient schema for the incoming form payload. All content fields are optional
  * strings (partials send only a few); only `sessionId` is required since it is
  * the upsert key.
@@ -65,10 +77,22 @@ export const applicationPayloadSchema = z
     sessionId: z.string().min(1, "sessionId is required"),
     partial: z.boolean().optional(),
     lastSection: z.string().optional(),
-    ...Object.fromEntries(ALL_CONTENT_KEYS.map((k) => [k, z.string().optional()]))
+    ...Object.fromEntries(ALL_CONTENT_KEYS.map((k) => [k, z.string().optional()])),
+    ...Object.fromEntries(TRACKING_KEYS.map((k) => [k, z.string().optional()]))
   })
   // Tolerate fields we don't know about yet (form drift) — they still land in rawData.
   .loose();
+
+/** The ad-attribution keys, exported so the server and tests share one list. */
+export const APPLICATION_TRACKING_KEYS = TRACKING_KEYS;
+
+/** Ad-attribution context for one submission. Absent fields are null, never "". */
+export interface ApplicationTracking {
+  eventId: string | null;
+  fbp: string | null;
+  fbc: string | null;
+  eventSourceUrl: string | null;
+}
 
 export type ApplicationPayload = z.infer<typeof applicationPayloadSchema>;
 
@@ -155,9 +179,12 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
   const raw = payload as Record<string, unknown>;
 
   // rawData keeps every content field provided (and any unknown extras), as sent.
+  // Ad-attribution fields are dropped: they describe the visit, not the
+  // applicant, and must not be persisted with the application.
   const rawData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (key === "sessionId" || key === "partial" || key === "lastSection") continue;
+    if ((TRACKING_KEYS as readonly string[]).includes(key)) continue;
     if (value !== undefined) rawData[key] = value;
   }
 
@@ -179,6 +206,24 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
     requestedTermWeeks: parseTermWeeks(raw.requestedTermWeeks),
     province: trimToNull(raw.province),
     homeAddress: trimToNull(raw.homeAddress)
+  };
+}
+
+/**
+ * Pulls the ad-attribution fields out of a validated payload.
+ *
+ * Separate from `normalizeApplication` on purpose: that function's result is
+ * what gets persisted, and these fields must never be. Typed accessor rather
+ * than reading the payload directly because the schema builds its content keys
+ * with a spread, which erases their literal types.
+ */
+export function extractTracking(payload: ApplicationPayload): ApplicationTracking {
+  const raw = payload as Record<string, unknown>;
+  return {
+    eventId: trimToNull(raw.eventId),
+    fbp: trimToNull(raw.fbp),
+    fbc: trimToNull(raw.fbc),
+    eventSourceUrl: trimToNull(raw.eventSourceUrl)
   };
 }
 
