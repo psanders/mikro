@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/psanders/mikro/compare/v2.0.5...v2.1.0) (2026-09-17)
+
+### Bug Fixes
+
+- **ci:** free runner disk space in build-android to stop ENOSPC failures ([#261](https://github.com/psanders/mikro/issues/261)) ([e2e9940](https://github.com/psanders/mikro/commit/e2e99403582cfb78744cce5ec177ea1eecab7f67))
+- **site:** point the Meta pixel at a real web pixel, not the app dataset ([#277](https://github.com/psanders/mikro/issues/277)) ([07bdc92](https://github.com/psanders/mikro/commit/07bdc926dbd301c690498a8c0b1208a4cdbca3f6)), closes [#276](https://github.com/psanders/mikro/issues/276)
+
+### Features
+
+- **api:** send Lead to Meta server-side, deduped with the browser pixel ([#279](https://github.com/psanders/mikro/issues/279)) ([184f3a3](https://github.com/psanders/mikro/commit/184f3a3fc535e6bf752d87881f43b3a990a7ca31)), closes [#278](https://github.com/psanders/mikro/issues/278) [#278](https://github.com/psanders/mikro/issues/278)
+- **site:** add Meta Pixel with PageView and Lead events ([#276](https://github.com/psanders/mikro/issues/276)) ([155434e](https://github.com/psanders/mikro/commit/155434e77f0b5a7e860716d421c7bfcf3a8d481e))
+
 ## [2.0.5](https://github.com/psanders/mikro/compare/v2.0.4...v2.0.5) (2026-09-02)
 
 ### Bug Fixes

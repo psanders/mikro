@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/psanders/mikro/compare/v2.0.5...v2.1.0) (2026-09-17)
+
+### Features
+
+- **api:** send Lead to Meta server-side, deduped with the browser pixel ([#279](https://github.com/psanders/mikro/issues/279)) ([184f3a3](https://github.com/psanders/mikro/commit/184f3a3fc535e6bf752d87881f43b3a990a7ca31)), closes [#278](https://github.com/psanders/mikro/issues/278) [#278](https://github.com/psanders/mikro/issues/278)
+
 ## [2.0.4](https://github.com/psanders/mikro/compare/v2.0.3...v2.0.4) (2026-08-05)
 
 **Note:** Version bump only for package @mikro/common
