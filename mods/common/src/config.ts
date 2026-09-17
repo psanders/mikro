@@ -97,6 +97,26 @@ const githubFeedbackSchema = z.object({
   repo: z.string().default("")
 });
 
+/**
+ * Meta Conversions API: the server-side twin of the browser pixel in
+ * `site/src/lib/metaPixel.ts`. The browser sends `Lead` and the server sends the
+ * same `Lead`; Meta collapses the pair on a shared event id, so the two paths
+ * are one conversion, not two. The server copy is what survives ad blockers,
+ * Safari tracking prevention and declined cookie banners.
+ *
+ * `pixelId` must be the same dataset the site's `VITE_META_PIXEL_ID` points at,
+ * or the two copies land in different datasets and neither dedupes. Nothing is
+ * sent unless both `pixelId` and `accessToken` are set, which doubles as the dev
+ * guard: unset locally, the server never reaches Meta.
+ */
+const metaConversionsSchema = z.object({
+  pixelId: z.string().default(""),
+  accessToken: z.string().default(""),
+  // Set while verifying in Events Manager → Test events. Tags events as test
+  // traffic so they never reach a live campaign. Leave empty in production.
+  testEventCode: z.string().default("")
+});
+
 /** Default max remaining installments by frequency to consider a loan "near completion" for renewal report. */
 export const DEFAULT_NEAR_COMPLETION_THRESHOLDS: Record<string, number> = {
   DAILY: 7,
@@ -439,7 +459,12 @@ export const mikroConfigSchema = z
     followUp: followUpSchema,
     updates: updatesSchema,
     qcobro: qcobroSchema,
-    githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" }))
+    githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" })),
+    metaConversions: metaConversionsSchema.default(() => ({
+      pixelId: "",
+      accessToken: "",
+      testEventCode: ""
+    }))
   })
   .strict();
 

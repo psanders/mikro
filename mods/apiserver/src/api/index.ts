@@ -116,3 +116,10 @@ export {
   createGenerateRenewalCandidatesReport,
   createRunPortfolioHealthCheck
 } from "./reports/index.js";
+
+// Marketing / ad-attribution operations
+export {
+  createSendLeadConversion,
+  type LeadConversion,
+  type SendLeadConversionDeps
+} from "./marketing/index.js";

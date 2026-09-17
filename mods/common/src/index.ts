@@ -139,6 +139,8 @@ export {
   // Loan application (intake) schemas
   applicationPayloadSchema,
   normalizeApplication,
+  extractTracking,
+  APPLICATION_TRACKING_KEYS,
   applicationStatusEnum,
   listApplicationsSchema,
   getApplicationSchema,
@@ -172,6 +174,7 @@ export {
   type ApplicationPayload,
   type NormalizedApplication,
   type NormalizedApplicationFields,
+  type ApplicationTracking,
   type ListApplicationsInput,
   type GetApplicationInput,
   type ClaimApplicationInput,

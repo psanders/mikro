@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
-import { trackLead, trackViewContent } from "../lib/metaPixel";
+import { trackLead, trackViewContent, newEventId, readFbCookies } from "../lib/metaPixel";
 
 // Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
 const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
@@ -496,11 +496,24 @@ export function SolicitudPage() {
     }
 
     setSubmitting(true);
+    // One id for this conversion, shared by the two copies of the Lead event:
+    // the server sends it from the payload below, the browser sends it after.
+    // Meta collapses them into one lead on this id.
+    const eventId = newEventId();
+    const { fbp, fbc } = readFbCookies();
     try {
       const res = await fetch(APPLICATIONS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, sessionId, partial: false })
+        body: JSON.stringify({
+          ...form,
+          sessionId,
+          partial: false,
+          eventId,
+          fbp,
+          fbc,
+          eventSourceUrl: window.location.href
+        })
       });
 
       if (!res.ok) {
@@ -512,7 +525,7 @@ export function SolicitudPage() {
         throw new Error(data?.error ?? "Respuesta inesperada del servidor.");
       }
 
-      trackLead();
+      trackLead(eventId);
       setSubmitted(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
