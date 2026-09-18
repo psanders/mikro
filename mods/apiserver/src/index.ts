@@ -30,7 +30,8 @@ import {
   resolvePathFromConfigDir,
   loadPublicKey,
   verifyReceiptToken,
-  renderReceiptCardWithToken
+  renderReceiptCardWithToken,
+  type SendWhatsAppMessageInput
 } from "@mikro/common";
 import { createGetManifestPath, createResolveAssetPath } from "./updates/index.js";
 import express from "express";
@@ -73,6 +74,7 @@ import { createSendApplicationPromo } from "./api/applications/createSendApplica
 import { createGetApplication } from "./api/applications/createGetApplication.js";
 import { createCreateTransaction } from "./api/accounting/index.js";
 import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/index.js";
+import { createEchoToChatwoot } from "./api/chatwoot/index.js";
 import {
   createApproveApplication,
   createRejectApplication,
@@ -927,10 +929,32 @@ async function initializeMessageProcessor() {
       findLatestApplicationByPhone
     });
 
+    // Mirror every bot reply into Chatwoot (no-op unless `chatwoot` is configured).
+    // Echoes are chained per phone so a burst of replies lands in order, and never
+    // awaited by the send: Chatwoot must not slow down or fail a WhatsApp reply.
+    const echoToChatwoot = createEchoToChatwoot(cfg.chatwoot);
+    const chatwootEchoChains = new Map<string, Promise<unknown>>();
+    const sendAndEchoToChatwoot = async (params: SendWhatsAppMessageInput) => {
+      const response = await sendWhatsAppMessage(params);
+      const content = params.message ?? params.caption;
+      if (content) {
+        const previous = chatwootEchoChains.get(params.phone) ?? Promise.resolve();
+        const next = previous.then(() =>
+          echoToChatwoot({ phone: params.phone, content, sourceId: response.messages?.[0]?.id })
+        );
+        chatwootEchoChains.set(params.phone, next);
+        void next.finally(() => {
+          if (chatwootEchoChains.get(params.phone) === next)
+            chatwootEchoChains.delete(params.phone);
+        });
+      }
+      return response;
+    };
+
     const processorConfig = {
       routeMessage,
       invokeLLM,
-      sendWhatsAppMessage,
+      sendWhatsAppMessage: sendAndEchoToChatwoot,
       sendTemplateMessage: whatsAppClient.sendTemplateMessage.bind(whatsAppClient),
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,

@@ -117,6 +117,25 @@ const metaConversionsSchema = z.object({
   testEventCode: z.string().default("")
 });
 
+/**
+ * Chatwoot mirror of the bot's WhatsApp replies. Chatwoot sees the customer's
+ * inbound messages (it receives the same Meta webhook) but never the bot's
+ * replies, because Meta does not echo Cloud API sends back as webhooks. When
+ * set, every bot reply is posted into the contact's open conversation in
+ * `inboxId` as an outgoing message carrying the WhatsApp message id as
+ * `source_id`, which Chatwoot treats as already delivered and never re-sends.
+ * Nothing is posted unless `url`, `accountId`, `inboxId` and `apiToken` are all set.
+ */
+const chatwootSchema = z.object({
+  /** Base URL of your Chatwoot instance, e.g. "https://chatwoot.example.com" (no trailing /api). */
+  url: z.string().default(""),
+  accountId: z.number().int().nonnegative().default(0),
+  /** The inbox that receives the WhatsApp number's conversations. */
+  inboxId: z.number().int().nonnegative().default(0),
+  /** An agent or bot access token (Profile settings → Access token). */
+  apiToken: z.string().default("")
+});
+
 /** Default max remaining installments by frequency to consider a loan "near completion" for renewal report. */
 export const DEFAULT_NEAR_COMPLETION_THRESHOLDS: Record<string, number> = {
   DAILY: 7,
@@ -464,7 +483,8 @@ export const mikroConfigSchema = z
       pixelId: "",
       accessToken: "",
       testEventCode: ""
-    }))
+    })),
+    chatwoot: chatwootSchema.default(() => ({ url: "", accountId: 0, inboxId: 0, apiToken: "" }))
   })
   .strict();
 

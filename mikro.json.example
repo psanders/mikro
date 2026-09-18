@@ -122,5 +122,11 @@
     "pixelId": "",
     "accessToken": "",
     "testEventCode": ""
+  },
+  "chatwoot": {
+    "url": "",
+    "accountId": 0,
+    "inboxId": 0,
+    "apiToken": ""
   }
 }
