@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   User,
   Store,
@@ -18,8 +18,19 @@ import {
 } from "lucide-react";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
-import { trackLead, trackViewContent, newEventId, readFbCookies } from "../lib/metaPixel";
+import {
+  trackLead,
+  trackViewContent,
+  trackCustom,
+  newEventId,
+  readFbCookies
+} from "../lib/metaPixel";
 import { readAdAttribution } from "../lib/adAttribution";
+import {
+  APPLICATION_SECTIONS,
+  isSectionComplete,
+  buildAutosavePayload
+} from "@mikro/application-form";
 
 // Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
 const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
@@ -463,10 +474,62 @@ export function SolicitudPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  // Sections we've already reported complete, so re-opening/closing a
+  // finished section doesn't fire SolicitudProgress twice.
+  const [trackedSections, setTrackedSections] = useState<Set<string>>(new Set());
+
+  // Kept fresh on every render so the pagehide/visibilitychange listeners
+  // (registered once, below) always read the current form without having to
+  // re-subscribe on every keystroke.
+  const formRef = useRef(form);
+  const openSectionRef = useRef(openSection);
+  const submittedRef = useRef(submitted);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+  useEffect(() => {
+    openSectionRef.current = openSection;
+  }, [openSection]);
+  useEffect(() => {
+    submittedRef.current = submitted;
+  }, [submitted]);
 
   useEffect(() => {
     trackViewContent();
   }, []);
+
+  // Captures the applicant who fills half a section and closes the tab, which
+  // a toggle-only autosave never sees. `sendBeacon` fires reliably even as the
+  // page is unloading; a plain `fetch` there is not guaranteed to complete.
+  // Sends a plain string body (not a typed Blob) so it stays a CORS-simple
+  // request — the beacon spec provides no way to await a preflight, and
+  // Content-Type "text/plain" is exactly what the apiserver's intake accepts
+  // alongside JSON for this reason.
+  useEffect(() => {
+    const saveBeacon = () => {
+      if (submittedRef.current || !APPLICATIONS_URL || !openSectionRef.current) return;
+      const payload = buildAutosavePayload(
+        formRef.current,
+        readAdAttribution(),
+        sessionId,
+        openSectionRef.current
+      );
+      try {
+        navigator.sendBeacon(APPLICATIONS_URL, JSON.stringify(payload));
+      } catch {
+        // Best-effort, same as the toggle autosave.
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") saveBeacon();
+    };
+    window.addEventListener("pagehide", saveBeacon);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", saveBeacon);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [sessionId]);
 
   const set = (name: string, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -474,20 +537,28 @@ export function SolicitudPage() {
 
   const handleToggle = (sectionId: string) => {
     if (openSection && APPLICATIONS_URL) {
+      // Attribution rides the autosaves too, so an applicant who abandons
+      // halfway is still credited to the ad that brought them. Same payload
+      // shape the leave-page beacon sends, above.
       fetch(APPLICATIONS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Attribution rides the autosaves too, so an applicant who abandons
-        // halfway is still credited to the ad that brought them.
-        body: JSON.stringify({
-          ...form,
-          ...readAdAttribution(),
-          sessionId,
-          partial: true,
-          lastSection: openSection
-        })
+        body: JSON.stringify(
+          buildAutosavePayload(form, readAdAttribution(), sessionId, openSection)
+        )
       }).catch(() => {});
     }
+
+    // Fire the coarser Meta signal once, the first time a section's required
+    // fields are all filled — before we close it or move to the next one.
+    if (openSection && !trackedSections.has(openSection) && isSectionComplete(openSection, form)) {
+      const sectionNumber = APPLICATION_SECTIONS.findIndex((s) => s.id === openSection) + 1;
+      if (sectionNumber > 0) {
+        trackCustom("SolicitudProgress", { section: sectionNumber });
+        setTrackedSections((prev) => new Set(prev).add(openSection));
+      }
+    }
+
     setOpenSection(openSection === sectionId ? "" : sectionId);
   };
 

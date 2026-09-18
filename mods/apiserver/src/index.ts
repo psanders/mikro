@@ -175,7 +175,13 @@ app.use((req, res, next) => {
 // is populated, so the global parser below still handles everything else).
 app.use("/trpc", express.json({ limit: MAX_TRPC_REQUEST_BYTES }));
 // Public application intake: small body cap (a solicitud is a few KB of text).
+// `navigator.sendBeacon` (the leave-page autosave) always posts a CORS-simple
+// request, which for a plain string body means Content-Type "text/plain" —
+// browsers give a beacon no way to send "application/json" without risking a
+// preflight it cannot await. Accept both: whichever parser matches the
+// request's Content-Type populates `req.body`, the other is a no-op.
 app.use("/v1/applications", express.json({ limit: "32kb" }));
+app.use("/v1/applications", express.text({ type: "text/plain", limit: "32kb" }));
 app.use(express.json());
 
 // Health check endpoint. Reports the running version so deploys can verify
@@ -343,12 +349,28 @@ app.post("/v1/applications", async (req, res) => {
     return;
   }
 
-  const parsed = applicationPayloadSchema.safeParse(req.body);
+  // `sendBeacon` bodies land here as a raw string (Content-Type "text/plain"),
+  // parsed by the express.text() middleware above; a normal fetch POST lands
+  // as an already-parsed object. Bad JSON from a beacon is the same as any
+  // other malformed payload below: logged, answered "ok" so the tab that's
+  // already closing never sees an error.
+  let body: unknown = req.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      logger.warn("application intake: invalid beacon body (not JSON)");
+      res.json({ result: "ok" });
+      return;
+    }
+  }
+
+  const parsed = applicationPayloadSchema.safeParse(body);
   if (!parsed.success) {
     // Lenient: log server-side, don't leak schema details. Still 200 so partial
     // autosaves stay silent for the user.
     logger.warn("application intake: invalid payload", {
-      sessionId: (req.body as { sessionId?: unknown })?.sessionId,
+      sessionId: (body as { sessionId?: unknown })?.sessionId,
       issues: parsed.error.issues.length
     });
     res.json({ result: "ok" });

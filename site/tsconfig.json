@@ -17,7 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@mikro/calculate-loan": ["../mods/common/src/utils/calculateLoan.ts"],
-      "@mikro/loan-calculator-constants": ["../mods/common/src/utils/loanCalculatorConstants.ts"]
+      "@mikro/loan-calculator-constants": ["../mods/common/src/utils/loanCalculatorConstants.ts"],
+      "@mikro/application-form": ["../mods/common/src/schemas/applicationForm.ts"]
     }
   },
   "include": ["src"]
