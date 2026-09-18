@@ -20,7 +20,7 @@ export async function handleForceQCobroSync(
   logger.verbose("qcobro force sync executed", result);
   return {
     success: true,
-    message: `Sincronización con QCobro completada: ${result.customers} clientes procesados, ${result.portfoliosPushed} portafolios enviados, ${result.portfoliosSkipped} omitidos (${result.durationMs} ms).`,
+    message: `Sincronización con QCobro completada: ${result.customers} clientes procesados, ${result.portfoliosPushed} portafolios enviados, ${result.portfoliosCleared} vaciados, ${result.portfoliosSkipped} omitidos (${result.durationMs} ms).`,
     data: { ...result }
   };
 }

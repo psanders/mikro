@@ -269,10 +269,15 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
     case "qcobro.synced": {
       const customers = typeof payload.customers === "number" ? payload.customers : 0;
       const pushed = typeof payload.portfoliosPushed === "number" ? payload.portfoliosPushed : 0;
+      // Absent on events recorded before empty REPLACE batches existed — omit
+      // the segment then rather than claiming "0 vaciados".
+      const cleared =
+        typeof payload.portfoliosCleared === "number" ? payload.portfoliosCleared : null;
       const skipped = typeof payload.portfoliosSkipped === "number" ? payload.portfoliosSkipped : 0;
       const durationMs = typeof payload.durationMs === "number" ? payload.durationMs : 0;
+      const clearedPart = cleared === null ? "" : ` · ${cleared} vaciados`;
       return {
-        text: `${customers} clientes · ${pushed} portafolios enviados · ${skipped} omitidos · ${durationMs} ms`,
+        text: `${customers} clientes · ${pushed} portafolios enviados${clearedPart} · ${skipped} omitidos · ${durationMs} ms`,
         tone: "muted"
       };
     }

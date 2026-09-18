@@ -166,6 +166,7 @@ export interface ToolExecutorDependencies {
   forceQCobroSync?: (actorName?: string) => Promise<{
     customers: number;
     portfoliosPushed: number;
+    portfoliosCleared: number;
     portfoliosSkipped: number;
     durationMs: number;
   }>;

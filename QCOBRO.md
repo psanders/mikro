@@ -68,7 +68,7 @@ it recomputes days-past-due from due dates and re-syncs. Ops actions (e.g. marki
 `DEFAULTED`) are reflected on the next cron tick.
 
 Each cron tick also records a `qcobro.synced` business event (customers processed, portfolios
-pushed/skipped, duration) so the daily run shows up as a card on the Founder Feed — an auditable
+pushed/emptied/skipped, duration) so the daily run shows up as a card on the Founder Feed — an auditable
 trail that the sync actually ran and didn't silently push zero portfolios. The on-payment trigger
 does **not** emit this event (it would flood the feed with one card per payment); only the cron's
 full pass does.
@@ -291,7 +291,10 @@ Every sync (cron or on-payment) is a **full pass** over every active customer:
    `lastPaymentDate`/`lastPaymentAmount` (most recent completed installment, if any).
 3. For each `portfolios[]` entry with at least one matching customer, push **one** batch:
    `syncAccounts({ portfolioId, mode: syncMode, rows })`. A portfolio with zero matching customers
-   this pass is **skipped** — the real API has no "clear this portfolio" call, so it's left as-is.
+   this pass is **emptied** when `syncMode` is `REPLACE` — it is pushed with `rows: []`, a full
+   snapshot saying nobody belongs there now, so QCobro archives every account still in it
+   (`portfoliosCleared`). Under any other `syncMode` it is **skipped** and left as-is
+   (`portfoliosSkipped`): an empty batch changes nothing outside REPLACE and the API rejects it.
 4. Persist each customer's current target-portfolio set (`Customer.lastSyncedPortfolios`) for
    bookkeeping, regardless of whether step 3 actually pushed (audit trail of intent even when the
    API couldn't express it).
@@ -312,11 +315,11 @@ never modifies them.
 
 ## Open items
 
-- **A portfolio with zero matching customers can't be cleared.** `syncAccounts` requires a
-  non-empty `rows` array (`accountRowSchema`/`syncAccountsInputSchema` in `@qcobro/common`), so
-  there's no way to express "this portfolio now has nobody in it" through this call. If every
-  customer cures out of a portfolio, that portfolio is silently skipped and left as whatever it
-  last successfully synced to.
+- **Emptying a portfolio needs a `@qcobro/sdk` with empty-REPLACE support.** The sync pushes
+  `rows: []` in REPLACE mode to empty a portfolio nobody matches anymore. QCobro's
+  `syncAccountsInputSchema` only started accepting that in fonoster/qcobro#191; against an SDK
+  release older than that, the empty push fails client-side validation and is logged as a
+  `syncAccounts failed` error (the portfolio stays as it last synced, as before).
 - **Full pass on every payment.** The on-payment trigger re-runs the same full-base sync as the
   cron (see "Sync mechanics") rather than a narrower per-customer push, because the real API's
   batch/`REPLACE` semantics make a single-customer push unsafe. Fine at current volume; revisit

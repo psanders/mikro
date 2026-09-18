@@ -14,11 +14,12 @@
  *
  * `portfolios.syncAccounts` pushes a **batch** of account rows into **one**
  * portfolio per call; `mode: REPLACE` replaces that portfolio's entire account
- * set with whatever is in `rows` (`rows` must be non-empty — there is no way
- * to express "this portfolio now has zero matching accounts" through this
- * call). `createSyncAllPortfolios.ts` calls this once per portfolio per tick
- * with every currently-matching customer, never per customer — see that file
- * for why.
+ * set with whatever is in `rows`. An empty `rows` is only valid with REPLACE,
+ * where it empties the portfolio (archives every account still there) — that
+ * is how "this portfolio now has zero matching accounts" is expressed; the
+ * other modes require a non-empty batch. `createSyncAllPortfolios.ts` calls
+ * this once per portfolio per tick with every currently-matching customer,
+ * never per customer — see that file for why.
  */
 import { Client } from "@qcobro/sdk";
 import type { QCobroConfig } from "@mikro/common";
@@ -43,7 +44,10 @@ export interface AccountRow {
 export interface SyncAccountsInput {
   portfolioId: string;
   mode: QCobroConfig["syncMode"];
-  /** Must be non-empty — the real API has no "clear this portfolio" call. */
+  /**
+   * May be empty only when `mode` is `REPLACE` — an empty REPLACE batch
+   * empties the portfolio. APPEND_ONLY / UPDATE_EXISTING require at least one row.
+   */
   rows: AccountRow[];
 }
 
@@ -81,7 +85,13 @@ export function isQCobroConfigured(cfg: QCobroConfig): boolean {
 function createDryRunQCobroClient(cfg: QCobroConfig): QCobroClient {
   return {
     async syncAccounts(input) {
-      logger.info("qcobro [DRY RUN]: would syncAccounts", {
+      // An empty REPLACE batch empties the portfolio — say so, since
+      // `rowCount: 0` alone reads like "nothing would happen".
+      const message =
+        input.rows.length === 0
+          ? "qcobro [DRY RUN]: would syncAccounts with no rows (empties the portfolio)"
+          : "qcobro [DRY RUN]: would syncAccounts";
+      logger.info(message, {
         workspace: cfg.workspace,
         portfolioId: input.portfolioId,
         mode: input.mode,
