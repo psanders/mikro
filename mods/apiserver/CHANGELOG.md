@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.2.0](https://github.com/psanders/mikro/compare/v2.1.1...v2.2.0) (2026-09-18)
+
+### Features
+
+- **reports:** attribute applications to their ad and report lead quality per ad ([#282](https://github.com/psanders/mikro/issues/282)) ([97c631f](https://github.com/psanders/mikro/commit/97c631f7856a96c09e9fab4be7bae062ef228ba6)), closes [#280](https://github.com/psanders/mikro/issues/280)
+
 # [2.1.0](https://github.com/psanders/mikro/compare/v2.0.5...v2.1.0) (2026-09-17)
 
 ### Features
