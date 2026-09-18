@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.3.0](https://github.com/psanders/mikro/compare/v2.2.0...v2.3.0) (2026-09-18)
+
+### Features
+
+- **api:** mirror the bot's WhatsApp replies into Chatwoot ([#283](https://github.com/psanders/mikro/issues/283)) ([a9b9f0a](https://github.com/psanders/mikro/commit/a9b9f0afc8e7f9c9bc075fb0024d52fbf39aa8d7))
+
 # [2.2.0](https://github.com/psanders/mikro/compare/v2.1.1...v2.2.0) (2026-09-18)
 
 ### Features
