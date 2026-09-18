@@ -315,11 +315,6 @@ never modifies them.
 
 ## Open items
 
-- **Emptying a portfolio needs a `@qcobro/sdk` with empty-REPLACE support.** The sync pushes
-  `rows: []` in REPLACE mode to empty a portfolio nobody matches anymore. QCobro's
-  `syncAccountsInputSchema` only started accepting that in fonoster/qcobro#191; against an SDK
-  release older than that, the empty push fails client-side validation and is logged as a
-  `syncAccounts failed` error (the portfolio stays as it last synced, as before).
 - **Full pass on every payment.** The on-payment trigger re-runs the same full-base sync as the
   cron (see "Sync mechanics") rather than a narrower per-customer push, because the real API's
   batch/`REPLACE` semantics make a single-customer push unsafe. Fine at current volume; revisit
