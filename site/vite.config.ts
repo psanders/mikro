@@ -30,7 +30,8 @@ export default defineConfig({
       "@mikro/loan-calculator-constants": path.resolve(
         dir,
         "../mods/common/src/utils/loanCalculatorConstants.ts"
-      )
+      ),
+      "@mikro/application-form": path.resolve(dir, "../mods/common/src/schemas/applicationForm.ts")
     }
   }
 });

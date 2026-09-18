@@ -18,6 +18,8 @@ function makeApplication(overrides: Partial<Record<string, unknown>> = {}) {
     adId: null,
     score: 60,
     riskBand: "MODERATE_RISK",
+    lastSection: null,
+    rawData: {},
     createdAt: new Date("2026-09-10T12:00:00Z"),
     ...overrides
   };
@@ -215,5 +217,190 @@ describe("createGenerateAdQualityReport", () => {
     expect(data.totals.lowOrModerate).to.equal(1);
     expect(data.totals.highOrVeryHigh).to.equal(1);
     expect(data.totals.medianScore).to.equal(50);
+  });
+});
+
+/**
+ * Form completeness (this issue): a quality measure for drafts that doesn't
+ * depend on loan scoring — how much of the form a person finished before they
+ * left. `started`, `submitRate`, `medianCompleteness` and `reachedSection` all
+ * come from `computeFormProgress` over each DRAFT's stored `rawData` +
+ * `lastSection`.
+ */
+describe("createGenerateAdQualityReport — form completeness", () => {
+  afterEach(() => sinon.restore());
+
+  it("counts started as every session, submitted or not", async () => {
+    const client = makeClient(
+      [
+        makeApplication({ id: "a", adId: "120212", status: "RECEIVED" }),
+        makeApplication({ id: "b", adId: "120212", status: "DRAFT", lastSection: "personal" }),
+        makeApplication({ id: "c", adId: "120212", status: "DRAFT", lastSection: "negocio" })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const row = data.rows.find((r) => r.adId === "120212");
+    expect(row?.started).to.equal(3);
+    expect(row?.leads).to.equal(1);
+    expect(row?.drafts).to.equal(2);
+    expect(row?.submitRate).to.be.closeTo(1 / 3, 1e-9);
+  });
+
+  it("reports submitRate as null for an ad that started nothing, not 0", async () => {
+    const client = makeClient([], [AD]);
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const row = data.rows.find((r) => r.adId === "120212");
+    expect(row?.started).to.equal(0);
+    expect(row?.submitRate).to.equal(null);
+  });
+
+  it("computes medianCompleteness only over drafts, at different depths", async () => {
+    const client = makeClient(
+      [
+        // Reached only personal, one required field filled there (1/23 ≈ 4%).
+        makeApplication({
+          id: "shallow",
+          adId: "120212",
+          status: "DRAFT",
+          lastSection: "personal",
+          rawData: { firstName: "Juana" }
+        }),
+        // Filled personal + negocio + credito + familiar entirely (19/23 ≈ 83%).
+        makeApplication({
+          id: "deep",
+          adId: "120212",
+          status: "DRAFT",
+          lastSection: "familiar",
+          rawData: {
+            firstName: "x",
+            lastName: "x",
+            phone: "x",
+            idNumber: "x",
+            dateOfBirth: "x",
+            maritalStatus: "x",
+            businessType: "x",
+            businessName: "x",
+            businessAge: "x",
+            monthlySales: "x",
+            locationType: "x",
+            formalization: "x",
+            employeeCount: "x",
+            businessPhone: "x",
+            requestedAmount: "x",
+            purpose: "x",
+            requestedTermWeeks: "x",
+            referenceName: "x",
+            referencePhone: "x"
+          }
+        }),
+        // A submit is never in the median — it's always 100%, which would flatter the ad.
+        makeApplication({ id: "submitted", adId: "120212", status: "RECEIVED" })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const row = data.rows.find((r) => r.adId === "120212");
+    // median of [round(1/23*100)=4, round(19/23*100)=83] = 44 (rounded average)
+    expect(row?.medianCompleteness).to.equal(44);
+  });
+
+  it("reports medianCompleteness as null for an ad with no drafts", async () => {
+    const client = makeClient([makeApplication({ adId: "120212", status: "RECEIVED" })], [AD]);
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    expect(data.rows.find((r) => r.adId === "120212")?.medianCompleteness).to.equal(null);
+  });
+
+  it("builds a reachedSection histogram over drafts, keyed by lastSection", async () => {
+    const client = makeClient(
+      [
+        makeApplication({ id: "a", adId: "120212", status: "DRAFT", lastSection: "personal" }),
+        makeApplication({ id: "b", adId: "120212", status: "DRAFT", lastSection: "credito" }),
+        makeApplication({ id: "c", adId: "120212", status: "DRAFT", lastSection: "credito" }),
+        // Never opened a recognized section — bucketed under "none", not dropped.
+        makeApplication({ id: "d", adId: "120212", status: "DRAFT", lastSection: null }),
+        // A submit must never appear in the drop-out histogram.
+        makeApplication({ id: "e", adId: "120212", status: "RECEIVED", lastSection: "vivienda" })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const row = data.rows.find((r) => r.adId === "120212");
+    expect(row?.reachedSection.personal).to.equal(1);
+    expect(row?.reachedSection.credito).to.equal(2);
+    expect(row?.reachedSection.none).to.equal(1);
+    expect(row?.reachedSection.negocio).to.equal(0);
+    expect(row?.reachedSection.vivienda).to.equal(0);
+  });
+
+  it("keeps organic and an ad's form-completeness numbers apart", async () => {
+    const client = makeClient(
+      [
+        makeApplication({
+          id: "ad-draft",
+          adId: "120212",
+          status: "DRAFT",
+          lastSection: "personal",
+          rawData: { firstName: "Ad Applicant" }
+        }),
+        makeApplication({
+          id: "organic-draft",
+          adId: null,
+          status: "DRAFT",
+          lastSection: "vivienda",
+          rawData: { firstName: "Organic Applicant" }
+        })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const ad = data.rows.find((r) => r.adId === "120212");
+    const organic = data.rows.find((r) => r.adId === null);
+    expect(ad?.reachedSection.personal).to.equal(1);
+    expect(ad?.reachedSection.vivienda).to.equal(0);
+    expect(organic?.reachedSection.vivienda).to.equal(1);
+    expect(organic?.reachedSection.personal).to.equal(0);
+  });
+
+  it("rolls started, submitRate, medianCompleteness and reachedSection up into totals", async () => {
+    const client = makeClient(
+      [
+        makeApplication({ id: "a", adId: "120212", status: "RECEIVED" }),
+        makeApplication({
+          id: "b",
+          adId: "120212",
+          status: "DRAFT",
+          lastSection: "personal",
+          rawData: { firstName: "x" }
+        }),
+        makeApplication({
+          id: "c",
+          adId: null,
+          status: "DRAFT",
+          lastSection: "personal",
+          rawData: { firstName: "x" }
+        })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    expect(data.totals.started).to.equal(3);
+    expect(data.totals.submitRate).to.be.closeTo(1 / 3, 1e-9);
+    expect(data.totals.medianCompleteness).to.be.a("number");
+    expect(data.totals.reachedSection.personal).to.equal(2);
   });
 });

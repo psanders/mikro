@@ -68,6 +68,18 @@ export function trackLead(eventId: string) {
 }
 
 /**
+ * A coarser, higher-volume signal than `Lead`: fired every time an applicant
+ * finishes one section of the form, whether or not they ever submit. At this
+ * budget `Lead` volume is thin — Meta may learn faster optimizing toward
+ * "reached section 3" as a custom conversion instead (see the rebuild plan).
+ *
+ * Same rule as `trackLead`: never pass applicant data, only the section depth.
+ */
+export function trackCustom(eventName: string, params: Record<string, string | number> = {}) {
+  window.fbq?.("trackCustom", eventName, params);
+}
+
+/**
  * Reads the Meta cookies the browser owns so they can travel with the server
  * event: `_fbc` carries the ad click id (set when someone arrives with `fbclid`)
  * and `_fbp` identifies the browser. They are the difference between an event
