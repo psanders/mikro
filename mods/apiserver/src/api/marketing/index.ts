@@ -6,3 +6,4 @@ export {
   type LeadConversion,
   type SendLeadConversionDeps
 } from "./createSendLeadConversion.js";
+export { createRecordMetaAd } from "./createRecordMetaAd.js";

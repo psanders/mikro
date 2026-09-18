@@ -82,3 +82,30 @@ export const generateLoanStatementSchema = z.object({
 });
 
 export type GenerateLoanStatementInput = z.infer<typeof generateLoanStatementSchema>;
+
+/**
+ * Schema for generating the ad-quality report (issue #280): applications grouped
+ * by the ad that produced them, with the risk-band split and median Mikro Score
+ * that say whether an ad brings borrowers worth having.
+ *
+ * Data only — no `format`. This one answers a question at a terminal ("which ad
+ * should I pause before the rebuild?"), it is not a document anyone signs or
+ * sends a customer, so it has no PDF twin like the other six.
+ *
+ * Calendar days rather than `safeOptionalDate`, and deliberately so: "since
+ * 2026-09-01" means that whole day in Santo Domingo, and coercing it to a Date
+ * first parses it as UTC midnight — which is 8pm the previous day here, quietly
+ * moving an evening's applications into the wrong end of the window. The window
+ * defaults to the trailing 14 days on the server.
+ */
+const calendarDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a calendar day as YYYY-MM-DD")
+  .optional();
+
+export const generateAdQualityReportSchema = z.object({
+  since: calendarDay,
+  until: calendarDay
+});
+
+export type GenerateAdQualityReportInput = z.infer<typeof generateAdQualityReportSchema>;

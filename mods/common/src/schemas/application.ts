@@ -56,7 +56,7 @@ const RAW_ONLY_KEYS = [
 const ALL_CONTENT_KEYS = [...STABLE_KEYS, ...RAW_ONLY_KEYS] as const;
 
 /**
- * Ad-attribution fields the form sends alongside the answers. They describe the
+ * Meta tracking fields the form sends alongside the answers. They describe the
  * visit, not the applicant, and exist only so the server can send Meta the same
  * `Lead` the browser sends (see `metaConversions` in config).
  *
@@ -66,6 +66,25 @@ const ALL_CONTENT_KEYS = [...STABLE_KEYS, ...RAW_ONLY_KEYS] as const;
  * lets `normalizeApplication` strip them instead.
  */
 const TRACKING_KEYS = ["eventId", "fbp", "fbc", "eventSourceUrl"] as const;
+
+/**
+ * Which ad produced the visit. Meta substitutes these into the landing URL at
+ * click time (`ad_id={{ad.id}}&ad_name={{ad.name}}&…`) and the site forwards
+ * them with the submission.
+ *
+ * Unlike TRACKING_KEYS above, these ARE persisted: the ids become columns on the
+ * application (the join key for reporting lead quality per ad) and the names
+ * feed the local ad catalog. They are still stripped from `rawData`, which holds
+ * the applicant's answers — an ad id is not one.
+ */
+const ATTRIBUTION_KEYS = [
+  "adId",
+  "adsetId",
+  "campaignId",
+  "adName",
+  "adsetName",
+  "campaignName"
+] as const;
 
 /**
  * Lenient schema for the incoming form payload. All content fields are optional
@@ -78,20 +97,37 @@ export const applicationPayloadSchema = z
     partial: z.boolean().optional(),
     lastSection: z.string().optional(),
     ...Object.fromEntries(ALL_CONTENT_KEYS.map((k) => [k, z.string().optional()])),
-    ...Object.fromEntries(TRACKING_KEYS.map((k) => [k, z.string().optional()]))
+    ...Object.fromEntries(TRACKING_KEYS.map((k) => [k, z.string().optional()])),
+    ...Object.fromEntries(ATTRIBUTION_KEYS.map((k) => [k, z.string().optional()]))
   })
   // Tolerate fields we don't know about yet (form drift) — they still land in rawData.
   .loose();
 
-/** The ad-attribution keys, exported so the server and tests share one list. */
+/** The Meta tracking keys, exported so the server and tests share one list. */
 export const APPLICATION_TRACKING_KEYS = TRACKING_KEYS;
 
-/** Ad-attribution context for one submission. Absent fields are null, never "". */
+/** The ad-attribution keys, exported so the site, server and tests share one list. */
+export const APPLICATION_ATTRIBUTION_KEYS = ATTRIBUTION_KEYS;
+
+/** Meta tracking context for one submission. Absent fields are null, never "". */
 export interface ApplicationTracking {
   eventId: string | null;
   fbp: string | null;
   fbc: string | null;
   eventSourceUrl: string | null;
+}
+
+/**
+ * Which ad produced one submission. All null for organic and direct traffic,
+ * which stays the common case.
+ */
+export interface ApplicationAttribution {
+  adId: string | null;
+  adsetId: string | null;
+  campaignId: string | null;
+  adName: string | null;
+  adsetName: string | null;
+  campaignName: string | null;
 }
 
 export type ApplicationPayload = z.infer<typeof applicationPayloadSchema>;
@@ -119,6 +155,12 @@ export interface NormalizedApplication extends NormalizedApplicationFields {
   partial: boolean;
   lastSection: string | null;
   rawData: Record<string, unknown>;
+  /**
+   * Which ad produced the visit, when the submission carried the parameters.
+   * Absent for every non-form path (José, CSV backfill, dashboard entry), which
+   * is why it is optional rather than an all-null object.
+   */
+  attribution?: ApplicationAttribution;
 }
 
 // ---- parse helpers (lenient: return null rather than throw) ----
@@ -179,20 +221,29 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
   const raw = payload as Record<string, unknown>;
 
   // rawData keeps every content field provided (and any unknown extras), as sent.
-  // Ad-attribution fields are dropped: they describe the visit, not the
-  // applicant, and must not be persisted with the application.
+  // Meta tracking fields are dropped entirely: they describe the visit, not the
+  // applicant, and must not be persisted with the application. Ad-attribution
+  // fields are lifted out too — they are persisted, but as columns and catalog
+  // rows, not as answers buried in the raw payload.
   const rawData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (key === "sessionId" || key === "partial" || key === "lastSection") continue;
     if ((TRACKING_KEYS as readonly string[]).includes(key)) continue;
+    if ((ATTRIBUTION_KEYS as readonly string[]).includes(key)) continue;
     if (value !== undefined) rawData[key] = value;
   }
+
+  const attribution = extractAttribution(payload);
 
   return {
     sessionId: payload.sessionId,
     partial: payload.partial ?? false,
     lastSection: trimToNull(payload.lastSection),
     rawData,
+    // Only when the visit actually carried an ad id. An organic submission has
+    // nothing to attribute, and a later autosave without the parameters must not
+    // overwrite the ad an earlier section recorded.
+    ...(attribution.adId ? { attribution } : {}),
     firstName: trimToNull(raw.firstName),
     lastName: trimToNull(raw.lastName),
     phone: parsePhone(raw.phone),
@@ -224,6 +275,24 @@ export function extractTracking(payload: ApplicationPayload): ApplicationTrackin
     fbp: trimToNull(raw.fbp),
     fbc: trimToNull(raw.fbc),
     eventSourceUrl: trimToNull(raw.eventSourceUrl)
+  };
+}
+
+/**
+ * Pulls the ad-attribution fields out of a validated payload.
+ *
+ * Typed accessor for the same reason as `extractTracking`: the schema builds
+ * these keys with a spread, which erases their literal types.
+ */
+export function extractAttribution(payload: ApplicationPayload): ApplicationAttribution {
+  const raw = payload as Record<string, unknown>;
+  return {
+    adId: trimToNull(raw.adId),
+    adsetId: trimToNull(raw.adsetId),
+    campaignId: trimToNull(raw.campaignId),
+    adName: trimToNull(raw.adName),
+    adsetName: trimToNull(raw.adsetName),
+    campaignName: trimToNull(raw.campaignName)
   };
 }
 

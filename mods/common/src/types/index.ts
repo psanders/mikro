@@ -10,9 +10,15 @@ export type {
   PaymentWithRelations,
   CustomerWithLoans,
   LoanApplicationWriteData,
+  MetaAdWriteData,
   FollowUpJob
 } from "./client.js";
-export type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
+export type {
+  LoanApplication,
+  ApplicationStatus,
+  ApplicationSource,
+  MetaAd
+} from "./application.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

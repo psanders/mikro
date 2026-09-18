@@ -72,7 +72,7 @@ import { createTaskWorker } from "./tasks/index.js";
 import { createSendApplicationPromo } from "./api/applications/createSendApplicationPromo.js";
 import { createGetApplication } from "./api/applications/createGetApplication.js";
 import { createCreateTransaction } from "./api/accounting/index.js";
-import { createSendLeadConversion } from "./api/marketing/index.js";
+import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/index.js";
 import {
   createApproveApplication,
   createRejectApplication,
@@ -293,10 +293,24 @@ const dbClient = prisma as unknown as DbClient;
 const recordOutboundMessage = createRecordOutboundMessage(prisma);
 const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
 const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
-const upsertApplication = createUpsertApplication(dbClient, { scheduleFollowUpJob });
+const recordMetaAd = createRecordMetaAd(dbClient);
+const upsertApplication = createUpsertApplication(dbClient, {
+  scheduleFollowUpJob,
+  recordMetaAd
+});
 const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
 // Server-side twin of the site's browser pixel. No-ops unless metaConversions is
 // configured, so local and dev never reach Meta.
+//
+// Note what this deliberately does NOT carry: the Mikro Score. The application
+// it belongs to has just been scored a few lines above, and putting that in
+// `custom_data` is the obvious way to let Meta optimize for good borrowers — but
+// these campaigns run in the financial products special ad category, whose whole
+// purpose is to stop credit advertising from being delivered discriminatorily.
+// Feeding creditworthiness back as the optimization signal invites the model to
+// find lookalikes of the people we scored well, and it can learn demographic
+// proxies from that even though we never send a demographic. The score stays on
+// our side and drives the ad-quality report instead (issue #280).
 const sendLeadConversion = createSendLeadConversion({
   pixelId: cfg.metaConversions.pixelId,
   accessToken: cfg.metaConversions.accessToken,

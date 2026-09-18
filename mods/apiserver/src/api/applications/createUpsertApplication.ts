@@ -3,6 +3,7 @@
  */
 import { scoreApplication } from "@mikro/common";
 import type {
+  ApplicationAttribution,
   ApplicationSource,
   DbClient,
   LoanApplication,
@@ -13,6 +14,8 @@ import { logger } from "../../logger.js";
 interface Deps {
   /** Called after a RECEIVED upsert from an external source (FORM or WHATSAPP). */
   scheduleFollowUpJob?: (applicationId: string) => Promise<void>;
+  /** Records the ad in the local name catalog. Only called when one is attributed. */
+  recordMetaAd?: (attribution: ApplicationAttribution) => Promise<unknown>;
 }
 
 /**
@@ -26,6 +29,11 @@ interface Deps {
  *
  * When `scheduleFollowUpJob` is provided, a NUDGE follow-up timer is scheduled
  * whenever an external (non-MANUAL) application reaches RECEIVED status.
+ *
+ * Ad attribution (`input.attribution`) is written only when the submission
+ * carried it: a form streams several autosaves under one session and only the
+ * ones whose page still had the URL parameters can say which ad this was, so an
+ * absent value means "unknown", never "organic".
  *
  * @param client - The database client
  * @param deps - Optional dependencies (follow-up scheduling)
@@ -59,7 +67,16 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       riskBand: result.risk_band,
       recommendation: result.recommendation,
       scoredAt: new Date(),
-      submittedAt: input.partial ? null : new Date()
+      submittedAt: input.partial ? null : new Date(),
+      // Spread, not fixed keys: omitting them leaves the stored ad alone, while
+      // `adId: null` would erase it on the next autosave.
+      ...(input.attribution
+        ? {
+            adId: input.attribution.adId,
+            adsetId: input.attribution.adsetId,
+            campaignId: input.attribution.campaignId
+          }
+        : {})
     };
 
     const application = await client.loanApplication.upsert({
@@ -75,8 +92,21 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       id: application.id,
       score: updateData.score,
       riskBand: updateData.riskBand,
-      recommendation: updateData.recommendation
+      recommendation: updateData.recommendation,
+      adId: application.adId
     });
+
+    // Learn the ad's name for the reports. Not awaited and never fatal: the
+    // catalog is reporting metadata, and an applicant's submission must not fail
+    // because we could not write down what their ad is called.
+    if (input.attribution && deps.recordMetaAd) {
+      deps.recordMetaAd(input.attribution).catch((err: Error) => {
+        logger.error("failed to record meta ad", {
+          adId: input.attribution?.adId,
+          error: err.message
+        });
+      });
+    }
 
     if (status === "RECEIVED" && source !== "MANUAL" && deps.scheduleFollowUpJob) {
       deps.scheduleFollowUpJob(application.id).catch((err: Error) => {
