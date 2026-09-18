@@ -127,7 +127,7 @@ const metaConversionsSchema = z.object({
  * Nothing is posted unless `url`, `accountId`, `inboxId` and `apiToken` are all set.
  */
 const chatwootSchema = z.object({
-  /** Base URL, e.g. "https://chat.mikro.do" (no trailing /api). */
+  /** Base URL of your Chatwoot instance, e.g. "https://chatwoot.example.com" (no trailing /api). */
   url: z.string().default(""),
   accountId: z.number().int().nonnegative().default(0),
   /** The inbox that receives the WhatsApp number's conversations. */
