@@ -166,6 +166,9 @@ const taskFailedPayloadSchema = taskEventBase.extend({
 const qcobroSyncedPayloadSchema = z.object({
   customers: z.number().int().nonnegative(),
   portfoliosPushed: z.number().int().nonnegative(),
+  // Portfolios emptied by an empty REPLACE batch. Optional: events recorded
+  // before it existed don't carry it.
+  portfoliosCleared: z.number().int().nonnegative().optional(),
   portfoliosSkipped: z.number().int().nonnegative(),
   durationMs: z.number().int().nonnegative()
 });

@@ -1196,6 +1196,7 @@ describe("Founder Copilot Integration", () => {
       const syncStub = sinon.stub().resolves({
         customers: 8,
         portfoliosPushed: 2,
+        portfoliosCleared: 2,
         portfoliosSkipped: 1,
         durationMs: 42
       });
@@ -1231,6 +1232,7 @@ describe("Founder Copilot Integration", () => {
       expect(syncedPayload).to.deep.equal({
         customers: 8,
         portfoliosPushed: 2,
+        portfoliosCleared: 2,
         portfoliosSkipped: 1,
         durationMs: 42
       });

@@ -31,8 +31,19 @@ export interface SyncAllPortfoliosOptions {
 
 export interface SyncAllPortfoliosResult {
   customers: number;
+  /** Portfolios that received a non-empty batch of matching customers this pass. */
   portfoliosPushed: number;
-  /** Portfolios with zero matching customers this pass — the real API has no "clear" call, so these are left as-is on the QCobro side. */
+  /**
+   * Portfolios with zero matching customers this pass that were emptied on the
+   * QCobro side: with `syncMode: REPLACE` an empty batch is a valid snapshot and
+   * archives every account still there (so stale accounts don't linger forever).
+   */
+  portfoliosCleared: number;
+  /**
+   * Portfolios with zero matching customers this pass that were left as-is on
+   * the QCobro side — only happens outside REPLACE, where an empty batch would
+   * change nothing and the API rejects it.
+   */
   portfoliosSkipped: number;
   durationMs: number;
 }
@@ -97,20 +108,32 @@ export function createSyncAllPortfolios(client: DbClient, options?: SyncAllPortf
     }
 
     let portfoliosPushed = 0;
+    let portfoliosCleared = 0;
     let portfoliosSkipped = 0;
     for (const rule of cfg.qcobro.portfolios) {
       const rows = rowsByPortfolio.get(rule.id) ?? [];
-      if (rows.length === 0) {
+      // An empty REPLACE batch is a full snapshot saying "nobody belongs here
+      // now" — QCobro archives every account still in the portfolio. Other
+      // modes can't express that (an empty batch would change nothing and the
+      // API rejects it), so those portfolios are left as-is.
+      if (rows.length === 0 && cfg.qcobro.syncMode !== "REPLACE") {
         portfoliosSkipped += 1;
         logger.verbose(
-          "qcobro sync: portfolio has no matching customers this pass, skipping (no clear-portfolio call in the API)",
-          { portfolioId: rule.id }
+          "qcobro sync: portfolio has no matching customers this pass, skipping (only REPLACE can empty a portfolio)",
+          { portfolioId: rule.id, mode: cfg.qcobro.syncMode }
         );
         continue;
       }
       try {
         await qcobroClient.syncAccounts({ portfolioId: rule.id, mode: cfg.qcobro.syncMode, rows });
-        portfoliosPushed += 1;
+        if (rows.length === 0) {
+          portfoliosCleared += 1;
+          logger.verbose("qcobro sync: portfolio has no matching customers this pass, emptied it", {
+            portfolioId: rule.id
+          });
+        } else {
+          portfoliosPushed += 1;
+        }
       } catch (err) {
         logger.error("qcobro sync: syncAccounts failed", {
           portfolioId: rule.id,
@@ -121,7 +144,7 @@ export function createSyncAllPortfolios(client: DbClient, options?: SyncAllPortf
 
     // Bookkeeping only — persisted regardless of whether the portfolio push
     // above actually ran, since it reflects what the customer's membership
-    // *should* be even when the API has no way to express it this pass.
+    // *should* be even when the push failed or was skipped this pass.
     await Promise.all(
       customers.map((customer) => {
         const target = targetByCustomer.get(customer.id) ?? [];
@@ -142,6 +165,7 @@ export function createSyncAllPortfolios(client: DbClient, options?: SyncAllPortf
     const result: SyncAllPortfoliosResult = {
       customers: customers.length,
       portfoliosPushed,
+      portfoliosCleared,
       portfoliosSkipped,
       durationMs: Date.now() - startedAt
     };

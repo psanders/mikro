@@ -16,10 +16,11 @@ export async function recordQCobroSyncedEvent(
   await recordEvent(client, {
     type: "qcobro.synced",
     actorName,
-    summary: `Sincronización QCobro completada: ${result.customers} clientes procesados, ${result.portfoliosPushed} portafolios enviados, ${result.portfoliosSkipped} omitidos (${result.durationMs} ms).`,
+    summary: `Sincronización QCobro completada: ${result.customers} clientes procesados, ${result.portfoliosPushed} portafolios enviados, ${result.portfoliosCleared} vaciados, ${result.portfoliosSkipped} omitidos (${result.durationMs} ms).`,
     payload: {
       customers: result.customers,
       portfoliosPushed: result.portfoliosPushed,
+      portfoliosCleared: result.portfoliosCleared,
       portfoliosSkipped: result.portfoliosSkipped,
       durationMs: result.durationMs
     }
