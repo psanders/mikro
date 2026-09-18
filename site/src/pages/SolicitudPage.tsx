@@ -19,6 +19,7 @@ import {
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
 import { trackLead, trackViewContent, newEventId, readFbCookies } from "../lib/metaPixel";
+import { readAdAttribution } from "../lib/adAttribution";
 
 // Posts to the Mikro apiserver's public intake endpoint (POST /v1/applications).
 const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undefined;
@@ -476,7 +477,15 @@ export function SolicitudPage() {
       fetch(APPLICATIONS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, sessionId, partial: true, lastSection: openSection })
+        // Attribution rides the autosaves too, so an applicant who abandons
+        // halfway is still credited to the ad that brought them.
+        body: JSON.stringify({
+          ...form,
+          ...readAdAttribution(),
+          sessionId,
+          partial: true,
+          lastSection: openSection
+        })
       }).catch(() => {});
     }
     setOpenSection(openSection === sectionId ? "" : sectionId);
@@ -507,6 +516,11 @@ export function SolicitudPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          // Which ad produced this applicant, captured when they landed. Stored
+          // with the application (unlike fbp/fbc below, which the server uses
+          // for the Meta event and then drops) so lead quality can be reported
+          // per ad.
+          ...readAdAttribution(),
           sessionId,
           partial: false,
           eventId,

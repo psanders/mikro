@@ -63,9 +63,29 @@ export interface LoanApplication {
   idBackSize: number | null;
   idUploadedById: string | null;
   idUploadedAt: Date | null;
+  adId: string | null;
+  adsetId: string | null;
+  campaignId: string | null;
   customerId: string | null;
   loanId: number | null;
   submittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * One Meta ad we have seen produce at least one application, with the names it
+ * carried at click time. Learned from the forwarded URL parameters — never from
+ * a live Meta call — so reports render names offline and keep working after the
+ * ad is deleted in Ads Manager.
+ */
+export interface MetaAd {
+  id: string;
+  name: string | null;
+  adsetId: string | null;
+  adsetName: string | null;
+  campaignId: string | null;
+  campaignName: string | null;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
 }

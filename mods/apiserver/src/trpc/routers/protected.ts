@@ -47,6 +47,7 @@ import {
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateLoanStatementSchema,
+  generateAdQualityReportSchema,
   generateCustomersReportSchema,
   // Loan note schemas
   createLoanNoteSchema,
@@ -174,6 +175,7 @@ import { createGenerateRenewalCandidatesReport } from "../../api/reports/createG
 import { createGenerateAccountingReport } from "../../api/reports/createGenerateAccountingReport.js";
 import { createGenerateLoanStatement } from "../../api/reports/createGenerateLoanStatement.js";
 import { createGenerateCustomersReport } from "../../api/reports/createGenerateCustomersReport.js";
+import { createGenerateAdQualityReport } from "../../api/reports/createGenerateAdQualityReport.js";
 // Loan note API functions
 import { createCreateLoanNote } from "../../api/loanNotes/createCreateLoanNote.js";
 import { createListLoanNotesByLoan } from "../../api/loanNotes/createListLoanNotesByLoan.js";
@@ -1169,6 +1171,21 @@ export const protectedRouter = router({
         filename: result.filename,
         mimeType: result.mimeType
       };
+    }),
+
+  /**
+   * Generate the ad-quality report (issue #280): applications in a window
+   * grouped by the ad that produced them, with the risk-band split and median
+   * Mikro Score. Founder/admin only — it is spend advice, not collection work.
+   *
+   * Data only, no PDF: it answers "which ad should I pause" at a terminal.
+   */
+  generateAdQualityReport: adminProcedure
+    .input(generateAdQualityReportSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createGenerateAdQualityReport(ctx.db);
+      const result = await fn(input);
+      return { data: result.data };
     }),
 
   // ==================== Events / Feed procedures ====================

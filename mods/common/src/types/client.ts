@@ -10,7 +10,12 @@ import type { Customer } from "./customer.js";
 import type { User } from "./user.js";
 import type { Message } from "./message.js";
 import type { Loan, Payment } from "./loan.js";
-import type { LoanApplication, ApplicationStatus, ApplicationSource } from "./application.js";
+import type {
+  LoanApplication,
+  ApplicationStatus,
+  ApplicationSource,
+  MetaAd
+} from "./application.js";
 import type { CustomerTag } from "./customerTag.js";
 import type { TagSource } from "../schemas/customerTag.js";
 import type { CustomerDocument } from "./customerDocument.js";
@@ -361,11 +366,23 @@ export interface DbClient {
       orderBy?: { createdAt?: "asc" | "desc" };
     }): Promise<LoanApplication | null>;
     findMany(args?: {
-      where?: { status?: ApplicationStatus };
+      where?: {
+        status?: ApplicationStatus | { in: ApplicationStatus[] };
+        createdAt?: { gte?: Date; lte?: Date };
+      };
       orderBy?: { createdAt?: "asc" | "desc" };
       take?: number;
       skip?: number;
     }): Promise<LoanApplication[]>;
+  };
+
+  metaAd: {
+    upsert(args: {
+      where: { id: string };
+      create: MetaAdWriteData & { id: string };
+      update: MetaAdWriteData;
+    }): Promise<MetaAd>;
+    findMany(args?: { orderBy?: { lastSeenAt?: "asc" | "desc" } }): Promise<MetaAd[]>;
   };
 
   followUpJob: {
@@ -480,8 +497,25 @@ export interface LoanApplicationWriteData {
   customerId?: string | null;
   loanId?: number | null;
   submittedAt?: Date | null;
+  /**
+   * Ad attribution. Optional and only ever written when the submission actually
+   * carried the parameters — a later autosave that arrives without them must
+   * not erase the ad the applicant came from.
+   */
+  adId?: string | null;
+  adsetId?: string | null;
+  campaignId?: string | null;
   /** Set only in the `create` block of an upsert; ignored in `update`. */
   source?: ApplicationSource;
+}
+
+/** Writable columns for a Meta ad catalog upsert. */
+export interface MetaAdWriteData {
+  name?: string | null;
+  adsetId?: string | null;
+  adsetName?: string | null;
+  campaignId?: string | null;
+  campaignName?: string | null;
 }
 
 export interface FollowUpJob {

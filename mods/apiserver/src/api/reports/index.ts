@@ -18,3 +18,9 @@ export {
   type GeneratedLoanStatement,
   type GenerateLoanStatementOptions
 } from "./createGenerateLoanStatement.js";
+export {
+  createGenerateAdQualityReport,
+  type GeneratedAdQualityReport,
+  type AdQualityReportData,
+  type AdQualityRow
+} from "./createGenerateAdQualityReport.js";

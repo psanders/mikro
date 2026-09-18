@@ -140,7 +140,9 @@ export {
   applicationPayloadSchema,
   normalizeApplication,
   extractTracking,
+  extractAttribution,
   APPLICATION_TRACKING_KEYS,
+  APPLICATION_ATTRIBUTION_KEYS,
   applicationStatusEnum,
   listApplicationsSchema,
   getApplicationSchema,
@@ -175,6 +177,7 @@ export {
   type NormalizedApplication,
   type NormalizedApplicationFields,
   type ApplicationTracking,
+  type ApplicationAttribution,
   type ListApplicationsInput,
   type GetApplicationInput,
   type ClaimApplicationInput,
@@ -358,12 +361,14 @@ export {
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateLoanStatementSchema,
+  generateAdQualityReportSchema,
   generateCustomersReportSchema,
   type GeneratePerformanceTrendReportInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
   type GenerateLoanStatementInput,
+  type GenerateAdQualityReportInput,
   type GenerateCustomersReportInput,
   // Dashboard schemas
   getCollectorDashboardSchema,
@@ -516,9 +521,15 @@ export type {
   PaymentWithRelations,
   CustomerWithLoans,
   LoanApplicationWriteData,
+  MetaAdWriteData,
   FollowUpJob
 } from "./types/index.js";
-export type { LoanApplication, ApplicationStatus, ApplicationSource } from "./types/index.js";
+export type {
+  LoanApplication,
+  ApplicationStatus,
+  ApplicationSource,
+  MetaAd
+} from "./types/index.js";
 export type {
   WhatsAppClient,
   WhatsAppSendResponse,

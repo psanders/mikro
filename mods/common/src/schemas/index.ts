@@ -7,8 +7,11 @@ export {
   applicationPayloadSchema,
   normalizeApplication,
   extractTracking,
+  extractAttribution,
   APPLICATION_TRACKING_KEYS,
+  APPLICATION_ATTRIBUTION_KEYS,
   type ApplicationTracking,
+  type ApplicationAttribution,
   applicationStatusEnum,
   listApplicationsSchema,
   getApplicationSchema,
@@ -245,12 +248,14 @@ export {
   generateRenewalCandidatesReportSchema,
   generateAccountingReportSchema,
   generateLoanStatementSchema,
+  generateAdQualityReportSchema,
   generateCustomersReportSchema,
   type GeneratePerformanceTrendReportInput,
   type GenerateDefaultedReportInput,
   type GenerateRenewalCandidatesReportInput,
   type GenerateAccountingReportInput,
   type GenerateLoanStatementInput,
+  type GenerateAdQualityReportInput,
   type GenerateCustomersReportInput
 } from "./report.js";
 

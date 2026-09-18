@@ -269,6 +269,9 @@ CREATE TABLE "loan_applications" (
     "id_back_size" INTEGER,
     "id_uploaded_by_id" TEXT,
     "id_uploaded_at" DATETIME,
+    "ad_id" TEXT,
+    "adset_id" TEXT,
+    "campaign_id" TEXT,
     "customer_id" TEXT,
     "loan_id" INTEGER,
     "submitted_at" DATETIME,
@@ -278,6 +281,19 @@ CREATE TABLE "loan_applications" (
 CREATE UNIQUE INDEX "loan_applications_session_id_key" ON "loan_applications"("session_id");
 CREATE INDEX "loan_applications_status_idx" ON "loan_applications"("status");
 CREATE INDEX "loan_applications_session_id_idx" ON "loan_applications"("session_id");
+CREATE INDEX "loan_applications_ad_id_idx" ON "loan_applications"("ad_id");
+
+-- Meta ad catalog (ad names learned from forwarded URL parameters)
+CREATE TABLE "meta_ads" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "adset_id" TEXT,
+    "adset_name" TEXT,
+    "campaign_id" TEXT,
+    "campaign_name" TEXT,
+    "first_seen_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_seen_at" DATETIME NOT NULL
+);
 
 -- Follow-up jobs table
 CREATE TABLE "follow_up_jobs" (

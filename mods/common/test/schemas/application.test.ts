@@ -5,10 +5,12 @@ import { expect } from "chai";
 import {
   applicationPayloadSchema,
   normalizeApplication,
-  APPLICATION_TRACKING_KEYS
+  extractAttribution,
+  APPLICATION_TRACKING_KEYS,
+  APPLICATION_ATTRIBUTION_KEYS
 } from "../../src/schemas/application.js";
 
-describe("normalizeApplication — ad-attribution fields", () => {
+describe("normalizeApplication — Meta tracking fields", () => {
   const payload = {
     sessionId: "sess-1",
     partial: false,
@@ -53,5 +55,69 @@ describe("normalizeApplication — ad-attribution fields", () => {
       applicationPayloadSchema.parse({ sessionId: "sess-3", somethingNew: "x" })
     );
     expect(normalized.rawData.somethingNew).to.equal("x");
+  });
+});
+
+/**
+ * Ad attribution is the mirror image of the tracking cookies above: both are
+ * stripped from `rawData`, but these are kept — as columns and catalog rows —
+ * because they are the join key that lets lead quality be reported per ad
+ * (issue #280).
+ */
+describe("normalizeApplication — ad attribution", () => {
+  const payload = {
+    sessionId: "sess-ad",
+    firstName: "Juana",
+    adId: "120212",
+    adsetId: "120211",
+    campaignId: "120210",
+    adName: "MIKRO | Business owner | v2",
+    adsetName: "Prospecting",
+    campaignName: "MIKRO | Leads"
+  };
+
+  it("lifts the ad parameters out of rawData, which holds the applicant's answers", () => {
+    const normalized = normalizeApplication(applicationPayloadSchema.parse(payload));
+
+    for (const key of APPLICATION_ATTRIBUTION_KEYS) {
+      expect(normalized.rawData, `rawData should not carry ${key}`).to.not.have.property(key);
+    }
+    expect(normalized.attribution?.adId).to.equal("120212");
+    expect(normalized.attribution?.adName).to.equal("MIKRO | Business owner | v2");
+    expect(normalized.firstName).to.equal("Juana");
+  });
+
+  it("omits attribution entirely for an organic submission", () => {
+    const normalized = normalizeApplication(
+      applicationPayloadSchema.parse({ sessionId: "sess-organic", firstName: "Luis" })
+    );
+
+    // Absent rather than all-null: the upsert uses that difference to leave an
+    // already-recorded ad alone instead of erasing it.
+    expect(normalized.attribution).to.equal(undefined);
+  });
+
+  it("ignores a name that arrives without an ad id — that is not attribution", () => {
+    const normalized = normalizeApplication(
+      applicationPayloadSchema.parse({ sessionId: "sess-partial", adName: "MIKRO | Online | v2" })
+    );
+
+    expect(normalized.attribution).to.equal(undefined);
+  });
+
+  it("reads the ad parameters off a validated payload", () => {
+    const attribution = extractAttribution(applicationPayloadSchema.parse(payload));
+
+    expect(attribution.adsetId).to.equal("120211");
+    expect(attribution.campaignName).to.equal("MIKRO | Leads");
+  });
+
+  it("treats blank parameters as absent, not as an ad called empty string", () => {
+    const attribution = extractAttribution(
+      applicationPayloadSchema.parse({ sessionId: "sess-blank", adId: "   ", adName: "" })
+    );
+
+    expect(attribution.adId).to.equal(null);
+    expect(attribution.adName).to.equal(null);
   });
 });

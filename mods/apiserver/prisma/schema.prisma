@@ -596,6 +596,19 @@ model LoanApplication {
   idUploadedById      String?   @map("id_uploaded_by_id")
   idUploadedAt        DateTime? @map("id_uploaded_at")
 
+  // Which ad produced this applicant. Meta substitutes these into the landing
+  // URL at click time ({{ad.id}} and friends); the site forwards them with the
+  // form the same way it forwards the pixel's event id.
+  //
+  // Columns rather than rawData because the whole point is to GROUP by them —
+  // the opposite of the tracking cookies, which are deliberately dropped before
+  // the row is written. Null for organic and direct traffic, which stays the
+  // common case. Ad NAMES live in MetaAd, not here: they change in Ads Manager
+  // and would otherwise be copied onto every row.
+  adId       String? @map("ad_id")
+  adsetId    String? @map("adset_id")
+  campaignId String? @map("campaign_id")
+
   // Reserved for Phase 3 conversion (unused in this phase)
   customerId String? @map("customer_id")
   loanId     Int?    @map("loan_id")
@@ -608,7 +621,28 @@ model LoanApplication {
 
   @@index([status])
   @@index([sessionId])
+  @@index([adId])
   @@map("loan_applications")
+}
+
+/// Local catalog of the Meta ads we have seen produce a click, learned from the
+/// {{ad.name}} URL parameters the site forwards with an application.
+///
+/// It exists so the ad-quality report can print "MIKRO | Business owner | v2"
+/// instead of "120212…" without a live Meta call: the report stays usable
+/// offline, and an ad keeps its name in our numbers after it is deleted in Ads
+/// Manager. Ids are Meta's, so they are the primary key.
+model MetaAd {
+  id           String   @id
+  name         String?
+  adsetId      String?  @map("adset_id")
+  adsetName    String?  @map("adset_name")
+  campaignId   String?  @map("campaign_id")
+  campaignName String?  @map("campaign_name")
+  firstSeenAt  DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt   DateTime @updatedAt @map("last_seen_at")
+
+  @@map("meta_ads")
 }
 
 model FollowUpJob {
