@@ -15,7 +15,7 @@ import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
-import { getMessageMaxAgeSeconds } from "../config.js";
+import { getMessageMaxAgeSeconds, getWhatsAppAgentRepliesEnabled } from "../config.js";
 import { logger } from "../logger.js";
 import type { Profile } from "../constants.js";
 import { getGuestConversation, addGuestMessage } from "../conversations/index.js";
@@ -110,6 +110,18 @@ function markMessageProcessed(id: string): void {
   pruneProcessedMessageIds();
   processedMessageIds.set(id, Date.now());
 }
+
+/**
+ * Stand-in sender used when replies are disabled: swallows the send so a path
+ * that must keep running (intake Flow ingestion) does not also have to know
+ * about the kill switch.
+ */
+const silentSend: MessageProcessorDependencies["sendWhatsAppMessage"] = async (params) => {
+  logger.verbose("whatsapp agent replies disabled, suppressing outbound reply", {
+    phone: params.phone
+  });
+  return {};
+};
 
 /**
  * Clear processed message IDs (for testing only).
@@ -359,17 +371,36 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     submitApplicationFromFlow
   } = messageProcessor;
 
+  // `whatsapp.agentRepliesEnabled: false` in mikro.json makes the number stop
+  // answering: no LLM, and none of the deterministic fallbacks below either.
+  const repliesEnabled = getWhatsAppAgentRepliesEnabled();
+
   // Intake Flow submission: a completed solicitud arrives as an interactive
   // nfm_reply with the answers as a JSON string. Ingest it (no routing/LLM) and
   // confirm. Handled before routing because the submitter is still an unknown
   // prospect — there is no agent conversation to run.
+  //
+  // Runs even with replies disabled: the solicitud is persisted either way,
+  // only the confirmation is withheld. Going quiet must never cost an
+  // application.
   if (type === "interactive" && message.interactive?.nfm_reply) {
     await processIntakeFlowSubmission(
       message,
       phone,
-      sendWhatsAppMessage,
+      repliesEnabled ? sendWhatsAppMessage : silentSend,
       submitApplicationFromFlow
     );
+    return;
+  }
+
+  // Everything else is a conversation turn, and a turn with no reply is just
+  // work we are throwing away — stop before routing and the LLM call.
+  if (!repliesEnabled) {
+    logger.info("whatsapp agent replies disabled, ignoring inbound message", {
+      phone,
+      messageId: id,
+      type
+    });
     return;
   }
 

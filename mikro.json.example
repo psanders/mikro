@@ -33,6 +33,7 @@
     "accessToken": "your-whatsapp-access-token",
     "verifyToken": "mikro_webhook_token",
     "languageCode": "es_DO",
+    "agentRepliesEnabled": true,
     "templates": {
       "paymentConfirmation": "payment_confirmation",
       "loanApplicationPromo": "loan_application",
