@@ -29,4 +29,4 @@
 ## 5. Design
 
 - [x] 5.1 Pencil screens for the stepper (Paso 1, Paso 5) + out-of-area state, mobile and desktop (in the main checkout's pencil.pen)
-- [ ] 5.2 User sign-off on the design
+- [x] 5.2 User sign-off on the design

@@ -1,5 +1,5 @@
 {
-  "version": "2.15",
+  "version": "2.18",
   "children": [
     {
       "type": "frame",
@@ -3793,8 +3793,8 @@
     {
       "type": "frame",
       "id": "mBc0P",
-      "x": -5366,
-      "y": 12488,
+      "x": -5374,
+      "y": 12206,
       "name": "Solicitud / Datos del cliente",
       "clip": true,
       "width": 1440,
@@ -4436,16 +4436,24 @@
                           "gap": 20,
                           "children": [
                             {
-                              "id": "vKN3y",
+                              "id": "iVHMA",
                               "type": "ref",
-                              "ref": "VLJf8",
+                              "ref": "crIxS",
+                              "name": "Monto solicitado",
                               "width": "fill_container",
                               "descendants": {
-                                "viBEG": {
-                                  "content": "Monto solicitado"
+                                "UKTdy": {
+                                  "content": "Monto solicitado",
+                                  "fontSize": 14,
+                                  "fontWeight": "500"
                                 },
-                                "F7kzO2": {
-                                  "content": "RD$"
+                                "hXbxd": {
+                                  "stroke": "#E6EEFB",
+                                  "strokeWidth": 1.5
+                                },
+                                "qYwem": {
+                                  "content": "RD$10,000",
+                                  "fill": "#14254A"
                                 }
                               }
                             },
@@ -4979,8 +4987,8 @@
     {
       "type": "frame",
       "id": "PT4PZ",
-      "x": -3806,
-      "y": 12488,
+      "x": -3814,
+      "y": 12206,
       "name": "Solicitud / Datos (Mobile)",
       "clip": true,
       "width": 390,
@@ -5691,27 +5699,18 @@
                   "gap": 14,
                   "children": [
                     {
-                      "id": "GewmM",
+                      "id": "eI8J4",
                       "type": "ref",
-                      "ref": "XHaAT",
+                      "ref": "crIxS",
+                      "name": "Monto solicitado",
                       "width": "fill_container",
                       "descendants": {
-                        "flbLp": {
+                        "UKTdy": {
                           "content": "Monto solicitado"
                         },
-                        "GeMhD": {
-                          "fill": "$brand.white",
-                          "stroke": "#D3DFF4",
-                          "strokeWidth": 1,
-                          "strokeLinejoin": "miter",
-                          "strokeLinecap": "butt",
-                          "strokeAlignment": "inner"
-                        },
-                        "lPkAM": {
-                          "enabled": false
-                        },
-                        "iaYYl": {
-                          "content": "RD$"
+                        "qYwem": {
+                          "content": "RD$10,000",
+                          "fill": "#14254A"
                         }
                       }
                     },
@@ -32904,8 +32903,8 @@
     {
       "type": "note",
       "id": "M5OwXK",
-      "x": -5366,
-      "y": 12380,
+      "x": -6569,
+      "y": 12513,
       "name": "Label - Website Solicitud disambiguation",
       "width": 1000,
       "height": 0,
@@ -86872,6 +86871,4040 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "aKmjR",
+      "x": -3304,
+      "y": 12206,
+      "name": "Solicitud / Stepper · Paso 1 (Mobile)",
+      "clip": true,
+      "width": 390,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "L3BvtM",
+          "type": "ref",
+          "ref": "wcnIs",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "qiHcU",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            40,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "ah7WO",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "A5cqj",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "XbYdq",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "D7u07",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 30,
+              "fontWeight": "700",
+              "letterSpacing": -0.8
+            },
+            {
+              "type": "text",
+              "id": "F7Pml",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 14,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "sGxff",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            32,
+            20,
+            40,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "XvBMp",
+              "name": "Progress",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "u1qDbz",
+                  "name": "Step Icons",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "pMjIM",
+                      "name": "Step 1",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.white",
+                      "cornerRadius": 9999,
+                      "stroke": "$brand.blue.primary",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "AzNPz",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "user",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "o9cekJ",
+                      "name": "Track 1",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Q4ASup",
+                      "name": "Step 2",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "arWGb",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "store",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v8OxEw",
+                      "name": "Track 2",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "kjEb6",
+                      "name": "Step 3",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "TPHzD",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "hand-coins",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Fxft2",
+                      "name": "Track 3",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MlOyA",
+                      "name": "Step 4",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Ziar2",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "users",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XYC4o",
+                      "name": "Track 4",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "LZXoS",
+                      "name": "Step 5",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "M84k2S",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "house",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lZTMk",
+                  "name": "Label Row",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EKDPr",
+                      "name": "Step Label",
+                      "fill": "$brand.blue.deep",
+                      "content": "Paso 1 de 5",
+                      "fontFamily": "Geist",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r97yQb",
+                      "name": "Percent",
+                      "fill": "#5B6B8C",
+                      "content": "20%",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fUpNY",
+                  "name": "Bar",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "#D5E3F7",
+                  "cornerRadius": 9999,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "G1z0R",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Bar Fill",
+                      "width": 70,
+                      "height": 8,
+                      "fill": "$brand.orange.primary",
+                      "cornerRadius": 9999
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "sYyZY",
+              "name": "Section Card",
+              "width": "fill_container",
+              "fill": "$brand.white",
+              "cornerRadius": 18,
+              "stroke": "$brand.blue.sky",
+              "strokeWidth": 2,
+              "strokeAlignment": "inner",
+              "layout": "vertical",
+              "gap": 18,
+              "padding": 22,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "F24LPY",
+                  "name": "Section Header",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "RlHHw",
+                      "name": "Section Icon",
+                      "width": 42,
+                      "height": 42,
+                      "fill": "$brand.mist",
+                      "cornerRadius": 12,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "SqxAc",
+                          "name": "Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "user",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "w74cp",
+                      "name": "Titles",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "a8Xbr",
+                          "name": "Title",
+                          "fill": "$brand.ink",
+                          "content": "01  ·  Datos personales",
+                          "fontFamily": "Geist",
+                          "fontSize": 16,
+                          "fontWeight": "700",
+                          "letterSpacing": -0.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "V8QYUu",
+                          "name": "Subtitle",
+                          "fill": "#5B6B8C",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Información básica para identificarte.",
+                          "fontFamily": "Geist",
+                          "fontSize": 12.5,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "eAM2Y",
+                  "name": "Fields",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "children": [
+                    {
+                      "id": "w6fUAi",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Nombre(s)",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Nombre(s)"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "Ej. Juan Carlos"
+                        }
+                      }
+                    },
+                    {
+                      "id": "AdJPx",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Apellido(s)",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Apellido(s)"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "Ej. Pérez"
+                        }
+                      }
+                    },
+                    {
+                      "id": "iMz3p",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Teléfono personal",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Teléfono personal"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "(809) 000-0000"
+                        }
+                      }
+                    },
+                    {
+                      "id": "x0aaTR",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Cédula",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Cédula"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "000-0000000-0"
+                        }
+                      }
+                    },
+                    {
+                      "id": "fJyq3",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Fecha de nacimiento",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Fecha de nacimiento"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "DD/MM/AAAA"
+                        }
+                      }
+                    },
+                    {
+                      "id": "Pp77w",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Estado civil",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Estado civil"
+                        },
+                        "qYwem": {
+                          "content": "Seleccionar",
+                          "fill": "#7888A8"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QJWhl",
+                  "name": "Step Nav",
+                  "width": "fill_container",
+                  "stroke": "#E6EEFB",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    20,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "id": "R4JZ3",
+                      "type": "ref",
+                      "ref": "rKdYB",
+                      "name": "Siguiente",
+                      "width": "fill_container",
+                      "justifyContent": "center",
+                      "padding": [
+                        16,
+                        0
+                      ],
+                      "descendants": {
+                        "tKDxm": {
+                          "content": "Siguiente"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "BGcca",
+          "type": "ref",
+          "ref": "D2jdJ",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "NuL37",
+      "x": -2834,
+      "y": 12206,
+      "name": "Solicitud / Stepper · Paso 5 (Mobile)",
+      "clip": true,
+      "width": 390,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "B3Pgf",
+          "type": "ref",
+          "ref": "wcnIs",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "ZPJjZ",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            40,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "nUhgM",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "m53Ucc",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "VeuHU",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "qQAMM",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 30,
+              "fontWeight": "700",
+              "letterSpacing": -0.8
+            },
+            {
+              "type": "text",
+              "id": "MTuOo",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 14,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "I3dA4",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            32,
+            20,
+            40,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "mwMoL",
+              "name": "Progress",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "SkhoJ",
+                  "name": "Step Icons",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "MYvRX",
+                      "name": "Step 1",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "x2FNF",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Y543PC",
+                      "name": "Track 1",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Zxhql",
+                      "name": "Step 2",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "UZPdr",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bFsu3",
+                      "name": "Track 2",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KxMFI",
+                      "name": "Step 3",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "vN3J7",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "LXAQd",
+                      "name": "Track 3",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "krKeq",
+                      "name": "Step 4",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Zdd4a",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "K50ULC",
+                      "name": "Track 4",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qJtPU",
+                      "name": "Step 5",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.white",
+                      "cornerRadius": 9999,
+                      "stroke": "$brand.blue.primary",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "qtvJm",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "house",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "q8A3mX",
+                  "name": "Label Row",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "c3rd0",
+                      "name": "Step Label",
+                      "fill": "$brand.blue.deep",
+                      "content": "Paso 5 de 5",
+                      "fontFamily": "Geist",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "hIqaY",
+                      "name": "Percent",
+                      "fill": "#5B6B8C",
+                      "content": "100%",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VmdfP",
+                  "name": "Bar",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "#D5E3F7",
+                  "cornerRadius": 9999,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "cGxAu",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Bar Fill",
+                      "width": 350,
+                      "height": 8,
+                      "fill": "$brand.orange.primary",
+                      "cornerRadius": 9999
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "y51c0w",
+              "name": "Section Card",
+              "width": "fill_container",
+              "fill": "$brand.white",
+              "cornerRadius": 18,
+              "stroke": "$brand.blue.sky",
+              "strokeWidth": 2,
+              "strokeAlignment": "inner",
+              "layout": "vertical",
+              "gap": 18,
+              "padding": 22,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eABkX",
+                  "name": "Section Header",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zSqPj",
+                      "name": "Section Icon",
+                      "width": 42,
+                      "height": 42,
+                      "fill": "$brand.mist",
+                      "cornerRadius": 12,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "zdl3i",
+                          "name": "Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "house",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vEdPE",
+                      "name": "Titles",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "RODuc",
+                          "name": "Title",
+                          "fill": "$brand.ink",
+                          "content": "05  ·  Vivienda",
+                          "fontFamily": "Geist",
+                          "fontSize": 16,
+                          "fontWeight": "700",
+                          "letterSpacing": -0.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "SiGW8",
+                          "name": "Subtitle",
+                          "fill": "#5B6B8C",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Dónde vives y desde cuándo.",
+                          "fontFamily": "Geist",
+                          "fontSize": 12.5,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "H7ycd",
+                  "name": "Fields",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "children": [
+                    {
+                      "id": "PybuF",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Tipo de vivienda",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Tipo de vivienda"
+                        },
+                        "qYwem": {
+                          "content": "Propia"
+                        }
+                      }
+                    },
+                    {
+                      "id": "At0FT",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Tiempo residiendo",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Tiempo residiendo"
+                        },
+                        "qYwem": {
+                          "content": "3 a 5 años"
+                        }
+                      }
+                    },
+                    {
+                      "id": "o8oqOv",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Dirección (calle, número y sector)",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Dirección (calle, número y sector)"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "Calle 1 #25, Los Prados",
+                          "fill": "$brand.ink"
+                        }
+                      }
+                    },
+                    {
+                      "id": "wbf4L",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Provincia",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Provincia"
+                        },
+                        "qYwem": {
+                          "content": "Seleccionar",
+                          "fill": "#7888A8"
+                        }
+                      }
+                    },
+                    {
+                      "id": "a2XC2",
+                      "type": "ref",
+                      "ref": "XHaAT",
+                      "name": "Referencia de dirección",
+                      "width": "fill_container",
+                      "descendants": {
+                        "flbLp": {
+                          "content": "Referencia de dirección"
+                        },
+                        "GeMhD": {
+                          "fill": "$brand.white",
+                          "stroke": "#D3DFF4",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner"
+                        },
+                        "lPkAM": {
+                          "enabled": false
+                        },
+                        "iaYYl": {
+                          "content": "Ej. Frente al parque"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M9Ekb",
+                  "name": "Consent + Submit",
+                  "width": "fill_container",
+                  "stroke": "#E6EEFB",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": [
+                    20,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ZoqfG",
+                      "name": "Consent",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "G6klI",
+                          "name": "Checkbox",
+                          "width": 22,
+                          "height": 22,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 6,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "DJzh6",
+                              "name": "Check",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "CUmS5",
+                          "name": "Consent Text",
+                          "fill": "#5B6B8C",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Autorizo a Mikro Crédito a consultar y reportar mi información en el buró de crédito para evaluar esta solicitud.",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Geist",
+                          "fontSize": 12.5,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "yhGkC",
+                      "type": "ref",
+                      "ref": "rKdYB",
+                      "name": "Enviar solicitud",
+                      "width": "fill_container",
+                      "justifyContent": "center",
+                      "padding": [
+                        16,
+                        0
+                      ],
+                      "descendants": {
+                        "tKDxm": {
+                          "content": "Enviar solicitud"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vIoZK",
+                      "name": "Anterior",
+                      "width": "fill_container",
+                      "fill": "$brand.white",
+                      "cornerRadius": 14,
+                      "stroke": "#D5E3F7",
+                      "strokeWidth": 1.5,
+                      "strokeAlignment": "inner",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        0
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "T937me",
+                          "name": "Arrow",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "arrow-left",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "I5xP3",
+                          "name": "Label",
+                          "fill": "$brand.blue.primary",
+                          "content": "Anterior",
+                          "fontFamily": "Geist",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "wBfcW",
+          "type": "ref",
+          "ref": "D2jdJ",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "DoTlt",
+      "x": -2364,
+      "y": 12206,
+      "name": "Solicitud / Fuera de cobertura (Mobile)",
+      "clip": true,
+      "width": 390,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "vk6AC",
+          "type": "ref",
+          "ref": "wcnIs",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "n678M4",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.white",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            96,
+            24,
+            120,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "c7wrr8",
+              "name": "Result Icon",
+              "width": 64,
+              "height": 64,
+              "fill": "#FFF1DC",
+              "cornerRadius": 9999,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "eBMXq",
+                  "name": "Map Pin",
+                  "width": 32,
+                  "height": 32,
+                  "icon": "map-pin",
+                  "library": "lucide",
+                  "fill": "$brand.orange.deep"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "OdSGT",
+              "name": "Title",
+              "fill": "$brand.blue.deep",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Aún no llegamos a tu ciudad",
+              "lineHeight": 1.15,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 30,
+              "fontWeight": "700",
+              "letterSpacing": -1
+            },
+            {
+              "type": "text",
+              "id": "ywWLO",
+              "name": "Body",
+              "fill": "#3C4F7A",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Lo sentimos, por el momento no estamos disponibles en tu ciudad. Estamos creciendo: vuelve a consultar en unos meses.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 16,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "id": "gVFec",
+          "type": "ref",
+          "ref": "D2jdJ",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "z9i4le",
+      "x": -5374,
+      "y": 14214,
+      "name": "Solicitud / Stepper · Paso 1 (Desktop)",
+      "clip": true,
+      "width": 1440,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "X476h",
+          "type": "ref",
+          "ref": "LUIi8",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "CZKOa",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            64,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "eUrhA",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "nvGF8",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "BYn2Y",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "bKHSu",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 44,
+              "fontWeight": "700",
+              "letterSpacing": -1.2
+            },
+            {
+              "type": "text",
+              "id": "w8lzE",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": 720,
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 17,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "s5TZT",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            64,
+            60,
+            80,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "k8GqNU",
+              "name": "FormColumn",
+              "width": 720,
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jYil5",
+                  "name": "Progress",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ScTZP",
+                      "name": "Step Icons",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Y2XSV9",
+                          "name": "Step 1",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.white",
+                          "cornerRadius": 9999,
+                          "stroke": "$brand.blue.primary",
+                          "strokeWidth": 2,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "gfu2Z",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "user",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HHdHY",
+                          "name": "Track 1",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rVGpz",
+                          "name": "Step 2",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "fMULd",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "store",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oGXUD",
+                          "name": "Track 2",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HEoTQ",
+                          "name": "Step 3",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "mpO5p",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "hand-coins",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Xtfva",
+                          "name": "Track 3",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "r2nDh",
+                          "name": "Step 4",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "g7Ium1",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "users",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "c8vux5",
+                          "name": "Track 4",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p7yM1",
+                          "name": "Step 5",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "s6wv8c",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "house",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "p1puyW",
+                      "name": "Label Row",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lhNrX",
+                          "name": "Step Label",
+                          "fill": "$brand.blue.deep",
+                          "content": "Paso 1 de 5",
+                          "fontFamily": "Geist",
+                          "fontSize": 14,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Ggqb8",
+                          "name": "Percent",
+                          "fill": "#5B6B8C",
+                          "content": "20%",
+                          "fontFamily": "Geist",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ePiRX",
+                      "name": "Bar",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 8,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "d4uS2v",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Bar Fill",
+                          "width": 144,
+                          "height": 8,
+                          "fill": "$brand.orange.primary",
+                          "cornerRadius": 9999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "t8Jtu6",
+                  "name": "Section Card",
+                  "width": "fill_container",
+                  "fill": "$brand.white",
+                  "cornerRadius": 20,
+                  "stroke": "$brand.blue.sky",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "inner",
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 32,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "sSIiA",
+                      "name": "Section Header",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MAFLH",
+                          "name": "Section Icon",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.mist",
+                          "cornerRadius": 14,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "UV1VM",
+                              "name": "Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "user",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KdT1u",
+                          "name": "Titles",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "HQNDu",
+                              "name": "Title",
+                              "fill": "$brand.ink",
+                              "content": "01  ·  Datos personales",
+                              "fontFamily": "Geist",
+                              "fontSize": 19,
+                              "fontWeight": "700",
+                              "letterSpacing": -0.3
+                            },
+                            {
+                              "type": "text",
+                              "id": "dZF9a",
+                              "name": "Subtitle",
+                              "fill": "#5B6B8C",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Información básica para identificarte.",
+                              "fontFamily": "Geist",
+                              "fontSize": 14,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "aJXL6",
+                      "name": "Fields",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "rvu6l",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "rPMua",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Nombre(s)",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Nombre(s)"
+                                },
+                                "F7kzO2": {
+                                  "content": "Ej. Juan Carlos"
+                                }
+                              }
+                            },
+                            {
+                              "id": "zVMwW",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Apellido(s)",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Apellido(s)"
+                                },
+                                "F7kzO2": {
+                                  "content": "Ej. Pérez"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wbXoT",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "C9zz4",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Teléfono personal",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Teléfono personal"
+                                },
+                                "F7kzO2": {
+                                  "content": "(809) 000-0000"
+                                }
+                              }
+                            },
+                            {
+                              "id": "Kev3P",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Cédula",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Cédula"
+                                },
+                                "F7kzO2": {
+                                  "content": "000-0000000-0"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JTl7Z",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "aiq0b",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Fecha de nacimiento",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Fecha de nacimiento"
+                                },
+                                "F7kzO2": {
+                                  "content": "DD/MM/AAAA"
+                                }
+                              }
+                            },
+                            {
+                              "id": "W4s18K",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Estado civil",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Estado civil"
+                                },
+                                "F7kzO2": {
+                                  "content": "Seleccionar"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "iENlG",
+                      "name": "Step Nav",
+                      "width": "fill_container",
+                      "stroke": "#E6EEFB",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 20,
+                      "padding": [
+                        24,
+                        0,
+                        0,
+                        0
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "lGegk",
+                          "name": "Buttons",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "AhCOz",
+                              "name": "Spacer",
+                              "width": 1,
+                              "height": 1
+                            },
+                            {
+                              "id": "g2NTzy",
+                              "type": "ref",
+                              "ref": "rKdYB",
+                              "name": "Siguiente",
+                              "descendants": {
+                                "tKDxm": {
+                                  "content": "Siguiente"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sAmvm",
+          "type": "ref",
+          "ref": "Fw5cG",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Ss5jU",
+      "x": -5374,
+      "y": 15779,
+      "name": "Solicitud / Stepper · Paso 5 (Desktop)",
+      "clip": true,
+      "width": 1440,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "AIlZf",
+          "type": "ref",
+          "ref": "LUIi8",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "IJYzt",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            64,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "BuLkI",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "e9Vgkb",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "JaJiz",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "W6Opr2",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 44,
+              "fontWeight": "700",
+              "letterSpacing": -1.2
+            },
+            {
+              "type": "text",
+              "id": "x4Ghl",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": 720,
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 17,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "UKkdh",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            64,
+            60,
+            80,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "mdezC",
+              "name": "FormColumn",
+              "width": 720,
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "v4JmSb",
+                  "name": "Progress",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ZVLWB",
+                      "name": "Step Icons",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "rZHfp",
+                          "name": "Step 1",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "qyTx8",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ex0jK",
+                          "name": "Track 1",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "x0cTip",
+                          "name": "Step 2",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "l6oy4",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pdOxg",
+                          "name": "Track 2",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "u7rRd",
+                          "name": "Step 3",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "lO2Tf",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "vqCVQ",
+                          "name": "Track 3",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XI1Bw",
+                          "name": "Step 4",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Ds1Rs",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SXYWc",
+                          "name": "Track 4",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "bIUA8",
+                          "name": "Step 5",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.white",
+                          "cornerRadius": 9999,
+                          "stroke": "$brand.blue.primary",
+                          "strokeWidth": 2,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "HSx3N",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "house",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AQtlF",
+                      "name": "Label Row",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "iAuOd",
+                          "name": "Step Label",
+                          "fill": "$brand.blue.deep",
+                          "content": "Paso 5 de 5",
+                          "fontFamily": "Geist",
+                          "fontSize": 14,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "g8PuqR",
+                          "name": "Percent",
+                          "fill": "#5B6B8C",
+                          "content": "100%",
+                          "fontFamily": "Geist",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wHWlq",
+                      "name": "Bar",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 8,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jhPEM",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Bar Fill",
+                          "width": 720,
+                          "height": 8,
+                          "fill": "$brand.orange.primary",
+                          "cornerRadius": 9999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "q2Cwvx",
+                  "name": "Section Card",
+                  "width": "fill_container",
+                  "fill": "$brand.white",
+                  "cornerRadius": 20,
+                  "stroke": "$brand.blue.sky",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "inner",
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 32,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "jAl54",
+                      "name": "Section Header",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "BTUCM",
+                          "name": "Section Icon",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.mist",
+                          "cornerRadius": 14,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "bNJMz",
+                              "name": "Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "house",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p5hMSp",
+                          "name": "Titles",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "csi6I",
+                              "name": "Title",
+                              "fill": "$brand.ink",
+                              "content": "05  ·  Vivienda",
+                              "fontFamily": "Geist",
+                              "fontSize": 19,
+                              "fontWeight": "700",
+                              "letterSpacing": -0.3
+                            },
+                            {
+                              "type": "text",
+                              "id": "T358t0",
+                              "name": "Subtitle",
+                              "fill": "#5B6B8C",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Dónde vives y desde cuándo.",
+                              "fontFamily": "Geist",
+                              "fontSize": 14,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IU2YH",
+                      "name": "Fields",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "r3uY6",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "gA3sx",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Tipo de vivienda",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Tipo de vivienda"
+                                },
+                                "F7kzO2": {
+                                  "content": "Propia",
+                                  "fill": "$brand.ink"
+                                }
+                              }
+                            },
+                            {
+                              "id": "C8UKAX",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Tiempo residiendo",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Tiempo residiendo"
+                                },
+                                "F7kzO2": {
+                                  "content": "3 a 5 años",
+                                  "fill": "$brand.ink"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Q9pzkv",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "ZQwaw",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Dirección (calle, número y sector)",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Dirección (calle, número y sector)"
+                                },
+                                "F7kzO2": {
+                                  "content": "Calle 1 #25, Los Prados",
+                                  "fill": "$brand.ink"
+                                }
+                              }
+                            },
+                            {
+                              "id": "IJRrF",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Provincia",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Provincia"
+                                },
+                                "F7kzO2": {
+                                  "content": "Seleccionar",
+                                  "fill": "#7888A8"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "d34BlK",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "kcwLM",
+                              "type": "ref",
+                              "ref": "VLJf8",
+                              "name": "Referencia de dirección",
+                              "width": "fill_container",
+                              "descendants": {
+                                "viBEG": {
+                                  "content": "Referencia de dirección"
+                                },
+                                "F7kzO2": {
+                                  "content": "Ej. Frente al parque"
+                                }
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "EWVc6",
+                              "name": "Spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Y2lc6",
+                      "name": "Consent + Submit",
+                      "width": "fill_container",
+                      "stroke": "#E6EEFB",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 20,
+                      "padding": [
+                        24,
+                        0,
+                        0,
+                        0
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "VacoJ",
+                          "name": "Consent",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ukC7A",
+                              "name": "Checkbox",
+                              "width": 22,
+                              "height": 22,
+                              "fill": "$brand.blue.primary",
+                              "cornerRadius": 6,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "I0GNnC",
+                                  "name": "Check",
+                                  "width": 14,
+                                  "height": 14,
+                                  "icon": "check",
+                                  "library": "lucide",
+                                  "fill": "$brand.white"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "cwIz1",
+                              "name": "Consent Text",
+                              "fill": "#5B6B8C",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Autorizo a Mikro Crédito a consultar y reportar mi información en el buró de crédito para evaluar esta solicitud.",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Geist",
+                              "fontSize": 13,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Zh1av",
+                          "name": "Buttons",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "e89XhP",
+                              "name": "Anterior",
+                              "fill": "$brand.white",
+                              "cornerRadius": 14,
+                              "stroke": "#D5E3F7",
+                              "strokeWidth": 1.5,
+                              "strokeAlignment": "inner",
+                              "gap": 8,
+                              "padding": [
+                                16,
+                                24
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "YetjY",
+                                  "name": "Arrow",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "arrow-left",
+                                  "library": "lucide",
+                                  "fill": "$brand.blue.primary"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "s5JetT",
+                                  "name": "Label",
+                                  "fill": "$brand.blue.primary",
+                                  "content": "Anterior",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "id": "G0ONi",
+                              "type": "ref",
+                              "ref": "rKdYB",
+                              "name": "Enviar solicitud",
+                              "descendants": {
+                                "tKDxm": {
+                                  "content": "Enviar solicitud"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "u3ncvI",
+          "type": "ref",
+          "ref": "Fw5cG",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "C8u2cX",
+      "x": -5374,
+      "y": 17404,
+      "name": "Solicitud / Fuera de cobertura (Desktop)",
+      "clip": true,
+      "width": 1440,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "FeQXm",
+          "type": "ref",
+          "ref": "LUIi8",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "AxRXo",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.white",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            160,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "atz1x",
+              "name": "Result Icon",
+              "width": 64,
+              "height": 64,
+              "fill": "#FFF1DC",
+              "cornerRadius": 9999,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "c5GtwY",
+                  "name": "Map Pin",
+                  "width": 32,
+                  "height": 32,
+                  "icon": "map-pin",
+                  "library": "lucide",
+                  "fill": "$brand.orange.deep"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "m3vk8H",
+              "name": "Title",
+              "fill": "$brand.blue.deep",
+              "content": "Aún no llegamos a tu ciudad",
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 44,
+              "fontWeight": "700",
+              "letterSpacing": -1
+            },
+            {
+              "type": "text",
+              "id": "fJNdJ",
+              "name": "Body",
+              "fill": "#3C4F7A",
+              "textGrowth": "fixed-width",
+              "width": 540,
+              "content": "Lo sentimos, por el momento no estamos disponibles en tu ciudad. Estamos creciendo: vuelve a consultar en unos meses.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 17,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "id": "ocHPs",
+          "type": "ref",
+          "ref": "Fw5cG",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "XIyWp",
+      "x": -2834,
+      "y": 14062,
+      "name": "Solicitud / Stepper · Paso 3 (Mobile)",
+      "clip": true,
+      "width": 390,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "lOjll",
+          "type": "ref",
+          "ref": "wcnIs",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "GO0zF",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            40,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "ZPulO",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "QSSW0",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "dWDlk",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "G5wX3B",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 30,
+              "fontWeight": "700",
+              "letterSpacing": -0.8
+            },
+            {
+              "type": "text",
+              "id": "iF8at",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 14,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Efu7l",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            32,
+            20,
+            40,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "RxVUi",
+              "name": "Progress",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "N3dUVH",
+                  "name": "Step Icons",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "oN7TZ",
+                      "name": "Step 1",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "m0zcfT",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KHN4U",
+                      "name": "Track 1",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "YRG22",
+                      "name": "Step 2",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ahPBH",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "lucide",
+                          "fill": "$brand.white"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IaeMy",
+                      "name": "Track 2",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "$brand.blue.primary",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J3TBQk",
+                      "name": "Step 3",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "$brand.white",
+                      "cornerRadius": 9999,
+                      "stroke": "$brand.blue.primary",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "hiJB0",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "hand-coins",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "k1SNa",
+                      "name": "Track 3",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ZU5St",
+                      "name": "Step 4",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "HriL8",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "users",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "hNZZQ",
+                      "name": "Track 4",
+                      "width": "fill_container",
+                      "height": 3,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999
+                    },
+                    {
+                      "type": "frame",
+                      "id": "N1u1d",
+                      "name": "Step 5",
+                      "width": 40,
+                      "height": 40,
+                      "fill": "#DCE8F8",
+                      "cornerRadius": 9999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Q7RG8F",
+                          "name": "Icon",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "house",
+                          "library": "lucide",
+                          "fill": "#7888A8"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Y3uR0W",
+                  "name": "Label Row",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VmP48",
+                      "name": "Step Label",
+                      "fill": "$brand.blue.deep",
+                      "content": "Paso 3 de 5",
+                      "fontFamily": "Geist",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "V8nJA",
+                      "name": "Percent",
+                      "fill": "#5B6B8C",
+                      "content": "60%",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "A7sVA",
+                  "name": "Bar",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "#D5E3F7",
+                  "cornerRadius": 9999,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LgEK0",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Bar Fill",
+                      "width": 210,
+                      "height": 8,
+                      "fill": "$brand.orange.primary",
+                      "cornerRadius": 9999
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dbmgT",
+              "name": "Section Card",
+              "width": "fill_container",
+              "fill": "$brand.white",
+              "cornerRadius": 18,
+              "stroke": "$brand.blue.sky",
+              "strokeWidth": 2,
+              "strokeAlignment": "inner",
+              "layout": "vertical",
+              "gap": 18,
+              "padding": 22,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "r7Uee",
+                  "name": "Section Header",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "vZfSD",
+                      "name": "Section Icon",
+                      "width": 42,
+                      "height": 42,
+                      "fill": "$brand.mist",
+                      "cornerRadius": 12,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "t13xyn",
+                          "name": "Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "hand-coins",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DyRFt",
+                      "name": "Titles",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "CzelJ",
+                          "name": "Title",
+                          "fill": "$brand.ink",
+                          "content": "03  ·  Crédito solicitado",
+                          "fontFamily": "Geist",
+                          "fontSize": 16,
+                          "fontWeight": "700",
+                          "letterSpacing": -0.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "tIvUf",
+                          "name": "Subtitle",
+                          "fill": "#5B6B8C",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Cuánto necesitas y para qué.",
+                          "fontFamily": "Geist",
+                          "fontSize": 12.5,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KQffQ",
+                  "name": "Fields",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "children": [
+                    {
+                      "id": "Aj7FM",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Monto solicitado",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Monto solicitado"
+                        },
+                        "qYwem": {
+                          "content": "RD$10,000"
+                        }
+                      }
+                    },
+                    {
+                      "id": "E4FTJ5",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Propósito del préstamo",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Propósito del préstamo"
+                        },
+                        "qYwem": {
+                          "content": "Capital de trabajo"
+                        }
+                      }
+                    },
+                    {
+                      "id": "Okpiu",
+                      "type": "ref",
+                      "ref": "crIxS",
+                      "name": "Plazo",
+                      "width": "fill_container",
+                      "descendants": {
+                        "UKTdy": {
+                          "content": "Plazo"
+                        },
+                        "qYwem": {
+                          "content": "10 semanas"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qp5ra",
+                  "name": "Step Nav",
+                  "width": "fill_container",
+                  "stroke": "#E6EEFB",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    20,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "id": "mRxjo",
+                      "type": "ref",
+                      "ref": "rKdYB",
+                      "name": "Siguiente",
+                      "width": "fill_container",
+                      "justifyContent": "center",
+                      "padding": [
+                        16,
+                        0
+                      ],
+                      "descendants": {
+                        "tKDxm": {
+                          "content": "Siguiente"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "PEw8H",
+                      "name": "Anterior",
+                      "width": "fill_container",
+                      "fill": "$brand.white",
+                      "cornerRadius": 14,
+                      "stroke": "#D5E3F7",
+                      "strokeWidth": 1.5,
+                      "strokeAlignment": "inner",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        0
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "oQSmB",
+                          "name": "Arrow",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "arrow-left",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "o1pAQ",
+                          "name": "Label",
+                          "fill": "$brand.blue.primary",
+                          "content": "Anterior",
+                          "fontFamily": "Geist",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lCgWo",
+          "type": "ref",
+          "ref": "D2jdJ",
+          "width": "fill_container"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "rxKZe",
+      "x": -5374,
+      "y": 21325.182119205296,
+      "name": "Solicitud / Stepper · Paso 3 (Desktop)",
+      "clip": true,
+      "width": 1440,
+      "fill": "$brand.white",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "sEKhG",
+          "type": "ref",
+          "ref": "LUIi8",
+          "width": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "GwwWT",
+          "name": "Header",
+          "width": "fill_container",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 160,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$brand.blue.deep",
+                "position": 0
+              },
+              {
+                "color": "$brand.blue.sky",
+                "position": 1
+              }
+            ]
+          },
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            64,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "L94GE",
+              "fill": "#1A4FB2",
+              "cornerRadius": 9999,
+              "stroke": "#3F86E055",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
+              "gap": 10,
+              "padding": [
+                8,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "b0TIQ",
+                  "width": 8,
+                  "height": 8,
+                  "fill": "$brand.yellow.accent",
+                  "cornerRadius": 9999
+                },
+                {
+                  "type": "text",
+                  "id": "QEo5w",
+                  "fill": "#D8E8FF",
+                  "content": "Solicitud de crédito · Menos de 5 minutos",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "V5UdW",
+              "fill": "$brand.white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Cuéntanos sobre ti",
+              "lineHeight": 1.1,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 44,
+              "fontWeight": "700",
+              "letterSpacing": -1.2
+            },
+            {
+              "type": "text",
+              "id": "hIj4k",
+              "fill": "#D8E8FF",
+              "textGrowth": "fixed-width",
+              "width": 720,
+              "content": "Cinco pasos cortos. Tu información viaja cifrada y protegida.",
+              "lineHeight": 1.45,
+              "textAlign": "center",
+              "fontFamily": "Geist",
+              "fontSize": 17,
+              "fontWeight": "500"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "n81Tvk",
+          "name": "Body",
+          "width": "fill_container",
+          "fill": "$brand.mist",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            64,
+            60,
+            80,
+            60
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "C8DHsb",
+              "name": "FormColumn",
+              "width": 720,
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "NEf1E",
+                  "name": "Progress",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Hsaat",
+                      "name": "Step Icons",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MUVaD",
+                          "name": "Step 1",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "LSQQX",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Gt22R",
+                          "name": "Track 1",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p3GbI",
+                          "name": "Step 2",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "irLQX",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "$brand.white"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "E5QvM7",
+                          "name": "Track 2",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "$brand.blue.primary",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "J3oDF",
+                          "name": "Step 3",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.white",
+                          "cornerRadius": 9999,
+                          "stroke": "$brand.blue.primary",
+                          "strokeWidth": 2,
+                          "strokeAlignment": "inner",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "UB7tK",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "hand-coins",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZXFTn",
+                          "name": "Track 3",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Sc0eO",
+                          "name": "Step 4",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "zCqIk",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "users",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zBPiq",
+                          "name": "Track 4",
+                          "width": "fill_container",
+                          "height": 3,
+                          "fill": "#D5E3F7",
+                          "cornerRadius": 9999
+                        },
+                        {
+                          "type": "frame",
+                          "id": "j9WcK",
+                          "name": "Step 5",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#DCE8F8",
+                          "cornerRadius": 9999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "U1ZNI",
+                              "name": "Icon",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "house",
+                              "library": "lucide",
+                              "fill": "#7888A8"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XH49o",
+                      "name": "Label Row",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qdPY2",
+                          "name": "Step Label",
+                          "fill": "$brand.blue.deep",
+                          "content": "Paso 3 de 5",
+                          "fontFamily": "Geist",
+                          "fontSize": 14,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "aiAIh",
+                          "name": "Percent",
+                          "fill": "#5B6B8C",
+                          "content": "60%",
+                          "fontFamily": "Geist",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eDI06",
+                      "name": "Bar",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 8,
+                      "fill": "#D5E3F7",
+                      "cornerRadius": 9999,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "q5jObi",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Bar Fill",
+                          "width": 432,
+                          "height": 8,
+                          "fill": "$brand.orange.primary",
+                          "cornerRadius": 9999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Hd9hn",
+                  "name": "Section Card",
+                  "width": "fill_container",
+                  "fill": "$brand.white",
+                  "cornerRadius": 20,
+                  "stroke": "$brand.blue.sky",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "inner",
+                  "layout": "vertical",
+                  "gap": 24,
+                  "padding": 32,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FNbYT",
+                      "name": "Section Header",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "M8O2my",
+                          "name": "Section Icon",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$brand.mist",
+                          "cornerRadius": 14,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "wkH0k",
+                              "name": "Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "hand-coins",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wjC4K",
+                          "name": "Titles",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "J9tBY",
+                              "name": "Title",
+                              "fill": "$brand.ink",
+                              "content": "03  ·  Crédito solicitado",
+                              "fontFamily": "Geist",
+                              "fontSize": 19,
+                              "fontWeight": "700",
+                              "letterSpacing": -0.3
+                            },
+                            {
+                              "type": "text",
+                              "id": "KTHo2",
+                              "name": "Subtitle",
+                              "fill": "#5B6B8C",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Cuánto necesitas y para qué.",
+                              "fontFamily": "Geist",
+                              "fontSize": 14,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "A5Bmtb",
+                      "name": "Fields",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "P2Fj3i",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "UefZy",
+                              "type": "ref",
+                              "ref": "crIxS",
+                              "name": "Monto solicitado",
+                              "width": "fill_container",
+                              "descendants": {
+                                "UKTdy": {
+                                  "content": "Monto solicitado",
+                                  "fontSize": 14,
+                                  "fontWeight": "500"
+                                },
+                                "hXbxd": {
+                                  "stroke": "#E6EEFB",
+                                  "strokeWidth": 1.5
+                                },
+                                "qYwem": {
+                                  "content": "RD$10,000"
+                                }
+                              }
+                            },
+                            {
+                              "id": "P0yyC",
+                              "type": "ref",
+                              "ref": "crIxS",
+                              "name": "Propósito del préstamo",
+                              "width": "fill_container",
+                              "descendants": {
+                                "UKTdy": {
+                                  "content": "Propósito del préstamo",
+                                  "fontSize": 14,
+                                  "fontWeight": "500"
+                                },
+                                "hXbxd": {
+                                  "stroke": "#E6EEFB",
+                                  "strokeWidth": 1.5
+                                },
+                                "qYwem": {
+                                  "content": "Capital de trabajo"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C9FBRr",
+                          "name": "Row",
+                          "width": "fill_container",
+                          "gap": 20,
+                          "children": [
+                            {
+                              "id": "rPiZ5",
+                              "type": "ref",
+                              "ref": "crIxS",
+                              "name": "Plazo",
+                              "width": "fill_container",
+                              "descendants": {
+                                "UKTdy": {
+                                  "content": "Plazo",
+                                  "fontSize": 14,
+                                  "fontWeight": "500"
+                                },
+                                "hXbxd": {
+                                  "stroke": "#E6EEFB",
+                                  "strokeWidth": 1.5
+                                },
+                                "qYwem": {
+                                  "content": "10 semanas"
+                                }
+                              }
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ZRFFW",
+                              "name": "Spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lXOXX",
+                      "name": "Step Nav",
+                      "width": "fill_container",
+                      "stroke": "#E6EEFB",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "padding": [
+                        24,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "h8zxU",
+                          "name": "Anterior",
+                          "fill": "$brand.white",
+                          "cornerRadius": 14,
+                          "stroke": "#D5E3F7",
+                          "strokeWidth": 1.5,
+                          "strokeAlignment": "inner",
+                          "gap": 8,
+                          "padding": [
+                            16,
+                            24
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "uNLK1",
+                              "name": "Arrow",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "arrow-left",
+                              "library": "lucide",
+                              "fill": "$brand.blue.primary"
+                            },
+                            {
+                              "type": "text",
+                              "id": "BWDb4",
+                              "name": "Label",
+                              "fill": "$brand.blue.primary",
+                              "content": "Anterior",
+                              "fontFamily": "Geist",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "txCIe",
+                          "type": "ref",
+                          "ref": "rKdYB",
+                          "name": "Siguiente",
+                          "descendants": {
+                            "tKDxm": {
+                              "content": "Siguiente"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "z4XFt",
+          "type": "ref",
+          "ref": "Fw5cG",
+          "width": "fill_container"
         }
       ]
     }
