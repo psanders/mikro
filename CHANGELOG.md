@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.6.1](https://github.com/psanders/mikro/compare/v2.6.0...v2.6.1) (2026-09-22)
+
+### Bug Fixes
+
+- **api:** list only ads clicked during the ad-quality report window ([#289](https://github.com/psanders/mikro/issues/289)) ([3c44bcf](https://github.com/psanders/mikro/commit/3c44bcf09a75b988e0edec972214d4ff07806e29))
+
 # [2.6.0](https://github.com/psanders/mikro/compare/v2.5.0...v2.6.0) (2026-09-22)
 
 ### Features
