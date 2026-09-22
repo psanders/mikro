@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.4.0](https://github.com/psanders/mikro/compare/v2.3.1...v2.4.0) (2026-09-22)
+
+### Features
+
+- measure form completeness for the solicitud (issue [#280](https://github.com/psanders/mikro/issues/280)) ([#286](https://github.com/psanders/mikro/issues/286)) ([a6aef20](https://github.com/psanders/mikro/commit/a6aef20eb3f635117dca386e5260a85a834fb02a))
+
 ## [2.3.1](https://github.com/psanders/mikro/compare/v2.3.0...v2.3.1) (2026-09-18)
 
 **Note:** Version bump only for package @mikro/ctl
