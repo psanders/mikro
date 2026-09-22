@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.6.0](https://github.com/psanders/mikro/compare/v2.5.0...v2.6.0) (2026-09-22)
+
+### Features
+
+- **site:** step-by-step solicitud with progress; auto-reject out-of-area applications ([#288](https://github.com/psanders/mikro/issues/288)) ([18e4ed1](https://github.com/psanders/mikro/commit/18e4ed1014abd6302c1209f23eac0b7f9a3f3528))
+
 # [2.5.0](https://github.com/psanders/mikro/compare/v2.4.0...v2.5.0) (2026-09-22)
 
 ### Features
