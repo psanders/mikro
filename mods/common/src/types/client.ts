@@ -382,7 +382,13 @@ export interface DbClient {
       create: MetaAdWriteData & { id: string };
       update: MetaAdWriteData;
     }): Promise<MetaAd>;
-    findMany(args?: { orderBy?: { lastSeenAt?: "asc" | "desc" } }): Promise<MetaAd[]>;
+    findMany(args?: {
+      where?: {
+        firstSeenAt?: { lte?: Date };
+        lastSeenAt?: { gte?: Date };
+      };
+      orderBy?: { lastSeenAt?: "asc" | "desc" };
+    }): Promise<MetaAd[]>;
   };
 
   followUpJob: {

@@ -114,6 +114,21 @@ describe("createGenerateAdQualityReport", () => {
     expect(row?.medianScore).to.equal(null); // not 0, which would read as "terrible"
   });
 
+  it("seeds only ads clicked during the window, so retired ads do not pad the table", async () => {
+    const client = makeClient([], [AD]);
+
+    await createGenerateAdQualityReport(client as never)({
+      since: "2026-09-01",
+      until: "2026-09-15"
+    } as never);
+
+    const where = client.metaAd.findMany.firstCall.args[0].where;
+    const appWhere = client.loanApplication.findMany.firstCall.args[0].where;
+    // Overlap test: first seen by the window's end, last seen since its start.
+    expect(where.firstSeenAt.lte.getTime()).to.equal(appWhere.createdAt.lte.getTime());
+    expect(where.lastSeenAt.gte.getTime()).to.equal(appWhere.createdAt.gte.getTime());
+  });
+
   it("gives an uncatalogued ad id its own row rather than counting it as organic", async () => {
     const client = makeClient([makeApplication({ adId: "999999" })], []);
 
