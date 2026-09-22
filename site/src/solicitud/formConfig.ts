@@ -3,7 +3,7 @@
  *
  * Static definition of the solicitud form, shared by the stepper (/solicitud)
  * and the legacy accordion (/solicitud-v0): sections, option lists, the
- * initial state, and the formatters the inputs apply as the applicant types.
+ * initial state, and the formatters the text inputs apply as the applicant types.
  * Which fields are REQUIRED lives in @mikro/application-form
  * (APPLICATION_SECTIONS) so the apiserver's completeness report reads the same.
  */
@@ -25,12 +25,6 @@ export function formatPhone(raw: string): string {
   if (digits.length <= 3) return digits;
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
-export function formatCurrency(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (!digits) return "";
-  return Number(digits).toLocaleString("es-DO");
 }
 
 export const ESTADO_CIVIL_OPTIONS = [
@@ -100,6 +94,13 @@ export const VENTAS_MENSUALES_OPTIONS = [
 export const TIPO_LOCAL_OPTIONS = ["Propio", "Alquilado", "En mi vivienda"];
 export const FORMALIZACION_OPTIONS = ["Tiene RNC (formalizado)", "Informal (sin RNC)"];
 export const NUM_EMPLEADOS_OPTIONS = ["Solo yo", "1 a 3", "4 a 10", "Más de 10"];
+// A fixed menu instead of a free amount, so nobody asks for more than we lend.
+// Values keep the thousands-separated string the free-form field used to send
+// ("15,000"), which the apiserver's normalizer already parses to 15000.
+export const MONTO_OPTIONS: SelectOption[] = [5, 10, 15, 20, 25, 30].map((k) => {
+  const amount = (k * 1000).toLocaleString("en-US");
+  return { value: amount, label: `RD$${amount}` };
+});
 export const PLAZO_OPTIONS = ["10 semanas", "12 semanas", "15 semanas", "18 semanas"];
 export const TIPO_VIVIENDA_OPTIONS = ["Propia", "Alquilada", "Familiar", "Otra"];
 export const TIEMPO_RESIDIENDO_OPTIONS = [

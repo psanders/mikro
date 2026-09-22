@@ -24,6 +24,15 @@ The website SHALL serve the loan application at `/solicitud` as a stepper that s
 - **WHEN** the applicant reaches step 5
 - **THEN** the buró consent checkbox and "Enviar solicitud" button are shown in place of "Siguiente"
 
+### Requirement: Requested amount is chosen from a fixed list
+
+On both form routes, "Monto solicitado" SHALL be a select limited to RD$5,000, RD$10,000, RD$15,000, RD$20,000, RD$25,000 and RD$30,000, so applicants cannot request more than Mikro lends. The submitted value keeps the thousands-separated form ("15,000") the apiserver already parses.
+
+#### Scenario: Only the lending amounts are offered
+
+- **WHEN** the applicant opens the "Monto solicitado" field
+- **THEN** the only choices are RD$5,000 through RD$30,000 in RD$5,000 steps, and free-form entry is not possible
+
 ### Requirement: Legacy accordion form at /solicitud-v0
 
 The website SHALL keep the previous accordion form available at `/solicitud-v0`, sharing field definitions, autosave, submission and result screens with the stepper.

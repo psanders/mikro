@@ -21,11 +21,13 @@ Status values: `pending` · `in-progress` · `done` · `skipped` (with reason).
 
 ## Pencil frames (main checkout pencil.pen)
 
-- Mobile: `aKmjR` Stepper · Paso 1, `NuL37` Stepper · Paso 5, `DoTlt` Fuera de cobertura
-- Desktop: `z9i4le` Stepper · Paso 1, `Ss5jU` Stepper · Paso 5, `C8u2cX` Fuera de cobertura
+- Mobile: `aKmjR` Stepper · Paso 1, `XIyWp` Paso 3, `NuL37` Paso 5, `DoTlt` Fuera de cobertura
+- Desktop: `z9i4le` Stepper · Paso 1, `rxKZe` Paso 3, `Ss5jU` Paso 5, `C8u2cX` Fuera de cobertura
+- "Monto solicitado" swapped to a select (`crIxS`) in the legacy accordion frames too: `iVHMA` (mBc0P desktop), `eI8J4` (PT4PZ mobile)
 
 ## Decision log
 
+- 2026-09-22 — User: "Monto solicitado" must be a select, RD$5,000–RD$30,000 in 5k steps (user wrote "5,10,15…30 pesos"; read as thousands). UI-only cap; the server still accepts any amount.
 - 2026-09-22 — Found + fixed a pre-existing intake bug: `fbp`/`fbc` posted as `null` failed `z.string().optional()`, so final submits without a Meta cookie were dropped as "invalid payload" while answering ok (row stayed DRAFT). Tracking keys are now `nullish()`.
 - 2026-09-22 — Desktop Pencil frames added on user request.
 - 2026-09-22 — Design deferred at first: Pencil had `proyecta/design/pencil.pen` open and the MCP ignores `filePath`; resumed once the user opened mikro's pencil.pen. Only new frames were added (the file carries another session's uncommitted edits, so it is not committed here).

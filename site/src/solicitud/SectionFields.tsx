@@ -9,6 +9,7 @@ import type { ChangeEvent } from "react";
 import {
   ESTADO_CIVIL_OPTIONS,
   FORMALIZACION_OPTIONS,
+  MONTO_OPTIONS,
   NUM_EMPLEADOS_OPTIONS,
   PLAZO_OPTIONS,
   PROPOSITO_OPTIONS,
@@ -20,7 +21,6 @@ import {
   TIPO_VIVIENDA_OPTIONS,
   VENTAS_MENSUALES_OPTIONS,
   formatCedula,
-  formatCurrency,
   formatPhone,
   type SelectOption
 } from "./formConfig";
@@ -192,40 +192,6 @@ function PhoneField({ label, name, value, onChange, required, invalid }: BaseFie
   );
 }
 
-function CurrencyField({
-  label,
-  name,
-  placeholder,
-  value,
-  onChange,
-  required,
-  invalid
-}: BaseFieldProps & { placeholder: string }) {
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onChange(name, formatCurrency(e.target.value));
-  };
-  return (
-    <FieldShell label={label} invalid={invalid}>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-[#7888A8]">
-          RD$
-        </span>
-        <input
-          type="text"
-          inputMode="numeric"
-          name={name}
-          placeholder={placeholder}
-          value={value}
-          onChange={handleChange}
-          required={required}
-          aria-invalid={invalid || undefined}
-          className={`${inputBase} ${borderFor(invalid)} pl-14`}
-        />
-      </div>
-    </FieldShell>
-  );
-}
-
 function Row({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-5 md:grid-cols-2">{children}</div>;
 }
@@ -343,9 +309,10 @@ export function SectionFields({ sectionId, form, onChange, invalidFields }: Sect
       return (
         <>
           <Row>
-            <CurrencyField
+            <SelectField
               label="Monto solicitado"
-              placeholder="0"
+              placeholder="Seleccionar"
+              options={MONTO_OPTIONS}
               {...f("requestedAmount")}
               required
             />

@@ -18,6 +18,7 @@
 - [x] 3.2 Move accordion to `SolicitudV0Page.tsx` at `/solicitud-v0` on the shared module
 - [x] 3.3 New stepper `SolicitudPage.tsx` at `/solicitud`
 - [x] 3.4 Out-of-area screen; no `trackLead` on out-of-area
+- [x] 3.5 "Monto solicitado" becomes a select: RD$5,000–RD$30,000 in RD$5,000 steps (both routes)
 
 ## 4. Verify
 
