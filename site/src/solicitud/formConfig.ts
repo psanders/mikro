@@ -147,10 +147,10 @@ export const INITIAL_FORM: Record<string, string> = {
   formalization: "",
   employeeCount: "",
   businessPhone: "",
-  // Preselected defaults (RD$10,000 over 10 weeks, and Puerto Plata, the one
-  // province we lend in today); the applicant can still change them. Note they
-  // ride every autosave, so drafts count these 3 required fields as filled in
-  // the form-completeness report even before the applicant reaches them.
+  // Preselected defaults (RD$10,000 over 10 weeks); the applicant can still
+  // change them. Note they ride every autosave, so drafts count these 2
+  // required fields as filled in the form-completeness report even before the
+  // applicant reaches them.
   requestedAmount: "10,000",
   purpose: "",
   requestedTermWeeks: "10 semanas",
@@ -161,7 +161,9 @@ export const INITIAL_FORM: Record<string, string> = {
   housingType: "",
   residenceTime: "",
   homeAddress: "",
-  province: "PUERTO_PLATA",
+  // Deliberately NOT preselected: defaulting to our only covered province would
+  // let out-of-area applicants slip through by leaving it untouched.
+  province: "",
   addressReference: ""
 };
 

@@ -19,7 +19,7 @@
 - [x] 3.3 New stepper `SolicitudPage.tsx` at `/solicitud`
 - [x] 3.4 Out-of-area screen; no `trackLead` on out-of-area
 - [x] 3.5 "Monto solicitado" becomes a select: RD$5,000–RD$30,000 in RD$5,000 steps (both routes)
-- [x] 3.6 Preselect RD$10,000, 10 semanas and Puerto Plata (both routes)
+- [x] 3.6 Preselect RD$10,000 and 10 semanas (both routes); Provincia stays unselected on purpose
 
 ## 4. Verify
 

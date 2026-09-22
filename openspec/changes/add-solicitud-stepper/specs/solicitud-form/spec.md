@@ -31,7 +31,8 @@ On both form routes, "Monto solicitado" SHALL be a select limited to RD$5,000, R
 #### Scenario: Sensible defaults are preselected
 
 - **WHEN** an applicant opens either form route
-- **THEN** "Monto solicitado" is preselected to RD$10,000, "Plazo" to 10 semanas and "Provincia" to Puerto Plata, and the applicant can change any of them
+- **THEN** "Monto solicitado" is preselected to RD$10,000 and "Plazo" to 10 semanas, and the applicant can change either
+- **AND** "Provincia" starts unselected, so applicants must actively choose it rather than default into the covered area
 
 #### Scenario: Only the lending amounts are offered
 

@@ -174,7 +174,8 @@ export function SolicitudPage() {
       <section className="bg-brand-mist px-5 py-8 md:px-[60px] md:py-14 md:pb-20">
         <form
           onSubmit={handleSubmit}
-          noValidate={!isLast}
+          // Validation is ours on every step (flags + message), never the browser popup.
+          noValidate
           className="mx-auto flex max-w-[720px] flex-col gap-6"
         >
           {/* Progress */}
