@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
+import { PROVINCES } from "./applicationForm.js";
 
 /**
  * Public loan-application (solicitud) intake.
@@ -97,7 +98,11 @@ export const applicationPayloadSchema = z
     partial: z.boolean().optional(),
     lastSection: z.string().optional(),
     ...Object.fromEntries(ALL_CONTENT_KEYS.map((k) => [k, z.string().optional()])),
-    ...Object.fromEntries(TRACKING_KEYS.map((k) => [k, z.string().optional()])),
+    // Nullish, not just optional: the site sends `fbp`/`fbc` as null when the
+    // browser has no Meta cookie (most visitors have no `_fbc`, which is only set
+    // after an ad click with fbclid). Rejecting null here once dropped every such
+    // FINAL submission as an "invalid payload" while still answering "ok".
+    ...Object.fromEntries(TRACKING_KEYS.map((k) => [k, z.string().nullish()])),
     ...Object.fromEntries(ATTRIBUTION_KEYS.map((k) => [k, z.string().optional()]))
   })
   // Tolerate fields we don't know about yet (form drift) — they still land in rawData.
@@ -649,40 +654,9 @@ export const BUSINESS_TYPE_LABELS: Record<string, string> = {
   OTRO: "Otro"
 };
 
-export const PROVINCE_LABELS: Record<string, string> = {
-  AZUA: "Azua",
-  BAHORUCO: "Bahoruco",
-  BARAHONA: "Barahona",
-  DAJABON: "Dajabón",
-  DISTRITO_NACIONAL: "Distrito Nacional",
-  DUARTE: "Duarte",
-  ELIAS_PINA: "Elías Piña",
-  EL_SEIBO: "El Seibo",
-  ESPAILLAT: "Espaillat",
-  HATO_MAYOR: "Hato Mayor",
-  HERMANAS_MIRABAL: "Hermanas Mirabal",
-  INDEPENDENCIA: "Independencia",
-  LA_ALTAGRACIA: "La Altagracia",
-  LA_ROMANA: "La Romana",
-  LA_VEGA: "La Vega",
-  MARIA_TRINIDAD_SANCHEZ: "María Trinidad Sánchez",
-  MONSENOR_NOUEL: "Monseñor Nouel",
-  MONTE_CRISTI: "Monte Cristi",
-  MONTE_PLATA: "Monte Plata",
-  PEDERNALES: "Pedernales",
-  PERAVIA: "Peravia",
-  PUERTO_PLATA: "Puerto Plata",
-  SAMANA: "Samaná",
-  SAN_CRISTOBAL: "San Cristóbal",
-  SAN_JOSE_DE_OCOA: "San José de Ocoa",
-  SAN_JUAN: "San Juan",
-  SAN_PEDRO_DE_MACORIS: "San Pedro de Macorís",
-  SANCHEZ_RAMIREZ: "Sánchez Ramírez",
-  SANTIAGO: "Santiago",
-  SANTIAGO_RODRIGUEZ: "Santiago Rodríguez",
-  SANTO_DOMINGO: "Santo Domingo",
-  VALVERDE: "Valverde"
-};
+export const PROVINCE_LABELS: Record<string, string> = Object.fromEntries(
+  PROVINCES.map((p) => [p.value, p.label])
+);
 
 // ---- manual purge (hard delete) ----
 

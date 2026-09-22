@@ -11,8 +11,12 @@ import {
   APPLICATION_SECTIONS,
   computeFormProgress,
   isSectionComplete,
-  buildAutosavePayload
+  buildAutosavePayload,
+  isOutOfCoverageArea,
+  PROVINCES,
+  PROVINCE_VALUES
 } from "../../src/schemas/applicationForm.js";
+import { PROVINCE_LABELS } from "../../src/schemas/application.js";
 
 const REQUIRED_TOTAL = APPLICATION_SECTIONS.reduce((sum, s) => sum + s.requiredFields.length, 0);
 
@@ -138,5 +142,37 @@ describe("buildAutosavePayload", () => {
       partial: true,
       lastSection: "personal"
     });
+  });
+});
+
+describe("isOutOfCoverageArea", () => {
+  const covered = ["PUERTO_PLATA"];
+
+  it("treats a covered province as in-area", () => {
+    expect(isOutOfCoverageArea("PUERTO_PLATA", covered)).to.equal(false);
+  });
+
+  it("matches the display label and stray casing/punctuation too", () => {
+    expect(isOutOfCoverageArea("Puerto Plata", covered)).to.equal(false);
+    expect(isOutOfCoverageArea(" puerto plata. ", covered)).to.equal(false);
+  });
+
+  it("flags a province that is not covered", () => {
+    expect(isOutOfCoverageArea("SANTIAGO", covered)).to.equal(true);
+    expect(isOutOfCoverageArea("Santiago Rodríguez", covered)).to.equal(true);
+  });
+
+  it("never flags a missing or empty province", () => {
+    expect(isOutOfCoverageArea(null, covered)).to.equal(false);
+    expect(isOutOfCoverageArea(undefined, covered)).to.equal(false);
+    expect(isOutOfCoverageArea("  ", covered)).to.equal(false);
+  });
+});
+
+describe("PROVINCES", () => {
+  it("backs PROVINCE_LABELS one-to-one", () => {
+    expect(Object.keys(PROVINCE_LABELS)).to.deep.equal([...PROVINCE_VALUES]);
+    expect(PROVINCE_LABELS.PUERTO_PLATA).to.equal("Puerto Plata");
+    expect(PROVINCES).to.have.length(32);
   });
 });

@@ -48,6 +48,9 @@
     "attachmentsPath": "./data/attachments/accounting",
     "disbursementAccountId": "00000000-0000-4000-8000-000000000000"
   },
+  "applications": {
+    "coveredProvinces": ["PUERTO_PLATA"]
+  },
   "evals": {
     "similarityThreshold": 0.7,
     "vendors": {

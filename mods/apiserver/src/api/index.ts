@@ -47,6 +47,8 @@ export {
 // Loan application (intake + review) operations
 export {
   createUpsertApplication,
+  createApplicationIntakeHandler,
+  OUT_OF_COVERAGE_AREA,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
   createSubmitApplicationFromFlow,

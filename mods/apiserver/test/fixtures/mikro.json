@@ -30,5 +30,8 @@
   "accounting": {
     "attachmentsPath": "/tmp/mikro-test-attachments",
     "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
+  },
+  "applications": {
+    "coveredProvinces": ["PUERTO_PLATA"]
   }
 }

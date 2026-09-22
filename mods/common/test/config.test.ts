@@ -17,7 +17,8 @@ const minimalRequiredFields = {
   whatsapp: {
     phoneNumberId: "123",
     accessToken: "token"
-  }
+  },
+  applications: { coveredProvinces: ["PUERTO_PLATA"] }
 };
 
 describe("mikroConfigSchema — accounting.disbursementAccountId", () => {
@@ -89,5 +90,51 @@ describe("mikroConfigSchema — qcobro.portfolios[].match tag shapes", () => {
   it("rejects a tag in an unknown namespace", () => {
     const parsed = mikroConfigSchema.safeParse(withPortfolio(["bogus:whatever"]));
     expect(parsed.success).to.equal(false);
+  });
+});
+
+describe("mikroConfigSchema — applications.coveredProvinces", () => {
+  const withoutApplications: Record<string, unknown> = { ...minimalRequiredFields };
+  delete withoutApplications.applications;
+  const base = {
+    ...withoutApplications,
+    accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+  };
+
+  it("rejects a config with no applications section (boot must fail)", () => {
+    const parsed = mikroConfigSchema.safeParse(base);
+    expect(parsed.success).to.equal(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((i) => i.path.join(".") === "applications")).to.equal(true);
+    }
+  });
+
+  it("rejects an applications section missing coveredProvinces", () => {
+    const parsed = mikroConfigSchema.safeParse({ ...base, applications: {} });
+    expect(parsed.success).to.equal(false);
+  });
+
+  it("rejects an empty coveredProvinces list", () => {
+    const parsed = mikroConfigSchema.safeParse({ ...base, applications: { coveredProvinces: [] } });
+    expect(parsed.success).to.equal(false);
+  });
+
+  it("rejects a value that is not a province enum value", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      applications: { coveredProvinces: ["Puerto Plata"] }
+    });
+    expect(parsed.success).to.equal(false);
+  });
+
+  it("accepts a list of province enum values", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      applications: { coveredProvinces: ["PUERTO_PLATA", "SANTIAGO"] }
+    });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) {
+      expect(parsed.data.applications.coveredProvinces).to.deep.equal(["PUERTO_PLATA", "SANTIAGO"]);
+    }
   });
 });

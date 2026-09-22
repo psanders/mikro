@@ -75,6 +75,11 @@ export {
   computeFormProgress,
   isSectionComplete,
   buildAutosavePayload,
+  PROVINCES,
+  PROVINCE_VALUES,
+  normalizeProvinceKey,
+  isOutOfCoverageArea,
+  type Province,
   type ApplicationSectionDef,
   type FormProgress
 } from "./applicationForm.js";

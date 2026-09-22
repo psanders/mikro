@@ -30,6 +30,14 @@ describe("normalizeApplication — Meta tracking fields", () => {
     expect(parsed.eventSourceUrl).to.equal("https://mikro.do/solicitud");
   });
 
+  // Regression: the site posts `fbc: null` / `fbp: null` when the browser has
+  // no Meta cookie. Rejecting null made the endpoint drop the final submission
+  // as an invalid payload (while answering "ok"), leaving the row a DRAFT.
+  it("accepts null tracking cookies, as the site sends them when absent", () => {
+    const parsed = applicationPayloadSchema.safeParse({ ...payload, fbp: null, fbc: null });
+    expect(parsed.success).to.equal(true);
+  });
+
   it("keeps tracking cookies out of rawData, which is persisted with the application", () => {
     const normalized = normalizeApplication(applicationPayloadSchema.parse(payload));
 

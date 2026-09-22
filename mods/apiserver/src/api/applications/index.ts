@@ -1,7 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-export { createUpsertApplication } from "./createUpsertApplication.js";
+export { createUpsertApplication, OUT_OF_COVERAGE_AREA } from "./createUpsertApplication.js";
+export { createApplicationIntakeHandler } from "./createApplicationIntakeHandler.js";
 export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
 export { createGetApplicationByPhone } from "./createGetApplicationByPhone.js";
 export { createSubmitApplicationFromFlow } from "./createSubmitApplicationFromFlow.js";

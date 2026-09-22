@@ -28,7 +28,8 @@ function makeTestConfig(sessionTimeoutSeconds: number): object {
     },
     accounting: {
       disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
-    }
+    },
+    applications: { coveredProvinces: ["PUERTO_PLATA"] }
   };
 }
 
