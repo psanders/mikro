@@ -7,7 +7,7 @@ Separately, Mikro only lends in Puerto Plata today, yet applicants from every pr
 ## What Changes
 
 - `/solicitud` becomes a **stepper**: the same five sections (same questions, same grouping, same icons), one per screen, with a "Paso X de 5" label, a progress bar, and a row of step icons. Anterior/Siguiente buttons; each step validates its required fields before advancing; the buró consent and the submit button sit on the last step.
-- "Monto solicitado" becomes a select (RD$5,000–RD$30,000 in RD$5,000 steps) instead of a free amount, on both routes, so nobody asks for more than Mikro lends.
+- "Monto solicitado" becomes a select (RD$5,000–RD$30,000 in RD$5,000 steps) instead of a free amount, on both routes, so nobody asks for more than Mikro lends. Defaults: RD$10,000, 10 semanas, Puerto Plata.
 - The current accordion form moves to **`/solicitud-v0`**, unchanged in behavior, so we can revert or A/B it.
 - Both pages share one module for field definitions, option lists, initial state, autosave, submit, Meta tracking, and the result screens — no duplicated form logic.
 - New required apiserver config **`applications.coveredProvinces`** (array of province enum values, initially `["PUERTO_PLATA"]`). No default: boot fails without it.

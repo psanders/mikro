@@ -27,6 +27,7 @@ Status values: `pending` · `in-progress` · `done` · `skipped` (with reason).
 
 ## Decision log
 
+- 2026-09-22 — User: default the form to RD$10,000, 10 semanas, Puerto Plata (both routes; Pencil Paso 3 + accordion frames updated). Side effect: defaults ride every autosave, so draft completeness counts 3 extra required fields as filled.
 - 2026-09-22 — User: "Monto solicitado" must be a select, RD$5,000–RD$30,000 in 5k steps (user wrote "5,10,15…30 pesos"; read as thousands). UI-only cap; the server still accepts any amount.
 - 2026-09-22 — Found + fixed a pre-existing intake bug: `fbp`/`fbc` posted as `null` failed `z.string().optional()`, so final submits without a Meta cookie were dropped as "invalid payload" while answering ok (row stayed DRAFT). Tracking keys are now `nullish()`.
 - 2026-09-22 — Desktop Pencil frames added on user request.

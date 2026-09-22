@@ -147,9 +147,13 @@ export const INITIAL_FORM: Record<string, string> = {
   formalization: "",
   employeeCount: "",
   businessPhone: "",
-  requestedAmount: "",
+  // Preselected defaults (RD$10,000 over 10 weeks, and Puerto Plata, the one
+  // province we lend in today); the applicant can still change them. Note they
+  // ride every autosave, so drafts count these 3 required fields as filled in
+  // the form-completeness report even before the applicant reaches them.
+  requestedAmount: "10,000",
   purpose: "",
-  requestedTermWeeks: "",
+  requestedTermWeeks: "10 semanas",
   spouseName: "",
   spousePhone: "",
   referenceName: "",
@@ -157,7 +161,7 @@ export const INITIAL_FORM: Record<string, string> = {
   housingType: "",
   residenceTime: "",
   homeAddress: "",
-  province: "",
+  province: "PUERTO_PLATA",
   addressReference: ""
 };
 

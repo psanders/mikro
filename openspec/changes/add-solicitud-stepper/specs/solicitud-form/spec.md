@@ -28,6 +28,11 @@ The website SHALL serve the loan application at `/solicitud` as a stepper that s
 
 On both form routes, "Monto solicitado" SHALL be a select limited to RD$5,000, RD$10,000, RD$15,000, RD$20,000, RD$25,000 and RD$30,000, so applicants cannot request more than Mikro lends. The submitted value keeps the thousands-separated form ("15,000") the apiserver already parses.
 
+#### Scenario: Sensible defaults are preselected
+
+- **WHEN** an applicant opens either form route
+- **THEN** "Monto solicitado" is preselected to RD$10,000, "Plazo" to 10 semanas and "Provincia" to Puerto Plata, and the applicant can change any of them
+
 #### Scenario: Only the lending amounts are offered
 
 - **WHEN** the applicant opens the "Monto solicitado" field
