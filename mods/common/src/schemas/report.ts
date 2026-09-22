@@ -88,6 +88,15 @@ export type GenerateLoanStatementInput = z.infer<typeof generateLoanStatementSch
  * by the ad that produced them, with the risk-band split and median Mikro Score
  * that say whether an ad brings borrowers worth having.
  *
+ * Each row also carries form-completeness numbers that don't depend on loan
+ * scoring: `started` (every session the ad produced, submitted or not),
+ * `submitRate`, `medianCompleteness` (median required-fields-filled percentage
+ * among the ad's DRAFTs — the people who never submitted), and `reachedSection`
+ * (a histogram of which section those DRAFTs last had open before they left).
+ * Computed by `computeFormProgress` off each DRAFT's stored `rawData` +
+ * `lastSection`, so a quality signal exists even for an ad whose leads are too
+ * thin to score. `totals` carries the same four, rolled up across every bucket.
+ *
  * Data only — no `format`. This one answers a question at a terminal ("which ad
  * should I pause before the rebuild?"), it is not a document anyone signs or
  * sends a customer, so it has no PDF twin like the other six.

@@ -17,6 +17,8 @@
 import {
   withErrorHandlingAndValidation,
   generateAdQualityReportSchema,
+  computeFormProgress,
+  APPLICATION_SECTION_IDS,
   type GenerateAdQualityReportInput,
   type DbClient,
   type LoanApplication,
@@ -26,6 +28,9 @@ import { logger } from "../../logger.js";
 
 /** Default window: long enough to accumulate leads at this budget, short enough to be current. */
 const DEFAULT_WINDOW_DAYS = 14;
+
+/** Bucket key for a draft that never opened a (recognized) section. */
+const NO_SECTION_REACHED = "none";
 
 /**
  * Statuses that mean a human decided to lend. `SIGNED` and `CONVERTED` are past
@@ -59,6 +64,28 @@ export interface AdQualityRow {
   /** Median ISC of the scored leads; null when the ad produced none. */
   medianScore: number | null;
   approved: number;
+  /**
+   * Every session this ad started, submitted or not (`leads + drafts`). Loan
+   * scoring only ever sees a submit, so this is the one number an ad with a
+   * form nobody finishes cannot hide behind.
+   */
+  started: number;
+  /** `leads / started`; null when the ad started nothing (not 0, which reads as "terrible"). */
+  submitRate: number | null;
+  /**
+   * Median completeness (0-100, required fields answered) among this ad's
+   * DRAFTs — the people who never submitted. A submitted application is
+   * always 100 (the browser won't submit an incomplete form), so mixing
+   * submits in would flatter an ad that mostly produces half-finished forms.
+   * Null when the ad has no drafts.
+   */
+  medianCompleteness: number | null;
+  /**
+   * Among this ad's DRAFTs, how many stopped having last opened each section
+   * — keyed by section id, plus `"none"` for a draft that never reached a
+   * recognized section. Shows where an ad's traffic gives up, e.g. "credito".
+   */
+  reachedSection: Record<string, number>;
 }
 
 export interface AdQualityReportData {
@@ -73,6 +100,10 @@ export interface AdQualityReportData {
     highOrVeryHigh: number;
     approved: number;
     medianScore: number | null;
+    started: number;
+    submitRate: number | null;
+    medianCompleteness: number | null;
+    reachedSection: Record<string, number>;
   };
 }
 
@@ -86,6 +117,50 @@ function median(values: number[]): number | null {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid];
+}
+
+/**
+ * Completeness (0-100) of a single DRAFT, from its stored `rawData` +
+ * `lastSection`. `rawData` is `unknown` on the entity (it's a JSON column);
+ * anything other than a plain object reads as no fields filled rather than
+ * throwing, same as `computeFormProgress` itself.
+ */
+function draftCompletenessPercent(draft: LoanApplication): number {
+  const rawData =
+    draft.rawData && typeof draft.rawData === "object"
+      ? (draft.rawData as Record<string, unknown>)
+      : {};
+  return Math.round(computeFormProgress(rawData, draft.lastSection).completeness * 100);
+}
+
+/**
+ * Histogram of where a set of DRAFTs stopped, keyed by the last section they
+ * had open — `"none"` for a draft whose `lastSection` is missing or not a
+ * recognized section id (a stale client, a renamed section).
+ */
+function reachedSectionHistogram(drafts: LoanApplication[]): Record<string, number> {
+  const histogram: Record<string, number> = { [NO_SECTION_REACHED]: 0 };
+  for (const id of APPLICATION_SECTION_IDS) histogram[id] = 0;
+
+  for (const draft of drafts) {
+    const key =
+      draft.lastSection && APPLICATION_SECTION_IDS.includes(draft.lastSection)
+        ? draft.lastSection
+        : NO_SECTION_REACHED;
+    histogram[key] = (histogram[key] ?? 0) + 1;
+  }
+
+  return histogram;
+}
+
+/** Sums two section histograms into a fresh one (used to roll rows up into totals). */
+function mergeHistograms(
+  a: Record<string, number>,
+  b: Record<string, number>
+): Record<string, number> {
+  const merged: Record<string, number> = { ...a };
+  for (const [key, count] of Object.entries(b)) merged[key] = (merged[key] ?? 0) + count;
+  return merged;
 }
 
 /**
@@ -172,7 +247,9 @@ export function createGenerateAdQualityReport(client: DbClient) {
 
     for (const [adId, bucket] of buckets) {
       const leads = bucket.applications.filter((a) => a.status !== "DRAFT");
-      const drafts = bucket.applications.length - leads.length;
+      const draftApplications = bucket.applications.filter((a) => a.status === "DRAFT");
+      const drafts = draftApplications.length;
+      const started = bucket.applications.length;
       const bands: Record<string, number> = {};
       let lowOrModerate = 0;
       let highOrVeryHigh = 0;
@@ -198,7 +275,14 @@ export function createGenerateAdQualityReport(client: DbClient) {
         highOrVeryHigh,
         bands,
         medianScore: median(scores),
-        approved: leads.filter((a) => APPROVED_STATUSES.has(a.status)).length
+        approved: leads.filter((a) => APPROVED_STATUSES.has(a.status)).length,
+        started,
+        submitRate: started > 0 ? leads.length / started : null,
+        medianCompleteness:
+          draftApplications.length > 0
+            ? median(draftApplications.map(draftCompletenessPercent))
+            : null,
+        reachedSection: reachedSectionHistogram(draftApplications)
       });
     }
 
@@ -213,17 +297,26 @@ export function createGenerateAdQualityReport(client: DbClient) {
     });
 
     const allLeads = applications.filter((a) => a.status !== "DRAFT");
+    const allDrafts = applications.filter((a) => a.status === "DRAFT");
     const data: AdQualityReportData = {
       since: toLocalDay(since),
       until: toLocalDay(until),
       rows,
       totals: {
         leads: allLeads.length,
-        drafts: applications.length - allLeads.length,
+        drafts: allDrafts.length,
         lowOrModerate: rows.reduce((sum, r) => sum + r.lowOrModerate, 0),
         highOrVeryHigh: rows.reduce((sum, r) => sum + r.highOrVeryHigh, 0),
         approved: rows.reduce((sum, r) => sum + r.approved, 0),
-        medianScore: median(allLeads.map((a) => a.score).filter((s): s is number => s != null))
+        medianScore: median(allLeads.map((a) => a.score).filter((s): s is number => s != null)),
+        started: applications.length,
+        submitRate: applications.length > 0 ? allLeads.length / applications.length : null,
+        medianCompleteness:
+          allDrafts.length > 0 ? median(allDrafts.map(draftCompletenessPercent)) : null,
+        reachedSection: rows.reduce(
+          (acc, r) => mergeHistograms(acc, r.reachedSection),
+          {} as Record<string, number>
+        )
       }
     };
 

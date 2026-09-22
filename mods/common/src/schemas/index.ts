@@ -70,6 +70,16 @@ export {
 } from "./application.js";
 
 export {
+  APPLICATION_SECTIONS,
+  APPLICATION_SECTION_IDS,
+  computeFormProgress,
+  isSectionComplete,
+  buildAutosavePayload,
+  type ApplicationSectionDef,
+  type FormProgress
+} from "./applicationForm.js";
+
+export {
   createCustomerSchema,
   updateCustomerSchema,
   getCustomerSchema,

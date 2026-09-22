@@ -8,6 +8,7 @@
  */
 import cliui from "cliui";
 import { Flags } from "@oclif/core";
+import { APPLICATION_SECTION_IDS } from "@mikro/common";
 import { BaseCommand, parseDateRange } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { cliuiCells, cliuiTableWidth, computeColumnWidths } from "../../lib/cliTableLayout.js";
@@ -24,6 +25,10 @@ interface AdQualityRow {
   highOrVeryHigh: number;
   medianScore: number | null;
   approved: number;
+  started: number;
+  submitRate: number | null;
+  medianCompleteness: number | null;
+  reachedSection: Record<string, number>;
 }
 
 export default class ReportsAdQuality extends BaseCommand<typeof ReportsAdQuality> {
@@ -63,10 +68,23 @@ export default class ReportsAdQuality extends BaseCommand<typeof ReportsAdQualit
 
       this.log(`\nCalidad por anuncio — ${data.since} a ${data.until}\n`);
 
-      const headers = ["AD", "LEADS", "LOW/MOD", "HIGH/V.HIGH", "MEDIAN ISC", "APPROVED"];
+      const headers = [
+        "AD",
+        "STARTED",
+        "LEADS",
+        "SUBMIT %",
+        "MED. COMPLETENESS",
+        "LOW/MOD",
+        "HIGH/V.HIGH",
+        "MEDIAN ISC",
+        "APPROVED"
+      ];
       const rows = (data.rows as AdQualityRow[]).map((row) => [
         this.label(row),
+        String(row.started),
         String(row.leads),
+        this.percent(row.submitRate),
+        row.medianCompleteness === null ? "—" : `${row.medianCompleteness}%`,
         String(row.lowOrModerate),
         String(row.highOrVeryHigh),
         row.medianScore === null ? "—" : String(row.medianScore),
@@ -81,10 +99,15 @@ export default class ReportsAdQuality extends BaseCommand<typeof ReportsAdQualit
 
       const { totals } = data;
       this.log(
-        `\nTotal: ${totals.leads} leads · ${totals.lowOrModerate} LOW/MOD · ` +
-          `${totals.highOrVeryHigh} HIGH/V.HIGH · ${totals.approved} aprobados` +
+        `\nTotal: ${totals.started} iniciadas · ${totals.leads} leads (${this.percent(totals.submitRate)}) · ` +
+          `${totals.lowOrModerate} LOW/MOD · ${totals.highOrVeryHigh} HIGH/V.HIGH · ` +
+          `${totals.approved} aprobados` +
           (totals.drafts ? ` · ${totals.drafts} sin completar` : "")
       );
+
+      if (totals.drafts > 0) {
+        this.log(`Dónde se detienen los que no completan: ${this.reachedSectionSummary(totals)}`);
+      }
 
       return data;
     } catch (e) {
@@ -101,5 +124,27 @@ export default class ReportsAdQuality extends BaseCommand<typeof ReportsAdQualit
   private label(row: AdQualityRow): string {
     if (row.adId === null) return "(orgánico / sin anuncio)";
     return row.adName ?? row.adId;
+  }
+
+  /** `null` (nothing started yet) reads as "—", never "0%" — that would read as "terrible". */
+  private percent(rate: number | null): string {
+    return rate === null ? "—" : `${Math.round(rate * 100)}%`;
+  }
+
+  /**
+   * Compact "sección N · sección M" summary of the reachedSection histogram,
+   * in the form's own section order, skipping sections nobody stopped at. The
+   * per-row histogram is still in the JSON (`--json`) output for anyone who
+   * wants it broken down by ad.
+   */
+  private reachedSectionSummary(totals: { reachedSection: Record<string, number> }): string {
+    const parts: string[] = [];
+    for (const id of APPLICATION_SECTION_IDS) {
+      const count = totals.reachedSection[id] ?? 0;
+      if (count > 0) parts.push(`${id} ${count}`);
+    }
+    const none = totals.reachedSection.none ?? 0;
+    if (none > 0) parts.push(`sin sección ${none}`);
+    return parts.length > 0 ? parts.join(" · ") : "—";
   }
 }

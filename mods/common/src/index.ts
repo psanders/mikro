@@ -200,6 +200,14 @@ export {
   type DeleteApplicationContractInput,
   type GenerateApplicationSummaryInput,
   type SendPromoInput,
+  // Solicitud form definition (sections, required fields, progress + autosave payload)
+  APPLICATION_SECTIONS,
+  APPLICATION_SECTION_IDS,
+  computeFormProgress,
+  isSectionComplete,
+  buildAutosavePayload,
+  type ApplicationSectionDef,
+  type FormProgress,
   // Customer schemas
   createCustomerSchema,
   updateCustomerSchema,
