@@ -28,7 +28,8 @@ const TEST_CONFIG = {
     evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
   },
   whatsapp: { phoneNumberId: "test", accessToken: "test" },
-  accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+  accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" },
+  applications: { coveredProvinces: ["PUERTO_PLATA"] }
 };
 
 describe("handleProspectMessage turn cap", () => {

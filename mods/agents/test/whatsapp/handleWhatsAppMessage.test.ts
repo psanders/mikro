@@ -647,7 +647,8 @@ describe("handleWhatsAppMessage", () => {
         evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
       },
       whatsapp: { phoneNumberId: "test", accessToken: "test", agentRepliesEnabled: false },
-      accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+      accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" },
+      applications: { coveredProvinces: ["PUERTO_PLATA"] }
     };
 
     const textWebhook = (id: string, from = silentPhone) => ({

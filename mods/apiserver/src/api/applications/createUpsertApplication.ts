@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { scoreApplication } from "@mikro/common";
+import { isOutOfCoverageArea, scoreApplication } from "@mikro/common";
 import type {
   ApplicationAttribution,
   ApplicationSource,
@@ -16,7 +16,18 @@ interface Deps {
   scheduleFollowUpJob?: (applicationId: string) => Promise<void>;
   /** Records the ad in the local name catalog. Only called when one is attributed. */
   recordMetaAd?: (attribution: ApplicationAttribution) => Promise<unknown>;
+  /**
+   * Provinces Mikro lends in (`applications.coveredProvinces`). When set, a
+   * completed submission from any other province is stored REJECTED with
+   * `reviewNote` {@link OUT_OF_COVERAGE_AREA} and gets no follow-up. Only the
+   * website intake passes this; the WhatsApp paths build their instance without
+   * it and are unaffected.
+   */
+  coveredProvinces?: readonly string[];
 }
+
+/** `reviewNote` stamped on an application auto-rejected for its province. */
+export const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA";
 
 /**
  * Creates a function that upserts a loan application by `sessionId`. The website
@@ -30,6 +41,12 @@ interface Deps {
  * When `scheduleFollowUpJob` is provided, a NUDGE follow-up timer is scheduled
  * whenever an external (non-MANUAL) application reaches RECEIVED status.
  *
+ * When `coveredProvinces` is provided, a completed submission whose province is
+ * set and not covered is stored as REJECTED instead (system decision:
+ * `reviewedById` null, `reviewNote` OUT_OF_COVERAGE_AREA) and schedules no
+ * follow-up. Partial autosaves never reject — the applicant may still change
+ * the province before submitting.
+ *
  * Ad attribution (`input.attribution`) is written only when the submission
  * carried it: a form streams several autosaves under one session and only the
  * ones whose page still had the URL parameters can say which ad this was, so an
@@ -42,11 +59,15 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
   return async (
     input: NormalizedApplication & { source?: ApplicationSource }
   ): Promise<LoanApplication> => {
-    const status = input.partial ? "DRAFT" : "RECEIVED";
+    const outOfArea =
+      !input.partial &&
+      deps.coveredProvinces !== undefined &&
+      isOutOfCoverageArea(input.province, deps.coveredProvinces);
+    const status = input.partial ? "DRAFT" : outOfArea ? "REJECTED" : "RECEIVED";
     const result = scoreApplication(input);
     const source: ApplicationSource = input.source ?? "FORM";
     const updateData = {
-      status: status as "DRAFT" | "RECEIVED",
+      status: status as "DRAFT" | "RECEIVED" | "REJECTED",
       lastSection: input.lastSection,
       firstName: input.firstName,
       lastName: input.lastName,
@@ -68,6 +89,9 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       recommendation: result.recommendation,
       scoredAt: new Date(),
       submittedAt: input.partial ? null : new Date(),
+      ...(outOfArea
+        ? { reviewedById: null, reviewedAt: new Date(), reviewNote: OUT_OF_COVERAGE_AREA }
+        : {}),
       // Spread, not fixed keys: omitting them leaves the stored ad alone, while
       // `adId: null` would erase it on the next autosave.
       ...(input.attribution

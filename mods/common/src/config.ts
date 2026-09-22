@@ -9,6 +9,7 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod/v4";
 import { tagShapeSchema } from "./schemas/customerTag.js";
+import { PROVINCE_VALUES } from "./schemas/applicationForm.js";
 
 /** Supported LLM vendors. */
 export const LLM_VENDORS = ["openai", "anthropic", "google"] as const;
@@ -175,6 +176,27 @@ const accountingSchema = z.object({
    */
   disbursementAccountId: z.uuid({ error: "accounting.disbursementAccountId is required" })
 });
+
+/**
+ * Website loan-application intake. Required, no defaults: the apiserver refuses
+ * to boot without it rather than silently accept applications from anywhere.
+ */
+const applicationsSchema = z
+  .object({
+    /**
+     * Provinces Mikro currently lends in, as the form's province enum values
+     * (e.g. "PUERTO_PLATA"). A completed website application from any other
+     * province is saved but auto-rejected (reviewNote OUT_OF_COVERAGE_AREA), and
+     * the applicant is told we are not in their city yet. Partial autosaves and
+     * the WhatsApp intake paths are not affected.
+     */
+    coveredProvinces: z
+      .array(z.enum(PROVINCE_VALUES), {
+        error: 'applications.coveredProvinces is required (e.g. ["PUERTO_PLATA"])'
+      })
+      .min(1, "applications.coveredProvinces must list at least one province")
+  })
+  .strict();
 
 const followUpSchema = z
   .object({
@@ -486,6 +508,7 @@ export const mikroConfigSchema = z
     })),
     reports: reportsSchema.default(() => ({})),
     accounting: accountingSchema,
+    applications: applicationsSchema,
     loans: loansSchema.default(defaultLoansConfig),
     contract: contractSchema,
     followUp: followUpSchema,

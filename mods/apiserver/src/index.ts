@@ -37,13 +37,7 @@ import { createGetManifestPath, createResolveAssetPath } from "./updates/index.j
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
-import {
-  ValidationError,
-  MAX_TRPC_REQUEST_BYTES,
-  applicationPayloadSchema,
-  normalizeApplication,
-  extractTracking
-} from "@mikro/common";
+import { ValidationError, MAX_TRPC_REQUEST_BYTES } from "@mikro/common";
 import type { CalculateLoanInput, DbClient } from "@mikro/common";
 import {
   handleWhatsAppMessage,
@@ -114,6 +108,7 @@ import {
   createUpdateLoanStatus,
   createListUsers,
   createUpsertApplication,
+  createApplicationIntakeHandler,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
   createSubmitApplicationFromFlow,
@@ -325,6 +320,19 @@ const sendLeadConversion = createSendLeadConversion({
   testEventCode: cfg.metaConversions.testEventCode
 });
 
+// The website form's intake. Its own upsert instance carries the covered area,
+// so an out-of-area final submit is auto-rejected here; the WhatsApp paths below
+// keep using `upsertApplication`, which does not enforce coverage.
+const upsertWebApplication = createUpsertApplication(dbClient, {
+  scheduleFollowUpJob,
+  recordMetaAd,
+  coveredProvinces: cfg.applications.coveredProvinces
+});
+const handleApplicationIntake = createApplicationIntakeHandler({
+  upsertApplication: upsertWebApplication,
+  sendLeadConversion
+});
+
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
 // production hardening (shared store, WAF, captcha) is a follow-up.
 const APPLICATION_RATE_LIMIT = 30;
@@ -348,67 +356,7 @@ app.post("/v1/applications", async (req, res) => {
     res.status(429).json({ result: "error" });
     return;
   }
-
-  // `sendBeacon` bodies land here as a raw string (Content-Type "text/plain"),
-  // parsed by the express.text() middleware above; a normal fetch POST lands
-  // as an already-parsed object. Bad JSON from a beacon is the same as any
-  // other malformed payload below: logged, answered "ok" so the tab that's
-  // already closing never sees an error.
-  let body: unknown = req.body;
-  if (typeof body === "string") {
-    try {
-      body = JSON.parse(body);
-    } catch {
-      logger.warn("application intake: invalid beacon body (not JSON)");
-      res.json({ result: "ok" });
-      return;
-    }
-  }
-
-  const parsed = applicationPayloadSchema.safeParse(body);
-  if (!parsed.success) {
-    // Lenient: log server-side, don't leak schema details. Still 200 so partial
-    // autosaves stay silent for the user.
-    logger.warn("application intake: invalid payload", {
-      sessionId: (body as { sessionId?: unknown })?.sessionId,
-      issues: parsed.error.issues.length
-    });
-    res.json({ result: "ok" });
-    return;
-  }
-
-  try {
-    const normalized = normalizeApplication(parsed.data);
-    await upsertApplication(normalized);
-    res.json({ result: "ok" });
-
-    // Only a completed submission is a Lead — partial autosaves fire on every
-    // section and would report the same applicant many times. Deliberately after
-    // res.json and not awaited: Meta must never delay or fail an application.
-    if (!normalized.partial) {
-      const tracking = extractTracking(parsed.data);
-      sendLeadConversion({
-        eventId: tracking.eventId ?? "",
-        phone: normalized.phone,
-        firstName: normalized.firstName,
-        lastName: normalized.lastName,
-        fbc: tracking.fbc,
-        fbp: tracking.fbp,
-        // From the request, not the body: a client could put anything in the body.
-        clientIpAddress: req.ip ?? null,
-        clientUserAgent: req.get("user-agent") ?? null,
-        eventSourceUrl: tracking.eventSourceUrl
-      }).catch((err: Error) => {
-        logger.error("meta capi: unexpected send failure", { error: err.message });
-      });
-    }
-  } catch (err) {
-    logger.error("application intake: upsert failed", {
-      sessionId: parsed.data.sessionId,
-      error: err instanceof Error ? err.message : String(err)
-    });
-    res.status(500).json({ result: "error" });
-  }
+  await handleApplicationIntake(req, res);
 });
 
 // tRPC API

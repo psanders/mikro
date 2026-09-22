@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Single definition of the solicitud form's sections and required fields,
- * mirroring the `required` attributes on site/src/pages/SolicitudPage.tsx.
+ * mirroring the `required` attributes on site/src/solicitud/SectionFields.tsx.
  * Kept in @mikro/common so the site (progress tracking, the completion
  * beacon) and the apiserver (the ad-quality report's form-completeness
  * numbers) read the same shape instead of two copies drifting apart —
@@ -20,6 +20,82 @@
  * browser bundle (site, dashboard) as well as the apiserver.
  */
 
+/**
+ * Dominican provinces as the form's dropdown offers them: enum value (what the
+ * form posts and what `applications.coveredProvinces` in mikro.json lists) +
+ * display label. The single source for the site dropdown, `PROVINCE_LABELS`,
+ * and the config enum.
+ */
+export const PROVINCES = [
+  { value: "AZUA", label: "Azua" },
+  { value: "BAHORUCO", label: "Bahoruco" },
+  { value: "BARAHONA", label: "Barahona" },
+  { value: "DAJABON", label: "Dajabón" },
+  { value: "DISTRITO_NACIONAL", label: "Distrito Nacional" },
+  { value: "DUARTE", label: "Duarte" },
+  { value: "ELIAS_PINA", label: "Elías Piña" },
+  { value: "EL_SEIBO", label: "El Seibo" },
+  { value: "ESPAILLAT", label: "Espaillat" },
+  { value: "HATO_MAYOR", label: "Hato Mayor" },
+  { value: "HERMANAS_MIRABAL", label: "Hermanas Mirabal" },
+  { value: "INDEPENDENCIA", label: "Independencia" },
+  { value: "LA_ALTAGRACIA", label: "La Altagracia" },
+  { value: "LA_ROMANA", label: "La Romana" },
+  { value: "LA_VEGA", label: "La Vega" },
+  { value: "MARIA_TRINIDAD_SANCHEZ", label: "María Trinidad Sánchez" },
+  { value: "MONSENOR_NOUEL", label: "Monseñor Nouel" },
+  { value: "MONTE_CRISTI", label: "Monte Cristi" },
+  { value: "MONTE_PLATA", label: "Monte Plata" },
+  { value: "PEDERNALES", label: "Pedernales" },
+  { value: "PERAVIA", label: "Peravia" },
+  { value: "PUERTO_PLATA", label: "Puerto Plata" },
+  { value: "SAMANA", label: "Samaná" },
+  { value: "SAN_CRISTOBAL", label: "San Cristóbal" },
+  { value: "SAN_JOSE_DE_OCOA", label: "San José de Ocoa" },
+  { value: "SAN_JUAN", label: "San Juan" },
+  { value: "SAN_PEDRO_DE_MACORIS", label: "San Pedro de Macorís" },
+  { value: "SANCHEZ_RAMIREZ", label: "Sánchez Ramírez" },
+  { value: "SANTIAGO", label: "Santiago" },
+  { value: "SANTIAGO_RODRIGUEZ", label: "Santiago Rodríguez" },
+  { value: "SANTO_DOMINGO", label: "Santo Domingo" },
+  { value: "VALVERDE", label: "Valverde" }
+] as const;
+
+export type Province = (typeof PROVINCES)[number]["value"];
+
+/** Province enum values, as a non-empty tuple (usable directly with `z.enum`). */
+export const PROVINCE_VALUES = PROVINCES.map((p) => p.value) as [Province, ...Province[]];
+
+/**
+ * Normalize a province to a comparable key: uppercase, strip diacritics, and
+ * collapse any run of non-alphanumerics to a single `_`. "Puerto Plata",
+ * "PUERTO_PLATA" and "puerto plata." all become "PUERTO_PLATA" — the same rule
+ * the scoring engine's zone check uses.
+ */
+export function normalizeProvinceKey(province: string): string {
+  return province
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/**
+ * Whether an applicant's province is outside the covered area. Only a positive
+ * signal counts: an empty or missing province is never "out of area", so an
+ * application is only auto-rejected when it actually names a province we don't
+ * serve.
+ */
+export function isOutOfCoverageArea(
+  province: string | null | undefined,
+  coveredProvinces: readonly string[]
+): boolean {
+  const key = normalizeProvinceKey(province ?? "");
+  if (!key) return false;
+  return !coveredProvinces.some((covered) => normalizeProvinceKey(covered) === key);
+}
+
 /** One section of the form, in display order, with its required content keys. */
 export interface ApplicationSectionDef {
   id: string;
@@ -27,7 +103,7 @@ export interface ApplicationSectionDef {
 }
 
 // Order and required fields mirror SECTION_DEFS + the `required` props in
-// site/src/pages/SolicitudPage.tsx. spouseName/spousePhone (familiar) and
+// site/src/solicitud/SectionFields.tsx. spouseName/spousePhone (familiar) and
 // addressReference (vivienda) are optional there, so they are left out here.
 export const APPLICATION_SECTIONS: readonly ApplicationSectionDef[] = [
   {
