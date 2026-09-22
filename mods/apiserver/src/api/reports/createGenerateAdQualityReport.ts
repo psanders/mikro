@@ -190,8 +190,8 @@ interface Bucket {
 }
 
 /**
- * Creates a function that generates the ad-quality report: every ad we know of
- * (including ones that produced nothing in the window — a spending ad with no
+ * Creates a function that generates the ad-quality report: every ad clicked
+ * during the window (including ones that produced nothing — a clicked ad with no
  * applications is the finding, and omitting its row would hide it) plus an
  * organic bucket, never merged into an ad's numbers.
  *
@@ -226,7 +226,15 @@ export function createGenerateAdQualityReport(client: DbClient) {
     // The catalog is the roster of ads, not the applications — that is what lets
     // an ad with zero applications appear. It also carries the names, so the
     // report needs no live Meta call and survives a deleted campaign.
-    const catalog = await client.metaAd.findMany({ orderBy: { lastSeenAt: "desc" } });
+    //
+    // Only ads alive during the window are seeded: first clicked on or before its
+    // end, last clicked on or after its start (`lastSeenAt` moves on every click).
+    // An ad retired before the window started, or launched after it ended, has
+    // nothing to say about it — listing it as a zero row is noise, not a finding.
+    const catalog = await client.metaAd.findMany({
+      where: { firstSeenAt: { lte: until }, lastSeenAt: { gte: since } },
+      orderBy: { lastSeenAt: "desc" }
+    });
 
     const buckets = new Map<string | null, Bucket>();
     // Seed every known ad first so zero-application ones survive to the output.
