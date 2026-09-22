@@ -10,7 +10,9 @@ import {
   resetProcessedMessageIdsForTesting
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
-import { ValidationError } from "@mikro/common";
+import { ValidationError, clearConfigCache, getConfig } from "@mikro/common";
+import { writeFileSync, unlinkSync, existsSync } from "fs";
+import { resolve } from "path";
 
 describe("handleWhatsAppMessage", () => {
   const recentTs = () => String(Math.floor(Date.now() / 1000) - 10);
@@ -626,6 +628,144 @@ describe("handleWhatsAppMessage", () => {
       await handleWhatsAppMessage(adminWebhook("msg-admin2"));
 
       expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
+    });
+  });
+
+  // `whatsapp.agentRepliesEnabled: false` is the operator kill switch: the
+  // number stops answering inbound messages entirely. Disabling an agent in
+  // agents.yaml only silences its LLM — the deterministic fallbacks (role
+  // redirects, hold message, voice-note notice) still reply — so this flag is
+  // the only way to go quiet.
+  describe("agent replies kill switch", () => {
+    const KILL_SWITCH_CONFIG_PATH = resolve(process.cwd(), "mikro-test-replies-disabled.json");
+    const silentPhone = "+18095550003";
+
+    const DISABLED_CONFIG = {
+      llm: {
+        text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+        vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
+        evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+      },
+      whatsapp: { phoneNumberId: "test", accessToken: "test", agentRepliesEnabled: false },
+      accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+    };
+
+    const textWebhook = (id: string, from = silentPhone) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  { from, type: "text", id, timestamp: recentTs(), text: { body: "hola" } }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    const nfmWebhook = (id: string) => ({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: silentPhone,
+                    type: "interactive",
+                    id,
+                    timestamp: recentTs(),
+                    interactive: {
+                      type: "nfm_reply",
+                      nfm_reply: {
+                        name: "flow",
+                        body: "Sent",
+                        response_json: JSON.stringify({
+                          firstName: "Ana",
+                          lastName: "Reyes",
+                          businessType: "COLMADO",
+                          requestedAmount: "20000"
+                        })
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    describe("disabled", () => {
+      before(() => {
+        writeFileSync(KILL_SWITCH_CONFIG_PATH, JSON.stringify(DISABLED_CONFIG));
+        clearConfigCache();
+        getConfig(KILL_SWITCH_CONFIG_PATH);
+      });
+      after(() => {
+        if (existsSync(KILL_SWITCH_CONFIG_PATH)) unlinkSync(KILL_SWITCH_CONFIG_PATH);
+        // Back to the suite-wide fixture (globalSetup's MIKRO_CONFIG_FILE).
+        clearConfigCache();
+      });
+
+      it("neither replies nor invokes the LLM for an ADMIN message", async () => {
+        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+          type: "user" as const,
+          userId: "admin-1",
+          name: "Founder",
+          role: "ADMIN" as const,
+          phone: silentPhone
+        });
+
+        await handleWhatsAppMessage(textWebhook("msg-off1"));
+
+        expect(mockMessageProcessor.sendWhatsAppMessage.called, "nothing sent back").to.be.false;
+        expect(mockMessageProcessor.invokeLLM.called, "no LLM").to.be.false;
+      });
+
+      it("does not even route the message (no wasted lookups)", async () => {
+        await handleWhatsAppMessage(textWebhook("msg-off2"));
+
+        expect(mockMessageProcessor.routeMessage.called).to.be.false;
+      });
+
+      it("still ingests an intake Flow submission, withholding only the confirmation", async () => {
+        await handleWhatsAppMessage(nfmWebhook("msg-off-nfm"));
+
+        expect(mockMessageProcessor.submitApplicationFromFlow.calledOnce, "solicitud persisted").to
+          .be.true;
+        const payload = mockMessageProcessor.submitApplicationFromFlow.firstCall.args[0];
+        expect(payload.sessionId).to.equal("wa-msg-off-nfm");
+        expect(payload.phone).to.equal(silentPhone);
+        expect(payload.firstName).to.equal("Ana");
+        expect(mockMessageProcessor.sendWhatsAppMessage.called, "no confirmation sent").to.be.false;
+      });
+    });
+
+    describe("enabled (default)", () => {
+      it("replies as usual when the flag is absent from mikro.json", async () => {
+        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+          type: "user" as const,
+          userId: "admin-1",
+          name: "Founder",
+          role: "ADMIN" as const,
+          phone: silentPhone
+        });
+
+        await handleWhatsAppMessage(textWebhook("msg-on1"));
+
+        expect(mockMessageProcessor.invokeLLM.calledOnce).to.be.true;
+        expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
+        expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.equal(
+          "AI response"
+        );
+      });
     });
   });
 

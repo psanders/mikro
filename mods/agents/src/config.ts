@@ -129,6 +129,16 @@ export function getSessionTimeoutSeconds(): number {
 }
 
 /**
+ * Whether the webhook may reply to inbound WhatsApp messages at all (LLM
+ * agents and the deterministic fallbacks alike). False makes the number go
+ * quiet; outbound templates, the Chatwoot mirror and delivery statuses are
+ * unaffected, and intake Flow submissions are still ingested.
+ */
+export function getWhatsAppAgentRepliesEnabled(): boolean {
+  return getConfig().whatsapp.agentRepliesEnabled;
+}
+
+/**
  * Whether voice notes (audio messages) are enabled.
  */
 export function getVoiceNotesEnabled(): boolean {

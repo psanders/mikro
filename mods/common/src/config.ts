@@ -56,6 +56,19 @@ const whatsappSchema = z.object({
   accessToken: z.string().min(1, "WhatsApp accessToken is required"),
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
+  // Operator kill switch for everything the webhook replies with: the LLM
+  // agents *and* the deterministic answers that fire when no agent is assigned
+  // (ADMIN/COLLECTOR redirects, the prospect hold message, the voice-note
+  // notice, the intake confirmation, the generic error). Disabling an agent in
+  // agents.yaml only silences its LLM, so that is not a way to go quiet; this
+  // is. Set false to make the number stop answering inbound messages entirely.
+  //
+  // Deliberately NOT gated by it: outbound templates (promo, payment
+  // confirmation, follow-up nudges), the Chatwoot mirror and delivery-status
+  // webhooks — those are not replies and keep running. Intake Flow submissions
+  // are still ingested while disabled (the solicitud is persisted, only its
+  // confirmation is withheld), so turning this off never loses an application.
+  agentRepliesEnabled: z.boolean().default(true),
   templates: whatsappTemplatesSchema.default(() => ({
     paymentConfirmation: "payment_confirmation",
     loanApplicationPromo: "loan_application",
