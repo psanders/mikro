@@ -41,23 +41,23 @@
 
 ## 4. Ops app UI
 
-- [ ] 4.1 Access: ADMIN full shell, REVIEWER scoped shell
-- [ ] 4.2 `SidePanel` primitive; migrate `TaskFormModal`
-- [ ] 4.3 Application cards per status/role, violet tokens, disabled reasons, "Cerradas" day grouping
-- [ ] 4.4 `ApplicationPanel` views: detail, edit, evidence, disbursement, assign
-- [ ] 4.5 Inline admin decision block
+- [x] 4.1 Access: ADMIN full shell, REVIEWER scoped shell
+- [x] 4.2 `SidePanel` primitive; migrate `TaskFormModal`
+- [x] 4.3 Application cards per status/role, violet tokens, disabled reasons, "Cerradas" day grouping
+- [x] 4.4 `ApplicationPanel` views: detail, edit, evidence, disbursement, assign
+- [x] 4.5 Inline admin decision block
 - [ ] 4.6 Storybook stories for every component state; `data-testid`s
 
 ## 5. End-to-end
 
-- [ ] 5.1 `scripts/seed-e2e.mjs` (deterministic users, accounts, apps in every status)
-- [ ] 5.2 Playwright config + specs (reviewer, admin, conversion→Cerradas, scoping, Tareas panel)
-- [ ] 5.3 `test:e2e:dashboard` root script; `e2e-dashboard.yaml` workflow; lockfile platform check
+- [x] 5.1 `scripts/seed-e2e.mjs` (deterministic users, accounts, apps in every status)
+- [x] 5.2 Playwright config + specs (reviewer, admin, conversion→Cerradas, scoping, Tareas panel)
+- [x] 5.3 `test:e2e:dashboard` root script; `e2e-dashboard.yaml` workflow; lockfile platform check
 
 ## 6. Cutover
 
-- [ ] 6.1 Remove mobile evaluator code, navigation, e2e mocks, Maestro flows; collector app unaffected
-- [ ] 6.2 Remove superseded dashboard `lib/applications.ts` helpers
+- [x] 6.1 Remove mobile evaluator code, navigation, e2e mocks, Maestro flows; collector app unaffected
+- [x] 6.2 Remove superseded dashboard `lib/applications.ts` helpers
 - [ ] 6.3 Mark Pencil Evaluator App board `gzBYk` superseded
 - [ ] 6.4 Release notes: deploy order, backup + `migrate deploy`, old mobile builds unsupported
 
