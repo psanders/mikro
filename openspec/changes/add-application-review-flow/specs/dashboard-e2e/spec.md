@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: The founder app has a Playwright end-to-end suite against a real backend
+### Requirement: The Ops app has a Playwright end-to-end suite against a real backend
 
-`mods/dashboard` SHALL include a Playwright suite that runs the founder app's web build against a real apiserver on a temporary SQLite database, seeded deterministically (an admin, a reviewer, a second reviewer, a collector, disbursement accounts, and applications in every status). The root script `npm run test:e2e:dashboard` SHALL build, seed, start both servers, run the suite, and tear down.
+`mods/dashboard` SHALL include a Playwright suite that runs the Ops app's web build against a real apiserver on a temporary SQLite database, seeded deterministically (an admin, a reviewer, a second reviewer, a collector, disbursement accounts, and applications in every status). The root script `npm run test:e2e:dashboard` SHALL build, seed, start both servers, run the suite, and tear down.
 
 #### Scenario: One command runs the suite
 

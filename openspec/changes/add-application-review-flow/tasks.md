@@ -39,7 +39,7 @@
 - [x] 3.11 `accounting.disbursementAccounts` (id + name, optional; default must be listed) + `listDisbursementAccounts` query with live balances; conversion refuses other accounts
 - [x] 3.10 Unit tests per function; integration `applicationLifecycle.test.ts` (happy path, send-back, rejects, withdraw, forbidden roles, locking, abandon guard, events, ledger, documents)
 
-## 4. Founder app UI
+## 4. Ops app UI
 
 - [ ] 4.1 Access: ADMIN full shell, REVIEWER scoped shell
 - [ ] 4.2 `SidePanel` primitive; migrate `TaskFormModal`

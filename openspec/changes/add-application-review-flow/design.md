@@ -1,6 +1,6 @@
 ## Context
 
-The review pipeline today lives in `mods/common/src/schemas/application.ts` (`REVIEW_TRANSITIONS` + `resolveReviewTransition`), `mods/apiserver/src/api/applications/*` (`reviewApplication.ts`, `createConvertApplication.ts`, `createUploadSignedContract.ts`, …), and the mobile evaluator (`mods/mobile/app/(evaluator)`, `app/solicitud`). The founder desktop app (`mods/dashboard/src/founder`) shows the business event log as a feed, fed by tRPC procedures tagged `.meta({ event })` and mapped in `api/events/mappers.ts`. The final design is `pencil.pen` → board `EzobQ` → section `bBdhj` (screens: reviewer feed `QeyK3`, evidence `i7Umh`, edit `k4S97G`, approved `ZjqE9`, disbursement `DvlAW`, closed group `Dq5Zl`, admin decision `PYWaG`, detail panel `k71Rb`/`UbCzS`).
+The review pipeline today lives in `mods/common/src/schemas/application.ts` (`REVIEW_TRANSITIONS` + `resolveReviewTransition`), `mods/apiserver/src/api/applications/*` (`reviewApplication.ts`, `createConvertApplication.ts`, `createUploadSignedContract.ts`, …), and the mobile evaluator (`mods/mobile/app/(evaluator)`, `app/solicitud`). The Ops app (`mods/dashboard/src/founder`) shows the business event log as a feed, fed by tRPC procedures tagged `.meta({ event })` and mapped in `api/events/mappers.ts`. The final design is `pencil.pen` → board `EzobQ` → section `bBdhj` (screens: reviewer feed `QeyK3`, evidence `i7Umh`, edit `k4S97G`, approved `ZjqE9`, disbursement `DvlAW`, closed group `Dq5Zl`, admin decision `PYWaG`, detail panel `k71Rb`/`UbCzS`).
 
 Constraints: no change to `mods/agents` or the WhatsApp nudge; SQLite (Prisma 7) with hand-kept integration `SCHEMA_SQL`; `mikro.json` is `.strict()`; the dashboard has no test runner today.
 
@@ -93,7 +93,7 @@ Other event types keep today's visibility (admins see all business events; revie
 
 One `SidePanel` primitive (600 px, right, scrim, optional back crumb, pinned footer, Esc/scrim closes, focus trap) hosts `ApplicationPanel` views and the Tareas task form. The inline admin decision stays on the card. There is no modal component left in `founder/`.
 
-### D9. Reviewer access to the founder app
+### D9. Reviewer access to the Ops app
 
 `App.tsx` currently admits only ADMIN. It becomes: ADMIN → full shell; REVIEWER-only → feed only (search, Tareas, Reportes and copilot expose non-application data); others → `AccessScreen`. The backend already guards with `reviewerProcedure` / `adminProcedure`, and the UI change is cosmetic on top of that.
 

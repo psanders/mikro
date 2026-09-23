@@ -1,13 +1,18 @@
 ## ADDED Requirements
 
-### Requirement: Reviewers can use the founder app with a scoped shell
+### Requirement: Reviewers can use the Ops app with a scoped shell
 
-The founder app SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: the feed only — no search, Tareas, Reportes or copilot, since those expose non-application data). Other users SHALL see the access screen. A user with both roles gets the full shell.
+The Ops app (served at `/ops`; formerly the founder app) SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: the feed only — no search, Tareas, Reportes or copilot, since those expose non-application data). Other users SHALL see the access screen. A user with both roles gets the full shell.
 
 #### Scenario: Reviewer signs in
 
-- **WHEN** a REVIEWER-only user signs in to the founder app
+- **WHEN** a REVIEWER-only user signs in to the Ops app
 - **THEN** they see the feed, and no search, Tareas, Reportes or copilot entry
+
+#### Scenario: Old founder links still work
+
+- **WHEN** someone opens `/founder` or any `/founder/...` path
+- **THEN** they are redirected to `/ops`
 
 #### Scenario: Collector is turned away
 
@@ -71,7 +76,7 @@ When an application becomes `CONVERTED`, `REJECTED` or `ABANDONED`, its entries 
 
 ### Requirement: All application detail and actions live in one side panel
 
-The founder app SHALL use a single right side panel (600 px) for:
+The Ops app SHALL use a single right side panel (600 px) for:
 
 - the full application: data, evidence, activity timeline, conversation
 - edit: accordion of form sections, data only
@@ -79,7 +84,7 @@ The founder app SHALL use a single right side panel (600 px) for:
 - disbursement: approved terms, collector, source account with balances, optional receipt
 - admin assignment
 
-Nested views SHALL show a "← Solicitud de …" back crumb and a pinned footer with the view's actions. The founder app SHALL contain no modal dialogs.
+Nested views SHALL show a "← Solicitud de …" back crumb and a pinned footer with the view's actions. The Ops app SHALL contain no modal dialogs.
 
 #### Scenario: Evidence opens in the panel
 
