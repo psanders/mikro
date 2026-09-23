@@ -1,10 +1,10 @@
 ## 0. Design (Pencil, section 08 of EzobQ)
 
-- [ ] 0.1 Wording → final ("diseño final"); notes → Decisiones / Contrato de backend / Fases futuras (capture link + GPS)
-- [ ] 0.2 Admin "Asignar a…" panel view; reviewer feed shows shared queue
-- [ ] 0.3 Disbursement panel: add "Cobrador asignado" (conversion requires a collector)
-- [ ] 0.4 Section 07 "Nueva tarea" as side panel
-- [ ] 0.5 Export final screens to HTML under this change's `pencil/` folder
+- [x] 0.1 Wording → final ("diseño final"); notes → Decisiones / Contrato de backend / Fases futuras (capture link + GPS)
+- [x] 0.2 Admin "Asignar a…" panel view; reviewer feed shows shared queue
+- [x] 0.3 Disbursement panel: add "Cobrador asignado" (conversion requires a collector)
+- [x] 0.4 Section 07 "Nueva tarea" as side panel
+- [x] 0.5 Export final screens to HTML under this change's `pencil/` folder
 
 ## 1. Shared contracts (@mikro/common)
 
