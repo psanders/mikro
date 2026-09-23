@@ -30,8 +30,9 @@ test("a reviewer takes a queued application, gathers the evidence and sends it t
   await colmado.getByTestId("action-take").click();
   await expect(card(page, "Colmado Cola")).toHaveAttribute("data-status", "IN_REVIEW");
 
+  // The card stays open on the next step: gathering evidence.
   const mine = card(page, "Colmado Cola");
-  await expand(mine);
+  await expect(mine.getByTestId("action-evidence")).toBeVisible();
   await expect(mine.getByTestId("action-send")).toBeDisabled();
 
   // Evidence in the side panel: both cédula slots, three photos.

@@ -200,6 +200,19 @@ export function FeedScreen() {
     [actorsQuery.data]
   );
   const userNames = useMemo(() => new Map(actors.map((a) => [a.id, a.name])), [actors]);
+  // Open application cards, by application id (not event id): a card whose
+  // application just changed re-renders from a newer event and must stay open.
+  const [openApps, setOpenApps] = useState<Set<string>>(() => new Set());
+  const appCardProps = (applicationId: string) => ({
+    expanded: openApps.has(applicationId),
+    onToggle: (open: boolean) =>
+      setOpenApps((prev) => {
+        const next = new Set(prev);
+        if (open) next.add(applicationId);
+        else next.delete(applicationId);
+        return next;
+      })
+  });
 
   const restore = trpc.restoreApplication.useMutation({
     onSuccess: () => {
@@ -329,10 +342,11 @@ export function FeedScreen() {
               if (row.kind === "application") {
                 return (
                   <ApplicationFeedCard
-                    key={row.event.id}
+                    key={row.event.applicationId}
                     event={row.event}
                     viewer={viewer}
                     userNames={userNames}
+                    {...appCardProps(row.event.applicationId!)}
                   />
                 );
               }
@@ -341,10 +355,11 @@ export function FeedScreen() {
                   <QueueGroupRow key={`${group.key}-queue`} events={row.events}>
                     {row.events.map((e) => (
                       <ApplicationFeedCard
-                        key={e.id}
+                        key={e.applicationId}
                         event={e}
                         viewer={viewer}
                         userNames={userNames}
+                        {...appCardProps(e.applicationId!)}
                       />
                     ))}
                   </QueueGroupRow>

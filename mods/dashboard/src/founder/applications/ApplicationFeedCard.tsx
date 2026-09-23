@@ -62,6 +62,13 @@ export interface ApplicationFeedCardProps {
   viewer: Viewer;
   /** Names of users by id (assignee / decider display). */
   userNames: Map<string, string>;
+  /**
+   * Controlled expansion, keyed by application in the feed so a card stays
+   * open when its application changes (e.g. after "Tomar" it re-renders from
+   * a newer event and should land on the next step, not collapse).
+   */
+  expanded?: boolean;
+  onToggle?: (expanded: boolean) => void;
   defaultExpanded?: boolean;
 }
 
@@ -82,7 +89,9 @@ export function viewerHasAction(state: FeedApplicationState, viewer: Viewer): bo
     case "PENDING_DECISION":
       return viewer.isAdmin;
     case "APPROVED":
-      return state.assignedReviewerId === viewer.id || viewer.isAdmin;
+      // The paperwork (contract, disbursement) is the assigned reviewer's step;
+      // an admin may still do it, but it does not flag their feed.
+      return state.assignedReviewerId === viewer.id;
     default:
       return false;
   }
@@ -92,9 +101,16 @@ export function ApplicationFeedCard({
   event,
   viewer,
   userNames,
+  expanded: controlled,
+  onToggle,
   defaultExpanded = false
 }: ApplicationFeedCardProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [internal, setInternal] = useState(defaultExpanded);
+  const expanded = controlled ?? internal;
+  const setExpanded = (next: boolean) => {
+    if (controlled === undefined) setInternal(next);
+    onToggle?.(next);
+  };
   const state = event.application;
   const id = event.applicationId!;
   const actionable = viewerHasAction(state, viewer);
@@ -112,13 +128,15 @@ export function ApplicationFeedCard({
           ? "Tomada por ti · reúne la evidencia"
           : `En evaluación con ${assignee ?? "otro evaluador"}`;
       case "PENDING_DECISION":
-        return `Evaluada por ${assignee ?? "—"} · lista para decidir`;
+        return viewer.isAdmin
+          ? `Evaluada por ${assignee ?? "—"} · lista para decidir`
+          : "Enviada a decisión · esperando al admin";
       case "APPROVED":
         return "Aprobada · falta contrato firmado y desembolso";
       default:
         return event.summary;
     }
-  }, [state.status, mine, assignee, event.summary]);
+  }, [state.status, mine, assignee, event.summary, viewer.isAdmin]);
 
   return (
     <div
@@ -130,7 +148,7 @@ export function ApplicationFeedCard({
       <div className={cn("flex flex-col gap-3 px-6", expanded ? "pb-4 pt-3" : "py-3")}>
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => setExpanded(!expanded)}
           aria-expanded={expanded}
           className="flex w-full items-center gap-[14px] text-left"
         >
@@ -583,7 +601,6 @@ function RecommendationRow({
             data-testid="recommendation-input"
           />
           <Btn
-            tone="primary"
             className="px-3 py-[7px]"
             disabled={!text.trim() || save.isPending}
             onClick={() => save.mutate({ id: applicationId, reviewerRecommendation: text.trim() })}
