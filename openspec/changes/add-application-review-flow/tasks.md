@@ -46,7 +46,7 @@
 - [x] 4.3 Application cards per status/role, violet tokens, disabled reasons, "Cerradas" day grouping
 - [x] 4.4 `ApplicationPanel` views: detail, edit, evidence, disbursement, assign
 - [x] 4.5 Inline admin decision block
-- [ ] 4.6 Storybook stories for every component state; `data-testid`s
+- [x] 4.6 Storybook stories for every component state; `data-testid`s
 
 ## 5. End-to-end
 
@@ -58,10 +58,10 @@
 
 - [x] 6.1 Remove mobile evaluator code, navigation, e2e mocks, Maestro flows; collector app unaffected
 - [x] 6.2 Remove superseded dashboard `lib/applications.ts` helpers
-- [ ] 6.3 Mark Pencil Evaluator App board `gzBYk` superseded
-- [ ] 6.4 Release notes: deploy order, backup + `migrate deploy`, old mobile builds unsupported
+- [ ] 6.3 Mark Pencil Evaluator App board `gzBYk` superseded (deferred: Pencil was released for another project)
+- [x] 6.4 Release notes: deploy order, backup + `migrate deploy`, old mobile builds unsupported
 
 ## 7. Verify
 
-- [ ] 7.1 lint, typecheck, all unit + integration + e2e green
-- [ ] 7.2 Local walk-through as reviewer and admin against the Pencil export
+- [x] 7.1 lint, typecheck, all unit + integration + e2e green
+- [x] 7.2 Local walk-through as reviewer and admin against the Pencil export
