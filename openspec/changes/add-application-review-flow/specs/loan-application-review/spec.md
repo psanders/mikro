@@ -40,7 +40,7 @@ A reviewer (REVIEWER or ADMIN) SHALL be able to assign a `RECEIVED` application 
 
 ### Requirement: Assigned reviewer sends a complete application to decision
 
-The assigned reviewer SHALL be able to move an `IN_REVIEW` application to `PENDING_DECISION`, only when its evidence is complete (see `application-evidence`) and a non-empty `recommendation` is stored. The transition SHALL record `sentToDecisionAt`.
+The assigned reviewer SHALL be able to move an `IN_REVIEW` application to `PENDING_DECISION`, only when its evidence is complete (see `application-evidence`) and a non-empty `reviewerRecommendation` is stored. The transition SHALL record `sentToDecisionAt`.
 
 #### Scenario: Complete application is sent
 

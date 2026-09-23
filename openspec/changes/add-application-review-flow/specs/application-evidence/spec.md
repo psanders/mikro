@@ -41,7 +41,7 @@ Evidence SHALL be complete when both ID sides are stored and the count of `BUSIN
 
 ### Requirement: Evidence is writable only by the assignee during review
 
-Uploads, replacements, and deletions of evidence, and edits of the `recommendation`, SHALL be allowed only while the application is `IN_REVIEW` and only by its assigned reviewer. Evidence is therefore locked while `PENDING_DECISION` and later, and becomes writable again when an admin returns the application. The storage/validation logic SHALL live in plain functions that take an already-authorized actor, so a future token-authenticated capture route can reuse them.
+Uploads, replacements, and deletions of evidence, and edits of the `reviewerRecommendation`, SHALL be allowed only while the application is `IN_REVIEW` and only by its assigned reviewer. Evidence is therefore locked while `PENDING_DECISION` and later, and becomes writable again when an admin returns the application. The storage/validation logic SHALL live in plain functions that take an already-authorized actor, so a future token-authenticated capture route can reuse them.
 
 #### Scenario: Locked while pending decision
 

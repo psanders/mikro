@@ -45,7 +45,7 @@ const ATTRIBUTION = {
 
 function makeClient() {
   const upsert = sinon.stub().resolves({ id: "app-1", status: "RECEIVED", adId: "120212" });
-  return { client: { loanApplication: { upsert } } as never, upsert };
+  return { client: { loanApplication: { upsert, findFirst: async () => null } } as never, upsert };
 }
 
 describe("createUpsertApplication — ad attribution", () => {

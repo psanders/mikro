@@ -19,15 +19,36 @@ interface Deps {
   /**
    * Provinces Mikro lends in (`applications.coveredProvinces`). When set, a
    * completed submission from any other province is stored REJECTED with
-   * `reviewNote` {@link OUT_OF_COVERAGE_AREA} and gets no follow-up. Only the
+   * `rejectionReason` {@link OUT_OF_COVERAGE_AREA} and gets no follow-up. Only the
    * website intake passes this; the WhatsApp paths build their instance without
    * it and are unaffected.
    */
   coveredProvinces?: readonly string[];
+  /**
+   * Records the `application.received` feed event. Called once, when a row
+   * first becomes RECEIVED (not on repeated final submits of the same row).
+   */
+  recordReceived?: (application: LoanApplication) => Promise<void>;
+  /** Records the system's `application.rejected` for an out-of-area submission. */
+  recordOutOfArea?: (application: LoanApplication) => Promise<void>;
 }
 
-/** `reviewNote` stamped on an application auto-rejected for its province. */
-export const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA";
+/**
+ * Statuses a person owns: intake writes (late autosaves, beacons, a repeated
+ * WhatsApp Flow submission) must not touch them, or they would silently undo
+ * an assignment, a decision, or evidence already gathered.
+ */
+const OWNED_BY_REVIEW = new Set(["IN_REVIEW", "PENDING_DECISION", "APPROVED"]);
+
+/**
+ * Closed with a history worth keeping. A new submission under the same session
+ * (a returning borrower matched by phone on the WhatsApp path) starts a fresh
+ * application instead of overwriting the old one.
+ */
+const CLOSED_WITH_HISTORY = new Set(["CONVERTED", "REJECTED"]);
+
+/** `rejectionReason` stamped on an application auto-rejected for its province. */
+export const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA" as const;
 
 /**
  * Creates a function that upserts a loan application by `sessionId`. The website
@@ -43,7 +64,7 @@ export const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA";
  *
  * When `coveredProvinces` is provided, a completed submission whose province is
  * set and not covered is stored as REJECTED instead (system decision:
- * `reviewedById` null, `reviewNote` OUT_OF_COVERAGE_AREA) and schedules no
+ * `decidedById` null, `rejectionReason` OUT_OF_COVERAGE_AREA) and schedules no
  * follow-up. Partial autosaves never reject — the applicant may still change
  * the province before submitting.
  *
@@ -90,7 +111,7 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       scoredAt: new Date(),
       submittedAt: input.partial ? null : new Date(),
       ...(outOfArea
-        ? { reviewedById: null, reviewedAt: new Date(), reviewNote: OUT_OF_COVERAGE_AREA }
+        ? { decidedById: null, decidedAt: new Date(), rejectionReason: OUT_OF_COVERAGE_AREA }
         : {}),
       // Spread, not fixed keys: omitting them leaves the stored ad alone, while
       // `adId: null` would erase it on the next autosave.
@@ -103,11 +124,56 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
         : {})
     };
 
+    const existing = await client.loanApplication.findFirst({
+      where: { sessionId: input.sessionId }
+    });
+    if (existing && OWNED_BY_REVIEW.has(existing.status)) {
+      logger.warn("intake write ignored: application is under review", {
+        sessionId: input.sessionId,
+        id: existing.id,
+        status: existing.status,
+        partial: input.partial
+      });
+      return existing;
+    }
+    // A fresh application for a returning applicant whose previous one is closed.
+    const sessionId =
+      existing && CLOSED_WITH_HISTORY.has(existing.status)
+        ? `${input.sessionId}-r${Date.now().toString(36)}`
+        : input.sessionId;
+    // Never walk a submitted application back to DRAFT: a partial write on a
+    // RECEIVED row (a stray beacon) keeps it RECEIVED and just updates the data.
+    if (existing?.status === "RECEIVED" && sessionId === input.sessionId && status === "DRAFT") {
+      updateData.status = "RECEIVED";
+      updateData.submittedAt = existing.submittedAt ?? new Date();
+    }
+
     const application = await client.loanApplication.upsert({
-      where: { sessionId: input.sessionId },
-      create: { sessionId: input.sessionId, source, ...updateData },
+      where: { sessionId },
+      create: { sessionId, source, ...updateData },
       update: updateData
     });
+    const becameReceived =
+      application.status === "RECEIVED" &&
+      !(existing?.status === "RECEIVED" && sessionId === input.sessionId);
+    const becameOutOfArea =
+      outOfArea && application.status === "REJECTED" && !existing?.rejectionReason;
+    if (becameOutOfArea && deps.recordOutOfArea) {
+      deps.recordOutOfArea(application).catch((err: Error) => {
+        logger.error("failed to record out-of-area rejection", {
+          applicationId: application.id,
+          error: err.message
+        });
+      });
+    }
+    if (becameReceived && deps.recordReceived) {
+      deps.recordReceived(application).catch((err: Error) => {
+        logger.error("failed to record application.received", {
+          applicationId: application.id,
+          error: err.message
+        });
+      });
+    }
 
     logger.verbose("loan application upserted", {
       sessionId: input.sessionId,

@@ -78,8 +78,12 @@ export default class Get extends BaseCommand<typeof Get> {
           `RISK BAND: \t${app.riskBand ?? "N/A"}\n` +
           `RECOMMENDATION: \t${app.recommendation ?? "N/A"}\n` +
           `\n` +
-          `REVIEWED BY: \t${app.reviewedById ?? "N/A"}\n` +
-          `REVIEW NOTE: \t${app.reviewNote ?? "N/A"}\n` +
+          `ASSIGNED TO: \t${app.assignedReviewerId ?? "N/A"}\n` +
+          `RECOMMENDATION (REVIEWER): \t${app.reviewerRecommendation ?? "N/A"}\n` +
+          `DECIDED BY: \t${app.decidedById ?? "N/A"}\n` +
+          `DECISION NOTE: \t${app.decisionNote ?? "N/A"}\n` +
+          `REJECTION REASON: \t${app.rejectionReason ?? "N/A"}\n` +
+          `APPROVED: \t${app.approvedAmount != null ? `RD$${app.approvedAmount} / ${app.approvedTermWeeks ?? "?"} sem.` : "N/A"}\n` +
           `\n` +
           `CÉDULA FRONT: \t${app.idFrontFilename ? "Uploaded" : "Not uploaded"}\n` +
           `CÉDULA BACK: \t${app.idBackFilename ? "Uploaded" : "Not uploaded"}\n` +

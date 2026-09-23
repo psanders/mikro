@@ -1,10 +1,11 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { DbClient, LoanApplication, DeleteIdImageInput } from "@mikro/common";
+import type { DbClient, LoanApplication, DeleteIdImageInput, TransitionActor } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { deleteImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
+import { assertEvidenceWritable } from "./reviewApplication.js";
 
 async function loadByRef(
   client: DbClient,
@@ -19,14 +20,9 @@ async function loadByRef(
 
 /** Remove one side of the applicant's cédula and unlink the stored file. */
 export function createDeleteIdImage(client: DbClient) {
-  return async (input: DeleteIdImageInput): Promise<LoanApplication> => {
+  return async (input: DeleteIdImageInput, actor: TransitionActor): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-    if (app.status === "CONVERTED") {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "Cannot change documents on a converted application."
-      });
-    }
+    assertEvidenceWritable(app, actor);
 
     const isFront = input.side === "FRONT";
     const prev = isFront ? app.idFrontFilename : app.idBackFilename;

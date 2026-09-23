@@ -59,7 +59,22 @@ interface ApplicationRow {
   firstName?: string | null;
   lastName?: string | null;
   businessName?: string | null;
-  reviewNote?: string | null;
+  score?: number | null;
+  assignedReviewerId?: string | null;
+  reviewerRecommendation?: string | null;
+  decisionNote?: string | null;
+  rejectionReason?: string | null;
+  approvedAmount?: unknown;
+  approvedTermWeeks?: number | null;
+}
+
+/** Display data every application review event carries (see applicationEventBase). */
+function applicationBase(app: ApplicationRow) {
+  return {
+    applicationId: app.id,
+    ...(app.businessName ? { businessName: app.businessName } : {}),
+    ...(app.score != null ? { score: app.score } : {})
+  };
 }
 
 async function loanCustomer(client: EventClient, loanUuid: string) {
@@ -122,10 +137,77 @@ const paymentReversed: EventMapper = async ({ input, result, ctx }) => {
   };
 };
 
+const applicationAssigned: EventMapper = async ({ input, result, ctx }) => {
+  const app = result as ApplicationRow;
+  const client = db(ctx);
+  const actorName = await resolveActorName(client, ctx.userId);
+  const assigneeId = app.assignedReviewerId ?? ctx.userId;
+  const self = assigneeId === ctx.userId;
+  const assigneeName = self ? actorName : await resolveActorName(client, assigneeId);
+  const name = applicationDisplayName(app);
+  // An assigneeId in the input on an application that was already in review
+  // means an admin moved it; either way the payload names who holds it now.
+  const reassigned = Boolean((input as { assigneeId?: string } | undefined)?.assigneeId) && !self;
+
+  return {
+    type: "application.assigned",
+    actorId: ctx.userId,
+    actorName,
+    customerName: name,
+    applicationId: app.id,
+    summary: self
+      ? `${actorName} tomó la solicitud de ${name}`
+      : `${actorName} asignó la solicitud de ${name} a ${assigneeName}`,
+    payload: {
+      ...applicationBase(app),
+      assigneeId,
+      assigneeName,
+      ...(reassigned ? { reassigned } : {})
+    }
+  };
+};
+
+const applicationSentToDecision: EventMapper = async ({ result, ctx }) => {
+  const app = result as ApplicationRow;
+  const actorName = await resolveActorName(db(ctx), ctx.userId);
+  const name = applicationDisplayName(app);
+
+  return {
+    type: "application.sent_to_decision",
+    actorId: ctx.userId,
+    actorName,
+    customerName: name,
+    applicationId: app.id,
+    summary: `${actorName} envió a decisión la solicitud de ${name}`,
+    payload: {
+      ...applicationBase(app),
+      ...(app.reviewerRecommendation ? { recommendation: app.reviewerRecommendation } : {})
+    }
+  };
+};
+
+const applicationReturned: EventMapper = async ({ result, ctx }) => {
+  const app = result as ApplicationRow;
+  const actorName = await resolveActorName(db(ctx), ctx.userId);
+  const name = applicationDisplayName(app);
+
+  return {
+    type: "application.returned",
+    actorId: ctx.userId,
+    actorName,
+    customerName: name,
+    applicationId: app.id,
+    summary: `${actorName} devolvió la solicitud de ${name} al evaluador`,
+    payload: { ...applicationBase(app), note: app.decisionNote ?? "" }
+  };
+};
+
 const applicationApproved: EventMapper = async ({ result, ctx }) => {
   const app = result as ApplicationRow;
   const actorName = await resolveActorName(db(ctx), ctx.userId);
   const name = applicationDisplayName(app);
+  const approvedAmount =
+    app.approvedAmount != null ? amountToNumber(app.approvedAmount as number) : undefined;
 
   return {
     type: "application.approved",
@@ -133,13 +215,16 @@ const applicationApproved: EventMapper = async ({ result, ctx }) => {
     actorName,
     customerName: name,
     applicationId: app.id,
-    summary: `Solicitud de ${name} aprobada`,
+    amount: approvedAmount,
+    summary: `Solicitud de ${name} aprobada${approvedAmount != null ? ` por ${formatDop(approvedAmount)}` : ""}`,
     // No policy-override concept exists in the approve flow today, so this is
     // always false; the amber "exception" treatment is reserved for when it does.
     payload: {
-      applicationId: app.id,
+      ...applicationBase(app),
       policyException: false,
-      ...(app.reviewNote ? { note: app.reviewNote } : {})
+      ...(approvedAmount != null ? { approvedAmount } : {}),
+      ...(app.approvedTermWeeks != null ? { approvedTermWeeks: app.approvedTermWeeks } : {}),
+      ...(app.decisionNote ? { note: app.decisionNote } : {})
     }
   };
 };
@@ -156,23 +241,27 @@ const applicationRejected: EventMapper = async ({ result, ctx }) => {
     customerName: name,
     applicationId: app.id,
     summary: `Solicitud de ${name} rechazada`,
-    payload: { applicationId: app.id, ...(app.reviewNote ? { note: app.reviewNote } : {}) }
+    payload: {
+      ...applicationBase(app),
+      ...(app.rejectionReason ? { reason: app.rejectionReason } : {}),
+      ...(app.decisionNote ? { note: app.decisionNote } : {})
+    }
   };
 };
 
-const applicationSigned: EventMapper = async ({ result, ctx }) => {
+const applicationWithdrawn: EventMapper = async ({ result, ctx }) => {
   const app = result as ApplicationRow;
   const actorName = await resolveActorName(db(ctx), ctx.userId);
   const name = applicationDisplayName(app);
 
   return {
-    type: "application.signed",
+    type: "application.withdrawn",
     actorId: ctx.userId,
     actorName,
     customerName: name,
     applicationId: app.id,
-    summary: `Contrato firmado para la solicitud de ${name}`,
-    payload: { applicationId: app.id }
+    summary: `${name} desistió del préstamo aprobado`,
+    payload: applicationBase(app)
   };
 };
 
@@ -354,17 +443,21 @@ const customerCreated: EventMapper = async ({ result, ctx }) => {
 
 /**
  * Registry keyed by event type. Every catalog type has a mapper EXCEPT the ones
- * not written at the tRPC boundary: `application.restored` (createRestoreApplication
- * writes it) and `contract.generated` (RETIRED — a contract is created as part of
+ * not written at the tRPC boundary: `application.received` (intake/promote write
+ * it, see recordApplicationReceived), the retired `application.signed`,
+ * `application.restored` (createRestoreApplication writes it) and `contract.generated` (RETIRED — a contract is created as part of
  * a loan, so `loan.created` covers it; the standalone event was redundant noise.
  * Kept in the catalog only so historical rows still read/render).
  */
 export const eventMappers: Partial<Record<BusinessEventType, EventMapper>> = {
   "payment.collected": paymentCollected,
   "payment.reversed": paymentReversed,
+  "application.assigned": applicationAssigned,
+  "application.sent_to_decision": applicationSentToDecision,
+  "application.returned": applicationReturned,
   "application.approved": applicationApproved,
   "application.rejected": applicationRejected,
-  "application.signed": applicationSigned,
+  "application.withdrawn": applicationWithdrawn,
   "application.converted": applicationConverted,
   "application.deleted": applicationDeleted,
   "loan.created": loanCreated,

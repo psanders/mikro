@@ -30,10 +30,45 @@ export interface FeedEventItem {
    */
   loanNumber: number | null;
   applicationId: string | null;
+  /**
+   * The application's CURRENT state for application.* events, joined at read
+   * time (the event itself is frozen). Cards render from this, so a
+   * "received" event whose application has since been taken shows its live
+   * status. `null` for non-application events or a deleted application.
+   */
+  application: FeedApplicationState | null;
   amount: number | null;
   summary: string;
   payload: unknown;
 }
+
+export interface FeedApplicationState {
+  status: string;
+  assignedReviewerId: string | null;
+  decidedById: string | null;
+  score: number | null;
+  businessName: string | null;
+  aiSummary: string | null;
+}
+
+/** Who is reading the feed; drives the role scoping of application events. */
+export interface FeedViewer {
+  id: string;
+  roles: readonly string[];
+}
+
+/** Review-lifecycle event types, scoped per role (openspec founder-application-flow). */
+export const APPLICATION_REVIEW_EVENT_TYPES = [
+  "application.received",
+  "application.assigned",
+  "application.sent_to_decision",
+  "application.returned",
+  "application.approved",
+  "application.rejected",
+  "application.withdrawn",
+  "application.signed",
+  "application.converted"
+] as const;
 
 export interface ListFeedEventsResult {
   items: FeedEventItem[];
@@ -65,6 +100,7 @@ function mapRow(row: {
     loanId: row.loanId,
     loanNumber: null,
     applicationId: row.applicationId,
+    application: null,
     amount: row.amount == null ? null : amountToNumber(row.amount),
     summary: row.summary,
     payload: JSON.parse(row.payload)
@@ -137,11 +173,82 @@ async function overlayMessageStatus(client: EventClient, items: FeedEventItem[])
  * non-overlapping even when new events arrive between requests. Optional
  * type/actor/date filters narrow the stream.
  */
-export function createListFeedEvents(client: EventClient) {
+/**
+ * Application ids whose review events this viewer should see:
+ *  - REVIEWER: the shared queue (still RECEIVED) + everything assigned to them
+ *  - ADMIN: what awaits a decision (PENDING_DECISION) + what they decided
+ * A viewer with both roles gets the union.
+ */
+async function visibleApplicationIds(client: EventClient, viewer: FeedViewer): Promise<string[]> {
+  const or: Array<Record<string, unknown>> = [];
+  const isReviewer = viewer.roles.includes("REVIEWER") || viewer.roles.includes("ADMIN");
+  if (isReviewer) {
+    or.push({ status: "RECEIVED" }, { assignedReviewerId: viewer.id });
+  }
+  if (viewer.roles.includes("ADMIN")) {
+    or.push({ status: "PENDING_DECISION" }, { decidedById: viewer.id });
+  }
+  if (or.length === 0) return [];
+  const rows = await client.loanApplication.findMany({ where: { OR: or }, select: { id: true } });
+  return rows.map((r) => r.id);
+}
+
+/** Join each application event's live application state (one batched query). */
+async function enrichApplicationState(client: EventClient, items: FeedEventItem[]): Promise<void> {
+  const ids = [
+    ...new Set(
+      items
+        .filter((i) => i.type.startsWith("application.") && i.applicationId)
+        .map((i) => i.applicationId!)
+    )
+  ];
+  if (ids.length === 0) return;
+  const rows = await client.loanApplication.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      status: true,
+      assignedReviewerId: true,
+      decidedById: true,
+      score: true,
+      businessName: true,
+      aiSummary: true
+    }
+  });
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const item of items) {
+    const row = item.applicationId ? byId.get(item.applicationId) : undefined;
+    if (!row || !item.type.startsWith("application.")) continue;
+    item.application = {
+      status: row.status,
+      assignedReviewerId: row.assignedReviewerId,
+      decidedById: row.decidedById,
+      score: row.score,
+      businessName: row.businessName,
+      aiSummary: row.aiSummary
+    };
+  }
+}
+
+export function createListFeedEvents(client: EventClient, viewer?: FeedViewer) {
   const fn = async (input: ListFeedEventsInput): Promise<ListFeedEventsResult> => {
     const limit = input.limit ?? DEFAULT_LIMIT;
 
     const and: Array<Record<string, unknown>> = [];
+    if (viewer) {
+      const appIds = await visibleApplicationIds(client, viewer);
+      const reviewEvents = { type: { in: [...APPLICATION_REVIEW_EVENT_TYPES] } };
+      const visibleReviewEvents = { AND: [reviewEvents, { applicationId: { in: appIds } }] };
+      if (viewer.roles.includes("ADMIN")) {
+        // Admins keep every other business event (payments, loans, tasks, …).
+        and.push({
+          OR: [{ type: { notIn: [...APPLICATION_REVIEW_EVENT_TYPES] } }, visibleReviewEvents]
+        });
+      } else {
+        // A REVIEWER-only viewer sees review events only.
+        and.push(visibleReviewEvents);
+      }
+    }
     if (input.types && input.types.length > 0) {
       and.push({ type: { in: input.types } });
     }
@@ -178,6 +285,7 @@ export function createListFeedEvents(client: EventClient) {
     // payload's `waMessageId`. One batched lookup keeps this O(1) queries/page.
     await overlayMessageStatus(client, items);
     await enrichLoanNumbers(client, items);
+    await enrichApplicationState(client, items);
 
     const last = items[items.length - 1];
     const nextCursor = hasMore && last ? encodeCursor(last.occurredAt, last.id) : null;

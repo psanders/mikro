@@ -43,7 +43,7 @@ evaluateTransition(app, action, actor, input?, ctx?) → { ok: true; to: Status 
 
 ### D2. Data model
 
-`LoanApplication` gains `assignedReviewerId`, `assignedAt`, `recommendation` (text), `sentToDecisionAt`, `decidedById`, `decidedAt`, `decisionNote`, `rejectionReason` (`ApplicationRejectionReason`: `OUT_OF_COVERAGE_AREA`, `PAYMENT_CAPACITY`, `DOCUMENTS`, `OTHER`), `approvedAmount`, `approvedTermWeeks`, `aiSummary`, `aiSummaryAt`. It drops `reviewedById`, `reviewedAt`, `reviewNote`.
+`LoanApplication` gains `assignedReviewerId`, `assignedAt`, `reviewerRecommendation` (text; `recommendation` is already the score engine's column), `sentToDecisionAt`, `decidedById`, `decidedAt`, `decisionNote`, `rejectionReason` (`ApplicationRejectionReason`: `OUT_OF_COVERAGE_AREA`, `PAYMENT_CAPACITY`, `DOCUMENTS`, `OTHER`), `approvedAmount`, `approvedTermWeeks`, `aiSummary`, `aiSummaryAt`. It drops `reviewedById`, `reviewedAt`, `reviewNote`.
 
 New `ApplicationDocument { id, applicationId, kind: BUSINESS_PHOTO | OTHER, filename, originalName, mimeType, size, sha256, label?, uploadedById, createdAt }`. Files use the existing content-addressed storage (`applications/storage.ts`, `<sha256>.<ext>`). ID front/back stay as columns: they are the two fixed slots.
 
@@ -95,7 +95,7 @@ One `SidePanel` primitive (600 px, right, scrim, optional back crumb, pinned foo
 
 ### D9. Reviewer access to the founder app
 
-`App.tsx` currently admits only ADMIN. It becomes: ADMIN → full shell; REVIEWER-only → feed + search, scoped (no Tareas/Reportes/copilot writes); others → `AccessScreen`. The backend already guards with `reviewerProcedure` / `adminProcedure`, and the UI change is cosmetic on top of that.
+`App.tsx` currently admits only ADMIN. It becomes: ADMIN → full shell; REVIEWER-only → feed only (search, Tareas, Reportes and copilot expose non-application data); others → `AccessScreen`. The backend already guards with `reviewerProcedure` / `adminProcedure`, and the UI change is cosmetic on top of that.
 
 ### D10. End-to-end tests
 

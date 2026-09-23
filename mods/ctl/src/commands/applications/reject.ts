@@ -7,9 +7,11 @@ import errorHandler from "../../errorHandler.js";
 import { promptApplicationSelectIfMissing, promptTextIfMissing } from "../../lib/prompts.js";
 
 export default class Reject extends MutationCommand<typeof Reject> {
-  static override readonly description = "reject a RECEIVED or IN_REVIEW application";
+  static override readonly description =
+    "reject an application (assignee while IN_REVIEW, admin while PENDING_DECISION)";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> <applicationId> --reason 'Fuera de zona de cobertura'"
+    "<%= config.bin %> <%= command.id %> <applicationId> --reason PAYMENT_CAPACITY",
+    "<%= config.bin %> <%= command.id %> <applicationId> --reason OTHER --note 'Negocio cerrado'"
   ];
   static override readonly args = {
     applicationId: Args.string({
@@ -18,7 +20,12 @@ export default class Reject extends MutationCommand<typeof Reject> {
     })
   };
   static override readonly flags = {
-    reason: Flags.string({ description: "Rejection reason (required)", required: false })
+    reason: Flags.string({
+      description: "Rejection reason",
+      options: ["OUT_OF_COVERAGE_AREA", "PAYMENT_CAPACITY", "DOCUMENTS", "OTHER"],
+      required: true
+    }),
+    note: Flags.string({ description: "Note (required when reason is OTHER)", required: false })
   };
 
   public async run(): Promise<void> {
@@ -31,13 +38,19 @@ export default class Reject extends MutationCommand<typeof Reject> {
       "Application to reject",
       "applicationId"
     );
-    const reason = await promptTextIfMissing(flags.reason, "Rejection reason", "reason");
+    const reason = flags.reason as
+      | "OUT_OF_COVERAGE_AREA"
+      | "PAYMENT_CAPACITY"
+      | "DOCUMENTS"
+      | "OTHER";
+    const note =
+      reason === "OTHER" ? await promptTextIfMissing(flags.note, "Note", "note") : flags.note;
 
     const ready = await this.confirmOrAbort(`Reject application ${applicationId}?`);
     if (!ready) return;
 
     try {
-      await client.rejectApplication.mutate({ id: applicationId, reason });
+      await client.rejectApplication.mutate({ id: applicationId, reason, note });
       this.log("Done!");
     } catch (e) {
       errorHandler(e, this.error.bind(this));

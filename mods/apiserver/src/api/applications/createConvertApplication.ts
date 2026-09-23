@@ -1,12 +1,13 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { resolveReviewTransition, getConfig } from "@mikro/common";
+import { getConfig } from "@mikro/common";
 import type {
   DbClient,
   LoanApplication,
   ConvertApplicationInput,
-  CustomerDocumentType
+  CustomerDocumentType,
+  TransitionActor
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { createCreateCustomer } from "../customers/createCreateCustomer.js";
@@ -14,6 +15,7 @@ import { createCreateLoan } from "../loans/createCreateLoan.js";
 import { postTransactionCore } from "../accounting/postTransaction.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
+import { authorize } from "./reviewApplication.js";
 
 const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
 
@@ -94,23 +96,19 @@ async function loadByRef(
 }
 
 /**
- * Convert a SIGNED application into a Customer (reuse-or-create) + Loan, link
- * them onto the application, and set status CONVERTED. Atomic.
+ * Convert an APPROVED application with a stored signed contract into a Customer
+ * (reuse-or-create) + Loan, disburse the approved principal from the chosen
+ * account, link them onto the application, and set status CONVERTED. Atomic.
  */
 export function createConvertApplication(client: DbClient) {
   return async (
     input: ConvertApplicationInput,
-    reviewerId: string
+    actor: TransitionActor
   ): Promise<ConvertApplicationResult> => {
     const app = await loadByRef(client, input);
 
-    const to = resolveReviewTransition("convert", app.status);
-    if (!to) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: `Cannot convert an application in status ${app.status} (must be SIGNED).`
-      });
-    }
+    // APPROVED + signed contract + assignee/admin + principal === approvedAmount.
+    const to = authorize(app, "convert", actor, { principal: input.principal });
     if (app.customerId || app.loanId) {
       throw new TRPCError({ code: "CONFLICT", message: "Application is already converted." });
     }
@@ -144,10 +142,10 @@ export function createConvertApplication(client: DbClient) {
     }
 
     // mikro/#155: every conversion auto-deducts the disbursed principal from
-    // the ledger. `accounting.disbursementAccountId` is a required config
-    // field (mikro.json) — the apiserver refuses to boot without it, so
-    // there's nothing to validate here.
-    const disbursementAccountId = getConfig().accounting.disbursementAccountId;
+    // the ledger. The caller picks the account; `accounting.disbursementAccountId`
+    // (required config) is the default. postTransactionCore rejects an unknown
+    // or inactive account, which rolls the whole conversion back.
+    const disbursementAccountId = input.accountId ?? getConfig().accounting.disbursementAccountId;
 
     return client.$transaction(async (tx) => {
       // Reuse an existing customer by cédula, then phone; else create one.
@@ -186,7 +184,25 @@ export function createConvertApplication(client: DbClient) {
       // front/back) onto the new customer, by reference — same filename/
       // sha256, no file I/O, no change to the application's own document
       // columns (they remain the immutable review-time audit record).
-      const documentsToMigrate = applicationDocuments(app);
+      const evidence = await tx.applicationDocument.findMany({
+        where: { applicationId: app.id },
+        orderBy: { createdAt: "asc" }
+      });
+      const documentsToMigrate = [
+        ...applicationDocuments(app).map((doc) => ({
+          ...doc,
+          sha256: sha256FromFilename(doc.filename!)
+        })),
+        // Business photos and other evidence gathered during review.
+        ...evidence.map((doc) => ({
+          type: doc.kind as CustomerDocumentType,
+          filename: doc.filename,
+          originalName: doc.originalName,
+          mimeType: doc.mimeType,
+          size: doc.size,
+          sha256: doc.sha256
+        }))
+      ];
       if (documentsToMigrate.length > 0) {
         await tx.customerDocument.createMany({
           data: documentsToMigrate.map((doc) => ({
@@ -195,7 +211,7 @@ export function createConvertApplication(client: DbClient) {
             originalName: doc.originalName,
             mimeType: doc.mimeType,
             size: doc.size,
-            sha256: sha256FromFilename(doc.filename!),
+            sha256: doc.sha256,
             source: "MIGRATED_FROM_APPLICATION" as const,
             customerId: customer.id
           }))
@@ -214,13 +230,23 @@ export function createConvertApplication(client: DbClient) {
         occurredAt: new Date(),
         description: `Desembolso de préstamo #${loan.loanId} para ${name}`,
         reference: `loan-disbursement:${loan.loanId}`,
-        createdById: reviewerId
+        createdById: actor.id
       });
 
-      const updated = await tx.loanApplication.update({
-        where: { id: app.id },
+      // Conditional on still being APPROVED: a concurrent conversion or
+      // withdrawal makes this match nothing, and the throw rolls back the
+      // customer, loan, documents and disbursement created above.
+      const { count } = await tx.loanApplication.updateMany({
+        where: { id: app.id, status: app.status, assignedReviewerId: app.assignedReviewerId },
         data: { status: to, customerId: customer.id, loanId: loan.loanId }
       });
+      if (count === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "La solicitud cambió mientras la convertías; recarga e intenta de nuevo."
+        });
+      }
+      const updated = (await tx.loanApplication.findUnique({ where: { id: app.id } }))!;
 
       logger.verbose("loan application converted", {
         id: app.id,

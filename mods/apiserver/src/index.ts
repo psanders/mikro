@@ -38,7 +38,7 @@ import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter, createContext } from "./trpc/index.js";
 import { ValidationError, MAX_TRPC_REQUEST_BYTES } from "@mikro/common";
-import type { CalculateLoanInput, DbClient } from "@mikro/common";
+import type { CalculateLoanInput, DbClient, LoanApplication } from "@mikro/common";
 import {
   handleWhatsAppMessage,
   getWebhookVerifyToken,
@@ -70,13 +70,18 @@ import { createCreateTransaction } from "./api/accounting/index.js";
 import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/index.js";
 import { createEchoToChatwoot } from "./api/chatwoot/index.js";
 import {
-  createApproveApplication,
-  createRejectApplication,
+  createCopilotApproveApplication,
+  createCopilotRejectApplication,
   createDeleteApplication
 } from "./api/applications/index.js";
 import { Octokit } from "@octokit/rest";
 import { fileGithubIssue } from "./api/feedback/fileGithubIssue.js";
 import { prisma } from "./db.js";
+import { recordApplicationReceived, recordOutOfAreaRejection } from "./api/events/index.js";
+import {
+  refreshApplicationSummary,
+  setApplicationSummaryModel
+} from "./api/applications/applicationSummary.js";
 import { logger } from "./logger.js";
 
 process.on("uncaughtException", (err) => {
@@ -297,9 +302,16 @@ const recordOutboundMessage = createRecordOutboundMessage(prisma);
 const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
 const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
 const recordMetaAd = createRecordMetaAd(dbClient);
+// Every intake path that makes a row RECEIVED puts it in the reviewers' queue
+// via this feed event (openspec add-application-review-flow).
+const recordReceived = async (app: LoanApplication) => {
+  void refreshApplicationSummary(dbClient, app.id);
+  await recordApplicationReceived(prisma, app);
+};
 const upsertApplication = createUpsertApplication(dbClient, {
   scheduleFollowUpJob,
-  recordMetaAd
+  recordMetaAd,
+  recordReceived
 });
 const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
 // Server-side twin of the site's browser pixel. No-ops unless metaConversions is
@@ -326,7 +338,9 @@ const sendLeadConversion = createSendLeadConversion({
 const upsertWebApplication = createUpsertApplication(dbClient, {
   scheduleFollowUpJob,
   recordMetaAd,
-  coveredProvinces: cfg.applications.coveredProvinces
+  coveredProvinces: cfg.applications.coveredProvinces,
+  recordReceived,
+  recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app)
 });
 const handleApplicationIntake = createApplicationIntakeHandler({
   upsertApplication: upsertWebApplication,
@@ -448,8 +462,8 @@ async function initializeMessageProcessor() {
     const previewLateFee = createPreviewLateFee(dbClient);
     const getCustomer = createGetCustomer(dbClient);
     const getApplication = createGetApplication(dbClient);
-    const approveApplication = createApproveApplication(dbClient);
-    const rejectApplication = createRejectApplication(dbClient);
+    const approveApplication = createCopilotApproveApplication(dbClient);
+    const rejectApplication = createCopilotRejectApplication(dbClient);
     const deleteApplication = createDeleteApplication(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();
@@ -780,6 +794,9 @@ async function initializeMessageProcessor() {
           request: { headers: { "x-github-api-version": "2022-11-28" } }
         })
       : undefined;
+    // Same model the copilot uses, at a lower temperature: the application
+    // summary is a factual paragraph, not a conversation.
+    setApplicationSummaryModel(() => createChatModel(getLLMConfig("text"), { temperature: 0.2 }));
     setCopilotDeps({
       toolExecutor,
       createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),

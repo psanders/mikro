@@ -24,7 +24,7 @@ The system SHALL define an `ApplicationStatus` enum with values `DRAFT`, `RECEIV
 The `LoanApplication` model SHALL persist assignment and decision columns separately:
 
 - `assignedReviewerId`, `assignedAt`
-- `recommendation`, `sentToDecisionAt`
+- `reviewerRecommendation`, `sentToDecisionAt`
 - `decidedById`, `decidedAt`, `decisionNote`
 - `rejectionReason` (enum `ApplicationRejectionReason`)
 - `approvedAmount`, `approvedTermWeeks`

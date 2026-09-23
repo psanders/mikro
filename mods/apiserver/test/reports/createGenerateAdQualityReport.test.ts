@@ -157,13 +157,16 @@ describe("createGenerateAdQualityReport", () => {
     expect(row?.medianScore).to.equal(40); // the draft's 90 is not counted
   });
 
-  it("counts SIGNED and CONVERTED as approved, so a better outcome is not a worse number", async () => {
+  it("counts CONVERTED and approved-then-withdrawn as approved, so a better outcome is not a worse number", async () => {
     const client = makeClient(
       [
         makeApplication({ id: "a", adId: "120212", status: "APPROVED" }),
-        makeApplication({ id: "b", adId: "120212", status: "SIGNED" }),
+        makeApplication({ id: "b", adId: "120212", status: "ABANDONED", approvedAmount: 10000 }),
         makeApplication({ id: "c", adId: "120212", status: "CONVERTED" }),
-        makeApplication({ id: "d", adId: "120212", status: "REJECTED" })
+        makeApplication({ id: "d", adId: "120212", status: "REJECTED" }),
+        // Awaiting the admin is not a decision yet; an abandoned draft never was one.
+        makeApplication({ id: "e", adId: "120212", status: "PENDING_DECISION" }),
+        makeApplication({ id: "f", adId: "120212", status: "ABANDONED" })
       ],
       [AD]
     );

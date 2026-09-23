@@ -4,13 +4,18 @@
 import type { DbClient, FollowUpJob } from "@mikro/common";
 import { logger } from "../logger.js";
 
+/**
+ * ABANDON fires after the nudge window. Only a DRAFT is ever abandoned by a
+ * timer: a submitted application (RECEIVED or later) stays in the reviewers'
+ * queue until a person acts on it (openspec add-application-review-flow).
+ */
 export function createHandleAbandonJob(client: DbClient) {
   return async (job: FollowUpJob): Promise<void> => {
     const app = await client.loanApplication.findUnique({ where: { id: job.applicationId } });
 
-    if (!app || app.status !== "RECEIVED") {
+    if (!app || app.status !== "DRAFT") {
       await client.followUpJob.update({ where: { id: job.id }, data: { status: "CANCELLED" } });
-      logger.verbose("ABANDON cancelled — application not in RECEIVED", {
+      logger.verbose("ABANDON cancelled — application is not a DRAFT", {
         jobId: job.id,
         applicationId: job.applicationId,
         status: app?.status ?? "NOT_FOUND"

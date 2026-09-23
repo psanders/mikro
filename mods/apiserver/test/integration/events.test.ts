@@ -169,26 +169,46 @@ describe("Founder Feed Integration", () => {
     });
 
     it("application.approved on approveApplication (policyException false)", async () => {
-      const app = await makeApplication();
-      await caller.approveApplication({ id: app.id, note: "ok" });
+      const app = await makeApplication({ status: "PENDING_DECISION" });
+      await caller.approveApplication({
+        id: app.id,
+        approvedAmount: 5000,
+        approvedTermWeeks: 10,
+        note: "ok"
+      });
 
       const events = await db.businessEvent.findMany({ where: { type: "application.approved" } });
       expect(events).to.have.lengthOf(1);
       expect(events[0].applicationId).to.equal(app.id);
       expect(events[0].summary).to.contain("aprobada");
-      expect(JSON.parse(events[0].payload).policyException).to.equal(false);
+      const payload = JSON.parse(events[0].payload);
+      expect(payload.policyException).to.equal(false);
+      expect(payload.approvedAmount).to.equal(5000);
+      expect(payload.approvedTermWeeks).to.equal(10);
     });
 
     it("application.rejected on rejectApplication", async () => {
-      const app = await makeApplication();
-      await caller.rejectApplication({ id: app.id, reason: "no califica" });
+      const app = await makeApplication({ status: "PENDING_DECISION" });
+      await caller.rejectApplication({ id: app.id, reason: "OTHER", note: "no califica" });
 
       const events = await db.businessEvent.findMany({ where: { type: "application.rejected" } });
       expect(events).to.have.lengthOf(1);
       expect(events[0].summary).to.contain("rechazada");
+      const payload = JSON.parse(events[0].payload);
+      expect(payload).to.include({ reason: "OTHER", note: "no califica" });
     });
 
-    it("application.signed on uploadSignedContract", async () => {
+    it("application.assigned on assignApplication", async () => {
+      const app = await makeApplication();
+      await caller.assignApplication({ id: app.id });
+
+      const events = await db.businessEvent.findMany({ where: { type: "application.assigned" } });
+      expect(events).to.have.lengthOf(1);
+      expect(events[0].applicationId).to.equal(app.id);
+      expect(events[0].summary).to.contain("tomó");
+    });
+
+    it("uploadSignedContract records no event — signing is a step of APPROVED, not a status", async () => {
       const app = await makeApplication({ status: "APPROVED" });
       await caller.uploadSignedContract({
         id: app.id,
@@ -197,9 +217,11 @@ describe("Founder Feed Integration", () => {
         dataBase64: tinyPdfBase64
       });
 
-      const events = await db.businessEvent.findMany({ where: { type: "application.signed" } });
-      expect(events).to.have.lengthOf(1);
-      expect(events[0].applicationId).to.equal(app.id);
+      const events = await db.businessEvent.findMany({ where: { applicationId: app.id } });
+      expect(events).to.have.lengthOf(0);
+      const row = await db.loanApplication.findUnique({ where: { id: app.id } });
+      expect(row!.status).to.equal("APPROVED");
+      expect(row!.contractFilename).to.be.a("string");
     });
 
     it("application.converted on convertApplication", async () => {
@@ -209,7 +231,10 @@ describe("Founder Feed Integration", () => {
         role: "COLLECTOR"
       });
       const app = await makeApplication({
-        status: "SIGNED",
+        status: "APPROVED",
+        approvedAmount: 5000,
+        approvedTermWeeks: 10,
+        contractFilename: "zzz000.pdf",
         idNumber: "001-7654321-0",
         phone: uniquePhone()
       });
@@ -390,6 +415,10 @@ describe("Founder Feed Integration", () => {
       // RETIRED — no longer produced (loan.created covers it), kept only so
       // historical rows read/render. These must be the only types without a mapper.
       const noBoundaryMapper = new Set([
+        // Written by intake/promote/manual create (recordApplicationReceived).
+        "application.received",
+        // RETIRED with the SIGNED status (a contract is a step of APPROVED).
+        "application.signed",
         "application.restored",
         "contract.generated",
         "copilot.action",

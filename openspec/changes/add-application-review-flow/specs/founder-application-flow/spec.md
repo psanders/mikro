@@ -2,12 +2,12 @@
 
 ### Requirement: Reviewers can use the founder app with a scoped shell
 
-The founder app SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: feed and search only, no Tareas, Reportes or copilot). Other users SHALL see the access screen. A user with both roles gets the full shell.
+The founder app SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: the feed only — no search, Tareas, Reportes or copilot, since those expose non-application data). Other users SHALL see the access screen. A user with both roles gets the full shell.
 
 #### Scenario: Reviewer signs in
 
 - **WHEN** a REVIEWER-only user signs in to the founder app
-- **THEN** they see the feed and search, and no Tareas, Reportes or copilot entry
+- **THEN** they see the feed, and no search, Tareas, Reportes or copilot entry
 
 #### Scenario: Collector is turned away
 

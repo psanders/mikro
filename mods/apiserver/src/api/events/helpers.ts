@@ -84,7 +84,10 @@ export function applicationDisplayName(app: {
 export const APPLICATION_DATE_FIELDS = new Set<string>([
   "dateOfBirth",
   "scoredAt",
-  "reviewedAt",
+  "assignedAt",
+  "sentToDecisionAt",
+  "decidedAt",
+  "aiSummaryAt",
   "signedAt",
   "idUploadedAt",
   "submittedAt",
@@ -123,7 +126,7 @@ function toJsonSafeValue(value: unknown): unknown {
  */
 export function snapshotToCreateData(snapshot: Record<string, unknown>): Record<string, unknown> {
   const data: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(snapshot)) {
+  for (const [key, value] of Object.entries(upgradeLegacySnapshot(snapshot))) {
     if (APPLICATION_DATE_FIELDS.has(key) && typeof value === "string") {
       data[key] = new Date(value);
     } else {
@@ -131,4 +134,39 @@ export function snapshotToCreateData(snapshot: Record<string, unknown>): Record<
     }
   }
   return data;
+}
+
+const DECIDED_LEGACY_STATUSES = new Set(["APPROVED", "SIGNED", "CONVERTED", "REJECTED"]);
+
+/**
+ * Snapshots taken before the review-flow change (openspec
+ * add-application-review-flow) carry `reviewedById`/`reviewedAt`/`reviewNote`
+ * and possibly status `SIGNED`, none of which exist anymore. Translate them the
+ * same way the 20260923120000 migration translated live rows, so an old
+ * deletion can still be restored.
+ */
+export function upgradeLegacySnapshot(snapshot: Record<string, unknown>): Record<string, unknown> {
+  if (!("reviewedById" in snapshot || "reviewedAt" in snapshot || "reviewNote" in snapshot)) {
+    return snapshot.status === "SIGNED" ? { ...snapshot, status: "APPROVED" } : snapshot;
+  }
+  const { reviewedById, reviewedAt, reviewNote, ...rest } = snapshot;
+  const status = String(rest.status ?? "");
+  const out: Record<string, unknown> = { ...rest };
+  if (status === "SIGNED") out.status = "APPROVED";
+  if (reviewedById && (status === "IN_REVIEW" || DECIDED_LEGACY_STATUSES.has(status))) {
+    out.assignedReviewerId = reviewedById;
+  }
+  if (status === "IN_REVIEW") out.assignedAt = reviewedAt ?? null;
+  if (DECIDED_LEGACY_STATUSES.has(status)) {
+    out.decidedById = reviewedById ?? null;
+    out.decidedAt = reviewedAt ?? null;
+    const outOfArea = status === "REJECTED" && reviewNote === "OUT_OF_COVERAGE_AREA";
+    out.decisionNote = outOfArea ? null : (reviewNote ?? null);
+    if (status === "REJECTED") out.rejectionReason = outOfArea ? "OUT_OF_COVERAGE_AREA" : "OTHER";
+  }
+  if (status === "APPROVED" || status === "SIGNED") {
+    out.approvedAmount = rest.requestedAmount ?? null;
+    out.approvedTermWeeks = rest.requestedTermWeeks ?? null;
+  }
+  return out;
 }

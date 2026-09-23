@@ -6,11 +6,19 @@ export type ApplicationStatus =
   | "DRAFT"
   | "RECEIVED"
   | "IN_REVIEW"
+  | "PENDING_DECISION"
   | "APPROVED"
-  | "REJECTED"
-  | "SIGNED"
   | "CONVERTED"
+  | "REJECTED"
   | "ABANDONED";
+
+export type ApplicationRejectionReason =
+  | "OUT_OF_COVERAGE_AREA"
+  | "PAYMENT_CAPACITY"
+  | "DOCUMENTS"
+  | "OTHER";
+
+export type ApplicationDocumentKind = "BUSINESS_PHOTO" | "OTHER";
 
 export type ApplicationSource = "FORM" | "WHATSAPP" | "MANUAL";
 
@@ -43,9 +51,18 @@ export interface LoanApplication {
   riskBand: string | null;
   recommendation: string | null;
   scoredAt: Date | null;
-  reviewedById: string | null;
-  reviewedAt: Date | null;
-  reviewNote: string | null;
+  assignedReviewerId: string | null;
+  assignedAt: Date | null;
+  reviewerRecommendation: string | null;
+  sentToDecisionAt: Date | null;
+  decidedById: string | null;
+  decidedAt: Date | null;
+  decisionNote: string | null;
+  rejectionReason: ApplicationRejectionReason | null;
+  approvedAmount: number | null;
+  approvedTermWeeks: number | null;
+  aiSummary: string | null;
+  aiSummaryAt: Date | null;
   contractFilename: string | null;
   contractOriginalName: string | null;
   contractMimeType: string | null;
@@ -71,6 +88,21 @@ export interface LoanApplication {
   submittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Evidence file on an application (business photo or other document). */
+export interface ApplicationDocument {
+  id: string;
+  applicationId: string;
+  kind: ApplicationDocumentKind;
+  label: string | null;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  sha256: string;
+  uploadedById: string;
+  createdAt: Date;
 }
 
 /**

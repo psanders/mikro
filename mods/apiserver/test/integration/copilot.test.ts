@@ -28,8 +28,8 @@ import {
 import { isWriteTool } from "../../src/api/copilot/toolPolicy.js";
 import { summarizeAction } from "../../src/api/copilot/summarizeAction.js";
 import {
-  createRejectApplication,
-  createApproveApplication
+  createCopilotRejectApplication,
+  createCopilotApproveApplication
 } from "../../src/api/applications/index.js";
 import { COPILOT_ACTION_EXPIRY_MINUTES } from "@mikro/common";
 import { createToolExecutor, type ToolResult, type ToolExecutor } from "@mikro/agents";
@@ -1074,11 +1074,12 @@ describe("Founder Copilot Integration", () => {
 
     it("confirming a rejection transitions to REJECTED, stores the reason, records copilot.action", async () => {
       const { admin, adminCaller } = await makeAdmin();
-      const appId = await seedApplication("RECEIVED");
+      // Copilot decisions follow the review rules: an admin acts on PENDING_DECISION.
+      const appId = await seedApplication("PENDING_DECISION");
 
       // A REAL executor wired to the review procedure, so the confirm actually mutates.
       const realExecutor = createToolExecutor({
-        rejectApplication: createRejectApplication(db as any)
+        rejectApplication: createCopilotRejectApplication(db as any)
       } as any);
       setCopilotDeps({
         toolExecutor: realExecutor,
@@ -1099,11 +1100,12 @@ describe("Founder Copilot Integration", () => {
       const res = await adminCaller.copilotConfirmAction({ actionId: action.id });
       expect(res.status).to.equal("CONFIRMED");
 
-      // Row moved to REJECTED with the reason preserved as the review note (audit).
+      // Row moved to REJECTED; the copilot's free text is filed under OTHER as the note (audit).
       const row = await db.loanApplication.findUnique({ where: { id: appId } });
       expect(row?.status).to.equal("REJECTED");
-      expect(row?.reviewNote).to.equal(reason);
-      expect(row?.reviewedById).to.equal(admin.id);
+      expect(row?.rejectionReason).to.equal("OTHER");
+      expect(row?.decisionNote).to.equal(reason);
+      expect(row?.decidedById).to.equal(admin.id);
 
       // Exactly one copilot.action event carrying the tool + args.
       const events = await db.businessEvent.findMany({ where: { type: "copilot.action" } });
@@ -1118,7 +1120,7 @@ describe("Founder Copilot Integration", () => {
       const appId = await seedApplication("CONVERTED"); // not a valid source for approve
 
       const realExecutor = createToolExecutor({
-        approveApplication: createApproveApplication(db as any)
+        approveApplication: createCopilotApproveApplication(db as any)
       } as any);
       setCopilotDeps({
         toolExecutor: realExecutor,

@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Integration tests for claimApplication's assign-to-another-reviewer path.
- * `assigneeId` defaults to the caller (self-claim, open to REVIEWER/ADMIN) but
+ * Integration tests for assignApplication's assign-to-another-reviewer path.
+ * `assigneeId` defaults to the caller (take from the queue, open to REVIEWER/ADMIN) but
  * reassigning to someone else is ADMIN-only, and the assignee must actually be
  * a reviewer or admin.
  */
@@ -16,7 +16,7 @@ import {
 } from "./setup.js";
 import { appRouter } from "../../src/trpc/index.js";
 
-describe("claimApplication assignment", () => {
+describe("assignApplication assignment", () => {
   let db: TestDb;
   let admin: AuthenticatedCaller;
   let phoneSeq = 0;
@@ -81,10 +81,10 @@ describe("claimApplication assignment", () => {
     const app = await makeApplication();
     const reviewerCaller = callerAs(reviewer.id, ["REVIEWER"]);
 
-    const updated = await reviewerCaller.claimApplication({ id: app.id });
+    const updated = await reviewerCaller.assignApplication({ id: app.id });
 
     expect(updated.status).to.equal("IN_REVIEW");
-    expect(updated.reviewedById).to.equal(reviewer.id);
+    expect(updated.assignedReviewerId).to.equal(reviewer.id);
   });
 
   it("rejects a reviewer assigning to someone else", async () => {
@@ -102,7 +102,7 @@ describe("claimApplication assignment", () => {
     const reviewerCaller = callerAs(reviewer.id, ["REVIEWER"]);
 
     await expectRejected(
-      reviewerCaller.claimApplication({ id: app.id, assigneeId: other.id }),
+      reviewerCaller.assignApplication({ id: app.id, assigneeId: other.id }),
       "FORBIDDEN"
     );
   });
@@ -115,10 +115,10 @@ describe("claimApplication assignment", () => {
     });
     const app = await makeApplication();
 
-    const updated = await admin.claimApplication({ id: app.id, assigneeId: target.id });
+    const updated = await admin.assignApplication({ id: app.id, assigneeId: target.id });
 
     expect(updated.status).to.equal("IN_REVIEW");
-    expect(updated.reviewedById).to.equal(target.id);
+    expect(updated.assignedReviewerId).to.equal(target.id);
   });
 
   it("rejects assigning to a user without reviewer/admin role", async () => {
@@ -130,7 +130,7 @@ describe("claimApplication assignment", () => {
     const app = await makeApplication();
 
     await expectRejected(
-      admin.claimApplication({ id: app.id, assigneeId: collector.id }),
+      admin.assignApplication({ id: app.id, assigneeId: collector.id }),
       "BAD_REQUEST"
     );
   });
@@ -139,7 +139,7 @@ describe("claimApplication assignment", () => {
     const app = await makeApplication();
 
     await expectRejected(
-      admin.claimApplication({ id: app.id, assigneeId: "99999999-9999-4999-8999-999999999999" }),
+      admin.assignApplication({ id: app.id, assigneeId: "99999999-9999-4999-8999-999999999999" }),
       "BAD_REQUEST"
     );
   });

@@ -8,3 +8,7 @@ export { createListFeedEvents, type FeedEventItem } from "./createListFeedEvents
 export { createRestoreApplication } from "./createRestoreApplication.js";
 export { createSearchAll } from "./createSearchAll.js";
 export { createExportAuditLog } from "./createExportAuditLog.js";
+export {
+  recordApplicationReceived,
+  recordOutOfAreaRejection
+} from "./recordApplicationReceived.js";

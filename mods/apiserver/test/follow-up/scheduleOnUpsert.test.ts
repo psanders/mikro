@@ -39,7 +39,7 @@ describe("createUpsertApplication — follow-up scheduling", () => {
     const app = { id: "app-1", status: "RECEIVED" };
     const upsertStub = sinon.stub().resolves(app);
     const client = {
-      loanApplication: { upsert: upsertStub }
+      loanApplication: { upsert: upsertStub, findFirst: async () => null }
     } as any;
 
     const scheduleFollowUpJob = sinon.stub().resolves();
@@ -53,7 +53,7 @@ describe("createUpsertApplication — follow-up scheduling", () => {
   it("schedules a NUDGE job for a WHATSAPP submission", async () => {
     const app = { id: "app-2", status: "RECEIVED" };
     const upsertStub = sinon.stub().resolves(app);
-    const client = { loanApplication: { upsert: upsertStub } } as any;
+    const client = { loanApplication: { upsert: upsertStub, findFirst: async () => null } } as any;
 
     const scheduleFollowUpJob = sinon.stub().resolves();
     const upsert = createUpsertApplication(client, { scheduleFollowUpJob });
@@ -66,7 +66,7 @@ describe("createUpsertApplication — follow-up scheduling", () => {
   it("does NOT schedule a job for a partial (DRAFT) submission", async () => {
     const app = { id: "app-3", status: "DRAFT" };
     const upsertStub = sinon.stub().resolves(app);
-    const client = { loanApplication: { upsert: upsertStub } } as any;
+    const client = { loanApplication: { upsert: upsertStub, findFirst: async () => null } } as any;
 
     const scheduleFollowUpJob = sinon.stub().resolves();
     const upsert = createUpsertApplication(client, { scheduleFollowUpJob });
@@ -79,7 +79,7 @@ describe("createUpsertApplication — follow-up scheduling", () => {
   it("does NOT schedule a job for MANUAL source", async () => {
     const app = { id: "app-4", status: "RECEIVED" };
     const upsertStub = sinon.stub().resolves(app);
-    const client = { loanApplication: { upsert: upsertStub } } as any;
+    const client = { loanApplication: { upsert: upsertStub, findFirst: async () => null } } as any;
 
     const scheduleFollowUpJob = sinon.stub().resolves();
     const upsert = createUpsertApplication(client, { scheduleFollowUpJob });

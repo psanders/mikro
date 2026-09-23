@@ -1,10 +1,16 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { DbClient, LoanApplication, DeleteApplicationContractInput } from "@mikro/common";
+import type {
+  DbClient,
+  LoanApplication,
+  DeleteApplicationContractInput,
+  TransitionActor
+} from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { deleteContract } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
+import { assertApprovedStepWritable } from "./reviewApplication.js";
 
 async function loadByRef(
   client: DbClient,
@@ -18,19 +24,17 @@ async function loadByRef(
 }
 
 /**
- * Remove a stored signed contract and revert SIGNED → APPROVED so the
- * reviewer can re-upload a corrected document.
+ * Remove a stored signed contract so the reviewer can re-upload a corrected
+ * document. The application stays APPROVED (a contract is a requirement of
+ * conversion, not a status).
  */
 export function createDeleteApplicationContract(client: DbClient) {
-  return async (input: DeleteApplicationContractInput): Promise<LoanApplication> => {
+  return async (
+    input: DeleteApplicationContractInput,
+    actor: TransitionActor
+  ): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-
-    if (app.status === "CONVERTED") {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "Cannot remove the contract from a converted application."
-      });
-    }
+    assertApprovedStepWritable(app, actor);
 
     if (!app.contractFilename) {
       throw new TRPCError({
@@ -44,8 +48,6 @@ export function createDeleteApplicationContract(client: DbClient) {
     const updated = await client.loanApplication.update({
       where: { id: app.id },
       data: {
-        // Revert to APPROVED only if currently SIGNED; leave other statuses unchanged.
-        ...(app.status === "SIGNED" ? { status: "APPROVED" } : {}),
         contractFilename: null,
         contractOriginalName: null,
         contractMimeType: null,

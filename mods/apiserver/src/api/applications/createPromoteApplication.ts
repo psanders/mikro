@@ -1,15 +1,17 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import {
-  applicationPayloadSchema,
-  normalizeApplication,
-  resolveReviewTransition,
-  scoreApplication
+import { applicationPayloadSchema, normalizeApplication, scoreApplication } from "@mikro/common";
+import type {
+  DbClient,
+  LoanApplication,
+  PromoteApplicationInput,
+  TransitionActor
 } from "@mikro/common";
-import type { DbClient, LoanApplication, PromoteApplicationInput } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import { authorize } from "./reviewApplication.js";
+import { recordApplicationReceived, type EventClient } from "../events/index.js";
 
 async function loadByRef(
   client: DbClient,
@@ -29,15 +31,12 @@ async function loadByRef(
  * is fully scored. Reviewer-driven: used to finish a partial submission by phone.
  */
 export function createPromoteApplication(client: DbClient) {
-  return async (input: PromoteApplicationInput, reviewerId: string): Promise<LoanApplication> => {
+  return async (
+    input: PromoteApplicationInput,
+    actor: TransitionActor
+  ): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-    const to = resolveReviewTransition("promote", app.status);
-    if (!to) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: `Only a draft can be promoted; this application is ${app.status}.`
-      });
-    }
+    const to = authorize(app, "promote", actor);
 
     const existing = (app.rawData as Record<string, unknown> | null) ?? {};
     const payload = applicationPayloadSchema.parse({ sessionId: app.sessionId, ...existing });
@@ -73,8 +72,12 @@ export function createPromoteApplication(client: DbClient) {
     logger.verbose("loan application promoted", {
       id: app.id,
       score: Math.round(result.isc),
-      reviewerId
+      by: actor.id
     });
+    await recordApplicationReceived(client as unknown as EventClient, updated, actor.id).catch(
+      (err: Error) =>
+        logger.error("failed to record application.received", { id: app.id, error: err.message })
+    );
     return updated;
   };
 }

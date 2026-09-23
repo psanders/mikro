@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { randomUUID } from "crypto";
+import type { Role, TransitionActor } from "@mikro/common";
 import {
   // Customer schemas
   createCustomerSchema,
@@ -55,10 +56,17 @@ import {
   // Loan application schemas
   listApplicationsSchema,
   getApplicationSchema,
-  claimApplicationSchema,
+  assignApplicationSchema,
+  setRecommendationSchema,
+  sendToDecisionSchema,
+  returnToReviewerSchema,
   approveApplicationSchema,
   rejectApplicationSchema,
-  reopenApplicationSchema,
+  withdrawApplicationSchema,
+  uploadApplicationDocumentSchema,
+  deleteApplicationDocumentSchema,
+  getApplicationDocumentSchema,
+  getApplicationEvidenceSchema,
   promoteApplicationSchema,
   uploadSignedContractSchema,
   getApplicationContractSchema,
@@ -132,11 +140,22 @@ import { createRunPortfolioHealthCheck } from "../../api/reports/createRunPortfo
 import { createListApplications } from "../../api/applications/createListApplications.js";
 import { createGetApplication } from "../../api/applications/createGetApplication.js";
 import {
-  createClaimApplication,
+  createAssignApplication,
+  createSetRecommendation,
+  createSendToDecision,
+  createReturnToReviewer,
   createApproveApplication,
   createRejectApplication,
-  createReopenApplication
+  createWithdrawApplication
 } from "../../api/applications/reviewApplication.js";
+import {
+  getApplicationEvidence,
+  getMinBusinessPhotos,
+  readApplicationDocument,
+  removeApplicationDocument,
+  storeApplicationDocument
+} from "../../api/applications/evidence.js";
+import { refreshApplicationSummary } from "../../api/applications/applicationSummary.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
 import { createGetApplicationContract } from "../../api/applications/createGetApplicationContract.js";
 import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
@@ -270,6 +289,14 @@ import {
 // In-memory per-user cooldown for submitFeedback (mikro/#69) — keeps a
 // stuck client from spamming the target repo with issues. Not persisted:
 // a server restart resets it, which is fine for a spam guard, not a hard limit.
+/**
+ * The review-rules actor for the authenticated caller (roles from the JWT, the
+ * same source the procedure guards use).
+ */
+function actorOf(ctx: { userId: string; roles: Role[] }): TransitionActor {
+  return { id: ctx.userId, roles: ctx.roles };
+}
+
 const feedbackRateLimit = new Map<string, number>();
 const FEEDBACK_RATE_LIMIT_MS = 60 * 1000;
 
@@ -612,66 +639,94 @@ export const protectedRouter = router({
   }),
 
   /**
-   * Claim a RECEIVED application for review (-> IN_REVIEW), or — ADMIN only —
-   * assign it directly to another reviewer via `assigneeId`. ADMIN/REVIEWER only.
+   * Assign an application (RECEIVED -> IN_REVIEW). Without `assigneeId` the
+   * caller takes it from the queue; ADMIN may assign it to another reviewer or
+   * reassign one already IN_REVIEW. Rules: evaluateTransition("assign").
    */
-  claimApplication: reviewerProcedure
-    .input(claimApplicationSchema)
+  assignApplication: reviewerProcedure
+    .meta({ event: "application.assigned" })
+    .input(assignApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      const assigneeId = input.assigneeId ?? ctx.userId;
-      if (assigneeId !== ctx.userId) {
-        if (!ctx.roles.includes("ADMIN")) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Only admins can assign an application to another reviewer."
-          });
-        }
-        const assignee = await ctx.db.user.findUnique({
-          where: { id: assigneeId },
-          include: { roles: { select: { role: true } } }
-        });
-        const assigneeRoles = assignee?.roles?.map((r) => r.role) ?? [];
-        if (!assignee || !(assigneeRoles.includes("ADMIN") || assigneeRoles.includes("REVIEWER"))) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Assignee must be an existing admin or reviewer."
-          });
-        }
-      }
-      const fn = createClaimApplication(ctx.db);
-      return fn(input, assigneeId);
+      return createAssignApplication(ctx.db)(input, actorOf(ctx));
     }),
 
-  /**
-   * Approve an application (RECEIVED|IN_REVIEW -> APPROVED). ADMIN/REVIEWER only.
-   */
+  /** The assignee's recommendation to the admin (IN_REVIEW only). */
+  setApplicationRecommendation: reviewerProcedure
+    .input(setRecommendationSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createSetRecommendation(ctx.db)(input, actorOf(ctx));
+    }),
+
+  /** Assignee sends a complete application to the admin (IN_REVIEW -> PENDING_DECISION). */
+  sendApplicationToDecision: reviewerProcedure
+    .meta({ event: "application.sent_to_decision" })
+    .input(sendToDecisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fn = createSendToDecision(ctx.db, { minBusinessPhotos: getMinBusinessPhotos() });
+      return fn(input, actorOf(ctx));
+    }),
+
+  /** Admin returns a pending application to its reviewer with a note (-> IN_REVIEW). */
+  returnApplicationToReviewer: reviewerProcedure
+    .meta({ event: "application.returned" })
+    .input(returnToReviewerSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createReturnToReviewer(ctx.db)(input, actorOf(ctx));
+    }),
+
+  /** Admin approves a pending application with its terms (PENDING_DECISION -> APPROVED). */
   approveApplication: reviewerProcedure
     .meta({ event: "application.approved" })
     .input(approveApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      const fn = createApproveApplication(ctx.db);
-      return fn(input, ctx.userId);
+      return createApproveApplication(ctx.db)(input, actorOf(ctx));
     }),
 
   /**
-   * Reject an application with a reason (RECEIVED|IN_REVIEW -> REJECTED). ADMIN/REVIEWER only.
+   * Reject with a reason: the assignee while IN_REVIEW, an admin while
+   * PENDING_DECISION (-> REJECTED).
    */
   rejectApplication: reviewerProcedure
     .meta({ event: "application.rejected" })
     .input(rejectApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      const fn = createRejectApplication(ctx.db);
-      return fn(input, ctx.userId);
+      return createRejectApplication(ctx.db)(input, actorOf(ctx));
     }),
 
-  /**
-   * Reopen a decided application (APPROVED|REJECTED -> IN_REVIEW). ADMIN/REVIEWER only.
-   */
-  reopenApplication: reviewerProcedure
-    .input(reopenApplicationSchema)
+  /** The customer backed out after approval (APPROVED -> ABANDONED). */
+  withdrawApplication: reviewerProcedure
+    .meta({ event: "application.withdrawn" })
+    .input(withdrawApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      const fn = createReopenApplication(ctx.db);
-      return fn(input, ctx.userId);
+      return createWithdrawApplication(ctx.db)(input, actorOf(ctx));
+    }),
+
+  /** Evidence completeness + document list for an application. */
+  getApplicationEvidence: reviewerProcedure
+    .input(getApplicationEvidenceSchema)
+    .query(async ({ ctx, input }) => {
+      return getApplicationEvidence(ctx.db, input);
+    }),
+
+  /** Upload a business photo or other document (assignee, IN_REVIEW). */
+  uploadApplicationDocument: reviewerProcedure
+    .input(uploadApplicationDocumentSchema)
+    .mutation(async ({ ctx, input }) => {
+      return storeApplicationDocument(ctx.db, input, actorOf(ctx));
+    }),
+
+  /** Remove an evidence document (assignee, IN_REVIEW). The file itself is kept. */
+  deleteApplicationDocument: reviewerProcedure
+    .input(deleteApplicationDocumentSchema)
+    .mutation(async ({ ctx, input }) => {
+      return removeApplicationDocument(ctx.db, input.documentId, actorOf(ctx));
+    }),
+
+  /** One evidence file as base64 (thumbnails / viewer). */
+  getApplicationDocument: reviewerProcedure
+    .input(getApplicationDocumentSchema)
+    .query(async ({ ctx, input }) => {
+      return readApplicationDocument(ctx.db, input.documentId);
     }),
 
   /**
@@ -681,18 +736,20 @@ export const protectedRouter = router({
     .input(promoteApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createPromoteApplication(ctx.db);
-      return fn(input, ctx.userId);
+      const promoted = await fn(input, actorOf(ctx));
+      void refreshApplicationSummary(ctx.db, promoted.id);
+      return promoted;
     }),
 
   /**
-   * Upload a signed contract PDF (APPROVED -> SIGNED). ADMIN/REVIEWER only.
+   * Store (or replace) the signed contract PDF of an APPROVED application; the
+   * status does not change. Assignee or ADMIN.
    */
   uploadSignedContract: reviewerProcedure
-    .meta({ event: "application.signed" })
     .input(uploadSignedContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createUploadSignedContract(ctx.db);
-      return fn(input, ctx.userId);
+      return fn(input, actorOf(ctx));
     }),
 
   /**
@@ -743,14 +800,15 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Convert a SIGNED application into a Customer + Loan (-> CONVERTED). ADMIN/REVIEWER only.
+   * Convert an APPROVED application with a signed contract into a Customer +
+   * Loan and disburse from the chosen account (-> CONVERTED). Assignee or ADMIN.
    */
   convertApplication: reviewerProcedure
     .meta({ event: "application.converted" })
     .input(convertApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createConvertApplication(ctx.db);
-      return fn(input, ctx.userId);
+      return fn(input, actorOf(ctx));
     }),
 
   /**
@@ -765,7 +823,8 @@ export const protectedRouter = router({
     .input(createApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createCreateApplication(ctx.db);
-      const application = await fn(input);
+      const application = await fn(input, ctx.userId);
+      void refreshApplicationSummary(ctx.db, application.id);
 
       let promo: PromoResult | null = null;
       if (input.sendPromo) {
@@ -785,13 +844,15 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Edit an application's fields; re-derives + re-scores. ADMIN/REVIEWER only.
+   * Edit an application's fields; re-derives + re-scores. Assignee, IN_REVIEW only.
    */
   updateApplication: reviewerProcedure
     .input(updateApplicationSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createUpdateApplication(ctx.db);
-      return fn(input);
+      const updated = await fn(input, actorOf(ctx));
+      void refreshApplicationSummary(ctx.db, updated.id);
+      return updated;
     }),
 
   /**
@@ -810,7 +871,7 @@ export const protectedRouter = router({
    */
   uploadIdImage: reviewerProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
     const fn = createUploadIdImage(ctx.db);
-    return fn(input, ctx.userId);
+    return fn(input, actorOf(ctx));
   }),
 
   /**
@@ -821,18 +882,18 @@ export const protectedRouter = router({
     return fn(input);
   }),
 
-  /** Remove one side of the applicant's cédula. ADMIN/REVIEWER only. */
+  /** Remove one side of the applicant's cédula. Assignee, IN_REVIEW only. */
   deleteIdImage: reviewerProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
     const fn = createDeleteIdImage(ctx.db);
-    return fn(input);
+    return fn(input, actorOf(ctx));
   }),
 
-  /** Remove the stored signed contract and revert SIGNED → APPROVED. ADMIN/REVIEWER only. */
+  /** Remove the stored signed contract of an APPROVED application. Assignee or ADMIN. */
   deleteApplicationContract: reviewerProcedure
     .input(deleteApplicationContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createDeleteApplicationContract(ctx.db);
-      return fn(input);
+      return fn(input, actorOf(ctx));
     }),
 
   /** Render a printable solicitud summary PDF. ADMIN/REVIEWER only. */
@@ -1198,10 +1259,13 @@ export const protectedRouter = router({
 
   /**
    * Reverse-chronological business-event feed with opaque (occurredAt, id)
-   * cursor pagination and optional type/date filters. ADMIN only.
+   * cursor pagination and optional type/date filters. Role-scoped: review
+   * events are limited to the caller's queue/assignments (REVIEWER) and
+   * pending/decided applications (ADMIN); a REVIEWER-only caller sees review
+   * events only. ADMIN or REVIEWER.
    */
-  listFeedEvents: adminProcedure.input(listFeedEventsSchema).query(async ({ ctx, input }) => {
-    const fn = createListFeedEvents(ctx.db as unknown as PrismaClient);
+  listFeedEvents: reviewerProcedure.input(listFeedEventsSchema).query(async ({ ctx, input }) => {
+    const fn = createListFeedEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
     return fn(input);
   }),
 

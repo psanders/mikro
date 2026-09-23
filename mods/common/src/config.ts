@@ -194,7 +194,12 @@ const applicationsSchema = z
       .array(z.enum(PROVINCE_VALUES), {
         error: 'applications.coveredProvinces is required (e.g. ["PUERTO_PLATA"])'
       })
-      .min(1, "applications.coveredProvinces must list at least one province")
+      .min(1, "applications.coveredProvinces must list at least one province"),
+    /**
+     * Business photos a reviewer must upload before sending an application to
+     * decision. Optional (default 3) so adding this release needs no mikro.json edit.
+     */
+    minBusinessPhotos: z.number().int().min(0).default(3)
   })
   .strict();
 

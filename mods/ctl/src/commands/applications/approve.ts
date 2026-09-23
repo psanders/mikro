@@ -7,10 +7,11 @@ import errorHandler from "../../errorHandler.js";
 import { promptApplicationSelectIfMissing } from "../../lib/prompts.js";
 
 export default class Approve extends MutationCommand<typeof Approve> {
-  static override readonly description = "approve a RECEIVED or IN_REVIEW application";
+  static override readonly description =
+    "approve an application waiting for decision (PENDING_DECISION), with the terms to lend";
   static override readonly examples = [
-    "<%= config.bin %> <%= command.id %> <applicationId>",
-    "<%= config.bin %> <%= command.id %> <applicationId> --note 'Buen historial de negocio'"
+    "<%= config.bin %> <%= command.id %> <applicationId> --amount 10000 --weeks 10",
+    "<%= config.bin %> <%= command.id %> <applicationId> --amount 10000 --weeks 10 --note 'Buen historial de negocio'"
   ];
   static override readonly args = {
     applicationId: Args.string({
@@ -19,7 +20,9 @@ export default class Approve extends MutationCommand<typeof Approve> {
     })
   };
   static override readonly flags = {
-    note: Flags.string({ description: "Optional review note", required: false })
+    amount: Flags.integer({ description: "Approved amount (RD$)", required: true }),
+    weeks: Flags.integer({ description: "Approved term in weeks", required: true }),
+    note: Flags.string({ description: "Optional decision note", required: false })
   };
 
   public async run(): Promise<void> {
@@ -30,14 +33,20 @@ export default class Approve extends MutationCommand<typeof Approve> {
       client,
       args.applicationId,
       "Application to approve",
-      "applicationId"
+      "applicationId",
+      { status: "PENDING_DECISION" }
     );
 
     const ready = await this.confirmOrAbort(`Approve application ${applicationId}?`);
     if (!ready) return;
 
     try {
-      await client.approveApplication.mutate({ id: applicationId, note: flags.note });
+      await client.approveApplication.mutate({
+        id: applicationId,
+        approvedAmount: flags.amount,
+        approvedTermWeeks: flags.weeks,
+        note: flags.note
+      });
       this.log("Done!");
     } catch (e) {
       errorHandler(e, this.error.bind(this));

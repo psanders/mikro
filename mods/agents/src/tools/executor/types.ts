@@ -131,16 +131,16 @@ export interface ToolExecutorDependencies {
 
   // ── Application review write tools (optional — only wired in apiserver) ────
   /**
-   * Approve a solicitud (RECEIVED/IN_REVIEW -> APPROVED). `reviewerId` is the
-   * confirming founder. Copilot-only; the WhatsApp agent executor leaves it unset.
+   * Approve a solicitud (PENDING_DECISION -> APPROVED, requested terms). `reviewerId`
+   * is the confirming founder. Copilot-only; the WhatsApp agent executor leaves it unset.
    */
   approveApplication?: (
     input: { id?: string; sessionId?: string; note?: string },
     reviewerId: string
   ) => Promise<import("@mikro/common").LoanApplication>;
   /**
-   * Reject a solicitud (RECEIVED/IN_REVIEW -> REJECTED). The required `reason` is
-   * persisted as the review note for audit. `reviewerId` is the confirming founder.
+   * Reject a solicitud (IN_REVIEW/PENDING_DECISION -> REJECTED). The required
+   * `reason` is filed under reason OTHER as the decision note for audit. `reviewerId` is the confirming founder.
    */
   rejectApplication?: (
     input: { id?: string; sessionId?: string; reason: string },

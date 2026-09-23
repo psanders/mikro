@@ -8,31 +8,34 @@
 
 ## 1. Shared contracts (@mikro/common)
 
-- [ ] 1.1 `ApplicationStatus`: add PENDING_DECISION, remove SIGNED; `ApplicationRejectionReason` enum; `ApplicationDocumentKind`
-- [ ] 1.2 Transition table + `evaluateTransition` + `TransitionBlock` + Spanish labels; delete `resolveReviewTransition`
-- [ ] 1.3 Input schemas: assign, sendToDecision, returnToReviewer, approve (+terms), reject (+reason), withdraw, convert (+accountId), document upload/delete, recommendation; remove claim/reopen
-- [ ] 1.4 Config `applications.minBusinessPhotos` (optional, default 3); `mikro.json.example`
-- [ ] 1.5 `evidenceStatus(app, docs, min)` helper
-- [ ] 1.6 Exhaustive table-driven tests; barrel exports (schemas/index.ts + root index.ts)
+- [x] 1.1 `ApplicationStatus`: add PENDING_DECISION, remove SIGNED; `ApplicationRejectionReason` enum; `ApplicationDocumentKind`
+- [x] 1.2 Transition table + `evaluateTransition` + `TransitionBlock` + Spanish labels; delete `resolveReviewTransition`
+- [x] 1.3 Input schemas: assign, sendToDecision, returnToReviewer, approve (+terms), reject (+reason), withdraw, convert (+accountId), document upload/delete, recommendation; remove claim/reopen
+- [x] 1.4 Config `applications.minBusinessPhotos` (optional, default 3); `mikro.json.example`
+- [x] 1.5 `evidenceStatus(app, docs, min)` helper
+- [x] 1.6 Exhaustive table-driven tests; barrel exports (schemas/index.ts + root index.ts)
 
 ## 2. Database
 
-- [ ] 2.1 Prisma schema: new columns, `ApplicationDocument`, enum changes, `CustomerDocumentType` += BUSINESS_PHOTO/OTHER, drop review audit columns
-- [ ] 2.2 Migration with data moves (design D3); rehearse on a prod snapshot
-- [ ] 2.3 Integration `SCHEMA_SQL` in sync
+- [x] 2.1 Prisma schema: new columns, `ApplicationDocument`, enum changes, `CustomerDocumentType` += BUSINESS_PHOTO/OTHER, drop review audit columns
+- [x] 2.2 Migration with data moves (design D3) — verified on a scratch DB with every legacy case
+- [ ] 2.2b Rehearse the migration on a prod snapshot before release
+- [x] 2.3 Integration `SCHEMA_SQL` in sync
 
 ## 3. Apiserver
 
-- [ ] 3.1 `reviewApplication.ts` → `evaluateTransition`; procedures assign/sendToDecision/returnToReviewer/approve/reject/withdraw
-- [ ] 3.2 Evidence functions + procedures (upload/replace ID side, add/delete document, set recommendation, get evidence status)
-- [ ] 3.3 `updateApplication` + ID image endpoints gated to assignee + IN_REVIEW
-- [ ] 3.4 `uploadSignedContract` no longer flips status; `convertApplication` from APPROVED + contract, principal = approvedAmount, `accountId`, copy business/other docs
-- [ ] 3.5 Out-of-area intake writes `rejectionReason`; `application.received` from intake/promote/Flow; mappers for new events; drop `application.signed` producer
-- [ ] 3.6 Role-scoped feed (`scope: "mine"`), current application status joined onto application events
-- [ ] 3.7 AI summary (`summarizeApplication`, optional model), triggered on received + edit
-- [ ] 3.8 Abandon job guard (DRAFT only)
-- [ ] 3.9 ctl commands + ad-quality status sets
-- [ ] 3.10 Unit tests per function; integration `applicationLifecycle.test.ts` (happy path, send-back, rejects, withdraw, forbidden roles, locking, abandon guard, events, ledger, documents)
+- [x] 3.0 Intake status protection: late autosaves/Flow submissions never walk back or overwrite an application under review; closed ones start a new application (found while wiring `application.received`)
+
+- [x] 3.1 `reviewApplication.ts` → `evaluateTransition`; procedures assign/sendToDecision/returnToReviewer/approve/reject/withdraw
+- [x] 3.2 Evidence functions + procedures (upload/replace ID side, add/delete document, set recommendation, get evidence status)
+- [x] 3.3 `updateApplication` + ID image endpoints gated to assignee + IN_REVIEW
+- [x] 3.4 `uploadSignedContract` no longer flips status; `convertApplication` from APPROVED + contract, principal = approvedAmount, `accountId`, copy business/other docs
+- [x] 3.5 Out-of-area intake writes `rejectionReason`; `application.received` from intake/promote/Flow; mappers for new events; drop `application.signed` producer
+- [x] 3.6 Role-scoped feed (`scope: "mine"`), current application status joined onto application events
+- [x] 3.7 AI summary (`summarizeApplication`, optional model), triggered on received + edit
+- [x] 3.8 Abandon job guard (DRAFT only)
+- [x] 3.9 ctl commands + ad-quality status sets
+- [x] 3.10 Unit tests per function; integration `applicationLifecycle.test.ts` (happy path, send-back, rejects, withdraw, forbidden roles, locking, abandon guard, events, ledger, documents)
 
 ## 4. Founder app UI
 

@@ -389,7 +389,7 @@ export const approveApplicationTool: ToolFunction = {
   function: {
     name: "approveApplication",
     description:
-      "Aprobar una solicitud (loan application) que está RECEIVED o IN_REVIEW, pasándola a APPROVED. Usa el ID (UUID) de la SOLICITUD. Puedes incluir una nota opcional.",
+      "Aprobar una solicitud (loan application) que está PENDING_DECISION (el evaluador ya la envió a decisión), pasándola a APPROVED con el monto y plazo que pidió el solicitante. Solo un admin puede aprobar. Para aprobar con otros términos, indica al fundador que lo haga desde el feed. Usa el ID (UUID) de la SOLICITUD. Puedes incluir una nota opcional.",
     parameters: {
       type: "object",
       properties: {
@@ -412,7 +412,7 @@ export const rejectApplicationTool: ToolFunction = {
   function: {
     name: "rejectApplication",
     description:
-      "Rechazar formalmente una solicitud (loan application) que está RECEIVED o IN_REVIEW, pasándola a REJECTED. Conserva el registro y el motivo para auditoría (NO la elimina). Prefiere esta herramienta sobre deleteApplication para declinar a un solicitante. El motivo es OBLIGATORIO. Usa el ID (UUID) de la SOLICITUD.",
+      "Rechazar formalmente una solicitud (loan application) que está IN_REVIEW (solo su evaluador asignado) o PENDING_DECISION (admin), pasándola a REJECTED. Conserva el registro y el motivo para auditoría (NO la elimina). Prefiere esta herramienta sobre deleteApplication para declinar a un solicitante. El motivo es OBLIGATORIO. Usa el ID (UUID) de la SOLICITUD.",
     parameters: {
       type: "object",
       properties: {
