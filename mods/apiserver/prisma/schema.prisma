@@ -599,6 +599,9 @@ model LoanApplication {
   // The terms the admin approved; conversion lends exactly approvedAmount.
   approvedAmount         Decimal?  @map("approved_amount")
   approvedTermWeeks      Int?      @map("approved_term_weeks")
+  // Loan terms printed on the generated contract ({installments,
+  // installmentAmount, frequency, startDate}); conversion must lend exactly these.
+  contractTerms          Json?     @map("contract_terms")
 
   // One-paragraph LLM summary for the feed card, refreshed on receipt and on edit.
   aiSummary   String?   @map("ai_summary")

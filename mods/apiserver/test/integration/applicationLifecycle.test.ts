@@ -345,6 +345,63 @@ describe("application review lifecycle (integration)", () => {
     expect(tx!.accountId).to.equal(DEFAULT_ACCOUNT_ID);
   });
 
+  it("prints the approved amount on the contract and binds conversion to its terms", async () => {
+    const app = await received();
+    await reviewer.assignApplication({ id: app.id });
+    await completeEvidence(app.id);
+    await reviewer.sendApplicationToDecision({ id: app.id });
+    // Requested 15,000; the admin approves 10,000.
+    await admin.approveApplication({ id: app.id, approvedAmount: 10000, approvedTermWeeks: 10 });
+    await rejected(
+      otherReviewer.generateApplicationContract({
+        id: app.id,
+        installments: 10,
+        installmentAmount: 1300,
+        frequency: "WEEKLY",
+        startDate: "2026-09-29"
+      }),
+      "FORBIDDEN"
+    );
+    const contract = await reviewer.generateApplicationContract({
+      id: app.id,
+      installments: 10,
+      installmentAmount: 1300,
+      frequency: "WEEKLY",
+      startDate: "2026-09-29"
+    });
+    expect(contract.mimeType).to.equal("application/pdf");
+    const stored = await db.loanApplication.findUnique({ where: { id: app.id } });
+    expect(stored!.contractTerms).to.deep.include({
+      installments: 10,
+      installmentAmount: 1300,
+      frequency: "WEEKLY"
+    });
+
+    await reviewer.uploadSignedContract({
+      id: app.id,
+      originalName: "c.pdf",
+      mimeType: "application/pdf",
+      dataBase64: PDF
+    });
+    const base = {
+      id: app.id,
+      principal: 10000,
+      termLength: 10,
+      paymentAmount: 1300,
+      paymentFrequency: "WEEKLY" as const,
+      assignedCollectorId: collectorId
+    };
+    await rejected(
+      reviewer.convertApplication({ ...base, paymentAmount: 1200 }),
+      "BAD_REQUEST",
+      "TERMS_MISMATCH"
+    );
+    const done = await reviewer.convertApplication(base);
+    const loan = await db.loan.findFirst({ where: { loanId: done.loanId } });
+    expect(Number(loan!.principal)).to.equal(10000);
+    expect(Number(loan!.paymentAmount)).to.equal(1300);
+  });
+
   it("lets the assignee reject during review, with a reason", async () => {
     const app = await received();
     await reviewer.assignApplication({ id: app.id });

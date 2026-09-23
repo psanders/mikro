@@ -35,6 +35,7 @@
 - [x] 3.7 AI summary (`summarizeApplication`, optional model), triggered on received + edit
 - [x] 3.8 Abandon job guard (DRAFT only)
 - [x] 3.9 ctl commands + ad-quality status sets
+- [x] 3.12 Contract prints `approvedAmount` (was requestedAmount — bug) and stores `contractTerms`; conversion refuses terms that differ from the signed contract
 - [x] 3.11 `accounting.disbursementAccounts` (id + name, optional; default must be listed) + `listDisbursementAccounts` query with live balances; conversion refuses other accounts
 - [x] 3.10 Unit tests per function; integration `applicationLifecycle.test.ts` (happy path, send-back, rejects, withdraw, forbidden roles, locking, abandon guard, events, ledger, documents)
 

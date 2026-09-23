@@ -16,6 +16,7 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 import { authorize } from "./reviewApplication.js";
 import { resolveDisbursementAccountId } from "./disbursementAccounts.js";
+import type { ContractTerms } from "./createGenerateApplicationContract.js";
 
 const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
 
@@ -109,6 +110,23 @@ export function createConvertApplication(client: DbClient) {
 
     // APPROVED + signed contract + assignee/admin + principal === approvedAmount.
     const to = authorize(app, "convert", actor, { principal: input.principal });
+    // The loan must be the one the customer signed: when the contract was
+    // generated here, its terms are binding. (Contracts uploaded before this
+    // flow existed carry no stored terms, so the operator's terms stand.)
+    const signedTerms = app.contractTerms as ContractTerms | null;
+    if (signedTerms) {
+      const mismatch =
+        input.termLength !== signedTerms.installments ||
+        Math.abs(input.paymentAmount - signedTerms.installmentAmount) > 0.005 ||
+        input.paymentFrequency !== signedTerms.frequency;
+      if (mismatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Los términos no coinciden con el contrato firmado (cuotas, monto de cuota o frecuencia). [TERMS_MISMATCH]"
+        });
+      }
+    }
     if (app.customerId || app.loanId) {
       throw new TRPCError({ code: "CONFLICT", message: "Application is already converted." });
     }

@@ -67,6 +67,7 @@ CREATE TABLE "new_loan_applications" (
     "rejection_reason" TEXT,
     "approved_amount" DECIMAL,
     "approved_term_weeks" INTEGER,
+    "contract_terms" JSONB,
     "ai_summary" TEXT,
     "ai_summary_at" DATETIME,
     "contract_filename" TEXT,

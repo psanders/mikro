@@ -776,7 +776,7 @@ export const protectedRouter = router({
     .input(generateApplicationContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateApplicationContract(ctx.db);
-      return fn(input);
+      return fn(input, actorOf(ctx));
     }),
 
   /**

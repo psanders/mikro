@@ -517,6 +517,7 @@ export interface LoanApplicationWriteData {
   rejectionReason?: ApplicationRejectionReason | null;
   approvedAmount?: number | null;
   approvedTermWeeks?: number | null;
+  contractTerms?: unknown;
   aiSummary?: string | null;
   aiSummaryAt?: Date | null;
   contractFilename?: string | null;
