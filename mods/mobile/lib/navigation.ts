@@ -1,29 +1,20 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { getRoles, getNavMode, hasEvaluatorRole, isDualRole } from "./auth";
+import { canManagePayments, getRoles } from "./auth";
 
-export const EVALUATOR_HOME = "/(evaluator)";
 export const COLLECTOR_HOME = "/(tabs)";
+/** Shown to REVIEWER-only accounts: application review lives in the Ops app (desktop). */
+export const USE_OPS_ROUTE = "/usa-ops";
 
 /**
- * Resolves which tab group a logged-in, unlocked user should land on, based
- * on their decoded roles (cached alongside the token, see lib/auth.ts):
- * - COLLECTOR-only -> collector tabs (unchanged).
- * - REVIEWER-only -> evaluator tabs.
- * - Dual-role (per `isDualRole`: COLLECTOR + evaluator role, OR plain ADMIN,
- *   who has server-side access to both surfaces) -> evaluator tabs by
- *   default, unless the user manually switched to collector via the Perfil
- *   switcher (persisted nav mode preference).
+ * Where a logged-in, unlocked user lands. The mobile app is the collector app:
+ * COLLECTOR and ADMIN go to the collector tabs. Application review moved to
+ * the Ops desktop app (openspec add-application-review-flow), so a
+ * REVIEWER-only account gets a screen that points there instead.
  */
 export async function resolveHomeRoute(): Promise<string> {
   const roles = await getRoles();
-  if (!hasEvaluatorRole(roles)) return COLLECTOR_HOME;
-
-  if (isDualRole(roles)) {
-    const mode = await getNavMode();
-    return mode === "collector" ? COLLECTOR_HOME : EVALUATOR_HOME;
-  }
-
-  return EVALUATOR_HOME;
+  if (roles.length > 0 && !canManagePayments(roles)) return USE_OPS_ROUTE;
+  return COLLECTOR_HOME;
 }

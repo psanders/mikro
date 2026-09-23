@@ -6,7 +6,7 @@
 # and success confirmation, no photo capture or computer vision involved.
 #
 # REQUIRES an e2e build (default role is COLLECTOR, so no EXPO_PUBLIC_E2E_ROLE
-# override is needed — see evaluator-solicitud-datos.yaml header):
+# override is needed):
 #   EXPO_PUBLIC_E2E=1 npx expo run:ios --port 8082
 #   maestro test .maestro/collector-promocionar.yaml
 appId: do.mikro.app

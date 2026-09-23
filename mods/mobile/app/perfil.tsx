@@ -12,7 +12,6 @@ import { Avatar } from "../components/ui/Avatar";
 import { StatCard } from "../components/ui/StatCard";
 import { ListTile } from "../components/ui/ListTile";
 import { SectionLabel } from "../components/ui/SectionLabel";
-import { OptionRow } from "../components/ui/OptionRow";
 import { FeedbackConsentModal } from "../components/feedback/FeedbackConsentModal";
 import { useFeedback } from "../lib/feedback/FeedbackContext";
 import {
@@ -21,14 +20,9 @@ import {
   clearUserName,
   clearNavMode,
   getRoles,
-  getNavMode,
-  isDualRole,
-  setNavMode,
-  activeRoleLabel,
-  type NavMode
+  activeRoleLabel
 } from "../lib/auth";
 import type { Role } from "@mikro/common/schemas";
-import { EVALUATOR_HOME, COLLECTOR_HOME } from "../lib/navigation";
 import { trpc } from "../lib/api";
 
 function formatRD(amount: number): string {
@@ -40,8 +34,6 @@ export default function PerfilScreen() {
   const router = useRouter();
   const dashboard = trpc.getCollectorDashboard.useQuery();
   const [roles, setRoles] = useState<Role[]>([]);
-  const [dualRole, setDualRole] = useState(false);
-  const [navMode, setNavModeState] = useState<NavMode>("evaluator");
   const [feedbackConsentVisible, setFeedbackConsentVisible] = useState(false);
   const feedback = useFeedback();
 
@@ -49,17 +41,8 @@ export default function PerfilScreen() {
     (async () => {
       const userRoles = await getRoles();
       setRoles(userRoles);
-      const dual = isDualRole(userRoles);
-      setDualRole(dual);
-      if (dual) setNavModeState(await getNavMode());
     })();
   }, []);
-
-  async function handleSwitchMode(mode: NavMode) {
-    setNavModeState(mode);
-    await setNavMode(mode);
-    router.replace(mode === "evaluator" ? EVALUATOR_HOME : COLLECTOR_HOME);
-  }
 
   const appVersion = Constants.expoConfig?.version ?? "1.35.3";
   const data = dashboard.data;
@@ -85,7 +68,7 @@ export default function PerfilScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{name}</Text>
               <Text style={styles.profileRole}>
-                {activeRoleLabel(roles, navMode, dualRole)} · {activeLoans} préstamos activos
+                {activeRoleLabel(roles)} · {activeLoans} préstamos activos
               </Text>
             </View>
           </View>
@@ -96,24 +79,6 @@ export default function PerfilScreen() {
             <StatCard value={formatRD(data?.amountCollected ?? 0)} label="Recaudado" />
             <StatCard value={String(data?.visitsPending ?? 0)} label="Pendientes" />
           </View>
-
-          {dualRole && (
-            <>
-              <SectionLabel>MODO</SectionLabel>
-              <View style={styles.modeGroup}>
-                <OptionRow
-                  label="Evaluador"
-                  selected={navMode === "evaluator"}
-                  onPress={() => handleSwitchMode("evaluator")}
-                />
-                <OptionRow
-                  label="Cobrador"
-                  selected={navMode === "collector"}
-                  onPress={() => handleSwitchMode("collector")}
-                />
-              </View>
-            </>
-          )}
 
           <SectionLabel>AJUSTES</SectionLabel>
           <View style={styles.settingsGroup}>
@@ -176,7 +141,6 @@ const styles = StyleSheet.create({
   profileName: { fontFamily: "Geist_700Bold", fontSize: 18, color: colors.brand.white },
   profileRole: { fontFamily: "Geist_500Medium", fontSize: 12, color: "#9DB9F0" },
   statsRow: { flexDirection: "row", gap: 10 },
-  modeGroup: { gap: 8 },
   settingsGroup: {
     borderRadius: radii.card,
     overflow: "hidden",
