@@ -306,6 +306,45 @@ describe("application review lifecycle (integration)", () => {
     ]);
   });
 
+  it("offers only the configured disbursement accounts and refuses any other", async () => {
+    const accounts = await reviewer.listDisbursementAccounts();
+    expect(accounts.map((a) => [a.name, a.isDefault, a.available])).to.deep.equal([
+      ["Caja General", true, true],
+      ["Cuenta de Recaudación", false, true]
+    ]);
+    expect(accounts[0]!.balance).to.equal(100_000);
+
+    const other = await db.accountingAccount.create({
+      data: { name: "Tarjeta de crédito", kind: "CREDIT_CARD", currentBalance: 0 }
+    });
+    const app = await received();
+    await reviewer.assignApplication({ id: app.id });
+    await completeEvidence(app.id);
+    await reviewer.sendApplicationToDecision({ id: app.id });
+    await admin.approveApplication({ id: app.id, approvedAmount: 10000, approvedTermWeeks: 10 });
+    await reviewer.uploadSignedContract({
+      id: app.id,
+      originalName: "c.pdf",
+      mimeType: "application/pdf",
+      dataBase64: PDF
+    });
+    const input = {
+      id: app.id,
+      principal: 10000,
+      termLength: 10,
+      paymentAmount: 1300,
+      paymentFrequency: "WEEKLY" as const,
+      assignedCollectorId: collectorId
+    };
+    await rejected(reviewer.convertApplication({ ...input, accountId: other.id }), "BAD_REQUEST");
+    expect(await status(app.id)).to.equal("APPROVED");
+
+    // No account given → the configured default (Caja General).
+    await reviewer.convertApplication(input);
+    const tx = await db.accountingTransaction.findFirst({ where: { type: "WITHDRAWAL" } });
+    expect(tx!.accountId).to.equal(DEFAULT_ACCOUNT_ID);
+  });
+
   it("lets the assignee reject during review, with a reason", async () => {
     const app = await received();
     await reviewer.assignApplication({ id: app.id });

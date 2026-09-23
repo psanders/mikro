@@ -6,7 +6,7 @@
  * fail later, silently, at the first loan conversion.
  */
 import { expect } from "chai";
-import { mikroConfigSchema } from "../src/config.js";
+import { mikroConfigSchema, getDisbursementAccountOptions } from "../src/config.js";
 
 const minimalRequiredFields = {
   llm: {
@@ -136,5 +136,64 @@ describe("mikroConfigSchema — applications.coveredProvinces", () => {
     if (parsed.success) {
       expect(parsed.data.applications.coveredProvinces).to.deep.equal(["PUERTO_PLATA", "SANTIAGO"]);
     }
+  });
+});
+
+describe("mikroConfigSchema — accounting.disbursementAccounts", () => {
+  const CAJA = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1";
+  const RECAUDO = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2";
+  const withAccounting = (accounting: unknown) =>
+    mikroConfigSchema.safeParse({ ...minimalRequiredFields, accounting });
+
+  it("is optional (only the default account is offered)", () => {
+    const parsed = withAccounting({ disbursementAccountId: CAJA });
+    expect(parsed.success).to.equal(true);
+    expect(getDisbursementAccountOptions({ disbursementAccountId: CAJA })).to.deep.equal([
+      { id: CAJA, name: null, isDefault: true }
+    ]);
+  });
+
+  it("accepts a named list that contains the default, and lists the default first", () => {
+    const accounting = {
+      disbursementAccountId: RECAUDO,
+      disbursementAccounts: [
+        { id: CAJA, name: "Caja General" },
+        { id: RECAUDO, name: "Cuenta de Recaudación" }
+      ]
+    };
+    expect(withAccounting(accounting).success).to.equal(true);
+    expect(getDisbursementAccountOptions(accounting)).to.deep.equal([
+      { id: RECAUDO, name: "Cuenta de Recaudación", isDefault: true },
+      { id: CAJA, name: "Caja General", isDefault: false }
+    ]);
+  });
+
+  it("rejects a default that is not in the list", () => {
+    const parsed = withAccounting({
+      disbursementAccountId: CAJA,
+      disbursementAccounts: [{ id: RECAUDO, name: "Cuenta de Recaudación" }]
+    });
+    expect(parsed.success).to.equal(false);
+  });
+
+  it("rejects duplicate ids, empty names and an empty list", () => {
+    expect(
+      withAccounting({
+        disbursementAccountId: CAJA,
+        disbursementAccounts: [
+          { id: CAJA, name: "Caja General" },
+          { id: CAJA, name: "Otra" }
+        ]
+      }).success
+    ).to.equal(false);
+    expect(
+      withAccounting({
+        disbursementAccountId: CAJA,
+        disbursementAccounts: [{ id: CAJA, name: " " }]
+      }).success
+    ).to.equal(false);
+    expect(
+      withAccounting({ disbursementAccountId: CAJA, disbursementAccounts: [] }).success
+    ).to.equal(false);
   });
 });

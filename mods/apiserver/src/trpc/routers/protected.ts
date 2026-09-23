@@ -156,6 +156,7 @@ import {
   storeApplicationDocument
 } from "../../api/applications/evidence.js";
 import { refreshApplicationSummary } from "../../api/applications/applicationSummary.js";
+import { listDisbursementAccounts } from "../../api/applications/disbursementAccounts.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
 import { createGetApplicationContract } from "../../api/applications/createGetApplicationContract.js";
 import { createGenerateApplicationContract } from "../../api/applications/createGenerateApplicationContract.js";
@@ -700,6 +701,11 @@ export const protectedRouter = router({
     .mutation(async ({ ctx, input }) => {
       return createWithdrawApplication(ctx.db)(input, actorOf(ctx));
     }),
+
+  /** Accounts a disbursement may come from (mikro.json), with live balances. */
+  listDisbursementAccounts: reviewerProcedure.query(async ({ ctx }) => {
+    return listDisbursementAccounts(ctx.db as unknown as PrismaClient);
+  }),
 
   /** Evidence completeness + document list for an application. */
   getApplicationEvidence: reviewerProcedure

@@ -29,7 +29,11 @@
   "evals": { "similarityThreshold": 0.7, "vendors": {} },
   "accounting": {
     "attachmentsPath": "/tmp/mikro-test-attachments",
-    "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
+    "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+    "disbursementAccounts": [
+      { "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", "name": "Caja General" },
+      { "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2", "name": "Cuenta de Recaudación" }
+    ]
   },
   "applications": {
     "coveredProvinces": ["PUERTO_PLATA"]

@@ -1,7 +1,6 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { getConfig } from "@mikro/common";
 import type {
   DbClient,
   LoanApplication,
@@ -16,6 +15,7 @@ import { postTransactionCore } from "../accounting/postTransaction.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 import { authorize } from "./reviewApplication.js";
+import { resolveDisbursementAccountId } from "./disbursementAccounts.js";
 
 const CEDULA_RE = /^\d{3}-\d{7}-\d{1}$/;
 
@@ -142,10 +142,11 @@ export function createConvertApplication(client: DbClient) {
     }
 
     // mikro/#155: every conversion auto-deducts the disbursed principal from
-    // the ledger. The caller picks the account; `accounting.disbursementAccountId`
+    // the ledger. The caller picks one of the configured disbursement accounts
+    // (accounting.disbursementAccounts); `accounting.disbursementAccountId`
     // (required config) is the default. postTransactionCore rejects an unknown
     // or inactive account, which rolls the whole conversion back.
-    const disbursementAccountId = input.accountId ?? getConfig().accounting.disbursementAccountId;
+    const disbursementAccountId = resolveDisbursementAccountId(input.accountId);
 
     return client.$transaction(async (tx) => {
       // Reuse an existing customer by cédula, then phone; else create one.

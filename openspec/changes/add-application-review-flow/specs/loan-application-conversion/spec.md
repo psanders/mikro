@@ -2,12 +2,17 @@
 
 ### Requirement: Convert a signed application into a Customer and Loan
 
-The assigned reviewer or an admin SHALL be able to convert an `APPROVED` application **that has a stored signed contract** into a `Customer` + `Loan`, atomically, setting the application to `CONVERTED` and linking the created records. The loan principal SHALL equal the application's `approvedAmount`. The disbursement SHALL be posted to the caller-chosen `accountId`, defaulting to `accounting.disbursementAccountId`. In the same atomic operation, every document stored on the application SHALL be copied into `CustomerDocument` records (`source: MIGRATED_FROM_APPLICATION`) owned by the resulting customer, by reference to the existing sha256-keyed files: signed contract, ID front/back, business photos, and other documents.
+The assigned reviewer or an admin SHALL be able to convert an `APPROVED` application **that has a stored signed contract** into a `Customer` + `Loan`, atomically, setting the application to `CONVERTED` and linking the created records. The loan principal SHALL equal the application's `approvedAmount`. The disbursement SHALL be posted to the caller-chosen `accountId`, defaulting to `accounting.disbursementAccountId`. When `accounting.disbursementAccounts` (a list of `{ id, name }` in `mikro.json`) is configured, only those accounts SHALL be offered and accepted, and the default MUST be one of them; without it only the default is allowed. In the same atomic operation, every document stored on the application SHALL be copied into `CustomerDocument` records (`source: MIGRATED_FROM_APPLICATION`) owned by the resulting customer, by reference to the existing sha256-keyed files: signed contract, ID front/back, business photos, and other documents.
 
 #### Scenario: Conversion creates customer, loan and disbursement
 
 - **WHEN** the assignee converts an `APPROVED` application with a stored contract, principal equal to `approvedAmount`, and account X
 - **THEN** a `Loan` is created with those terms, a `Customer` exists for the applicant, a WITHDRAWAL of the principal is posted on account X, the application's `customerId`/`loanId` are set, and its status becomes `CONVERTED`
+
+#### Scenario: Only configured accounts are accepted
+
+- **WHEN** conversion is requested with an account not listed in `accounting.disbursementAccounts`
+- **THEN** the request fails with BAD_REQUEST and nothing is created
 
 #### Scenario: Default disbursement account
 

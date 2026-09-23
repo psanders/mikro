@@ -21,6 +21,8 @@ export {
   LOAN_APPLICATION_PROMO_ASSET_ROUTE,
   getContractConfig,
   getFollowUpTimerConfig,
+  getDisbursementAccountOptions,
+  type DisbursementAccountOption,
   getWhatsAppFollowUpTemplate,
   getWhatsAppPaymentConfirmationTemplate,
   getReceiptImageUrl,
