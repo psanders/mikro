@@ -253,6 +253,7 @@ export function createListFeedEvents(client: EventClient, viewer?: FeedViewer) {
       and.push({ type: { in: input.types } });
     }
     if (input.actorId) and.push({ actorId: input.actorId });
+    if (input.applicationId) and.push({ applicationId: input.applicationId });
     if (input.from) and.push({ occurredAt: { gte: input.from } });
     if (input.to) and.push({ occurredAt: { lte: input.to } });
 

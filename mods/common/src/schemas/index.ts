@@ -117,7 +117,20 @@ export {
   isOutOfCoverageArea,
   type Province,
   type ApplicationSectionDef,
-  type FormProgress
+  type FormProgress,
+  ESTADO_CIVIL_OPTIONS,
+  TIPO_NEGOCIO_OPTIONS,
+  TIEMPO_OPERANDO_OPTIONS,
+  VENTAS_MENSUALES_OPTIONS,
+  TIPO_LOCAL_OPTIONS,
+  FORMALIZACION_OPTIONS,
+  NUM_EMPLEADOS_OPTIONS,
+  MONTO_OPTIONS,
+  PLAZO_OPTIONS,
+  TIPO_VIVIENDA_OPTIONS,
+  TIEMPO_RESIDIENDO_OPTIONS,
+  PROPOSITO_OPTIONS,
+  type SelectOption
 } from "./applicationForm.js";
 
 export {

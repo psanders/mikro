@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Reports catalog (`/founder/reportes`) — Pencil "Founder / Reportes" (node
+ * Reports catalog (`/ops/reportes`) — Pencil "Founder / Reportes" (node
  * Gz8x7). Five reports, each produced from the shared `defineReport`
  * definition in `@mikro/common` (issue #110 / unify-reporting-strategy):
  * clientes, préstamos en riesgo, renovación, desempeño, contable.

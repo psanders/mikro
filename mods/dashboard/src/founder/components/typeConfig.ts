@@ -21,7 +21,11 @@ import {
   CalendarX,
   RefreshCw,
   MessageSquare,
-  MessageSquareX
+  MessageSquareX,
+  Inbox,
+  UserCheck,
+  Scale,
+  UserX
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -58,6 +62,11 @@ export const FEED_CHIP_BG: Record<FeedAccent, string> = {
 const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "payment.collected": { icon: HandCoins, accent: "green" },
   "payment.reversed": { icon: Undo2, accent: "amber" },
+  "application.received": { icon: Inbox, accent: "blue" },
+  "application.assigned": { icon: UserCheck, accent: "blue" },
+  "application.sent_to_decision": { icon: Scale, accent: "blue" },
+  "application.returned": { icon: Undo2, accent: "amber" },
+  "application.withdrawn": { icon: UserX, accent: "neutral" },
   "application.approved": { icon: FileCheck, accent: "green" },
   "application.rejected": { icon: FileX, accent: "red" },
   "application.signed": { icon: PenLine, accent: "blue" },
@@ -401,7 +410,15 @@ export function resolveNarrative(event: FeedEvent): string | null {
       return `Solicitud de ${customerName ?? "cliente"} rechazada por ${actorName}.${note ? ` Motivo: ${note}.` : ""}`;
     }
     case "application.signed":
+    case "application.received":
+    case "application.assigned":
+    case "application.sent_to_decision":
+    case "application.withdrawn":
       return null;
+    case "application.returned": {
+      const note = typeof payload.note === "string" && payload.note ? payload.note : "";
+      return note ? `Nota: ${note}.` : null;
+    }
     case "application.converted": {
       const loanNumber = typeof payload.loanNumber === "number" ? payload.loanNumber : null;
       const principal = typeof payload.principal === "number" ? payload.principal : null;

@@ -285,6 +285,8 @@ export const listFeedEventsSchema = z.object({
   limit: z.number().int().positive().max(100).optional(),
   types: z.array(businessEventTypeEnum).optional(),
   actorId: z.uuid().optional(),
+  /** One application's history (the side panel's Actividad tab). */
+  applicationId: z.string().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional()
 });

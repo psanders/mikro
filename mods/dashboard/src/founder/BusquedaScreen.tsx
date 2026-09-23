@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Universal admin search (`/founder/buscar`) — Pencil "Búsqueda". One input
+ * Universal admin search (`/ops/buscar`) — Pencil "Búsqueda". One input
  * queries `searchAll` (debounced ~300ms) and renders three grouped sections
  * (CLIENTES, PRÉSTAMOS, EN EL FEED). No entity-type picker. The "ask copilot"
  * row is inert (a later change owns the copilot).

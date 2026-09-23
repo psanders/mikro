@@ -4,7 +4,7 @@
  * Self-contained founder shell — Pencil "Feed en vivo" board (`EzobQ`). A slim
  * dark-on-white icon rail (feed home, exceptions, búsqueda, reportes,
  * profile) on the left, the active screen on the right. Rendered OUTSIDE the
- * operations Layout: an admin on any `/founder` route sees only this chrome.
+ * operations Layout: an admin on any `/ops` route sees only this chrome.
  *
  * "Exceptions" (issue #109) opens the feed's alerts filter and carries a red
  * badge — lit by `AlertsProvider` polling for newly caught alert-type events,
@@ -23,6 +23,7 @@ import { AlertsProvider, useAlerts } from "./alerts/AlertsContext";
 import { useOsAlertNotifications } from "./alerts/osAlertNotifications";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
+import { ApplicationPanelProvider } from "./applications/ApplicationPanelContext";
 
 interface RailItemProps {
   icon: LucideIcon;
@@ -68,11 +69,11 @@ function ExceptionsRailItem() {
     <RailItem
       icon={TriangleAlert}
       label="Excepciones"
-      active={location.pathname === "/founder" && location.state?.filterId === "alertas"}
+      active={location.pathname === "/ops" && location.state?.filterId === "alertas"}
       badge={alerts.hasUnread}
       onClick={() => {
         alerts.markSeen();
-        navigate("/founder", { state: { filterId: "alertas" } });
+        navigate("/ops", { state: { filterId: "alertas" } });
       }}
     />
   );
@@ -147,52 +148,61 @@ export function FounderShell() {
 
   const path = location.pathname;
   const initials = initialsOf(whoami.data?.name ?? "");
+  // Reviewers share the feed (their applications) but not the admin tools:
+  // search, tasks, exceptions, reports and the copilot expose non-application data.
+  const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
 
   return (
     <AlertsProvider>
       <CopilotProvider>
-        <div className="flex h-dvh w-full bg-white text-[#14254A]">
-          <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
-            <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
-              <ShipWheel size={24} strokeWidth={2} />
+        <ApplicationPanelProvider>
+          <div className="flex h-dvh w-full bg-white text-[#14254A]">
+            <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
+              <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
+                <ShipWheel size={24} strokeWidth={2} />
+              </div>
+              <div className="h-[10px]" />
+              <RailItem
+                icon={House}
+                label="Feed"
+                active={path === "/ops" && location.state?.filterId !== "alertas"}
+                onClick={() => navigate("/ops")}
+              />
+              {isAdmin && (
+                <>
+                  <RailItem
+                    icon={Search}
+                    label="Búsqueda"
+                    active={path.startsWith("/ops/buscar")}
+                    onClick={() => navigate("/ops/buscar")}
+                  />
+                  <RailItem
+                    icon={Clock3}
+                    label="Tareas"
+                    active={path.startsWith("/ops/tareas")}
+                    onClick={() => navigate("/ops/tareas")}
+                  />
+                  <ExceptionsRailItem />
+                  <RailItem
+                    icon={FileText}
+                    label="Reportes"
+                    active={path.startsWith("/ops/reportes")}
+                    onClick={() => navigate("/ops/reportes")}
+                  />
+                </>
+              )}
+              <div className="flex-1" />
+              <FeedbackButton />
+              <ProfileMenu initials={initials} name={whoami.data?.name ?? "Ops"} />
+            </nav>
+
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
+              <Outlet />
             </div>
-            <div className="h-[10px]" />
-            <RailItem
-              icon={House}
-              label="Feed"
-              active={path === "/founder" && location.state?.filterId !== "alertas"}
-              onClick={() => navigate("/founder")}
-            />
-            <RailItem
-              icon={Search}
-              label="Búsqueda"
-              active={path.startsWith("/founder/buscar")}
-              onClick={() => navigate("/founder/buscar")}
-            />
-            <RailItem
-              icon={Clock3}
-              label="Tareas"
-              active={path.startsWith("/founder/tareas")}
-              onClick={() => navigate("/founder/tareas")}
-            />
-            <ExceptionsRailItem />
-            <RailItem
-              icon={FileText}
-              label="Reportes"
-              active={path.startsWith("/founder/reportes")}
-              onClick={() => navigate("/founder/reportes")}
-            />
-            <div className="flex-1" />
-            <FeedbackButton />
-            <ProfileMenu initials={initials} name={whoami.data?.name ?? "Fundador"} />
-          </nav>
 
-          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
-            <Outlet />
+            {isAdmin && <CopilotDockContainer />}
           </div>
-
-          <CopilotDockContainer />
-        </div>
+        </ApplicationPanelProvider>
       </CopilotProvider>
     </AlertsProvider>
   );

@@ -50,7 +50,7 @@ export function LoginPage() {
 
         <div className="flex flex-col gap-4">
           <span className="text-[13px] font-medium tracking-[1.4px] text-white/70">
-            panel de fundadores
+            panel de ops
           </span>
           <h1 className="max-w-[440px] text-[40px] font-bold leading-[1.1] tracking-[-1px]">
             Tu cartera,
@@ -58,8 +58,8 @@ export function LoginPage() {
             en un solo lugar.
           </h1>
           <p className="max-w-[440px] text-base font-medium leading-[1.5] text-[#E6FFF5]">
-            Feed en vivo, búsqueda y reportes de tu negocio — con un copiloto que te ayuda a
-            entender qué está pasando.
+            Solicitudes, cobros y reportes de tu negocio en un feed en vivo — cada persona ve lo que
+            le toca.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export function LoginPage() {
               Inicia sesión
             </h2>
             <p className="text-[15px] font-medium leading-[1.4] text-ds-muted">
-              Accede al panel de fundadores de Mikro.
+              Accede al panel de Ops de Mikro.
             </p>
           </div>
 
