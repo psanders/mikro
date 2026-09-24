@@ -6,6 +6,10 @@
  * account is one of the accounts configured for disbursements in mikro.json,
  * shown with its live balance. Confirming creates the customer + loan, posts
  * the withdrawal and moves the application to Convertida — one transaction.
+ *
+ * A contract signed before this flow (a migrated SIGNED application) has no
+ * stored terms, so the operator types them from the signed paper — as the old
+ * flow did — plus the amount when the old form never recorded one.
  */
 import { useMemo, useState } from "react";
 import { Landmark, UserRound, UserPlus, Wallet } from "lucide-react";
@@ -17,7 +21,10 @@ import { SidePanel } from "../../components/SidePanel";
 import {
   contractTermsOf,
   FREQUENCY_LABELS,
+  INSTALLMENT_PLURAL,
   shiftPeriod,
+  toDateInput,
+  todayDate,
   useApplicationInvalidation,
   type Frequency
 } from "../helpers";
@@ -27,8 +34,30 @@ import type { ViewProps } from "./types";
 export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps) {
   const toast = useToast();
   const invalidate = useApplicationInvalidation();
-  const terms = contractTermsOf(app);
-  const principal = Number(app.approvedAmount ?? 0);
+  const stored = contractTermsOf(app);
+  const legacy = !stored && Boolean(app.contractFilename);
+  const approved = app.approvedAmount == null ? null : Number(app.approvedAmount);
+  const [manual, setManual] = useState(() => ({
+    principal: approved == null ? "" : String(approved),
+    installments: app.approvedTermWeeks == null ? "" : String(app.approvedTermWeeks),
+    installmentAmount: "",
+    frequency: "WEEKLY" as Frequency,
+    startDate: toDateInput(shiftPeriod(todayDate(), "WEEKLY", 1))
+  }));
+  const manualTerms =
+    legacy &&
+    Number(manual.installments) > 0 &&
+    Number(manual.installmentAmount) > 0 &&
+    manual.startDate
+      ? {
+          installments: Number(manual.installments),
+          installmentAmount: Number(manual.installmentAmount),
+          frequency: manual.frequency,
+          startDate: manual.startDate
+        }
+      : null;
+  const terms = stored ?? manualTerms;
+  const principal = approved ?? Number(manual.principal || 0);
   const users = trpc.listUsers.useQuery({ limit: 100 });
   const accounts = trpc.listDisbursementAccounts.useQuery();
   const collectors = useMemo(
@@ -53,7 +82,8 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
 
   const accountName =
     accounts.data?.find((a) => a.id === chosenAccount)?.name ?? "la cuenta elegida";
-  const ready = writable && Boolean(terms) && Boolean(collectorId) && Boolean(chosenAccount);
+  const ready =
+    writable && Boolean(terms) && principal > 0 && Boolean(collectorId) && Boolean(chosenAccount);
 
   function confirm() {
     if (!terms || !chosenAccount) return;
@@ -89,13 +119,20 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
   return (
     <SidePanel open {...panel} footer={footer}>
       <div className="flex flex-col gap-[18px]" data-testid="disburse-view">
-        {terms ? (
+        {legacy ? (
+          <LegacyTerms
+            value={manual}
+            onChange={setManual}
+            amountLocked={approved != null}
+            disabled={!writable}
+          />
+        ) : terms ? (
           <div className="grid grid-cols-4 rounded-[10px] bg-[#EEF3F9] px-4 py-3">
             {[
               ["Monto", formatDop(principal)],
               [
                 "Cuotas",
-                `${terms.installments} ${FREQUENCY_LABELS[terms.frequency].toLowerCase()}s`
+                `${terms.installments} ${INSTALLMENT_PLURAL[terms.frequency as Frequency]}`
               ],
               ["Cuota", formatDop(terms.installmentAmount)],
               ["Primera cuota", formatDate(terms.startDate)]
@@ -196,5 +233,95 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
         </p>
       </div>
     </SidePanel>
+  );
+}
+
+interface ManualTerms {
+  principal: string;
+  installments: string;
+  installmentAmount: string;
+  frequency: Frequency;
+  startDate: string;
+}
+
+/** Terms typed from a contract signed before this flow (it stored none). */
+function LegacyTerms({
+  value,
+  onChange,
+  amountLocked,
+  disabled
+}: {
+  value: ManualTerms;
+  onChange: (v: ManualTerms) => void;
+  amountLocked: boolean;
+  disabled: boolean;
+}) {
+  const set = (patch: Partial<ManualTerms>) => onChange({ ...value, ...patch });
+  const digits = (v: string) => v.replace(/[^\d.]/g, "");
+  return (
+    <div className="flex flex-col gap-3" data-testid="disburse-legacy-terms">
+      <div className="rounded-[10px] bg-[#FDF1E3] px-4 py-3 text-[12.5px] font-medium text-[#D97706]">
+        Contrato firmado antes del nuevo flujo: copia los términos tal como aparecen en el contrato
+        firmado.
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <PanelField label="Monto del préstamo (RD$)">
+          <input
+            className={INPUT_CLASS}
+            inputMode="decimal"
+            value={value.principal}
+            disabled={disabled || amountLocked}
+            onChange={(e) => set({ principal: digits(e.target.value) })}
+            data-testid="disburse-legacy-principal"
+          />
+        </PanelField>
+        <PanelField label="Cuotas">
+          <input
+            className={INPUT_CLASS}
+            inputMode="numeric"
+            value={value.installments}
+            disabled={disabled}
+            onChange={(e) => set({ installments: e.target.value.replace(/\D/g, "") })}
+            data-testid="disburse-legacy-installments"
+          />
+        </PanelField>
+        <PanelField label="Monto de cada cuota (RD$)">
+          <input
+            className={INPUT_CLASS}
+            inputMode="decimal"
+            value={value.installmentAmount}
+            disabled={disabled}
+            onChange={(e) => set({ installmentAmount: digits(e.target.value) })}
+            data-testid="disburse-legacy-installment-amount"
+          />
+        </PanelField>
+        <PanelField label="Frecuencia">
+          <select
+            className={INPUT_CLASS}
+            value={value.frequency}
+            disabled={disabled}
+            onChange={(e) => {
+              const f = e.target.value as Frequency;
+              set({ frequency: f, startDate: toDateInput(shiftPeriod(todayDate(), f, 1)) });
+            }}
+          >
+            {(Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => (
+              <option key={f} value={f}>
+                {FREQUENCY_LABELS[f]}
+              </option>
+            ))}
+          </select>
+        </PanelField>
+        <PanelField label="Primera cuota">
+          <input
+            type="date"
+            className={INPUT_CLASS}
+            value={value.startDate}
+            disabled={disabled}
+            onChange={(e) => set({ startDate: e.target.value })}
+          />
+        </PanelField>
+      </div>
+    </div>
   );
 }

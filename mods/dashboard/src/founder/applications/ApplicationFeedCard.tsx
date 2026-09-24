@@ -406,7 +406,8 @@ function CardBody({
   // ---- APPROVED: paperwork, then disbursement ----
   if (app.status === "APPROVED") {
     const canWork = app.assignedReviewerId === viewer.id || viewer.isAdmin;
-    const hasTerms = Boolean(app.contractTerms);
+    // A contract signed before this flow stored no terms, but it was generated.
+    const hasTerms = Boolean(app.contractTerms) || Boolean(app.contractFilename);
     return (
       <div className="flex flex-col gap-[14px] pl-[50px]">
         <div className="flex gap-2 rounded-[8px] bg-[#E8F7EE] px-3 py-[10px] text-[12.5px] font-medium text-[#16A34A]">

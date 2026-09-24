@@ -7,8 +7,9 @@
 -- happen inside the table rebuild's INSERT ... SELECT below:
 --   * assigned_reviewer_id  <- reviewed_by_id for any row a reviewer touched
 --   * decided_*             <- reviewed_* for decided rows
---   * rejection_reason      <- OUT_OF_COVERAGE_AREA for intake auto-rejects, else OTHER
---                              (their free text stays in decision_note)
+--   * rejection_reason      <- OUT_OF_COVERAGE_AREA for intake auto-rejects; PAYMENT_CAPACITY /
+--                              DOCUMENTS when the note starts with the old app's reason label;
+--                              else OTHER (the free text stays in decision_note)
 --   * approved_amount/term  <- the loan's principal for CONVERTED rows, else the
 --                              requested terms (the implicit approval of the old flow)
 -- Not reversible (columns are dropped): back up with VACUUM INTO before deploying.
@@ -103,6 +104,8 @@ INSERT INTO "new_loan_applications" ("ad_id", "adset_id", "business_name", "busi
     CASE WHEN "status" IN ('APPROVED', 'SIGNED', 'CONVERTED', 'REJECTED') THEN "reviewed_at" END,
     CASE WHEN "status" IN ('APPROVED', 'SIGNED', 'CONVERTED', 'REJECTED') AND NOT ("status" = 'REJECTED' AND "review_note" = 'OUT_OF_COVERAGE_AREA') THEN "review_note" END,
     CASE WHEN "status" = 'REJECTED' AND "review_note" = 'OUT_OF_COVERAGE_AREA' THEN 'OUT_OF_COVERAGE_AREA'
+         WHEN "status" = 'REJECTED' AND "review_note" LIKE 'Capacidad de pago insuficiente%' THEN 'PAYMENT_CAPACITY'
+         WHEN "status" = 'REJECTED' AND "review_note" LIKE 'Documentación incompleta%' THEN 'DOCUMENTS'
          WHEN "status" = 'REJECTED' THEN 'OTHER' END,
     CASE WHEN "status" = 'CONVERTED' THEN COALESCE((SELECT l."principal" FROM "loans" l WHERE l."loan_id" = "loan_applications"."loan_id"), "requested_amount")
          WHEN "status" IN ('APPROVED', 'SIGNED') THEN "requested_amount" END,
@@ -121,3 +124,48 @@ PRAGMA defer_foreign_keys=OFF;
 -- CreateIndex
 CREATE INDEX "application_documents_application_id_idx" ON "application_documents"("application_id");
 
+
+-- Backfill application.received for open applications. The Ops feed renders an
+-- application as a card at its newest event, and this event is new with this
+-- flow: without it, applications received before the release (the whole shared
+-- queue) would have no card. Mirrors recordApplicationReceived: dated at
+-- submission, attributed to "Sistema", payload without null keys.
+INSERT INTO "business_events" ("id", "type", "occurred_at", "actor_name", "customer_name", "application_id", "amount", "summary", "payload")
+SELECT
+    lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+        substr('89ab', 1 + (abs(random()) % 4), 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))),
+    'application.received',
+    COALESCE(a."submitted_at", a."created_at"),
+    'Sistema',
+    n.name,
+    a."id",
+    a."requested_amount",
+    'Nueva solicitud de ' || n.name || ' desde ' ||
+        CASE a."source" WHEN 'FORM' THEN 'el sitio web' WHEN 'WHATSAPP' THEN 'WhatsApp' WHEN 'MANUAL' THEN 'registro manual' ELSE a."source" END,
+    json_remove(
+        json_object(
+            'applicationId', a."id",
+            'businessName', NULLIF(trim(a."business_name"), ''),
+            'score', a."score",
+            'source', a."source",
+            'requestedAmount', CAST(a."requested_amount" AS REAL)
+        ),
+        CASE WHEN NULLIF(trim(a."business_name"), '') IS NULL THEN '$.businessName' ELSE '$.__keep' END,
+        CASE WHEN a."score" IS NULL THEN '$.score' ELSE '$.__keep' END,
+        CASE WHEN a."requested_amount" IS NULL THEN '$.requestedAmount' ELSE '$.__keep' END
+    )
+FROM "loan_applications" a
+JOIN (
+    SELECT "id",
+        COALESCE(
+            NULLIF(trim(COALESCE("first_name", '') || ' ' || COALESCE("last_name", '')), ''),
+            NULLIF(trim("business_name"), ''),
+            '#' || substr("id", 1, 8)
+        ) AS name
+    FROM "loan_applications"
+) n ON n."id" = a."id"
+WHERE a."status" IN ('RECEIVED', 'IN_REVIEW', 'PENDING_DECISION', 'APPROVED')
+  AND NOT EXISTS (
+      SELECT 1 FROM "business_events" e
+      WHERE e."application_id" = a."id" AND e."type" = 'application.received'
+  );

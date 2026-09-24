@@ -87,13 +87,15 @@ export function forTransition(app: {
   reviewerRecommendation: string | null;
   contractFilename: string | null;
   approvedAmount: unknown;
+  contractTerms?: unknown;
 }): ApplicationForTransition {
   return {
     status: app.status as ApplicationForTransition["status"],
     assignedReviewerId: app.assignedReviewerId,
     reviewerRecommendation: app.reviewerRecommendation,
     contractFilename: app.contractFilename,
-    approvedAmount: app.approvedAmount == null ? null : Number(app.approvedAmount)
+    approvedAmount: app.approvedAmount == null ? null : Number(app.approvedAmount),
+    contractTerms: app.contractTerms ?? null
   };
 }
 

@@ -65,7 +65,8 @@ export function forTransition(app: LoanApplication): ApplicationForTransition {
     assignedReviewerId: app.assignedReviewerId,
     reviewerRecommendation: app.reviewerRecommendation,
     contractFilename: app.contractFilename,
-    approvedAmount: toNumber(app.approvedAmount)
+    approvedAmount: toNumber(app.approvedAmount),
+    contractTerms: app.contractTerms
   };
 }
 

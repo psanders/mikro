@@ -177,6 +177,34 @@ for (const [first, last, biz] of [
   });
 }
 
+// A contract signed before this flow, as the migration leaves it: APPROVED with
+// the signed PDF but no stored contract terms, and an old form that never
+// recorded an amount (Ana).
+{
+  const app = await received("Ángel", "Jiménez", "Contrato Antiguo");
+  await ana.assignApplication({ id: app.id });
+  await withEvidence(ana, app.id);
+  await ana.sendApplicationToDecision({ id: app.id });
+  await admin.approveApplication({ id: app.id, approvedAmount: 8000, approvedTermWeeks: 10 });
+  await ana.generateApplicationContract({
+    id: app.id,
+    installments: 10,
+    installmentAmount: 1000,
+    frequency: "WEEKLY",
+    startDate: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+  });
+  await ana.uploadSignedContract({
+    id: app.id,
+    originalName: "contrato-viejo.pdf",
+    mimeType: "application/pdf",
+    dataBase64: PDF
+  });
+  await prisma.$executeRawUnsafe(
+    "UPDATE loan_applications SET contract_terms = NULL, approved_amount = NULL, approved_term_weeks = NULL WHERE id = ?",
+    app.id
+  );
+}
+
 // In review with Luis — must NOT appear in Ana's feed.
 {
   const app = await received("Luisa", "Mejía", "Tienda de Luis");

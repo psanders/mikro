@@ -39,6 +39,7 @@ function app(
     reviewerRecommendation: "Aprobar",
     contractFilename: "c.pdf",
     approvedAmount: 10000,
+    contractTerms: { installments: 10, installmentAmount: 1300, frequency: "WEEKLY" },
     ...over
   };
 }
@@ -258,6 +259,23 @@ describe("evaluateTransition — requirements", () => {
     expect(
       evaluateTransition(app("APPROVED"), "convert", ADMIN, { principal: 12000 })
     ).to.deep.equal({ ok: false, reason: "AMOUNT_MISMATCH" });
+  });
+
+  it("a contract signed before this flow converts with the operator's principal", () => {
+    // Migrated SIGNED application: signed contract, no stored terms, and an old
+    // form that never recorded an amount.
+    const legacy = app("APPROVED", { approvedAmount: null, contractTerms: null });
+    expect(evaluateTransition(legacy, "convert", ADMIN, { principal: 8000 }).ok).to.equal(true);
+    expect(evaluateTransition(legacy, "convert", ADMIN, {})).to.deep.equal({
+      ok: false,
+      reason: "TERMS_REQUIRED"
+    });
+    // With an amount on record, the principal must still match it.
+    const withAmount = app("APPROVED", { contractTerms: null });
+    expect(evaluateTransition(withAmount, "convert", ADMIN, { principal: 8000 })).to.deep.equal({
+      ok: false,
+      reason: "AMOUNT_MISMATCH"
+    });
   });
 
   it("ignoreInput enables a button before its input is typed, but never state blocks", () => {

@@ -104,6 +104,12 @@ export interface ApplicationForTransition {
   reviewerRecommendation: string | null;
   contractFilename: string | null;
   approvedAmount: number | null;
+  /**
+   * Terms stored when the contract is generated in this flow. Null on a
+   * contract signed before it (a migrated SIGNED application), whose loan terms
+   * the operator still enters at disbursement.
+   */
+  contractTerms: unknown;
 }
 
 export interface TransitionActor {
@@ -236,7 +242,11 @@ const REQUIRES: Record<ReviewAction, RuleCheck> = {
   withdraw: () => null,
   convert: (app, _actor, input) => {
     if (!app.contractFilename) return "CONTRACT_REQUIRED";
-    if (app.approvedAmount == null) return "TERMS_REQUIRED";
+    if (app.approvedAmount == null) {
+      // Only an approval from before this flow lacks an amount. With its
+      // pre-flow signed contract, the operator's principal stands (as it did).
+      return app.contractTerms == null && positive(input.principal) ? null : "TERMS_REQUIRED";
+    }
     if (input.principal != null && input.principal !== app.approvedAmount) return "AMOUNT_MISMATCH";
     return null;
   }
