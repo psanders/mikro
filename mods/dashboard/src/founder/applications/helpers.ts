@@ -25,6 +25,14 @@ export const FREQUENCY_LABELS: Record<Frequency, string> = {
   MONTHLY: "Mensual"
 };
 
+/** "10 cuotas semanales": the frequency as a plural adjective after "cuotas". */
+export const INSTALLMENT_PLURAL: Record<Frequency, string> = {
+  DAILY: "diarias",
+  WEEKLY: "semanales",
+  BIWEEKLY: "quincenales",
+  MONTHLY: "mensuales"
+};
+
 /** Shift a date by one payment period (for the first-installment default and loan start). */
 export function shiftPeriod(date: Date, frequency: Frequency, direction: 1 | -1): Date {
   const d = new Date(date);

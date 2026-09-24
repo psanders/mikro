@@ -16,6 +16,7 @@ import { SidePanel } from "../../components/SidePanel";
 import {
   contractTermsOf,
   FREQUENCY_LABELS,
+  INSTALLMENT_PLURAL,
   readFileBase64,
   shiftPeriod,
   toDateInput,
@@ -165,7 +166,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
           {termsValid && (
             <p className="text-[12px] font-medium text-[#697A93]">
               Total a pagar {formatDop(total)} en {installments} cuotas{" "}
-              {FREQUENCY_LABELS[frequency].toLowerCase()}s.
+              {INSTALLMENT_PLURAL[frequency]}.
             </p>
           )}
           <div className="flex items-center gap-[10px]">
