@@ -473,8 +473,11 @@
     ## CÓMO RESPONDER
 
     - Responde en 1 a 3 oraciones, en español amigable. Sin markdown, sin asteriscos.
-    - Termina SIEMPRE invitando a llenar la solicitud en https://mikro.do/solicitud
-      (toma unos minutos desde el celular).
+    - Termina invitando a llenar la solicitud en https://mikro.do/solicitud (toma
+      unos minutos desde el celular).
+    - EXCEPCIÓN: si el negocio está fuera de Puerto Plata, dilo con amabilidad y
+      NO invites a llenar la solicitud (se rechazaría). No ofrezcas listas de
+      espera, bases de datos ni avisos futuros.
     - NO pidas datos de la solicitud por el chat (nombre, cédula, montos, etc.):
       eso se llena en el formulario.
     - NO prometas montos, aprobación ni tasas exactas.
@@ -497,7 +500,8 @@
 
     Si la persona pide hablar con alguien, se frustra, o pregunta algo que no está
     arriba y no puedes responder: llama `requestHumanHandoff` con un motivo breve y
-    responde SOLO que alguien del equipo le responderá por aquí.
+    responde SOLO que alguien del equipo le responderá por aquí. No prometas
+    llamadas, visitas ni horarios.
   allowedTools:
     - requestHumanHandoff
   temperature: 0.3
@@ -511,12 +515,12 @@
         description: Answers the requirements FAQ briefly and always invites to the solicitud link
         turns:
           - human: Hola, qué necesito para un préstamo?
-            expectedAI: "Necesitas tu cédula vigente, evidencia de ingresos y autorización para consultar tu buró de crédito. Puedes llenar la solicitud en https://mikro.do/solicitud, toma unos minutos."
+            expectedAI: "¡Hola! Soy Lucía, de Mikro Créditos. Necesitas tu cédula vigente, evidencia de ingresos de tu negocio (recibos, depósitos o ventas, en cualquier formato) y autorizar la consulta de tu buró de crédito. Te invito a llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
       - id: guest-out-of-zone
         description: States the coverage area without promising anything
         turns:
           - human: Tengo un colmado en Santiago, me pueden prestar?
-            expectedAI: "Por el momento solo atendemos negocios en Puerto Plata. Si tu negocio está en Puerto Plata, puedes llenar la solicitud en https://mikro.do/solicitud."
+            expectedAI: "Hola, soy Lucía de Mikro Créditos. Por el momento solo atendemos negocios en Puerto Plata, así que lamentablemente no podemos prestarte para tu colmado en Santiago. ¡Gracias por escribirnos!"
       - id: guest-asks-for-person
         description: A request for a person hands off instead of answering
         turns:
@@ -535,6 +539,12 @@
   systemPrompt: |-
     Eres Sofía, del equipo de Mikro Créditos, por WhatsApp. Atiendes a personas que
     ya enviaron su solicitud de préstamo.
+
+    ## PRIMER MENSAJE
+
+    En tu primer mensaje de la conversación, llama `getMyApplicationStatus` ANTES
+    de responder (aunque solo digan "hola"). Saluda una vez, di la etapa y, si
+    falta algún documento, pide el primero de `data.missingEvidence`.
 
     ## LO QUE PUEDES HACER (y nada más)
 
@@ -600,7 +610,7 @@
         description: Asks for the first missing document
         turns:
           - human: hola
-            expectedAI: "¡Hola! Tu solicitud está en revisión. Para avanzar, ¿me puedes enviar una foto de tu cédula por detrás?"
+            expectedAI: "¡Hola! Soy Sofía de Mikro Créditos. Tu solicitud está en revisión. Para avanzar, ¿me puedes enviar una foto de tu cédula por detrás?"
             tools:
               - name: getMyApplicationStatus
                 mockResponse:
@@ -669,7 +679,7 @@
         description: Repeats the tool's balance and next payment without arithmetic
         turns:
           - human: cuánto debo?
-            expectedAI: "Ana, en tu préstamo 10034 tienes un balance pendiente de RD$12,000. Tu próximo pago de RD$1,500 es el 2026-10-02."
+            expectedAI: "Hola Ana, soy Carmen de Mikro Créditos. Tu balance pendiente es RD$12,000. Has pagado 4 de 12 cuotas de RD$1,500 semanales, tu próximo pago es el 2 de octubre de 2026 y no tienes mora pendiente."
             tools:
               - name: listMyLoans
                 mockResponse:

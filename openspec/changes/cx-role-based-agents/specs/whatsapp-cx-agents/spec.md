@@ -2,13 +2,19 @@
 
 ### Requirement: Guest agent answers FAQ and pushes the solicitud
 
-The `GUEST` agent SHALL answer general questions about Mikro (what it offers, coverage area, requirements, how to apply) and SHALL end every substantive reply by inviting the guest to fill out the solicitud (the website link or the WhatsApp intake Flow). It SHALL NOT collect application fields in free text and SHALL NOT quote approval odds or promise amounts.
+The `GUEST` agent SHALL answer general questions about Mikro (what it offers, coverage area, requirements, how to apply) and SHALL end every substantive reply by inviting the guest to fill out the solicitud (the website link), except when the guest's business is outside the coverage area. It SHALL NOT collect application fields in free text and SHALL NOT quote approval odds or promise amounts.
 
 #### Scenario: Guest asks about requirements
 
 - **WHEN** a guest asks "¿qué necesito para un préstamo?"
 - **THEN** the agent answers briefly
 - **AND** invites the guest to fill out the solicitud
+
+#### Scenario: Guest outside the coverage area
+
+- **WHEN** a guest says their business is outside the coverage area
+- **THEN** the agent says so politely
+- **AND** does not invite them to the solicitud (it would be auto-rejected) or offer a waitlist
 
 ### Requirement: Applicant agent is limited to status, missing evidence and FAQ
 
