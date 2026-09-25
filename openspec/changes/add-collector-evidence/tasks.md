@@ -19,7 +19,7 @@
 - [x] 3.1 Evidence panel "Ubicación del negocio" field (paste, validate, save, open, replace/remove)
 - [x] 3.2 "Falta:" line + card evidence line include the location
 - [x] 3.3 Feed: `application.evidence_completed` type config + card
-- [ ] 3.4 Playwright: map-link field + seed updates (existing specs need a map link to send) — written, not yet run
+- [x] 3.4 Playwright: map-link field + seed updates (existing specs need a map link to send)
 
 ## 4. Collector app (mobile)
 
@@ -32,5 +32,5 @@
 
 ## 5. Release
 
-- [ ] 5.1 Release notes: store build needed, in-review applications need a link
+- [x] 5.1 Release notes: store build needed, in-review applications need a link (in the PR description)
 - [x] 5.2 Verify on the prod copy (rehearsal harness) that the migration is additive only — both migrations applied to the 2026-09-23 copy; all existing rows identical, two empty columns added
