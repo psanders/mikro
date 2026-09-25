@@ -1,9 +1,9 @@
 ## 1. Shared types and schema
 
-- [ ] 1.1 Add `CUSTOMER` and `APPLICANT` to `profileEnum` in `mods/common/src/schemas/user.ts`; confirm both barrels (`schemas/index.ts` and root `index.ts`) still export `AGENT_PROFILES`/`Profile`
-- [ ] 1.2 Add `ConversationHandoff` model to `schema.prisma` (phone, profile, reason, applicationId?, customerId?, openedAt, expiresAt, closedAt?; index on phone+closedAt) with a migration
-- [ ] 1.3 Mirror the new table in the integration-test `SCHEMA_SQL`
-- [ ] 1.4 Add `cx.handoff_requested` to the business event types and render it in the founder feed (summary: profile + reason)
+- [x] 1.1 Add `CUSTOMER` and `APPLICANT` to `profileEnum` in `mods/common/src/schemas/user.ts`; confirm both barrels (`schemas/index.ts` and root `index.ts`) still export `AGENT_PROFILES`/`Profile`
+- [x] 1.2 Add `ConversationHandoff` model to `schema.prisma` (phone, profile, reason, applicationId?, customerId?, openedAt, expiresAt, closedAt?; index on phone+closedAt) with a migration
+- [x] 1.3 Mirror the new table in the integration-test `SCHEMA_SQL`
+- [x] 1.4 Add `cx.handoff_requested` to the business event types and render it in the founder feed (summary: profile + reason)
 
 ## 2. Apiserver data functions
 

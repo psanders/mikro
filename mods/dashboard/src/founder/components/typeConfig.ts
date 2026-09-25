@@ -25,7 +25,8 @@ import {
   Inbox,
   UserCheck,
   Scale,
-  UserX
+  UserX,
+  Headset
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -85,7 +86,9 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "qcobro.synced": { icon: RefreshCw, accent: "blue" },
   // Base is amber ("enviado", awaiting a delivery receipt). `resolveVisual`
   // promotes it to green (delivered/read) or red (failed) from payload.status.
-  "message.sent": { icon: MessageSquare, accent: "amber" }
+  "message.sent": { icon: MessageSquare, accent: "amber" },
+  // Amber: a person is waiting on a human reply in Chatwoot.
+  "cx.handoff_requested": { icon: Headset, accent: "amber" }
 };
 
 /**
@@ -299,10 +302,24 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
       }
       return { text: label, tone: "muted" };
     }
+    case "cx.handoff_requested": {
+      const profile = typeof payload.profile === "string" ? payload.profile : "";
+      const who = HANDOFF_PROFILE_LABELS[profile] ?? "Contacto";
+      const reason = typeof payload.reason === "string" ? payload.reason : "";
+      return { text: reason ? `${who} · ${reason}` : who, tone: "muted" };
+    }
     default:
       return { text: "", tone: "muted" };
   }
 }
+
+/** Who asked for a person, by the WhatsApp profile that served them. */
+const HANDOFF_PROFILE_LABELS: Record<string, string> = {
+  GUEST: "Visitante",
+  PROSPECT: "Prospecto",
+  APPLICANT: "Solicitante",
+  CUSTOMER: "Cliente"
+};
 
 /** Spanish delivery-state labels for a `message.sent` card's meta line. */
 const MESSAGE_STATUS_LABELS: Record<string, string> = {
@@ -476,6 +493,9 @@ export function resolveNarrative(event: FeedEvent): string | null {
       return null;
     case "message.sent":
       // The compact meta line already carries the delivery state.
+      return null;
+    case "cx.handoff_requested":
+      // The compact meta line already carries who and why.
       return null;
   }
 }

@@ -11,12 +11,19 @@ export const roleEnum = z.enum(["ADMIN", "COLLECTOR", "REVIEWER"]);
 
 /**
  * Audience profiles an agent can serve. A superset of the DB `Role` (so a
- * user's role is always a valid profile) plus the router-derived PROSPECT
- * (unknown phone with a partial application) and GUEST (unknown phone, no
- * application). Profiles — not agent names — are the only agent identity in
+ * user's role is always a valid profile) plus the router-derived CUSTOMER
+ * (phone matches a customer), APPLICANT (unknown phone with an application in
+ * the review pipeline, RECEIVED → APPROVED), PROSPECT (unknown phone with a
+ * DRAFT application) and GUEST (anyone else). Profiles — not agent names — are the only agent identity in
  * code; routing resolves the serving agent by profile.
  */
-export const profileEnum = z.enum([...roleEnum.options, "PROSPECT", "GUEST"]);
+export const profileEnum = z.enum([
+  ...roleEnum.options,
+  "CUSTOMER",
+  "APPLICANT",
+  "PROSPECT",
+  "GUEST"
+]);
 
 /** Audience profile an agent serves. */
 export type Profile = z.infer<typeof profileEnum>;
