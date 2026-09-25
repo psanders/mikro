@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.3.0](https://github.com/psanders/mikro/compare/v3.2.0...v3.3.0) (2026-09-25)
+
+### Features
+
+- **cx:** leave a private note and handoff label in Chatwoot on each hand-off ([#295](https://github.com/psanders/mikro/issues/295)) ([bc2b1a9](https://github.com/psanders/mikro/commit/bc2b1a9d6604178d3bc06541514ecc1b0aa3f2ef))
+
 # [3.2.0](https://github.com/psanders/mikro/compare/v3.1.0...v3.2.0) (2026-09-25)
 
 ### Features
