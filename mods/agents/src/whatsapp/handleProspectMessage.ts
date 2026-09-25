@@ -19,6 +19,8 @@ export interface ProspectMessageDeps {
     isNewSession?: boolean
   ) => Promise<InvokeLLMResult>;
   joseAgent: Agent;
+  /** The DRAFT's id; lets José's tools (e.g. requestHumanHandoff) name it. */
+  applicationId?: string;
 }
 
 /**
@@ -38,7 +40,7 @@ const MAX_JOSE_TURNS = 7;
 const DECLINE_RE =
   /\b(no me interesa|ya no me interesa|no estoy interesad|perdí el interés|no quiero (el préstamo|el credito|el crédito|seguir|continuar|nada|ningún)|ya no quiero|no deseo continuar|déjame (tranquilo|en paz)|déjenme (tranquilo|en paz)|no, gracias|cancela(r| mi solicitud)?)\b/i;
 
-function isDecline(message: string): boolean {
+export function isDecline(message: string): boolean {
   return DECLINE_RE.test(message);
 }
 
@@ -109,7 +111,12 @@ export async function handleProspectMessage(
     });
   }
 
-  const context: Record<string, unknown> = { sessionId, phone };
+  const context: Record<string, unknown> = {
+    sessionId,
+    phone,
+    profile: "PROSPECT",
+    ...(deps.applicationId ? { applicationId: deps.applicationId } : {})
+  };
 
   logger.verbose("handling prospect message", {
     phone,

@@ -264,4 +264,32 @@ export interface ToolExecutorDependencies {
     args: Record<string, unknown>,
     context?: Record<string, unknown>
   ) => Promise<import("../../llm/types.js").ToolResult>;
+
+  // ── WhatsApp CX self-service (optional — only wired in apiserver) ───────
+  // Each reads the sender's identity from `context` (customerId, applicationId,
+  // phone, profile) and ignores identifiers in `args`.
+  cx?: {
+    listMyLoans: (
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+    listMyPayments: (
+      args: Record<string, unknown>,
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+    sendMyReceipt: (
+      args: Record<string, unknown>,
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+    getMyApplicationStatus: (
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+    attachApplicationEvidence: (
+      args: Record<string, unknown>,
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+    requestHumanHandoff: (
+      args: Record<string, unknown>,
+      context?: Record<string, unknown>
+    ) => Promise<import("../../llm/types.js").ToolResult>;
+  };
 }

@@ -23,7 +23,7 @@ import {
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
-import { handleProspectMessage } from "./handleProspectMessage.js";
+import { handleProspectMessage, isDecline } from "./handleProspectMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -81,6 +81,25 @@ export interface MessageProcessorDependencies {
    * to the tracked outbound message. When unset, statuses are ignored.
    */
   updateOutboundStatus?: (status: WhatsAppStatus) => Promise<void>;
+  // ── WhatsApp CX (openspec cx-role-based-agents) — all optional ──────────
+  /** Restart a DRAFT's abandon clock (the prospect wrote in). */
+  recordProspectActivity?: (applicationId: string) => Promise<void>;
+  /** Reopen a never-submitted ABANDONED application to DRAFT; false if not allowed. */
+  reopenApplication?: (applicationId: string) => Promise<boolean>;
+  /**
+   * If a human hand-off is open for the phone, push its expiry out and return
+   * true; agents then stay silent. False when none is open.
+   */
+  extendHandoff?: (phone: string) => Promise<boolean>;
+  /** Open a human hand-off (the explicit-request backstop). */
+  openHandoff?: (input: {
+    phone: string;
+    profile: Profile;
+    reason: string;
+    applicationId?: string;
+    customerId?: string;
+    displayName?: string;
+  }) => Promise<unknown>;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -401,6 +420,11 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       messageId: id,
       type
     });
+    // A prospect writing in is still activity: it keeps their draft from being
+    // abandoned even while the number is quiet. Only route when that matters.
+    if (messageProcessor.recordProspectActivity) {
+      await recordActivityIfProspect(phone, messageProcessor);
+    }
     return;
   }
 
@@ -495,102 +519,19 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     // Step 2: Handle based on route type
-    if (route.type === "customer") {
-      // Customers don't interact with agents
-      logger.verbose("no handler available for customers", { phone, customerId: route.customerId });
-      return;
-    }
-
     if (route.type === "ignored") {
       logger.verbose("message ignored", { phone, reason: route.reason });
       return;
     }
 
-    // Guest: unknown phone, no application. Respond only if a GUEST agent is
-    // assigned in config; otherwise ignore (preserves the no-auto-reply default).
-    if (route.type === "guest") {
-      const guestAgent = getAgentForProfile("GUEST");
-      if (!guestAgent) {
-        logger.verbose("no agent assigned to GUEST profile, ignoring", { phone });
-        return;
-      }
-      const history = getGuestConversation(phone);
-      const newGuestSession = isNewSession(phone);
-      const guestResult = await invokeLLM(
-        guestAgent,
-        history,
-        userMessage,
-        imageUrl,
-        { phone },
-        newGuestSession
-      );
-      touchSession(phone);
-      const guestText = typeof guestResult === "string" ? guestResult : guestResult.text;
-      addGuestMessage(phone, { role: "user", content: userMessage });
-      addGuestMessage(phone, { role: "assistant", content: guestText });
-      if (guestText) await sendWhatsAppMessage({ phone, message: guestText });
+    if (route.type !== "user") {
+      await handleCxMessage(route, userMessage, imageUrl, messageProcessor);
       return;
     }
 
-    // Prospect: partial application → PROSPECT agent (José); completed → hold message.
-    if (route.type === "prospect") {
-      if (!route.partial) {
-        logger.verbose("prospect application already complete, sending hold message", { phone });
-        await sendWhatsAppMessage({
-          phone,
-          message: "Tu solicitud ya está en revisión. Pronto te contactaremos."
-        });
-        return;
-      }
-      const prospectAgent = getAgentForProfile("PROSPECT");
-      if (!prospectAgent) {
-        logger.verbose("no agent assigned to PROSPECT profile, ignoring prospect message", {
-          phone
-        });
-        return;
-      }
-      const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
-        invokeLLM,
-        joseAgent: prospectAgent
-      });
-      if (result.text) {
-        await sendWhatsAppMessage({ phone, message: result.text });
-      }
-      return;
-    }
-
-    // COLLECTOR: the photo → vision → WhatsApp-button promo flow was retired
-    // in favor of a native mobile action (mods/mobile app/promocionar.tsx,
-    // mikro/#68) — no photo capture, no computer-vision extraction step. A
-    // COLLECTOR profile can still be assigned an LLM agent in agents.yaml for
-    // other purposes, so fall through to the generic agent path below rather
-    // than special-casing the role; only reply here when nothing is assigned,
-    // so collectors who still text a photo out of habit get redirected
-    // instead of silence.
-    if (route.role === "COLLECTOR" && !getAgentForProfile("COLLECTOR")) {
-      await sendWhatsAppMessage({
-        phone,
-        message: "Ahora puedes enviar promociones directamente desde la app Mikro Cobradores."
-      });
-      return;
-    }
-
-    // ADMIN: María was retired in favor of the founder Copilot on the
-    // dashboard (mikro/#120) — admin assistance no longer happens over
-    // WhatsApp by default. Redirect once instead of silently ignoring, so an
-    // admin who still texts out of habit knows where help lives now. An
-    // ADMIN profile can still be assigned a different LLM agent in
-    // agents.yaml, in which case this falls through to the normal path below.
-    if (route.role === "ADMIN" && !getAgentForProfile("ADMIN")) {
-      await sendWhatsAppMessage({
-        phone,
-        message:
-          "Ahora la asistencia para administradores está en el dashboard de Mikro: habla con el copiloto ahí para registrar pagos, ver reportes y más."
-      });
-      return;
-    }
-
-    // Known users with an LLM agent (e.g. a custom ADMIN or COLLECTOR agent).
+    // Employees (ADMIN, REVIEWER, COLLECTOR) get no automated reply unless an
+    // agent is explicitly assigned to their role. Their message still reaches
+    // the Chatwoot inbox through the WABA fan-out, where a person sees it.
     const agent = getAgentForProfile(route.role);
     if (!agent) {
       logger.verbose("no agent assigned to user role profile", { phone, role: route.role });
@@ -661,6 +602,153 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       logger.error("failed to send error message", { phone });
     }
   }
+}
+
+/** Chat routes answered by a CX agent (everything except staff). */
+type CxRoute = Exclude<RouteResult, { type: "user" } | { type: "ignored" }>;
+
+/**
+ * An explicit request for a person. Kept to imperative forms so a passing
+ * mention ("mi asesor me dijo…") does not silence the agent; softer cases are
+ * the agent's call through `requestHumanHandoff`.
+ */
+const HUMAN_REQUEST_RE =
+  /\b(quiero|quisiera|necesito|prefiero|puedo|me gustar[ií]a)\s+(hablar|conversar|comunicarme)\s+con\s+(una?\s+)?(persona|humano|alguien|asesor[a]?|agente|representante|empleado)\b|\b(p[aá]same|comun[ií]came|ponme)\s+con\s+(una?\s+)?(persona|humano|alguien|asesor[a]?|agente|representante)\b|\bhablar\s+con\s+un\s+humano\b/i;
+
+export function isHumanRequest(message: string): boolean {
+  return HUMAN_REQUEST_RE.test(message);
+}
+
+const HANDOFF_ACK =
+  "Claro, ya le avisé al equipo. Una persona te va a responder por aquí lo antes posible.";
+
+function profileFor(route: CxRoute): Profile {
+  switch (route.type) {
+    case "customer":
+      return "CUSTOMER";
+    case "applicant":
+      return "APPLICANT";
+    case "prospect":
+    case "reopen":
+      return "PROSPECT";
+    case "guest":
+      return "GUEST";
+  }
+}
+
+/** Context every CX tool reads identity from (never from model arguments). */
+function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
+  return {
+    phone: route.phone,
+    profile,
+    ...(route.type === "customer" ? { customerId: route.customerId, name: route.name } : {}),
+    ...("applicationId" in route
+      ? { applicationId: route.applicationId, sessionId: route.sessionId }
+      : {}),
+    ...(imageUrl ? { imageDataUrl: imageUrl } : {})
+  };
+}
+
+async function recordActivityIfProspect(
+  phone: string,
+  processor: MessageProcessorDependencies
+): Promise<void> {
+  try {
+    const route = await processor.routeMessage(phone);
+    if (route.type === "prospect") await processor.recordProspectActivity?.(route.applicationId);
+  } catch (error) {
+    logger.error("failed to record prospect activity", {
+      phone,
+      error: (error as Error).message
+    });
+  }
+}
+
+/**
+ * Answer a guest, prospect, applicant or customer (openspec
+ * cx-role-based-agents): record prospect activity, stay silent during a human
+ * hand-off, honor an explicit request for a person, reopen an abandoned draft,
+ * then hand the turn to the agent serving the profile (none assigned → no reply).
+ */
+async function handleCxMessage(
+  route: CxRoute,
+  userMessage: string,
+  imageUrl: string | null,
+  processor: MessageProcessorDependencies
+): Promise<void> {
+  const { phone } = route;
+  const { invokeLLM, sendWhatsAppMessage, getAgentForProfile } = processor;
+  const profile = profileFor(route);
+
+  if (route.type === "prospect" && processor.recordProspectActivity) {
+    await processor.recordProspectActivity(route.applicationId);
+  }
+
+  if (processor.extendHandoff && (await processor.extendHandoff(phone))) {
+    logger.verbose("human hand-off open, agent stays silent", { phone, profile });
+    return;
+  }
+
+  const agent = getAgentForProfile(profile);
+  if (!agent) {
+    logger.verbose("no agent assigned to profile, ignoring", { phone, profile });
+    return;
+  }
+
+  // An explicit "no me interesa" wins over a request for a person: José closes it.
+  const optingOut = profile === "PROSPECT" && isDecline(userMessage);
+  if (processor.openHandoff && !optingOut && isHumanRequest(userMessage)) {
+    const ctx = cxContext(route, profile, null);
+    await processor.openHandoff({
+      phone,
+      profile,
+      reason: "Pidió hablar con una persona",
+      applicationId: "applicationId" in ctx ? ctx.applicationId : undefined,
+      customerId: "customerId" in ctx ? ctx.customerId : undefined,
+      displayName: "name" in ctx ? ctx.name : undefined
+    });
+    await sendWhatsAppMessage({ phone, message: HANDOFF_ACK });
+    return;
+  }
+
+  if (route.type === "reopen") {
+    if (!processor.reopenApplication || !(await processor.reopenApplication(route.applicationId))) {
+      logger.verbose("abandoned application not reopened, ignoring", { phone });
+      return;
+    }
+  }
+
+  if (route.type === "prospect" || route.type === "reopen") {
+    const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
+      invokeLLM,
+      joseAgent: agent,
+      applicationId: route.applicationId
+    });
+    if (result.text) await sendWhatsAppMessage({ phone, message: result.text });
+    return;
+  }
+
+  // GUEST, APPLICANT, CUSTOMER: phone-keyed in-memory conversation.
+  const history = getGuestConversation(phone);
+  const newSession = isNewSession(phone);
+  const result = await invokeLLM(
+    agent,
+    history,
+    userMessage,
+    imageUrl,
+    cxContext(route, profile, imageUrl),
+    newSession
+  );
+  touchSession(phone);
+  const text = typeof result === "string" ? result : result.text;
+  const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
+  addGuestMessage(phone, { role: "user", content: userMessage || "[Imagen]" });
+  addGuestMessage(phone, {
+    role: "assistant",
+    content: text,
+    tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
+  });
+  if (text) await sendWhatsAppMessage({ phone, message: text });
 }
 
 /**

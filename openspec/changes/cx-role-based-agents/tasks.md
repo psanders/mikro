@@ -7,32 +7,32 @@
 
 ## 2. Apiserver data functions
 
-- [ ] 2.1 Extend `createGetApplicationByPhone` to return `{ applicationId, sessionId, status, submittedAt }` (keep `partial` for existing callers until the router switches); update its tests
-- [ ] 2.2 Add `createRecordProspectActivity(applicationId)`: cancel PENDING ABANDON for the application and create one at now + `abandonDelayMs`; unit-test "exactly one pending ABANDON"
-- [ ] 2.3 Call `recordProspectActivity` from `createUpsertApplication` on `partial: true` writes; test
-- [ ] 2.4 Stop scheduling ABANDON in `createHandleNudgeJob`; update its tests and the no-phone path
-- [ ] 2.5 Make `createHandleAbandonJob` defer (reschedule to `expiresAt`) while a hand-off is open for the application's phone; test
-- [ ] 2.6 Add `createReopenApplication(applicationId)`: only `ABANDONED` with `submittedAt == null` → `DRAFT`, then record activity; reject other states; test both branches
-- [ ] 2.7 Add hand-off functions: `openHandoff` (open-or-extend, idempotent, appends the business event), `getOpenHandoff(phone)` (respects `expiresAt`), `extendHandoff(phone)`; tests incl. restart persistence via DB
-- [ ] 2.8 Add customer self-service data functions: own loans with the canonical balance snapshot, own payments for a loan (ownership check), and the missing evidence for an application (cédula slots + business photo count vs `applications.minBusinessPhotos`)
+- [x] 2.1 Extend `createGetApplicationByPhone` to return `{ applicationId, sessionId, status, submittedAt }` (keep `partial` for existing callers until the router switches); update its tests
+- [x] 2.2 Add `createRecordProspectActivity(applicationId)`: cancel PENDING ABANDON for the application and create one at now + `abandonDelayMs`; unit-test "exactly one pending ABANDON"
+- [x] 2.3 Call `recordProspectActivity` from `createUpsertApplication` on `partial: true` writes; test
+- [x] 2.4 Stop scheduling ABANDON in `createHandleNudgeJob`; update its tests and the no-phone path
+- [x] 2.5 Make `createHandleAbandonJob` defer (reschedule to `expiresAt`) while a hand-off is open for the application's phone; test
+- [x] 2.6 Add `createReopenApplication(applicationId)`: only `ABANDONED` with `submittedAt == null` → `DRAFT`, then record activity; reject other states; test both branches
+- [x] 2.7 Add hand-off functions: `openHandoff` (open-or-extend, idempotent, appends the business event), `getOpenHandoff(phone)` (respects `expiresAt`), `extendHandoff(phone)`; tests incl. restart persistence via DB
+- [x] 2.8 Add customer self-service data functions: own loans with the canonical balance snapshot, own payments for a loan (ownership check), and the missing evidence for an application (cédula slots + business photo count vs `applications.minBusinessPhotos`)
 
 ## 3. Agent tools (context-bound)
 
-- [ ] 3.1 Add `listMyLoans`, `listMyPayments`, `sendMyReceipt` definitions and executors that read identity only from context; tests proving foreign phone/loan/payment ids return nothing
-- [ ] 3.2 Add `getMyApplicationStatus` returning only `{ stage, missingEvidence }` (plain-language stage map; no score/band/reasons); test the payload shape
-- [ ] 3.3 Add `attachApplicationEvidence(kind: ID_FRONT | ID_BACK | BUSINESS_PHOTO)` using the current turn's image from context; writes the cédula columns or an `ApplicationDocument` with `uploadedById = "whatsapp:<phone>"`; tests incl. "no image in turn" error
-- [ ] 3.4 Add `requestHumanHandoff(reason)` wired to `openHandoff` with profile/application/customer from context; test
-- [ ] 3.5 Wire the new executors' dependencies in `apiserver/src/index.ts`
+- [x] 3.1 Add `listMyLoans`, `listMyPayments`, `sendMyReceipt` definitions and executors that read identity only from context; tests proving foreign phone/loan/payment ids return nothing
+- [x] 3.2 Add `getMyApplicationStatus` returning only `{ stage, missingEvidence }` (plain-language stage map; no score/band/reasons); test the payload shape
+- [x] 3.3 Add `attachApplicationEvidence(kind: ID_FRONT | ID_BACK | BUSINESS_PHOTO)` using the current turn's image from context; writes the cédula columns or an `ApplicationDocument` with `uploadedById = "whatsapp:<phone>"`; tests incl. "no image in turn" error
+- [x] 3.4 Add `requestHumanHandoff(reason)` wired to `openHandoff` with profile/application/customer from context; test
+- [x] 3.5 Wire the new executors' dependencies in `apiserver/src/index.ts`
 
 ## 4. Routing and handler
 
-- [ ] 4.1 Rewrite `createMessageRouter` to the D2 order (user → customer → application status → guest) with ADMIN > REVIEWER > COLLECTOR precedence; new `RouteResult` variants (`customer`, `prospect` with applicationId, `reopen`, `applicant`); table-driven tests covering every spec scenario
-- [ ] 4.2 In `handleWhatsAppMessage`, add the hand-off gate after routing (open → extend, record activity, no reply) and the explicit-request backstop regex (open the hand-off + fixed acknowledgement); tests incl. the regex's negative cases ("mi asesor me dijo…")
-- [ ] 4.3 Record prospect activity for PROSPECT-routed messages, including when `agentRepliesEnabled` is false (move the kill-switch check after the activity bookkeeping, keep "no LLM, no send"); tests
-- [ ] 4.4 Add the reopen path: call `reopenApplication`, then hand the turn to José; skipped when replies are disabled; test
-- [ ] 4.5 Add APPLICANT and CUSTOMER paths using the phone-keyed in-memory conversation store; pass `{ phone, applicationId | customerId, imageUrl }` context; tests
-- [ ] 4.6 Remove the fixed "en revisión" hold message and the ADMIN/COLLECTOR redirect texts; unassigned employee roles = no LLM, no send; update tests
-- [ ] 4.7 Add `requestHumanHandoff` to José's flow: the handoff does not trigger abandon; the decline regex still wins; test
+- [x] 4.1 Rewrite `createMessageRouter` to the D2 order (user → customer → application status → guest) with ADMIN > REVIEWER > COLLECTOR precedence; new `RouteResult` variants (`customer`, `prospect` with applicationId, `reopen`, `applicant`); table-driven tests covering every spec scenario
+- [x] 4.2 In `handleWhatsAppMessage`, add the hand-off gate after routing (open → extend, record activity, no reply) and the explicit-request backstop regex (open the hand-off + fixed acknowledgement); tests incl. the regex's negative cases ("mi asesor me dijo…")
+- [x] 4.3 Record prospect activity for PROSPECT-routed messages, including when `agentRepliesEnabled` is false (move the kill-switch check after the activity bookkeeping, keep "no LLM, no send"); tests
+- [x] 4.4 Add the reopen path: call `reopenApplication`, then hand the turn to José; skipped when replies are disabled; test
+- [x] 4.5 Add APPLICANT and CUSTOMER paths using the phone-keyed in-memory conversation store; pass `{ phone, applicationId | customerId, imageUrl }` context; tests
+- [x] 4.6 Remove the fixed "en revisión" hold message and the ADMIN/COLLECTOR redirect texts; unassigned employee roles = no LLM, no send; update tests
+- [x] 4.7 Add `requestHumanHandoff` to José's flow: the handoff does not trigger abandon; the decline regex still wins; test
 
 ## 5. Agent config
 

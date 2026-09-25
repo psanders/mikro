@@ -534,17 +534,13 @@ describe("handleWhatsAppMessage", () => {
       ]
     });
 
-    it("redirects a COLLECTOR with no agent assigned to the mobile app, without invoking an LLM", async () => {
+    it("does not reply to a COLLECTOR with no agent assigned (Chatwoot has the message)", async () => {
       mockMessageProcessor.routeMessage.withArgs(collectorPhone).resolves(collectorRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
 
       await handleWhatsAppMessage(collectorWebhook("msg-col1"));
 
-      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
-      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].phone).to.equal(
-        collectorPhone
-      );
-      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.contain("app");
+      expect(mockMessageProcessor.sendWhatsAppMessage.called).to.be.false;
       expect(mockMessageProcessor.invokeLLM.called).to.be.false;
     });
 
@@ -564,10 +560,9 @@ describe("handleWhatsAppMessage", () => {
     });
   });
 
-  // mikro/#120: María (the WhatsApp ADMIN agent) was retired in favor of the
-  // founder Copilot on the dashboard. An ADMIN with no agent assigned in
-  // agents.yaml now gets a one-time redirect instead of silence; an ADMIN
-  // profile with a different agent assigned still falls through normally.
+  // mikro/#120 retired María for the founder Copilot. Since
+  // cx-role-based-agents an ADMIN with no agent assigned gets no reply at all
+  // (the redirect text is gone); an assigned ADMIN agent still answers.
   describe("admin routing (mikro/#120)", () => {
     const adminPhone = "+18095550002";
     const adminOnlyRoute = {
@@ -601,17 +596,13 @@ describe("handleWhatsAppMessage", () => {
       ]
     });
 
-    it("redirects an ADMIN with no agent assigned to the dashboard copilot, without invoking an LLM", async () => {
+    it("does not reply to an ADMIN with no agent assigned (Chatwoot has the message)", async () => {
       mockMessageProcessor.routeMessage.withArgs(adminPhone).resolves(adminOnlyRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
 
       await handleWhatsAppMessage(adminWebhook("msg-admin1"));
 
-      expect(mockMessageProcessor.sendWhatsAppMessage.calledOnce).to.be.true;
-      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].phone).to.equal(adminPhone);
-      expect(mockMessageProcessor.sendWhatsAppMessage.firstCall.args[0].message).to.contain(
-        "dashboard"
-      );
+      expect(mockMessageProcessor.sendWhatsAppMessage.called).to.be.false;
       expect(mockMessageProcessor.invokeLLM.called).to.be.false;
     });
 
@@ -734,6 +725,23 @@ describe("handleWhatsAppMessage", () => {
         await handleWhatsAppMessage(textWebhook("msg-off2"));
 
         expect(mockMessageProcessor.routeMessage.called).to.be.false;
+      });
+
+      it("still restarts a prospect's abandon clock, without replying", async () => {
+        const recordProspectActivity = sinon.stub().resolves();
+        setMessageProcessor({ ...mockMessageProcessor, recordProspectActivity });
+        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+          type: "prospect" as const,
+          applicationId: "app-1",
+          sessionId: "s-1",
+          phone: silentPhone
+        });
+
+        await handleWhatsAppMessage(textWebhook("msg-off3"));
+
+        expect(recordProspectActivity.calledOnceWith("app-1")).to.be.true;
+        expect(mockMessageProcessor.sendWhatsAppMessage.called).to.be.false;
+        expect(mockMessageProcessor.invokeLLM.called).to.be.false;
       });
 
       it("still ingests an intake Flow submission, withholding only the confirmation", async () => {

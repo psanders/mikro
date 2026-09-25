@@ -52,6 +52,10 @@ New tools resolve identity from the `context` the handler passes (`phone`, `cust
 - `attachApplicationEvidence(kind)` attaches the image from the current turn. The handler passes it through context, never a model-supplied URL. It writes an `ApplicationDocument` with `uploadedById = "whatsapp:<phone>"` (the field is a plain string). The missing list comes from the empty cédula slots (`idFront*`/`idBack*`) plus `BUSINESS_PHOTO` count < `applications.minBusinessPhotos`.
   _Alternative:_ add a `phone` binding flag to the existing tools. Rejected: those tools serve the founder copilot and collectors, and mixing trust levels in one tool is how a scoping bug ships.
 
+### D4b. Applicants add evidence only before a decision is in progress
+
+Review evidence is otherwise editable only IN_REVIEW, by the assigned reviewer (`assertEvidenceWritable`), and is frozen once the application is sent to decision. The applicant path therefore writes directly (it is not a reviewer), but only while the application is `RECEIVED` or `IN_REVIEW`. In `PENDING_DECISION` or `APPROVED` the tool refuses, `missingEvidence` is empty, and the agent says the team will reach out. Found during implementation.
+
 ### D5. Activity hook reschedules ABANDON (one pending job per application)
 
 A new `recordProspectActivity(applicationId)` in apiserver cancels any PENDING ABANDON for the application and creates one at `now + abandonDelayMs`. It is called:

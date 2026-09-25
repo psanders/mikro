@@ -89,3 +89,37 @@ describe("createUpsertApplication — follow-up scheduling", () => {
     expect(scheduleFollowUpJob.called).to.be.false;
   });
 });
+
+describe("createUpsertApplication — prospect activity", () => {
+  afterEach(() => sinon.restore());
+
+  it("restarts the abandon clock when a write leaves the row a DRAFT", async () => {
+    const client = {
+      loanApplication: {
+        upsert: sinon.stub().resolves({ id: "app-9", status: "DRAFT" }),
+        findFirst: async () => null
+      }
+    } as any;
+    const recordProspectActivity = sinon.stub().resolves();
+    const upsert = createUpsertApplication(client, { recordProspectActivity });
+
+    await upsert(makeNormalized({ partial: true }));
+
+    expect(recordProspectActivity.calledOnceWith("app-9")).to.be.true;
+  });
+
+  it("does not touch the abandon clock when the row becomes RECEIVED", async () => {
+    const client = {
+      loanApplication: {
+        upsert: sinon.stub().resolves({ id: "app-9", status: "RECEIVED" }),
+        findFirst: async () => null
+      }
+    } as any;
+    const recordProspectActivity = sinon.stub().resolves();
+    const upsert = createUpsertApplication(client, { recordProspectActivity });
+
+    await upsert(makeNormalized());
+
+    expect(recordProspectActivity.called).to.be.false;
+  });
+});

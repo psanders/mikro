@@ -15,7 +15,7 @@ The `GUEST` agent SHALL answer general questions about Mikro (what it offers, co
 The `APPLICANT` agent SHALL be able to:
 
 - tell the applicant their application's stage in plain language (received / in review / pending decision / approved);
-- ask for the evidence still missing (cédula front/back images; business photos below the configured minimum) and attach images the applicant sends to the application;
+- while the application is `RECEIVED` or `IN_REVIEW`, ask for the evidence still missing (cédula front/back images; business photos below the configured minimum) and attach images the applicant sends to the application;
 - answer the FAQ.
 
 It SHALL NOT disclose score, risk band, recommendation, rejection or decision reasons, reviewer names, timelines or approval odds. Any other request SHALL lead to a hand-off to a human.
@@ -31,6 +31,12 @@ It SHALL NOT disclose score, risk band, recommendation, rejection or decision re
 - **WHEN** the application has fewer business photos than the configured minimum and the applicant sends a photo
 - **THEN** the image is attached to the application as a `BUSINESS_PHOTO` document
 - **AND** the agent confirms and asks for any evidence still missing
+
+#### Scenario: Evidence closed once with the decider
+
+- **WHEN** the application is `PENDING_DECISION` or `APPROVED` and the applicant sends a photo
+- **THEN** nothing is attached
+- **AND** the agent says the team will contact them if anything else is needed
 
 #### Scenario: Applicant asks why it is taking long
 

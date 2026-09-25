@@ -31,6 +31,11 @@ interface Deps {
   recordReceived?: (application: LoanApplication) => Promise<void>;
   /** Records the system's `application.rejected` for an out-of-area submission. */
   recordOutOfArea?: (application: LoanApplication) => Promise<void>;
+  /**
+   * Restarts a DRAFT's abandon clock. Called after every write that leaves the
+   * row a DRAFT: a form autosave is the prospect still working on it.
+   */
+  recordProspectActivity?: (applicationId: string) => Promise<void>;
 }
 
 /**
@@ -161,6 +166,14 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
     if (becameOutOfArea && deps.recordOutOfArea) {
       deps.recordOutOfArea(application).catch((err: Error) => {
         logger.error("failed to record out-of-area rejection", {
+          applicationId: application.id,
+          error: err.message
+        });
+      });
+    }
+    if (application.status === "DRAFT" && deps.recordProspectActivity) {
+      deps.recordProspectActivity(application.id).catch((err: Error) => {
+        logger.error("failed to record prospect activity", {
           applicationId: application.id,
           error: err.message
         });

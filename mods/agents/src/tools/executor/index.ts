@@ -46,6 +46,11 @@ import { handlePreviewLateFee } from "./previewLateFee.js";
  * const result = await toolExecutor("createCustomer", { name: "John" }, { phone: "+123" });
  * ```
  */
+const CX_NOT_CONFIGURED: ToolResult = {
+  success: false,
+  message: "Herramientas de atención al cliente no configuradas"
+};
+
 export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor {
   const handlers: Record<
     string,
@@ -90,7 +95,18 @@ export function createToolExecutor(deps: ToolExecutorDependencies): ToolExecutor
       if (!d.joseFinalizeApplication)
         return { success: false, message: "finalizeApplication not configured" };
       return d.joseFinalizeApplication(args, ctx);
-    }
+    },
+    listMyLoans: async (d, _args, ctx) => (d.cx ? d.cx.listMyLoans(ctx) : CX_NOT_CONFIGURED),
+    listMyPayments: async (d, args, ctx) =>
+      d.cx ? d.cx.listMyPayments(args, ctx) : CX_NOT_CONFIGURED,
+    sendMyReceipt: async (d, args, ctx) =>
+      d.cx ? d.cx.sendMyReceipt(args, ctx) : CX_NOT_CONFIGURED,
+    getMyApplicationStatus: async (d, _args, ctx) =>
+      d.cx ? d.cx.getMyApplicationStatus(ctx) : CX_NOT_CONFIGURED,
+    attachApplicationEvidence: async (d, args, ctx) =>
+      d.cx ? d.cx.attachApplicationEvidence(args, ctx) : CX_NOT_CONFIGURED,
+    requestHumanHandoff: async (d, args, ctx) =>
+      d.cx ? d.cx.requestHumanHandoff(args, ctx) : CX_NOT_CONFIGURED
   };
 
   return async function executeTool(

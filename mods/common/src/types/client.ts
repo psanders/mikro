@@ -426,7 +426,7 @@ export interface DbClient {
       where: { status: "PENDING"; scheduledFor: { lte: Date } };
     }): Promise<FollowUpJob[]>;
     updateMany(args: {
-      where: { applicationId: string; status: "PENDING" };
+      where: { applicationId: string; status: "PENDING"; type?: "NUDGE" | "ABANDON" };
       data: { status: "CANCELLED" };
     }): Promise<{ count: number }>;
     update(args: {

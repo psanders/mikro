@@ -123,8 +123,21 @@ import {
 import {
   createScheduleFollowUpJob,
   createSendFollowUpNudge,
-  createFollowUpWorker
+  createFollowUpWorker,
+  createRecordProspectActivity,
+  createReopenApplication
 } from "./follow-up/index.js";
+import {
+  createOpenHandoff,
+  createExtendHandoff,
+  createGetOpenHandoffExpiry,
+  createListMyLoans,
+  createListMyPayments,
+  createSendMyReceipt,
+  createGetMyApplicationStatus,
+  createAttachApplicationEvidence,
+  createRequestHumanHandoff
+} from "./api/cx/index.js";
 import {
   createSyncAllPortfolios,
   createQCobroWorker,
@@ -301,6 +314,14 @@ const dbClient = prisma as unknown as DbClient;
 const recordOutboundMessage = createRecordOutboundMessage(prisma);
 const { nudgeDelayMs, abandonDelayMs } = getFollowUpTimerConfig();
 const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
+// WhatsApp CX (openspec cx-role-based-agents): a DRAFT's abandon clock restarts
+// on every bit of prospect activity; an abandoned draft reopens when they come
+// back; a human hand-off silences the agents for that phone.
+const recordProspectActivity = createRecordProspectActivity(dbClient, abandonDelayMs);
+const reopenApplication = createReopenApplication(dbClient, recordProspectActivity);
+const openHandoff = createOpenHandoff(prisma);
+const extendHandoff = createExtendHandoff(prisma);
+const getOpenHandoffExpiry = createGetOpenHandoffExpiry(prisma);
 const recordMetaAd = createRecordMetaAd(dbClient);
 // Every intake path that makes a row RECEIVED puts it in the reviewers' queue
 // via this feed event (openspec add-application-review-flow).
@@ -311,7 +332,8 @@ const recordReceived = async (app: LoanApplication) => {
 const upsertApplication = createUpsertApplication(dbClient, {
   scheduleFollowUpJob,
   recordMetaAd,
-  recordReceived
+  recordReceived,
+  recordProspectActivity
 });
 const findLatestApplicationByPhone = createFindLatestApplicationByPhone(dbClient);
 // Server-side twin of the site's browser pixel. No-ops unless metaConversions is
@@ -340,7 +362,8 @@ const upsertWebApplication = createUpsertApplication(dbClient, {
   recordMetaAd,
   coveredProvinces: cfg.applications.coveredProvinces,
   recordReceived,
-  recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app)
+  recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app),
+  recordProspectActivity
 });
 const handleApplicationIntake = createApplicationIntakeHandler({
   upsertApplication: upsertWebApplication,
@@ -779,7 +802,16 @@ async function initializeMessageProcessor() {
       joseFinalizeApplication: createFinalizeApplication(
         prisma as unknown as DbClient,
         upsertApplication
-      )
+      ),
+      // WhatsApp CX self-service: identity comes from the message context.
+      cx: {
+        listMyLoans: createListMyLoans(prisma, dbClient),
+        listMyPayments: createListMyPayments(prisma),
+        sendMyReceipt: createSendMyReceipt(prisma, sendReceiptViaWhatsAppFn),
+        getMyApplicationStatus: createGetMyApplicationStatus(dbClient),
+        attachApplicationEvidence: createAttachApplicationEvidence(dbClient),
+        requestHumanHandoff: createRequestHumanHandoff(openHandoff)
+      }
     });
 
     // Wire the founder copilot: it reuses the same tool executor as the WhatsApp
@@ -951,6 +983,11 @@ async function initializeMessageProcessor() {
       // Apply async delivery receipts (sent/delivered/read/failed) to the tracked
       // outbound message so the founder feed card reflects real delivery state.
       updateOutboundStatus: createUpdateOutboundStatus(prisma),
+      // WhatsApp CX (openspec cx-role-based-agents)
+      recordProspectActivity,
+      reopenApplication,
+      extendHandoff,
+      openHandoff,
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 
@@ -1050,7 +1087,7 @@ initializeMessageProcessor()
       stopFollowUpWorker = createFollowUpWorker({
         client: dbClient,
         sendFollowUpNudge,
-        abandonDelayMs
+        getOpenHandoffExpiry
       });
 
       // Start QCobro cron worker (recompute + sync deterioration on qcobro.schedule)
