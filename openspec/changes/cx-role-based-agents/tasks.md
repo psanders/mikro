@@ -52,4 +52,4 @@
 
 - [x] 7.1 Router flags a guest whose latest application is REJECTED; the handler opens a hand-off with a fixed acknowledgement, no LLM (D9); tests
 - [x] 7.2 Router attaches a returning customer's in-pipeline application; Carmen gets the status/evidence tools with the APPLICANT limits (D10); tests + eval scenario
-- [x] 7.3 Specs, design and explainer updated for both decisions
+- [x] 7.3 Specs, design and explainer (now `CX_EXPLAINER.md` at the repo root) updated for both decisions
