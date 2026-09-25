@@ -3,12 +3,16 @@
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AppState } from "react-native";
+import { IS_E2E } from "../e2e";
 
 const HEALTH_URL = `${process.env.EXPO_PUBLIC_API_URL}/health`;
 const POLL_INTERVAL = 10_000;
 const PING_TIMEOUT = 5_000;
 
 async function ping(): Promise<boolean> {
+  // E2E builds have no backend (tRPC is served by e2eMockLink), so there is
+  // nothing to ping; they count as online so online-only screens render.
+  if (IS_E2E) return true;
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), PING_TIMEOUT);

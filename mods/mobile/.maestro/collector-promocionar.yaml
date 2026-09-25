@@ -12,6 +12,10 @@
 appId: do.mikro.app
 ---
 - launchApp
+# Opening the dev-server link while the dev client is still starting its first
+# runtime can crash it (native, dev-client only), so let the launch settle.
+- waitForAnimationToEnd:
+    timeout: 8000
 - openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
 - tapOn:
     text: "Continue"

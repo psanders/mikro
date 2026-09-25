@@ -39,7 +39,7 @@ import {
   SignalLow,
   Trash2
 } from "lucide-react-native";
-import { buildMapUrl } from "@mikro/common/schemas";
+import { PROVINCES, buildMapUrl } from "@mikro/common/schemas";
 import { colors } from "../../lib/theme";
 import { Header } from "../../components/ui/Header";
 import { ProgressBar } from "../../components/ui/ProgressBar";
@@ -182,7 +182,8 @@ export default function EvidenciaDetalleScreen() {
     Math.max(0, t.status.businessPhotos.need - photos.length)
   );
   const digits = (t.phone ?? "").replace(/\D/g, "");
-  const address = [t.homeAddress, t.province?.replace(/_/g, " ")].filter(Boolean).join(", ");
+  const province = PROVINCES.find((p) => p.value === t.province)?.label ?? t.province;
+  const address = [t.homeAddress, province].filter(Boolean).join(", ");
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -213,7 +214,7 @@ export default function EvidenciaDetalleScreen() {
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.street}>{t.homeAddress ?? "Sin dirección"}</Text>
               <Text style={styles.muted}>
-                {[t.province?.replace(/_/g, " "), t.addressReference].filter(Boolean).join(" · ")}
+                {[province, t.addressReference].filter(Boolean).join(" · ")}
               </Text>
             </View>
           </View>

@@ -48,17 +48,26 @@ export function e2eEvidenceQueue() {
   ];
 }
 
+/** The map link saved in this e2e session (setApplicationMapUrl stub). */
+let e2eMapUrl: string | null = null;
+
+export function e2eSetMapUrl(input: unknown): null {
+  const mapUrl = (input as { mapUrl?: string | null } | undefined)?.mapUrl;
+  e2eMapUrl = mapUrl ?? null;
+  return null;
+}
+
 /** Evidence detail stub for the incomplete application. */
 export function e2eEvidenceTask() {
   const item = e2eEvidenceQueue()[0]!;
   return {
     ...item,
-    mapUrl: null,
+    mapUrl: e2eMapUrl,
     idFront: true,
     idBack: false,
     documents: [],
     status: {
-      location: false,
+      location: Boolean(e2eMapUrl),
       idFront: true,
       idBack: false,
       businessPhotos: { have: 0, need: 3 },
