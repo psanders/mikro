@@ -36,10 +36,10 @@
 
 ## 5. Agent config
 
-- [ ] 5.1 Add GUEST, APPLICANT and CUSTOMER entries to `agents.yaml` with `enabled: false`, Spanish prompts per the spec limits, and explicit `allowedTools`; add `requestHumanHandoff` to José
-- [ ] 5.2 Add evaluation cases per agent: applicant never states a score/date/odds; customer refuses another person's loan; guest always invites to the solicitud; explicit "quiero hablar con una persona" triggers a hand-off
-- [ ] 5.3 Confirm config validation accepts the new profiles and still rejects duplicate profiles (test)
-- [ ] 5.4 Get founder FAQ copy (coverage, requirements, hours) into the GUEST/CUSTOMER prompts
+- [x] 5.1 Add GUEST, APPLICANT and CUSTOMER entries to `agents.yaml` with `enabled: false`, Spanish prompts per the spec limits, and explicit `allowedTools`; add `requestHumanHandoff` to José
+- [x] 5.2 Add evaluation cases per agent: applicant never states a score/date/odds; customer refuses another person's loan; guest always invites to the solicitud; explicit "quiero hablar con una persona" triggers a hand-off
+- [x] 5.3 Confirm config validation accepts the new profiles and still rejects duplicate profiles (test)
+- [x] 5.4 FAQ copy for the GUEST/APPLICANT prompts taken from the website FAQ (site/src/pages/FAQPage.tsx) + coverage (Puerto Plata); founder to review before enabling
 
 ## 6. Verification and docs
 
