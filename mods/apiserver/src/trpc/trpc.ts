@@ -124,6 +124,23 @@ export const reviewerProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 /**
+ * Evidence procedure - ADMIN, REVIEWER or COLLECTOR. Evidence for an
+ * application in review is gathered by its reviewer or by any collector in the
+ * field; `assertEvidenceWritable` does the per-application check (IN_REVIEW,
+ * assignee or collector). Reads through it are limited the same way.
+ */
+export const evidenceProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const { roles } = ctx;
+  if (!roles.includes("ADMIN") && !roles.includes("REVIEWER") && !roles.includes("COLLECTOR")) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Reviewer, collector or admin role required"
+    });
+  }
+  return next();
+});
+
+/**
  * Collector procedure - requires a valid JWT whose user has the ADMIN or
  * COLLECTOR role. Use this for payment-collection actions and reads (payment
  * amounts, balances, receipts): the REVIEWER role must not see or trigger

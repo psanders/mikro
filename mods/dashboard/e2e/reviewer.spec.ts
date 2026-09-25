@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Reviewer journey (Ana): the shared queue → take → evidence (fixed cédula
- * slots + 3 business photos) → recommendation → send to decision. Plus role
+ * Reviewer journey (Ana): the shared queue → take → evidence (map link, fixed
+ * cédula slots + 3 business photos) → recommendation → send to decision. Plus role
  * scoping: another reviewer's application is not in Ana's feed, and the admin
  * tools are not in her rail.
  */
@@ -39,7 +39,17 @@ test("a reviewer takes a queued application, gathers the evidence and sends it t
   await mine.getByTestId("action-evidence").click();
   const panel = page.getByTestId("application-panel");
   await expect(panel.getByTestId("evidence-view")).toBeVisible();
-  await expect(panel.getByTestId("evidence-pending")).toContainText("Falta");
+  await expect(panel.getByTestId("evidence-pending")).toContainText("ubicación");
+  // The location: only Google Maps links are accepted.
+  const location = panel.getByTestId("evidence-location");
+  await location.getByTestId("evidence-location-input").fill("https://example.com/colmado");
+  await expect(location.getByTestId("evidence-location-save")).toBeDisabled();
+  await expect(location).toContainText("Solo se aceptan enlaces de Google Maps");
+  await location.getByTestId("evidence-location-input").fill("https://maps.app.goo.gl/AbC123");
+  await location.getByTestId("evidence-location-save").click();
+  await expect(location.getByTestId("evidence-location-url")).toHaveText(
+    "https://maps.app.goo.gl/AbC123"
+  );
   const png = (name: string) => ({ name, mimeType: "image/png", buffer: PNG });
   await panel.getByTestId("evidence-slot-front-input").setInputFiles(png("frente.png"));
   await panel.getByTestId("evidence-slot-back-input").setInputFiles(png("reverso.png"));

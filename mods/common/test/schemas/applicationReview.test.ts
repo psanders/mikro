@@ -7,6 +7,7 @@ import {
   REVIEW_ACTIONS,
   evaluateTransition,
   evidenceStatus,
+  evidenceProgress,
   transitionBlockCode,
   type ApplicationForTransition,
   type EvidenceStatus,
@@ -24,7 +25,11 @@ const FOUNDER: TransitionActor = { id: "founder", roles: ["ADMIN", "REVIEWER", "
 const COLLECTOR: TransitionActor = { id: "col-1", roles: ["COLLECTOR"] };
 
 const COMPLETE: EvidenceStatus = evidenceStatus(
-  { idFrontFilename: "a.jpg", idBackFilename: "b.jpg" },
+  {
+    mapUrl: "https://maps.google.com/?q=19.79,-70.69",
+    idFrontFilename: "a.jpg",
+    idBackFilename: "b.jpg"
+  },
   3,
   3
 );
@@ -190,7 +195,15 @@ describe("evaluateTransition — roles", () => {
 describe("evaluateTransition — requirements", () => {
   it("sendToDecision needs complete evidence, then a recommendation", () => {
     const a = app("IN_REVIEW");
-    const partial = evidenceStatus({ idFrontFilename: "a.jpg", idBackFilename: null }, 3, 3);
+    const partial = evidenceStatus(
+      {
+        mapUrl: "https://maps.google.com/?q=19.79,-70.69",
+        idFrontFilename: "a.jpg",
+        idBackFilename: null
+      },
+      3,
+      3
+    );
     expect(
       evaluateTransition(a, "sendToDecision", FOUNDER, {}, { evidence: partial })
     ).to.deep.equal({ ok: false, reason: "EVIDENCE_INCOMPLETE" });
@@ -297,25 +310,52 @@ describe("evaluateTransition — requirements", () => {
 });
 
 describe("evidenceStatus", () => {
-  it("needs both cédula sides and the minimum photos", () => {
-    expect(evidenceStatus({ idFrontFilename: "a", idBackFilename: "b" }, 2, 3)).to.deep.equal({
+  const LINK = "https://maps.google.com/?q=19.79,-70.69";
+  const ev = (
+    mapUrl: string | null,
+    front: string | null,
+    back: string | null,
+    photos: number,
+    min = 3
+  ) => evidenceStatus({ mapUrl, idFrontFilename: front, idBackFilename: back }, photos, min);
+
+  it("needs the location, both cédula sides and the minimum photos", () => {
+    expect(ev(LINK, "a", "b", 2)).to.deep.equal({
+      location: true,
       idFront: true,
       idBack: true,
       businessPhotos: { have: 2, need: 3 },
       complete: false
     });
-    expect(evidenceStatus({ idFrontFilename: "a", idBackFilename: "b" }, 3, 3).complete).to.equal(
-      true
-    );
-    expect(evidenceStatus({ idFrontFilename: null, idBackFilename: "b" }, 9, 3).complete).to.equal(
-      false
-    );
+    expect(ev(LINK, "a", "b", 3).complete).to.equal(true);
+    expect(ev(LINK, null, "b", 9).complete).to.equal(false);
   });
 
-  it("a zero minimum only needs the cédula", () => {
-    expect(evidenceStatus({ idFrontFilename: "a", idBackFilename: "b" }, 0, 0).complete).to.equal(
-      true
-    );
+  it("is incomplete without the map link", () => {
+    const e = ev(null, "a", "b", 3);
+    expect(e.location).to.equal(false);
+    expect(e.complete).to.equal(false);
+  });
+
+  it("a zero minimum only needs the location and the cédula", () => {
+    expect(ev(LINK, "a", "b", 0, 0).complete).to.equal(true);
+  });
+});
+
+describe("evidenceProgress", () => {
+  const ev = (mapUrl: string | null, photos: number) =>
+    evidenceStatus({ mapUrl, idFrontFilename: "a", idBackFilename: null }, photos, 3);
+
+  it("counts location, each cédula side and each required photo", () => {
+    expect(evidenceProgress(ev(null, 0))).to.deep.equal({ have: 1, need: 6 });
+    expect(evidenceProgress(ev("https://maps.app.goo.gl/x", 2))).to.deep.equal({
+      have: 4,
+      need: 6
+    });
+  });
+
+  it("extra photos don't count past the minimum", () => {
+    expect(evidenceProgress(ev(null, 9)).have).to.equal(4);
   });
 });
 

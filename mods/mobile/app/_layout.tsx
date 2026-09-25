@@ -109,6 +109,8 @@ export default function RootLayout() {
               <Stack.Screen name="sincronizar" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="historico/[loanId]" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="perfil" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="evidencias/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="evidencias/[id]" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="usa-ops" />
             </Stack>
           </FeedbackProvider>

@@ -110,6 +110,10 @@ async function received(firstName, lastName, businessName) {
 }
 
 async function withEvidence(caller, id) {
+  await caller.setApplicationMapUrl({
+    id,
+    mapUrl: "https://maps.google.com/?q=19.793412,-70.688401"
+  });
   await caller.uploadIdImage({
     id,
     side: "FRONT",

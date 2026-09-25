@@ -77,6 +77,7 @@ export function DecisionBlock({
           </p>
           <div className="flex flex-wrap items-center gap-[14px] text-[12px] font-medium text-[#697A93]">
             {[
+              ["Ubicación", Boolean(evidence?.location)],
               ["Cédula", Boolean(evidence?.idFront && evidence?.idBack)],
               [
                 `Fotos · ${evidence?.businessPhotos.have ?? 0}`,

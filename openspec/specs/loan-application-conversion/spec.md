@@ -8,26 +8,46 @@ TBD - created by archiving change add-application-conversion. Update Purpose aft
 
 ### Requirement: Convert a signed application into a Customer and Loan
 
-A reviewer (ADMIN or REVIEWER) SHALL be able to convert a `SIGNED` application into a `Customer` + `Loan` using operator-supplied loan terms, atomically, setting the application to `CONVERTED` and linking the created records. As part of the same atomic operation, any documents already stored on the application (signed contract, ID front/back images) SHALL be copied — by reference to their existing sha256-keyed files, without moving or duplicating bytes and without modifying the application's own document columns — into `CustomerDocument` records (`source: MIGRATED_FROM_APPLICATION`) owned by the resulting customer.
+The assigned reviewer or an admin SHALL be able to convert an `APPROVED` application **that has a stored signed contract** into a `Customer` + `Loan`, atomically, setting the application to `CONVERTED` and linking the created records. The loan principal SHALL equal the application's `approvedAmount`. The disbursement SHALL be posted to the caller-chosen `accountId`, defaulting to `accounting.disbursementAccountId`. When `accounting.disbursementAccounts` (a list of `{ id, name }` in `mikro.json`) is configured, only those accounts SHALL be offered and accepted, and the default MUST be one of them; without it only the default is allowed. In the same atomic operation, every document stored on the application SHALL be copied into `CustomerDocument` records (`source: MIGRATED_FROM_APPLICATION`) owned by the resulting customer, by reference to the existing sha256-keyed files: signed contract, ID front/back, business photos, and other documents.
 
-#### Scenario: Conversion creates customer and loan
+#### Scenario: Conversion creates customer, loan and disbursement
 
-- **WHEN** a reviewer converts a `SIGNED` application with loan terms (principal, term, payment amount, frequency)
-- **THEN** a `Loan` is created with those terms, a `Customer` exists for the applicant, and the application's `customerId`/`loanId` are set and status becomes `CONVERTED`
+- **WHEN** the assignee converts an `APPROVED` application with a stored contract, principal equal to `approvedAmount`, and account X
+- **THEN** a `Loan` is created with those terms, a `Customer` exists for the applicant, a WITHDRAWAL of the principal is posted on account X, the application's `customerId`/`loanId` are set, and its status becomes `CONVERTED`
+
+#### Scenario: Only configured accounts are accepted
+
+- **WHEN** conversion is requested with an account not listed in `accounting.disbursementAccounts`
+- **THEN** the request fails with BAD_REQUEST and nothing is created
+
+#### Scenario: Default disbursement account
+
+- **WHEN** conversion is requested without `accountId`
+- **THEN** the disbursement posts to `accounting.disbursementAccountId`
+
+#### Scenario: Principal must match the approved amount
+
+- **WHEN** conversion is requested with a principal different from `approvedAmount`
+- **THEN** the request fails with CONFLICT and nothing is created
+
+#### Scenario: Missing contract blocks conversion
+
+- **WHEN** an `APPROVED` application without a stored contract is converted
+- **THEN** the request fails with reason `CONTRACT_REQUIRED`
 
 #### Scenario: Conversion is atomic
 
 - **WHEN** loan creation fails during conversion (e.g. invalid terms)
-- **THEN** no `Customer` or `Loan` is left created and the application stays `SIGNED`, and no `CustomerDocument` rows are created
+- **THEN** no `Customer`, `Loan`, ledger transaction or `CustomerDocument` is left created and the application stays `APPROVED`
 
-#### Scenario: Converting an unsigned application is rejected
+#### Scenario: Converting a non-approved application is rejected
 
-- **WHEN** a reviewer converts an application that is not `SIGNED`
-- **THEN** the request fails with an error naming the current and attempted status
+- **WHEN** an application that is not `APPROVED` is converted
+- **THEN** the request fails with an error naming the current status
 
 #### Scenario: Double conversion is blocked
 
-- **WHEN** a reviewer converts an application that already has `customerId`/`loanId` set
+- **WHEN** an application that already has `customerId`/`loanId` set is converted
 - **THEN** the request fails (already converted)
 
 #### Scenario: Invalid applicant data blocks conversion
@@ -35,20 +55,10 @@ A reviewer (ADMIN or REVIEWER) SHALL be able to convert a `SIGNED` application i
 - **WHEN** the application's `idNumber` is not in cédula format `000-0000000-0`
 - **THEN** the request fails with an error identifying the field to fix
 
-#### Scenario: Application's stored documents are migrated to the customer
+#### Scenario: All stored documents are migrated to the customer
 
-- **WHEN** a reviewer converts a `SIGNED` application that has a stored signed contract and ID front/back images
-- **THEN** the resulting customer has 3 `CustomerDocument` rows (`CONTRACT`, `ID_FRONT`, `ID_BACK`, each `source: MIGRATED_FROM_APPLICATION`) referencing the same files already on disk, and the application's own `contract*`/`idFront*`/`idBack*` columns and files are unchanged
-
-#### Scenario: Conversion with no stored documents migrates nothing
-
-- **WHEN** a reviewer converts a `SIGNED` application that has no signed contract or ID images stored
-- **THEN** conversion succeeds as before and no `CustomerDocument` rows are created
-
-#### Scenario: Reviewer application view is unaffected
-
-- **WHEN** an application is converted and its documents are migrated to the customer
-- **THEN** the reviewer mobile app's application detail screen continues to show the application's own contract/ID documents exactly as before conversion
+- **WHEN** an application with a contract, ID front/back and three business photos is converted
+- **THEN** the resulting customer has 6 `CustomerDocument` rows (`CONTRACT`, `ID_FRONT`, `ID_BACK`, 3× `BUSINESS_PHOTO`) referencing the same files, and the application's own documents are unchanged
 
 ### Requirement: Returning borrowers reuse the existing customer
 
@@ -66,9 +76,14 @@ Conversion SHALL match an existing `Customer` by `idNumber` (cédula), falling b
 
 ### Requirement: Conversion is restricted to reviewers
 
-Conversion SHALL be restricted to callers whose roles include `ADMIN` or `REVIEWER`.
+Conversion SHALL be restricted by the transition table to the assigned reviewer or an ADMIN.
+
+#### Scenario: Unassigned reviewer is forbidden
+
+- **WHEN** a REVIEWER who is not the assignee converts an application
+- **THEN** the request is rejected as forbidden
 
 #### Scenario: Non-reviewer is forbidden
 
-- **WHEN** an authenticated user without `ADMIN` or `REVIEWER` invokes conversion
+- **WHEN** a user with only `COLLECTOR` converts an application
 - **THEN** the request is rejected as forbidden

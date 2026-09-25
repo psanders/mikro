@@ -1,0 +1,67 @@
+# Collector — Evidencias por recoger (openspec add-collector-evidence)
+#
+# Covers: the Hoy entry card, the list (oldest first, the complete one marked),
+# the detail checklist, and the GPS step: with a simulated location, "Estoy en
+# el negocio" asks for location permission and saves the reading as a Google
+# Maps link. Camera and gallery need a real device; the uploads are covered by
+# the apiserver integration tests.
+#
+# REQUIRES an e2e build (it fakes login and serves tRPC from e2eMockLink):
+#   EXPO_PUBLIC_E2E=1 npx expo run:ios --port 8082
+#   maestro test .maestro/collector-evidencias.yaml
+appId: ${APP_ID || "do.mikro.app"}
+---
+- launchApp
+# Opening the dev-server link while the dev client is still starting its first
+# runtime can crash it (native, dev-client only), so let the launch settle.
+- waitForAnimationToEnd:
+    timeout: 8000
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+- tapOn:
+    text: "Continue"
+    optional: true
+# The dev client may leave its tools sheet open after the onboarding.
+- runFlow:
+    when:
+      visible: "Go home"
+    commands:
+      - swipe:
+          direction: DOWN
+          duration: 400
+
+# On iOS a tappable card/row is one accessibility element whose label joins all
+# its texts, so these match by testID or by a regex on part of the label.
+- extendedWaitUntil:
+    visible:
+      id: "evidence-entry"
+    timeout: 30000
+
+- tapOn:
+    id: "evidence-entry"
+- extendedWaitUntil:
+    visible:
+      id: "evidence-row-e2e-app-1"
+    timeout: 15000
+- assertVisible: ".*Baberos.*1 de 6.*"
+- assertVisible: ".*Padilla Rentals.*Completa.*"
+
+- tapOn:
+    id: "evidence-row-e2e-app-1"
+- extendedWaitUntil:
+    visible: "UBICACIÓN DEL NEGOCIO"
+    timeout: 15000
+- assertVisible: ".*Puerto Plata.*"
+- assertVisible: ".*Cámara o galería.*"
+
+# GPS: a good reading at the business saves its map link.
+- setLocation:
+    latitude: 19.793412
+    longitude: -70.688401
+- tapOn: "Estoy en el negocio"
+- tapOn:
+    text: "Allow While Using App"
+    optional: true
+- extendedWaitUntil:
+    visible: "Ubicación guardada"
+    timeout: 20000
+- assertVisible: ".*maps.google.com/\\?q=19.793412,-70.688401.*"

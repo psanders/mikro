@@ -135,6 +135,7 @@ function buildSyncPayload(opts: { anchored: boolean }): CollectorSyncResult {
         phone: "8095550000",
         idNumber: "001-0000000-0",
         collectionPoint: null,
+        mapUrl: null,
         homeAddress: "Calle Falsa 123",
         preferredPaymentDay: null,
         assignedCollectorId: "collector-1",

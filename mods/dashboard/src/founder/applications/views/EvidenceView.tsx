@@ -1,13 +1,24 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Evidence (Pencil i7Umh): the cédula's two fixed slots, business photos (as
- * many as needed; the minimum comes from the server), and optional other
- * documents. Each file is saved as it is picked; everything is locked once the
+ * Evidence (Pencil i7Umh; location field b4u6j6): the business location as a
+ * pasted Google Maps link (required), the cédula's two fixed slots, business
+ * photos (as many as needed; the minimum comes from the server), and optional
+ * other documents. Collectors can also fill these from the field app. Each file is saved as it is picked; everything is locked once the
  * application goes to decision (the server refuses writes outside IN_REVIEW).
  */
 import { useRef, useState } from "react";
-import { CircleDashed, ImageUp, Info, Paperclip, Plus, Trash2 } from "lucide-react";
+import {
+  CircleDashed,
+  ExternalLink,
+  ImageUp,
+  Info,
+  MapPin,
+  Paperclip,
+  Plus,
+  Trash2
+} from "lucide-react";
+import { isMapUrl } from "@mikro/common/schemas";
 import { trpc } from "../../../lib/trpc";
 import { useToast } from "../../../components/ui/ToastProvider";
 import { friendlyError } from "../../../lib/applications";
@@ -34,14 +45,18 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
   const uploadId = trpc.uploadIdImage.useMutation();
   const uploadDoc = trpc.uploadApplicationDocument.useMutation();
   const deleteDoc = trpc.deleteApplicationDocument.useMutation();
+  const setMapUrl = trpc.setApplicationMapUrl.useMutation();
 
-  async function run(task: () => Promise<unknown>, ok: string) {
+  /** Run a write; resolves true when it succeeded (errors are shown as a toast). */
+  async function run(task: () => Promise<unknown>, ok: string): Promise<boolean> {
     setBusy(true);
     try {
       await task();
       toast.success(ok);
+      return true;
     } catch (e) {
       toast.error(friendlyError(e, "No se pudo guardar el archivo."));
+      return false;
     } finally {
       setBusy(false);
       await invalidate(app.id);
@@ -91,6 +106,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
   const photos = evidence.documents.filter((d) => d.kind === "BUSINESS_PHOTO");
   const others = evidence.documents.filter((d) => d.kind === "OTHER");
   const missing: string[] = [];
+  if (!status.location) missing.push("ubicación");
   if (!status.idFront) missing.push("cédula (frente)");
   if (!status.idBack) missing.push("cédula (reverso)");
   const needPhotos = status.businessPhotos.need - status.businessPhotos.have;
@@ -150,6 +166,18 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
             evaluación.
           </p>
         )}
+
+        <LocationSection
+          mapUrl={app.mapUrl ?? null}
+          writable={writable}
+          busy={busy}
+          onSave={(mapUrl) =>
+            run(
+              () => setMapUrl.mutateAsync({ id: app.id, mapUrl }),
+              mapUrl ? "Ubicación guardada." : "Ubicación quitada."
+            )
+          }
+        />
 
         <section className="flex flex-col gap-3">
           <SectionLabel
@@ -302,6 +330,140 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
         </div>
       </div>
     </SidePanel>
+  );
+}
+
+/**
+ * The business location: a pasted Google Maps link (collectors save it from GPS
+ * in the field app). Only map links are accepted, so it always opens a map.
+ */
+function LocationSection({
+  mapUrl,
+  writable,
+  busy,
+  onSave
+}: {
+  mapUrl: string | null;
+  writable: boolean;
+  busy: boolean;
+  /** Resolves true when saved; on failure the pasted link is kept for a retry. */
+  onSave: (mapUrl: string | null) => Promise<boolean>;
+}) {
+  const [draft, setDraft] = useState("");
+  const [editing, setEditing] = useState(false);
+  const value = draft.trim();
+  const invalid = value !== "" && !isMapUrl(value);
+  const showInput = writable && (!mapUrl || editing);
+
+  async function save() {
+    if (!value || invalid) return;
+    if (!(await onSave(value))) return;
+    setDraft("");
+    setEditing(false);
+  }
+
+  return (
+    <section className="flex flex-col gap-3" data-testid="evidence-location">
+      <SectionLabel
+        extra={<Counter ok={Boolean(mapUrl)}>{mapUrl ? "guardada" : "obligatoria"}</Counter>}
+      >
+        Ubicación del negocio
+      </SectionLabel>
+      {mapUrl && !editing && (
+        <div className="flex items-center gap-2 rounded-[10px] border border-[#E5EAF1] px-3 py-[10px]">
+          <MapPin size={15} className="shrink-0 text-[#16A34A]" />
+          <span
+            className="flex-1 truncate text-[12.5px] font-medium text-[#14254A]"
+            data-testid="evidence-location-url"
+          >
+            {mapUrl}
+          </span>
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-[12px] font-semibold text-[#1F4AA8]"
+          >
+            <ExternalLink size={13} />
+            Abrir en Maps
+          </a>
+          {writable && (
+            <>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="text-[12px] font-semibold text-[#1F4AA8]"
+              >
+                Reemplazar
+              </button>
+              <button
+                type="button"
+                aria-label="Quitar ubicación"
+                disabled={busy}
+                onClick={() => void onSave(null)}
+                className="text-[#697A93] hover:text-[#DC2626]"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+      {showInput && (
+        <>
+          <div
+            className={cn(
+              "flex items-center gap-[10px] rounded-[10px] border px-[14px] py-[8px]",
+              invalid ? "border-[#DC2626]" : "border-[#F5C98F]"
+            )}
+          >
+            <MapPin size={15} className="shrink-0 text-[#697A93]" />
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void save()}
+              placeholder="Pega el enlace de Google Maps del negocio"
+              className="flex-1 bg-transparent text-[12.5px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93]"
+              data-testid="evidence-location-input"
+            />
+            <Btn
+              tone="primary"
+              className="px-3 py-[6px]"
+              disabled={busy || !value || invalid}
+              onClick={() => void save()}
+              data-testid="evidence-location-save"
+            >
+              Guardar
+            </Btn>
+            {editing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft("");
+                  setEditing(false);
+                }}
+                className="text-[12px] font-semibold text-[#697A93]"
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+          <p
+            className={cn(
+              "text-[12px] font-medium leading-[1.4]",
+              invalid ? "text-[#DC2626]" : "text-[#697A93]"
+            )}
+          >
+            {invalid
+              ? "Solo se aceptan enlaces de Google Maps (maps.google.com, maps.app.goo.gl)."
+              : "O la recoge un cobrador en el negocio con el GPS del teléfono."}
+          </p>
+        </>
+      )}
+      {!mapUrl && !writable && (
+        <p className="text-[12px] font-medium text-[#D97706]">Sin ubicación todavía.</p>
+      )}
+    </section>
   );
 }
 

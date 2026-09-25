@@ -90,7 +90,13 @@ const MIGRATION_V3 = `
 ALTER TABLE payments ADD COLUMN mora_accrual_from TEXT;
 `;
 
-const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2, MIGRATION_V3];
+// Business location (Google Maps link) copied from the application on
+// conversion; the customer screen's "Mapa" opens it (add-collector-evidence).
+const MIGRATION_V4 = `
+ALTER TABLE customers ADD COLUMN map_url TEXT;
+`;
+
+const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2, MIGRATION_V3, MIGRATION_V4];
 
 export function runMigrations(db: SQLiteDatabase): void {
   const result = db.getFirstSync<{ user_version: number }>("PRAGMA user_version");
