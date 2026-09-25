@@ -7,6 +7,7 @@ import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
 import { PROVINCES } from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
+import { isMapUrl } from "./mapUrl.js";
 
 /**
  * Public loan-application (solicitud) intake.
@@ -641,7 +642,27 @@ export const getApplicationDocumentSchema = z.object({ documentId: z.string().mi
 /** Evidence overview: completeness plus the document list. */
 export const getApplicationEvidenceSchema = z.object(applicationRef).refine(requireRef, refMessage);
 
+/** Set (or clear, with null) the business location map link. */
+export const setApplicationMapUrlSchema = z
+  .object({
+    ...applicationRef,
+    mapUrl: z
+      .string()
+      .trim()
+      .refine(isMapUrl, { message: "Must be a Google Maps link (https)" })
+      .nullable()
+  })
+  .refine(requireRef, refMessage);
+
+/** The collector's evidence list takes no input. */
+export const listEvidenceQueueSchema = z.object({}).optional();
+
+/** One application's evidence task, as a collector sees it. */
+export const getEvidenceTaskSchema = z.object(applicationRef).refine(requireRef, refMessage);
+
 export type ApplicationDocumentKind = z.infer<typeof applicationDocumentKindEnum>;
+export type SetApplicationMapUrlInput = z.infer<typeof setApplicationMapUrlSchema>;
+export type GetEvidenceTaskInput = z.infer<typeof getEvidenceTaskSchema>;
 export type UploadApplicationDocumentInput = z.infer<typeof uploadApplicationDocumentSchema>;
 export type DeleteApplicationDocumentInput = z.infer<typeof deleteApplicationDocumentSchema>;
 export type GetApplicationDocumentInput = z.infer<typeof getApplicationDocumentSchema>;

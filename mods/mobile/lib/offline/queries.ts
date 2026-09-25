@@ -399,6 +399,7 @@ export interface CustomerRow {
   phone: string;
   idNumber: string;
   collectionPoint: string | null;
+  mapUrl: string | null;
   homeAddress: string;
   preferredPaymentDay: string | null;
   isActive: boolean;
@@ -414,6 +415,7 @@ export function getCustomer(id: string): CustomerRow | null {
     phone: string;
     id_number: string;
     collection_point: string | null;
+    map_url: string | null;
     home_address: string;
     preferred_payment_day: string | null;
     is_active: number;
@@ -428,6 +430,7 @@ export function getCustomer(id: string): CustomerRow | null {
     phone: row.phone,
     idNumber: row.id_number,
     collectionPoint: row.collection_point,
+    mapUrl: row.map_url,
     homeAddress: row.home_address,
     preferredPaymentDay: row.preferred_payment_day,
     isActive: row.is_active === 1,
@@ -445,6 +448,7 @@ export function searchCustomers(query: string, limit = 20): CustomerRow[] {
     phone: string;
     id_number: string;
     collection_point: string | null;
+    map_url: string | null;
     home_address: string;
     preferred_payment_day: string | null;
     is_active: number;
@@ -463,6 +467,7 @@ export function searchCustomers(query: string, limit = 20): CustomerRow[] {
     phone: row.phone,
     idNumber: row.id_number,
     collectionPoint: row.collection_point,
+    mapUrl: row.map_url,
     homeAddress: row.home_address,
     preferredPaymentDay: row.preferred_payment_day,
     isActive: row.is_active === 1,

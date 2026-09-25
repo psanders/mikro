@@ -48,7 +48,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
       NSBluetoothPeripheralUsageDescription:
         "Mikro necesita Bluetooth para conectarse a la impresora térmica.",
-      NSCameraUsageDescription: "Mikro necesita la cámara para fotografiar el contrato firmado.",
+      NSCameraUsageDescription:
+        "Mikro necesita la cámara para fotografiar documentos y la evidencia del negocio.",
       NSMicrophoneUsageDescription:
         "Mikro necesita el micrófono para grabar feedback dentro de la app."
     }
@@ -80,7 +81,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-image-picker",
       {
-        cameraPermission: "Mikro necesita la cámara para fotografiar el contrato firmado."
+        cameraPermission:
+          "Mikro necesita la cámara para fotografiar documentos y la evidencia del negocio.",
+        photosPermission:
+          "Mikro necesita tus fotos para adjuntar documentos y la evidencia del negocio."
+      }
+    ],
+    // Collector evidence: "Estoy en el negocio" saves the business location as
+    // a map link (openspec add-collector-evidence). Foreground only.
+    [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "Mikro usa tu ubicación para guardar dónde está el negocio que visitas."
       }
     ],
     ["react-native-ble-plx", { isBackgroundEnabled: false, neverForLocation: true }],

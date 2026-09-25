@@ -78,6 +78,8 @@ export interface DbClient {
       where: { id: string };
       data: { lastSyncedPortfolios?: string | null };
     }): Promise<Customer>;
+    /** Store the business location copied from a converted application. */
+    update(args: { where: { id: string }; data: { mapUrl: string } }): Promise<Customer>;
     delete(args: { where: { id: string } }): Promise<Customer>;
     findUnique(args: {
       where: { id: string };
@@ -386,6 +388,11 @@ export interface DbClient {
       where: { id: string; status: ApplicationStatus; assignedReviewerId?: string | null };
       data: Partial<LoanApplicationWriteData>;
     }): Promise<{ count: number }>;
+    /** Claim or release the evidence-completion marker (conditional, atomic). */
+    updateMany(args: {
+      where: { id: string; evidenceCompletedAt: null | { not: null } };
+      data: { evidenceCompletedAt: Date | null };
+    }): Promise<{ count: number }>;
   };
 
   applicationDocument: {
@@ -527,6 +534,8 @@ export interface LoanApplicationWriteData {
   contractSha256?: string | null;
   signedById?: string | null;
   signedAt?: Date | null;
+  mapUrl?: string | null;
+  evidenceCompletedAt?: Date | null;
   idFrontFilename?: string | null;
   idFrontOriginalName?: string | null;
   idFrontMimeType?: string | null;

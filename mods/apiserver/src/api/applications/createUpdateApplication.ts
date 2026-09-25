@@ -10,7 +10,7 @@ import type {
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
-import { assertEvidenceWritable } from "./reviewApplication.js";
+import { assertReviewDataWritable } from "./reviewApplication.js";
 
 async function loadByRef(
   client: DbClient,
@@ -27,7 +27,7 @@ async function loadByRef(
  * Reviewer edit: merge a field patch over the application's rawData, re-derive
  * the stable columns, recompute the score, and persist — leaving status, review
  * audit, contract, and conversion links untouched. Only the assigned reviewer,
- * only while IN_REVIEW (see assertEvidenceWritable).
+ * only while IN_REVIEW (see assertReviewDataWritable).
  */
 export function createUpdateApplication(client: DbClient) {
   return async (
@@ -35,7 +35,7 @@ export function createUpdateApplication(client: DbClient) {
     actor: TransitionActor
   ): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-    assertEvidenceWritable(app, actor);
+    assertReviewDataWritable(app, actor);
 
     const existing = (app.rawData as Record<string, unknown> | null) ?? {};
     const merged = { ...existing, ...input.patch };

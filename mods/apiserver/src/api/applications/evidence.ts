@@ -9,16 +9,21 @@
  */
 import {
   getConfig,
+  evidenceProgress,
   DEFAULT_MIN_BUSINESS_PHOTOS,
   type ApplicationDocument,
   type DbClient,
   type EvidenceStatus,
+  type LoanApplication,
+  type SetApplicationMapUrlInput,
   type TransitionActor,
   type UploadApplicationDocumentInput
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { readContract, readImage, saveContract, saveImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
+import { recordEvidenceCompleted } from "../events/recordEvidenceCompleted.js";
+import type { EventClient } from "../events/recordEvent.js";
 import {
   assertEvidenceWritable,
   loadApplication,
@@ -129,4 +134,167 @@ export async function getApplicationEvidence(
     })
   ]);
   return { status, documents };
+}
+
+/**
+ * Keep the evidence-completion marker in step with the evidence after a write,
+ * and record `application.evidence_completed` for the write that completes it.
+ * The marker is claimed with a conditional update, so exactly one write per
+ * completion wins even when several land at once; the event is only recorded
+ * when that write isn't the assignee's (a collector in the field). When the
+ * evidence becomes incomplete again the marker is released, so the next
+ * completion is announced too.
+ */
+export async function syncEvidenceCompletion(
+  client: DbClient,
+  applicationId: string,
+  actor: TransitionActor
+): Promise<void> {
+  const app = await loadApplication(client, { id: applicationId });
+  const status = await loadEvidenceStatus(client, app, getMinBusinessPhotos());
+  if (!status.complete) {
+    await client.loanApplication.updateMany({
+      where: { id: app.id, evidenceCompletedAt: { not: null } },
+      data: { evidenceCompletedAt: null }
+    });
+    return;
+  }
+  const { count } = await client.loanApplication.updateMany({
+    where: { id: app.id, evidenceCompletedAt: null },
+    data: { evidenceCompletedAt: new Date() }
+  });
+  if (count === 1 && app.assignedReviewerId !== actor.id) {
+    await recordEvidenceCompleted(client as unknown as EventClient, app, actor.id);
+  }
+}
+
+/** Run an evidence write, then sync the completion marker/event (never fails the write). */
+export async function trackEvidenceCompletion<T>(
+  client: DbClient,
+  applicationId: (result: T) => string,
+  actor: TransitionActor,
+  write: () => Promise<T>
+): Promise<T> {
+  const result = await write();
+  const id = applicationId(result);
+  try {
+    await syncEvidenceCompletion(client, id, actor);
+  } catch (err) {
+    logger.error("failed to sync evidence completion", {
+      applicationId: id,
+      error: (err as Error).message
+    });
+  }
+  return result;
+}
+
+/** Set or clear the business location map link (evidence rules apply). */
+export async function setApplicationMapUrl(
+  client: DbClient,
+  input: SetApplicationMapUrlInput,
+  actor: TransitionActor
+): Promise<LoanApplication> {
+  const app = await loadApplication(client, input);
+  assertEvidenceWritable(app, actor);
+  return client.loanApplication.update({
+    where: { id: app.id },
+    data: { mapUrl: input.mapUrl }
+  });
+}
+
+/**
+ * Evidence reads for collectors are limited to applications in review (the
+ * only ones they work on); reviewers and admins read any.
+ */
+export function assertEvidenceReadable(app: LoanApplication, actor: TransitionActor): void {
+  const reviewer = actor.roles.includes("REVIEWER") || actor.roles.includes("ADMIN");
+  if (!reviewer && app.status !== "IN_REVIEW") {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Loan application not found" });
+  }
+}
+
+/** The contact and address fields a collector needs for the visit. */
+function visitFields(app: LoanApplication) {
+  const raw = (app.rawData as Record<string, unknown> | null) ?? {};
+  const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  return {
+    id: app.id,
+    firstName: app.firstName,
+    lastName: app.lastName,
+    businessName: app.businessName,
+    phone: app.phone,
+    homeAddress: app.homeAddress,
+    province: app.province,
+    addressReference: text(raw.addressReference),
+    inReviewSince: app.assignedAt ?? app.updatedAt
+  };
+}
+
+export interface EvidenceQueueItem extends ReturnType<typeof visitFields> {
+  progress: { have: number; need: number };
+  complete: boolean;
+}
+
+/**
+ * The collector's evidence list: every application IN_REVIEW, the one that
+ * entered review first at the top, each with its progress. Complete ones stay
+ * listed (marked) until the application leaves review.
+ */
+export async function listEvidenceQueue(client: DbClient): Promise<EvidenceQueueItem[]> {
+  const min = getMinBusinessPhotos();
+  const entered = (a: LoanApplication) => (a.assignedAt ?? a.createdAt).getTime();
+  const apps = (await client.loanApplication.findMany({ where: { status: "IN_REVIEW" } })).sort(
+    (a, b) => entered(a) - entered(b)
+  );
+  return Promise.all(
+    apps.map(async (app) => {
+      const status = await loadEvidenceStatus(client, app, min);
+      return { ...visitFields(app), progress: evidenceProgress(status), complete: status.complete };
+    })
+  );
+}
+
+export interface EvidenceTask extends ReturnType<typeof visitFields> {
+  mapUrl: string | null;
+  idFront: boolean;
+  idBack: boolean;
+  documents: Array<{
+    id: string;
+    kind: ApplicationDocument["kind"];
+    label: string | null;
+    mimeType: string;
+    originalName: string;
+  }>;
+  status: EvidenceStatus;
+  progress: { have: number; need: number };
+}
+
+/**
+ * One application as a collector sees it: visit fields and evidence only — no
+ * score, recommendation, terms or decision data. NOT_FOUND unless IN_REVIEW.
+ */
+export async function getEvidenceTask(
+  client: DbClient,
+  ref: ApplicationRef
+): Promise<EvidenceTask> {
+  const app = await loadApplication(client, ref);
+  if (app.status !== "IN_REVIEW") {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Loan application not found" });
+  }
+  const { status, documents } = await getApplicationEvidence(client, { id: app.id });
+  return {
+    ...visitFields(app),
+    mapUrl: app.mapUrl,
+    idFront: Boolean(app.idFrontFilename),
+    idBack: Boolean(app.idBackFilename),
+    documents: documents.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      label: d.label,
+      mimeType: d.mimeType,
+      originalName: d.originalName
+    })),
+    status,
+    progress: evidenceProgress(status)
+  };
 }

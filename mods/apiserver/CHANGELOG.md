@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.1.0](https://github.com/psanders/mikro/compare/v3.0.0...v3.1.0) (2026-09-25)
+
+### Features
+
+- collectors gather evidence for applications in review; map link is required evidence ([#292](https://github.com/psanders/mikro/issues/292)) ([a952018](https://github.com/psanders/mikro/commit/a952018105b4dd96060376a15e46f97b91d50c66))
+
 # [3.0.0](https://github.com/psanders/mikro/compare/v2.6.1...v3.0.0) (2026-09-25)
 
 ### Features

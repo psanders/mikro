@@ -26,6 +26,7 @@ import {
   UserCheck,
   Scale,
   UserX,
+  ClipboardCheck,
   Headset
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -68,6 +69,7 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.sent_to_decision": { icon: Scale, accent: "blue" },
   "application.returned": { icon: Undo2, accent: "amber" },
   "application.withdrawn": { icon: UserX, accent: "neutral" },
+  "application.evidence_completed": { icon: ClipboardCheck, accent: "green" },
   "application.approved": { icon: FileCheck, accent: "green" },
   "application.rejected": { icon: FileX, accent: "red" },
   "application.signed": { icon: PenLine, accent: "blue" },
@@ -496,6 +498,9 @@ export function resolveNarrative(event: FeedEvent): string | null {
       return null;
     case "cx.handoff_requested":
       // The compact meta line already carries who and why.
+      return null;
+    case "application.evidence_completed":
+      // The summary line already says the evidence is complete.
       return null;
   }
 }

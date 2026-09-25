@@ -417,6 +417,8 @@ describe("Founder Feed Integration", () => {
       const noBoundaryMapper = new Set([
         // Written by intake/promote/manual create (recordApplicationReceived).
         "application.received",
+        // Written by evidence writes that complete the evidence (recordEvidenceCompleted).
+        "application.evidence_completed",
         // RETIRED with the SIGNED status (a contract is a step of APPROVED).
         "application.signed",
         "application.restored",

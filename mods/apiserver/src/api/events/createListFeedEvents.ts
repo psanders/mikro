@@ -66,6 +66,7 @@ export const APPLICATION_REVIEW_EVENT_TYPES = [
   "application.approved",
   "application.rejected",
   "application.withdrawn",
+  "application.evidence_completed",
   "application.signed",
   "application.converted"
 ] as const;

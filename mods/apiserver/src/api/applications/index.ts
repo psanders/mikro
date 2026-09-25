@@ -21,7 +21,8 @@ export {
   createCopilotRejectApplication,
   loadActor,
   loadApplication,
-  assertEvidenceWritable
+  assertEvidenceWritable,
+  assertReviewDataWritable
 } from "./reviewApplication.js";
 export { createUploadSignedContract } from "./createUploadSignedContract.js";
 export {

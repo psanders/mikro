@@ -29,6 +29,7 @@ export const FEED_TYPE_GROUPS: FeedTypeGroup[] = [
       "application.approved",
       "application.rejected",
       "application.withdrawn",
+      "application.evidence_completed",
       "application.converted"
     ]
   },

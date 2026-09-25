@@ -27,8 +27,8 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
 
     for (const c of data.customers) {
       db.runSync(
-        `INSERT INTO customers (id, name, nickname, phone, id_number, collection_point, home_address, preferred_payment_day, assigned_collector_id, is_active, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO customers (id, name, nickname, phone, id_number, collection_point, map_url, home_address, preferred_payment_day, assigned_collector_id, is_active, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           c.id,
           c.name,
@@ -36,6 +36,7 @@ export async function pullSync(api: ApiClient): Promise<PullSyncResult> {
           c.phone,
           c.idNumber,
           c.collectionPoint,
+          c.mapUrl ?? null,
           c.homeAddress,
           c.preferredPaymentDay,
           c.assignedCollectorId,

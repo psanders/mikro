@@ -19,6 +19,7 @@ export const businessEventTypeEnum = z.enum([
   "application.approved",
   "application.rejected",
   "application.withdrawn",
+  "application.evidence_completed",
   // RETIRED: signing is no longer a status (a stored contract is a requirement
   // of conversion). No longer produced; kept so historical rows still render.
   "application.signed",
@@ -247,6 +248,7 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "application.sent_to_decision": applicationSentToDecisionPayloadSchema,
   "application.returned": applicationReturnedPayloadSchema,
   "application.withdrawn": applicationWithdrawnPayloadSchema,
+  "application.evidence_completed": applicationEventBase,
   "application.approved": applicationApprovedPayloadSchema,
   "application.rejected": applicationRejectedPayloadSchema,
   "application.signed": applicationSignedPayloadSchema,

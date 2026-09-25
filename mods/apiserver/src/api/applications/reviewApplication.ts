@@ -70,7 +70,7 @@ export function forTransition(app: LoanApplication): ApplicationForTransition {
   };
 }
 
-/** Evidence completeness for an application (cédula slots + business photo count). */
+/** Evidence completeness for an application (map link, cédula slots, business photo count). */
 export async function loadEvidenceStatus(
   client: DbClient,
   app: LoanApplication,
@@ -186,7 +186,7 @@ export function createSetRecommendation(client: DbClient) {
     actor: TransitionActor
   ): Promise<LoanApplication> => {
     const app = await loadApplication(client, input);
-    assertEvidenceWritable(app, actor);
+    assertReviewDataWritable(app, actor);
     return client.loanApplication.update({
       where: { id: app.id },
       data: { reviewerRecommendation: input.reviewerRecommendation || null }
@@ -194,23 +194,46 @@ export function createSetRecommendation(client: DbClient) {
   };
 }
 
-/**
- * Guard for everything the reviewer edits while gathering evidence: data,
- * recommendation, cédula and documents. Allowed only IN_REVIEW, only for the
- * assignee — which is also what locks evidence once it goes to decision.
- */
-export function assertEvidenceWritable(app: LoanApplication, actor: TransitionActor): void {
-  const isReviewer = actor.roles.includes("REVIEWER") || actor.roles.includes("ADMIN");
-  if (!isReviewer) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Reviewer or admin role required" });
-  }
+function assertInReview(app: LoanApplication): void {
   if (app.status !== "IN_REVIEW") {
     throw new TRPCError({
       code: "CONFLICT",
       message: `${TRANSITION_BLOCK_LABELS.WRONG_STATUS} [WRONG_STATUS: evidence and data are editable only IN_REVIEW, application is ${app.status}]`
     });
   }
+}
+
+/**
+ * Guard for the reviewer's own work on an application: its data and the
+ * recommendation. Allowed only IN_REVIEW, only for the assignee — which is also
+ * what locks it once the application goes to decision.
+ */
+export function assertReviewDataWritable(app: LoanApplication, actor: TransitionActor): void {
+  const isReviewer = actor.roles.includes("REVIEWER") || actor.roles.includes("ADMIN");
+  if (!isReviewer) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Reviewer or admin role required" });
+  }
+  assertInReview(app);
   if (app.assignedReviewerId !== actor.id) {
+    throw new TRPCError({ code: "FORBIDDEN", message: TRANSITION_BLOCK_LABELS.NOT_ASSIGNEE });
+  }
+}
+
+/**
+ * Guard for evidence (cédula, business photos, other documents, map link):
+ * IN_REVIEW, and the assignee or any collector — collectors gather evidence in
+ * the field without being assigned. Locked once it goes to decision.
+ */
+export function assertEvidenceWritable(app: LoanApplication, actor: TransitionActor): void {
+  const { roles } = actor;
+  if (!roles.includes("ADMIN") && !roles.includes("REVIEWER") && !roles.includes("COLLECTOR")) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Reviewer, collector or admin role required"
+    });
+  }
+  assertInReview(app);
+  if (app.assignedReviewerId !== actor.id && !actor.roles.includes("COLLECTOR")) {
     throw new TRPCError({ code: "FORBIDDEN", message: TRANSITION_BLOCK_LABELS.NOT_ASSIGNEE });
   }
 }

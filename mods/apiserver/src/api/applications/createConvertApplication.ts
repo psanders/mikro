@@ -189,6 +189,16 @@ export function createConvertApplication(client: DbClient) {
       // (mikro/#41: collector assignment is mandatory at every level), so no
       // backfill branch is needed here.
 
+      // The business location gathered as evidence becomes the customer's, so
+      // the collector app's "Mapa" opens the exact pin. A returning customer
+      // keeps theirs when this application has none.
+      if (app.mapUrl) {
+        customer = await tx.customer.update({
+          where: { id: customer.id },
+          data: { mapUrl: app.mapUrl }
+        });
+      }
+
       const loan = await createCreateLoan(tx)({
         customerId: customer.id,
         principal: input.principal,

@@ -13,6 +13,7 @@ import { ClientRow } from "../../components/ui/ClientRow";
 import { useLocalDashboard } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
 import { formatDueLabel } from "../../lib/dueLabel";
+import { EvidenceEntryCard } from "../../components/evidence/EvidenceEntryCard";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -163,6 +164,8 @@ export default function HomeScreen() {
             onPress={() => router.push("/promocionar")}
           />
         </View>
+
+        <EvidenceEntryCard isOnline={isOnline} />
 
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>Próximas visitas</Text>

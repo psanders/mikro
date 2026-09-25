@@ -127,7 +127,10 @@ describe("application review lifecycle (integration)", () => {
     });
   }
 
+  const MAP_URL = "https://maps.google.com/?q=19.793412,-70.688401";
+
   async function completeEvidence(id: string, as = reviewer) {
+    await as.setApplicationMapUrl({ id, mapUrl: MAP_URL });
     await as.uploadIdImage({
       id,
       side: "FRONT",

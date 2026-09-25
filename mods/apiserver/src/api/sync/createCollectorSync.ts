@@ -11,6 +11,8 @@ export interface CustomerSnapshot {
   phone: string;
   idNumber: string;
   collectionPoint: string | null;
+  /** Business location (Google Maps link), when the customer came through evidence. */
+  mapUrl: string | null;
   homeAddress: string;
   preferredPaymentDay: string | null;
   assignedCollectorId: string | null;
@@ -162,6 +164,7 @@ export function createCollectorSync(client: DbClient) {
         phone: c.phone,
         idNumber: c.idNumber,
         collectionPoint: c.collectionPoint ?? null,
+        mapUrl: c.mapUrl ?? null,
         homeAddress: c.homeAddress,
         preferredPaymentDay: c.preferredPaymentDay ?? null,
         assignedCollectorId: c.assignedCollectorId ?? null,
