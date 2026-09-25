@@ -124,6 +124,9 @@ export function ApplicationFeedCard({
       case "RECEIVED":
         return "En la cola · sin asignar";
       case "IN_REVIEW":
+        if (mine && event.type === "application.evidence_completed") {
+          return `Evidencia completa · por ${event.actorName} · lista para enviar`;
+        }
         return mine
           ? "Tomada por ti · reúne la evidencia"
           : `En evaluación con ${assignee ?? "otro evaluador"}`;
@@ -136,7 +139,7 @@ export function ApplicationFeedCard({
       default:
         return event.summary;
     }
-  }, [state.status, mine, assignee, event.summary, viewer.isAdmin]);
+  }, [state.status, mine, assignee, event.summary, event.type, event.actorName, viewer.isAdmin]);
 
   return (
     <div
@@ -331,9 +334,9 @@ function CardBody({
               )}
               <span className="text-[13px] font-semibold text-[#14254A]">Evidencia</span>
               <span className="text-[12px] font-medium text-[#697A93]">
-                cédula {Number(evidence?.idFront) + Number(evidence?.idBack)} de 2 · fotos del
-                negocio {evidence?.businessPhotos.have ?? 0} (mín.{" "}
-                {evidence?.businessPhotos.need ?? 3})
+                {evidence?.location ? "ubicación ✓" : "ubicación pendiente"} · cédula{" "}
+                {Number(evidence?.idFront) + Number(evidence?.idBack)} de 2 · fotos del negocio{" "}
+                {evidence?.businessPhotos.have ?? 0} (mín. {evidence?.businessPhotos.need ?? 3})
               </span>
               <span className="flex-1" />
               <Btn

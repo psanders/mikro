@@ -25,7 +25,8 @@ import {
   Inbox,
   UserCheck,
   Scale,
-  UserX
+  UserX,
+  ClipboardCheck
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
@@ -67,6 +68,7 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.sent_to_decision": { icon: Scale, accent: "blue" },
   "application.returned": { icon: Undo2, accent: "amber" },
   "application.withdrawn": { icon: UserX, accent: "neutral" },
+  "application.evidence_completed": { icon: ClipboardCheck, accent: "green" },
   "application.approved": { icon: FileCheck, accent: "green" },
   "application.rejected": { icon: FileX, accent: "red" },
   "application.signed": { icon: PenLine, accent: "blue" },

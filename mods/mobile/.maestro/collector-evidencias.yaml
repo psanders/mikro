@@ -1,0 +1,36 @@
+# Collector — Evidencias por recoger (openspec add-collector-evidence)
+#
+# Covers: the Hoy entry card, the list (oldest first, the complete one marked),
+# and the detail checklist with the location step first. Camera, gallery and
+# GPS need a real device and permissions, so this flow checks navigation and
+# what each screen shows; the writes are covered by the apiserver integration
+# tests.
+#
+# REQUIRES an e2e build:
+#   EXPO_PUBLIC_E2E=1 npx expo run:ios --port 8082
+#   maestro test .maestro/collector-evidencias.yaml
+appId: ${APP_ID || "do.mikro.app"}
+---
+- launchApp
+- openLink: "exp+mikro://expo-development-client/?url=http://localhost:8082"
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: "Evidencias por recoger"
+    timeout: 30000
+
+- tapOn:
+    id: "evidence-entry"
+- extendedWaitUntil:
+    visible: "Baberos"
+    timeout: 15000
+- assertVisible: "1 de 6"
+- assertVisible: "Completa"
+
+- tapOn: "Baberos"
+- extendedWaitUntil:
+    visible: "UBICACIÓN DEL NEGOCIO"
+    timeout: 15000
+- assertVisible: "Estoy en el negocio"
+- assertVisible: "Cámara o galería"

@@ -9,7 +9,7 @@
 import { TRPCClientError, type TRPCLink } from "@trpc/client";
 import { observable } from "@trpc/server/observable";
 import type { AppRouter } from "@mikro/apiserver";
-import { E2E_USERS, e2eSendPromo } from "./e2eFixtures";
+import { E2E_USERS, e2eEvidenceQueue, e2eEvidenceTask, e2eSendPromo } from "./e2eFixtures";
 
 function resolve(path: string): unknown {
   switch (path) {
@@ -17,6 +17,10 @@ function resolve(path: string): unknown {
       return E2E_USERS;
     case "sendPromo":
       return e2eSendPromo();
+    case "listEvidenceQueue":
+      return e2eEvidenceQueue();
+    case "getEvidenceTask":
+      return e2eEvidenceTask();
     default:
       return null;
   }

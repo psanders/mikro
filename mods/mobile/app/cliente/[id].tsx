@@ -148,6 +148,12 @@ export default function ClienteDetalleScreen() {
             <Pressable
               style={styles.actionBtn}
               onPress={() => {
+                // The exact pin gathered as evidence when there is one; else a
+                // search on the address, as before.
+                if (c?.mapUrl) {
+                  Linking.openURL(c.mapUrl).catch(() => {});
+                  return;
+                }
                 const addr = c?.collectionPoint || c?.homeAddress;
                 if (!addr) return;
                 Linking.openURL(`https://maps.apple.com/?q=${encodeURIComponent(addr)}`).catch(
