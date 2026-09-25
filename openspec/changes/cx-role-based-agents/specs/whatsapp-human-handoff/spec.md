@@ -44,3 +44,23 @@ Opening a hand-off SHALL append a `cx.handoff_requested` business event to the f
 
 - **WHEN** a hand-off is opened for an applicant
 - **THEN** a `cx.handoff_requested` event with the application id and reason appears in the founder feed
+
+### Requirement: Hand-offs leave a note and a label in Chatwoot
+
+When a new hand-off opens and Chatwoot is configured, the system SHALL post a **private note** in the person's open WhatsApp conversation and add the `handoff` label, keeping any labels already set. The note SHALL state who is writing (name and profile), the reason, the application stage and business or the active loan numbers when known, and either the agent's 2–3 sentence summary or, when no agent wrote one (explicit request, rejected applicant), the last few messages. Mikro SHALL NOT assign the conversation; a Chatwoot automation rule on the `handoff` label does. A Chatwoot failure SHALL NOT affect the hand-off, the feed card or the reply to the person.
+
+#### Scenario: Agent hands off with a summary
+
+- **WHEN** Carmen calls `requestHumanHandoff` with a reason and a summary
+- **THEN** the Chatwoot conversation gets a private note with the customer's name, active loan numbers, reason and summary
+- **AND** the `handoff` label is added
+
+#### Scenario: Explicit request, no agent summary
+
+- **WHEN** a person writes "quiero hablar con una persona"
+- **THEN** the private note carries the last messages instead of a summary
+
+#### Scenario: Chatwoot unavailable
+
+- **WHEN** Chatwoot is not configured or returns an error
+- **THEN** the hand-off still opens, the feed card appears, and the acknowledgement is sent

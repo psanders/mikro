@@ -121,6 +121,8 @@ What happens next:
 4. Every new message from them pushes the end of the hand-off 24h further out.
 5. After **24h without a message from them**, the hand-off closes on its own and agents answer again.
 6. There is no "close hand-off" button yet. It only expires.
+7. **In Chatwoot**, the conversation gets a **private note** (only your team sees it) and the **`handoff` label**. The note says who is writing, the reason, the application stage or active loan numbers, and the agent's short summary; when no agent was involved (explicit request, rejected applicant) it shows the last messages instead.
+8. **Who gets it** is decided in Chatwoot, not in Mikro: create the `handoff` label (Settings → Labels), then an automation rule (Settings → Automation: "Conversation updated", condition label = `handoff`, action assign to an agent or team). Change the person anytime there.
 
 **Monitor:** the feed card, then Chatwoot. Logs `human hand-off opened`, `human hand-off extended` and `human hand-off open, agent stays silent`. In the database: the `conversation_handoffs` table.
 

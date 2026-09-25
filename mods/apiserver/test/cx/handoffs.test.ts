@@ -85,4 +85,27 @@ describe("human hand-offs", () => {
     const db = { conversationHandoff: { updateMany } } as any;
     expect(await createExtendHandoff(db)("+18095550001")).to.be.false;
   });
+
+  it("runs the follow-up (Chatwoot note) only for a NEW hand-off", async () => {
+    const onOpened = sinon.stub().resolves();
+    const input = { phone: "+18095550001", profile: "GUEST", reason: "x", summary: "s" };
+
+    await createOpenHandoff(makeDb(0).db, onOpened)(input);
+    await createOpenHandoff(makeDb(1).db, onOpened)(input);
+
+    expect(onOpened.calledOnceWith(input)).to.be.true;
+  });
+
+  it("a failing follow-up does not fail the hand-off", async () => {
+    const onOpened = sinon.stub().rejects(new Error("chatwoot down"));
+    const result = await createOpenHandoff(
+      makeDb(0).db,
+      onOpened
+    )({
+      phone: "+18095550001",
+      profile: "GUEST",
+      reason: "x"
+    });
+    expect(result).to.deep.equal({ opened: true });
+  });
 });
