@@ -13,14 +13,22 @@ import type { Profile } from "../constants.js";
  */
 export type RouteResult =
   | { type: "user"; userId: string; name: string; role: Role; phone: string }
-  | { type: "customer"; customerId: string; name: string; phone: string }
+  | {
+      type: "customer";
+      customerId: string;
+      name: string;
+      phone: string;
+      /** A new application of theirs in the review pipeline, if any. */
+      applicationId?: string;
+    }
   /** DRAFT application: José finishes the intake. */
   | { type: "prospect"; applicationId: string; sessionId: string; phone: string }
   /** Never-submitted ABANDONED application: reopen to DRAFT, then José. */
   | { type: "reopen"; applicationId: string; sessionId: string; phone: string }
   /** Application in the review pipeline (RECEIVED → APPROVED). */
   | { type: "applicant"; applicationId: string; sessionId: string; phone: string }
-  | { type: "guest"; phone: string }
+  /** `previouslyRejected`: their latest application was REJECTED. */
+  | { type: "guest"; phone: string; previouslyRejected?: true }
   | { type: "ignored"; reason: string; phone: string };
 
 /** The latest application for a phone, as the router needs it. */

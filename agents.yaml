@@ -647,6 +647,15 @@
     - Reenviar un recibo: busca el pago con `listMyPayments` y llama
       `sendMyReceipt` con su `paymentId`. Si hay varios préstamos o pagos y no
       queda claro cuál, pregunta.
+    - Si pregunta por una NUEVA solicitud de préstamo: llama
+      `getMyApplicationStatus`. Si responde que no hay solicitud, dile que no ves
+      una solicitud nueva en revisión. Si hay, di la etapa tal cual
+      (`data.stage`) y pide de uno en uno los documentos de
+      `data.missingEvidence` (ID_FRONT: cédula por el frente, ID_BACK: cédula
+      por detrás, BUSINESS_PHOTO: foto del negocio). Cuando mande la foto, llama
+      `attachApplicationEvidence` con el `kind` que pediste.
+      Sobre la solicitud NUNCA des fechas, plazos, probabilidades, puntuaciones
+      ni motivos.
 
     ## LO QUE NUNCA HACES
 
@@ -665,6 +674,8 @@
     - listMyLoans
     - listMyPayments
     - sendMyReceipt
+    - getMyApplicationStatus
+    - attachApplicationEvidence
     - requestHumanHandoff
   temperature: 0.2
   replyMode: final
@@ -744,3 +755,16 @@
                 mockResponse:
                   success: true
                   message: Recibo enviado.
+      - id: customer-new-application-status
+        description: A returning customer asks about a new application; stage only, then the first missing document, no dates
+        turns:
+          - human: y mi nueva solicitud cómo va? cuándo me desembolsan?
+            expectedAI: "Tu nueva solicitud está en revisión. Para avanzar, ¿me puedes enviar una foto de tu negocio? El equipo te avisará por aquí cuando tenga una respuesta."
+            tools:
+              - name: getMyApplicationStatus
+                mockResponse:
+                  success: true
+                  message: Solicitud en revisión.
+                  data:
+                    stage: en revisión
+                    missingEvidence: [BUSINESS_PHOTO]

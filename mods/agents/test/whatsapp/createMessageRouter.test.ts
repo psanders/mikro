@@ -166,7 +166,11 @@ describe("createMessageRouter — CX routing by role and application status", ()
       { type: "applicant", ...ref }
     ],
     ["APPROVED → applicant", app("APPROVED", new Date()), { type: "applicant", ...ref }],
-    ["REJECTED → guest", app("REJECTED", new Date()), { type: "guest", phone: PHONE }],
+    [
+      "REJECTED → guest, flagged as previously rejected",
+      app("REJECTED", new Date()),
+      { type: "guest", phone: PHONE, previouslyRejected: true }
+    ],
     [
       "CONVERTED without customer → guest",
       app("CONVERTED", new Date()),
@@ -183,10 +187,12 @@ describe("createMessageRouter — CX routing by role and application status", ()
     });
   }
 
-  it("routes a customer to CUSTOMER, ahead of any application", async () => {
-    const findApplicationByPhone = sinon.stub().resolves(app("DRAFT"));
+  it("routes a customer to CUSTOMER; a DRAFT of theirs is not attached", async () => {
     const router = createMessageRouter(
-      makeDeps({ getCustomerByPhone: sinon.stub().resolves(customer), findApplicationByPhone })
+      makeDeps({
+        getCustomerByPhone: sinon.stub().resolves(customer),
+        findApplicationByPhone: sinon.stub().resolves(app("DRAFT"))
+      })
     );
     expect(await router(PHONE)).to.deep.equal({
       type: "customer",
@@ -194,7 +200,22 @@ describe("createMessageRouter — CX routing by role and application status", ()
       name: "Ana López",
       phone: PHONE
     });
-    expect(findApplicationByPhone.called).to.be.false;
+  });
+
+  it("attaches a returning customer's application in the review pipeline", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getCustomerByPhone: sinon.stub().resolves(customer),
+        findApplicationByPhone: sinon.stub().resolves(app("IN_REVIEW", new Date()))
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({
+      type: "customer",
+      customerId: "cust-1",
+      name: "Ana López",
+      phone: PHONE,
+      applicationId: "app-1"
+    });
   });
 
   it("routes an employee who is also a customer as the employee", async () => {

@@ -47,3 +47,9 @@
 - [x] 6.2 Run the agent evals for the new agents
 - [ ] 6.3 Manual WhatsApp smoke on staging: guest, DRAFT prospect, reopen, applicant + photo, customer balance/receipt, hand-off silence + expiry, employee silence, kill switch
 - [x] 6.4 Update `mods/agents/README.md` routing section and the rollout order (enable GUEST → APPLICANT → CUSTOMER)
+
+## 7. Founder decisions (2026-09-25)
+
+- [x] 7.1 Router flags a guest whose latest application is REJECTED; the handler opens a hand-off with a fixed acknowledgement, no LLM (D9); tests
+- [x] 7.2 Router attaches a returning customer's in-pipeline application; Carmen gets the status/evidence tools with the APPLICANT limits (D10); tests + eval scenario
+- [x] 7.3 Specs, design and explainer updated for both decisions

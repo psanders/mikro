@@ -56,7 +56,7 @@ It SHALL NOT disclose score, risk band, recommendation, rejection or decision re
 
 ### Requirement: Customer agent sees only the sender's own loans
 
-The `CUSTOMER` agent SHALL answer about the sender's own loans (status, balance, next payment, payment history) and SHALL be able to resend a receipt for one of the sender's own payments. Customer tools SHALL take the customer identity from the conversation context and SHALL ignore any phone, customer id or loan id supplied by the model that does not belong to that customer.
+The `CUSTOMER` agent SHALL answer about the sender's own loans (status, balance, next payment, payment history) and SHALL be able to resend a receipt for one of the sender's own payments. When the route carries a new application of theirs, it SHALL also offer the `APPLICANT` status and evidence tools under the same limits. Customer tools SHALL take the customer identity from the conversation context and SHALL ignore any phone, customer id or loan id supplied by the model that does not belong to that customer.
 
 #### Scenario: Customer asks for balance
 
@@ -73,6 +73,12 @@ The `CUSTOMER` agent SHALL answer about the sender's own loans (status, balance,
 
 - **WHEN** a customer asks for the receipt of their last payment
 - **THEN** the receipt for that customer's payment is sent to the sender's phone
+
+#### Scenario: Returning customer asks about a new application
+
+- **WHEN** a customer whose new application is `IN_REVIEW` asks how it is going
+- **THEN** the agent gives the plain stage and asks for missing evidence one item at a time, attaching photos they send
+- **AND** follows the same disclosure limits as the `APPLICANT` agent (no score, reasons, dates or odds)
 
 ### Requirement: CX agents are defined in agents.yaml
 

@@ -5,11 +5,11 @@
 The system SHALL resolve every inbound WhatsApp conversation message to exactly one route, evaluated in this order:
 
 1. A phone that belongs to an enabled DB user routes to that user's role profile (`ADMIN` > `REVIEWER` > `COLLECTOR` precedence when the user has several roles). A disabled user is ignored.
-2. A phone that belongs to a customer routes to `CUSTOMER`.
+2. A phone that belongs to a customer routes to `CUSTOMER`. When that phone's most recent application is in the review pipeline (`RECEIVED` → `APPROVED`), the route SHALL carry that application so the CUSTOMER agent can follow it.
 3. A phone whose most recent application is `DRAFT` routes to `PROSPECT`.
 4. A phone whose most recent application is `ABANDONED` with no `submittedAt` is reopened to `DRAFT` and routes to `PROSPECT`.
 5. A phone whose most recent application is `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION` or `APPROVED` routes to `APPLICANT`.
-6. Any other phone routes to `GUEST`. This covers no application, `REJECTED`, `CONVERTED` without a customer match, and `ABANDONED` after submission.
+6. Any other phone routes to `GUEST`. This covers no application, `REJECTED` (flagged as previously rejected), `CONVERTED` without a customer match, and `ABANDONED` after submission.
 
 The serving agent SHALL be resolved from the profile via `agents.yaml`. A profile with no agent assigned SHALL receive no reply.
 
@@ -28,10 +28,15 @@ The serving agent SHALL be resolved from the profile via `agents.yaml`. A profil
 - **WHEN** a message arrives from an unknown phone whose latest application is `IN_REVIEW`
 - **THEN** it routes to `APPLICANT` with that application's id
 
-#### Scenario: Rejected applicant is treated as a guest
+#### Scenario: Rejected applicant is treated as a flagged guest
 
 - **WHEN** the phone's latest application is `REJECTED`
-- **THEN** it routes to `GUEST`
+- **THEN** it routes to `GUEST`, flagged as previously rejected
+
+#### Scenario: Returning customer with a new application
+
+- **WHEN** a customer's phone has an application `IN_REVIEW`
+- **THEN** it routes to `CUSTOMER` carrying that application's id
 
 #### Scenario: Customer
 
@@ -81,3 +86,19 @@ When `whatsapp.agentRepliesEnabled` is `false`, the system SHALL send no reply o
 
 - **WHEN** replies are disabled and a guest, applicant or customer writes in
 - **THEN** no reply is sent and no LLM is invoked
+
+### Requirement: Previously rejected applicants are handed to a person
+
+When a message routes to `GUEST` flagged as previously rejected, and an agent serves `GUEST`, the system SHALL open a human hand-off (reason "Solicitud anterior no aprobada") and send one fixed acknowledgement that the previous application was not approved and a person will reply. It SHALL NOT invoke the GUEST agent, which would otherwise invite them to apply again. No message SHALL be sent at the moment of rejection (no template exists for it).
+
+#### Scenario: Rejected applicant writes in
+
+- **WHEN** a person whose latest application is `REJECTED` writes "quiero volver a aplicar"
+- **THEN** a hand-off is opened and a `cx.handoff_requested` feed card appears
+- **AND** they receive the fixed acknowledgement
+- **AND** no LLM is invoked
+
+#### Scenario: Rejected applicant during an open hand-off
+
+- **WHEN** that person writes again while the hand-off is open
+- **THEN** no reply is sent and the hand-off is extended

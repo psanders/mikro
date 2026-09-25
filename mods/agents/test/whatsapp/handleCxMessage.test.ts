@@ -306,6 +306,35 @@ describe("WhatsApp CX routes", () => {
       expect(p.sendWhatsAppMessage.called).to.be.false;
     });
 
+    it("hands a previously rejected guest to a person, without the LLM", async () => {
+      const p = setup({ type: "guest", phone: PHONE, previouslyRejected: true });
+
+      await handleWhatsAppMessage(textWebhook("hola, quiero volver a aplicar"));
+
+      expect(p.openHandoff.calledOnce).to.be.true;
+      expect(p.openHandoff.firstCall.args[0]).to.deep.equal({
+        phone: PHONE,
+        profile: "GUEST",
+        reason: "Solicitud anterior no aprobada"
+      });
+      expect(p.invokeLLM.called).to.be.false;
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.match(/no fue aprobada/);
+    });
+
+    it("gives Carmen a returning customer's new application", async () => {
+      const p = setup({ ...customerRoute, applicationId: "app-2" });
+
+      await handleWhatsAppMessage(textWebhook("¿cómo va mi nueva solicitud?"));
+
+      expect(p.invokeLLM.firstCall.args[4]).to.deep.equal({
+        phone: PHONE,
+        profile: "CUSTOMER",
+        customerId: "cust-1",
+        name: "Ana López",
+        applicationId: "app-2"
+      });
+    });
+
     it("answers a guest through the GUEST agent", async () => {
       const p = setup({ type: "guest", phone: PHONE });
 

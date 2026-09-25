@@ -622,6 +622,14 @@ export function isHumanRequest(message: string): boolean {
   return HUMAN_REQUEST_RE.test(message);
 }
 
+/**
+ * Someone whose last application was rejected writes in. The guest agent knows
+ * nothing about that decision and would invite them to apply again, so a
+ * person takes it instead (founder decision, openspec cx-role-based-agents).
+ */
+const REJECTED_HANDOFF_ACK =
+  "Hola, gracias por escribirnos. Vemos que tu solicitud anterior no fue aprobada. Ya le avisé al equipo; una persona te va a responder por aquí.";
+
 const HANDOFF_ACK =
   "Claro, ya le avisé al equipo. Una persona te va a responder por aquí lo antes posible.";
 
@@ -645,7 +653,11 @@ function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
     phone: route.phone,
     profile,
     ...(route.type === "customer" ? { customerId: route.customerId, name: route.name } : {}),
-    ...("applicationId" in route
+    // A returning customer's new application, or the applicant's/prospect's own.
+    ...(route.type === "customer" && route.applicationId
+      ? { applicationId: route.applicationId }
+      : {}),
+    ...(route.type === "applicant" || route.type === "prospect" || route.type === "reopen"
       ? { applicationId: route.applicationId, sessionId: route.sessionId }
       : {}),
     ...(imageUrl ? { imageDataUrl: imageUrl } : {})
@@ -713,6 +725,16 @@ async function handleCxMessage(
 
   if (!(await passesCxGate(route, processor))) return;
   const agent = getAgentForProfile(profile)!;
+
+  if (route.type === "guest" && route.previouslyRejected && processor.openHandoff) {
+    await processor.openHandoff({
+      phone,
+      profile,
+      reason: "Solicitud anterior no aprobada"
+    });
+    await sendWhatsAppMessage({ phone, message: REJECTED_HANDOFF_ACK });
+    return;
+  }
 
   // An explicit "no me interesa" wins over a request for a person: José closes it.
   const optingOut = profile === "PROSPECT" && isDecline(userMessage);

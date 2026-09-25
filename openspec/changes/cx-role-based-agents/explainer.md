@@ -13,11 +13,12 @@ When a WhatsApp message arrives, the server decides **who is writing**. That pic
 | Who is writing                     | How we know                                                                     | Who answers                          |
 | ---------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------ |
 | Staff (admin, reviewer, collector) | phone matches an enabled user                                                   | **Nobody.** You read it in Chatwoot. |
-| Customer                           | phone matches a customer                                                        | **Carmen**                           |
+| Customer                           | phone matches a customer (a new application of theirs in review is attached)    | **Carmen**                           |
 | Prospect with an unfinished form   | latest application is `DRAFT`                                                   | **José** (as today)                  |
 | Prospect whose draft expired       | latest application is `ABANDONED` and was **never submitted**                   | the draft reopens, then **José**     |
 | Applicant in review                | latest application is `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION` or `APPROVED` | **Sofía**                            |
-| Everyone else                      | no application, `REJECTED`, withdrawn after approval, etc.                      | **Lucía**                            |
+| Rejected applicant                 | latest application is `REJECTED`                                                | **A person** (hand-off, case L)      |
+| Everyone else                      | no application, withdrawn after approval, etc.                                  | **Lucía**                            |
 
 The checks run in that order. For example, a collector who is also a customer is treated as staff.
 
@@ -93,6 +94,7 @@ Each case lists what happens and how you can see it. Log lines are quoted exactl
 3. She can list their recent payments and **resend a receipt**, always to the phone that is writing.
 4. She cannot touch anyone else's loan, even if they type another number or loan id. The tools ignore what the model passes and use the sender's identity.
 5. She cannot record payments, give discounts or change dates. Anything like that → hand-off.
+6. **Returning customer with a new application in review:** Carmen also follows it. She gives the plain stage and asks for missing documents one at a time, with the same limits as Sofía (no score, reasons, dates or odds). A new application still being filled out (`DRAFT`) is not attached; they finish it on the web form.
 
 **Monitor:** Chatwoot. Resent receipts appear as normal receipt sends.
 
@@ -129,6 +131,17 @@ What happens next:
 - Form submissions through the WhatsApp Flow are still saved (as today).
 - Abandoned drafts are **not** reopened while it's off.
 
+### L. A rejected applicant writes again
+
+1. Their latest application is `REJECTED` → **no AI answers**.
+2. A hand-off opens right away (reason "Solicitud anterior no aprobada") and a feed card appears.
+3. They get one fixed reply: _"Hola, gracias por escribirnos. Vemos que tu solicitud anterior no fue aprobada. Ya le avisé al equipo; una persona te va a responder por aquí."_
+4. While the hand-off is open (24h after their last message), they get no automatic replies. You decide what to tell them in Chatwoot.
+5. If Lucía (GUEST) is turned off, they get no reply at all, same as other guests.
+6. Applying again through the web form is still allowed.
+
+**Monitor:** feed card with reason "Solicitud anterior no aprobada", then Chatwoot.
+
 ### K. Unchanged
 
 The WhatsApp Flow intake and its confirmation, the generic error message, receipts, promos and payment confirmations all work as before.
@@ -148,18 +161,9 @@ Voice notes are transcribed (when configured) and handled like text. **Changed:*
 | José declines in the chat (outside Puerto Plata, or a critical business type) | **Yes, but it's his in-chat reply** ("Por el momento solo atendemos negocios en Puerto Plata…"), not a notification |
 | Applicant withdraws after approval                                            | **No**                                                                                                              |
 
-**What happens if a rejected person writes later:**
+**What happens if a rejected person writes later** (decided 2026-09-25): a person takes it. See case L. The AI doesn't answer them, because it doesn't know why they were rejected and would invite them to apply again.
 
-1. They are routed to **Lucía** (case A). She **does not know** they were rejected.
-2. Unless they are outside Puerto Plata, she will invite them to fill out the form again.
-3. The system **allows** a new application after a rejection: a returning phone gets a fresh application, with no waiting period.
-
-⚠️ **This is a decision for you** (it is not built):
-
-- **Option 1: leave it.** A rejected person can simply apply again.
-- **Option 2: tell Lucía.** Route `REJECTED` phones to her with a flag, so she says something like "tu solicitud anterior no fue aprobada; el equipo puede orientarte" and hands off instead of pushing the form.
-- **Option 3: a cooldown.** Block a new application for N days after a rejection.
-- **Option 4: send a rejection notice** at the moment of rejection. That is a business-initiated message, so it would need a **new approved Meta template** (see the next section).
+Not chosen, for the record: a waiting period before re-applying, and a rejection notice at the moment of rejection (that would need a new approved Meta template).
 
 ---
 
@@ -220,23 +224,24 @@ ORDER BY j.scheduled_for;
 
 There are three layers:
 
-1. **Automated unit and integration tests.** They run on every PR; all pass today: agents 205, apiserver 578, integration 811.
+1. **Automated unit and integration tests.** They run on every PR; all pass today: agents 211, apiserver 578, integration 811.
 2. **Agent evals.** A real AI model answers scripted conversations and a judge checks both the tool use and the answer. Run with `npm run agents:eval -- <agent>`.
 3. **Manual staging smoke test** on a real WhatsApp. **Not done yet.** It's the one open task (6.3).
 
-| Case                                                                              | Automated test                                                                                                          | Eval                                                                              | Manual (to do)                              |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
-| Routing table (every status → agent, staff first, reviewer role)                  | `mods/agents/test/whatsapp/createMessageRouter.test.ts`                                                                 | —                                                                                 | ✔                                           |
-| A. Guest FAQ + form link                                                          | `handleCxMessage.test.ts` (routes to GUEST)                                                                             | Lucía: requirements, out-of-zone, asks for person — 3/3                           | ✔                                           |
-| B. José + clock restart                                                           | `handleCxMessage.test.ts`, `createRecordProspectActivity.test.ts`                                                       | José: existing 6 scenarios (5/6; the failing one fails on `main` too)             | ✔                                           |
-| C. 8h abandon, deferred by hand-off, never for submitted                          | `createHandleAbandonJob.test.ts`, `scheduleOnUpsert.test.ts`, `createHandleNudgeJob.test.ts`                            | —                                                                                 | ✔ wait 8h (or set a short delay on staging) |
-| D. Reopen / no reopen after withdrawal                                            | `createReopenApplication.test.ts`, `handleCxMessage.test.ts`                                                            | —                                                                                 | ✔                                           |
-| E/F. Applicant stage, no leaks, photos only before decision                       | `selfService.test.ts` (checks no score, reasons or dates in the data), `handleCxMessage.test.ts` (photo passed through) | Sofía: status without dates, asks for missing doc, change amount → hand-off — 3/3 | ✔ send a real photo                         |
-| G. Customer own loans only, receipt to sender                                     | `selfService.test.ts` (someone else's loan or payment → refused)                                                        | Carmen: balance from tool, refuses brother's loan, resends receipt — 3/3          | ✔                                           |
-| H. Staff silence                                                                  | `handleWhatsAppMessage.test.ts`                                                                                         | —                                                                                 | ✔                                           |
-| I. Hand-off (explicit phrases, passing mentions ignored, silence, 24h, feed card) | `handleCxMessage.test.ts`, `handoffs.test.ts`, integration feed test                                                    | all three agents hand off in evals                                                | ✔ incl. feed card                           |
-| J. Kill switch                                                                    | `handleWhatsAppMessage.test.ts` (no reply, clock still restarts)                                                        | —                                                                                 | ✔                                           |
-| Meta templates unchanged                                                          | `createHandleNudgeJob.test.ts` (same template send, no abandon)                                                         | —                                                                                 | ✔ watch no new template sends               |
+| Case                                                                              | Automated test                                                                                                                                    | Eval                                                                                                                                                 | Manual (to do)                              |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Routing table (every status → agent, staff first, reviewer role)                  | `mods/agents/test/whatsapp/createMessageRouter.test.ts`                                                                                           | —                                                                                                                                                    | ✔                                           |
+| A. Guest FAQ + form link                                                          | `handleCxMessage.test.ts` (routes to GUEST)                                                                                                       | Lucía: requirements, out-of-zone, asks for person — 3/3                                                                                              | ✔                                           |
+| B. José + clock restart                                                           | `handleCxMessage.test.ts`, `createRecordProspectActivity.test.ts`                                                                                 | José: existing 6 scenarios (5/6; the failing one fails on `main` too)                                                                                | ✔                                           |
+| C. 8h abandon, deferred by hand-off, never for submitted                          | `createHandleAbandonJob.test.ts`, `scheduleOnUpsert.test.ts`, `createHandleNudgeJob.test.ts`                                                      | —                                                                                                                                                    | ✔ wait 8h (or set a short delay on staging) |
+| D. Reopen / no reopen after withdrawal                                            | `createReopenApplication.test.ts`, `handleCxMessage.test.ts`                                                                                      | —                                                                                                                                                    | ✔                                           |
+| E/F. Applicant stage, no leaks, photos only before decision                       | `selfService.test.ts` (checks no score, reasons or dates in the data), `handleCxMessage.test.ts` (photo passed through)                           | Sofía: status without dates, asks for missing doc, change amount → hand-off — 3/3                                                                    | ✔ send a real photo                         |
+| G. Customer own loans only, receipt to sender, new application                    | `selfService.test.ts` (someone else's loan or payment → refused), `createMessageRouter.test.ts`, `handleCxMessage.test.ts` (application attached) | Carmen: balance, refuses brother's loan, resends receipt, new application status — behavior correct in all 4; wording judge is noisy (2–4/4 per run) | ✔                                           |
+| L. Rejected applicant → person                                                    | `createMessageRouter.test.ts` (flag), `handleCxMessage.test.ts` (hand-off, fixed reply, no LLM)                                                   | — (no AI involved)                                                                                                                                   | ✔                                           |
+| H. Staff silence                                                                  | `handleWhatsAppMessage.test.ts`                                                                                                                   | —                                                                                                                                                    | ✔                                           |
+| I. Hand-off (explicit phrases, passing mentions ignored, silence, 24h, feed card) | `handleCxMessage.test.ts`, `handoffs.test.ts`, integration feed test                                                                              | all three agents hand off in evals                                                                                                                   | ✔ incl. feed card                           |
+| J. Kill switch                                                                    | `handleWhatsAppMessage.test.ts` (no reply, clock still restarts)                                                                                  | —                                                                                                                                                    | ✔                                           |
+| Meta templates unchanged                                                          | `createHandleNudgeJob.test.ts` (same template send, no abandon)                                                                                   | —                                                                                                                                                    | ✔ watch no new template sends               |
 
 **What the automated tests do not prove** (the manual checklist covers these):
 
@@ -248,9 +253,8 @@ There are three layers:
 
 ## 7. Open decisions for you
 
-1. **Rejected people who write again**: pick an option from section 3.
-2. **FAQ copy**: Lucía and Sofía use the website FAQ text. Please read it in `agents.yaml` before turning them on.
-3. **Agent names**: Lucía, Sofía and Carmen are placeholders. Rename freely.
-4. **Turn-on order**: GUEST → APPLICANT → CUSTOMER, one at a time, watching the feed and Chatwoot.
+1. **FAQ copy**: Lucía and Sofía use the website FAQ text. Please read it in `agents.yaml` before turning them on.
+2. **Agent names**: Lucía, Sofía and Carmen are placeholders. Rename freely.
+3. **Turn-on order**: GUEST → APPLICANT → CUSTOMER, one at a time, watching the feed and Chatwoot.
 
-5. **Returning customers who apply again** always get Carmen (customer agent), not Sofía, so they cannot check the new application or send photos over WhatsApp. They can still ask for a person. Found in code review; decide with item 1.
+Decided on 2026-09-25: rejected applicants go to a person (case L), and returning customers keep Carmen, who also follows their new application (case G).

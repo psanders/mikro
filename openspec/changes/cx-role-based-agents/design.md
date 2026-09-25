@@ -85,6 +85,14 @@ GUEST keeps the existing in-memory guest conversation. APPLICANT and CUSTOMER re
 
 The ADMIN and COLLECTOR redirect texts are removed. A role with an assigned agent still gets that agent (existing behavior is kept for a custom ADMIN agent). No LLM call and no send for unassigned roles.
 
+### D9. Rejected applicants who write again go to a person (founder decision 2026-09-25)
+
+Nothing messages a person when their application is rejected, and the GUEST agent knows nothing about the decision (it would invite them to apply again). So the router flags a guest whose latest application is `REJECTED`, and the handler opens a hand-off with a fixed acknowledgement, without calling the LLM. A founder decides case by case in Chatwoot. _Rejected alternatives:_ a cooldown (a config value and an upsert change for a rare case), and a rejection notice at decision time (needs a new approved Meta template and a send path). Re-applying through the web form stays allowed.
+
+### D10. Returning customers keep Carmen, who also follows their new application (founder decision 2026-09-25)
+
+The customer match still wins, so balance and receipts keep working. When the customer's latest application is in the pipeline, the route carries its id and the CUSTOMER agent gets `getMyApplicationStatus` / `attachApplicationEvidence`, with the APPLICANT limits in its prompt. The tools already scope by the context's `applicationId`. _Rejected alternative:_ routing to APPLICANT while the application is open, which would lose loan answers for weeks.
+
 ## Risks / Trade-offs
 
 - [The customer agent quotes a wrong balance] → The tools return the canonical snapshot the receipts use (`getCycleMetrics` / the loan statement path). The prompt forbids arithmetic ("only repeat numbers from tools"). Eval cases are added in `agents.yaml`.
@@ -108,5 +116,3 @@ Existing DRAFTs have no ABANDON job. On deploy they only get one on their next a
 ## Open Questions
 
 - The FAQ content for the GUEST and CUSTOMER prompts: coverage area, rates wording, office hours. It needs founder copy before those agents are enabled (it does not block building).
-- **Rejected applicants who write again (KNOWN GAP, spec update pending).** No rejection path messages the person (reviewer reject, out-of-area auto-reject, withdrawal). A rejected phone routes to GUEST, and Lucía does not know about the rejection: she invites them to apply again, and the upsert allows a fresh application right away (`CLOSED_WITH_HISTORY`). The founder must choose (2026-09-25): (1) leave it; (2) route `REJECTED` to GUEST with a flag so the agent acknowledges it and hands off; (3) a cooldown before re-applying; (4) a rejection notice at decision time, which needs a new approved Meta template. Update the specs once decided. See explainer.md §3.
-- **Returning customers who apply again (KNOWN GAP, from code review).** The customer match wins over the application lookup, so a customer with a new application in the pipeline always gets the CUSTOMER agent. That agent has no `applicationId`, so they cannot check status or send evidence over WhatsApp; they can still ask for a person. Options: route a customer with an in-pipeline application to APPLICANT; or give the CUSTOMER agent the application tools as well. Decide together with the rejected-applicant gap.
