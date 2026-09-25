@@ -249,9 +249,19 @@ CREATE TABLE "loan_applications" (
     "risk_band" TEXT,
     "recommendation" TEXT,
     "scored_at" DATETIME,
-    "reviewed_by_id" TEXT,
-    "reviewed_at" DATETIME,
-    "review_note" TEXT,
+    "assigned_reviewer_id" TEXT,
+    "assigned_at" DATETIME,
+    "reviewer_recommendation" TEXT,
+    "sent_to_decision_at" DATETIME,
+    "decided_by_id" TEXT,
+    "decided_at" DATETIME,
+    "decision_note" TEXT,
+    "rejection_reason" TEXT,
+    "approved_amount" DECIMAL,
+    "approved_term_weeks" INTEGER,
+    "contract_terms" JSONB,
+    "ai_summary" TEXT,
+    "ai_summary_at" DATETIME,
     "contract_filename" TEXT,
     "contract_original_name" TEXT,
     "contract_mime_type" TEXT,
@@ -282,6 +292,22 @@ CREATE UNIQUE INDEX "loan_applications_session_id_key" ON "loan_applications"("s
 CREATE INDEX "loan_applications_status_idx" ON "loan_applications"("status");
 CREATE INDEX "loan_applications_session_id_idx" ON "loan_applications"("session_id");
 CREATE INDEX "loan_applications_ad_id_idx" ON "loan_applications"("ad_id");
+CREATE INDEX "loan_applications_assigned_reviewer_id_idx" ON "loan_applications"("assigned_reviewer_id");
+CREATE TABLE "application_documents" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "application_id" TEXT NOT NULL,
+    "kind" TEXT NOT NULL,
+    "label" TEXT,
+    "filename" TEXT NOT NULL,
+    "original_name" TEXT NOT NULL,
+    "mime_type" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "sha256" TEXT NOT NULL,
+    "uploaded_by_id" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "application_documents_application_id_fkey" FOREIGN KEY ("application_id") REFERENCES "loan_applications" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX "application_documents_application_id_idx" ON "application_documents"("application_id");
 
 -- Meta ad catalog (ad names learned from forwarded URL parameters)
 CREATE TABLE "meta_ads" (

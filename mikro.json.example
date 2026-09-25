@@ -46,10 +46,15 @@
   },
   "accounting": {
     "attachmentsPath": "./data/attachments/accounting",
-    "disbursementAccountId": "00000000-0000-4000-8000-000000000000"
+    "disbursementAccountId": "00000000-0000-4000-8000-000000000000",
+    "disbursementAccounts": [
+      { "id": "00000000-0000-4000-8000-000000000000", "name": "Caja General" },
+      { "id": "00000000-0000-4000-8000-000000000001", "name": "Cuenta de Recaudación" }
+    ]
   },
   "applications": {
-    "coveredProvinces": ["PUERTO_PLATA"]
+    "coveredProvinces": ["PUERTO_PLATA"],
+    "minBusinessPhotos": 3
   },
   "evals": {
     "similarityThreshold": 0.7,

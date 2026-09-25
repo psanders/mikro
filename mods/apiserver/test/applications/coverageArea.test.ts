@@ -47,7 +47,7 @@ function echoClient() {
     id: "app-1",
     ...args.create
   }));
-  return { client: { loanApplication: { upsert } } as any, upsert };
+  return { client: { loanApplication: { upsert, findFirst: async () => null } } as any, upsert };
 }
 
 describe("createUpsertApplication — coverage area", () => {
@@ -81,9 +81,9 @@ describe("createUpsertApplication — coverage area", () => {
     expect(app.status).to.equal("REJECTED");
     const { update } = upsert.firstCall.args[0];
     expect(update.status).to.equal("REJECTED");
-    expect(update.reviewNote).to.equal(OUT_OF_COVERAGE_AREA);
-    expect(update.reviewedById).to.equal(null);
-    expect(update.reviewedAt).to.be.instanceOf(Date);
+    expect(update.rejectionReason).to.equal(OUT_OF_COVERAGE_AREA);
+    expect(update.decidedById).to.equal(null);
+    expect(update.decidedAt).to.be.instanceOf(Date);
     expect(update.submittedAt).to.be.instanceOf(Date);
     expect(scheduleFollowUpJob.called).to.equal(false);
   });

@@ -1,0 +1,68 @@
+{
+  "timezone": "America/Santo_Domingo",
+  "port": 4199,
+  "publicUrl": "http://localhost:4199",
+  "corsAllowedOrigins": ["http://localhost:5199"],
+  "receiptsPath": "./.run/receipts",
+  "contractsPath": "./.run/contracts",
+  "databaseUrl": "file:./.run/mikro-e2e.db",
+  "jwtSecret": "e2e-jwt-secret",
+  "jwtExpiresIn": "7d",
+  "keysPath": "./.run/keys",
+  "assetsPath": "../../apiserver/assets",
+  "agentsFile": "../../../agents.yaml",
+  "messageMaxAgeSeconds": 60,
+  "sessionTimeoutSeconds": 1800,
+  "llm": {
+    "text": {
+      "vendor": "openai",
+      "apiKey": "e2e-no-key",
+      "model": "gpt-4o-mini"
+    },
+    "vision": {
+      "vendor": "openai",
+      "apiKey": "e2e-no-key",
+      "model": "gpt-4o"
+    },
+    "evals": {
+      "vendor": "openai",
+      "apiKey": "e2e-no-key",
+      "model": "gpt-4o-mini"
+    }
+  },
+  "whatsapp": {
+    "phoneNumberId": "e2e",
+    "accessToken": "e2e",
+    "verifyToken": "e2e",
+    "languageCode": "es_DO",
+    "templates": {
+      "paymentConfirmation": "payment_receipt"
+    }
+  },
+  "voiceNotes": {
+    "enabled": false,
+    "deepgramApiKey": ""
+  },
+  "evals": {
+    "similarityThreshold": 0.7,
+    "vendors": {}
+  },
+  "accounting": {
+    "attachmentsPath": "./.run/attachments",
+    "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+    "disbursementAccounts": [
+      {
+        "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+        "name": "Caja General"
+      },
+      {
+        "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+        "name": "Cuenta de Recaudación"
+      }
+    ]
+  },
+  "applications": {
+    "coveredProvinces": ["PUERTO_PLATA"],
+    "minBusinessPhotos": 3
+  }
+}

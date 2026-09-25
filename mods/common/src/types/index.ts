@@ -15,6 +15,9 @@ export type {
 } from "./client.js";
 export type {
   LoanApplication,
+  ApplicationDocument,
+  ApplicationDocumentKind,
+  ApplicationRejectionReason,
   ApplicationStatus,
   ApplicationSource,
   MetaAd

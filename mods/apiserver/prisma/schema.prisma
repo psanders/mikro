@@ -86,6 +86,7 @@ enum CustomerDocumentType {
   CONTRACT
   ID_FRONT
   ID_BACK
+  BUSINESS_PHOTO
   OTHER
 
   @@map("customer_document_types")
@@ -150,15 +151,33 @@ enum CategoryKind {
 // every write (see the score* columns below), so there is no "scored" status.
 enum ApplicationStatus {
   DRAFT // Partial submission, still being filled in
-  RECEIVED // Completed submission, awaiting processing
-  IN_REVIEW // A human has picked it up
-  APPROVED // Human approved
-  REJECTED // Human rejected (terminal)
-  SIGNED // Signed contract uploaded
+  RECEIVED // Completed submission, waiting in the reviewers' shared queue
+  IN_REVIEW // Assigned to a reviewer, who gathers evidence
+  PENDING_DECISION // Evidence complete; waiting for an admin to decide
+  APPROVED // Admin approved (terms stored); contract + disbursement pending
   CONVERTED // Converted to Customer + Loan (terminal)
-  ABANDONED // Prospect declined intake or went silent (terminal)
+  REJECTED // Rejected with a reason (terminal)
+  ABANDONED // Draft went silent, or the customer withdrew after approval (terminal)
 
   @@map("application_statuses")
+}
+
+// Why an application was rejected. OUT_OF_COVERAGE_AREA is also set by intake.
+enum ApplicationRejectionReason {
+  OUT_OF_COVERAGE_AREA
+  PAYMENT_CAPACITY
+  DOCUMENTS
+  OTHER
+
+  @@map("application_rejection_reasons")
+}
+
+// Evidence beyond the two fixed cédula slots (which stay as idFront*/idBack* columns).
+enum ApplicationDocumentKind {
+  BUSINESS_PHOTO
+  OTHER
+
+  @@map("application_document_kinds")
 }
 
 // Origin channel of a loan application. Set once at creation; never changed.
@@ -567,10 +586,26 @@ model LoanApplication {
   recommendation String?
   scoredAt       DateTime? @map("scored_at")
 
-  // Human review decision (latest), recorded by the review mutations.
-  reviewedById String?   @map("reviewed_by_id")
-  reviewedAt   DateTime? @map("reviewed_at")
-  reviewNote   String?   @map("review_note")
+  // Review workflow (see evaluateTransition in @mikro/common). Assignment and
+  // decision are separate: the reviewer gathers evidence, an admin decides.
+  assignedReviewerId     String?   @map("assigned_reviewer_id")
+  assignedAt             DateTime? @map("assigned_at")
+  reviewerRecommendation String?   @map("reviewer_recommendation")
+  sentToDecisionAt       DateTime? @map("sent_to_decision_at")
+  decidedById            String?   @map("decided_by_id")
+  decidedAt              DateTime? @map("decided_at")
+  decisionNote           String?   @map("decision_note")
+  rejectionReason        ApplicationRejectionReason? @map("rejection_reason")
+  // The terms the admin approved; conversion lends exactly approvedAmount.
+  approvedAmount         Decimal?  @map("approved_amount")
+  approvedTermWeeks      Int?      @map("approved_term_weeks")
+  // Loan terms printed on the generated contract ({installments,
+  // installmentAmount, frequency, startDate}); conversion must lend exactly these.
+  contractTerms          Json?     @map("contract_terms")
+
+  // One-paragraph LLM summary for the feed card, refreshed on receipt and on edit.
+  aiSummary   String?   @map("ai_summary")
+  aiSummaryAt DateTime? @map("ai_summary_at")
 
   // Signed contract (Phase 3): bytes live on disk under contractsPath as
   // <sha256>.pdf; these columns are the metadata + who/when signed.
@@ -618,11 +653,34 @@ model LoanApplication {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   followUpJobs FollowUpJob[]
+  documents    ApplicationDocument[]
 
   @@index([status])
   @@index([sessionId])
   @@index([adId])
+  @@index([assignedReviewerId])
   @@map("loan_applications")
+}
+
+/// Evidence files on an application beyond the cédula slots: business photos
+/// and other documents. Bytes live in the same content-addressed store as the
+/// contract and cédula (<sha256>.<ext>); this row is metadata only.
+model ApplicationDocument {
+  id            String                  @id @default(uuid())
+  application   LoanApplication         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String                  @map("application_id")
+  kind          ApplicationDocumentKind
+  label         String?
+  filename      String
+  originalName  String                  @map("original_name")
+  mimeType      String                  @map("mime_type")
+  size          Int
+  sha256        String
+  uploadedById  String                  @map("uploaded_by_id")
+  createdAt     DateTime                @default(now()) @map("created_at")
+
+  @@index([applicationId])
+  @@map("application_documents")
 }
 
 /// Local catalog of the Meta ads we have seen produce a click, learned from the

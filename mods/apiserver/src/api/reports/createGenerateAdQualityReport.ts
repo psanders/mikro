@@ -33,11 +33,14 @@ const DEFAULT_WINDOW_DAYS = 14;
 const NO_SECTION_REACHED = "none";
 
 /**
- * Statuses that mean a human decided to lend. `SIGNED` and `CONVERTED` are past
- * `APPROVED`, so counting only `APPROVED` would make an ad look worse the better
- * it did.
+ * An admin decided to lend: APPROVED, or CONVERTED (past APPROVED — counting only
+ * APPROVED would make an ad look worse the better it did), or approved and then
+ * withdrawn by the customer (ABANDONED with approved terms). PENDING_DECISION is
+ * not a decision yet.
  */
-const APPROVED_STATUSES = new Set(["APPROVED", "SIGNED", "CONVERTED"]);
+const APPROVED_STATUSES = new Set(["APPROVED", "CONVERTED"]);
+const wasApproved = (a: { status: string; approvedAmount?: unknown }) =>
+  APPROVED_STATUSES.has(a.status) || (a.status === "ABANDONED" && a.approvedAmount != null);
 
 /** Bands worth having, and bands not. `OUT_OF_COVERAGE` is neither — it is a geography problem. */
 const GOOD_BANDS = new Set<RiskBand>(["LOW_RISK", "MODERATE_RISK"]);
@@ -283,7 +286,7 @@ export function createGenerateAdQualityReport(client: DbClient) {
         highOrVeryHigh,
         bands,
         medianScore: median(scores),
-        approved: leads.filter((a) => APPROVED_STATUSES.has(a.status)).length,
+        approved: leads.filter(wasApproved).length,
         started,
         submitRate: started > 0 ? leads.length / started : null,
         medianCompleteness:

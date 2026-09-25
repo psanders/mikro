@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { applicationPayloadSchema, normalizeApplication, scoreApplication } from "@mikro/common";
 import type { CreateApplicationInput, DbClient, LoanApplication } from "@mikro/common";
 import { logger } from "../../logger.js";
+import { recordApplicationReceived, type EventClient } from "../events/index.js";
 
 /**
  * Reviewer-initiated create: build a fresh LoanApplication in DRAFT status from
@@ -12,7 +13,7 @@ import { logger } from "../../logger.js";
  * server-side. Runs the same normalize + score pipeline as updateApplication.
  */
 export function createCreateApplication(client: DbClient) {
-  return async (input: CreateApplicationInput): Promise<LoanApplication> => {
+  return async (input: CreateApplicationInput, actorId?: string): Promise<LoanApplication> => {
     const sessionId = randomUUID();
     const payload = applicationPayloadSchema.parse({ sessionId, ...input.patch });
     const normalized = normalizeApplication(payload);
@@ -54,6 +55,10 @@ export function createCreateApplication(client: DbClient) {
       source: "MANUAL",
       score: Math.round(result.isc)
     });
+    await recordApplicationReceived(client as unknown as EventClient, app, actorId).catch(
+      (err: Error) =>
+        logger.error("failed to record application.received", { id: app.id, error: err.message })
+    );
     return app;
   };
 }

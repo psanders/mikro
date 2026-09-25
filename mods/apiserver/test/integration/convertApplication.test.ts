@@ -81,8 +81,17 @@ describe("convertApplication collector assignment", () => {
     return db.loanApplication.create({
       data: {
         sessionId: `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        status: "SIGNED",
+        // An approved application with its signed contract on file: what
+        // conversion requires since the review-flow change (no SIGNED status).
+        status: "APPROVED",
         source: "MANUAL",
+        assignedReviewerId: REVIEWER_ID,
+        approvedAmount: 5000,
+        approvedTermWeeks: 10,
+        contractFilename: "zzz000.pdf",
+        contractOriginalName: "contrato-firmado.pdf",
+        contractMimeType: "application/pdf",
+        contractSize: 1_000,
         firstName: "Pedro",
         lastName: "Martínez",
         phone: uniquePhone(),
@@ -237,7 +246,7 @@ describe("convertApplication collector assignment", () => {
       expect(await db.loan.count()).to.equal(0);
       expect(await db.accountingTransaction.count()).to.equal(0);
       const unchangedApp = await db.loanApplication.findUnique({ where: { id: app.id } });
-      expect(unchangedApp!.status).to.equal("SIGNED");
+      expect(unchangedApp!.status).to.equal("APPROVED");
     });
   });
 
@@ -295,7 +304,7 @@ describe("convertApplication collector assignment", () => {
       expect(unchangedApp!.idBackFilename).to.equal("ccc333.jpg");
     });
 
-    it("migrates nothing when the application has no stored documents", async () => {
+    it("migrates only the contract when it is the only stored document", async () => {
       const collector = await makeCollector();
       const app = await makeApplication();
 
@@ -311,7 +320,7 @@ describe("convertApplication collector assignment", () => {
       const docs = await db.customerDocument.findMany({
         where: { customerId: result.customerId }
       });
-      expect(docs).to.have.lengthOf(0);
+      expect(docs.map((d) => d.type)).to.deep.equal(["CONTRACT"]);
     });
 
     it("leaves no CustomerDocument rows when conversion fails and rolls back", async () => {

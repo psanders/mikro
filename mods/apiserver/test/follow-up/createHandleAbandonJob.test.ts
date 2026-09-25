@@ -21,10 +21,10 @@ function makeJob(overrides: Partial<FollowUpJob> = {}): FollowUpJob {
 describe("createHandleAbandonJob", () => {
   afterEach(() => sinon.restore());
 
-  it("marks application ABANDONED and job DONE when status is RECEIVED", async () => {
+  it("marks a DRAFT ABANDONED and the job DONE", async () => {
     const appUpdate = sinon.stub().resolves({});
     const jobUpdate = sinon.stub().resolves({});
-    const findUnique = sinon.stub().resolves({ id: "app-1", status: "RECEIVED" });
+    const findUnique = sinon.stub().resolves({ id: "app-1", status: "DRAFT" });
     const client = {
       loanApplication: { findUnique, update: appUpdate },
       followUpJob: { update: jobUpdate }
@@ -37,6 +37,22 @@ describe("createHandleAbandonJob", () => {
       .be.true;
     expect(jobUpdate.calledOnceWith({ where: { id: "job-2" }, data: { status: "DONE" } })).to.be
       .true;
+  });
+
+  it("never abandons a submitted (RECEIVED) application — it stays in the review queue", async () => {
+    const appUpdate = sinon.stub().resolves({});
+    const jobUpdate = sinon.stub().resolves({});
+    const findUnique = sinon.stub().resolves({ id: "app-1", status: "RECEIVED" });
+    const client = {
+      loanApplication: { findUnique, update: appUpdate },
+      followUpJob: { update: jobUpdate }
+    } as unknown as Parameters<typeof createHandleAbandonJob>[0];
+
+    await createHandleAbandonJob(client)(makeJob());
+
+    expect(appUpdate.called).to.be.false;
+    expect(jobUpdate.calledOnceWith({ where: { id: "job-2" }, data: { status: "CANCELLED" } })).to
+      .be.true;
   });
 
   it("cancels job without touching application when already past RECEIVED", async () => {

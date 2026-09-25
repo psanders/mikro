@@ -27,17 +27,18 @@ function FullscreenLoading() {
 
 /**
  * Guards every authenticated route. Unauthenticated users bounce to login.
- * ADMIN users fall through (via `<Outlet />`) to the founder app; every other
- * role (COLLECTOR/REVIEWER) sees the access screen instead — the operations UI
- * is retired, so there is no other authenticated surface for them to reach.
+ * ADMIN and REVIEWER users fall through (via `<Outlet />`) to the Ops app —
+ * reviewers get a scoped shell (see FounderShell). COLLECTOR-only users see
+ * the access screen: their surface is the mobile app.
  */
 function RequireAuth() {
   const { isAuthenticated } = useAuth();
   const whoami = trpc.whoami.useQuery(undefined, { enabled: isAuthenticated });
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (whoami.isPending) return <FullscreenLoading />;
-  const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
-  return isAdmin ? <Outlet /> : <AccessScreen />;
+  const roles = whoami.data?.roles ?? [];
+  const canUseOps = roles.includes("ADMIN") || roles.includes("REVIEWER");
+  return canUseOps ? <Outlet /> : <AccessScreen />;
 }
 
 function AppRoutes() {
@@ -55,19 +56,20 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/founder" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to="/ops" replace /> : <LoginPage />}
       />
       <Route element={<RequireAuth />}>
-        <Route path="/founder" element={<FounderShell />}>
+        {/* The app was the "founder" app until reviewers joined it; old links still work. */}
+        <Route path="/founder/*" element={<Navigate to="/ops" replace />} />
+        <Route path="/ops" element={<FounderShell />}>
           <Route index element={<FeedScreen />} />
           <Route path="buscar" element={<BusquedaScreen />} />
           <Route path="reportes" element={<ReportesScreen />} />
           <Route path="tareas" element={<TareasScreen />} />
         </Route>
-        {/* Unknown paths (including any retired operations route) redirect
-            admins to the founder app; the access screen already caught
-            non-admins above. */}
-        <Route path="*" element={<Navigate to="/founder" replace />} />
+        {/* Unknown paths (including any retired route) redirect to the Ops
+            app; the access screen already caught everyone else above. */}
+        <Route path="*" element={<Navigate to="/ops" replace />} />
       </Route>
     </Routes>
   );

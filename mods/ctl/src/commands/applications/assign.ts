@@ -78,7 +78,7 @@ export default class Assign extends MutationCommand<typeof Assign> {
     if (!ready) return;
 
     try {
-      await client.claimApplication.mutate({ id: applicationId, assigneeId });
+      await client.assignApplication.mutate({ id: applicationId, assigneeId });
       this.log(`Done! Assigned to ${assigneeLabel}.`);
     } catch (e) {
       errorHandler(e, this.error.bind(this));

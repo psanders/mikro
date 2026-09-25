@@ -35,6 +35,7 @@
     "keys:generate": "npx tsx .scripts/generate-keys.ts",
     "agents:eval": "npx tsx mods/agents/src/eval/cli.ts",
     "test:e2e": "npm run test:e2e -w @mikro/mobile",
+    "test:e2e:dashboard": "npm run build -w @mikro/apiserver && npm run test:e2e -w @mikro/dashboard",
     "start:mobile": "npm start -w @mikro/mobile -- --ios",
     "build:mobile:ios": "npm run build:ios -w @mikro/mobile",
     "build:mobile:android": "npm run build:android -w @mikro/mobile",

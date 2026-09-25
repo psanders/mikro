@@ -14,6 +14,9 @@ import type {
   LoanApplication,
   ApplicationStatus,
   ApplicationSource,
+  ApplicationRejectionReason,
+  ApplicationDocument,
+  ApplicationDocumentKind,
   MetaAd
 } from "./application.js";
 import type { CustomerTag } from "./customerTag.js";
@@ -369,11 +372,35 @@ export interface DbClient {
       where?: {
         status?: ApplicationStatus | { in: ApplicationStatus[] };
         createdAt?: { gte?: Date; lte?: Date };
+        assignedReviewerId?: string | null;
       };
       orderBy?: { createdAt?: "asc" | "desc" };
       take?: number;
       skip?: number;
     }): Promise<LoanApplication[]>;
+    /**
+     * Conditional update used by review transitions (optimistic concurrency):
+     * the row changes only if it still has the status (and assignee) we read.
+     */
+    updateMany(args: {
+      where: { id: string; status: ApplicationStatus; assignedReviewerId?: string | null };
+      data: Partial<LoanApplicationWriteData>;
+    }): Promise<{ count: number }>;
+  };
+
+  applicationDocument: {
+    create(args: {
+      data: Omit<ApplicationDocument, "id" | "createdAt">;
+    }): Promise<ApplicationDocument>;
+    findUnique(args: { where: { id: string } }): Promise<ApplicationDocument | null>;
+    findMany(args: {
+      where: { applicationId: string; kind?: ApplicationDocumentKind };
+      orderBy?: { createdAt?: "asc" | "desc" };
+    }): Promise<ApplicationDocument[]>;
+    count(args: {
+      where: { applicationId: string; kind?: ApplicationDocumentKind };
+    }): Promise<number>;
+    delete(args: { where: { id: string } }): Promise<ApplicationDocument>;
   };
 
   metaAd: {
@@ -480,9 +507,19 @@ export interface LoanApplicationWriteData {
   riskBand?: string | null;
   recommendation?: string | null;
   scoredAt?: Date | null;
-  reviewedById?: string | null;
-  reviewedAt?: Date | null;
-  reviewNote?: string | null;
+  assignedReviewerId?: string | null;
+  assignedAt?: Date | null;
+  reviewerRecommendation?: string | null;
+  sentToDecisionAt?: Date | null;
+  decidedById?: string | null;
+  decidedAt?: Date | null;
+  decisionNote?: string | null;
+  rejectionReason?: ApplicationRejectionReason | null;
+  approvedAmount?: number | null;
+  approvedTermWeeks?: number | null;
+  contractTerms?: unknown;
+  aiSummary?: string | null;
+  aiSummaryAt?: Date | null;
   contractFilename?: string | null;
   contractOriginalName?: string | null;
   contractMimeType?: string | null;

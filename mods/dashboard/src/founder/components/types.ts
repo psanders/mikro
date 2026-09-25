@@ -25,6 +25,18 @@ export interface FeedEvent {
   /** Human, Spanish one-liner — rendered as-is as the card's main line. */
   summary: string;
   payload: Record<string, unknown>;
+  /**
+   * For application.* events: the application's CURRENT state, joined by the
+   * server at read time. Application cards render from this, not the event.
+   */
+  application?: {
+    status: string;
+    assignedReviewerId: string | null;
+    decidedById: string | null;
+    score: number | null;
+    businessName: string | null;
+    aiSummary: string | null;
+  };
 }
 
 /**
@@ -69,6 +81,7 @@ export function toFeedEvent(item: FeedItem): FeedEvent {
     applicationId: item.applicationId ?? undefined,
     amount: item.amount ?? undefined,
     summary: item.summary,
-    payload: (item.payload ?? {}) as Record<string, unknown>
+    payload: (item.payload ?? {}) as Record<string, unknown>,
+    application: item.application ?? undefined
   };
 }

@@ -1,10 +1,11 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { DbClient, LoanApplication, UploadIdImageInput } from "@mikro/common";
+import type { DbClient, LoanApplication, UploadIdImageInput, TransitionActor } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { saveImage, deleteImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
+import { assertEvidenceWritable } from "./reviewApplication.js";
 
 async function loadByRef(
   client: DbClient,
@@ -23,14 +24,10 @@ async function loadByRef(
  * unlinks the previous file when it is no longer referenced.
  */
 export function createUploadIdImage(client: DbClient) {
-  return async (input: UploadIdImageInput, uploadedById: string): Promise<LoanApplication> => {
+  return async (input: UploadIdImageInput, actor: TransitionActor): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-    if (app.status === "CONVERTED") {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "Cannot change documents on a converted application."
-      });
-    }
+    const uploadedById = actor.id;
+    assertEvidenceWritable(app, actor);
 
     const saved = saveImage({ dataBase64: input.dataBase64, mimeType: input.mimeType });
     const isFront = input.side === "FRONT";

@@ -4,8 +4,6 @@
 import {
   decodeJwtPayload,
   decodeRolesFromToken,
-  hasEvaluatorRole,
-  isDualRole,
   activeRoleLabel,
   canManagePayments
 } from "../auth";
@@ -87,67 +85,18 @@ describe("decodeRolesFromToken", () => {
   });
 });
 
-describe("hasEvaluatorRole", () => {
-  it("is true for REVIEWER", () => {
-    expect(hasEvaluatorRole(["REVIEWER"])).toBe(true);
-  });
-
-  it("is true for ADMIN", () => {
-    expect(hasEvaluatorRole(["ADMIN"])).toBe(true);
-  });
-
-  it("is false for COLLECTOR-only", () => {
-    expect(hasEvaluatorRole(["COLLECTOR"])).toBe(false);
-  });
-
-  it("is false for an empty role list", () => {
-    expect(hasEvaluatorRole([])).toBe(false);
-  });
-});
-
-describe("isDualRole", () => {
-  it("is true when COLLECTOR is combined with REVIEWER", () => {
-    expect(isDualRole(["COLLECTOR", "REVIEWER"])).toBe(true);
-  });
-
-  it("is true when COLLECTOR is combined with ADMIN", () => {
-    expect(isDualRole(["COLLECTOR", "ADMIN"])).toBe(true);
-  });
-
-  it("is false for COLLECTOR-only", () => {
-    expect(isDualRole(["COLLECTOR"])).toBe(false);
-  });
-
-  it("is false for REVIEWER-only (no COLLECTOR)", () => {
-    expect(isDualRole(["REVIEWER"])).toBe(false);
-  });
-
-  // mikro/#70: ADMIN has server-side access to both surfaces even without an
-  // explicit COLLECTOR row, so ADMIN-only must also show the mode switch.
-  it("is true for ADMIN-only (no explicit COLLECTOR row)", () => {
-    expect(isDualRole(["ADMIN"])).toBe(true);
-  });
-});
-
 describe("activeRoleLabel", () => {
-  it("labels ADMIN as Administrador when in evaluator mode", () => {
-    expect(activeRoleLabel(["ADMIN"], "evaluator", true)).toBe("Administrador");
+  it("labels ADMIN as Administrador", () => {
+    expect(activeRoleLabel(["ADMIN"])).toBe("Administrador");
   });
 
-  it("labels ADMIN as Cobrador when switched to collector mode (dual-role)", () => {
-    expect(activeRoleLabel(["ADMIN"], "collector", true)).toBe("Cobrador");
+  it("labels COLLECTOR as Cobrador, also alongside REVIEWER", () => {
+    expect(activeRoleLabel(["COLLECTOR"])).toBe("Cobrador");
+    expect(activeRoleLabel(["COLLECTOR", "REVIEWER"])).toBe("Cobrador");
   });
 
   it("labels REVIEWER-only as Evaluador", () => {
-    expect(activeRoleLabel(["REVIEWER"], "evaluator", false)).toBe("Evaluador");
-  });
-
-  it("labels COLLECTOR-only as Cobrador", () => {
-    expect(activeRoleLabel(["COLLECTOR"], "evaluator", false)).toBe("Cobrador");
-  });
-
-  it("prefers Administrador over Evaluador when both ADMIN and REVIEWER are present", () => {
-    expect(activeRoleLabel(["ADMIN", "REVIEWER"], "evaluator", false)).toBe("Administrador");
+    expect(activeRoleLabel(["REVIEWER"])).toBe("Evaluador");
   });
 });
 

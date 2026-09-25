@@ -75,7 +75,7 @@ export function createApplicationIntakeHandler(deps: Deps) {
       const outOfArea =
         !normalized.partial &&
         application.status === "REJECTED" &&
-        application.reviewNote === OUT_OF_COVERAGE_AREA;
+        application.rejectionReason === OUT_OF_COVERAGE_AREA;
 
       if (outOfArea) {
         res.json({ result: "ok", outcome: "out_of_area" });

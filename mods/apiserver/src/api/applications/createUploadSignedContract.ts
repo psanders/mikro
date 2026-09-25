@@ -1,51 +1,45 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { resolveReviewTransition } from "@mikro/common";
-import type { DbClient, LoanApplication, UploadSignedContractInput } from "@mikro/common";
-import { TRPCError } from "@trpc/server";
+import type {
+  DbClient,
+  LoanApplication,
+  TransitionActor,
+  UploadSignedContractInput
+} from "@mikro/common";
 import { saveContract } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
-
-async function loadByRef(
-  client: DbClient,
-  ref: { id?: string; sessionId?: string }
-): Promise<LoanApplication> {
-  const app = ref.id
-    ? await client.loanApplication.findUnique({ where: { id: ref.id } })
-    : await client.loanApplication.findFirst({ where: { sessionId: ref.sessionId! } });
-  if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Loan application not found" });
-  return app;
-}
+import { assertApprovedStepWritable, loadApplication } from "./reviewApplication.js";
 
 /**
- * Store a signed contract PDF for an APPROVED application and move it to SIGNED.
+ * Store (or replace) the signed contract PDF of an APPROVED application. The
+ * status does not change: a stored contract is what `convert` requires.
  */
 export function createUploadSignedContract(client: DbClient) {
-  return async (input: UploadSignedContractInput, signedById: string): Promise<LoanApplication> => {
-    const app = await loadByRef(client, input);
-    const to = resolveReviewTransition("sign", app.status);
-    if (!to) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: `Cannot upload a signed contract for an application in status ${app.status}.`
-      });
-    }
+  return async (
+    input: UploadSignedContractInput,
+    actor: TransitionActor
+  ): Promise<LoanApplication> => {
+    const app = await loadApplication(client, input);
+    assertApprovedStepWritable(app, actor);
     const saved = saveContract({ dataBase64: input.dataBase64 });
     const updated = await client.loanApplication.update({
       where: { id: app.id },
       data: {
-        status: to,
         contractFilename: saved.filename,
         contractOriginalName: input.originalName,
         contractMimeType: input.mimeType,
         contractSize: saved.size,
         contractSha256: saved.sha256,
-        signedById,
+        signedById: actor.id,
         signedAt: new Date()
       }
     });
-    logger.verbose("loan application signed", { id: app.id, filename: saved.filename, signedById });
+    logger.verbose("signed contract stored", {
+      id: app.id,
+      filename: saved.filename,
+      by: actor.id
+    });
     return updated;
   };
 }

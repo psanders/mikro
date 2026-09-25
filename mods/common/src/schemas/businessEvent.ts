@@ -11,8 +11,16 @@ import { outboundMessageStatusEnum } from "./whatsapp.js";
 export const businessEventTypeEnum = z.enum([
   "payment.collected",
   "payment.reversed",
+  // Application review lifecycle (openspec add-application-review-flow).
+  "application.received",
+  "application.assigned",
+  "application.sent_to_decision",
+  "application.returned",
   "application.approved",
   "application.rejected",
+  "application.withdrawn",
+  // RETIRED: signing is no longer a status (a stored contract is a requirement
+  // of conversion). No longer produced; kept so historical rows still render.
   "application.signed",
   "application.converted",
   "application.deleted",
@@ -47,16 +55,51 @@ const paymentReversedPayloadSchema = z.object({
   reason: z.string().optional()
 });
 
-const applicationApprovedPayloadSchema = z.object({
+/**
+ * Display data every application review event carries, so a feed card renders
+ * without joining the application (which may later be deleted). All optional:
+ * events recorded before this existed don't carry them.
+ */
+const applicationEventBase = z.object({
   applicationId: z.uuid(),
+  businessName: z.string().optional(),
+  score: z.number().int().optional()
+});
+
+const applicationReceivedPayloadSchema = applicationEventBase.extend({
+  source: z.string().optional(),
+  requestedAmount: z.number().optional()
+});
+
+const applicationAssignedPayloadSchema = applicationEventBase.extend({
+  assigneeId: z.uuid(),
+  assigneeName: z.string(),
+  // True when an admin moved an application that was already in review.
+  reassigned: z.boolean().optional()
+});
+
+const applicationSentToDecisionPayloadSchema = applicationEventBase.extend({
+  recommendation: z.string().optional()
+});
+
+const applicationReturnedPayloadSchema = applicationEventBase.extend({
+  note: z.string()
+});
+
+const applicationWithdrawnPayloadSchema = applicationEventBase;
+
+const applicationApprovedPayloadSchema = applicationEventBase.extend({
+  approvedAmount: z.number().optional(),
+  approvedTermWeeks: z.number().int().optional(),
   // True when the approval overrode a policy rule; feed renders these
   // with the exception (amber) treatment.
   policyException: z.boolean(),
   note: z.string().optional()
 });
 
-const applicationRejectedPayloadSchema = z.object({
-  applicationId: z.uuid(),
+const applicationRejectedPayloadSchema = applicationEventBase.extend({
+  // RejectionReason; optional because older events only carried a free-text note.
+  reason: z.string().optional(),
   note: z.string().optional()
 });
 
@@ -189,6 +232,11 @@ const messageSentPayloadSchema = z.object({
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
   "payment.reversed": paymentReversedPayloadSchema,
+  "application.received": applicationReceivedPayloadSchema,
+  "application.assigned": applicationAssignedPayloadSchema,
+  "application.sent_to_decision": applicationSentToDecisionPayloadSchema,
+  "application.returned": applicationReturnedPayloadSchema,
+  "application.withdrawn": applicationWithdrawnPayloadSchema,
   "application.approved": applicationApprovedPayloadSchema,
   "application.rejected": applicationRejectedPayloadSchema,
   "application.signed": applicationSignedPayloadSchema,
@@ -237,6 +285,8 @@ export const listFeedEventsSchema = z.object({
   limit: z.number().int().positive().max(100).optional(),
   types: z.array(businessEventTypeEnum).optional(),
   actorId: z.uuid().optional(),
+  /** One application's history (the side panel's Actividad tab). */
+  applicationId: z.string().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional()
 });

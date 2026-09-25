@@ -2,9 +2,15 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { applicationPayloadSchema, normalizeApplication, scoreApplication } from "@mikro/common";
-import type { DbClient, LoanApplication, UpdateApplicationInput } from "@mikro/common";
+import type {
+  DbClient,
+  LoanApplication,
+  UpdateApplicationInput,
+  TransitionActor
+} from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import { assertEvidenceWritable } from "./reviewApplication.js";
 
 async function loadByRef(
   client: DbClient,
@@ -20,17 +26,16 @@ async function loadByRef(
 /**
  * Reviewer edit: merge a field patch over the application's rawData, re-derive
  * the stable columns, recompute the score, and persist — leaving status, review
- * audit, contract, and conversion links untouched. Locked once CONVERTED.
+ * audit, contract, and conversion links untouched. Only the assigned reviewer,
+ * only while IN_REVIEW (see assertEvidenceWritable).
  */
 export function createUpdateApplication(client: DbClient) {
-  return async (input: UpdateApplicationInput): Promise<LoanApplication> => {
+  return async (
+    input: UpdateApplicationInput,
+    actor: TransitionActor
+  ): Promise<LoanApplication> => {
     const app = await loadByRef(client, input);
-    if (app.status === "CONVERTED") {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "A converted application is locked and cannot be edited."
-      });
-    }
+    assertEvidenceWritable(app, actor);
 
     const existing = (app.rawData as Record<string, unknown> | null) ?? {};
     const merged = { ...existing, ...input.patch };

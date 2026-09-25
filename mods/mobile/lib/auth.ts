@@ -132,11 +132,6 @@ export async function getRoles(): Promise<Role[]> {
   }
 }
 
-/** True when roles include REVIEWER or ADMIN — the evaluator surface. */
-export function hasEvaluatorRole(roles: Role[]): boolean {
-  return roles.includes("REVIEWER") || roles.includes("ADMIN");
-}
-
 /**
  * True when a user may see payment data (balances, collection history) or
  * trigger a collection (the "Cobrar" flow). REVIEWER-only accounts must not:
@@ -148,25 +143,10 @@ export function canManagePayments(roles: Role[]): boolean {
   return roles.includes("COLLECTOR") || roles.includes("ADMIN");
 }
 
-/**
- * True when a user should see the Collector/Reviewer mode switch: either
- * they hold both COLLECTOR and an evaluator role, or they're ADMIN (who has
- * server-side access to both surfaces — `getCollectorDashboard` uses
- * `protectedProcedure`, not a role guard — even without an explicit
- * COLLECTOR row). See mikro/#70.
- */
-export function isDualRole(roles: Role[]): boolean {
-  return (roles.includes("COLLECTOR") || roles.includes("ADMIN")) && hasEvaluatorRole(roles);
-}
-
-/**
- * Human label for the role currently active on screen. For dual-role users
- * this tracks `navMode` so the label matches whichever screens are actually
- * rendered (see mikro/#70); ADMIN outranks REVIEWER when both are present.
- */
-export function activeRoleLabel(roles: Role[], navMode: NavMode, dual: boolean): string {
-  if (dual && navMode === "collector") return "Cobrador";
+/** Human label for the account's role (ADMIN outranks COLLECTOR outranks REVIEWER). */
+export function activeRoleLabel(roles: Role[]): string {
   if (roles.includes("ADMIN")) return "Administrador";
+  if (roles.includes("COLLECTOR")) return "Cobrador";
   if (roles.includes("REVIEWER")) return "Evaluador";
   return "Cobrador";
 }
@@ -195,25 +175,12 @@ export async function clearUserName(): Promise<void> {
   await SecureStore.deleteItemAsync(NAME_KEY);
 }
 
-export type NavMode = "evaluator" | "collector";
-
 const NAV_MODE_KEY = "mikro_nav_mode";
 
 /**
- * Manual collector/evaluator navigation preference for dual-role users
- * (COLLECTOR + REVIEWER/ADMIN). Only meaningful for dual-role accounts —
- * single-role users are routed purely by `hasEvaluatorRole`/role checks and
- * never read this. Defaults to "evaluator" per design.md when unset.
+ * Remove the retired collector/evaluator mode preference left by older builds
+ * (the evaluator moved to the Ops desktop app). Called on logout.
  */
-export async function getNavMode(): Promise<NavMode> {
-  const raw = await SecureStore.getItemAsync(NAV_MODE_KEY);
-  return raw === "collector" ? "collector" : "evaluator";
-}
-
-export async function setNavMode(mode: NavMode): Promise<void> {
-  await SecureStore.setItemAsync(NAV_MODE_KEY, mode);
-}
-
 export async function clearNavMode(): Promise<void> {
   await SecureStore.deleteItemAsync(NAV_MODE_KEY);
 }

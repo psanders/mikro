@@ -16,8 +16,22 @@ export interface FeedTypeGroup {
   types: BusinessEventType[];
 }
 
-/** Same six groupings the feed's old type pills used — now multi-selectable. */
+/** Type groupings for the filter popup — multi-selectable. */
 export const FEED_TYPE_GROUPS: FeedTypeGroup[] = [
+  {
+    id: "solicitudes",
+    label: "Solicitudes",
+    types: [
+      "application.received",
+      "application.assigned",
+      "application.sent_to_decision",
+      "application.returned",
+      "application.approved",
+      "application.rejected",
+      "application.withdrawn",
+      "application.converted"
+    ]
+  },
   { id: "pagos", label: "Pagos", types: ["payment.collected", "payment.reversed"] },
   { id: "contratos", label: "Contratos", types: ["application.signed", "application.converted"] },
   {

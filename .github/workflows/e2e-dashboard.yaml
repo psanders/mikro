@@ -1,0 +1,59 @@
+name: Ops app E2E
+
+# Playwright suite for the Ops app (mods/dashboard) against a real apiserver on
+# a throwaway SQLite database (see mods/dashboard/playwright.config.ts and
+# e2e/prepare.mjs). Runs on pull requests that can change what the Ops app
+# shows or how the review flow behaves.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "mods/dashboard/**"
+      - "mods/apiserver/**"
+      - "mods/common/**"
+      - "package-lock.json"
+      - ".github/workflows/e2e-dashboard.yaml"
+
+concurrency:
+  group: e2e-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  e2e:
+    name: Ops app end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: mods/dashboard
+
+      - name: Build and run the suite
+        run: npm run test:e2e:dashboard
+        env:
+          CI: "1"
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            mods/dashboard/playwright-report
+            mods/dashboard/test-results
+          retention-days: 7

@@ -1,7 +1,9 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Founder feed home (`/founder`) — Pencil "Feed en vivo" board (`EzobQ`).
+ * Ops feed home (`/ops`) — Pencil "Feed en vivo" board (`EzobQ`). Shared by
+ * admins and reviewers: the server scopes application events per role, and
+ * applications render as one card each (section 08, see applicationFeedLayout).
  * Reverse-chronological business events grouped by day, backed by
  * `listFeedEvents`'s opaque `(occurredAt, id)` cursor. Cards are compact and
  * expand per-card; the persistent filter bar (Tipo/Actor/Rango de fechas)
@@ -44,6 +46,16 @@ import {
   type FeedFilterValue
 } from "./components/feedFilters";
 import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/types";
+import { ApplicationFeedCard } from "./applications/ApplicationFeedCard";
+import { ClosedGroupRow, QueueGroupRow } from "./applications/ApplicationGroupRow";
+import {
+  isApplicationEvent,
+  isDayRow,
+  latestPerApplication,
+  layoutDay,
+  type DayRow
+} from "./applications/applicationFeedLayout";
+import { useViewer } from "./applications/useViewer";
 import type { RouterOutputs } from "../lib/trpc";
 
 const RESTORE_WINDOW_MS = RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -117,6 +129,7 @@ function groupByDay(events: FeedEvent[]): DayGroup[] {
 }
 
 export function FeedScreen() {
+  const viewer = useViewer();
   const toast = useToast();
   const utils = trpc.useUtils();
   const copilot = useCopilot();
@@ -173,7 +186,9 @@ export function FeedScreen() {
   // Always-visible safety net (issue #215): a firing left unconfirmed past
   // the day it fired otherwise has no way back into view once it scrolls out
   // of the "Hoy"-default feed filter. Independent of `filterValue` on purpose.
-  const openFiringsQuery = trpc.tasks.listOpenFirings.useQuery();
+  const openFiringsQuery = trpc.tasks.listOpenFirings.useQuery(undefined, {
+    enabled: viewer?.isAdmin ?? false
+  });
   const staleOpenFirings = useMemo(() => {
     const cutoff = startOfToday();
     return (openFiringsQuery.data ?? []).filter((f) => new Date(f.dueAt) < cutoff);
@@ -184,6 +199,20 @@ export function FeedScreen() {
     () => (actorsQuery.data ?? []).map((u) => ({ id: u.id, name: u.name })),
     [actorsQuery.data]
   );
+  const userNames = useMemo(() => new Map(actors.map((a) => [a.id, a.name])), [actors]);
+  // Open application cards, by application id (not event id): a card whose
+  // application just changed re-renders from a newer event and must stay open.
+  const [openApps, setOpenApps] = useState<Set<string>>(() => new Set());
+  const appCardProps = (applicationId: string) => ({
+    expanded: openApps.has(applicationId),
+    onToggle: (open: boolean) =>
+      setOpenApps((prev) => {
+        const next = new Set(prev);
+        if (open) next.add(applicationId);
+        else next.delete(applicationId);
+        return next;
+      })
+  });
 
   const restore = trpc.restoreApplication.useMutation({
     onSuccess: () => {
@@ -197,7 +226,8 @@ export function FeedScreen() {
 
   const events = useMemo(() => {
     const raw = feed.data?.pages.flatMap((p) => p.items) ?? [];
-    return raw.map(toFeedEvent);
+    // One card per application, at its newest event (see applicationFeedLayout).
+    return latestPerApplication(raw.map(toFeedEvent));
   }, [feed.data]);
 
   const groups = useMemo(() => groupByDay(events), [events]);
@@ -213,19 +243,51 @@ export function FeedScreen() {
     copilot.openWith(subjectQuestion(target, event.customerName));
   }
 
+  /** Plain events keep the existing run grouping; application rows render on their own. */
+  function renderRows(rows: FeedEvent[], key: string) {
+    return groupFeedRuns(rows, (e) => !isTaskEvent(e) && !isApplicationEvent(e)).map((row) => {
+      if (Array.isArray(row)) {
+        return (
+          <GroupedFeedRow
+            key={`${key}-${row[0]!.id}`}
+            events={row}
+            canRestore={canRestore}
+            onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
+            onNavigate={handleNavigate}
+            onAskCopilot={(question) => copilot.openWith(question)}
+          />
+        );
+      }
+      const event = row;
+      const Card = isTaskEvent(event) ? TaskFeedCard : FeedCard;
+      return (
+        <Card
+          key={event.id}
+          event={event}
+          canRestore={canRestore(event)}
+          onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
+          onNavigate={(target) => handleNavigate(event, target)}
+          onAskCopilot={(question) => copilot.openWith(question)}
+        />
+      );
+    });
+  }
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
         <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Feed</h1>
-        <button
-          type="button"
-          onClick={() => copilot.openWith()}
-          title="Copiloto"
-          aria-label="Copiloto"
-          className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
-        >
-          <Sparkles size={17} />
-        </button>
+        {viewer?.isAdmin && (
+          <button
+            type="button"
+            onClick={() => copilot.openWith()}
+            title="Copiloto"
+            aria-label="Copiloto"
+            className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+          >
+            <Sparkles size={17} />
+          </button>
+        )}
       </header>
 
       <FilterBar value={filterValue} actors={actors} onApply={applyFilter} />
@@ -273,31 +335,46 @@ export function FeedScreen() {
         {groups.map((group) => (
           <div key={group.key}>
             {formatDayLabel(group.date) !== "Hoy" && <FeedDayHeader date={group.date} />}
-            {groupFeedRuns(group.events, (e) => !isTaskEvent(e)).map((row) => {
-              if (Array.isArray(row)) {
+            {segments(layoutDay(group.events)).map((seg, i) => {
+              if (seg.kind === "rows") return renderRows(seg.rows, `${group.key}-${i}`);
+              const row = seg.row;
+              if (!viewer) return null;
+              if (row.kind === "application") {
                 return (
-                  <GroupedFeedRow
-                    key={row[0]!.id}
-                    events={row}
-                    canRestore={canRestore}
-                    onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
-                    onNavigate={handleNavigate}
-                    onAskCopilot={(question) => copilot.openWith(question)}
+                  <ApplicationFeedCard
+                    key={row.event.applicationId}
+                    event={row.event}
+                    viewer={viewer}
+                    userNames={userNames}
+                    {...appCardProps(row.event.applicationId!)}
                   />
                 );
               }
-              const event = row;
-              const Card = isTaskEvent(event) ? TaskFeedCard : FeedCard;
-              return (
-                <Card
-                  key={event.id}
-                  event={event}
-                  canRestore={canRestore(event)}
-                  onRestore={(e) => restore.mutate({ deletionEventId: e.id })}
-                  onNavigate={(target) => handleNavigate(event, target)}
-                  onAskCopilot={(question) => copilot.openWith(question)}
-                />
-              );
+              if (row.kind === "queue") {
+                return (
+                  <QueueGroupRow key={`${group.key}-queue`} events={row.events}>
+                    {row.events.map((e) => (
+                      <ApplicationFeedCard
+                        key={e.applicationId}
+                        event={e}
+                        viewer={viewer}
+                        userNames={userNames}
+                        {...appCardProps(e.applicationId!)}
+                      />
+                    ))}
+                  </QueueGroupRow>
+                );
+              }
+              if (row.kind === "closed") {
+                return (
+                  <ClosedGroupRow
+                    key={`${group.key}-closed`}
+                    events={row.events}
+                    dayLabel={formatDayLabel(group.date)}
+                  />
+                );
+              }
+              return null;
             })}
           </div>
         ))}
@@ -317,4 +394,21 @@ export function FeedScreen() {
       </div>
     </div>
   );
+}
+
+type Segment = { kind: "rows"; rows: FeedEvent[] } | { kind: "app"; row: DayRow };
+
+/** Split a laid-out day into runs of plain events and single application rows. */
+function segments(items: Array<FeedEvent | DayRow>): Segment[] {
+  const out: Segment[] = [];
+  for (const item of items) {
+    if (isDayRow(item)) {
+      out.push({ kind: "app", row: item });
+    } else {
+      const last = out[out.length - 1];
+      if (last && last.kind === "rows") last.rows.push(item);
+      else out.push({ kind: "rows", rows: [item] });
+    }
+  }
+  return out;
 }

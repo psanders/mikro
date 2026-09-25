@@ -10,8 +10,9 @@
  * with copilot creation: both paths hit the same tasks.create validation.
  */
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, Info, X } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, Info } from "lucide-react";
 import { cn } from "../../lib/cn";
+import { SidePanel } from "./SidePanel";
 
 export interface TaskAutomationOption {
   id: string;
@@ -139,23 +140,41 @@ export function TaskFormModal({
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#14254A66] p-6">
-      <div className="flex max-h-full w-[520px] flex-col gap-4 overflow-y-auto rounded-[16px] bg-white p-7 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-semibold tracking-[-0.2px] text-[#14254A]">
-            {mode === "edit" ? "Editar tarea" : "Nueva tarea"}
-          </h2>
-          <button
-            type="button"
-            aria-label="Cerrar"
-            onClick={onClose}
-            className="text-[#697A93] transition hover:text-[#14254A]"
-          >
-            <X size={18} />
-          </button>
-        </div>
+  const footer = (
+    <>
+      <span className="flex-1" />
+      <button
+        type="button"
+        onClick={onClose}
+        className="inline-flex items-center rounded-[9px] border border-[#E5EAF1] bg-white px-[16px] py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        disabled={submitting}
+        onClick={handleSubmit}
+        className={cn(
+          "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
+          submitting && "cursor-not-allowed opacity-60 hover:bg-[#1F4AA8]"
+        )}
+      >
+        <Check size={16} />
+        {submitting ? "Guardando…" : mode === "edit" ? "Guardar cambios" : "Crear tarea"}
+      </button>
+    </>
+  );
 
+  return (
+    <SidePanel
+      open
+      onClose={onClose ?? (() => {})}
+      title={mode === "edit" ? "Editar tarea" : "Nueva tarea"}
+      icon={CalendarClock}
+      footer={footer}
+      testId="task-panel"
+    >
+      <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-[7px]">
           <span className={FIELD_LABEL}>Automatización</span>
           <div className="relative">
@@ -340,29 +359,7 @@ export function TaskFormModal({
         )}
 
         {error && <p className="text-[12px] font-semibold leading-tight text-[#DC2626]">{error}</p>}
-
-        <div className="flex items-center justify-end gap-[10px]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center rounded-[9px] border border-[#E5EAF1] bg-white px-[16px] py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={handleSubmit}
-            className={cn(
-              "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
-              submitting && "cursor-not-allowed opacity-60 hover:bg-[#1F4AA8]"
-            )}
-          >
-            <Check size={16} />
-            {submitting ? "Guardando…" : mode === "edit" ? "Guardar cambios" : "Crear tarea"}
-          </button>
-        </div>
       </div>
-    </div>
+    </SidePanel>
   );
 }

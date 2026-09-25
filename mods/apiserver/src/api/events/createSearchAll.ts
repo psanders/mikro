@@ -90,6 +90,7 @@ export function createSearchAll(client: EventClient) {
       loanId: row.loanId,
       loanNumber: null,
       applicationId: row.applicationId,
+      application: null,
       amount: row.amount == null ? null : amountToNumber(row.amount),
       summary: row.summary,
       payload: JSON.parse(row.payload)

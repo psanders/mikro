@@ -1,119 +1,131 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Shared display + transition helpers for loan applications (solicitudes),
- * mirroring the backend lifecycle and review transition map.
+ * Display helpers for loan applications (solicitudes) in the founder app.
+ * Which actions a person may take is NOT decided here: that is
+ * `evaluateTransition` from @mikro/common, the same rules the server enforces.
  */
-import type { BadgeTone } from "../components/ui/Badge";
+import {
+  evaluateTransition,
+  TRANSITION_BLOCK_LABELS,
+  type ApplicationForTransition,
+  type EvidenceStatus,
+  type ReviewAction,
+  type TransitionActor
+} from "@mikro/common/schemas";
 
 export type ApplicationStatus =
   | "DRAFT"
   | "RECEIVED"
   | "IN_REVIEW"
+  | "PENDING_DECISION"
   | "APPROVED"
+  | "CONVERTED"
   | "REJECTED"
-  | "SIGNED"
-  | "CONVERTED";
+  | "ABANDONED";
 
-// Status renders as plain text (Pencil v2): neutral everywhere except "Nueva"
-// (RECEIVED) which is green to flag a new, actionable item in the inbox.
-export const STATUS_META: Record<ApplicationStatus, { label: string; tone: BadgeTone }> = {
-  DRAFT: { label: "Borrador", tone: "neutral" },
-  RECEIVED: { label: "Nueva", tone: "green" },
-  IN_REVIEW: { label: "En evaluación", tone: "neutral" },
-  APPROVED: { label: "Aprobada", tone: "neutral" },
-  REJECTED: { label: "Rechazada", tone: "neutral" },
-  SIGNED: { label: "Firmada", tone: "green" },
-  CONVERTED: { label: "Convertida", tone: "green" }
+/**
+ * One label per status. Color follows one rule across the app: violet while
+ * the application is in progress, green/red only for the final outcome.
+ */
+export const STATUS_META: Record<ApplicationStatus, { label: string; tone: StatusTone }> = {
+  DRAFT: { label: "Borrador", tone: "muted" },
+  RECEIVED: { label: "Recibida", tone: "violet" },
+  IN_REVIEW: { label: "En evaluación", tone: "violet" },
+  PENDING_DECISION: { label: "Esperando decisión", tone: "violet" },
+  APPROVED: { label: "Aprobada", tone: "violet" },
+  CONVERTED: { label: "Convertida", tone: "green" },
+  REJECTED: { label: "Rechazada", tone: "red" },
+  ABANDONED: { label: "Desistida", tone: "muted" }
 };
 
-export function statusMeta(status: string): { label: string; tone: BadgeTone } {
-  return STATUS_META[status as ApplicationStatus] ?? { label: status, tone: "neutral" };
+export type StatusTone = "violet" | "green" | "red" | "muted";
+
+export function statusMeta(status: string): { label: string; tone: StatusTone } {
+  return STATUS_META[status as ApplicationStatus] ?? { label: status, tone: "muted" };
 }
 
-export const RISK_BAND_META: Record<string, { label: string; tone: BadgeTone }> = {
-  LOW_RISK: { label: "Riesgo bajo", tone: "neutral" },
-  MODERATE_RISK: { label: "Riesgo moderado", tone: "neutral" },
-  MEDIUM_HIGH_RISK: { label: "Riesgo medio-alto", tone: "neutral" },
-  HIGH_RISK: { label: "Riesgo alto", tone: "neutral" },
-  VERY_HIGH_RISK: { label: "Riesgo muy alto", tone: "neutral" },
-  OUT_OF_COVERAGE: { label: "Fuera de zona", tone: "neutral" }
-};
+/** Closed applications leave the active feed for the day's "Cerradas" group. */
+export const CLOSED_STATUSES: ReadonlySet<string> = new Set(["CONVERTED", "REJECTED", "ABANDONED"]);
 
-export function riskBandMeta(band: string | null): { label: string; tone: BadgeTone } | null {
-  if (!band) return null;
-  return RISK_BAND_META[band] ?? { label: band, tone: "neutral" };
+export function isClosed(status: string | null | undefined): boolean {
+  return Boolean(status && CLOSED_STATUSES.has(status));
 }
 
-// Scoring engine recommendation codes → human-readable Spanish labels.
-export const RECOMMENDATION_META: Record<string, string> = {
-  APPROVE: "Aprobar",
-  APPROVE_WITH_CONDITIONS: "Aprobar con condiciones",
-  MANUAL_REVIEW: "Revisión manual",
-  LIKELY_REJECT: "Probable rechazo",
-  REJECT: "Rechazar",
-  REJECT_OUT_OF_ZONE: "Rechazar — fuera de zona",
-  REJECT_CRITICAL_BUSINESS: "Rechazar — negocio no elegible"
-};
-
-export function recommendationLabel(value: string | null | undefined): string {
-  if (!value) return "";
-  return RECOMMENDATION_META[value] ?? value;
+/** Score chip color: the risk scale, independent of the status colors. */
+export function scoreTone(score: number | null | undefined): "green" | "amber" | "red" | "muted" {
+  if (score == null) return "muted";
+  if (score >= 65) return "green";
+  if (score >= 50) return "amber";
+  return "red";
 }
 
-// Scoring confidence codes → human-readable Spanish labels.
-export const CONFIDENCE_META: Record<string, string> = {
-  HIGH: "Alta",
-  MEDIUM: "Media",
-  LOW: "Baja"
-};
-
-export function confidenceLabel(value: string | null | undefined): string {
-  if (!value) return "";
-  return CONFIDENCE_META[value] ?? value;
+export interface ActionCheck {
+  enabled: boolean;
+  /** Spanish reason when disabled (from TRANSITION_BLOCK_LABELS). */
+  reason?: string;
 }
 
-/** Status filter tabs for the list (Pencil Jnc0R), in display order. */
-export const STATUS_TABS: Array<{ label: string; value: ApplicationStatus }> = [
-  { label: "Nuevas", value: "RECEIVED" },
-  { label: "En evaluación", value: "IN_REVIEW" },
-  { label: "Aprobadas", value: "APPROVED" },
-  { label: "Documentos", value: "SIGNED" },
-  { label: "Convertidas", value: "CONVERTED" },
-  { label: "Rechazadas", value: "REJECTED" },
-  // Pre-submission drafts (and abandoned ones) live at the end — visible but out
-  // of the active-work flow. Replaces the removed "Todas" tab for this purpose.
-  { label: "Borradores", value: "DRAFT" }
-];
+/**
+ * Whether `actor` may start `action` now. Input-only requirements (a reason, a
+ * note, terms) are ignored — those are asked for when the action opens.
+ */
+export function checkAction(
+  app: ApplicationForTransition,
+  action: ReviewAction,
+  actor: TransitionActor,
+  evidence?: EvidenceStatus
+): ActionCheck {
+  const r = evaluateTransition(app, action, actor, {}, { evidence }, { ignoreInput: true });
+  return r.ok ? { enabled: true } : { enabled: false, reason: TRANSITION_BLOCK_LABELS[r.reason] };
+}
 
-/** Default filter when none is remembered. */
-export const DEFAULT_STATUS: ApplicationStatus = "RECEIVED";
-
-/** Which review/pipeline actions are valid from a given status (mirrors the API). */
-export function allowedActions(status: string): {
-  canPromote: boolean;
-  canClaim: boolean;
-  canApprove: boolean;
-  canReject: boolean;
-  canReopen: boolean;
-  canSign: boolean;
-  canConvert: boolean;
-} {
+/** The rule slice from a `getApplication` row (money columns may be Decimal strings). */
+export function forTransition(app: {
+  status: string;
+  assignedReviewerId: string | null;
+  reviewerRecommendation: string | null;
+  contractFilename: string | null;
+  approvedAmount: unknown;
+  contractTerms?: unknown;
+}): ApplicationForTransition {
   return {
-    canPromote: status === "DRAFT",
-    canClaim: status === "RECEIVED",
-    canApprove: status === "RECEIVED" || status === "IN_REVIEW",
-    canReject: status === "RECEIVED" || status === "IN_REVIEW",
-    canReopen: status === "APPROVED" || status === "REJECTED",
-    canSign: status === "APPROVED",
-    canConvert: status === "SIGNED"
+    status: app.status as ApplicationForTransition["status"],
+    assignedReviewerId: app.assignedReviewerId,
+    reviewerRecommendation: app.reviewerRecommendation,
+    contractFilename: app.contractFilename,
+    approvedAmount: app.approvedAmount == null ? null : Number(app.approvedAmount),
+    contractTerms: app.contractTerms ?? null
   };
+}
+
+export function applicantName(app: {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  businessName?: string | null;
+}): string {
+  const name = [app.firstName, app.lastName].filter(Boolean).join(" ").trim();
+  return name || app.businessName?.trim() || `#${app.id.slice(0, 8)}`;
+}
+
+export const RISK_BAND_META: Record<string, string> = {
+  LOW_RISK: "Riesgo bajo",
+  MODERATE_RISK: "Riesgo moderado",
+  MEDIUM_HIGH_RISK: "Riesgo medio-alto",
+  HIGH_RISK: "Riesgo alto",
+  VERY_HIGH_RISK: "Riesgo muy alto",
+  OUT_OF_COVERAGE: "Fuera de zona"
+};
+
+export function riskBandLabel(band: string | null | undefined): string {
+  return band ? (RISK_BAND_META[band] ?? band) : "";
 }
 
 export function formatDop(value: unknown): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return "";
-  return `RD$ ${n.toLocaleString("es-DO", { maximumFractionDigits: 0 })}`;
+  return `RD$${n.toLocaleString("es-DO", { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDate(value: string | Date | null | undefined): string {
@@ -126,8 +138,15 @@ export function formatDate(value: string | Date | null | undefined): string {
       );
 }
 
-/** Detect a tRPC FORBIDDEN error (non-reviewer) for a friendly access message. */
+/** Detect a tRPC FORBIDDEN error for a friendly access message. */
 export function isForbidden(err: unknown): boolean {
   const data = (err as { data?: { code?: string } } | null)?.data;
   return data?.code === "FORBIDDEN";
+}
+
+/** The Spanish part of a server error message (drops the "[CODE: …]" debug tail). */
+export function friendlyError(err: unknown, fallback: string): string {
+  const msg = (err as { message?: string } | null)?.message;
+  if (!msg) return fallback;
+  return msg.replace(/\s*\[[A-Z_]+:.*\]$/, "").trim() || fallback;
 }

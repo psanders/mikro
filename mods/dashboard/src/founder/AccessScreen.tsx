@@ -39,11 +39,11 @@ export function AccessScreen() {
           </div>
           <div className="flex flex-col gap-2">
             <p className="text-[17px] font-semibold text-[#14254A]">
-              Esta aplicación es el panel de fundadores
+              Esta aplicación es el panel de Ops
             </p>
             <p className="text-[13px] font-medium leading-[1.5] text-[#697A93]">
-              {userName ? `${userName}, tu` : "Tu"} trabajo diario — cobros, revisión y solicitudes
-              — ahora vive en la app móvil de Mikro. Ábrela en tu teléfono para continuar.
+              Es para quien evalúa y decide solicitudes. {userName ? `${userName}, tu` : "Tu"}{" "}
+              trabajo de cobro vive en la app móvil de Mikro. Ábrela en tu teléfono para continuar.
             </p>
           </div>
         </div>

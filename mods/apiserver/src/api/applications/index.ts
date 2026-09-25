@@ -10,10 +10,18 @@ export { createSendApplicationPromo, type PromoResult } from "./createSendApplic
 export { createListApplications } from "./createListApplications.js";
 export { createGetApplication } from "./createGetApplication.js";
 export {
-  createClaimApplication,
+  createAssignApplication,
+  createSetRecommendation,
+  createSendToDecision,
+  createReturnToReviewer,
   createApproveApplication,
   createRejectApplication,
-  createReopenApplication
+  createWithdrawApplication,
+  createCopilotApproveApplication,
+  createCopilotRejectApplication,
+  loadActor,
+  loadApplication,
+  assertEvidenceWritable
 } from "./reviewApplication.js";
 export { createUploadSignedContract } from "./createUploadSignedContract.js";
 export {

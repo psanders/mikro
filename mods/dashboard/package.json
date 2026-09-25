@@ -15,7 +15,8 @@
     "tauri:build": "tauri build",
     "tauri:build:local": "tauri build --config src-tauri/tauri.local.conf.json",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@mikro/apiserver": "*",
@@ -36,6 +37,7 @@
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@storybook/react-vite": "^10.4.2",
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "^2",

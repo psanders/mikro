@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Founder Tasks tab (`/founder/tareas`) — Pencil "tareas states" screen
+ * Founder Tasks tab (`/ops/tareas`) — Pencil "tareas states" screen
  * `U6iGU`. Lists task definitions with pause/resume and delete, and opens the
  * schema-driven create/edit modal (`TaskFormModal`). Creation here has full
  * parity with copilot creation: both call tasks.create with the same

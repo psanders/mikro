@@ -6,6 +6,7 @@ import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
 import { PROVINCES } from "./applicationForm.js";
+import { rejectionReasonEnum } from "./applicationReview.js";
 
 /**
  * Public loan-application (solicitud) intake.
@@ -375,10 +376,10 @@ export const applicationStatusEnum = z.enum([
   "DRAFT",
   "RECEIVED",
   "IN_REVIEW",
+  "PENDING_DECISION",
   "APPROVED",
-  "REJECTED",
-  "SIGNED",
   "CONVERTED",
+  "REJECTED",
   "ABANDONED"
 ]);
 
@@ -411,28 +412,55 @@ const requireRef = (v: { id?: string; sessionId?: string }) => Boolean(v.id || v
 const refMessage = { message: "Provide either id or sessionId" };
 
 /**
- * Claim a RECEIVED application for review. `assigneeId` defaults to the caller
- * (self-claim); an admin may pass a different reviewer's id to hand the
- * application to them directly instead of claiming it themselves first.
+ * Assign an application to a reviewer. Without `assigneeId` the caller takes it
+ * from the queue; an admin may pass another reviewer's id, or reassign an
+ * application that is already in review. See `evaluateTransition` ("assign").
  */
-export const claimApplicationSchema = z
+export const assignApplicationSchema = z
   .object({ ...applicationRef, assigneeId: z.uuid().optional() })
   .refine(requireRef, refMessage);
 
-export const approveApplicationSchema = z
-  .object({ ...applicationRef, note: z.string().max(2000).optional() })
+/** The assigned reviewer's recommendation to the admin (editable while IN_REVIEW). */
+export const setRecommendationSchema = z
+  .object({ ...applicationRef, reviewerRecommendation: z.string().trim().max(2000) })
   .refine(requireRef, refMessage);
 
-export const rejectApplicationSchema = z
+/** Assigned reviewer hands a complete application to the admin. */
+export const sendToDecisionSchema = z.object(applicationRef).refine(requireRef, refMessage);
+
+/** Admin sends a pending application back to its reviewer; the note says why. */
+export const returnToReviewerSchema = z
   .object({
     ...applicationRef,
-    reason: z.string().trim().min(1, "A rejection reason is required").max(2000)
+    note: z.string().trim().min(1, "A note is required").max(2000)
   })
   .refine(requireRef, refMessage);
 
-export const reopenApplicationSchema = z
-  .object({ ...applicationRef, note: z.string().max(2000).optional() })
+/** Admin approves a pending application with the terms that will be lent. */
+export const approveApplicationSchema = z
+  .object({
+    ...applicationRef,
+    approvedAmount: z.number().positive("Approved amount must be positive"),
+    approvedTermWeeks: z.number().int().positive("Approved term must be a positive integer"),
+    note: z.string().trim().max(2000).optional()
+  })
   .refine(requireRef, refMessage);
+
+/** Reject with a reason from the fixed list; `note` is required for OTHER. */
+export const rejectApplicationSchema = z
+  .object({
+    ...applicationRef,
+    reason: rejectionReasonEnum,
+    note: z.string().trim().max(2000).optional()
+  })
+  .refine(requireRef, refMessage)
+  .refine((v) => v.reason !== "OTHER" || Boolean(v.note && v.note.length > 0), {
+    message: "A note is required when the reason is OTHER",
+    path: ["note"]
+  });
+
+/** The customer backed out after approval. */
+export const withdrawApplicationSchema = z.object(applicationRef).refine(requireRef, refMessage);
 
 /**
  * Promote a reviewer-completed DRAFT into the active queue (-> RECEIVED). Used
@@ -460,45 +488,15 @@ export const generateApplicationContractSchema = z
   })
   .refine(requireRef, refMessage);
 
-export type ClaimApplicationInput = z.infer<typeof claimApplicationSchema>;
+export type AssignApplicationInput = z.infer<typeof assignApplicationSchema>;
+export type SetRecommendationInput = z.infer<typeof setRecommendationSchema>;
+export type SendToDecisionInput = z.infer<typeof sendToDecisionSchema>;
+export type ReturnToReviewerInput = z.infer<typeof returnToReviewerSchema>;
 export type ApproveApplicationInput = z.infer<typeof approveApplicationSchema>;
 export type RejectApplicationInput = z.infer<typeof rejectApplicationSchema>;
-export type ReopenApplicationInput = z.infer<typeof reopenApplicationSchema>;
+export type WithdrawApplicationInput = z.infer<typeof withdrawApplicationSchema>;
 export type PromoteApplicationInput = z.infer<typeof promoteApplicationSchema>;
 export type GenerateApplicationContractInput = z.infer<typeof generateApplicationContractSchema>;
-
-// ---- review transition validation ----
-
-type Status = z.infer<typeof applicationStatusEnum>;
-
-/** The review/pipeline action being attempted (drives the allowed source statuses). */
-export type ReviewAction =
-  | "promote"
-  | "claim"
-  | "approve"
-  | "reject"
-  | "reopen"
-  | "sign"
-  | "convert";
-
-const REVIEW_TRANSITIONS: Record<ReviewAction, { from: Status[]; to: Status }> = {
-  promote: { from: ["DRAFT"], to: "RECEIVED" },
-  claim: { from: ["RECEIVED"], to: "IN_REVIEW" },
-  approve: { from: ["RECEIVED", "IN_REVIEW"], to: "APPROVED" },
-  reject: { from: ["RECEIVED", "IN_REVIEW"], to: "REJECTED" },
-  reopen: { from: ["APPROVED", "REJECTED"], to: "IN_REVIEW" },
-  sign: { from: ["APPROVED"], to: "SIGNED" },
-  convert: { from: ["SIGNED"], to: "CONVERTED" }
-};
-
-/**
- * Resolve the target status for a review action given the current status, or
- * return null if the transition is not allowed.
- */
-export function resolveReviewTransition(action: ReviewAction, current: Status): Status | null {
-  const rule = REVIEW_TRANSITIONS[action];
-  return rule.from.includes(current) ? rule.to : null;
-}
 
 // ---- signing + conversion (Phase 3) ----
 
@@ -528,7 +526,9 @@ export const convertApplicationSchema = z
     paymentFrequency: paymentFrequencyEnum,
     startingDate: safeOptionalDate,
     moraRate: z.number().min(0).max(1, "moraRate must be between 0 and 1").optional(),
-    assignedCollectorId: z.uuid({ error: "Invalid collector ID" })
+    assignedCollectorId: z.uuid({ error: "Invalid collector ID" }),
+    /** Ledger account the principal is disbursed from; defaults to accounting.disbursementAccountId. */
+    accountId: z.uuid({ error: "Invalid account ID" }).optional()
   })
   .refine(requireRef, refMessage);
 
@@ -604,6 +604,48 @@ export const deleteIdImageSchema = z
 export const deleteApplicationContractSchema = z
   .object(applicationRef)
   .refine(requireRef, refMessage);
+
+// ---- evidence documents (business photos, other documents) ----
+
+/** Evidence beyond the two fixed cédula slots. */
+export const applicationDocumentKindEnum = z.enum(["BUSINESS_PHOTO", "OTHER"]);
+
+const evidenceMimeType = z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"], {
+  error: "File must be a JPEG, PNG, WebP, or PDF"
+});
+
+/** Upload one evidence file. Business photos must be images; OTHER may also be a PDF. */
+export const uploadApplicationDocumentSchema = z
+  .object({
+    ...applicationRef,
+    kind: applicationDocumentKindEnum,
+    label: z.string().trim().max(60).optional(),
+    originalName: z.string().min(1).max(255),
+    mimeType: evidenceMimeType,
+    dataBase64: z
+      .string()
+      .min(1, "File content is required")
+      .refine((b) => Math.ceil((b.length * 3) / 4) <= MAX_ATTACHMENT_SIZE_BYTES, {
+        message: "File exceeds the maximum allowed size"
+      })
+  })
+  .refine(requireRef, refMessage)
+  .refine((v) => v.kind !== "BUSINESS_PHOTO" || v.mimeType !== "application/pdf", {
+    message: "Business photos must be images",
+    path: ["mimeType"]
+  });
+
+export const deleteApplicationDocumentSchema = z.object({ documentId: z.string().min(1) });
+export const getApplicationDocumentSchema = z.object({ documentId: z.string().min(1) });
+
+/** Evidence overview: completeness plus the document list. */
+export const getApplicationEvidenceSchema = z.object(applicationRef).refine(requireRef, refMessage);
+
+export type ApplicationDocumentKind = z.infer<typeof applicationDocumentKindEnum>;
+export type UploadApplicationDocumentInput = z.infer<typeof uploadApplicationDocumentSchema>;
+export type DeleteApplicationDocumentInput = z.infer<typeof deleteApplicationDocumentSchema>;
+export type GetApplicationDocumentInput = z.infer<typeof getApplicationDocumentSchema>;
+export type GetApplicationEvidenceInput = z.infer<typeof getApplicationEvidenceSchema>;
 
 export type IdImageSide = z.infer<typeof idImageSideEnum>;
 export type UploadIdImageInput = z.infer<typeof uploadIdImageSchema>;

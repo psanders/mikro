@@ -165,17 +165,44 @@ const reportsSchema = z
   })
   .default(() => ({}));
 
-const accountingSchema = z.object({
-  /** Where transaction attachments (receipts) are saved. Resolved relative to the config dir. */
-  attachmentsPath: z.string().default("./data/attachments/accounting"),
-  /**
-   * AccountingAccount.id to auto-debit the disbursed principal from when a
-   * loan application converts (mikro/#155). Required — the apiserver refuses
-   * to boot without it rather than fail later at conversion time. Find the id
-   * via `accounting.listAccounts` or the ops dashboard's Contabilidad screen.
-   */
-  disbursementAccountId: z.uuid({ error: "accounting.disbursementAccountId is required" })
-});
+const accountingSchema = z
+  .object({
+    /** Where transaction attachments (receipts) are saved. Resolved relative to the config dir. */
+    attachmentsPath: z.string().default("./data/attachments/accounting"),
+    /**
+     * AccountingAccount.id to auto-debit the disbursed principal from when a
+     * loan application converts (mikro/#155). Required — the apiserver refuses
+     * to boot without it rather than fail later at conversion time. Find the id
+     * via `accounting.listAccounts` or the ops dashboard's Contabilidad screen.
+     */
+    disbursementAccountId: z.uuid({ error: "accounting.disbursementAccountId is required" }),
+    /**
+     * The accounts a disbursement may come from, with the name shown in the
+     * disbursement panel (e.g. Caja General, Cuenta de Recaudación). Optional:
+     * without it only `disbursementAccountId` is offered. When set, conversion
+     * refuses any other account, and `disbursementAccountId` (the preselected
+     * default) must be one of them.
+     */
+    disbursementAccounts: z
+      .array(z.object({ id: z.uuid(), name: z.string().trim().min(1) }).strict())
+      .min(1, "accounting.disbursementAccounts must list at least one account")
+      .optional()
+  })
+  .refine(
+    (a) =>
+      !a.disbursementAccounts ||
+      a.disbursementAccounts.some((x) => x.id === a.disbursementAccountId),
+    {
+      message: "accounting.disbursementAccountId must be one of accounting.disbursementAccounts",
+      path: ["disbursementAccountId"]
+    }
+  )
+  .refine(
+    (a) =>
+      !a.disbursementAccounts ||
+      new Set(a.disbursementAccounts.map((x) => x.id)).size === a.disbursementAccounts.length,
+    { message: "accounting.disbursementAccounts has duplicate ids", path: ["disbursementAccounts"] }
+  );
 
 /**
  * Website loan-application intake. Required, no defaults: the apiserver refuses
@@ -194,7 +221,12 @@ const applicationsSchema = z
       .array(z.enum(PROVINCE_VALUES), {
         error: 'applications.coveredProvinces is required (e.g. ["PUERTO_PLATA"])'
       })
-      .min(1, "applications.coveredProvinces must list at least one province")
+      .min(1, "applications.coveredProvinces must list at least one province"),
+    /**
+     * Business photos a reviewer must upload before sending an application to
+     * decision. Optional (default 3) so adding this release needs no mikro.json edit.
+     */
+    minBusinessPhotos: z.number().int().min(0).default(3)
   })
   .strict();
 
@@ -826,4 +858,29 @@ export function getConfig(configPath?: string): ResolvedMikroConfig {
  */
 export function clearConfigCache(): void {
   cachedConfig = null;
+}
+
+/** A disbursement source account as configured (see accounting.disbursementAccounts). */
+export interface DisbursementAccountOption {
+  id: string;
+  /** Configured display name; null when only disbursementAccountId is set. */
+  name: string | null;
+  isDefault: boolean;
+}
+
+/**
+ * The accounts a loan disbursement may come from, default first. Without
+ * `accounting.disbursementAccounts` this is just the default account.
+ */
+export function getDisbursementAccountOptions(
+  accounting: {
+    disbursementAccountId: string;
+    disbursementAccounts?: { id: string; name: string }[];
+  } = getConfig().accounting
+): DisbursementAccountOption[] {
+  const def = accounting.disbursementAccountId;
+  const list = accounting.disbursementAccounts ?? [{ id: def, name: null as unknown as string }];
+  return list
+    .map((a) => ({ id: a.id, name: a.name ?? null, isDefault: a.id === def }))
+    .sort((a, b) => Number(b.isDefault) - Number(a.isDefault));
 }
