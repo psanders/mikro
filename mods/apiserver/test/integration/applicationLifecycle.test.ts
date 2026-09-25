@@ -493,6 +493,24 @@ describe("application review lifecycle (integration)", () => {
     expect(pending?.application?.status).to.equal("PENDING_DECISION");
   });
 
+  it("lists each open application once, at its newest event, with the feed's role scoping", async () => {
+    const mine = await received();
+    const theirs = await received();
+    const queued = await received();
+    const closed = await received();
+    await reviewer.assignApplication({ id: mine.id });
+    await otherReviewer.assignApplication({ id: theirs.id });
+    await reviewer.assignApplication({ id: closed.id });
+    await reviewer.rejectApplication({ id: closed.id, reason: "PAYMENT_CAPACITY" });
+
+    const open = await reviewer.listOpenApplicationEvents();
+    const ids = open.map((i) => i.applicationId);
+    expect(ids).to.have.members([mine.id, queued.id]);
+    const card = open.find((i) => i.applicationId === mine.id)!;
+    expect(card.type).to.equal("application.assigned");
+    expect(card.application?.status).to.equal("IN_REVIEW");
+  });
+
   it("keeps the WhatsApp nudge but never auto-abandons a submitted application", async () => {
     // Guarded in the follow-up worker; asserted here against the real schema.
     const app = await received();

@@ -3,13 +3,16 @@
  *
  * Collapsible group rows for applications in the Ops feed:
  *  - "N solicitudes nuevas en la cola" (violet — the viewer can act)
+ *  - "Otras N solicitudes abiertas" (violet — pinned above the day groups so
+ *    open work never hides behind the date filter or "Cargar más")
  *  - "N solicitudes cerradas hoy" (not highlighted — Convertida, Rechazada,
  *    Desistida leave the active view; same pattern as completed tasks)
  */
 import { useState, type ReactNode } from "react";
-import { Archive, ChevronDown, ChevronUp, Inbox, PanelRightOpen } from "lucide-react";
+import { Archive, ChevronDown, ChevronUp, History, Inbox, PanelRightOpen } from "lucide-react";
 import { cn } from "../../lib/cn";
-import { formatClockTime } from "../components/format";
+import { statusMeta } from "../../lib/applications";
+import { formatClockTime, formatDayLabel } from "../components/format";
 import type { FeedEvent } from "../components/types";
 import { useApplicationPanel } from "./ApplicationPanelContext";
 import type { FeedApplicationState } from "./ApplicationFeedCard";
@@ -95,6 +98,29 @@ export function QueueGroupRow({ events, children }: { events: AppEvent[]; childr
         .join(" · ")}
       time={formatClockTime(events[0]!.occurredAt)}
       testId="queue-group"
+    >
+      {children}
+    </GroupShell>
+  );
+}
+
+/**
+ * Open applications the loaded feed doesn't render (latest activity outside
+ * the filters, or on a page not loaded yet). Same shell as the queue row.
+ */
+export function OpenGroupRow({ events, children }: { events: AppEvent[]; children: ReactNode }) {
+  const n = events.length;
+  return (
+    <GroupShell
+      tone="violet"
+      icon={History}
+      title={n > 1 ? `Otras ${n} solicitudes abiertas` : "Otra solicitud abierta"}
+      meta={events
+        .slice(0, 3)
+        .map((e) => `${e.customerName ?? "Solicitud"} · ${statusMeta(e.application.status).label}`)
+        .join(" · ")}
+      time={formatDayLabel(events[0]!.occurredAt)}
+      testId="open-group"
     >
       {children}
     </GroupShell>

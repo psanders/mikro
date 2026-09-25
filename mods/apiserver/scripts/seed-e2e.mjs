@@ -17,7 +17,8 @@
  * Applications (by business name): Colmado Cola (RECEIVED ×2 with Frutería Cola),
  * Salón Pendiente + Taller Pendiente (PENDING_DECISION), Ferretería Aprobada
  * (APPROVED, contract generated + signed, assigned to Ana), Tienda de Luis
- * (IN_REVIEW, assigned to Luis).
+ * (IN_REVIEW, assigned to Luis), Colmado Viejo (RECEIVED three days ago —
+ * outside the feed's default "Hoy" range).
  */
 /* global console, process, Buffer */
 import bcrypt from "bcryptjs";
@@ -213,6 +214,15 @@ for (const [first, last, biz] of [
 {
   const app = await received("Luisa", "Mejía", "Tienda de Luis");
   await luis.assignApplication({ id: app.id });
+}
+
+// Received three days ago and never taken: only the "Abiertas" row shows it.
+{
+  const app = await received("Marta", "Rosario", "Colmado Viejo");
+  await prisma.businessEvent.updateMany({
+    where: { applicationId: app.id },
+    data: { occurredAt: new Date(Date.now() - 3 * 24 * 3600 * 1000) }
+  });
 }
 
 console.log("e2e seed complete");

@@ -39,7 +39,7 @@ import {
   riskBandLabel
 } from "../../lib/applications";
 import { cn } from "../../lib/cn";
-import { formatClockTime } from "../components/format";
+import { formatClockTime, formatDayLabel } from "../components/format";
 import type { FeedEvent } from "../components/types";
 import { useApplicationPanel } from "./ApplicationPanelContext";
 import { useApplicationInvalidation } from "./helpers";
@@ -70,6 +70,11 @@ export interface ApplicationFeedCardProps {
   expanded?: boolean;
   onToggle?: (expanded: boolean) => void;
   defaultExpanded?: boolean;
+  /**
+   * Show the day ("Ayer", "22 de septiembre") instead of the clock time — for
+   * cards outside a day group, like the pinned open-applications row.
+   */
+  showDay?: boolean;
 }
 
 const STATUS_ICON: Record<string, typeof Inbox> = {
@@ -103,7 +108,8 @@ export function ApplicationFeedCard({
   userNames,
   expanded: controlled,
   onToggle,
-  defaultExpanded = false
+  defaultExpanded = false,
+  showDay = false
 }: ApplicationFeedCardProps) {
   const [internal, setInternal] = useState(defaultExpanded);
   const expanded = controlled ?? internal;
@@ -172,7 +178,7 @@ export function ApplicationFeedCard({
           <ScoreChip score={state.score} />
           <StatusPill status={state.status} />
           <span className="text-[12px] font-medium text-[#697A93]">
-            {formatClockTime(event.occurredAt)}
+            {showDay ? formatDayLabel(event.occurredAt) : formatClockTime(event.occurredAt)}
           </span>
           {expanded ? (
             <ChevronUp size={15} className="text-[#697A93]" />
