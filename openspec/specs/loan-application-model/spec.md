@@ -24,7 +24,7 @@ The system SHALL provide a `LoanApplication` model that stores each submission w
 
 ### Requirement: ApplicationStatus enum covers the full lifecycle
 
-The system SHALL define an `ApplicationStatus` enum with values `DRAFT`, `RECEIVED`, `IN_REVIEW`, `APPROVED`, `REJECTED`, `SIGNED`, `CONVERTED`, and `ABANDONED`. The previously reserved `AI_REVIEWED` value is removed: scoring is a derived attribute, not a pipeline stage. Only `DRAFT` and `RECEIVED` are assigned at intake; the remaining states are reserved for later phases.
+The system SHALL define an `ApplicationStatus` enum with values `DRAFT`, `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION`, `APPROVED`, `CONVERTED`, `REJECTED`, and `ABANDONED`. There is no `SIGNED` status: a stored signed contract is a requirement of conversion, not a stage. Scoring is a derived attribute, not a pipeline stage. Intake assigns `DRAFT` or `RECEIVED` (or `REJECTED` for out-of-area final website submissions).
 
 #### Scenario: New application defaults to DRAFT
 
@@ -35,6 +35,11 @@ The system SHALL define an `ApplicationStatus` enum with values `DRAFT`, `RECEIV
 
 - **WHEN** an application is scored
 - **THEN** its status is unchanged by scoring (scoring does not move it to a "scored" or "AI reviewed" state)
+
+#### Scenario: Legacy SIGNED rows become APPROVED
+
+- **WHEN** the migration runs on a database with `SIGNED` applications
+- **THEN** they become `APPROVED` with their contract columns intact
 
 ### Requirement: Conversion foreign keys are reserved
 
@@ -86,22 +91,31 @@ The `LoanApplication` model SHALL persist the full scoring result and extracted 
 
 ### Requirement: LoanApplication records the latest review decision
 
-The `LoanApplication` model SHALL persist review audit columns: `reviewedById` (String, the deciding admin's user id), `reviewedAt` (DateTime), and `reviewNote` (String, the rejection reason or approval/reopen note). These reflect the most recent review action.
+The `LoanApplication` model SHALL persist assignment and decision columns separately:
 
-#### Scenario: Decision columns set on a review action
+- `assignedReviewerId`, `assignedAt`
+- `reviewerRecommendation`, `sentToDecisionAt`
+- `decidedById`, `decidedAt`, `decisionNote`
+- `rejectionReason` (enum `ApplicationRejectionReason`)
+- `approvedAmount`, `approvedTermWeeks`
+- `aiSummary`, `aiSummaryAt`
 
-- **WHEN** an admin claims, approves, rejects, or reopens an application
-- **THEN** `reviewedById` and `reviewedAt` reflect the caller and the time of the action
+The former `reviewedById`/`reviewedAt`/`reviewNote` columns are removed.
 
-#### Scenario: Rejection reason persisted
+#### Scenario: Assignment and decision are distinct
 
-- **WHEN** an application is rejected with a reason
-- **THEN** `reviewNote` holds that reason
+- **WHEN** reviewer A is assigned and admin B approves
+- **THEN** `assignedReviewerId` is A and `decidedById` is B
 
-#### Scenario: Internal read procedures expose the review fields
+#### Scenario: Legacy review audit migrates
 
-- **WHEN** an authenticated caller lists or gets applications
-- **THEN** the returned rows include `reviewedById`, `reviewedAt`, and `reviewNote`
+- **WHEN** the migration runs on a `REJECTED` row whose `reviewNote` is `OUT_OF_COVERAGE_AREA`
+- **THEN** it has `rejectionReason = OUT_OF_COVERAGE_AREA` and no `decisionNote`
+
+#### Scenario: Internal read procedures expose the decision fields
+
+- **WHEN** an authenticated reviewer lists or gets applications
+- **THEN** the returned rows include the assignment, decision, approved-terms and AI summary fields
 
 ### Requirement: LoanApplication records its creation source
 

@@ -51,3 +51,7 @@ The design is final in `pencil.pen`, section 08 of the Founder Dashboard board (
 - **Not touched:** `mods/agents` (routing, José, WhatsApp handlers, agents.yaml), the WhatsApp nudge sender and template, prospect routing (`getApplicationByPhone` still reads DRAFT vs not-DRAFT).
 - **Deploy:** apiserver, dashboard and mobile ship in one release. `applications.minBusinessPhotos` is optional, so no `mikro.json` change is needed at deploy; if set, add it only after this version is live (the config schema is `.strict()`).
 - **Future (not in this change):** a tokenized mobile-web capture link, sent to the customer or a street collector, capturing GPS and photos into the same evidence storage.
+
+### Retired Capabilities
+
+- `mobile-evaluator-access` and `mobile-evaluator-review-flow`: the mobile evaluator app is removed, so these capability specs are deleted outright (every requirement was removed).

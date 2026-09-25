@@ -19,7 +19,7 @@
 
 - [x] 2.1 Prisma schema: new columns, `ApplicationDocument`, enum changes, `CustomerDocumentType` += BUSINESS_PHOTO/OTHER, drop review audit columns
 - [x] 2.2 Migration with data moves (design D3) — verified on a scratch DB with every legacy case
-- [ ] 2.2b Rehearse the migration on a prod snapshot before release
+- [x] 2.2b Rehearse the migration on a prod snapshot before release — done 2026-09-23 (3 regressions found and fixed in 5a80c92)
 - [x] 2.3 Integration `SCHEMA_SQL` in sync
 
 ## 3. Apiserver
@@ -58,7 +58,7 @@
 
 - [x] 6.1 Remove mobile evaluator code, navigation, e2e mocks, Maestro flows; collector app unaffected
 - [x] 6.2 Remove superseded dashboard `lib/applications.ts` helpers
-- [ ] 6.3 Mark Pencil Evaluator App board `gzBYk` superseded (deferred: Pencil was released for another project)
+- [x] 6.3 Mark Pencil Evaluator App board `gzBYk` superseded
 - [x] 6.4 Release notes: deploy order, backup + `migrate deploy`, old mobile builds unsupported
 
 ## 7. Verify

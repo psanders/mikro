@@ -80,7 +80,7 @@ For a firing in `READY` or `NEEDS_INPUT`, the apiserver SHALL expose founder-onl
 
 ### Requirement: Tasks tab lists definitions and creates them with a schema-driven form
 
-The founder app SHALL include a Tasks tab listing task definitions (name, automation, schedule, next firing, enabled state) with create, edit, cancel, and a per-row pause/resume toggle (the `enabled` flag: a paused task fires nothing until resumed, and resuming recomputes `nextFireAt` forward — paused periods are not fired retroactively). The create/edit form SHALL be generated from the selected automation's param spec: `static` slots render as inputs (selects for catalog-backed values, starting with the automation itself) validated against the schema, `ask` slots are displayed as to-be-asked-at-confirmation, and the gate control is clamped to the automation's floor. Manual creation SHALL have full parity with copilot creation and require no LLM.
+The Ops app SHALL include a Tasks tab listing task definitions (name, automation, schedule, next firing, enabled state) with create, edit, cancel, and a per-row pause/resume toggle (the `enabled` flag: a paused task fires nothing until resumed, and resuming recomputes `nextFireAt` forward — paused periods are not fired retroactively). The create/edit form SHALL open in the Ops app's right side panel (the same panel used by applications; no modal dialog) and SHALL be generated from the selected automation's param spec: `static` slots render as inputs (selects for catalog-backed values, starting with the automation itself) validated against the schema, `ask` slots are displayed as to-be-asked-at-confirmation, and the gate control is clamped to the automation's floor. Manual creation SHALL have full parity with copilot creation and require no LLM.
 
 Static slot inputs SHALL be dispatched on the slot's declared `kind`, not on its name, so every automation with a slot of a given kind renders consistently. A slot of kind `amount` SHALL render as a numeric money input — numeric entry affordance and a currency-formatted placeholder — rather than a free-text box; the currency itself is named in the slot's label. A slot the automation declares optional SHALL be submittable empty, and an empty money input SHALL be submitted as unset rather than as zero.
 
@@ -103,6 +103,11 @@ Static slot inputs SHALL be dispatched on the slot's declared `kind`, not on its
 
 - **WHEN** a founder pauses a weekly task for three weeks and then resumes it
 - **THEN** no firings are created for the paused weeks and `nextFireAt` is the next occurrence after the resume
+
+#### Scenario: Form opens in the side panel
+
+- **WHEN** a founder starts creating or editing a task
+- **THEN** the form opens in the right side panel with the Tasks list still visible behind it, and no modal dialog is used
 
 ### Requirement: Loan-statement automation in the catalog
 
