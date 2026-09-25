@@ -159,6 +159,11 @@ export async function handleProspectMessage(
   return { text: responseText };
 }
 
+/** José's conversation with a phone so far (empty when none). */
+export function getProspectHistory(phone: string): Message[] {
+  return prospectSessions.get(phone)?.history ?? [];
+}
+
 /** Clear session for a phone (used after finalization to stop intake). */
 export function clearProspectHistory(phone: string): void {
   prospectSessions.delete(phone);

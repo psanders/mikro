@@ -6,3 +6,11 @@ export {
   type ChatwootEcho,
   type EchoToChatwootDeps
 } from "./createEchoToChatwoot.js";
+export {
+  createNotifyChatwootHandoff,
+  buildHandoffNote,
+  HANDOFF_LABEL,
+  type HandoffNoteInput,
+  type NotifyChatwootHandoffDeps
+} from "./createNotifyChatwootHandoff.js";
+export { createChatwootClient, type ChatwootConfig } from "./chatwootClient.js";

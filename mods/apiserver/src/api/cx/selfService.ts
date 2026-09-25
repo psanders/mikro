@@ -263,13 +263,18 @@ export function createRequestHumanHandoff(
     if (!phone || !profile) return { success: false, message: "Falta el contexto del contacto." };
     const reason =
       typeof args.reason === "string" && args.reason.trim() ? args.reason.trim() : "Sin motivo";
+    const summary =
+      typeof args.summary === "string" && args.summary.trim()
+        ? args.summary.trim().slice(0, 800)
+        : undefined;
     await openHandoff({
       phone,
       profile,
       reason: reason.slice(0, 200),
       applicationId: str(context, "applicationId"),
       customerId: str(context, "customerId"),
-      displayName: str(context, "name")
+      displayName: str(context, "name"),
+      summary
     });
     return {
       success: true,

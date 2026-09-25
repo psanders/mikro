@@ -23,7 +23,7 @@ import {
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
-import { handleProspectMessage, isDecline } from "./handleProspectMessage.js";
+import { handleProspectMessage, isDecline, getProspectHistory } from "./handleProspectMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -99,6 +99,8 @@ export interface MessageProcessorDependencies {
     applicationId?: string;
     customerId?: string;
     displayName?: string;
+    /** Last turns (oldest first) for the Chatwoot note; no agent summarized. */
+    recentMessages?: Array<{ role: "user" | "assistant"; content: string }>;
   }) => Promise<unknown>;
 }
 
@@ -647,6 +649,27 @@ function profileFor(route: CxRoute): Profile {
   }
 }
 
+/** How many turns of history the Chatwoot note shows for a deterministic hand-off. */
+const NOTE_TURNS = 6;
+
+/** The last turns of this conversation plus the message just received. */
+function recentTurns(
+  route: CxRoute,
+  userMessage: string
+): Array<{ role: "user" | "assistant"; content: string }> {
+  const history =
+    route.type === "prospect" || route.type === "reopen"
+      ? getProspectHistory(route.phone)
+      : getGuestConversation(route.phone);
+  const turns = history
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: typeof m.content === "string" ? m.content : ""
+    }));
+  return [...turns, { role: "user" as const, content: userMessage }].slice(-NOTE_TURNS);
+}
+
 /** Context every CX tool reads identity from (never from model arguments). */
 function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
   return {
@@ -730,7 +753,8 @@ async function handleCxMessage(
     await processor.openHandoff({
       phone,
       profile,
-      reason: "Solicitud anterior no aprobada"
+      reason: "Solicitud anterior no aprobada",
+      recentMessages: recentTurns(route, userMessage)
     });
     await sendWhatsAppMessage({ phone, message: REJECTED_HANDOFF_ACK });
     return;
@@ -746,7 +770,8 @@ async function handleCxMessage(
       reason: "Pidió hablar con una persona",
       applicationId: "applicationId" in ctx ? ctx.applicationId : undefined,
       customerId: "customerId" in ctx ? ctx.customerId : undefined,
-      displayName: "name" in ctx ? ctx.name : undefined
+      displayName: "name" in ctx ? ctx.name : undefined,
+      recentMessages: recentTurns(route, userMessage)
     });
     await sendWhatsAppMessage({ phone, message: HANDOFF_ACK });
     return;

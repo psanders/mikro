@@ -844,9 +844,14 @@ export const requestHumanHandoffTool: ToolFunction = {
         reason: {
           type: "string",
           description: "Motivo breve (una frase) para el equipo, en español."
+        },
+        summary: {
+          type: "string",
+          description:
+            "Resumen para la persona del equipo que va a atender, en 2 o 3 oraciones: qué quiere, qué ya se le dijo y qué falta. Solo hechos de la conversación y de las herramientas; no inventes."
         }
       },
-      required: ["reason"]
+      required: ["reason", "summary"]
     }
   }
 };

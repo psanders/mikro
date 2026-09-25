@@ -145,7 +145,7 @@ describe("CX self-service tools", () => {
     it("opens the hand-off with identity from context", async () => {
       const openHandoff = sinon.stub().resolves({ opened: true });
       const result = await createRequestHumanHandoff(openHandoff)(
-        { reason: "  está frustrado  ", phone: "+18090000000" },
+        { reason: "  está frustrado  ", summary: " Pide hablar del pago. ", phone: "+18090000000" },
         { ...CUSTOMER_CTX, name: "Ana" }
       );
       expect(result.success).to.be.true;
@@ -155,7 +155,8 @@ describe("CX self-service tools", () => {
         reason: "está frustrado",
         applicationId: undefined,
         customerId: "cust-1",
-        displayName: "Ana"
+        displayName: "Ana",
+        summary: "Pide hablar del pago."
       });
     });
   });

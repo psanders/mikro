@@ -186,6 +186,10 @@ describe("WhatsApp CX routes", () => {
       expect(p.invokeLLM.called).to.be.false;
       expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
       expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.match(/equipo/);
+      // No agent summarized, so the Chatwoot note gets the last turns.
+      expect(p.openHandoff.firstCall.args[0].recentMessages).to.deep.equal([
+        { role: "user", content: "Quiero hablar con una persona por favor" }
+      ]);
     });
 
     it("lets an opt-out win over a request for a person (José closes it)", async () => {
@@ -315,7 +319,8 @@ describe("WhatsApp CX routes", () => {
       expect(p.openHandoff.firstCall.args[0]).to.deep.equal({
         phone: PHONE,
         profile: "GUEST",
-        reason: "Solicitud anterior no aprobada"
+        reason: "Solicitud anterior no aprobada",
+        recentMessages: [{ role: "user", content: "hola, quiero volver a aplicar" }]
       });
       expect(p.invokeLLM.called).to.be.false;
       expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.match(/no fue aprobada/);

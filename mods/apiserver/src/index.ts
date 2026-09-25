@@ -68,7 +68,7 @@ import { createSendApplicationPromo } from "./api/applications/createSendApplica
 import { createGetApplication } from "./api/applications/createGetApplication.js";
 import { createCreateTransaction } from "./api/accounting/index.js";
 import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/index.js";
-import { createEchoToChatwoot } from "./api/chatwoot/index.js";
+import { createEchoToChatwoot, createNotifyChatwootHandoff } from "./api/chatwoot/index.js";
 import {
   createCopilotApproveApplication,
   createCopilotRejectApplication,
@@ -319,7 +319,40 @@ const scheduleFollowUpJob = createScheduleFollowUpJob(dbClient, nudgeDelayMs);
 // back; a human hand-off silences the agents for that phone.
 const recordProspectActivity = createRecordProspectActivity(dbClient, abandonDelayMs);
 const reopenApplication = createReopenApplication(dbClient, recordProspectActivity);
-const openHandoff = createOpenHandoff(prisma);
+// Each new hand-off leaves a private note + `handoff` label in Chatwoot; an
+// automation rule there decides who gets it (no-op unless chatwoot is configured).
+const notifyChatwootHandoff = createNotifyChatwootHandoff({
+  ...cfg.chatwoot,
+  lookupFacts: async ({ applicationId, customerId }) => {
+    const [app, customer, loans] = await Promise.all([
+      applicationId
+        ? prisma.loanApplication.findUnique({
+            where: { id: applicationId },
+            select: { id: true, status: true, businessName: true, firstName: true, lastName: true }
+          })
+        : null,
+      customerId
+        ? prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } })
+        : null,
+      customerId
+        ? prisma.loan.findMany({
+            where: { customerId, status: "ACTIVE" },
+            select: { loanId: true },
+            orderBy: { createdAt: "asc" }
+          })
+        : []
+    ]);
+    const appName = [app?.firstName, app?.lastName].filter(Boolean).join(" ");
+    return {
+      name: customer?.name ?? (appName || undefined),
+      application: app
+        ? { id: app.id, status: app.status, businessName: app.businessName }
+        : undefined,
+      loanIds: loans.map((l) => l.loanId)
+    };
+  }
+});
+const openHandoff = createOpenHandoff(prisma, notifyChatwootHandoff);
 const extendHandoff = createExtendHandoff(prisma);
 const getOpenHandoffExpiry = createGetOpenHandoffExpiry(prisma);
 const recordMetaAd = createRecordMetaAd(dbClient);

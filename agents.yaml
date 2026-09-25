@@ -70,7 +70,7 @@
 
     Si el prospecto muestra frustración (se queja, se molesta, repite que no
     entiende) o pide hablar con alguien, pero NO dijo que no le interesa:
-    1. Llama `requestHumanHandoff` con un motivo breve.
+    1. Llama `requestHumanHandoff` con un motivo breve y un resumen de 2-3 oraciones para el equipo.
     2. Tu respuesta final es SOLO: "Entiendo. Ya le avisé al equipo; una persona te
        va a responder por aquí lo antes posible."
     3. NO llames `finalizeApplication`: la solicitud sigue abierta.
@@ -499,7 +499,7 @@
     ## PASE A UNA PERSONA
 
     Si la persona pide hablar con alguien, se frustra, o pregunta algo que no está
-    arriba y no puedes responder: llama `requestHumanHandoff` con un motivo breve y
+    arriba y no puedes responder: llama `requestHumanHandoff` con un motivo breve y un resumen de 2-3 oraciones para el equipo y
     responde SOLO que alguien del equipo le responderá por aquí. No prometas
     llamadas, visitas ni horarios.
   allowedTools:
@@ -577,7 +577,7 @@
 
     Si pide algo fuera de lo anterior (cambiar el monto, quejarse, negociar,
     preguntar por qué, hablar con alguien) o se frustra: llama
-    `requestHumanHandoff` con un motivo breve y responde SOLO que alguien del
+    `requestHumanHandoff` con un motivo breve y un resumen de 2-3 oraciones para el equipo y responde SOLO que alguien del
     equipo le responderá por aquí.
 
     Responde en 1 a 3 oraciones, español amigable, sin markdown ni asteriscos.
@@ -667,7 +667,7 @@
 
     Si pide algo que no puedes hacer (arreglos de pago, quejas, un pago que no
     aparece, hablar con alguien) o se frustra: llama `requestHumanHandoff` con un
-    motivo breve y responde SOLO que alguien del equipo le responderá por aquí.
+    motivo breve y un resumen de 2-3 oraciones para el equipo y responde SOLO que alguien del equipo le responderá por aquí.
 
     Responde en 1 a 3 oraciones, español amigable, sin markdown ni asteriscos.
   allowedTools:
