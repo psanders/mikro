@@ -30,7 +30,7 @@ function makeApp(overrides: Record<string, unknown> = {}) {
 describe("createHandleNudgeJob", () => {
   afterEach(() => sinon.restore());
 
-  it("sends nudge and schedules ABANDON job when RECEIVED + phone", async () => {
+  it("sends the nudge and schedules no ABANDON when RECEIVED + phone", async () => {
     const findUnique = sinon.stub().resolves(makeApp());
     const create = sinon.stub().resolves({});
     const update = sinon.stub().resolves({});
@@ -40,21 +40,17 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: true, messageId: "mid-1" });
-    const handler = createHandleNudgeJob({
-      client,
-      sendFollowUpNudge,
-      abandonDelayMs: 8 * 60 * 60 * 1000
-    });
+    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
 
     await handler(makeJob());
 
     expect(sendFollowUpNudge.calledOnceWith("+18298717987")).to.be.true;
-    expect(create.calledOnce).to.be.true;
-    expect(create.firstCall.args[0].data.type).to.equal("ABANDON");
+    // A submitted application is never abandoned by a timer.
+    expect(create.called).to.be.false;
     expect(update.calledOnceWith({ where: { id: "job-1" }, data: { status: "DONE" } })).to.be.true;
   });
 
-  it("schedules immediate ABANDON and does not send when RECEIVED but no phone", async () => {
+  it("does not send and schedules nothing when RECEIVED but no phone", async () => {
     const findUnique = sinon.stub().resolves(makeApp({ phone: null }));
     const create = sinon.stub().resolves({});
     const update = sinon.stub().resolves({});
@@ -64,18 +60,12 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false });
-    const handler = createHandleNudgeJob({
-      client,
-      sendFollowUpNudge,
-      abandonDelayMs: 8 * 60 * 60 * 1000
-    });
+    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
 
     await handler(makeJob());
 
     expect(sendFollowUpNudge.called).to.be.false;
-    expect(create.calledOnce).to.be.true;
-    const { scheduledFor } = create.firstCall.args[0].data;
-    expect(scheduledFor.getTime()).to.be.lessThanOrEqual(Date.now() + 1000);
+    expect(create.called).to.be.false;
     expect(update.calledOnceWith({ where: { id: "job-1" }, data: { status: "DONE" } })).to.be.true;
   });
 
@@ -89,11 +79,7 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false });
-    const handler = createHandleNudgeJob({
-      client,
-      sendFollowUpNudge,
-      abandonDelayMs: 8 * 60 * 60 * 1000
-    });
+    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
 
     await handler(makeJob());
 
@@ -112,11 +98,7 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub();
-    const handler = createHandleNudgeJob({
-      client,
-      sendFollowUpNudge,
-      abandonDelayMs: 8 * 60 * 60 * 1000
-    });
+    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
 
     await handler(makeJob());
 
@@ -124,7 +106,7 @@ describe("createHandleNudgeJob", () => {
       .true;
   });
 
-  it("still schedules ABANDON even when nudge send fails", async () => {
+  it("marks the job DONE even when the nudge send fails", async () => {
     const findUnique = sinon.stub().resolves(makeApp());
     const create = sinon.stub().resolves({});
     const update = sinon.stub().resolves({});
@@ -134,15 +116,11 @@ describe("createHandleNudgeJob", () => {
     } as unknown as Parameters<typeof createHandleNudgeJob>[0]["client"];
 
     const sendFollowUpNudge = sinon.stub().resolves({ sent: false, error: "API error" });
-    const handler = createHandleNudgeJob({
-      client,
-      sendFollowUpNudge,
-      abandonDelayMs: 8 * 60 * 60 * 1000
-    });
+    const handler = createHandleNudgeJob({ client, sendFollowUpNudge });
 
     await handler(makeJob());
 
-    expect(create.calledOnce).to.be.true;
+    expect(create.called).to.be.false;
     expect(update.calledOnceWith({ where: { id: "job-1" }, data: { status: "DONE" } })).to.be.true;
   });
 });

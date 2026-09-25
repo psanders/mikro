@@ -86,4 +86,48 @@ describe("createHandleAbandonJob", () => {
     expect(jobUpdate.calledOnceWith({ where: { id: "job-2" }, data: { status: "CANCELLED" } })).to
       .be.true;
   });
+
+  it("defers a DRAFT's ABANDON to the hand-off expiry while a human is on it", async () => {
+    const expiry = new Date(Date.now() + 60_000);
+    const appUpdate = sinon.stub().resolves({});
+    const jobUpdate = sinon.stub().resolves({});
+    const jobCreate = sinon.stub().resolves({});
+    const findUnique = sinon
+      .stub()
+      .resolves({ id: "app-1", status: "DRAFT", phone: "+18095550001" });
+    const client = {
+      loanApplication: { findUnique, update: appUpdate },
+      followUpJob: { update: jobUpdate, create: jobCreate }
+    } as unknown as Parameters<typeof createHandleAbandonJob>[0];
+    const getOpenHandoffExpiry = sinon.stub().resolves(expiry);
+
+    await createHandleAbandonJob(client, { getOpenHandoffExpiry })(makeJob());
+
+    expect(getOpenHandoffExpiry.calledOnceWith("+18095550001")).to.be.true;
+    expect(appUpdate.called).to.be.false;
+    expect(jobUpdate.calledOnceWith({ where: { id: "job-2" }, data: { status: "CANCELLED" } })).to
+      .be.true;
+    expect(
+      jobCreate.calledOnceWith({
+        data: { applicationId: "app-1", type: "ABANDON", scheduledFor: expiry }
+      })
+    ).to.be.true;
+  });
+
+  it("abandons the DRAFT when no hand-off is open", async () => {
+    const appUpdate = sinon.stub().resolves({});
+    const jobUpdate = sinon.stub().resolves({});
+    const findUnique = sinon
+      .stub()
+      .resolves({ id: "app-1", status: "DRAFT", phone: "+18095550001" });
+    const client = {
+      loanApplication: { findUnique, update: appUpdate },
+      followUpJob: { update: jobUpdate }
+    } as unknown as Parameters<typeof createHandleAbandonJob>[0];
+
+    await createHandleAbandonJob(client, { getOpenHandoffExpiry: async () => null })(makeJob());
+
+    expect(appUpdate.calledOnceWith({ where: { id: "app-1" }, data: { status: "ABANDONED" } })).to
+      .be.true;
+  });
 });

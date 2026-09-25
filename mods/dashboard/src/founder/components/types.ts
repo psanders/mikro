@@ -47,7 +47,8 @@ export interface FeedEvent {
 export const ALERT_EVENT_TYPES: BusinessEventType[] = [
   "application.deleted",
   "application.restored",
-  "loan.status_changed"
+  "loan.status_changed",
+  "cx.handoff_requested"
 ];
 
 export type NavigateTargetKind = "application" | "loan" | "customer";

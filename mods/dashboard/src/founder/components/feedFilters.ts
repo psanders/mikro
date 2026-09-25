@@ -46,7 +46,7 @@ export const FEED_TYPE_GROUPS: FeedTypeGroup[] = [
     label: "Tareas",
     types: ["task.due", "task.needs_input", "task.completed", "task.failed"]
   },
-  { id: "mensajes", label: "Mensajes", types: ["message.sent"] }
+  { id: "mensajes", label: "Mensajes", types: ["message.sent", "cx.handoff_requested"] }
 ];
 
 export type FeedDatePreset = "hoy" | "7d" | "30d" | "custom";

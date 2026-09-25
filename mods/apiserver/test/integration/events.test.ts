@@ -429,7 +429,9 @@ describe("Founder Feed Integration", () => {
         "task.completed",
         "task.failed",
         "qcobro.synced",
-        "message.sent"
+        "message.sent",
+        // Written by the WhatsApp hand-off (createOpenHandoff), not a tRPC boundary.
+        "cx.handoff_requested"
       ]);
       for (const type of businessEventTypeEnum.options) {
         if (noBoundaryMapper.has(type)) {

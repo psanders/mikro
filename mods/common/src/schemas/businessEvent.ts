@@ -39,7 +39,10 @@ export const businessEventTypeEnum = z.enum([
   "task.completed",
   "task.failed",
   "qcobro.synced",
-  "message.sent"
+  "message.sent",
+  // A WhatsApp CX agent handed a conversation to a human (openspec
+  // cx-role-based-agents). Agents stay silent for that phone while it's open.
+  "cx.handoff_requested"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -229,6 +232,13 @@ const messageSentPayloadSchema = z.object({
   status: outboundMessageStatusEnum
 });
 
+const cxHandoffRequestedPayloadSchema = z.object({
+  handoffId: z.uuid(),
+  phone: z.string().min(1),
+  profile: z.string().min(1),
+  reason: z.string().min(1)
+});
+
 /** Per-type payload schema. Producers MUST validate through this map. */
 export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> = {
   "payment.collected": paymentCollectedPayloadSchema,
@@ -255,7 +265,8 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "task.completed": taskCompletedPayloadSchema,
   "task.failed": taskFailedPayloadSchema,
   "qcobro.synced": qcobroSyncedPayloadSchema,
-  "message.sent": messageSentPayloadSchema
+  "message.sent": messageSentPayloadSchema,
+  "cx.handoff_requested": cxHandoffRequestedPayloadSchema
 };
 
 /**

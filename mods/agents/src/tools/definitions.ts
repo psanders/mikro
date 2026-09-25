@@ -753,6 +753,104 @@ export const finalizeApplicationTool: ToolFunction = {
   }
 };
 
+// ── WhatsApp CX self-service (openspec cx-role-based-agents) ────────────────
+// Identity always comes from the conversation context, never from arguments:
+// these tools only ever touch the sender's own records.
+
+export const listMyLoansTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listMyLoans",
+    description:
+      "Listar los préstamos activos de la persona que escribe: cuota, cuotas pagadas, balance pendiente, mora pendiente, próximo pago y si está atrasado. Solo repite los números que devuelve esta herramienta; nunca calcules.",
+    parameters: { type: "object", properties: {}, required: [] }
+  }
+};
+
+export const listMyPaymentsTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "listMyPayments",
+    description:
+      "Listar los pagos recientes de uno de los préstamos de la persona que escribe (máximo 10, el más reciente primero). Devuelve el paymentId de cada pago, necesario para reenviar un recibo.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "number",
+          description: "Número del préstamo (loanId) tomado de listMyLoans."
+        }
+      },
+      required: ["loanId"]
+    }
+  }
+};
+
+export const sendMyReceiptTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "sendMyReceipt",
+    description:
+      "Reenviar por WhatsApp, a la persona que escribe, el recibo de uno de sus pagos. Requiere el paymentId de listMyPayments.",
+    parameters: {
+      type: "object",
+      properties: {
+        paymentId: { type: "string", description: "ID del pago (UUID) de listMyPayments." }
+      },
+      required: ["paymentId"]
+    }
+  }
+};
+
+export const getMyApplicationStatusTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "getMyApplicationStatus",
+    description:
+      "Obtener la etapa de la solicitud de la persona que escribe (recibida, en revisión, aprobada) y la lista de documentos que faltan (ID_FRONT, ID_BACK, BUSINESS_PHOTO). No devuelve puntuación, motivos ni fechas: no existen para ti.",
+    parameters: { type: "object", properties: {}, required: [] }
+  }
+};
+
+export const attachApplicationEvidenceTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "attachApplicationEvidence",
+    description:
+      "Adjuntar a la solicitud la foto que la persona envió en ESTE mensaje. Úsala solo cuando el mensaje trae una foto. kind: ID_FRONT (cédula frente), ID_BACK (cédula reverso) o BUSINESS_PHOTO (foto del negocio). Devuelve lo que aún falta.",
+    parameters: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["ID_FRONT", "ID_BACK", "BUSINESS_PHOTO"],
+          description: "Qué muestra la foto."
+        }
+      },
+      required: ["kind"]
+    }
+  }
+};
+
+export const requestHumanHandoffTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "requestHumanHandoff",
+    description:
+      "Pasar la conversación a una persona del equipo. Úsala cuando la persona pide hablar con alguien, muestra frustración, o pide algo que no puedes resolver. Después de llamarla, despídete en una sola oración diciendo que alguien del equipo le responderá por aquí.",
+    parameters: {
+      type: "object",
+      properties: {
+        reason: {
+          type: "string",
+          description: "Motivo breve (una frase) para el equipo, en español."
+        }
+      },
+      required: ["reason"]
+    }
+  }
+};
+
 /**
  * All available tools.
  */
@@ -781,7 +879,13 @@ export const allTools: ToolFunction[] = [
   previewLateFeeTool,
   getApplicationStateTool,
   saveAnswerTool,
-  finalizeApplicationTool
+  finalizeApplicationTool,
+  listMyLoansTool,
+  listMyPaymentsTool,
+  sendMyReceiptTool,
+  getMyApplicationStatusTool,
+  attachApplicationEvidenceTool,
+  requestHumanHandoffTool
 ];
 
 /**

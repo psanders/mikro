@@ -725,6 +725,30 @@ model FollowUpJob {
 }
 
 // =============================================================================
+// WhatsApp human hand-off (openspec cx-role-based-agents)
+// =============================================================================
+
+// A WhatsApp conversation a CX agent handed to a human. While open (closedAt
+// null and expiresAt in the future) no agent replies to `phone`; the human
+// answers from Chatwoot. Each inbound message pushes expiresAt forward, so it
+// closes on its own after a quiet window. No foreign keys, like
+// business_events: the refs are context for the feed card, not ownership.
+model ConversationHandoff {
+  id            String    @id @default(uuid())
+  phone         String
+  profile       String
+  reason        String
+  applicationId String?   @map("application_id")
+  customerId    String?   @map("customer_id")
+  openedAt      DateTime  @default(now()) @map("opened_at")
+  expiresAt     DateTime  @map("expires_at")
+  closedAt      DateTime? @map("closed_at")
+
+  @@index([phone, closedAt])
+  @@map("conversation_handoffs")
+}
+
+// =============================================================================
 // Business event log (Founder Feed)
 // =============================================================================
 

@@ -134,3 +134,123 @@ describe("createMessageRouter — COLLECTOR routing", () => {
     expect(result.type).to.equal("ignored");
   });
 });
+
+// openspec cx-role-based-agents: who is writing picks the profile.
+describe("createMessageRouter — CX routing by role and application status", () => {
+  const PHONE = "+18095550009";
+  const customer = { id: "cust-1", name: "Ana López", phone: PHONE, isActive: true };
+  const app = (status: string, submittedAt: Date | null = null) => ({
+    applicationId: "app-1",
+    sessionId: "s-1",
+    status: status as never,
+    submittedAt
+  });
+  const ref = { applicationId: "app-1", sessionId: "s-1", phone: PHONE };
+
+  afterEach(() => sinon.restore());
+
+  const cases: Array<[string, ReturnType<typeof app> | null, Record<string, unknown>]> = [
+    ["no application → guest", null, { type: "guest", phone: PHONE }],
+    ["DRAFT → prospect", app("DRAFT"), { type: "prospect", ...ref }],
+    ["never-submitted ABANDONED → reopen", app("ABANDONED"), { type: "reopen", ...ref }],
+    [
+      "ABANDONED after submission → guest",
+      app("ABANDONED", new Date()),
+      { type: "guest", phone: PHONE }
+    ],
+    ["RECEIVED → applicant", app("RECEIVED", new Date()), { type: "applicant", ...ref }],
+    ["IN_REVIEW → applicant", app("IN_REVIEW", new Date()), { type: "applicant", ...ref }],
+    [
+      "PENDING_DECISION → applicant",
+      app("PENDING_DECISION", new Date()),
+      { type: "applicant", ...ref }
+    ],
+    ["APPROVED → applicant", app("APPROVED", new Date()), { type: "applicant", ...ref }],
+    [
+      "REJECTED → guest, flagged as previously rejected",
+      app("REJECTED", new Date()),
+      { type: "guest", phone: PHONE, previouslyRejected: true }
+    ],
+    [
+      "CONVERTED without customer → guest",
+      app("CONVERTED", new Date()),
+      { type: "guest", phone: PHONE }
+    ]
+  ];
+
+  for (const [name, found, expected] of cases) {
+    it(name, async () => {
+      const router = createMessageRouter(
+        makeDeps({ findApplicationByPhone: sinon.stub().resolves(found) })
+      );
+      expect(await router(PHONE)).to.deep.equal(expected);
+    });
+  }
+
+  it("routes a customer to CUSTOMER; a DRAFT of theirs is not attached", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getCustomerByPhone: sinon.stub().resolves(customer),
+        findApplicationByPhone: sinon.stub().resolves(app("DRAFT"))
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({
+      type: "customer",
+      customerId: "cust-1",
+      name: "Ana López",
+      phone: PHONE
+    });
+  });
+
+  it("attaches a returning customer's application in the review pipeline", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getCustomerByPhone: sinon.stub().resolves(customer),
+        findApplicationByPhone: sinon.stub().resolves(app("IN_REVIEW", new Date()))
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({
+      type: "customer",
+      customerId: "cust-1",
+      name: "Ana López",
+      phone: PHONE,
+      applicationId: "app-1"
+    });
+  });
+
+  it("routes an employee who is also a customer as the employee", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getUserByPhone: sinon.stub().resolves({ ...collectorUser, phone: PHONE }),
+        getCustomerByPhone: sinon.stub().resolves(customer)
+      })
+    );
+    const result = await router(PHONE);
+    expect(result.type).to.equal("user");
+  });
+
+  it("routes a REVIEWER-only user as REVIEWER, not COLLECTOR", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getUserByPhone: sinon
+          .stub()
+          .resolves({ ...collectorUser, roles: [{ role: "REVIEWER" as const }] })
+      })
+    );
+    const result = await router(COLLECTOR_PHONE);
+    expect(result.type === "user" && result.role).to.equal("REVIEWER");
+  });
+
+  it("prefers ADMIN over REVIEWER over COLLECTOR", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        getUserByPhone: sinon.stub().resolves({
+          ...collectorUser,
+          roles: [{ role: "COLLECTOR" as const }, { role: "REVIEWER" as const }]
+        })
+      })
+    );
+    const result = await router(COLLECTOR_PHONE);
+    expect(result.type === "user" && result.role).to.equal("REVIEWER");
+  });
+});

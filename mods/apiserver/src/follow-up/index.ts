@@ -7,3 +7,5 @@ export { createSendFollowUpNudge, type NudgeResult } from "./createSendFollowUpN
 export { createHandleNudgeJob } from "./createHandleNudgeJob.js";
 export { createHandleAbandonJob } from "./createHandleAbandonJob.js";
 export { createFollowUpWorker } from "./createFollowUpWorker.js";
+export { createRecordProspectActivity } from "./createRecordProspectActivity.js";
+export { createReopenApplication } from "./createReopenApplication.js";

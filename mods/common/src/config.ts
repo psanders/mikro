@@ -58,9 +58,8 @@ const whatsappSchema = z.object({
   verifyToken: z.string().default("mikro_webhook_token"),
   languageCode: z.string().default("es_DO"),
   // Operator kill switch for everything the webhook replies with: the LLM
-  // agents *and* the deterministic answers that fire when no agent is assigned
-  // (ADMIN/COLLECTOR redirects, the prospect hold message, the voice-note
-  // notice, the intake confirmation, the generic error). Disabling an agent in
+  // agents *and* the deterministic answers (the hand-off acknowledgement, the
+  // voice-note notice, the intake confirmation, the generic error). Disabling an agent in
   // agents.yaml only silences its LLM, so that is not a way to go quiet; this
   // is. Set false to make the number stop answering inbound messages entirely.
   //

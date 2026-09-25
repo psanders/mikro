@@ -12,16 +12,17 @@ const POLL_INTERVAL_MS = 30_000;
 interface Deps {
   client: DbClient;
   sendFollowUpNudge: (phone: string) => Promise<NudgeResult>;
-  abandonDelayMs: number;
+  /** Defers a DRAFT's ABANDON while its phone has an open human hand-off. */
+  getOpenHandoffExpiry?: (phone: string) => Promise<Date | null>;
 }
 
 export function createFollowUpWorker({
   client,
   sendFollowUpNudge,
-  abandonDelayMs
+  getOpenHandoffExpiry
 }: Deps): () => void {
-  const handleNudgeJob = createHandleNudgeJob({ client, sendFollowUpNudge, abandonDelayMs });
-  const handleAbandonJob = createHandleAbandonJob(client);
+  const handleNudgeJob = createHandleNudgeJob({ client, sendFollowUpNudge });
+  const handleAbandonJob = createHandleAbandonJob(client, { getOpenHandoffExpiry });
 
   async function tick(): Promise<void> {
     const now = new Date();

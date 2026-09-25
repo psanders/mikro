@@ -8,10 +8,15 @@ import { logger } from "../logger.js";
 interface Deps {
   client: DbClient;
   sendFollowUpNudge: (phone: string, firstName?: string | null) => Promise<NudgeResult>;
-  abandonDelayMs: number;
 }
 
-export function createHandleNudgeJob({ client, sendFollowUpNudge, abandonDelayMs }: Deps) {
+/**
+ * NUDGE fires a while after an application is submitted. It only sends the
+ * template: a submitted application is never abandoned by a timer, so there is
+ * no ABANDON to schedule here (DRAFT abandon follows the prospect's last
+ * activity — see createRecordProspectActivity).
+ */
+export function createHandleNudgeJob({ client, sendFollowUpNudge }: Deps) {
   return async (job: FollowUpJob): Promise<void> => {
     const app = await client.loanApplication.findUnique({ where: { id: job.applicationId } });
 
@@ -28,22 +33,10 @@ export function createHandleNudgeJob({ client, sendFollowUpNudge, abandonDelayMs
     if (app.phone) {
       await sendFollowUpNudge(app.phone, app.firstName);
     } else {
-      logger.verbose("NUDGE skipped — no phone; scheduling immediate ABANDON", {
-        applicationId: app.id
-      });
+      logger.verbose("NUDGE skipped — no phone", { applicationId: app.id });
     }
 
-    const abandonDelay = app.phone ? abandonDelayMs : 0;
-    const scheduledFor = new Date(Date.now() + abandonDelay);
-    await client.followUpJob.create({
-      data: { applicationId: app.id, type: "ABANDON", scheduledFor }
-    });
-
     await client.followUpJob.update({ where: { id: job.id }, data: { status: "DONE" } });
-    logger.verbose("NUDGE handled — ABANDON job scheduled", {
-      applicationId: app.id,
-      scheduledFor,
-      hadPhone: !!app.phone
-    });
+    logger.verbose("NUDGE handled", { applicationId: app.id, hadPhone: !!app.phone });
   };
 }

@@ -337,6 +337,20 @@ CREATE TABLE "follow_up_jobs" (
 CREATE INDEX "follow_up_jobs_status_scheduled_for_idx" ON "follow_up_jobs"("status", "scheduled_for");
 CREATE INDEX "follow_up_jobs_application_id_idx" ON "follow_up_jobs"("application_id");
 
+-- WhatsApp human hand-offs (cx-role-based-agents)
+CREATE TABLE "conversation_handoffs" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "phone" TEXT NOT NULL,
+    "profile" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "application_id" TEXT,
+    "customer_id" TEXT,
+    "opened_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expires_at" DATETIME NOT NULL,
+    "closed_at" DATETIME
+);
+CREATE INDEX "conversation_handoffs_phone_closed_at_idx" ON "conversation_handoffs"("phone", "closed_at");
+
 -- Business events table (founder feed, append-only)
 CREATE TABLE "business_events" (
     "id" TEXT NOT NULL PRIMARY KEY,
