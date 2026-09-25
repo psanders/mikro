@@ -32910,12 +32910,51 @@
       "id": "gzBYk",
       "x": 7531,
       "y": 6364,
-      "name": "Evaluator App / User Flow",
+      "name": "Evaluator App / User Flow — REEMPLAZADO (ver Founder Dashboard · sec-08 y Cobrador · Evidencias)",
       "cornerRadius": 32,
       "layout": "vertical",
       "gap": 90,
       "padding": 96,
       "children": [
+        {
+          "type": "frame",
+          "id": "YV8BN",
+          "name": "supersededBanner",
+          "width": 1458,
+          "fill": "$ds.red.bg",
+          "cornerRadius": 20,
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            24,
+            28
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "xHHsw",
+              "name": "t1",
+              "fill": "$ds.red",
+              "content": "REEMPLAZADO — la app de evaluador se retiró en v3.0.0",
+              "fontFamily": "Geist",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "M4nTA",
+              "name": "t2",
+              "fill": "#7F1D1D",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "La revisión de solicitudes vive en la app Ops (Founder Dashboard · sección 08). La evidencia en campo la recoge el cobrador (tablero «Cobrador · Evidencias por recoger»). Este tablero queda solo como referencia histórica.",
+              "lineHeight": 1.4,
+              "fontFamily": "Geist",
+              "fontSize": 17,
+              "fontWeight": "normal"
+            }
+          ]
+        },
         {
           "type": "frame",
           "id": "h4Qio",
@@ -119752,7 +119791,7 @@
                                       "id": "aMNnE",
                                       "name": "t",
                                       "fill": "$brand.blue.primary",
-                                      "content": "Tomar foto",
+                                      "content": "Cámara o galería",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "600"
@@ -119851,7 +119890,7 @@
                                       "id": "FOxOF",
                                       "name": "t",
                                       "fill": "$brand.blue.primary",
-                                      "content": "Tomar foto",
+                                      "content": "Cámara o galería",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "600"
@@ -119909,7 +119948,7 @@
                                       "id": "Mj9UD",
                                       "name": "t",
                                       "fill": "$brand.blue.primary",
-                                      "content": "Tomar foto",
+                                      "content": "Cámara o galería",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "600"
@@ -119967,7 +120006,7 @@
                                       "id": "Emkax",
                                       "name": "t",
                                       "fill": "$brand.blue.primary",
-                                      "content": "Tomar foto",
+                                      "content": "Cámara o galería",
                                       "fontFamily": "Geist",
                                       "fontSize": 12,
                                       "fontWeight": "600"
@@ -121986,6 +122025,38 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "El revisor sigue subiendo evidencia desde Ops; ahí la ubicación se pega como enlace de Google Maps.",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "o8e5O1",
+                  "name": "item",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "r6IWo",
+                      "name": "dot",
+                      "fill": "$brand.orange.primary",
+                      "content": "•",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "i7xcAz",
+                      "name": "x",
+                      "fill": "#3A4A66",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Cada foto puede venir de la cámara o de la galería (p. ej., la cédula que el cliente mandó por WhatsApp).",
                       "lineHeight": 1.4,
                       "fontFamily": "Geist",
                       "fontSize": 13,
