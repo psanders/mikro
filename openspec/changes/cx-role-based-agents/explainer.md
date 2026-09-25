@@ -131,7 +131,9 @@ What happens next:
 
 ### K. Unchanged
 
-Voice notes (transcribed if configured), the WhatsApp Flow intake and its confirmation, the generic error message, receipts, promos and payment confirmations all work as before.
+The WhatsApp Flow intake and its confirmation, the generic error message, receipts, promos and payment confirmations all work as before.
+
+Voice notes are transcribed (when configured) and handled like text. **Changed:** if a voice note can't be used, the "No puedo escuchar notas de voz" notice now follows the same rules as any reply. It is not sent during a hand-off or when no agent serves that person, and the voice note still counts as prospect activity.
 
 ---
 
