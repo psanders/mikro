@@ -28,7 +28,7 @@
 - [x] 4.3 Detail screen: contact/directions, progress, checklist, uploads/deletes
 - [x] 4.4 GPS capture states (searching, no permission, weak signal → save anyway)
 - [x] 4.5 "Mapa" button uses `customer.mapUrl`
-- [ ] 4.6 Jest tests + Maestro flow; native config validation (expo prebuild) — Jest + prebuild done; Maestro flow written, not yet run on a simulator
+- [x] 4.6 Jest tests + Maestro flow; native config validation (expo prebuild) — Maestro run on an iOS simulator, incl. simulated GPS
 
 ## 5. Release
 
