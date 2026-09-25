@@ -438,51 +438,36 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
   let userMessage: string = "";
   let imageUrl: string | null = null;
+  // A voice note we can't use. The notice waits for routing: it is still a
+  // reply, so it must respect an open hand-off and the "no agent, no reply"
+  // rule like any other, and the message still counts as prospect activity.
+  let voiceNotice: string | null = null;
 
   if (type === "audio") {
     if (!transcribeVoiceNote) {
-      logger.verbose("voice note received, sending not available message", {
+      logger.verbose("voice note received, transcription not available", {
         phone,
         messageId: id
       });
+      voiceNotice = VOICE_NOT_AVAILABLE_MSG;
+    } else if (!audio?.id) {
+      logger.warn("voice note missing audio id", { phone, messageId: id });
+      voiceNotice = VOICE_ERROR_MSG;
+    } else {
       try {
-        await sendWhatsAppMessage({ phone, message: VOICE_NOT_AVAILABLE_MSG });
+        const dataUrl = await downloadMedia(audio.id);
+        logger.verbose("voice note downloaded", { phone, mediaId: audio.id });
+        const transcribed = await transcribeVoiceNote(dataUrl);
+        userMessage = "[Voice]: " + transcribed;
       } catch (error) {
         const err = error as Error;
-        logger.error("failed to send voice note not available message", {
+        logger.error("voice note download or transcription failed", {
           phone,
+          messageId: id,
           error: err.message
         });
+        voiceNotice = VOICE_ERROR_MSG;
       }
-      return;
-    }
-    if (!audio?.id) {
-      logger.warn("voice note missing audio id", { phone, messageId: id });
-      try {
-        await sendWhatsAppMessage({ phone, message: VOICE_ERROR_MSG });
-      } catch {
-        // ignore
-      }
-      return;
-    }
-    try {
-      const dataUrl = await downloadMedia(audio.id);
-      logger.verbose("voice note downloaded", { phone, mediaId: audio.id });
-      const transcribed = await transcribeVoiceNote(dataUrl);
-      userMessage = "[Voice]: " + transcribed;
-    } catch (error) {
-      const err = error as Error;
-      logger.error("voice note download or transcription failed", {
-        phone,
-        messageId: id,
-        error: err.message
-      });
-      try {
-        await sendWhatsAppMessage({ phone, message: VOICE_ERROR_MSG });
-      } catch {
-        // ignore
-      }
-      return;
     }
   }
 
@@ -521,6 +506,24 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     // Step 2: Handle based on route type
     if (route.type === "ignored") {
       logger.verbose("message ignored", { phone, reason: route.reason });
+      return;
+    }
+
+    if (voiceNotice !== null) {
+      const mayReply =
+        route.type === "user"
+          ? !!getAgentForProfile(route.role)
+          : await passesCxGate(route, messageProcessor);
+      if (mayReply) {
+        try {
+          await sendWhatsAppMessage({ phone, message: voiceNotice });
+        } catch (error) {
+          logger.error("failed to send voice note notice", {
+            phone,
+            error: (error as Error).message
+          });
+        }
+      }
       return;
     }
 
@@ -665,6 +668,34 @@ async function recordActivityIfProspect(
 }
 
 /**
+ * What every inbound CX message goes through before anything may answer it:
+ * record prospect activity, then stay silent if a human hand-off is open or
+ * no agent serves the profile. Returns whether a reply is allowed.
+ */
+async function passesCxGate(
+  route: CxRoute,
+  processor: MessageProcessorDependencies
+): Promise<boolean> {
+  const { phone } = route;
+  const profile = profileFor(route);
+
+  if (route.type === "prospect" && processor.recordProspectActivity) {
+    await processor.recordProspectActivity(route.applicationId);
+  }
+
+  if (processor.extendHandoff && (await processor.extendHandoff(phone))) {
+    logger.verbose("human hand-off open, agent stays silent", { phone, profile });
+    return false;
+  }
+
+  if (!processor.getAgentForProfile(profile)) {
+    logger.verbose("no agent assigned to profile, ignoring", { phone, profile });
+    return false;
+  }
+  return true;
+}
+
+/**
  * Answer a guest, prospect, applicant or customer (openspec
  * cx-role-based-agents): record prospect activity, stay silent during a human
  * hand-off, honor an explicit request for a person, reopen an abandoned draft,
@@ -680,20 +711,8 @@ async function handleCxMessage(
   const { invokeLLM, sendWhatsAppMessage, getAgentForProfile } = processor;
   const profile = profileFor(route);
 
-  if (route.type === "prospect" && processor.recordProspectActivity) {
-    await processor.recordProspectActivity(route.applicationId);
-  }
-
-  if (processor.extendHandoff && (await processor.extendHandoff(phone))) {
-    logger.verbose("human hand-off open, agent stays silent", { phone, profile });
-    return;
-  }
-
-  const agent = getAgentForProfile(profile);
-  if (!agent) {
-    logger.verbose("no agent assigned to profile, ignoring", { phone, profile });
-    return;
-  }
+  if (!(await passesCxGate(route, processor))) return;
+  const agent = getAgentForProfile(profile)!;
 
   // An explicit "no me interesa" wins over a request for a person: José closes it.
   const optingOut = profile === "PROSPECT" && isDecline(userMessage);

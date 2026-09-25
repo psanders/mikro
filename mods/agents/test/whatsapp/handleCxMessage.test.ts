@@ -70,6 +70,31 @@ function imageWebhook() {
   };
 }
 
+function voiceWebhook() {
+  return {
+    object: "whatsapp_business_account",
+    entry: [
+      {
+        changes: [
+          {
+            value: {
+              messages: [
+                {
+                  from: PHONE,
+                  type: "audio",
+                  id: `cx-${++seq}`,
+                  timestamp: recentTs(),
+                  audio: { id: "audio-1" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  };
+}
+
 const agentFor = (profile: string) => ({
   name: `${profile.toLowerCase()}-agent`,
   profile,
@@ -288,6 +313,38 @@ describe("WhatsApp CX routes", () => {
 
       expect(p.getAgentForProfile.calledWith("GUEST")).to.be.true;
       expect(p.invokeLLM.firstCall.args[4]).to.deep.equal({ phone: PHONE, profile: "GUEST" });
+    });
+  });
+
+  // Code review: an unusable voice note used to reply before routing, past an
+  // open hand-off, and without counting as prospect activity.
+  describe("voice notes we cannot transcribe", () => {
+    it("stay silent during an open hand-off, and extend it", async () => {
+      const p = setup(customerRoute, { extendHandoff: sinon.stub().resolves(true) });
+
+      await handleWhatsAppMessage(voiceWebhook());
+
+      expect(p.extendHandoff.calledOnceWith(PHONE)).to.be.true;
+      expect(p.sendWhatsAppMessage.called).to.be.false;
+    });
+
+    it("still restart a prospect's abandon clock, then send the notice", async () => {
+      const p = setup(prospectRoute);
+
+      await handleWhatsAppMessage(voiceWebhook());
+
+      expect(p.recordProspectActivity.calledOnceWith("app-1")).to.be.true;
+      expect(p.invokeLLM.called).to.be.false;
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.match(/notas de voz/);
+    });
+
+    it("send no notice when no agent serves the profile", async () => {
+      const p = setup(customerRoute, { getAgentForProfile: sinon.stub().returns(undefined) });
+
+      await handleWhatsAppMessage(voiceWebhook());
+
+      expect(p.sendWhatsAppMessage.called).to.be.false;
     });
   });
 });

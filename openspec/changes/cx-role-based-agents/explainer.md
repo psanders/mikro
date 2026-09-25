@@ -250,3 +250,5 @@ There are three layers:
 2. **FAQ copy**: Lucía and Sofía use the website FAQ text. Please read it in `agents.yaml` before turning them on.
 3. **Agent names**: Lucía, Sofía and Carmen are placeholders. Rename freely.
 4. **Turn-on order**: GUEST → APPLICANT → CUSTOMER, one at a time, watching the feed and Chatwoot.
+
+5. **Returning customers who apply again** always get Carmen (customer agent), not Sofía, so they cannot check the new application or send photos over WhatsApp. They can still ask for a person. Found in code review; decide with item 1.
