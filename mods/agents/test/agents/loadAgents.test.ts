@@ -37,14 +37,14 @@ describe("loadAgents — CX profiles", () => {
     clearConfigCache();
   });
 
-  it("loads the tracked agents.yaml, with the CX agents shipped disabled", () => {
+  it("loads the tracked agents.yaml, with the CX agents enabled", () => {
     useAgentsFile(REPO_AGENTS);
     const agents = loadAgents();
 
     for (const profile of ["GUEST", "APPLICANT", "CUSTOMER"] as const) {
       const agent = agents.get(profile);
       expect(agent, profile).to.not.equal(undefined);
-      expect(agent!.enabled, `${profile} ships disabled`).to.be.false;
+      expect(agent!.enabled, `${profile} is enabled`).to.be.true;
       expect(agent!.allowedTools).to.include("requestHumanHandoff");
     }
     expect(agents.get("PROSPECT")!.allowedTools).to.include("requestHumanHandoff");

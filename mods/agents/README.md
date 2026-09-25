@@ -21,7 +21,7 @@ Every agent except staff can hand the conversation to a person (`requestHumanHan
 
 ### Rollout
 
-The CX agents (Lucía, Sofía, Carmen) ship with `enabled: false`. Enable them one at a time: GUEST, then APPLICANT, then CUSTOMER. Watch the founder feed and Chatwoot after each one. To check a prompt change, run `npm run agents:eval -- <agent>`.
+The CX agents (Lucía, Sofía, Carmen) are enabled. Production reads its own copy of `agents.yaml` next to `mikro.json`, and deploys never update it. After changing `agents.yaml`, copy it to the server and restart the container. To turn one agent off quickly, set its `enabled: false` in the server's copy and restart. To check a prompt change, run `npm run agents:eval -- <agent>`.
 
 ## Example customers report
 
