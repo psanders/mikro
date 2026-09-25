@@ -43,7 +43,7 @@
 
 ## 6. Verification and docs
 
-- [ ] 6.1 `npm run build`, lint and the full test suite green in the worktree (run `npm ci` in the worktree first)
-- [ ] 6.2 Run the agent evals for the new agents
+- [x] 6.1 `npm run build`, lint and the full test suite green in the worktree (run `npm ci` in the worktree first)
+- [x] 6.2 Run the agent evals for the new agents
 - [ ] 6.3 Manual WhatsApp smoke on staging: guest, DRAFT prospect, reopen, applicant + photo, customer balance/receipt, hand-off silence + expiry, employee silence, kill switch
-- [ ] 6.4 Update `mods/agents/README.md` routing section and the rollout order (enable GUEST → APPLICANT → CUSTOMER)
+- [x] 6.4 Update `mods/agents/README.md` routing section and the rollout order (enable GUEST → APPLICANT → CUSTOMER)
