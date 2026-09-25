@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.2.0](https://github.com/psanders/mikro/compare/v3.1.0...v3.2.0) (2026-09-25)
+
+### Features
+
+- **cx:** role-based WhatsApp agents with human hand-off ([#294](https://github.com/psanders/mikro/issues/294)) ([bf4358b](https://github.com/psanders/mikro/commit/bf4358b938bc06c9056e33389ba0155a7220bdc4))
+
 # [3.1.0](https://github.com/psanders/mikro/compare/v3.0.0...v3.1.0) (2026-09-25)
 
 ### Features
