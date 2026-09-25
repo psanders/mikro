@@ -71,6 +71,8 @@ export interface LoanApplication {
   contractSha256: string | null;
   signedById: string | null;
   signedAt: Date | null;
+  /** Business location evidence: a Google Maps link only. */
+  mapUrl: string | null;
   idFrontFilename: string | null;
   idFrontOriginalName: string | null;
   idFrontMimeType: string | null;

@@ -119,6 +119,8 @@ export interface TransitionActor {
 
 /** Evidence completeness, computed by `evidenceStatus`. */
 export interface EvidenceStatus {
+  /** The business location, stored as a map link (`mapUrl`). */
+  location: boolean;
   idFront: boolean;
   idBack: boolean;
   businessPhotos: { have: number; need: number };
@@ -280,23 +282,38 @@ export function evaluateTransition(
 }
 
 /**
- * Evidence completeness: both cédula sides stored and at least `minBusinessPhotos`
- * business photos. The recommendation is checked separately by `sendToDecision`
- * so the UI can name each missing piece.
+ * Evidence completeness: the business location (map link), both cédula sides,
+ * and at least `minBusinessPhotos` business photos. The recommendation is
+ * checked separately by `sendToDecision` so the UI can name each missing piece.
  */
 export function evidenceStatus(
-  app: { idFrontFilename: string | null; idBackFilename: string | null },
+  app: { mapUrl: string | null; idFrontFilename: string | null; idBackFilename: string | null },
   businessPhotoCount: number,
   minBusinessPhotos: number
 ): EvidenceStatus {
+  const location = Boolean(app.mapUrl);
   const idFront = Boolean(app.idFrontFilename);
   const idBack = Boolean(app.idBackFilename);
   const businessPhotos = { have: businessPhotoCount, need: minBusinessPhotos };
   return {
+    location,
     idFront,
     idBack,
     businessPhotos,
-    complete: idFront && idBack && businessPhotoCount >= minBusinessPhotos
+    complete: location && idFront && idBack && businessPhotoCount >= minBusinessPhotos
+  };
+}
+
+/**
+ * Evidence progress as counted pieces: the location, each cédula side, and
+ * each required photo (extra photos don't count past the minimum). Drives the
+ * collector list's "1 de 6".
+ */
+export function evidenceProgress(e: EvidenceStatus): { have: number; need: number } {
+  const photos = Math.min(e.businessPhotos.have, e.businessPhotos.need);
+  return {
+    have: Number(e.location) + Number(e.idFront) + Number(e.idBack) + photos,
+    need: 3 + e.businessPhotos.need
   };
 }
 

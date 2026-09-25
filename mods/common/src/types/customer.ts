@@ -12,6 +12,8 @@ export interface Customer {
   phone: string;
   idNumber: string;
   collectionPoint?: string;
+  /** Business location as a Google Maps link (copied from the application on conversion). */
+  mapUrl?: string | null;
   homeAddress: string;
   jobPosition?: string | null;
   income?: number | null;

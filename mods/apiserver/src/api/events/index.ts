@@ -12,3 +12,4 @@ export {
   recordApplicationReceived,
   recordOutOfAreaRejection
 } from "./recordApplicationReceived.js";
+export { recordEvidenceCompleted } from "./recordEvidenceCompleted.js";

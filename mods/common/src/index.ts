@@ -158,6 +158,9 @@ export {
   deleteApplicationDocumentSchema,
   getApplicationDocumentSchema,
   getApplicationEvidenceSchema,
+  setApplicationMapUrlSchema,
+  listEvidenceQueueSchema,
+  getEvidenceTaskSchema,
   approveApplicationSchema,
   rejectApplicationSchema,
   promoteApplicationSchema,
@@ -199,6 +202,8 @@ export {
   type DeleteApplicationDocumentInput,
   type GetApplicationDocumentInput,
   type GetApplicationEvidenceInput,
+  type SetApplicationMapUrlInput,
+  type GetEvidenceTaskInput,
   type ApproveApplicationInput,
   type RejectApplicationInput,
   type PromoteApplicationInput,
@@ -225,6 +230,7 @@ export {
   DEFAULT_MIN_BUSINESS_PHOTOS,
   evaluateTransition,
   evidenceStatus,
+  evidenceProgress,
   transitionBlockCode,
   type ReviewAction,
   type RejectionReason,
@@ -667,3 +673,4 @@ export * from "./eval/index.js";
 
 // Reporting foundation (shared Report contract, branded PDF renderer, helpers)
 export * from "./reporting/index.js";
+export { isMapUrl, buildMapUrl, MAX_MAP_URL_LENGTH } from "./schemas/mapUrl.js";

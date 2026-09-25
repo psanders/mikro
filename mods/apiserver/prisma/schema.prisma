@@ -257,6 +257,8 @@ model Customer {
   phone               String
   idNumber            String   @map("id_number")
   collectionPoint     String?   @map("collection_point")
+  /// Business location as a Google Maps link, copied from the application on conversion.
+  mapUrl              String?   @map("map_url")
   homeAddress         String   @map("home_address")
   jobPosition         String?  @map("job_position")
   income              Decimal?
@@ -620,6 +622,8 @@ model LoanApplication {
   // Identity document images (front/back of the cédula). Static uploads stored
   // on disk under contractsPath as <sha256>.<ext>; these columns are metadata
   // only — no OCR/extraction. Captured before converting the prospect.
+  /// Business location evidence: a Google Maps link only (no coordinates).
+  mapUrl              String?   @map("map_url")
   idFrontFilename     String?   @map("id_front_filename")
   idFrontOriginalName String?   @map("id_front_original_name")
   idFrontMimeType     String?   @map("id_front_mime_type")

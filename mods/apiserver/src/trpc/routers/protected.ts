@@ -78,6 +78,9 @@ import {
   createApplicationSchema,
   deleteApplicationSchema,
   uploadIdImageSchema,
+  setApplicationMapUrlSchema,
+  listEvidenceQueueSchema,
+  getEvidenceTaskSchema,
   getIdImageSchema,
   deleteIdImageSchema,
   deleteApplicationContractSchema,
@@ -94,7 +97,8 @@ import {
   protectedProcedure,
   reviewerProcedure,
   adminProcedure,
-  collectorProcedure
+  collectorProcedure,
+  evidenceProcedure
 } from "../trpc.js";
 // Customer API functions
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
@@ -149,12 +153,18 @@ import {
   createWithdrawApplication
 } from "../../api/applications/reviewApplication.js";
 import {
+  assertEvidenceReadable,
   getApplicationEvidence,
+  getEvidenceTask,
   getMinBusinessPhotos,
+  listEvidenceQueue,
   readApplicationDocument,
   removeApplicationDocument,
-  storeApplicationDocument
+  setApplicationMapUrl,
+  storeApplicationDocument,
+  trackEvidenceCompletion
 } from "../../api/applications/evidence.js";
+import { loadApplication } from "../../api/applications/reviewApplication.js";
 import { refreshApplicationSummary } from "../../api/applications/applicationSummary.js";
 import { listDisbursementAccounts } from "../../api/applications/disbursementAccounts.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
@@ -707,33 +717,60 @@ export const protectedRouter = router({
     return listDisbursementAccounts(ctx.db as unknown as PrismaClient);
   }),
 
-  /** Evidence completeness + document list for an application. */
-  getApplicationEvidence: reviewerProcedure
+  /** Evidence completeness + document list. Collectors: applications in review only. */
+  getApplicationEvidence: evidenceProcedure
     .input(getApplicationEvidenceSchema)
     .query(async ({ ctx, input }) => {
+      assertEvidenceReadable(await loadApplication(ctx.db, input), actorOf(ctx));
       return getApplicationEvidence(ctx.db, input);
     }),
 
-  /** Upload a business photo or other document (assignee, IN_REVIEW). */
-  uploadApplicationDocument: reviewerProcedure
+  /** Upload a business photo or other document (assignee or collector, IN_REVIEW). */
+  uploadApplicationDocument: evidenceProcedure
     .input(uploadApplicationDocumentSchema)
     .mutation(async ({ ctx, input }) => {
-      return storeApplicationDocument(ctx.db, input, actorOf(ctx));
+      const actor = actorOf(ctx);
+      return trackEvidenceCompletion(ctx.db, input, actor, () =>
+        storeApplicationDocument(ctx.db, input, actor)
+      );
     }),
 
-  /** Remove an evidence document (assignee, IN_REVIEW). The file itself is kept. */
-  deleteApplicationDocument: reviewerProcedure
+  /** Remove an evidence document (assignee or collector, IN_REVIEW). The file itself is kept. */
+  deleteApplicationDocument: evidenceProcedure
     .input(deleteApplicationDocumentSchema)
     .mutation(async ({ ctx, input }) => {
       return removeApplicationDocument(ctx.db, input.documentId, actorOf(ctx));
     }),
 
-  /** One evidence file as base64 (thumbnails / viewer). */
-  getApplicationDocument: reviewerProcedure
+  /** One evidence file as base64 (thumbnails / viewer). Collectors: in review only. */
+  getApplicationDocument: evidenceProcedure
     .input(getApplicationDocumentSchema)
     .query(async ({ ctx, input }) => {
-      return readApplicationDocument(ctx.db, input.documentId);
+      const file = await readApplicationDocument(ctx.db, input.documentId);
+      const app = await loadApplication(ctx.db, { id: file.document.applicationId });
+      assertEvidenceReadable(app, actorOf(ctx));
+      return file;
     }),
+
+  /** Set or clear the business location map link (assignee or collector, IN_REVIEW). */
+  setApplicationMapUrl: evidenceProcedure
+    .input(setApplicationMapUrlSchema)
+    .mutation(async ({ ctx, input }) => {
+      const actor = actorOf(ctx);
+      return trackEvidenceCompletion(ctx.db, input, actor, () =>
+        setApplicationMapUrl(ctx.db, input, actor)
+      );
+    }),
+
+  /** Collector evidence list: every application in review, oldest first, with progress. */
+  listEvidenceQueue: collectorProcedure.input(listEvidenceQueueSchema).query(async ({ ctx }) => {
+    return listEvidenceQueue(ctx.db);
+  }),
+
+  /** One application in review as a collector sees it (visit fields + evidence only). */
+  getEvidenceTask: collectorProcedure.input(getEvidenceTaskSchema).query(async ({ ctx, input }) => {
+    return getEvidenceTask(ctx.db, input);
+  }),
 
   /**
    * Promote a reviewer-completed DRAFT into the queue (-> RECEIVED). ADMIN/REVIEWER only.
@@ -873,23 +910,28 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Upload one side of the applicant's cédula (static image). ADMIN/REVIEWER only.
+   * Upload one side of the applicant's cédula (static image). Assignee or
+   * collector, IN_REVIEW only.
    */
-  uploadIdImage: reviewerProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
-    const fn = createUploadIdImage(ctx.db);
-    return fn(input, actorOf(ctx));
+  uploadIdImage: evidenceProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
+    const actor = actorOf(ctx);
+    return trackEvidenceCompletion(ctx.db, input, actor, () =>
+      createUploadIdImage(ctx.db)(input, actor)
+    );
   }),
 
   /**
-   * Fetch a stored cédula image (front/back) as base64. ADMIN/REVIEWER only.
+   * Fetch a stored cédula image (front/back) as base64. Collectors: applications
+   * in review only.
    */
-  getIdImage: reviewerProcedure.input(getIdImageSchema).query(async ({ ctx, input }) => {
+  getIdImage: evidenceProcedure.input(getIdImageSchema).query(async ({ ctx, input }) => {
+    assertEvidenceReadable(await loadApplication(ctx.db, input), actorOf(ctx));
     const fn = createGetIdImage(ctx.db);
     return fn(input);
   }),
 
-  /** Remove one side of the applicant's cédula. Assignee, IN_REVIEW only. */
-  deleteIdImage: reviewerProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
+  /** Remove one side of the applicant's cédula. Assignee or collector, IN_REVIEW only. */
+  deleteIdImage: evidenceProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
     const fn = createDeleteIdImage(ctx.db);
     return fn(input, actorOf(ctx));
   }),
