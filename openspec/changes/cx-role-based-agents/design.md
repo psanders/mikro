@@ -108,3 +108,4 @@ Existing DRAFTs have no ABANDON job. On deploy they only get one on their next a
 ## Open Questions
 
 - The FAQ content for the GUEST and CUSTOMER prompts: coverage area, rates wording, office hours. It needs founder copy before those agents are enabled (it does not block building).
+- **Rejected applicants who write again (KNOWN GAP, spec update pending).** No rejection path messages the person (reviewer reject, out-of-area auto-reject, withdrawal). A rejected phone routes to GUEST, and Lucía does not know about the rejection: she invites them to apply again, and the upsert allows a fresh application right away (`CLOSED_WITH_HISTORY`). The founder must choose (2026-09-25): (1) leave it; (2) route `REJECTED` to GUEST with a flag so the agent acknowledges it and hands off; (3) a cooldown before re-applying; (4) a rejection notice at decision time, which needs a new approved Meta template. Update the specs once decided. See explainer.md §3.
