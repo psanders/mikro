@@ -1,8 +1,8 @@
 # WhatsApp CX: what happens, case by case
 
-A plain-language guide to the `cx-role-based-agents` change. It covers what the WhatsApp number does for each kind of person, where to look to see it happening, which Meta templates are involved, what happens on rejections, and how each case is tested.
+A plain-language guide to how the WhatsApp number handles each kind of person: what happens, where to look to see it happening, which Meta templates are involved, what happens on rejections, and how each case is tested. The formal spec is in `openspec/changes/cx-role-based-agents/`.
 
-> **Status (2026-09-25):** built on branch `feat/cx-role-based-agents`, not deployed. The three new agents (Lucía, Sofía, Carmen) ship **turned off**. Until you turn one on, that audience gets no reply, which is the same as today.
+> **Status (2026-09-25):** the routing code is live in production since v3.2.0 (PR #294). The Chatwoot note on hand-offs comes with PR #295. Which agents actually answer depends on the `agents.yaml` file on the server (next to `mikro.json`), not on the release: deploys never update that file. An agent that is missing or `enabled: false` there means that audience gets no reply.
 
 ---
 
