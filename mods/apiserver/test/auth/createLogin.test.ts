@@ -29,7 +29,7 @@ describe("createLogin", () => {
 
   before(() => {
     savedConfigFile = process.env.MIKRO_CONFIG_FILE;
-    process.env.MIKRO_CONFIG_FILE = resolve(__dirname, "../../../../mikro.json");
+    process.env.MIKRO_CONFIG_FILE = resolve(__dirname, "../fixtures/mikro.json");
     clearConfigCache();
   });
 

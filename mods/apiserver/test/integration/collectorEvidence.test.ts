@@ -326,6 +326,44 @@ describe("collector evidence (integration)", () => {
       expect(await completedEvents()).to.have.lengthOf(0);
     });
 
+    it("two collectors completing it at the same time record one event", async () => {
+      const app = await inReview();
+      await collector.uploadIdImage(idSide(app.id, "FRONT"));
+      await collector.uploadIdImage(idSide(app.id, "BACK"));
+      await collector.uploadApplicationDocument(photo(app.id, "Fachada"));
+      await collector.uploadApplicationDocument(photo(app.id, "Interior"));
+      const other = as(
+        (await admin.createUser({ name: "Rosa Cobradora", phone: phone(), role: "COLLECTOR" })).id,
+        ["COLLECTOR"]
+      );
+      await Promise.all([
+        collector.setApplicationMapUrl({ id: app.id, mapUrl: MAP_URL }),
+        other.uploadApplicationDocument(photo(app.id, "Mercancía"))
+      ]);
+      const events = await completedEvents();
+      expect(events.length).to.be.at.most(1);
+      // Whichever write completed it, the evidence is complete and claimed once.
+      const task = await collector.getEvidenceTask({ id: app.id });
+      if (task.status.complete) expect(events).to.have.lengthOf(1);
+    });
+
+    it("once the assignee completes it, a later collector write records nothing", async () => {
+      const app = await inReview();
+      await allButMapUrl(app.id, reviewer);
+      await reviewer.setApplicationMapUrl({ id: app.id, mapUrl: MAP_URL });
+      await collector.uploadApplicationDocument(photo(app.id, "Letrero"));
+      expect(await completedEvents()).to.have.lengthOf(0);
+    });
+
+    it("is recorded again after the evidence becomes incomplete and is completed again", async () => {
+      const app = await inReview();
+      await allButMapUrl(app.id);
+      await collector.setApplicationMapUrl({ id: app.id, mapUrl: MAP_URL });
+      await collector.setApplicationMapUrl({ id: app.id, mapUrl: null });
+      await collector.setApplicationMapUrl({ id: app.id, mapUrl: MAP_URL });
+      expect(await completedEvents()).to.have.lengthOf(2);
+    });
+
     it("shows in the assignee's feed", async () => {
       const app = await inReview();
       await allButMapUrl(app.id);

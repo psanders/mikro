@@ -624,6 +624,9 @@ model LoanApplication {
   // only — no OCR/extraction. Captured before converting the prospect.
   /// Business location evidence: a Google Maps link only (no coordinates).
   mapUrl              String?   @map("map_url")
+  /// Set by the first write that completes the evidence, cleared when it becomes
+  /// incomplete again: the atomic claim behind the single evidence_completed event.
+  evidenceCompletedAt DateTime? @map("evidence_completed_at")
   idFrontFilename     String?   @map("id_front_filename")
   idFrontOriginalName String?   @map("id_front_original_name")
   idFrontMimeType     String?   @map("id_front_mime_type")

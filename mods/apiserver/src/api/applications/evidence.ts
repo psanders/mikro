@@ -137,31 +137,51 @@ export async function getApplicationEvidence(
 }
 
 /**
- * Run an evidence write and, when it takes the evidence from incomplete to
- * complete and the writer isn't the assignee (a collector in the field), record
- * one `application.evidence_completed` event for the reviewer. Deletions can't
- * complete evidence, so only additive writes go through this.
+ * Keep the evidence-completion marker in step with the evidence after a write,
+ * and record `application.evidence_completed` for the write that completes it.
+ * The marker is claimed with a conditional update, so exactly one write per
+ * completion wins even when several land at once; the event is only recorded
+ * when that write isn't the assignee's (a collector in the field). When the
+ * evidence becomes incomplete again the marker is released, so the next
+ * completion is announced too.
  */
+export async function syncEvidenceCompletion(
+  client: DbClient,
+  applicationId: string,
+  actor: TransitionActor
+): Promise<void> {
+  const app = await loadApplication(client, { id: applicationId });
+  const status = await loadEvidenceStatus(client, app, getMinBusinessPhotos());
+  if (!status.complete) {
+    await client.loanApplication.updateMany({
+      where: { id: app.id, evidenceCompletedAt: { not: null } },
+      data: { evidenceCompletedAt: null }
+    });
+    return;
+  }
+  const { count } = await client.loanApplication.updateMany({
+    where: { id: app.id, evidenceCompletedAt: null },
+    data: { evidenceCompletedAt: new Date() }
+  });
+  if (count === 1 && app.assignedReviewerId !== actor.id) {
+    await recordEvidenceCompleted(client as unknown as EventClient, app, actor.id);
+  }
+}
+
+/** Run an evidence write, then sync the completion marker/event (never fails the write). */
 export async function trackEvidenceCompletion<T>(
   client: DbClient,
-  ref: ApplicationRef,
+  applicationId: (result: T) => string,
   actor: TransitionActor,
   write: () => Promise<T>
 ): Promise<T> {
-  const min = getMinBusinessPhotos();
-  const app = await loadApplication(client, ref);
-  const before = await loadEvidenceStatus(client, app, min);
   const result = await write();
-  if (before.complete || app.assignedReviewerId === actor.id) return result;
+  const id = applicationId(result);
   try {
-    const fresh = await loadApplication(client, { id: app.id });
-    const after = await loadEvidenceStatus(client, fresh, min);
-    if (after.complete) {
-      await recordEvidenceCompleted(client as unknown as EventClient, fresh, actor.id);
-    }
+    await syncEvidenceCompletion(client, id, actor);
   } catch (err) {
-    logger.error("failed to record evidence completion", {
-      applicationId: app.id,
+    logger.error("failed to sync evidence completion", {
+      applicationId: id,
       error: (err as Error).message
     });
   }

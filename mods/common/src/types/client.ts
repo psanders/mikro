@@ -388,6 +388,11 @@ export interface DbClient {
       where: { id: string; status: ApplicationStatus; assignedReviewerId?: string | null };
       data: Partial<LoanApplicationWriteData>;
     }): Promise<{ count: number }>;
+    /** Claim or release the evidence-completion marker (conditional, atomic). */
+    updateMany(args: {
+      where: { id: string; evidenceCompletedAt: null | { not: null } };
+      data: { evidenceCompletedAt: Date | null };
+    }): Promise<{ count: number }>;
   };
 
   applicationDocument: {
@@ -530,6 +535,7 @@ export interface LoanApplicationWriteData {
   signedById?: string | null;
   signedAt?: Date | null;
   mapUrl?: string | null;
+  evidenceCompletedAt?: Date | null;
   idFrontFilename?: string | null;
   idFrontOriginalName?: string | null;
   idFrontMimeType?: string | null;

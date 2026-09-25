@@ -730,8 +730,11 @@ export const protectedRouter = router({
     .input(uploadApplicationDocumentSchema)
     .mutation(async ({ ctx, input }) => {
       const actor = actorOf(ctx);
-      return trackEvidenceCompletion(ctx.db, input, actor, () =>
-        storeApplicationDocument(ctx.db, input, actor)
+      return trackEvidenceCompletion(
+        ctx.db,
+        (doc) => doc.applicationId,
+        actor,
+        () => storeApplicationDocument(ctx.db, input, actor)
       );
     }),
 
@@ -739,7 +742,13 @@ export const protectedRouter = router({
   deleteApplicationDocument: evidenceProcedure
     .input(deleteApplicationDocumentSchema)
     .mutation(async ({ ctx, input }) => {
-      return removeApplicationDocument(ctx.db, input.documentId, actorOf(ctx));
+      const actor = actorOf(ctx);
+      return trackEvidenceCompletion(
+        ctx.db,
+        (doc) => doc.applicationId,
+        actor,
+        () => removeApplicationDocument(ctx.db, input.documentId, actor)
+      );
     }),
 
   /** One evidence file as base64 (thumbnails / viewer). Collectors: in review only. */
@@ -757,8 +766,11 @@ export const protectedRouter = router({
     .input(setApplicationMapUrlSchema)
     .mutation(async ({ ctx, input }) => {
       const actor = actorOf(ctx);
-      return trackEvidenceCompletion(ctx.db, input, actor, () =>
-        setApplicationMapUrl(ctx.db, input, actor)
+      return trackEvidenceCompletion(
+        ctx.db,
+        (app) => app.id,
+        actor,
+        () => setApplicationMapUrl(ctx.db, input, actor)
       );
     }),
 
@@ -915,8 +927,11 @@ export const protectedRouter = router({
    */
   uploadIdImage: evidenceProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
     const actor = actorOf(ctx);
-    return trackEvidenceCompletion(ctx.db, input, actor, () =>
-      createUploadIdImage(ctx.db)(input, actor)
+    return trackEvidenceCompletion(
+      ctx.db,
+      (app) => app.id,
+      actor,
+      () => createUploadIdImage(ctx.db)(input, actor)
     );
   }),
 
@@ -932,8 +947,13 @@ export const protectedRouter = router({
 
   /** Remove one side of the applicant's cédula. Assignee or collector, IN_REVIEW only. */
   deleteIdImage: evidenceProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
-    const fn = createDeleteIdImage(ctx.db);
-    return fn(input, actorOf(ctx));
+    const actor = actorOf(ctx);
+    return trackEvidenceCompletion(
+      ctx.db,
+      (app) => app.id,
+      actor,
+      () => createDeleteIdImage(ctx.db)(input, actor)
+    );
   }),
 
   /** Remove the stored signed contract of an APPROVED application. Assignee or ADMIN. */

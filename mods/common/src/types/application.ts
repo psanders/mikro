@@ -73,6 +73,8 @@ export interface LoanApplication {
   signedAt: Date | null;
   /** Business location evidence: a Google Maps link only. */
   mapUrl: string | null;
+  /** When the evidence last became complete (the completion-event claim). */
+  evidenceCompletedAt: Date | null;
   idFrontFilename: string | null;
   idFrontOriginalName: string | null;
   idFrontMimeType: string | null;

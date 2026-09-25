@@ -35,6 +35,7 @@ export function isGoodReading(r: Reading): boolean {
 }
 
 export type CaptureResult =
+  | { kind: "cancelled" }
   | { kind: "denied" }
   | { kind: "unavailable" }
   | { kind: "good"; reading: Reading }
@@ -44,49 +45,67 @@ export type CaptureResult =
  * Ask for foreground location permission, then watch the position until a
  * reading is good (≤ 20 m) or 15 s pass; a weak best reading is returned for
  * the collector to save anyway. Only the resulting link is ever stored.
+ * `cancel()` stops the watch and resolves `cancelled` (e.g. the collector left
+ * the screen), so a late reading is never saved.
  */
-export async function captureLocation(onProgress?: (r: Reading) => void): Promise<CaptureResult> {
-  const perm = await Location.requestForegroundPermissionsAsync();
-  if (perm.status !== "granted") return { kind: "denied" };
+export function startLocationCapture(onProgress?: (r: Reading) => void): {
+  result: Promise<CaptureResult>;
+  cancel: () => void;
+} {
+  let cancelled = false;
+  let finish: ((r: CaptureResult) => void) | null = null;
+  const result = (async (): Promise<CaptureResult> => {
+    const perm = await Location.requestForegroundPermissionsAsync();
+    if (cancelled) return { kind: "cancelled" };
+    if (perm.status !== "granted") return { kind: "denied" };
 
-  let best: Reading | null = null;
-  return new Promise<CaptureResult>((resolve) => {
-    let sub: Location.LocationSubscription | null = null;
-    let done = false;
-    const finish = (result: CaptureResult) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      sub?.remove();
-      resolve(result);
-    };
-    const timer = setTimeout(() => {
-      finish(
-        best
-          ? { kind: isGoodReading(best) ? "good" : "weak", reading: best }
-          : { kind: "unavailable" }
-      );
-    }, GPS_TIMEOUT_MS);
+    let best: Reading | null = null;
+    return new Promise<CaptureResult>((resolve) => {
+      let sub: Location.LocationSubscription | null = null;
+      let done = false;
+      const end = (r: CaptureResult) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        sub?.remove();
+        resolve(r);
+      };
+      finish = end;
+      const timer = setTimeout(() => {
+        end(
+          best
+            ? { kind: isGoodReading(best) ? "good" : "weak", reading: best }
+            : { kind: "unavailable" }
+        );
+      }, GPS_TIMEOUT_MS);
 
-    Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Highest, timeInterval: 1000, distanceInterval: 0 },
-      (pos) => {
-        const reading: Reading = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy ?? null
-        };
-        best = betterReading(best, reading);
-        onProgress?.(best);
-        if (isGoodReading(best)) finish({ kind: "good", reading: best });
-      }
-    )
-      .then((s) => {
-        if (done) s.remove();
-        else sub = s;
-      })
-      .catch(() => finish({ kind: "unavailable" }));
-  });
+      Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Highest, timeInterval: 1000, distanceInterval: 0 },
+        (pos) => {
+          if (done) return;
+          best = betterReading(best, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy ?? null
+          });
+          onProgress?.(best);
+          if (isGoodReading(best)) end({ kind: "good", reading: best });
+        }
+      )
+        .then((s) => {
+          if (done) s.remove();
+          else sub = s;
+        })
+        .catch(() => end({ kind: "unavailable" }));
+    });
+  })();
+  return {
+    result,
+    cancel: () => {
+      cancelled = true;
+      finish?.({ kind: "cancelled" });
+    }
+  };
 }
 
 export type PhotoSource = "camera" | "library";

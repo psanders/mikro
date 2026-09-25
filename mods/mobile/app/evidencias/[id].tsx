@@ -7,7 +7,7 @@
  * from the camera or the gallery; each piece is saved as soon as it's taken.
  * Collectors can add, replace and remove anything while it's in review.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -45,7 +45,7 @@ import { Header } from "../../components/ui/Header";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { trpc } from "../../lib/api";
 import {
-  captureLocation,
+  startLocationCapture,
   inReviewLabel,
   missingPieces,
   pickImage,
@@ -80,6 +80,10 @@ export default function EvidenciaDetalleScreen() {
   const task = trpc.getEvidenceTask.useQuery({ id: id! }, { enabled: Boolean(id) });
   const [busy, setBusy] = useState<string | null>(null);
   const [loc, setLoc] = useState<LocState>({ kind: "idle" });
+  // The running GPS capture: cancelled when the collector leaves this screen,
+  // so a late reading is never saved to an application nobody is looking at.
+  const capture = useRef<ReturnType<typeof startLocationCapture> | null>(null);
+  useEffect(() => () => capture.current?.cancel(), []);
 
   const uploadId = trpc.uploadIdImage.useMutation();
   const deleteId = trpc.deleteIdImage.useMutation();
@@ -145,8 +149,13 @@ export default function EvidenciaDetalleScreen() {
   }
 
   async function startCapture() {
+    capture.current?.cancel();
     setLoc({ kind: "searching", best: null });
-    const result = await captureLocation((best) => setLoc({ kind: "searching", best }));
+    const run = startLocationCapture((best) => setLoc({ kind: "searching", best }));
+    capture.current = run;
+    const result = await run.result;
+    if (capture.current === run) capture.current = null;
+    if (result.kind === "cancelled") return;
     if (result.kind === "good") await saveReading(result.reading);
     else if (result.kind === "weak") setLoc({ kind: "weak", reading: result.reading });
     else setLoc({ kind: result.kind });

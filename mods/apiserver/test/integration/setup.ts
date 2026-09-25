@@ -271,6 +271,7 @@ CREATE TABLE "loan_applications" (
     "signed_by_id" TEXT,
     "signed_at" DATETIME,
     "map_url" TEXT,
+    "evidence_completed_at" DATETIME,
     "id_front_filename" TEXT,
     "id_front_original_name" TEXT,
     "id_front_mime_type" TEXT,

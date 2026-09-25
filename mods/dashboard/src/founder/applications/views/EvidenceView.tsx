@@ -47,13 +47,16 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
   const deleteDoc = trpc.deleteApplicationDocument.useMutation();
   const setMapUrl = trpc.setApplicationMapUrl.useMutation();
 
-  async function run(task: () => Promise<unknown>, ok: string) {
+  /** Run a write; resolves true when it succeeded (errors are shown as a toast). */
+  async function run(task: () => Promise<unknown>, ok: string): Promise<boolean> {
     setBusy(true);
     try {
       await task();
       toast.success(ok);
+      return true;
     } catch (e) {
       toast.error(friendlyError(e, "No se pudo guardar el archivo."));
+      return false;
     } finally {
       setBusy(false);
       await invalidate(app.id);
@@ -343,7 +346,8 @@ function LocationSection({
   mapUrl: string | null;
   writable: boolean;
   busy: boolean;
-  onSave: (mapUrl: string | null) => Promise<void>;
+  /** Resolves true when saved; on failure the pasted link is kept for a retry. */
+  onSave: (mapUrl: string | null) => Promise<boolean>;
 }) {
   const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState(false);
@@ -353,7 +357,7 @@ function LocationSection({
 
   async function save() {
     if (!value || invalid) return;
-    await onSave(value);
+    if (!(await onSave(value))) return;
     setDraft("");
     setEditing(false);
   }
@@ -431,6 +435,18 @@ function LocationSection({
             >
               Guardar
             </Btn>
+            {editing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft("");
+                  setEditing(false);
+                }}
+                className="text-[12px] font-semibold text-[#697A93]"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
           <p
             className={cn(
