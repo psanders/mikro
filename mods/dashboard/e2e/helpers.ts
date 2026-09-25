@@ -40,11 +40,16 @@ export async function expand(cardLocator: Locator) {
   if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
 }
 
-/** Open the queue group row when 2+ new applications are grouped. */
+/**
+ * Open the group rows that fold application cards: the day's queue (2+ new
+ * applications) and the pinned "Otras N solicitudes abiertas" row.
+ */
 export async function openQueue(page: Page) {
-  const group = page.getByTestId("queue-group");
-  if (await group.count()) {
-    const header = group.locator("button[aria-expanded]").first();
-    if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
+  for (const id of ["open-group", "queue-group"]) {
+    const group = page.getByTestId(id);
+    if (await group.count()) {
+      const header = group.locator("button[aria-expanded]").first();
+      if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
+    }
   }
 }

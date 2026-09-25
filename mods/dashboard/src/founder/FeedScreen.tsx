@@ -47,10 +47,11 @@ import {
 } from "./components/feedFilters";
 import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/types";
 import { ApplicationFeedCard } from "./applications/ApplicationFeedCard";
-import { ClosedGroupRow, QueueGroupRow } from "./applications/ApplicationGroupRow";
+import { ClosedGroupRow, OpenGroupRow, QueueGroupRow } from "./applications/ApplicationGroupRow";
 import {
   isApplicationEvent,
   isDayRow,
+  type AppEvent,
   latestPerApplication,
   layoutDay,
   type DayRow
@@ -232,6 +233,22 @@ export function FeedScreen() {
 
   const groups = useMemo(() => groupByDay(events), [events]);
 
+  // Always-visible open applications (same safety net as #215's Pendientes):
+  // a card sits at its application's newest event, so an open one drops out
+  // of view when that event is outside the date filter ("Hoy" by default) or
+  // behind "Cargar más" (pages count events, not cards). Only those the loaded
+  // feed doesn't already render, so no card shows twice.
+  const openAppsQuery = trpc.listOpenApplicationEvents.useQuery(undefined, {
+    refetchInterval: FEED_POLL_INTERVAL_MS,
+    refetchOnWindowFocus: true
+  });
+  const hiddenOpenApps = useMemo(() => {
+    const shown = new Set(events.map((e) => e.applicationId).filter(Boolean));
+    return (openAppsQuery.data ?? [])
+      .map(toFeedEvent)
+      .filter((e): e is AppEvent => isApplicationEvent(e) && !shown.has(e.applicationId));
+  }, [openAppsQuery.data, events]);
+
   function canRestore(event: FeedEvent): boolean {
     if (event.type !== "application.deleted") return false;
     return Date.now() - new Date(event.occurredAt).getTime() <= RESTORE_WINDOW_MS;
@@ -330,6 +347,21 @@ export function FeedScreen() {
           <div className="p-6">
             <FeedEmptyState />
           </div>
+        )}
+
+        {viewer && hiddenOpenApps.length > 0 && (
+          <OpenGroupRow events={hiddenOpenApps}>
+            {hiddenOpenApps.map((e) => (
+              <ApplicationFeedCard
+                key={e.applicationId}
+                event={e}
+                viewer={viewer}
+                userNames={userNames}
+                showDay
+                {...appCardProps(e.applicationId!)}
+              />
+            ))}
+          </OpenGroupRow>
         )}
 
         {groups.map((group) => (

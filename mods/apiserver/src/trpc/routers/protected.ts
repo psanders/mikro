@@ -245,6 +245,7 @@ import {
 // Founder feed / event-log API functions
 import {
   createListFeedEvents,
+  createListOpenApplicationEvents,
   createRestoreApplication,
   createSearchAll,
   createExportAuditLog
@@ -1335,6 +1336,16 @@ export const protectedRouter = router({
   listFeedEvents: reviewerProcedure.input(listFeedEventsSchema).query(async ({ ctx, input }) => {
     const fn = createListFeedEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
     return fn(input);
+  }),
+
+  /**
+   * The newest review event of every open application the caller can see
+   * (same role scoping as listFeedEvents), regardless of date — backs the
+   * feed's always-visible "Abiertas" row. ADMIN or REVIEWER.
+   */
+  listOpenApplicationEvents: reviewerProcedure.query(async ({ ctx }) => {
+    const fn = createListOpenApplicationEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
+    return fn();
   }),
 
   /**

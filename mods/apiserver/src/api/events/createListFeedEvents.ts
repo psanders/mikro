@@ -231,6 +231,49 @@ async function enrichApplicationState(client: EventClient, items: FeedEventItem[
   }
 }
 
+/** Terminal application statuses — never listed as open. */
+const CLOSED_APPLICATION_STATUSES = ["CONVERTED", "REJECTED", "ABANDONED"] as const;
+
+/**
+ * The newest review event of every OPEN application this viewer can see,
+ * newest first, with its live state joined. Date-independent on purpose: the
+ * feed defaults to "Hoy", so an application whose last activity was on an
+ * earlier day would otherwise drop out of view while still awaiting someone.
+ * Same role scoping as the feed ({@link visibleApplicationIds}).
+ */
+export function createListOpenApplicationEvents(client: EventClient, viewer: FeedViewer) {
+  return async (): Promise<FeedEventItem[]> => {
+    const visible = await visibleApplicationIds(client, viewer);
+    if (visible.length === 0) return [];
+    const open = await client.loanApplication.findMany({
+      where: {
+        id: { in: visible },
+        status: { notIn: ["DRAFT", ...CLOSED_APPLICATION_STATUSES] }
+      },
+      select: { id: true }
+    });
+    if (open.length === 0) return [];
+
+    const rows = await client.businessEvent.findMany({
+      where: {
+        applicationId: { in: open.map((a) => a.id) },
+        type: { in: [...APPLICATION_REVIEW_EVENT_TYPES] }
+      },
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }]
+    });
+    const seen = new Set<string>();
+    const latest = rows.filter((r) => {
+      if (!r.applicationId || seen.has(r.applicationId)) return false;
+      seen.add(r.applicationId);
+      return true;
+    });
+
+    const items = latest.map(mapRow);
+    await enrichApplicationState(client, items);
+    return items;
+  };
+}
+
 export function createListFeedEvents(client: EventClient, viewer?: FeedViewer) {
   const fn = async (input: ListFeedEventsInput): Promise<ListFeedEventsResult> => {
     const limit = input.limit ?? DEFAULT_LIMIT;

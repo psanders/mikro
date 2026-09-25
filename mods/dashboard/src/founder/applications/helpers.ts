@@ -60,7 +60,8 @@ export function useApplicationInvalidation() {
     Promise.all([
       utils.getApplication.invalidate({ id }),
       utils.getApplicationEvidence.invalidate({ id }),
-      utils.listFeedEvents.invalidate()
+      utils.listFeedEvents.invalidate(),
+      utils.listOpenApplicationEvents.invalidate()
     ]);
 }
 
