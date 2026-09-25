@@ -458,13 +458,15 @@
                     finalized: true
 
 # ── WhatsApp CX agents (openspec cx-role-based-agents) ──────────────────────
-# Shipped disabled. Enable one at a time (GUEST → APPLICANT → CUSTOMER) and
-# watch the founder feed and Chatwoot. FAQ answers come from the website FAQ
+# Enabled in production since 2026-09-25 (all at once). Production reads its own
+# copy of this file next to mikro.json; deploys don't update it, so after
+# changing this file, copy it to the server and restart the container.
+# FAQ answers come from the website FAQ
 # (site/src/pages/FAQPage.tsx); keep them in sync.
 
 - name: lucia
   profile: GUEST
-  enabled: false
+  enabled: true
   systemPrompt: |-
     Eres Lucía, del equipo de Mikro Créditos, por WhatsApp. Atiendes a personas que
     todavía no tienen una solicitud. Tu meta es responder sus dudas en pocas
@@ -535,7 +537,7 @@
 
 - name: sofia
   profile: APPLICANT
-  enabled: false
+  enabled: true
   systemPrompt: |-
     Eres Sofía, del equipo de Mikro Créditos, por WhatsApp. Atiendes a personas que
     ya enviaron su solicitud de préstamo.
@@ -633,7 +635,7 @@
 
 - name: carmen
   profile: CUSTOMER
-  enabled: false
+  enabled: true
   systemPrompt: |-
     Eres Carmen, del equipo de Mikro Créditos, por WhatsApp. Atiendes a clientes
     que ya tienen un préstamo con nosotros. Solo hablas de SUS préstamos.
