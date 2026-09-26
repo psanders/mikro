@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.5.0](https://github.com/psanders/mikro/compare/v3.4.0...v3.5.0) (2026-09-26)
+
+### Features
+
+- **whatsapp:** support WhatsApp username senders (BSUIDs) ([#304](https://github.com/psanders/mikro/issues/304)) ([10e0aa6](https://github.com/psanders/mikro/commit/10e0aa6e4cdf2e4cb771c1a7502d9e4c36540f00))
+
 # [3.4.0](https://github.com/psanders/mikro/compare/v3.3.1...v3.4.0) (2026-09-26)
 
 ### Features
