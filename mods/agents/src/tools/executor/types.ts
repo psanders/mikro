@@ -171,6 +171,18 @@ export interface ToolExecutorDependencies {
     durationMs: number;
   }>;
 
+  /**
+   * Run the conversation audit now (copilot DIRECT tool). `actorName` is the
+   * founder, shown on the feed card. Throws when a run is already in progress.
+   */
+  runConversationAudit?: (actorName: string) => Promise<{
+    runId: string;
+    conversations: number;
+    handoffs: number;
+    criticalCount: number;
+    warningCount: number;
+  }>;
+
   // ── Founder copilot accounting write tool (optional — only wired in apiserver) ──
   /**
    * Create an accounting transaction (income/expense/transfer). Copilot-only,

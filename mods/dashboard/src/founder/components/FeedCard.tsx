@@ -51,6 +51,8 @@ export interface FeedCardProps {
    * widget mounts here. The card stays a plain event row when omitted.
    */
   actionSlot?: React.ReactNode;
+  /** Type-specific detail rendered right under the narrative, above the links. */
+  detailSlot?: React.ReactNode;
   className?: string;
 }
 
@@ -72,8 +74,13 @@ const ACT_BUTTON =
 
 const LINK_BUTTON = "inline-flex items-center gap-[5px] text-[11px] font-semibold";
 
+/** Summaries that open with a bold subject instead of the actor. */
+const SUBJECT_LEADS = ["Auditoría de conversaciones"];
+
 /** Splits "Actor did X" into a bold actor + the medium-weight remainder. */
 function splitSummary(summary: string, actorName: string): { lead?: string; rest: string } {
+  const subject = SUBJECT_LEADS.find((s) => summary.startsWith(`${s} `));
+  if (subject) return { lead: subject, rest: summary.slice(subject.length + 1) };
   if (actorName && summary.startsWith(`${actorName} `)) {
     return { lead: actorName, rest: summary.slice(actorName.length + 1) };
   }
@@ -90,6 +97,7 @@ export function FeedCard({
   onNavigate,
   onAskCopilot,
   tint: tintOverride,
+  detailSlot,
   actionSlot,
   className
 }: FeedCardProps) {
@@ -118,7 +126,9 @@ export function FeedCard({
   const metaClass =
     meta.tone === "red" && !(deletion && !canRestore)
       ? "text-[#DC2626] font-semibold"
-      : "text-[#697A93] font-medium";
+      : meta.tone === "amber"
+        ? "text-ds-amber font-semibold"
+        : "text-[#697A93] font-medium";
 
   return (
     <div className={cn("w-full border-b border-[#E5EAF1]", tint && CARD_TINT[tint], className)}>
@@ -170,6 +180,8 @@ export function FeedCard({
             {narrative && (
               <p className="text-[13px] font-medium leading-[1.4] text-[#14254A]">{narrative}</p>
             )}
+
+            {detailSlot}
 
             <div className="flex items-center gap-[14px]">
               <button

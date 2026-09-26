@@ -207,6 +207,27 @@ export {
 } from "./conversation.js";
 
 export {
+  conversationAuditTriggerEnum,
+  conversationAuditStatusEnum,
+  conversationAuditSeverityEnum,
+  conversationAuditSourceEnum,
+  conversationAuditAgentSummarySchema,
+  conversationAuditTopFindingSchema,
+  conversationAuditedPayloadSchema,
+  runConversationAuditSchema,
+  listConversationAuditFindingsSchema,
+  type ConversationAuditTrigger,
+  type ConversationAuditStatus,
+  type ConversationAuditSeverity,
+  type ConversationAuditSource,
+  type ConversationAuditAgentSummary,
+  type ConversationAuditTopFinding,
+  type ConversationAuditedPayload,
+  type RunConversationAuditInput,
+  type ListConversationAuditFindingsInput
+} from "./conversationAudit.js";
+
+export {
   whatsappTextSchema,
   whatsappImageSchema,
   whatsappAudioSchema,

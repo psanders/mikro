@@ -786,8 +786,7 @@ async function processMessage(message: WhatsAppMessage, sender: SenderIdentity):
         : messageProcessor.sendWhatsAppMessage;
       await send({
         phone,
-        message:
-          "Lo siento, hubo un error procesando tu mensaje. Por favor, intenta de nuevo más tarde."
+        message: PROCESSING_ERROR_REPLY
       });
     } catch {
       logger.error("failed to send error message", { phone });
@@ -797,6 +796,10 @@ async function processMessage(message: WhatsAppMessage, sender: SenderIdentity):
 
 /** Chat routes answered by a CX agent (everything except staff). */
 type CxRoute = Exclude<RouteResult, { type: "user" } | { type: "ignored" }>;
+
+/** Sent when handling a message throws. The conversation audit flags it. */
+export const PROCESSING_ERROR_REPLY =
+  "Lo siento, hubo un error procesando tu mensaje. Por favor, intenta de nuevo más tarde.";
 
 /**
  * An explicit request for a person. Kept to imperative forms so a passing

@@ -8,6 +8,7 @@ export { invokeTextPrompt } from "./invokeTextPrompt.js";
 export type {
   ModelSettings,
   Agent,
+  AgentPolicy,
   Message,
   MessageContentItem,
   ToolCall,

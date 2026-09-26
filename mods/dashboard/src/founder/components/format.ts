@@ -17,6 +17,28 @@ const MONTHS_ES = [
   "diciembre"
 ];
 
+const MONTHS_SHORT_ES = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic"
+];
+
+/** "25 sep 7:00" (local time). */
+export function formatShortDateTime(iso: string | Date): string {
+  const d = new Date(iso);
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${d.getDate()} ${MONTHS_SHORT_ES[d.getMonth()]} ${d.getHours()}:${mm}`;
+}
+
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

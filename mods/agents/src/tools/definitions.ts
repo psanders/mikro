@@ -534,6 +534,25 @@ export const forceQCobroSyncTool: ToolFunction = {
 };
 
 /**
+ * Tool definition for running the conversation audit now (DIRECT_TOOL — runs
+ * at once, no confirm card: it only reads transcripts and writes audit rows
+ * plus the `conversation.audited` feed card). No arguments.
+ */
+export const runConversationAuditTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "runConversationAudit",
+    description:
+      "Correr ahora la auditoría de las conversaciones de WhatsApp de los agentes (Lucía, José, Sofía, Carmen): revisa las conversaciones con mensajes nuevos desde la última auditoría, aplica los chequeos fijos y el juez IA contra las reglas de cada agente, y deja la tarjeta con el resultado en el feed. Úsala cuando el fundador pida auditar, revisar o chequear las conversaciones. No requiere parámetros.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  }
+};
+
+/**
  * Tool definition for listing loans by customer ID.
  * Used by Juan (collector).
  */
@@ -876,6 +895,7 @@ export const allTools: ToolFunction[] = [
   rejectApplicationTool,
   deleteApplicationTool,
   forceQCobroSyncTool,
+  runConversationAuditTool,
   createAccountingTransactionTool,
   listLoansByCustomerTool,
   listCustomerLoansByPhoneTool,

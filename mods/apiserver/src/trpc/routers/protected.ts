@@ -21,6 +21,7 @@ import {
   getApplicationConversationSchema,
   listConversationTurnsSchema,
   deleteConversationSchema,
+  listConversationAuditFindingsSchema,
   // Loan schemas
   createLoanSchema,
   calculateLoanSchema,
@@ -122,7 +123,8 @@ import {
   createGetApplicationConversation,
   createGetApplicationChatwootUrl,
   createListConversationTurns,
-  createDeleteConversation
+  createDeleteConversation,
+  createListConversationAuditFindings
 } from "../../api/conversations/index.js";
 import { createChatwootClient } from "../../api/chatwoot/index.js";
 // Dashboard API functions
@@ -512,6 +514,16 @@ export const protectedRouter = router({
         ctx.db as unknown as PrismaClient,
         chatwoot.findContactUrl
       )(input);
+    }),
+
+  /**
+   * One conversation-audit run with its findings (critical first), for the
+   * feed card's detail panel. ADMIN, like the feed. Null for an unknown run.
+   */
+  listConversationAuditFindings: adminProcedure
+    .input(listConversationAuditFindingsSchema)
+    .query(async ({ ctx, input }) => {
+      return createListConversationAuditFindings(ctx.db as unknown as PrismaClient)(input);
     }),
 
   /** Transcript turns matching filters, oldest first — the ctl eval export. ADMIN. */

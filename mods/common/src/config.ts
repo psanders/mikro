@@ -354,6 +354,25 @@ const qcobroSchema = z
   }));
 
 export type QCobroConfig = z.infer<typeof qcobroSchema>;
+
+/**
+ * Scheduled audit of stored CX WhatsApp conversations (`conversation_turns`):
+ * code checks plus an AI rules judge per agent, posted to the founder feed.
+ * Off by default; the copilot can still run it on demand.
+ */
+const conversationAuditSchema = z
+  .object({
+    /** Run the audit on `schedule`. The copilot's on-demand run ignores this. */
+    enabled: z.boolean().default(false),
+    /** Cron expression for the scheduled run. Evaluated in `timezone`. */
+    schedule: cronExpressionSchema.default("0 7 * * *"),
+    /** Most conversations the AI judge reads per run; the rest get code checks only. */
+    maxConversations: z.number().int().positive().default(200)
+  })
+  .strict()
+  .default(() => ({ enabled: false, schedule: "0 7 * * *", maxConversations: 200 }));
+
+export type ConversationAuditConfig = z.infer<typeof conversationAuditSchema>;
 export type QCobroPortfolioRule = z.infer<typeof qcobroPortfolioRuleSchema>;
 
 /** Past-due (mora) fee policy. See README "Past-due fee". */
@@ -545,6 +564,7 @@ export const mikroConfigSchema = z
     followUp: followUpSchema,
     updates: updatesSchema,
     qcobro: qcobroSchema,
+    conversationAudit: conversationAuditSchema,
     githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" })),
     metaConversions: metaConversionsSchema.default(() => ({
       pixelId: "",
@@ -560,7 +580,15 @@ export type MikroConfig = z.infer<typeof mikroConfigSchema>;
 /** Config with optional sections filled with defaults (what getConfig() returns). */
 export type ResolvedMikroConfig = Omit<
   MikroConfig,
-  "whatsapp" | "voiceNotes" | "evals" | "reports" | "loans" | "contract" | "updates" | "qcobro"
+  | "whatsapp"
+  | "voiceNotes"
+  | "evals"
+  | "reports"
+  | "loans"
+  | "contract"
+  | "updates"
+  | "qcobro"
+  | "conversationAudit"
 > & {
   whatsapp: MikroConfig["whatsapp"] & {
     templates: NonNullable<MikroConfig["whatsapp"]["templates"]>;
@@ -574,6 +602,7 @@ export type ResolvedMikroConfig = Omit<
   contract: ContractConfig;
   updates: NonNullable<MikroConfig["updates"]>;
   qcobro: QCobroConfig;
+  conversationAudit: ConversationAuditConfig;
 };
 
 const DEFAULT_CONFIG_FILENAME = "mikro.json";
@@ -769,6 +798,11 @@ export function getQCobroConfig(): ResolvedMikroConfig["qcobro"] {
   return getConfig().qcobro;
 }
 
+/** Conversation audit settings (enabled, schedule, maxConversations). */
+export function getConversationAuditConfig(): ResolvedMikroConfig["conversationAudit"] {
+  return getConfig().conversationAudit;
+}
+
 /**
  * Payment-confirmation template config: the approved template sent to the
  * borrower after a payment (image header = receipt card, URL button = download).
@@ -820,7 +854,7 @@ export function loadConfig(configPath?: string): ResolvedMikroConfig {
   const path = getConfigFilePath(configPath);
   if (!existsSync(path)) {
     throw new Error(
-      `Mikro config file not found at ${path}. Create mikro.json from mikro.json.example.`
+      `Mikro config file not found at ${path}. Create mikro.json from mikro.example.json.`
     );
   }
   let raw: unknown;

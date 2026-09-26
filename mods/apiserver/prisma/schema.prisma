@@ -808,6 +808,68 @@ model ConversationTurn {
   @@map("conversation_turns")
 }
 
+// One run of the conversation audit (openspec add-conversation-audit): code
+// checks + an AI rules judge over the turns added since the previous DONE run
+// (`lastTurnId` is the watermark). Counts are denormalized for the feed card;
+// `byAgent` is JSON [{agentName, profile, agentVersion, isNewVersion,
+// conversations, critical, warning}].
+// trigger: SCHEDULED | MANUAL. status: RUNNING | DONE | FAILED.
+model ConversationAuditRun {
+  id            String    @id @default(uuid())
+  trigger       String
+  actorName     String    @map("actor_name")
+  status        String    @default("RUNNING")
+  startedAt     DateTime  @default(now()) @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+  windowStart   DateTime? @map("window_start")
+  firstTurnId   Int?      @map("first_turn_id")
+  lastTurnId    Int?      @map("last_turn_id")
+  conversations Int       @default(0)
+  turns         Int       @default(0)
+  handoffs      Int       @default(0)
+  failedSends   Int       @default(0) @map("failed_sends")
+  criticalCount Int       @default(0) @map("critical_count")
+  warningCount  Int       @default(0) @map("warning_count")
+  judged        Int       @default(0)
+  judgeSkipped  Int       @default(0) @map("judge_skipped")
+  judgeErrors   Int       @default(0) @map("judge_errors")
+  byAgent       String    @default("[]") @map("by_agent")
+  error         String?
+
+  findings ConversationAuditFinding[]
+
+  @@index([status, startedAt])
+  @@map("conversation_audit_runs")
+}
+
+// One problem an audit run found in one conversation. source: CODE (a fixed
+// check) | JUDGE (an agents.yaml policy). severity: CRITICAL | WARNING. No
+// foreign keys to domain rows, like conversation_turns.
+model ConversationAuditFinding {
+  id            String   @id @default(uuid())
+  runId         String   @map("run_id")
+  phone         String
+  applicationId String?  @map("application_id")
+  customerId    String?  @map("customer_id")
+  profile       String?
+  agentName     String?  @map("agent_name")
+  agentVersion  String?  @map("agent_version")
+  checkId       String   @map("check_id")
+  source        String
+  severity      String
+  rule          String
+  turnId        Int?     @map("turn_id")
+  evidence      String?
+  reason        String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  run ConversationAuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([phone])
+  @@map("conversation_audit_findings")
+}
+
 // =============================================================================
 // Business event log (Founder Feed)
 // =============================================================================

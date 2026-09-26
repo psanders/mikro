@@ -12,6 +12,7 @@
  */
 import { Image as ImageIcon, UserRound } from "lucide-react";
 import { SectionLabel } from "./ui";
+import { agentDisplayName } from "../agentNames";
 
 export interface ThreadTurn {
   id: number;
@@ -51,17 +52,9 @@ export function formatTurnTime(value: string | Date): string {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${hh}:${mm}`;
 }
 
-/** "jose" → "José (agente)". Agent names come from agents.yaml. */
-const AGENT_LABELS: Record<string, string> = {
-  jose: "José",
-  lucia: "Lucía",
-  sofia: "Sofía",
-  carmen: "Carmen"
-};
-
+/** "jose" → "José (agente)". */
 function agentLabel(name: string | null): string {
-  if (!name) return "Agente";
-  return `${AGENT_LABELS[name] ?? name.charAt(0).toUpperCase() + name.slice(1)} (agente)`;
+  return `${agentDisplayName(name)} (agente)`;
 }
 
 type Item =

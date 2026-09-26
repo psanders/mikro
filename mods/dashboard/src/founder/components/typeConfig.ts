@@ -27,11 +27,13 @@ import {
   Scale,
   UserX,
   ClipboardCheck,
-  Headset
+  Headset,
+  MessageSquareWarning,
+  ShieldCheck
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessEventType, FeedEvent, NavigateTarget } from "./types";
-import { formatAmount } from "./format";
+import { formatAmount, formatShortDateTime } from "./format";
 export type FeedAccent = "green" | "amber" | "red" | "blue" | "neutral";
 
 interface TypeVisual {
@@ -90,8 +92,17 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   // promotes it to green (delivered/read) or red (failed) from payload.status.
   "message.sent": { icon: MessageSquare, accent: "amber" },
   // Amber: a person is waiting on a human reply in Chatwoot.
-  "cx.handoff_requested": { icon: Headset, accent: "amber" }
+  "cx.handoff_requested": { icon: Headset, accent: "amber" },
+  // Base is amber (problems found); `resolveVisual` settles a clean run to green.
+  "conversation.audited": { icon: MessageSquareWarning, accent: "amber" }
 };
+
+const count = (v: unknown) => (typeof v === "number" ? v : 0);
+
+/** Critical + warning findings of a `conversation.audited` event. */
+export function auditProblemCount(event: FeedEvent): number {
+  return count(event.payload.criticalCount) + count(event.payload.warningCount);
+}
 
 /**
  * Delivery-state → card accent for a `message.sent` card. `accepted`/`sent` are
@@ -123,6 +134,9 @@ export function resolveVisual(event: FeedEvent): TypeVisual {
     const accent = messageStatusAccent(event.payload.status);
     return { icon: accent === "red" ? MessageSquareX : MessageSquare, accent };
   }
+  if (event.type === "conversation.audited" && auditProblemCount(event) === 0) {
+    return { icon: ShieldCheck, accent: "green" };
+  }
   // The event log is append-only and long-lived, so a row can outlast the
   // build's knowledge of its type — a type retired later, or a row written by
   // a newer server than the client. Fall back to a neutral visual rather than
@@ -138,6 +152,7 @@ export function resolveVisual(event: FeedEvent): TypeVisual {
 export function resolveCardTint(event: FeedEvent): "amber" | "red" | null {
   if (isPolicyExceptionApproval(event)) return "amber";
   if (isDeletion(event)) return "red";
+  if (event.type === "conversation.audited") return auditProblemCount(event) > 0 ? "amber" : null;
   // A WhatsApp send tints while pending (amber) or on failure (red); a delivered/
   // read message settles to a plain card.
   if (event.type === "message.sent") {
@@ -165,7 +180,7 @@ export const ACCENT_ALERT_EVENT_TYPES: BusinessEventType[] = [
   "application.approved"
 ];
 
-export type CompactMetaTone = "muted" | "red";
+export type CompactMetaTone = "muted" | "red" | "amber";
 
 export interface CompactMeta {
   text: string;
@@ -303,6 +318,24 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
         return { text: reason ? `${label} · ${reason}` : label, tone: "red" };
       }
       return { text: label, tone: "muted" };
+    }
+    case "conversation.audited": {
+      const trigger =
+        payload.trigger === "MANUAL"
+          ? `Pedida por ${event.actorName} desde el copiloto`
+          : "automática";
+      const critical = count(payload.criticalCount);
+      const warning = count(payload.warningCount);
+      if (critical + warning === 0) {
+        const handoffs = count(payload.handoffs);
+        const passed = `${handoffs} ${handoffs === 1 ? "pasó" : "pasaron"} a persona`;
+        return { text: `${trigger} · ${passed}`, tone: "muted" };
+      }
+      const parts = [
+        critical ? `${critical} crítico${critical === 1 ? "" : "s"}` : "",
+        warning ? `${warning} advertencia${warning === 1 ? "" : "s"}` : ""
+      ].filter(Boolean);
+      return { text: `${parts.join(" · ")} · ${trigger}`, tone: "amber" };
     }
     case "cx.handoff_requested": {
       const profile = typeof payload.profile === "string" ? payload.profile : "";
@@ -499,6 +532,21 @@ export function resolveNarrative(event: FeedEvent): string | null {
     case "cx.handoff_requested":
       // The compact meta line already carries who and why.
       return null;
+    case "conversation.audited": {
+      const turns = count(payload.turns);
+      const conversations = count(payload.conversations);
+      if (conversations === 0) return "No hubo conversaciones nuevas desde la auditoría anterior.";
+      const since =
+        typeof payload.windowStart === "string"
+          ? ` desde ${formatShortDateTime(payload.windowStart)}`
+          : "";
+      const judge: string[] = [];
+      if (count(payload.judgeSkipped) > 0)
+        judge.push(`${count(payload.judgeSkipped)} solo con chequeos fijos por el tope`);
+      if (count(payload.judgeErrors) > 0)
+        judge.push(`${count(payload.judgeErrors)} sin revisión del juez por error`);
+      return `Revisó ${turns} mensajes de ${conversations} conversaci${conversations === 1 ? "ón" : "ones"}${since}.${judge.length ? ` ${judge.join("; ")}.` : ""}`;
+    }
     case "application.evidence_completed":
       // The summary line already says the evidence is complete.
       return null;
@@ -610,6 +658,8 @@ export function resolveInsightsQuestion(event: FeedEvent): string {
     }
     case "qcobro.synced":
       return "Cuéntame más sobre esta sincronización con QCobro.";
+    case "conversation.audited":
+      return "Cuéntame más sobre esta auditoría de conversaciones.";
     default:
       return "Cuéntame más sobre este evento.";
   }

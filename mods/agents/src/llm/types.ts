@@ -46,6 +46,15 @@ export interface Agent {
   replyMode: "final" | "pre-tool";
   /** Optional evaluation configuration */
   evaluations?: AgentEvaluation;
+  /** Audit rules for the conversation audit's judge; never sent to the model. */
+  policies?: AgentPolicy[];
+}
+
+/** One audit rule an agent is graded against by the conversation audit. */
+export interface AgentPolicy {
+  id: string;
+  rule: string;
+  severity: "critical" | "warning";
 }
 
 /**

@@ -16,3 +16,16 @@ export {
   type ConversationTurnView,
   type ApplicationConversation
 } from "./conversations.js";
+export {
+  AUDIT_FIRST_WINDOW_MS,
+  AUDIT_CONTEXT_TURNS,
+  AUDIT_STALE_RUN_MS,
+  AUDIT_MAX_TURNS,
+  AuditInProgressError,
+  createRunConversationAudit,
+  createListConversationAuditFindings,
+  type RunConversationAuditDeps,
+  type ConversationAuditRunResult,
+  type ConversationAuditFindingView,
+  type ConversationAuditDetail
+} from "./audit.js";
