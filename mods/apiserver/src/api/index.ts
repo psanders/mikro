@@ -51,6 +51,7 @@ export {
   OUT_OF_COVERAGE_AREA,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
+  createGetApplicationByWhatsAppUserId,
   createSubmitApplicationFromFlow,
   createSendApplicationPromo,
   createListApplications,

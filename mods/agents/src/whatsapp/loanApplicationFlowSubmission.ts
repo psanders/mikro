@@ -35,14 +35,16 @@ const DATE_KEYS = new Set(["dateOfBirth"]);
  */
 export function mapFlowAnswersToPayload(
   answers: Record<string, unknown>,
-  phone: string,
+  phone: string | undefined,
   sessionId: string
 ): Record<string, string | boolean> {
   const payload: Record<string, string | boolean> = {
     sessionId,
     partial: false,
     // The applicant's own phone is the WhatsApp sender — not asked in the form.
-    phone
+    // A WhatsApp username sender may reach us without one: then it's omitted
+    // and the submission is tied to them by their BSUID instead.
+    ...(phone ? { phone } : {})
   };
 
   for (const [key, raw] of Object.entries(answers)) {

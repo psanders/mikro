@@ -85,9 +85,9 @@ GUEST keeps the existing in-memory guest conversation. APPLICANT and CUSTOMER re
 
 The ADMIN and COLLECTOR redirect texts are removed. A role with an assigned agent still gets that agent (existing behavior is kept for a custom ADMIN agent). No LLM call and no send for unassigned roles.
 
-### D9. Rejected applicants who write again go to a person (founder decision 2026-09-25)
+### D9. Rejected applicants get their reapply date, not a hand-off (founder decision 2026-09-26)
 
-Nothing messages a person when their application is rejected, and the GUEST agent knows nothing about the decision (it would invite them to apply again). So the router flags a guest whose latest application is `REJECTED`, and the handler opens a hand-off with a fixed acknowledgement, without calling the LLM. A founder decides case by case in Chatwoot. _Rejected alternatives:_ a cooldown (a config value and an upsert change for a rare case), and a rejection notice at decision time (needs a new approved Meta template and a send path). Re-applying through the web form stays allowed.
+Nothing messages a person when their application is rejected, and the GUEST agent knows nothing about the decision (it would invite them to apply again). So for 30 days after the decision the router flags the guest with `reapplyFrom`, and the handler adds a system note to the agent's input: the application was not approved, they may apply again from that date, no reasons, no invitation before then. The agent answers like any guest and hands off only if they ask for a person. After 30 days they are a regular guest. The cooldown (`REAPPLY_COOLDOWN_DAYS`) is a code constant: no mikro.json key. _Superseded:_ the first version (2026-09-25) handed every rejected applicant to a person with a fixed reply. _Rejected alternatives:_ blocking re-application in the form (not asked for), and a rejection notice at decision time (needs a new approved Meta template).
 
 ### D10. Returning customers keep Carmen, who also follows their new application (founder decision 2026-09-25)
 

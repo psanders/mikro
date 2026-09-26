@@ -13,7 +13,10 @@ interface Deps {
   client: DbClient;
   sendFollowUpNudge: (phone: string) => Promise<NudgeResult>;
   /** Defers a DRAFT's ABANDON while its phone has an open human hand-off. */
-  getOpenHandoffExpiry?: (phone: string) => Promise<Date | null>;
+  getOpenHandoffExpiry?: (key: {
+    phone?: string | null;
+    whatsappUserId?: string | null;
+  }) => Promise<Date | null>;
 }
 
 export function createFollowUpWorker({

@@ -40,6 +40,8 @@ export interface HandoffNoteInput {
   /** The last few turns, oldest first; used when there is no summary. */
   recentMessages?: Array<{ role: "user" | "assistant"; content: string }>;
   name?: string;
+  /** WhatsApp username, for a sender who hides their phone. */
+  username?: string;
   application?: { id: string; status: string; businessName?: string | null };
   loanIds?: number[];
 }
@@ -48,7 +50,10 @@ export interface HandoffNoteInput {
 export function buildHandoffNote(input: HandoffNoteInput): string {
   const lines = ["🙋 Pase a una persona", ""];
   const who = PROFILE_LABELS[input.profile] ?? input.profile;
-  lines.push(`Quién: ${input.name ? `${input.name} · ` : ""}${who}`);
+  const handle = input.username ? ` (@${input.username})` : "";
+  lines.push(
+    `Quién: ${input.name ? `${input.name}${handle} · ` : handle ? `@${input.username} · ` : ""}${who}`
+  );
   lines.push(`Motivo: ${input.reason}`);
   if (input.application) {
     const status = STATUS_LABELS[input.application.status] ?? input.application.status;
@@ -105,7 +110,7 @@ export function createNotifyChatwootHandoff(deps: NotifyChatwootHandoffDeps) {
         ...facts,
         name: facts.name ?? input.displayName
       });
-      const conversationId = await chatwoot.findConversationId(input.phone);
+      const conversationId = await chatwoot.findConversationId(input.phone, input.username);
       if (conversationId == null) {
         logger.warn("chatwoot hand-off: no open conversation for contact", { phone: input.phone });
         return false;

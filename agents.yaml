@@ -523,6 +523,11 @@
         turns:
           - human: Tengo un colmado en Santiago, me pueden prestar?
             expectedAI: "Hola, soy Lucía de Mikro Créditos. Por el momento solo atendemos negocios en Puerto Plata, así que lamentablemente no podemos prestarte para tu colmado en Santiago. ¡Gracias por escribirnos!"
+      - id: guest-recently-rejected
+        description: A recently rejected applicant (the handler adds the SISTEMA note) is told when they may apply again; no form link before that date, no reasons, no hand-off
+        turns:
+          - human: "[SISTEMA: Esta persona tuvo una solicitud que NO fue aprobada. Puede volver a solicitar a partir del 26 de octubre de 2026. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que su solicitud anterior no fue aprobada y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. NO expliques motivos de la decisión. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
+            expectedAI: "Hola, gracias por escribirnos. Tu solicitud anterior no fue aprobada, pero puedes volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud."
       - id: guest-asks-for-person
         description: A request for a person hands off instead of answering
         turns:

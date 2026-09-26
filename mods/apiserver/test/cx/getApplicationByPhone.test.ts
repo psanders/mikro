@@ -25,6 +25,7 @@ describe("createGetApplicationByPhone", () => {
       sessionId: "s-1",
       status: "IN_REVIEW",
       submittedAt,
+      decidedAt: null,
       partial: false
     });
   });

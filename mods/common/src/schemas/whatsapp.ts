@@ -77,15 +77,34 @@ export const whatsappMessageTypeEnum = z.enum([
 /**
  * Schema for an individual WhatsApp message from webhook.
  */
+/**
+ * A contact card inside a `type: "contacts"` message. With `origin:
+ * "contact_request"` it is the sender sharing their OWN number (answering a
+ * request for contact info); `"other"` is any card they chose to share.
+ */
+export const whatsappSharedContactSchema = z.object({
+  origin: z.string().optional(),
+  phones: z
+    .array(z.object({ phone: z.string().optional(), wa_id: z.string().optional() }))
+    .optional()
+});
+
 export const whatsappMessageSchema = z.object({
-  from: z.string(),
+  /**
+   * Sender's phone (wa_id). Omitted when the sender uses a WhatsApp username
+   * and Meta can't share their number; `from_user_id` identifies them then.
+   */
+  from: z.string().optional(),
+  /** Sender's business-scoped user ID (BSUID), e.g. "DO.1610031533916997". */
+  from_user_id: z.string().optional(),
   type: whatsappMessageTypeEnum,
   id: z.string(),
   timestamp: z.string(),
   text: whatsappTextSchema.optional(),
   image: whatsappImageSchema.optional(),
   audio: whatsappAudioSchema.optional(),
-  interactive: whatsappInteractiveSchema.optional()
+  interactive: whatsappInteractiveSchema.optional(),
+  contacts: z.array(whatsappSharedContactSchema).optional()
 });
 
 /**
@@ -128,6 +147,8 @@ export const whatsappStatusSchema = z.object({
   status: whatsappStatusValueEnum,
   timestamp: z.string(),
   recipient_id: z.string().optional(),
+  /** Recipient's BSUID when we sent to a username-only user. */
+  recipient_user_id: z.string().optional(),
   errors: z.array(whatsappStatusErrorSchema).optional()
 });
 
@@ -136,8 +157,22 @@ export const whatsappStatusSchema = z.object({
  * `messages`; async delivery receipts for our outbound sends arrive under
  * `statuses`. A single webhook delivery carries one or the other.
  */
+/** Sender profile Meta sends next to `messages` (phone and/or BSUID, username). */
+export const whatsappContactSchema = z.object({
+  wa_id: z.string().optional(),
+  user_id: z.string().optional(),
+  profile: z.object({ name: z.string().optional(), username: z.string().optional() }).optional()
+});
+
 export const whatsappChangeValueSchema = z.object({
-  messages: z.array(whatsappMessageSchema).optional(),
+  /**
+   * Raw inbound messages. Each one is validated on its own with
+   * `whatsappMessageSchema` by the handler, so a single message of a shape we
+   * don't know can never make the whole delivery (other people's messages
+   * included) fail validation.
+   */
+  messages: z.array(z.unknown()).optional(),
+  contacts: z.array(whatsappContactSchema).optional(),
   statuses: z.array(whatsappStatusSchema).optional()
 });
 
@@ -382,6 +417,9 @@ export type WhatsAppMessage = z.infer<typeof whatsappMessageSchema>;
  * Type for a single outbound-message delivery status from the webhook.
  */
 export type WhatsAppStatus = z.infer<typeof whatsappStatusSchema>;
+
+/** Sender profile entry from a webhook change value. */
+export type WhatsAppContact = z.infer<typeof whatsappContactSchema>;
 
 /**
  * Delivery-status value reported by Meta (`sent`/`delivered`/`read`/`failed`).

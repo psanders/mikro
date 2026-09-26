@@ -166,7 +166,7 @@ describe("WhatsApp CX routes", () => {
 
       await handleWhatsAppMessage(textWebhook("¿hola?"));
 
-      expect(p.extendHandoff.calledOnceWith(PHONE)).to.be.true;
+      expect(p.extendHandoff.calledOnceWith(sinon.match({ phone: PHONE }))).to.be.true;
       expect(p.invokeLLM.called).to.be.false;
       expect(p.sendWhatsAppMessage.called).to.be.false;
     });
@@ -319,20 +319,34 @@ describe("WhatsApp CX routes", () => {
       expect(p.sendWhatsAppMessage.called).to.be.false;
     });
 
-    it("hands a previously rejected guest to a person, without the LLM", async () => {
-      const p = setup({ type: "guest", phone: PHONE, previouslyRejected: true });
+    it("lets Lucía answer a recently rejected guest, told when they may reapply (no hand-off)", async () => {
+      const reapplyFrom = new Date("2026-10-26T15:00:00Z");
+      const p = setup({ type: "guest", phone: PHONE, previouslyRejected: true, reapplyFrom });
 
       await handleWhatsAppMessage(textWebhook("hola, quiero volver a aplicar"));
 
-      expect(p.openHandoff.calledOnce).to.be.true;
-      expect(p.openHandoff.firstCall.args[0]).to.deep.equal({
+      expect(p.openHandoff.called).to.be.false;
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      const input: string = p.invokeLLM.firstCall.args[2];
+      expect(input).to.contain("NO fue aprobada");
+      expect(input).to.contain("26 de octubre de 2026");
+      expect(input).to.match(/hola, quiero volver a aplicar$/);
+      // History keeps the person's own words, not the directive.
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+    });
+
+    it("still hands a rejected guest to a person when they ask for one", async () => {
+      const p = setup({
+        type: "guest",
         phone: PHONE,
-        profile: "GUEST",
-        reason: "Solicitud anterior no aprobada",
-        recentMessages: [{ role: "user", content: "hola, quiero volver a aplicar" }]
+        previouslyRejected: true,
+        reapplyFrom: new Date(Date.now() + 86400000)
       });
+
+      await handleWhatsAppMessage(textWebhook("quiero hablar con una persona"));
+
+      expect(p.openHandoff.calledOnce).to.be.true;
       expect(p.invokeLLM.called).to.be.false;
-      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.match(/no fue aprobada/);
     });
 
     it("gives Carmen a returning customer's new application", async () => {
@@ -367,7 +381,7 @@ describe("WhatsApp CX routes", () => {
 
       await handleWhatsAppMessage(voiceWebhook());
 
-      expect(p.extendHandoff.calledOnceWith(PHONE)).to.be.true;
+      expect(p.extendHandoff.calledOnceWith(sinon.match({ phone: PHONE }))).to.be.true;
       expect(p.sendWhatsAppMessage.called).to.be.false;
     });
 

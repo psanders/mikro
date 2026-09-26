@@ -87,18 +87,22 @@ When `whatsapp.agentRepliesEnabled` is `false`, the system SHALL send no reply o
 - **WHEN** replies are disabled and a guest, applicant or customer writes in
 - **THEN** no reply is sent and no LLM is invoked
 
-### Requirement: Previously rejected applicants are handed to a person
+### Requirement: Recently rejected applicants are told when they may apply again
 
-When a message routes to `GUEST` flagged as previously rejected, and an agent serves `GUEST`, the system SHALL open a human hand-off (reason "Solicitud anterior no aprobada") and send one fixed acknowledgement that the previous application was not approved and a person will reply. It SHALL NOT invoke the GUEST agent, which would otherwise invite them to apply again. No message SHALL be sent at the moment of rejection (no template exists for it).
+When a message routes to `GUEST` because the phone's latest application is `REJECTED`, and the decision (`decidedAt`, else `submittedAt`) is less than 30 days old, the route SHALL carry `reapplyFrom` (decision + 30 days). The GUEST agent SHALL then answer with a system note that the previous application was not approved and that they may apply again from `reapplyFrom`. The agent SHALL NOT invite them to apply before that date and SHALL NOT explain the decision. No hand-off SHALL be opened unless they ask for a person. After 30 days, they SHALL be treated as a regular guest. No message SHALL be sent at the moment of rejection (no template exists for it). Re-applying through the web form is not blocked. (Founder decision 2026-09-26; supersedes the earlier "hand to a person" rule.)
 
-#### Scenario: Rejected applicant writes in
+#### Scenario: Rejected applicant writes within 30 days
 
-- **WHEN** a person whose latest application is `REJECTED` writes "quiero volver a aplicar"
-- **THEN** a hand-off is opened and a `cx.handoff_requested` feed card appears
-- **AND** they receive the fixed acknowledgement
-- **AND** no LLM is invoked
+- **WHEN** a person whose application was rejected 5 days ago writes "¿puedo volver a aplicar?"
+- **THEN** the GUEST agent answers that the previous application was not approved and gives the date they may apply again
+- **AND** no hand-off is opened
 
-#### Scenario: Rejected applicant during an open hand-off
+#### Scenario: Rejected applicant asks for a person
 
-- **WHEN** that person writes again while the hand-off is open
-- **THEN** no reply is sent and the hand-off is extended
+- **WHEN** that person writes "quiero hablar con una persona"
+- **THEN** a hand-off is opened, as for any guest
+
+#### Scenario: Rejection older than 30 days
+
+- **WHEN** the rejection is 31 days old
+- **THEN** the person is routed as a regular guest and may be invited to apply

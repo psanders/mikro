@@ -255,6 +255,11 @@ model Customer {
   name                String
   nickname            String?
   phone               String
+  /// WhatsApp business-scoped user id (BSUID) and username, learned from
+  /// inbound messages. Internal only: lets a username-only sender (Meta hides
+  /// their phone) be matched to this customer.
+  whatsappUserId      String?  @map("whatsapp_user_id")
+  whatsappUsername    String?  @map("whatsapp_username")
   idNumber            String   @map("id_number")
   collectionPoint     String?   @map("collection_point")
   /// Business location as a Google Maps link, copied from the application on conversion.
@@ -287,6 +292,7 @@ model Customer {
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
+  @@index([whatsappUserId])
   @@map("customers")
 }
 
@@ -565,6 +571,9 @@ model LoanApplication {
   firstName         String?   @map("first_name")
   lastName          String?   @map("last_name")
   phone             String?
+  /// WhatsApp BSUID + username of the applicant (internal; see Customer).
+  whatsappUserId    String?   @map("whatsapp_user_id")
+  whatsappUsername  String?   @map("whatsapp_username")
   idNumber          String?   @map("id_number")
   dateOfBirth       DateTime? @map("date_of_birth")
   maritalStatus     String?   @map("marital_status")
@@ -668,6 +677,7 @@ model LoanApplication {
 
   @@index([status])
   @@index([sessionId])
+  @@index([whatsappUserId])
   @@index([adId])
   @@index([assignedReviewerId])
   @@map("loan_applications")
@@ -739,7 +749,10 @@ model FollowUpJob {
 // business_events: the refs are context for the feed card, not ownership.
 model ConversationHandoff {
   id            String    @id @default(uuid())
+  /// Where replies go: the phone, or the BSUID for a username-only sender.
   phone         String
+  /// The sender's BSUID when known, so the hand-off holds whichever way they write.
+  whatsappUserId String?  @map("whatsapp_user_id")
   profile       String
   reason        String
   applicationId String?   @map("application_id")
@@ -749,6 +762,7 @@ model ConversationHandoff {
   closedAt      DateTime? @map("closed_at")
 
   @@index([phone, closedAt])
+  @@index([whatsappUserId, closedAt])
   @@map("conversation_handoffs")
 }
 

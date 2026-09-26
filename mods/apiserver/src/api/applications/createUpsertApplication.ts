@@ -83,7 +83,12 @@ export const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA" as const;
  */
 export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
   return async (
-    input: NormalizedApplication & { source?: ApplicationSource }
+    input: NormalizedApplication & {
+      source?: ApplicationSource;
+      /** WhatsApp username sender's BSUID (Flow path only; internal matching). */
+      whatsappUserId?: string;
+      whatsappUsername?: string;
+    }
   ): Promise<LoanApplication> => {
     const outOfArea =
       !input.partial &&
@@ -98,6 +103,10 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       firstName: input.firstName,
       lastName: input.lastName,
       phone: input.phone,
+      // Only when given: a web autosave must not erase a learned BSUID.
+      ...(input.whatsappUserId
+        ? { whatsappUserId: input.whatsappUserId, whatsappUsername: input.whatsappUsername ?? null }
+        : {}),
       idNumber: input.idNumber,
       dateOfBirth: input.dateOfBirth,
       maritalStatus: input.maritalStatus,

@@ -4,7 +4,10 @@
 export { createUpsertApplication, OUT_OF_COVERAGE_AREA } from "./createUpsertApplication.js";
 export { createApplicationIntakeHandler } from "./createApplicationIntakeHandler.js";
 export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
-export { createGetApplicationByPhone } from "./createGetApplicationByPhone.js";
+export {
+  createGetApplicationByPhone,
+  createGetApplicationByWhatsAppUserId
+} from "./createGetApplicationByPhone.js";
 export { createSubmitApplicationFromFlow } from "./createSubmitApplicationFromFlow.js";
 export { createSendApplicationPromo, type PromoResult } from "./createSendApplicationPromo.js";
 export { createListApplications } from "./createListApplications.js";

@@ -274,6 +274,8 @@ export function createRequestHumanHandoff(
       applicationId: str(context, "applicationId"),
       customerId: str(context, "customerId"),
       displayName: str(context, "name"),
+      whatsappUserId: str(context, "whatsappUserId"),
+      username: str(context, "username"),
       summary
     });
     return {

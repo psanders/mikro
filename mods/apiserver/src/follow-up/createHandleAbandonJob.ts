@@ -10,7 +10,10 @@ interface Options {
    * draft is not abandoned while a person is handling the conversation; the
    * job moves to the hand-off's expiry instead.
    */
-  getOpenHandoffExpiry?: (phone: string) => Promise<Date | null>;
+  getOpenHandoffExpiry?: (key: {
+    phone?: string | null;
+    whatsappUserId?: string | null;
+  }) => Promise<Date | null>;
 }
 
 /**
@@ -34,8 +37,11 @@ export function createHandleAbandonJob(client: DbClient, options: Options = {}) 
     }
 
     const handoffExpiry =
-      app.phone && options.getOpenHandoffExpiry
-        ? await options.getOpenHandoffExpiry(app.phone)
+      (app.phone || app.whatsappUserId) && options.getOpenHandoffExpiry
+        ? await options.getOpenHandoffExpiry({
+            phone: app.phone,
+            whatsappUserId: app.whatsappUserId
+          })
         : null;
     if (handoffExpiry) {
       await client.followUpJob.update({ where: { id: job.id }, data: { status: "CANCELLED" } });

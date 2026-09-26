@@ -3,6 +3,7 @@
  */
 export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation.js";
 export { validatePhone, e164OrRaw } from "./validatePhone.js";
+export { isBusinessScopedUserId } from "./whatsappUserId.js";
 export {
   getCycleMetrics,
   countCuotasCovered,

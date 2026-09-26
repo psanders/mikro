@@ -35,6 +35,9 @@ export interface LoanApplication {
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
+  /** WhatsApp BSUID / username learned from inbound messages (internal matching only). */
+  whatsappUserId?: string | null;
+  whatsappUsername?: string | null;
   idNumber: string | null;
   dateOfBirth: Date | null;
   maritalStatus: string | null;

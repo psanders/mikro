@@ -6,6 +6,7 @@
  * reply mirror (createEchoToChatwoot) and the hand-off note
  * (createNotifyChatwootHandoff).
  */
+import { isBusinessScopedUserId } from "@mikro/common";
 
 export interface ChatwootConfig {
   url: string;
@@ -32,6 +33,20 @@ interface ChatwootConversation {
   status: string;
   last_activity_at?: number;
 }
+
+/** A conversation as the list endpoint returns it (sender embedded). */
+interface ChatwootListedConversation extends ChatwootConversation {
+  meta?: {
+    sender?: {
+      id: number;
+      phone_number?: string | null;
+      additional_attributes?: { social_whatsapp_user_name?: string | null } | null;
+    };
+  };
+}
+
+/** How many pages of the inbox's recent conversations a username lookup scans. */
+const USERNAME_SCAN_PAGES = 2;
 
 const digitsOf = (phone: string) => phone.replace(/\D/g, "");
 
@@ -66,7 +81,9 @@ export function createChatwootClient(cfg: ChatwootConfig) {
    * WhatsApp inbox. Retried because Mikro can act before Chatwoot has finished
    * creating the contact/conversation from the inbound webhook.
    */
-  async function findConversationId(phone: string): Promise<number | null> {
+  async function findConversationId(address: string, username?: string): Promise<number | null> {
+    if (isBusinessScopedUserId(address)) return findUsernameConversationId(address, username);
+    const phone = address;
     const digits = digitsOf(phone);
     for (let attempt = 1; attempt <= attempts; attempt++) {
       const { payload: contacts } = await call<{ payload: ChatwootContact[] }>(
@@ -82,6 +99,46 @@ export function createChatwootClient(cfg: ChatwootConfig) {
           .filter((c) => c.inbox_id === inboxId && c.status !== "resolved")
           .sort((a, b) => (b.last_activity_at ?? 0) - (a.last_activity_at ?? 0) || b.id - a.id);
         if (open[0]) return open[0].id;
+      }
+      if (attempt < attempts) await sleep(retryDelayMs);
+    }
+    return null;
+  }
+
+  /**
+   * A WhatsApp username contact has no phone in Chatwoot, and Chatwoot's
+   * contact search matches neither the BSUID nor the username. Chatwoot keeps
+   * the username in `additional_attributes.social_whatsapp_user_name` and the
+   * BSUID as the contact's inbox `source_id`, so scan the inbox's most recent
+   * conversations (the person just wrote, so theirs is near the top): match by
+   * username, and confirm by `source_id` when there is no username to compare.
+   */
+  async function findUsernameConversationId(
+    bsuid: string,
+    username?: string
+  ): Promise<number | null> {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      for (let page = 1; page <= USERNAME_SCAN_PAGES; page++) {
+        const { data } = await call<{ data: { payload: ChatwootListedConversation[] } }>(
+          `/conversations?inbox_id=${inboxId}&status=all&page=${page}`
+        );
+        const candidates = (data?.payload ?? [])
+          .filter((c) => c.inbox_id === inboxId && c.status !== "resolved")
+          .filter((c) => c.meta?.sender && !c.meta.sender.phone_number);
+        for (const conv of candidates) {
+          const sender = conv.meta!.sender!;
+          const senderUsername = sender.additional_attributes?.social_whatsapp_user_name;
+          if (username && senderUsername) {
+            if (senderUsername.toLowerCase() === username.toLowerCase()) return conv.id;
+            continue;
+          }
+          const contact = await call<{
+            payload: { contact_inboxes?: Array<{ source_id?: string; inbox?: { id?: number } }> };
+          }>(`/contacts/${sender.id}`);
+          const inboxes = contact.payload?.contact_inboxes ?? [];
+          if (inboxes.some((ci) => ci.source_id === bsuid)) return conv.id;
+        }
+        if ((data?.payload ?? []).length === 0) break;
       }
       if (attempt < attempts) await sleep(retryDelayMs);
     }
