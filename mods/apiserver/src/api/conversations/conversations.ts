@@ -38,6 +38,8 @@ export const CX_HISTORY_TURNS = 40;
 export const CX_HISTORY_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 /** José's intake is short (7 replies max); this only bounds a runaway thread. */
 export const PROSPECT_HISTORY_TURNS = 100;
+/** The panel shows the newest turns; older ones are in the ctl export. */
+export const PANEL_TURNS = 500;
 
 /** A stored turn as the UI and ctl see it: tool calls parsed. */
 export interface ConversationTurnView {
@@ -252,8 +254,8 @@ export function createGetApplicationConversation(
     const [rows, handoffs] = await Promise.all([
       db.conversationTurn.findMany({
         where: { phone },
-        orderBy: { id: "asc" },
-        take: 500
+        orderBy: { id: "desc" },
+        take: PANEL_TURNS
       }),
       db.conversationHandoff.findMany({
         where: { phone },
@@ -261,7 +263,7 @@ export function createGetApplicationConversation(
         select: { id: true, reason: true, openedAt: true, closedAt: true }
       })
     ]);
-    return { phone, turns: rows.map(toTurnView), handoffs };
+    return { phone, turns: rows.reverse().map(toTurnView), handoffs };
   };
   return withErrorHandlingAndValidation(fn, getApplicationConversationSchema);
 }
