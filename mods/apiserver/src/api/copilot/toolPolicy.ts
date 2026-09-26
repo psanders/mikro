@@ -464,7 +464,10 @@ export const DIRECT_TOOLS: readonly string[] = [
   "openLoanForm",
   // Read-only document generation — nothing to confirm, so it executes
   // inline like the form-opener tools above.
-  "generateLoanStatement"
+  "generateLoanStatement",
+  // Conversation audit: reads transcripts and writes only audit rows + its
+  // feed card, no business data — runs at once (openspec add-conversation-audit).
+  "runConversationAudit"
 ];
 
 /** Copilot-local tool names — handled by createCopilotChat, not the executor. */

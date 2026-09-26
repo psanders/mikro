@@ -45,6 +45,23 @@ const evaluationsSchema = z.object({
   )
 });
 
+/**
+ * Audit rules the conversation audit's judge grades this agent against
+ * (openspec add-conversation-audit). Audit-only: never sent to the agent and
+ * not part of its `agent_version`.
+ */
+const policiesSchema = z
+  .array(
+    z.object({
+      id: z.string().min(1),
+      rule: z.string().min(1),
+      severity: z.enum(["critical", "warning"])
+    })
+  )
+  .refine((list) => new Set(list.map((p) => p.id)).size === list.length, {
+    message: "policy ids must be unique within an agent"
+  });
+
 /** Schema for a single agent entry in the agents YAML file. */
 export const agentConfigSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -63,7 +80,9 @@ export const agentConfigSchema = z.object({
   // call (e.g. María's "¡Listo!") want "pre-tool".
   replyMode: z.enum(["final", "pre-tool"]).default("final"),
   /** Optional evaluation suite (used by the eval CLI; ignored at runtime). */
-  evaluations: evaluationsSchema.optional()
+  evaluations: evaluationsSchema.optional(),
+  /** Optional audit rules for the conversation audit (ignored at runtime). */
+  policies: policiesSchema.optional()
 });
 
 /** Input type for a parsed agent entry. */

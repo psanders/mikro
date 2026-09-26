@@ -3,6 +3,7 @@
  */
 import { z } from "zod/v4";
 import { outboundMessageStatusEnum } from "./whatsapp.js";
+import { conversationAuditedPayloadSchema } from "./conversationAudit.js";
 
 /**
  * v1 business event catalog. The event log is append-only: corrections are
@@ -42,7 +43,9 @@ export const businessEventTypeEnum = z.enum([
   "message.sent",
   // A WhatsApp CX agent handed a conversation to a human (openspec
   // cx-role-based-agents). Agents stay silent for that phone while it's open.
-  "cx.handoff_requested"
+  "cx.handoff_requested",
+  // A conversation audit run finished (openspec add-conversation-audit).
+  "conversation.audited"
 ]);
 
 export type BusinessEventType = z.infer<typeof businessEventTypeEnum>;
@@ -266,7 +269,8 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "task.failed": taskFailedPayloadSchema,
   "qcobro.synced": qcobroSyncedPayloadSchema,
   "message.sent": messageSentPayloadSchema,
-  "cx.handoff_requested": cxHandoffRequestedPayloadSchema
+  "cx.handoff_requested": cxHandoffRequestedPayloadSchema,
+  "conversation.audited": conversationAuditedPayloadSchema
 };
 
 /**

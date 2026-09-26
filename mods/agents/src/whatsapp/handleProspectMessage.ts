@@ -34,7 +34,7 @@ export interface ProspectMessageDeps {
  * collect data. This guarantees a short form regardless of ISC progress —
  * José finalizes earlier if simulatedIsc reaches the target threshold.
  */
-const MAX_JOSE_TURNS = 7;
+export const MAX_JOSE_TURNS = 7;
 
 /**
  * Conservative detector for an explicit "not interested" / opt-out message.

@@ -265,6 +265,31 @@ Since issue #299 every CX message is stored in the `conversation_turns` table, n
   - Filters: `--phone`, `--application`, `--customer`, `--profile`, `--agent`, `--agent-version`, `--until`, `--limit`.
 - **Retention:** kept until someone asks for deletion. There is no automatic expiry. To delete, run `mikro conversations:delete +18095551234` (ADMIN, asks for confirmation). It removes every stored message for that phone. It does not touch Chatwoot, hand-off records or applications; delete those separately if the request covers them.
 
+## 5c. Conversation audit (automatic review of the stored conversations)
+
+The stored conversations are reviewed automatically, on a schedule or when you ask. Each run looks for agent drift and misbehavior and posts one card to the feed.
+
+- **What a run reviews:** the messages stored since the previous completed run. The first run looks back 24 hours. Each phone's messages count as one conversation. The AI judge also sees up to 20 earlier messages for context, but it never reports on them.
+- **Fixed checks** (no AI, every conversation):
+  - **Mensaje no entregado**: a send Meta rejected.
+  - **Respondió con el mensaje de error**: handling a message failed and the generic error reply went out.
+  - **Pidió una persona y no se traspasó**: an explicit request for a person with no hand-off within 10 minutes.
+  - **José pasó el tope de turnos**: more replies than José's cap for one application. It only reports; the cap itself is unchanged (under review).
+  - **Reveló el puntaje** (critical): a reply that states a score or band with a number.
+- **AI judge:** reads each conversation against the serving agent's `policies` in `agents.yaml` and reports every rule it breaks, with the message quoted. It uses the `evals` model (the same one as `npm run agents:eval`). Editing policies does not change an agent's version hash.
+- **Cap:** `maxConversations` is how many conversations the judge reads per run, most recent first. The rest get the fixed checks only, and the card says so.
+- **Where to see it:** the feed card "Auditoría de conversaciones" shows the counts (conversations, messages, hand-offs to a person, not delivered, problems), the per-agent breakdown with each agent's version ("nueva" when it changed since the last run), and the worst problem. **Ver detalle** opens every finding in the side panel, and **Ver conversación** opens the application's conversation. The card is amber when there are problems and green when there are none. It's under the **Mensajes** filter.
+- **Run it now:** ask the copilot, e.g. "Corre la auditoría de conversaciones ahora". It works even when the schedule is off. Only one run at a time; a run stuck for more than 30 minutes is marked failed and a new one proceeds.
+- **Turn on the schedule** in `mikro.json`:
+
+  ```json
+  "conversationAudit": { "enabled": true, "schedule": "0 7 * * *", "maxConversations": 200 }
+  ```
+
+  `schedule` is a cron expression in `timezone`. It's off by default. **Add this to prod only after the release that includes it is deployed**: `mikro.json` is strict, and an unknown key crashes the boot, including a rollback.
+
+- **Stored:** runs in `conversation_audit_runs` and findings in `conversation_audit_findings`, both kept with the agent name and version.
+
 ---
 
 ## 6. How each case is tested

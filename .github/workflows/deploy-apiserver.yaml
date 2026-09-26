@@ -98,7 +98,7 @@ jobs:
       - name: Boot image with CI config
         run: |
           mkdir -p ci-smoke/keys
-          cp mikro.json.example ci-smoke/mikro.json
+          cp mikro.example.json ci-smoke/mikro.json
           # agents.yaml is tracked and secret-free, so use it directly. (The old
           # agents.yaml.example was removed in 72ce4d8 as redundant.)
           cp agents.yaml ci-smoke/agents.yaml

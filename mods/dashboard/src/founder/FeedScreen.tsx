@@ -30,6 +30,8 @@ import { useCopilot } from "./copilot/CopilotContext";
 import { useAlerts } from "./alerts/AlertsContext";
 import { FeedCard } from "./components/FeedCard";
 import { TaskFeedCard } from "./TaskFeedCard";
+import { ConversationAuditFeedCard } from "./audit/ConversationAuditCard";
+import { useApplicationPanel } from "./applications/ApplicationPanelContext";
 import { FilterBar } from "./components/FilterBar";
 import { FeedDayHeader } from "./components/FeedDayHeader";
 import { FeedEmptyState } from "./components/FeedEmptyState";
@@ -73,6 +75,11 @@ const FEED_POLL_INTERVAL_MS = 60_000;
 /** Task lifecycle events whose card may carry the live action widget — never grouped. */
 function isTaskEvent(event: FeedEvent): boolean {
   return event.type === "task.due" || event.type === "task.needs_input";
+}
+
+/** Audit runs render their own card (counts, agents, findings panel) — never grouped. */
+function isAuditEvent(event: FeedEvent): boolean {
+  return event.type === "conversation.audited";
 }
 
 type OpenFiring = RouterOutputs["tasks"]["listOpenFirings"][number];
@@ -134,6 +141,7 @@ export function FeedScreen() {
   const toast = useToast();
   const utils = trpc.useUtils();
   const copilot = useCopilot();
+  const applicationPanel = useApplicationPanel();
   const alerts = useAlerts();
   const location = useLocation();
   const navState = location.state as FeedNavState | null;
@@ -262,7 +270,10 @@ export function FeedScreen() {
 
   /** Plain events keep the existing run grouping; application rows render on their own. */
   function renderRows(rows: FeedEvent[], key: string) {
-    return groupFeedRuns(rows, (e) => !isTaskEvent(e) && !isApplicationEvent(e)).map((row) => {
+    return groupFeedRuns(
+      rows,
+      (e) => !isTaskEvent(e) && !isApplicationEvent(e) && !isAuditEvent(e)
+    ).map((row) => {
       if (Array.isArray(row)) {
         return (
           <GroupedFeedRow
@@ -276,6 +287,16 @@ export function FeedScreen() {
         );
       }
       const event = row;
+      if (isAuditEvent(event)) {
+        return (
+          <ConversationAuditFeedCard
+            key={event.id}
+            event={event}
+            onAskCopilot={(question) => copilot.openWith(question)}
+            onOpenConversation={(applicationId) => applicationPanel.open(applicationId)}
+          />
+        );
+      }
       const Card = isTaskEvent(event) ? TaskFeedCard : FeedCard;
       return (
         <Card

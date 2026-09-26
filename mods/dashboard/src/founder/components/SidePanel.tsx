@@ -18,6 +18,8 @@ export interface SidePanelProps {
   title: string;
   subtitle?: string;
   icon?: LucideIcon;
+  /** Icon chip colors; defaults to the applications' violet. */
+  iconClassName?: string;
   /** Shows the back crumb above the title. */
   onBack?: () => void;
   backLabel?: string;
@@ -36,6 +38,7 @@ export function SidePanel({
   title,
   subtitle,
   icon: Icon,
+  iconClassName = "bg-[#F1EAFE] text-[#7C3AED]",
   onBack,
   backLabel,
   headerExtra,
@@ -99,7 +102,12 @@ export function SidePanel({
           )}
           <div className="flex items-center gap-3">
             {Icon && (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
+              <span
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]",
+                  iconClassName
+                )}
+              >
                 <Icon size={17} />
               </span>
             )}

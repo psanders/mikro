@@ -40,7 +40,7 @@ collection, cash is allocated **mora-first**: the server may create two `Payment
 rows for one deposit — `LATE_FEE` then `INSTALLMENT` — linked so reversals and
 receipts stay consistent.
 
-- Policy defaults live under `loans` in `mikro.json` (see `mikro.json.example`):
+- Policy defaults live under `loans` in `mikro.json` (see `mikro.example.json`):
   `defaultMoraRate`, `moraGraceDays`, `moraCapInCuotas`, `moraMinDop`,
   `moraStopOnDefault`, `moraEffectiveFrom`.
 - `moraGraceDays` is a waiver window, not a deductible: at or below it no mora accrues and

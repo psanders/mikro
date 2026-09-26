@@ -40,7 +40,7 @@ Republic); currency is DOP. Money is handled with care — see "Domain rules".
 - Validate inputs/outputs with zod; share schemas via `@mikro/common` rather than redefining.
 - New API surface goes through tRPC routers in `@mikro/apiserver`; the CLI/mobile consume it via tRPC clients — don't bypass the API.
 - Schema changes go through Prisma migrations (`npm run db:migrate`), not manual SQL.
-- Config is read from `mikro.json` (see `mikro.json.example`); secrets/keys are not committed.
+- Config is read from `mikro.json` (see `mikro.example.json`); secrets/keys are not committed.
 - CLI commands accept flags but should remain runnable interactively (prompt when a flag is omitted).
 - Lint/format are enforced on commit (lint-staged) — keep changes clean.
 

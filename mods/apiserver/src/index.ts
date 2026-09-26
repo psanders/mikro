@@ -19,6 +19,7 @@ if (!process.env.MIKRO_CONFIG_FILE) {
 
 import {
   getConfig,
+  getConversationAuditConfig,
   getPromoBannerPath,
   getFollowUpTimerConfig,
   getWhatsAppFollowUpTemplate,
@@ -55,6 +56,7 @@ import {
   getDeepgramApiKey,
   initializeLLM,
   getAgentByProfile,
+  createJudgeConversation,
   createChatModel,
   getLLMConfig,
   getWhatsAppPromoTemplate,
@@ -71,8 +73,16 @@ import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/in
 import { createEchoToChatwoot, createNotifyChatwootHandoff } from "./api/chatwoot/index.js";
 import {
   createRecordConversationTurn,
-  createGetConversationHistory
+  createGetConversationHistory,
+  createRunConversationAudit
 } from "./api/conversations/index.js";
+import { createConversationAuditWorker } from "./audit/createConversationAuditWorker.js";
+
+/**
+ * The conversation audit runner, built once the agents (and their audit
+ * policies) are loaded. Shared by the cron worker and the copilot tool.
+ */
+let runConversationAuditFn: ReturnType<typeof createRunConversationAudit> | undefined;
 import {
   createCopilotApproveApplication,
   createCopilotRejectApplication,
@@ -509,6 +519,18 @@ async function initializeMessageProcessor() {
     logger.verbose("agents loaded", { count: agents.size });
     logger.info("agents loaded successfully", { count: agents.size, step: "agents-loaded" });
 
+    // Conversation audit: agents are matched by the name stored on their turns.
+    const agentsByName = new Map([...agents.values()].map((a) => [a.name, a] as const));
+    runConversationAuditFn = createRunConversationAudit(prisma, {
+      judge: createJudgeConversation(),
+      getAgent: (name) => {
+        const agent = agentsByName.get(name);
+        return agent ? { name: agent.name, policies: agent.policies ?? [] } : undefined;
+      },
+      getMaxConversations: () => getConversationAuditConfig().maxConversations
+    });
+    const runConversationAudit = runConversationAuditFn;
+
     // Create API functions
     const dbClient = prisma as unknown as Parameters<typeof createGetUserByPhone>[0];
     const getUserByPhone = createGetUserByPhone(dbClient);
@@ -708,6 +730,10 @@ async function initializeMessageProcessor() {
       // qcobro.synced feed event so the run shows up on the feed with counts,
       // just like the cron run (createConfirmCopilotAction separately records
       // the generic copilot.action event for every confirmed write).
+      // On-demand conversation audit (copilot DIRECT tool): runs now, posts the
+      // same conversation.audited card as the scheduled run.
+      runConversationAudit: async (actorName: string) =>
+        runConversationAudit({ trigger: "MANUAL", actorName }),
       forceQCobroSync: async (actorName?: string) => {
         const result = await syncAllPortfoliosOnPayment();
         await recordQCobroSyncedEvent(prisma, result, actorName ?? "Fundador");
@@ -1090,17 +1116,20 @@ const followUpTemplate = getWhatsAppFollowUpTemplate();
 let stopFollowUpWorker: (() => void) | undefined;
 let stopQCobroWorker: (() => void) | undefined;
 let stopTaskWorker: (() => void) | undefined;
+let stopConversationAuditWorker: (() => void) | undefined;
 
 process.on("SIGTERM", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
   stopTaskWorker?.();
+  stopConversationAuditWorker?.();
   process.exit(0);
 });
 process.on("SIGINT", () => {
   stopFollowUpWorker?.();
   stopQCobroWorker?.();
   stopTaskWorker?.();
+  stopConversationAuditWorker?.();
   process.exit(0);
 });
 
@@ -1157,6 +1186,11 @@ initializeMessageProcessor()
 
       // Start QCobro cron worker (recompute + sync deterioration on qcobro.schedule)
       stopQCobroWorker = createQCobroWorker(dbClient);
+
+      // Start the conversation audit worker (only when conversationAudit.enabled)
+      if (runConversationAuditFn) {
+        stopConversationAuditWorker = createConversationAuditWorker(runConversationAuditFn);
+      }
 
       // Start the founder-task worker (fires scheduled automations)
       stopTaskWorker = createTaskWorker(

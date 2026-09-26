@@ -24,6 +24,7 @@ export {
   type InvokeLLMResult,
   type ModelSettings,
   type Agent,
+  type AgentPolicy,
   type Message,
   type MessageContentItem,
   type ToolCall,
@@ -65,6 +66,25 @@ export {
   type ConversationTurnRecord,
   type ConversationHistoryQuery
 } from "./conversations/index.js";
+
+// Conversation audit
+export {
+  CONVERSATION_CHECKS,
+  runChecks,
+  runAudit,
+  createJudgeConversation,
+  formatTranscript,
+  type AuditConversation,
+  type AuditTurn,
+  type AuditFinding,
+  type AuditSeverity,
+  type AuditSource,
+  type AuditAgentSummary,
+  type JudgeVerdict,
+  type JudgeConversation,
+  type RunAuditInput,
+  type RunAuditResult
+} from "./audit/index.js";
 
 // Sessions
 export { isNewSession, touchSession } from "./sessions/index.js";

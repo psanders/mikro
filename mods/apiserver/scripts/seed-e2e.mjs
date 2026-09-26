@@ -19,11 +19,14 @@
  * (APPROVED, contract generated + signed, assigned to Ana), Tienda de Luis
  * (IN_REVIEW, assigned to Luis), Colmado Viejo (RECEIVED three days ago —
  * outside the feed's default "Hoy" range).
+ * Plus Yokasta's WhatsApp transcript (+18095551001) and one conversation audit
+ * run over it (one warning: José's failed send).
  */
 /* global console, process, Buffer */
 import bcrypt from "bcryptjs";
 import { appRouter } from "../dist/trpc/routers/index.js";
 import { prisma } from "../dist/db.js";
+import { createRunConversationAudit } from "../dist/api/conversations/index.js";
 
 const PASSWORD = "e2e-pass";
 const PNG =
@@ -296,6 +299,15 @@ for (const [first, last, biz] of [
     data: { occurredAt: new Date(Date.now() - 3 * 24 * 3600 * 1000) }
   });
 }
+
+// A conversation audit over the seeded transcripts, through the real run (no
+// LLM in e2e: the judge finds nothing, so only the code checks report — José's
+// failed send to Yokasta).
+await createRunConversationAudit(prisma, {
+  judge: async () => [],
+  getAgent: () => undefined,
+  getMaxConversations: () => 200
+})({ trigger: "SCHEDULED", actorName: "Sistema" });
 
 console.log("e2e seed complete");
 await prisma.$disconnect();
