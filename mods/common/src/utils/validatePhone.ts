@@ -38,3 +38,16 @@ export function validatePhone(phoneNumber: string): string {
   // We keep the + for consistent storage and querying
   return result.phoneNumber;
 }
+
+/**
+ * E.164 when the number parses, otherwise the value unchanged. The one key
+ * rule for phone-keyed records (WhatsApp CX transcripts): writes, reads and
+ * data-removal deletes must all agree on it.
+ */
+export function e164OrRaw(phoneNumber: string): string {
+  try {
+    return validatePhone(phoneNumber);
+  } catch {
+    return phoneNumber;
+  }
+}

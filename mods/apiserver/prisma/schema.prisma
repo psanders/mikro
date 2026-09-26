@@ -656,6 +656,10 @@ model LoanApplication {
   loanId     Int?    @map("loan_id")
 
   submittedAt DateTime? @map("submitted_at")
+  // When an abandoned draft last came back to DRAFT because the prospect wrote
+  // again. José's intake memory starts here, so the old intake's turn counters
+  // don't carry into the reopened one.
+  reopenedAt  DateTime? @map("reopened_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -746,6 +750,48 @@ model ConversationHandoff {
 
   @@index([phone, closedAt])
   @@map("conversation_handoffs")
+}
+
+// One message of a WhatsApp CX conversation (guest, prospect, applicant,
+// customer), kept for monitoring, audits and agent evals (issue #299). Keyed by
+// the E.164 phone, so a guest with no customer or application row still has a
+// transcript; `applicationId`/`customerId` are what the route knew at the time.
+// Also the agents' conversation memory: history is read back from here, so it
+// survives restarts. Staff chats stay in `Message`. No foreign keys on purpose,
+// like BusinessEvent: a transcript outlives the rows it mentions and is removed
+// only by an explicit per-phone delete (retention: kept until requested).
+//
+// role: INBOUND (the person), AGENT (an LLM agent's reply), SYSTEM (a fixed
+// reply the app sent: hand-off acks, voice-note notices, errors).
+model ConversationTurn {
+  // Autoincrement, not a uuid: turns are ordered by id, so two recorded in the
+  // same millisecond still read back in the order they happened.
+  id            Int      @id @default(autoincrement())
+  phone         String
+  role          String
+  content       String
+  // GUEST, PROSPECT, APPLICANT or CUSTOMER; null when the turn came before routing.
+  profile       String?
+  agentName     String?  @map("agent_name")
+  // Short hash of the agent's prompt, model and tools: groups turns by agent
+  // revision so drift shows up as a change in behavior between versions.
+  agentVersion  String?  @map("agent_version")
+  // JSON array of {name, args} for the tools the agent ran this turn (no results).
+  toolCalls     String?  @map("tool_calls")
+  hasImage      Boolean  @default(false) @map("has_image")
+  applicationId String?  @map("application_id")
+  customerId    String?  @map("customer_id")
+  waMessageId   String?  @map("wa_message_id")
+  // The send to WhatsApp failed: the reply was produced (kept for audits) but
+  // the person never got it, so it is left out of the agents' memory.
+  failed        Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([phone, createdAt])
+  @@index([applicationId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("conversation_turns")
 }
 
 // =============================================================================

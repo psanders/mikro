@@ -70,6 +70,10 @@ import { createCreateTransaction } from "./api/accounting/index.js";
 import { createSendLeadConversion, createRecordMetaAd } from "./api/marketing/index.js";
 import { createEchoToChatwoot, createNotifyChatwootHandoff } from "./api/chatwoot/index.js";
 import {
+  createRecordConversationTurn,
+  createGetConversationHistory
+} from "./api/conversations/index.js";
+import {
   createCopilotApproveApplication,
   createCopilotRejectApplication,
   createDeleteApplication
@@ -1011,6 +1015,10 @@ async function initializeMessageProcessor() {
       downloadMedia: whatsAppClient.downloadMedia.bind(whatsAppClient),
       getChatHistoryForUser,
       addMessageForUser,
+      // Persisted CX transcripts (#299): every guest/prospect/applicant/customer
+      // turn is written here, and the agents' memory is read back from it.
+      recordConversationTurn: createRecordConversationTurn(prisma),
+      getConversationHistory: createGetConversationHistory(prisma),
       getAgentForProfile,
       submitApplicationFromFlow,
       // Apply async delivery receipts (sent/delivered/read/failed) to the tracked

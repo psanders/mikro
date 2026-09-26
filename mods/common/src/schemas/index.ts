@@ -184,14 +184,27 @@ export {
   messageRoleEnum,
   attachmentTypeEnum,
   attachmentInputSchema,
-  getChatHistorySchema,
   addMessageSchema,
-  type GetChatHistoryInput,
   type AddMessageInput,
   type AttachmentInput,
   type MessageRole,
   type AttachmentType
 } from "./message.js";
+
+export {
+  conversationTurnRoleEnum,
+  conversationToolCallSchema,
+  recordConversationTurnSchema,
+  listConversationTurnsSchema,
+  getApplicationConversationSchema,
+  deleteConversationSchema,
+  type ConversationTurnRole,
+  type ConversationToolCall,
+  type RecordConversationTurnInput,
+  type ListConversationTurnsInput,
+  type GetApplicationConversationInput,
+  type DeleteConversationInput
+} from "./conversation.js";
 
 export {
   whatsappTextSchema,

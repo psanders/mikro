@@ -80,6 +80,8 @@ export interface Message {
   tool_call_id?: string;
   /** Tools executed in this turn (persisted for history so LLM sees what was actually done) */
   tools_executed?: ToolExecuted[];
+  /** When the message was stored (persisted history only); never sent to the model. */
+  timestamp?: string | Date;
 }
 
 /**

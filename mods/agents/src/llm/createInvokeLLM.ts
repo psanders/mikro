@@ -12,6 +12,7 @@ import type { Runnable } from "@langchain/core/runnables";
 import { getLLMConfig } from "../config.js";
 import { createChatModel, isVisionModel } from "./providers.js";
 import { logger } from "../logger.js";
+import { textOf } from "../conversations/transcript.js";
 import type { Agent, Message, MessageContentItem, ToolFunction, ToolExecutor } from "./types.js";
 
 /**
@@ -133,11 +134,16 @@ function convertSingleMessage(msg: Message): BaseMessage {
  * (not appended to the AI message) so the model never sees the annotation
  * as part of its own output and cannot learn to mimic it textually.
  */
-function convertAllToLangChainMessages(messages: Message[]): BaseMessage[] {
+export function convertAllToLangChainMessages(messages: Message[]): BaseMessage[] {
   const result: BaseMessage[] = [];
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
+
+    // A turn where the agent only ran tools has no text. Anthropic and Gemini
+    // reject empty assistant messages, so it is skipped; its tools still reach
+    // the model through the note on the following user message.
+    if (msg.role === "assistant" && !textOf(msg).trim() && !msg.tool_calls?.length) continue;
 
     if (msg.role === "user") {
       const prev = i > 0 ? messages[i - 1] : null;
