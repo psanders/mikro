@@ -19,6 +19,10 @@ import {
   listUsersSchema,
   // Chat schemas
   getChatHistorySchema,
+  // Conversation transcript schemas (WhatsApp CX)
+  getApplicationConversationSchema,
+  listConversationTurnsSchema,
+  deleteConversationSchema,
   // Loan schemas
   createLoanSchema,
   calculateLoanSchema,
@@ -117,6 +121,13 @@ import { createGetUser } from "../../api/users/createGetUser.js";
 import { createListUsers } from "../../api/users/createListUsers.js";
 // Chat API functions
 import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
+// Conversation transcript API functions (WhatsApp CX)
+import {
+  createGetApplicationConversation,
+  createListConversationTurns,
+  createDeleteConversation
+} from "../../api/conversations/index.js";
+import { createChatwootClient } from "../../api/chatwoot/index.js";
 // Dashboard API functions
 import { createGetCollectorDashboard } from "../../api/dashboard/createGetCollectorDashboard.js";
 // Sync API functions
@@ -219,6 +230,7 @@ import {
   getLLMConfig
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
+import { logger } from "../../logger.js";
 // Accounting schemas
 import {
   createAccountSchema,
@@ -488,6 +500,48 @@ export const protectedRouter = router({
     const fn = createGetChatHistory(ctx.db);
     return fn(input);
   }),
+
+  // ==================== Conversation transcripts (WhatsApp CX, #299) ====================
+
+  /**
+   * The applicant's WhatsApp conversation for the application panel, with a
+   * link to their Chatwoot contact (staff replies live there). Same access as
+   * getApplication. The Chatwoot lookup is best-effort and never fails the read.
+   */
+  getApplicationConversation: reviewerProcedure
+    .input(getApplicationConversationSchema)
+    .query(async ({ ctx, input }) => {
+      const conversation = await createGetApplicationConversation(
+        ctx.db as unknown as PrismaClient
+      )(input);
+      let chatwootUrl: string | null = null;
+      if (conversation.phone) {
+        try {
+          chatwootUrl = await createChatwootClient(getConfig().chatwoot).findContactUrl(
+            conversation.phone
+          );
+        } catch (err) {
+          logger.verbose("chatwoot contact lookup failed", {
+            error: err instanceof Error ? err.message : String(err)
+          });
+        }
+      }
+      return { ...conversation, chatwootUrl };
+    }),
+
+  /** Transcript turns matching filters, oldest first — the ctl eval export. ADMIN. */
+  listConversationTurns: adminProcedure
+    .input(listConversationTurnsSchema)
+    .query(async ({ ctx, input }) => {
+      return createListConversationTurns(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** Delete a phone's whole transcript (a person asked for their data to be removed). ADMIN. */
+  deleteConversation: adminProcedure
+    .input(deleteConversationSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createDeleteConversation(ctx.db as unknown as PrismaClient)(input);
+    }),
 
   // ==================== Loan procedures ====================
 

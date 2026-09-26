@@ -2,7 +2,9 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Handles an inbound WhatsApp message from a prospect with a partial loan
- * application. Manages phone-keyed in-memory session state and invokes José.
+ * application and invokes José. Stateless: the conversation so far comes in as
+ * `history` (read from the persisted transcript), and the turn counters are
+ * derived from it, so an intake survives an apiserver restart.
  */
 import type { Agent, Message, ToolExecuted } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
@@ -21,6 +23,8 @@ export interface ProspectMessageDeps {
   joseAgent: Agent;
   /** The DRAFT's id; lets José's tools (e.g. requestHumanHandoff) name it. */
   applicationId?: string;
+  /** José's conversation with this prospect so far, oldest first (no SYSTEM turns). */
+  history: Message[];
 }
 
 /**
@@ -44,25 +48,21 @@ export function isDecline(message: string): boolean {
   return DECLINE_RE.test(message);
 }
 
-interface ProspectSession {
-  history: Message[];
-  turnsSinceLastSave: number;
-  /** Count of replies José has produced in this conversation. */
-  joseTurns: number;
+function savedThisTurn(message: Message): boolean {
+  return (message.tools_executed ?? []).some((t) => t.name === "saveAnswer");
 }
 
-/** In-memory phone → session for prospects. */
-const prospectSessions = new Map<string, ProspectSession>();
-
-function getSession(phone: string): ProspectSession {
-  if (!prospectSessions.has(phone)) {
-    prospectSessions.set(phone, { history: [], turnsSinceLastSave: 0, joseTurns: 0 });
+/**
+ * The counters the directives key off, derived from the history: how many
+ * replies José has sent, and how many of the latest ones saved nothing.
+ */
+function countTurns(history: Message[]): { joseTurns: number; turnsSinceLastSave: number } {
+  const replies = history.filter((m) => m.role === "assistant");
+  let turnsSinceLastSave = 0;
+  for (let i = replies.length - 1; i >= 0 && !savedThisTurn(replies[i]); i--) {
+    turnsSinceLastSave++;
   }
-  return prospectSessions.get(phone)!;
-}
-
-function savedThisTurn(_assistantMessage: string, toolsExecuted: ToolExecuted[]): boolean {
-  return toolsExecuted.some((t) => t.name === "saveAnswer");
+  return { joseTurns: replies.length, turnsSinceLastSave };
 }
 
 export async function handleProspectMessage(
@@ -70,9 +70,9 @@ export async function handleProspectMessage(
   sessionId: string,
   userMessage: string,
   deps: ProspectMessageDeps
-): Promise<{ text: string }> {
-  const { invokeLLM, joseAgent } = deps;
-  const session = getSession(phone);
+): Promise<{ text: string; toolsExecuted: ToolExecuted[] }> {
+  const { invokeLLM, joseAgent, history } = deps;
+  const session = countTurns(history);
   const newSession = isNewSession(phone);
 
   // Inject a directive into userMessage based on conversation state. Precedence:
@@ -125,46 +125,12 @@ export async function handleProspectMessage(
     turnsSinceLastSave: session.turnsSinceLastSave
   });
 
-  const result = await invokeLLM(
-    joseAgent,
-    session.history,
-    effectiveMessage,
-    null,
-    context,
-    newSession
-  );
+  const result = await invokeLLM(joseAgent, history, effectiveMessage, null, context, newSession);
   touchSession(phone);
 
   const responseText = typeof result === "string" ? result : result.text;
   const toolsExecuted: ToolExecuted[] =
     typeof result === "string" ? [] : (result.toolsExecuted ?? []);
 
-  // Count this José reply against the hard turn cap.
-  session.joseTurns += 1;
-
-  // Update stuck counter
-  if (savedThisTurn(responseText, toolsExecuted)) {
-    session.turnsSinceLastSave = 0;
-  } else {
-    session.turnsSinceLastSave += 1;
-  }
-
-  session.history.push({ role: "user", content: userMessage }); // store original, not injected
-  session.history.push({
-    role: "assistant",
-    content: responseText,
-    tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
-  });
-
-  return { text: responseText };
-}
-
-/** José's conversation with a phone so far (empty when none). */
-export function getProspectHistory(phone: string): Message[] {
-  return prospectSessions.get(phone)?.history ?? [];
-}
-
-/** Clear session for a phone (used after finalization to stop intake). */
-export function clearProspectHistory(phone: string): void {
-  prospectSessions.delete(phone);
+  return { text: responseText, toolsExecuted };
 }

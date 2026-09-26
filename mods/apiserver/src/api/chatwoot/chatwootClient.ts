@@ -88,6 +88,22 @@ export function createChatwootClient(cfg: ChatwootConfig) {
     return null;
   }
 
+  /**
+   * Link to the contact's page in the Chatwoot app (all their conversations,
+   * including staff replies Mikro never sees). One lookup, no retries; null when
+   * unconfigured, not found, or Chatwoot is slow — it only decorates a panel.
+   */
+  async function findContactUrl(phone: string, timeoutMs = 3000): Promise<string | null> {
+    if (!configured) return null;
+    const digits = digitsOf(phone);
+    const { payload: contacts } = await call<{ payload: ChatwootContact[] }>(
+      `/contacts/search?q=${encodeURIComponent(digits)}`,
+      { signal: AbortSignal.timeout(timeoutMs) }
+    );
+    const contact = contacts.find((c) => c.phone_number && digitsOf(c.phone_number) === digits);
+    return contact ? `${baseUrl}/app/accounts/${accountId}/contacts/${contact.id}` : null;
+  }
+
   /** Add labels without dropping existing ones (the POST replaces the set). */
   async function addLabels(conversationId: number, labels: string[]): Promise<void> {
     const { payload: current } = await call<{ payload: string[] }>(
@@ -100,5 +116,5 @@ export function createChatwootClient(cfg: ChatwootConfig) {
     });
   }
 
-  return { configured, call, findConversationId, addLabels };
+  return { configured, call, findConversationId, findContactUrl, addLabels };
 }

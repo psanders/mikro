@@ -748,6 +748,45 @@ model ConversationHandoff {
   @@map("conversation_handoffs")
 }
 
+// One message of a WhatsApp CX conversation (guest, prospect, applicant,
+// customer), kept for monitoring, audits and agent evals (issue #299). Keyed by
+// the E.164 phone, so a guest with no customer or application row still has a
+// transcript; `applicationId`/`customerId` are what the route knew at the time.
+// Also the agents' conversation memory: history is read back from here, so it
+// survives restarts. Staff chats stay in `Message`. No foreign keys on purpose,
+// like BusinessEvent: a transcript outlives the rows it mentions and is removed
+// only by an explicit per-phone delete (retention: kept until requested).
+//
+// role: INBOUND (the person), AGENT (an LLM agent's reply), SYSTEM (a fixed
+// reply the app sent: hand-off acks, voice-note notices, errors).
+model ConversationTurn {
+  // Autoincrement, not a uuid: turns are ordered by id, so two recorded in the
+  // same millisecond still read back in the order they happened.
+  id            Int      @id @default(autoincrement())
+  phone         String
+  role          String
+  content       String
+  // GUEST, PROSPECT, APPLICANT or CUSTOMER; null when the turn came before routing.
+  profile       String?
+  agentName     String?  @map("agent_name")
+  // Short hash of the agent's prompt, model and tools: groups turns by agent
+  // revision so drift shows up as a change in behavior between versions.
+  agentVersion  String?  @map("agent_version")
+  // JSON array of {name, args} for the tools the agent ran this turn (no results).
+  toolCalls     String?  @map("tool_calls")
+  hasImage      Boolean  @default(false) @map("has_image")
+  applicationId String?  @map("application_id")
+  customerId    String?  @map("customer_id")
+  waMessageId   String?  @map("wa_message_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([phone, createdAt])
+  @@index([applicationId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("conversation_turns")
+}
+
 // =============================================================================
 // Business event log (Founder Feed)
 // =============================================================================

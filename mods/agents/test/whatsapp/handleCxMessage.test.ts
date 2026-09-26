@@ -14,7 +14,7 @@ import {
   isHumanRequest
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
-import { clearGuestConversation } from "../../src/conversations/index.js";
+import { createFakeTranscript } from "./fakeTranscript.js";
 
 const PHONE = "+18095550010";
 const recentTs = () => String(Math.floor(Date.now() / 1000) - 10);
@@ -122,8 +122,14 @@ const prospectRoute = {
   phone: PHONE
 };
 
-function setup(route: unknown, over: Record<string, unknown> = {}) {
+function setup(
+  route: unknown,
+  over: Record<string, unknown> = {},
+  transcript = createFakeTranscript()
+) {
   const processor = {
+    recordConversationTurn: transcript.recordConversationTurn,
+    getConversationHistory: transcript.getConversationHistory,
     routeMessage: sinon.stub().resolves(route),
     invokeLLM: sinon.stub().resolves({ text: "respuesta", toolsExecuted: [] }),
     sendWhatsAppMessage: sinon.stub().resolves({ messages: [{ id: "out-1" }] }),
@@ -140,14 +146,13 @@ function setup(route: unknown, over: Record<string, unknown> = {}) {
   };
   setMessageProcessor(processor as never);
   markInitializationComplete();
-  return processor;
+  return Object.assign(processor, { turns: transcript.turns });
 }
 
 describe("WhatsApp CX routes", () => {
   beforeEach(() => {
     resetProcessedMessageIdsForTesting();
     clearSessionsForTesting();
-    clearGuestConversation(PHONE);
   });
   afterEach(() => sinon.restore());
 
@@ -379,6 +384,179 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(voiceWebhook());
 
       expect(p.sendWhatsAppMessage.called).to.be.false;
+    });
+  });
+
+  // Issue #299: every CX message is persisted for monitoring and agent evals,
+  // and the agents' memory is read back from that transcript.
+  describe("transcript", () => {
+    it("records the inbound message and the agent's reply with its identity and tools", async () => {
+      const p = setup(customerRoute, {
+        invokeLLM: sinon.stub().resolves({
+          text: "Debes 1,500",
+          toolsExecuted: [{ name: "getBalance", args: { loanId: 10034 } }]
+        })
+      });
+
+      await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
+
+      expect(p.turns.map((t) => t.role)).to.deep.equal(["INBOUND", "AGENT"]);
+      const [inbound, reply] = p.turns;
+      expect(inbound).to.include({
+        phone: PHONE,
+        content: "¿cuánto debo?",
+        profile: "CUSTOMER",
+        customerId: "cust-1",
+        hasImage: false
+      });
+      expect(inbound.waMessageId).to.match(/^cx-/);
+      expect(reply).to.include({
+        phone: PHONE,
+        content: "Debes 1,500",
+        profile: "CUSTOMER",
+        customerId: "cust-1",
+        agentName: "customer-agent",
+        waMessageId: "out-1"
+      });
+      expect(reply.agentVersion).to.match(/^[0-9a-f]{12}$/);
+      expect(reply.toolCalls).to.deep.equal([{ name: "getBalance", args: { loanId: 10034 } }]);
+    });
+
+    it("records a message the agent stays silent on (hand-off open)", async () => {
+      const p = setup(customerRoute, { extendHandoff: sinon.stub().resolves(true) });
+
+      await handleWhatsAppMessage(textWebhook("¿hola?"));
+
+      expect(p.turns.map((t) => t.role)).to.deep.equal(["INBOUND"]);
+    });
+
+    it("records the hand-off acknowledgment as a SYSTEM turn", async () => {
+      const p = setup(customerRoute);
+
+      await handleWhatsAppMessage(textWebhook("Quiero hablar con una persona"));
+
+      expect(p.turns.map((t) => t.role)).to.deep.equal(["INBOUND", "SYSTEM"]);
+      expect(p.turns[1].content).to.match(/equipo/);
+      expect(p.turns[1].agentName).to.equal(undefined);
+    });
+
+    it("records an image by its caption and a flag, never the media", async () => {
+      const p = setup(applicantRoute);
+
+      await handleWhatsAppMessage(imageWebhook());
+
+      expect(p.turns[0]).to.include({
+        content: "mi negocio",
+        hasImage: true,
+        applicationId: "app-1"
+      });
+    });
+
+    it("gives the agent the earlier conversation, without the current message", async () => {
+      const p = setup({ type: "guest", phone: PHONE });
+
+      await handleWhatsAppMessage(textWebhook("hola"));
+      await handleWhatsAppMessage(textWebhook("¿y los requisitos?"));
+
+      expect(p.invokeLLM.firstCall.args[1]).to.deep.equal([]);
+      expect(p.invokeLLM.secondCall.args[1]).to.deep.equal([
+        { role: "user", content: "hola" },
+        { role: "assistant", content: "respuesta" }
+      ]);
+      expect(p.invokeLLM.secondCall.args[2]).to.equal("¿y los requisitos?");
+    });
+
+    it("remembers a conversation from before a restart (history comes from storage)", async () => {
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "me llamo Ana", profile: "GUEST" },
+        { phone: PHONE, role: "AGENT", content: "¡Hola Ana!", profile: "GUEST" }
+      ]);
+      const p = setup({ type: "guest", phone: PHONE }, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("¿recuerdas mi nombre?"));
+
+      expect(p.invokeLLM.firstCall.args[1]).to.deep.equal([
+        { role: "user", content: "me llamo Ana" },
+        { role: "assistant", content: "¡Hola Ana!" }
+      ]);
+    });
+
+    it("puts earlier turns in the hand-off note", async () => {
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "hola", profile: "CUSTOMER" },
+        { phone: PHONE, role: "AGENT", content: "¿en qué te ayudo?", profile: "CUSTOMER" }
+      ]);
+      const p = setup(customerRoute, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("Quiero hablar con una persona"));
+
+      expect(p.openHandoff.firstCall.args[0].recentMessages).to.deep.equal([
+        { role: "user", content: "hola" },
+        { role: "assistant", content: "¿en qué te ayudo?" },
+        { role: "user", content: "Quiero hablar con una persona" }
+      ]);
+    });
+
+    it("tags José's turns with the application and reads José's own history", async () => {
+      const p = setup(prospectRoute, {
+        invokeLLM: sinon.stub().resolves({
+          text: "Anotado",
+          toolsExecuted: [{ name: "saveAnswer", args: { field: "monthlySales", value: 50000 } }]
+        })
+      });
+
+      await handleWhatsAppMessage(textWebhook("vendo 50 mil"));
+
+      expect(p.turns[1]).to.include({
+        role: "AGENT",
+        profile: "PROSPECT",
+        applicationId: "app-1"
+      });
+      expect(p.getConversationHistory.firstCall.args[0]).to.include({
+        scope: "prospect",
+        applicationId: "app-1"
+      });
+    });
+
+    it("still replies when the transcript write fails", async () => {
+      const p = setup(customerRoute, {
+        recordConversationTurn: sinon.stub().rejects(new Error("disk full"))
+      });
+
+      await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
+
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta");
+    });
+
+    it("records a failed send, without a wamid", async () => {
+      const p = setup(customerRoute, {
+        sendWhatsAppMessage: sinon.stub().rejects(new Error("meta down"))
+      });
+
+      await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
+
+      const agentTurn = p.turns.find((t) => t.role === "AGENT");
+      expect(agentTurn).to.include({ content: "respuesta", waMessageId: undefined });
+    });
+
+    it("records the voice-note notice as a SYSTEM turn", async () => {
+      const p = setup(customerRoute);
+
+      await handleWhatsAppMessage(voiceWebhook());
+
+      expect(p.turns.map((t) => [t.role, t.content])).to.deep.equal([
+        ["INBOUND", "[Nota de voz]"],
+        ["SYSTEM", "No puedo escuchar notas de voz. Por favor, escríbeme un mensaje de texto."]
+      ]);
+    });
+
+    it("leaves staff conversations out of the CX transcript", async () => {
+      const p = setup({ type: "user", userId: "u-1", name: "Ana", role: "ADMIN", phone: PHONE });
+
+      await handleWhatsAppMessage(textWebhook("hola"));
+
+      expect(p.turns).to.deep.equal([]);
     });
   });
 });
