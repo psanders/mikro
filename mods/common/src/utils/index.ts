@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 export { withErrorHandlingAndValidation } from "./withErrorHandlingAndValidation.js";
-export { validatePhone } from "./validatePhone.js";
+export { validatePhone, e164OrRaw } from "./validatePhone.js";
 export { isBusinessScopedUserId } from "./whatsappUserId.js";
 export {
   getCycleMetrics,

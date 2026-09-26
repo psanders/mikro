@@ -28,7 +28,7 @@ export {
 } from "./customers/index.js";
 
 // Chat operations
-export { createGetChatHistory, createAddMessageToChatHistory } from "./chat/index.js";
+export { createAddMessageToChatHistory } from "./chat/index.js";
 
 // Loan operations
 export {

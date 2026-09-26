@@ -25,7 +25,12 @@ describe("createReopenApplication", () => {
     });
 
     expect(await reopen("app-1")).to.be.true;
-    expect(update.calledOnceWith({ where: { id: "app-1" }, data: { status: "DRAFT" } })).to.be.true;
+    expect(update.calledOnce).to.be.true;
+    const { where, data } = update.firstCall.args[0];
+    expect(where).to.deep.equal({ id: "app-1" });
+    expect(data.status).to.equal("DRAFT");
+    // Marks where José's intake memory restarts (#299).
+    expect(data.reopenedAt).to.be.instanceOf(Date);
     expect(recordActivity.calledOnceWith("app-1")).to.be.true;
   });
 

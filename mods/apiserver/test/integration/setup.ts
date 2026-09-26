@@ -292,6 +292,7 @@ CREATE TABLE "loan_applications" (
     "customer_id" TEXT,
     "loan_id" INTEGER,
     "submitted_at" DATETIME,
+    "reopened_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL
 );
@@ -358,6 +359,28 @@ CREATE INDEX "conversation_handoffs_phone_closed_at_idx" ON "conversation_handof
 CREATE INDEX "conversation_handoffs_whatsapp_user_id_closed_at_idx" ON "conversation_handoffs"("whatsapp_user_id", "closed_at");
 CREATE INDEX "customers_whatsapp_user_id_idx" ON "customers"("whatsapp_user_id");
 CREATE INDEX "loan_applications_whatsapp_user_id_idx" ON "loan_applications"("whatsapp_user_id");
+
+-- Conversation turns (persisted WhatsApp CX transcripts)
+CREATE TABLE "conversation_turns" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "phone" TEXT NOT NULL,
+    "role" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "profile" TEXT,
+    "agent_name" TEXT,
+    "agent_version" TEXT,
+    "tool_calls" TEXT,
+    "has_image" BOOLEAN NOT NULL DEFAULT false,
+    "application_id" TEXT,
+    "customer_id" TEXT,
+    "wa_message_id" TEXT,
+    "failed" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX "conversation_turns_phone_created_at_idx" ON "conversation_turns"("phone", "created_at");
+CREATE INDEX "conversation_turns_application_id_idx" ON "conversation_turns"("application_id");
+CREATE INDEX "conversation_turns_customer_id_idx" ON "conversation_turns"("customer_id");
+CREATE INDEX "conversation_turns_created_at_idx" ON "conversation_turns"("created_at");
 
 -- Business events table (founder feed, append-only)
 CREATE TABLE "business_events" (

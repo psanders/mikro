@@ -58,15 +58,12 @@ export {
   type CustomerLookupResult
 } from "./router/index.js";
 
-// Conversations
+// Conversations (persisted CX transcripts)
 export {
-  getGuestConversation,
-  addGuestMessage,
-  clearGuestConversation,
-  hasGuestConversation,
-  getActiveGuestPhones,
-  getActiveGuestCount,
-  migrateGuestToDatabase
+  agentVersionOf,
+  type ConversationTurnRole,
+  type ConversationTurnRecord,
+  type ConversationHistoryQuery
 } from "./conversations/index.js";
 
 // Sessions

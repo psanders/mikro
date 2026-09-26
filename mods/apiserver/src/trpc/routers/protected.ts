@@ -17,8 +17,10 @@ import {
   updateUserSchema,
   getUserSchema,
   listUsersSchema,
-  // Chat schemas
-  getChatHistorySchema,
+  // Conversation transcript schemas (WhatsApp CX)
+  getApplicationConversationSchema,
+  listConversationTurnsSchema,
+  deleteConversationSchema,
   // Loan schemas
   createLoanSchema,
   calculateLoanSchema,
@@ -115,8 +117,14 @@ import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
 import { createGetUser } from "../../api/users/createGetUser.js";
 import { createListUsers } from "../../api/users/createListUsers.js";
-// Chat API functions
-import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
+// Conversation transcript API functions (WhatsApp CX)
+import {
+  createGetApplicationConversation,
+  createGetApplicationChatwootUrl,
+  createListConversationTurns,
+  createDeleteConversation
+} from "../../api/conversations/index.js";
+import { createChatwootClient } from "../../api/chatwoot/index.js";
 // Dashboard API functions
 import { createGetCollectorDashboard } from "../../api/dashboard/createGetCollectorDashboard.js";
 // Sync API functions
@@ -479,15 +487,46 @@ export const protectedRouter = router({
     return fn(input);
   }),
 
-  // ==================== Chat procedures ====================
+  // ==================== Conversation transcripts (WhatsApp CX, #299) ====================
 
   /**
-   * Get chat history for a customer or user.
+   * The applicant's WhatsApp conversation for the application panel, straight
+   * from the stored transcript. Same access as getApplication.
    */
-  getChatHistory: protectedProcedure.input(getChatHistorySchema).query(async ({ ctx, input }) => {
-    const fn = createGetChatHistory(ctx.db);
-    return fn(input);
-  }),
+  getApplicationConversation: reviewerProcedure
+    .input(getApplicationConversationSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetApplicationConversation(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /**
+   * Link to the applicant's Chatwoot contact, kept out of
+   * getApplicationConversation so the panel never waits on Chatwoot. Same
+   * access; null when Chatwoot is unconfigured, slow or has no such contact.
+   */
+  getApplicationChatwootUrl: reviewerProcedure
+    .input(getApplicationConversationSchema)
+    .query(async ({ ctx, input }) => {
+      const chatwoot = createChatwootClient(getConfig().chatwoot);
+      return createGetApplicationChatwootUrl(
+        ctx.db as unknown as PrismaClient,
+        chatwoot.findContactUrl
+      )(input);
+    }),
+
+  /** Transcript turns matching filters, oldest first — the ctl eval export. ADMIN. */
+  listConversationTurns: adminProcedure
+    .input(listConversationTurnsSchema)
+    .query(async ({ ctx, input }) => {
+      return createListConversationTurns(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** Delete a phone's whole transcript (a person asked for their data to be removed). ADMIN. */
+  deleteConversation: adminProcedure
+    .input(deleteConversationSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createDeleteConversation(ctx.db as unknown as PrismaClient)(input);
+    }),
 
   // ==================== Loan procedures ====================
 

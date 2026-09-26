@@ -23,7 +23,10 @@ export function createReopenApplication(
       });
       return false;
     }
-    await client.loanApplication.update({ where: { id: app.id }, data: { status: "DRAFT" } });
+    await client.loanApplication.update({
+      where: { id: app.id },
+      data: { status: "DRAFT", reopenedAt: new Date() }
+    });
     await recordProspectActivity(app.id);
     logger.info("abandoned draft reopened on prospect return", { applicationId: app.id });
     return true;

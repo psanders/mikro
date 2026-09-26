@@ -15,7 +15,7 @@ import {
   buildSenderIdentity
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
-import { clearGuestConversation } from "../../src/conversations/index.js";
+import { createFakeTranscript } from "./fakeTranscript.js";
 import { createMessageRouter } from "../../src/router/createMessageRouter.js";
 import { addressFields, sendMessage } from "../../src/whatsapp/client/sendMessage.js";
 
@@ -48,7 +48,10 @@ const usernameText = (body: string) =>
   ]);
 
 function setup(route: unknown, over: Record<string, unknown> = {}) {
+  const transcript = createFakeTranscript();
   const processor = {
+    recordConversationTurn: transcript.recordConversationTurn,
+    getConversationHistory: transcript.getConversationHistory,
     routeMessage: sinon.stub().resolves(route),
     invokeLLM: sinon.stub().resolves({ text: "respuesta", toolsExecuted: [] }),
     sendWhatsAppMessage: sinon.stub().resolves({ messages: [{ id: "out-1" }] }),
@@ -79,7 +82,6 @@ describe("WhatsApp username senders", () => {
   beforeEach(() => {
     resetProcessedMessageIdsForTesting();
     clearSessionsForTesting();
-    clearGuestConversation(BSUID);
   });
   afterEach(() => sinon.restore());
 

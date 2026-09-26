@@ -94,6 +94,7 @@ export interface LoanApplication {
   customerId: string | null;
   loanId: number | null;
   submittedAt: Date | null;
+  reopenedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
