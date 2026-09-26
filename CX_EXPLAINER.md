@@ -200,12 +200,18 @@ Things to keep in mind:
 | You want to know…                  | Look at                                                                                                                                                            |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Someone needs a person             | Founder feed → **Alertas** or **Mensajes** filter, headset card; then Chatwoot                                                                                     |
-| What an agent said                 | Chatwoot (every bot reply is echoed there)                                                                                                                         |
+| What an agent said                 | Ops app → application → **Conversación · WhatsApp**; `mikro conversations:export`; Chatwoot (also has staff replies)                                               |
 | Drafts being abandoned or reopened | apiserver logs: `application auto-abandoned after stale window`, `abandoned draft reopened on prospect return`                                                     |
 | Photos applicants sent             | Ops app → application → evidence (uploader `whatsapp:<phone>`)                                                                                                     |
 | Why someone got no reply           | logs: `no agent assigned to profile, ignoring` (agent off), `human hand-off open, agent stays silent`, `whatsapp agent replies disabled, ignoring inbound message` |
 
 Database checks (SQLite):
+
+```sql
+-- One phone's stored conversation (see section 5b)
+SELECT created_at, role, profile, agent_name, content
+FROM conversation_turns WHERE phone = '+18095551234' ORDER BY id;
+```
 
 ```sql
 -- Open hand-offs right now
@@ -219,6 +225,24 @@ FROM follow_up_jobs j JOIN loan_applications a ON a.id = j.application_id
 WHERE j.type = 'ABANDON' AND j.status = 'PENDING'
 ORDER BY j.scheduled_for;
 ```
+
+---
+
+## 5b. Stored conversations (monitoring, evals, compliance)
+
+Since issue #299 every CX message is stored in the `conversation_turns` table, not only in Chatwoot. That covers guests, prospects, applicants and customers. It includes messages the agents stayed silent on (open hand-off, agent off, kill switch). Staff chats are not in this table; they stay in `messages` as before.
+
+- **One row per message.** `INBOUND` is the person. `AGENT` is an agent's reply, with the agent's name, a version hash and the tools it called (name + arguments, never the results). `SYSTEM` is a fixed reply the app sent (hand-off ack, voice-note notice, error message, intake confirmation).
+- **Version hash** (`agent_version`): 12 characters derived from the agent's prompt, model, temperature, reply mode and tools. Editing an agent in `agents.yaml` changes it. Comparing conversations across versions is how you spot drift.
+- **Images and voice notes** are not stored. An image is recorded as its caption (or `[Imagen]`) with `has_image = true`. A voice note is recorded as its transcription, or as `[Nota de voz]` when it could not be transcribed.
+- **Agent memory reads from this table**, so a deploy no longer makes the bot forget. The guest/applicant/customer agents remember the last 40 messages from the last 30 days. José remembers his whole intake for that application, and his 7-turn cap keeps counting across restarts.
+- **Where to see it:** Ops app → open an application → **Conversación · WhatsApp**. It shows everything stored for the applicant's phone, including chats from before they applied, and marks where a hand-off began. Replies your team types in Chatwoot are **not** stored; use the **Abrir en Chatwoot →** link for those. The link only appears when `chatwoot` is configured.
+- **Export for evals** (ADMIN):
+  - `mikro conversations:export --since 2026-09-01 > turns.jsonl` writes one JSON turn per line.
+  - `--format conversations` writes one JSON conversation per phone per line.
+  - `--format text` is for reading by eye.
+  - Filters: `--phone`, `--application`, `--customer`, `--profile`, `--agent`, `--agent-version`, `--until`, `--limit`.
+- **Retention:** kept until someone asks for deletion. There is no automatic expiry. To delete, run `mikro conversations:delete +18095551234` (ADMIN, asks for confirmation). It removes every stored message for that phone. It does not touch Chatwoot, hand-off records or applications; delete those separately if the request covers them.
 
 ---
 

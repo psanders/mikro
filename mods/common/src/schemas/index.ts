@@ -194,6 +194,21 @@ export {
 } from "./message.js";
 
 export {
+  conversationTurnRoleEnum,
+  conversationToolCallSchema,
+  recordConversationTurnSchema,
+  listConversationTurnsSchema,
+  getApplicationConversationSchema,
+  deleteConversationSchema,
+  type ConversationTurnRole,
+  type ConversationToolCall,
+  type RecordConversationTurnInput,
+  type ListConversationTurnsInput,
+  type GetApplicationConversationInput,
+  type DeleteConversationInput
+} from "./conversation.js";
+
+export {
   whatsappTextSchema,
   whatsappImageSchema,
   whatsappAudioSchema,

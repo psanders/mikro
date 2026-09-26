@@ -63,6 +63,8 @@ describe("handleWhatsAppMessage", () => {
       allowedTools: []
     }),
     submitApplicationFromFlow: sinon.stub().resolves(),
+    recordConversationTurn: sinon.stub().resolves({ id: "turn-1" }),
+    getConversationHistory: sinon.stub().resolves([]),
     updateOutboundStatus: sinon.stub().resolves()
   };
 
@@ -88,6 +90,8 @@ describe("handleWhatsAppMessage", () => {
       allowedTools: []
     });
     mockMessageProcessor.submitApplicationFromFlow = sinon.stub().resolves();
+    mockMessageProcessor.recordConversationTurn = sinon.stub().resolves({ id: "turn-1" });
+    mockMessageProcessor.getConversationHistory = sinon.stub().resolves([]);
     mockMessageProcessor.updateOutboundStatus = sinon.stub().resolves();
 
     resetProcessedMessageIdsForTesting();
@@ -721,10 +725,30 @@ describe("handleWhatsAppMessage", () => {
         expect(mockMessageProcessor.invokeLLM.called, "no LLM").to.be.false;
       });
 
-      it("does not even route the message (no wasted lookups)", async () => {
+      // Issue #299: a quiet number still keeps the CX transcript, so it routes
+      // (to tell staff from CX) but never replies.
+      it("still records a CX message in the transcript, without replying", async () => {
+        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+          type: "guest" as const,
+          phone: silentPhone
+        });
+
         await handleWhatsAppMessage(textWebhook("msg-off2"));
 
-        expect(mockMessageProcessor.routeMessage.called).to.be.false;
+        expect(mockMessageProcessor.recordConversationTurn.calledOnce).to.be.true;
+        expect(mockMessageProcessor.recordConversationTurn.firstCall.args[0]).to.include({
+          phone: silentPhone,
+          role: "INBOUND",
+          profile: "GUEST"
+        });
+        expect(mockMessageProcessor.sendWhatsAppMessage.called).to.be.false;
+        expect(mockMessageProcessor.invokeLLM.called).to.be.false;
+      });
+
+      it("records nothing for a staff member", async () => {
+        await handleWhatsAppMessage(textWebhook("msg-off2b"));
+
+        expect(mockMessageProcessor.recordConversationTurn.called).to.be.false;
       });
 
       it("still restarts a prospect's abandon clock, without replying", async () => {

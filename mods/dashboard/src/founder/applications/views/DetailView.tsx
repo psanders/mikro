@@ -4,19 +4,10 @@
  * "Ver solicitud completa" (Pencil UbCzS): everything about one application,
  * read-only, with the viewer's key action for its current step in the header
  * row. Sections: data, documents, activity (this application's events), and
- * conversation (a later phase).
+ * conversation (the persisted WhatsApp transcript, #299).
  */
 import { useState } from "react";
-import {
-  FileText,
-  Images,
-  Landmark,
-  MessageCircle,
-  Pencil,
-  Sparkles,
-  UserCheck,
-  UserPlus
-} from "lucide-react";
+import { FileText, Images, Landmark, Pencil, Sparkles, UserCheck, UserPlus } from "lucide-react";
 import { trpc } from "../../../lib/trpc";
 import { useToast } from "../../../components/ui/ToastProvider";
 import { checkAction, forTransition, formatDate, friendlyError } from "../../../lib/applications";
@@ -25,6 +16,7 @@ import { APPLICATION_FIELD_SECTIONS, fieldDisplay } from "../fields";
 import { useApplicationInvalidation } from "../helpers";
 import { Btn, SectionLabel } from "../ui";
 import { DocThumb } from "./DocThumb";
+import { ConversationThread } from "../ConversationThread";
 import type { ViewProps } from "./types";
 
 const ANCHORS = [
@@ -47,6 +39,7 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
     onError: (e) => toast.error(friendlyError(e, "No se pudo tomar la solicitud."))
   });
   const activity = trpc.listFeedEvents.useQuery({ applicationId: app.id, limit: 50 });
+  const conversation = trpc.getApplicationConversation.useQuery({ applicationId: app.id });
   const record = app as unknown as Record<string, unknown>;
 
   const take = checkAction(rules, "assign", viewer);
@@ -214,12 +207,15 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
           </ol>
         </section>
 
-        <section id="app-conversacion" className="flex flex-col gap-3">
-          <SectionLabel>Conversación · WhatsApp</SectionLabel>
-          <div className="flex items-center gap-2 rounded-[10px] bg-[#F4F7FB] p-3 text-[12.5px] font-medium text-[#697A93]">
-            <MessageCircle size={14} />
-            El historial de WhatsApp llegará en una próxima fase; por ahora está en Chatwoot.
-          </div>
+        <section id="app-conversacion">
+          <ConversationThread
+            turns={conversation.data?.turns ?? []}
+            handoffs={conversation.data?.handoffs ?? []}
+            personName={app.firstName?.trim() || "Solicitante"}
+            chatwootUrl={conversation.data?.chatwootUrl}
+            loading={conversation.isPending}
+            error={conversation.isError}
+          />
         </section>
       </div>
     </SidePanel>

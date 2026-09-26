@@ -3,6 +3,7 @@
  */
 import {
   withErrorHandlingAndValidation,
+  validatePhone,
   whatsappWebhookSchema,
   type WhatsAppWebhookBody,
   type WhatsAppMessage,
@@ -11,19 +12,24 @@ import {
   type SendWhatsAppTemplateInput,
   type WhatsAppSendResponse
 } from "@mikro/common";
-import type { Agent, Message } from "../llm/types.js";
+import type { Agent, Message, ToolExecuted } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
 import { getMessageMaxAgeSeconds, getWhatsAppAgentRepliesEnabled } from "../config.js";
 import { logger } from "../logger.js";
 import type { Profile } from "../constants.js";
-import { getGuestConversation, addGuestMessage } from "../conversations/index.js";
+import {
+  agentVersionOf,
+  textOf,
+  type ConversationTurnRecord,
+  type ConversationHistoryQuery
+} from "../conversations/index.js";
 import {
   mapFlowAnswersToPayload,
   INTAKE_RECEIVED_MESSAGE
 } from "./loanApplicationFlowSubmission.js";
-import { handleProspectMessage, isDecline, getProspectHistory } from "./handleProspectMessage.js";
+import { handleProspectMessage, isDecline } from "./handleProspectMessage.js";
 
 /**
  * Result of handling a WhatsApp webhook.
@@ -64,6 +70,14 @@ export interface MessageProcessorDependencies {
     content: string;
     tools?: string[];
   }) => Promise<void>;
+  /**
+   * Persist one CX transcript turn (issue #299) and return its id. Every
+   * inbound CX message and every reply to it goes through here, whether or not
+   * an agent answers. Failures are logged by the caller, never surfaced.
+   */
+  recordConversationTurn: (turn: ConversationTurnRecord) => Promise<{ id: string }>;
+  /** A CX agent's memory for a phone, oldest first, read from the transcript. */
+  getConversationHistory: (query: ConversationHistoryQuery) => Promise<Message[]>;
   /** Resolve the agent assigned to a profile (undefined when none is assigned). */
   getAgentForProfile: (profile: Profile) => Agent | undefined;
   /** Send an approved WhatsApp template message (used by the collector promo flow). */
@@ -199,6 +213,8 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     !processor.downloadMedia ||
     !processor.getChatHistoryForUser ||
     !processor.addMessageForUser ||
+    !processor.recordConversationTurn ||
+    !processor.getConversationHistory ||
     !processor.getAgentForProfile ||
     !processor.sendTemplateMessage
   ) {
@@ -209,6 +225,8 @@ export function setMessageProcessor(processor: MessageProcessorDependencies): vo
     if (!processor.downloadMedia) missing.push("downloadMedia");
     if (!processor.getChatHistoryForUser) missing.push("getChatHistoryForUser");
     if (!processor.addMessageForUser) missing.push("addMessageForUser");
+    if (!processor.recordConversationTurn) missing.push("recordConversationTurn");
+    if (!processor.getConversationHistory) missing.push("getConversationHistory");
     if (!processor.getAgentForProfile) missing.push("getAgentForProfile");
     if (!processor.sendTemplateMessage) missing.push("sendTemplateMessage");
     logger.error("setMessageProcessor called with missing dependencies", { missing });
@@ -319,7 +337,7 @@ export const handleWhatsAppMessage = (() => {
  * Process a single WhatsApp message.
  *
  * 1. Routes the message based on phone number
- * 2. Gets chat history (in-memory for guests, DB for users)
+ * 2. Records CX messages to the transcript and reads history back from it
  * 3. Invokes the appropriate agent's LLM
  * 4. Saves messages to history
  * 5. Sends response via WhatsApp
@@ -405,10 +423,21 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
   // only the confirmation is withheld. Going quiet must never cost an
   // application.
   if (type === "interactive" && message.interactive?.nfm_reply) {
+    const transcriptPhone = e164OrRaw(phone);
+    await recordTurn(messageProcessor, {
+      phone: transcriptPhone,
+      role: "INBOUND",
+      content: INTAKE_FLOW_INBOUND,
+      waMessageId: id
+    });
     await processIntakeFlowSubmission(
       message,
       phone,
-      repliesEnabled ? sendWhatsAppMessage : silentSend,
+      repliesEnabled
+        ? recordingSender(messageProcessor, sendWhatsAppMessage, transcriptPhone, {
+            role: "SYSTEM"
+          })
+        : silentSend,
       submitApplicationFromFlow
     );
     return;
@@ -422,11 +451,9 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       messageId: id,
       type
     });
-    // A prospect writing in is still activity: it keeps their draft from being
-    // abandoned even while the number is quiet. Only route when that matters.
-    if (messageProcessor.recordProspectActivity) {
-      await recordActivityIfProspect(phone, messageProcessor);
-    }
+    // Still part of the transcript, and a prospect writing in is still
+    // activity: it keeps their draft from being abandoned while the number is quiet.
+    await noteQuietInbound(message, messageProcessor);
     return;
   }
 
@@ -473,6 +500,10 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
   }
 
+  // Set once routing says this is a CX conversation, so the error reply below
+  // lands in its transcript too.
+  let cxRoute: CxRoute | null = null;
+
   try {
     let route: RouteResult;
 
@@ -511,6 +542,18 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       return;
     }
 
+    // Every CX message is transcribed before anything decides whether to
+    // answer it: silent turns (hand-off open, no agent) matter to an audit too.
+    let inboundId: string | undefined;
+    if (route.type !== "user") {
+      cxRoute = route;
+      inboundId = await recordTurn(messageProcessor, {
+        ...inboundTurn(route, inboundContent(message, userMessage)),
+        hasImage: !!image?.id,
+        waMessageId: id
+      });
+    }
+
     if (voiceNotice !== null) {
       const mayReply =
         route.type === "user"
@@ -518,7 +561,15 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
           : await passesCxGate(route, messageProcessor);
       if (mayReply) {
         try {
-          await sendWhatsAppMessage({ phone, message: voiceNotice });
+          const send =
+            route.type === "user"
+              ? sendWhatsAppMessage
+              : recordingSender(messageProcessor, sendWhatsAppMessage, route.phone, {
+                  ...routeIds(route),
+                  role: "SYSTEM",
+                  profile: profileFor(route)
+                });
+          await send({ phone, message: voiceNotice });
         } catch (error) {
           logger.error("failed to send voice note notice", {
             phone,
@@ -530,7 +581,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     if (route.type !== "user") {
-      await handleCxMessage(route, userMessage, imageUrl, messageProcessor);
+      await handleCxMessage(route, userMessage, imageUrl, messageProcessor, inboundId);
       return;
     }
 
@@ -598,7 +649,14 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
     // Try to send an error message to the user
     try {
-      await messageProcessor.sendWhatsAppMessage({
+      const send = cxRoute
+        ? recordingSender(messageProcessor, messageProcessor.sendWhatsAppMessage, cxRoute.phone, {
+            ...routeIds(cxRoute),
+            role: "SYSTEM",
+            profile: profileFor(cxRoute)
+          })
+        : messageProcessor.sendWhatsAppMessage;
+      await send({
         phone,
         message:
           "Lo siento, hubo un error procesando tu mensaje. Por favor, intenta de nuevo más tarde."
@@ -652,22 +710,116 @@ function profileFor(route: CxRoute): Profile {
 /** How many turns of history the Chatwoot note shows for a deterministic hand-off. */
 const NOTE_TURNS = 6;
 
+/** The part of the transcript the agent serving this route remembers. */
+function historyQuery(route: CxRoute, excludeId?: string): ConversationHistoryQuery {
+  return route.type === "prospect" || route.type === "reopen"
+    ? { phone: route.phone, scope: "prospect", applicationId: route.applicationId, excludeId }
+    : { phone: route.phone, scope: "cx", excludeId };
+}
+
 /** The last turns of this conversation plus the message just received. */
 function recentTurns(
-  route: CxRoute,
+  history: Message[],
   userMessage: string
 ): Array<{ role: "user" | "assistant"; content: string }> {
-  const history =
-    route.type === "prospect" || route.type === "reopen"
-      ? getProspectHistory(route.phone)
-      : getGuestConversation(route.phone);
   const turns = history
     .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: typeof m.content === "string" ? m.content : ""
-    }));
+    .map((m) => ({ role: m.role as "user" | "assistant", content: textOf(m) }));
   return [...turns, { role: "user" as const, content: userMessage }].slice(-NOTE_TURNS);
+}
+
+/** The INBOUND turn for a completed intake Flow (the answers live on the application). */
+const INTAKE_FLOW_INBOUND = "[Formulario de solicitud enviado por WhatsApp]";
+
+/** What an inbound message says in the transcript (never the media itself). */
+function inboundContent(message: WhatsAppMessage, userMessage: string): string {
+  if (userMessage) return userMessage;
+  if (message.type === "image") return "[Imagen]";
+  if (message.type === "audio") return "[Nota de voz]";
+  return `[${message.type}]`;
+}
+
+/** Normalized phone for the transcript; the raw sender id when it does not parse. */
+function e164OrRaw(phone: string): string {
+  try {
+    return validatePhone(phone);
+  } catch {
+    return phone;
+  }
+}
+
+/** The application/customer a route knows about, for tagging its turns. */
+function routeIds(route: CxRoute): { applicationId?: string; customerId?: string } {
+  switch (route.type) {
+    case "customer":
+      return {
+        customerId: route.customerId,
+        ...(route.applicationId ? { applicationId: route.applicationId } : {})
+      };
+    case "applicant":
+    case "prospect":
+    case "reopen":
+      return { applicationId: route.applicationId };
+    case "guest":
+      return {};
+  }
+}
+
+function inboundTurn(route: CxRoute, content: string): ConversationTurnRecord {
+  return {
+    ...routeIds(route),
+    phone: route.phone,
+    role: "INBOUND",
+    content,
+    profile: profileFor(route)
+  };
+}
+
+/**
+ * Persist a transcript turn. Never throws: a transcript write must not cost the
+ * person their reply. Returns the turn id, or undefined when the write failed.
+ */
+async function recordTurn(
+  processor: MessageProcessorDependencies,
+  turn: ConversationTurnRecord
+): Promise<string | undefined> {
+  try {
+    return (await processor.recordConversationTurn(turn)).id;
+  } catch (error) {
+    logger.error("failed to record conversation turn", {
+      phone: turn.phone,
+      role: turn.role,
+      error: (error as Error).message
+    });
+    return undefined;
+  }
+}
+
+/**
+ * Wrap a sender so every message it sends is also recorded as a turn, with the
+ * wamid Meta returned. A failed send is still recorded (without a wamid): the
+ * reply was produced, and an audit should see it.
+ */
+function recordingSender(
+  processor: MessageProcessorDependencies,
+  send: MessageProcessorDependencies["sendWhatsAppMessage"],
+  transcriptPhone: string,
+  turn: Omit<ConversationTurnRecord, "phone" | "content" | "waMessageId">
+): MessageProcessorDependencies["sendWhatsAppMessage"] {
+  return async (params) => {
+    let response: Awaited<ReturnType<typeof send>> | undefined;
+    try {
+      response = await send(params);
+      return response;
+    } finally {
+      await recordTurn(processor, {
+        ...turn,
+        phone: transcriptPhone,
+        content: params.message ?? params.caption ?? "",
+        waMessageId: response?.messages?.[0]?.id
+      });
+    }
+  };
 }
 
 /** Context every CX tool reads identity from (never from model arguments). */
@@ -687,16 +839,27 @@ function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
   };
 }
 
-async function recordActivityIfProspect(
-  phone: string,
+/**
+ * An inbound message while replies are disabled: route it only to keep the
+ * transcript (CX routes) and the prospect's abandon clock. Never replies.
+ */
+async function noteQuietInbound(
+  message: WhatsAppMessage,
   processor: MessageProcessorDependencies
 ): Promise<void> {
   try {
-    const route = await processor.routeMessage(phone);
+    const route = await processor.routeMessage(message.from);
+    if (route.type === "user" || route.type === "ignored") return;
+    const caption = message.text?.body ?? message.image?.caption ?? "";
+    await recordTurn(processor, {
+      ...inboundTurn(route, inboundContent(message, caption)),
+      hasImage: !!message.image?.id,
+      waMessageId: message.id
+    });
     if (route.type === "prospect") await processor.recordProspectActivity?.(route.applicationId);
   } catch (error) {
-    logger.error("failed to record prospect activity", {
-      phone,
+    logger.error("failed to note inbound message while replies are disabled", {
+      phone: message.from,
       error: (error as Error).message
     });
   }
@@ -740,23 +903,39 @@ async function handleCxMessage(
   route: CxRoute,
   userMessage: string,
   imageUrl: string | null,
-  processor: MessageProcessorDependencies
+  processor: MessageProcessorDependencies,
+  inboundId?: string
 ): Promise<void> {
   const { phone } = route;
-  const { invokeLLM, sendWhatsAppMessage, getAgentForProfile } = processor;
+  const { invokeLLM, getAgentForProfile, getConversationHistory } = processor;
   const profile = profileFor(route);
 
   if (!(await passesCxGate(route, processor))) return;
   const agent = getAgentForProfile(profile)!;
+  const agentTurn = {
+    ...routeIds(route),
+    role: "AGENT" as const,
+    profile,
+    agentName: agent.name,
+    agentVersion: agentVersionOf(agent)
+  };
+  const systemReply = recordingSender(processor, processor.sendWhatsAppMessage, phone, {
+    ...routeIds(route),
+    role: "SYSTEM",
+    profile
+  });
+  // The turn just recorded is the current message, which the agent gets
+  // separately, so it is left out of its memory.
+  const history = await getConversationHistory(historyQuery(route, inboundId));
 
   if (route.type === "guest" && route.previouslyRejected && processor.openHandoff) {
     await processor.openHandoff({
       phone,
       profile,
       reason: "Solicitud anterior no aprobada",
-      recentMessages: recentTurns(route, userMessage)
+      recentMessages: recentTurns(history, userMessage)
     });
-    await sendWhatsAppMessage({ phone, message: REJECTED_HANDOFF_ACK });
+    await systemReply({ phone, message: REJECTED_HANDOFF_ACK });
     return;
   }
 
@@ -771,9 +950,9 @@ async function handleCxMessage(
       applicationId: "applicationId" in ctx ? ctx.applicationId : undefined,
       customerId: "customerId" in ctx ? ctx.customerId : undefined,
       displayName: "name" in ctx ? ctx.name : undefined,
-      recentMessages: recentTurns(route, userMessage)
+      recentMessages: recentTurns(history, userMessage)
     });
-    await sendWhatsAppMessage({ phone, message: HANDOFF_ACK });
+    await systemReply({ phone, message: HANDOFF_ACK });
     return;
   }
 
@@ -788,14 +967,14 @@ async function handleCxMessage(
     const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
       invokeLLM,
       joseAgent: agent,
-      applicationId: route.applicationId
+      applicationId: route.applicationId,
+      history
     });
-    if (result.text) await sendWhatsAppMessage({ phone, message: result.text });
+    await replyAsAgent(processor, phone, result.text, result.toolsExecuted, agentTurn);
     return;
   }
 
-  // GUEST, APPLICANT, CUSTOMER: phone-keyed in-memory conversation.
-  const history = getGuestConversation(phone);
+  // GUEST, APPLICANT, CUSTOMER: one phone-keyed conversation.
   const newSession = isNewSession(phone);
   const result = await invokeLLM(
     agent,
@@ -808,13 +987,33 @@ async function handleCxMessage(
   touchSession(phone);
   const text = typeof result === "string" ? result : result.text;
   const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
-  addGuestMessage(phone, { role: "user", content: userMessage || "[Imagen]" });
-  addGuestMessage(phone, {
-    role: "assistant",
-    content: text,
-    tools_executed: toolsExecuted.length > 0 ? toolsExecuted : undefined
-  });
-  if (text) await sendWhatsAppMessage({ phone, message: text });
+  await replyAsAgent(processor, phone, text, toolsExecuted, agentTurn);
+}
+
+/**
+ * Send an agent's reply and record it with the tools it ran. A turn with no
+ * text but with tool calls is still recorded (nothing is sent): what the agent
+ * did matters to an eval even when it said nothing.
+ */
+async function replyAsAgent(
+  processor: MessageProcessorDependencies,
+  phone: string,
+  text: string,
+  toolsExecuted: ToolExecuted[],
+  turn: Omit<ConversationTurnRecord, "phone" | "content" | "waMessageId" | "toolCalls">
+): Promise<void> {
+  const withTools = {
+    ...turn,
+    ...(toolsExecuted.length > 0
+      ? { toolCalls: toolsExecuted.map(({ name, args }) => ({ name, args: args ?? {} })) }
+      : {})
+  };
+  if (text) {
+    const send = recordingSender(processor, processor.sendWhatsAppMessage, phone, withTools);
+    await send({ phone, message: text });
+  } else if (toolsExecuted.length > 0) {
+    await recordTurn(processor, { ...withTools, phone, content: "" });
+  }
 }
 
 /**
