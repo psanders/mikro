@@ -103,7 +103,10 @@ describe("createHandleAbandonJob", () => {
 
     await createHandleAbandonJob(client, { getOpenHandoffExpiry })(makeJob());
 
-    expect(getOpenHandoffExpiry.calledOnceWith("+18095550001")).to.be.true;
+    expect(getOpenHandoffExpiry.firstCall.args[0]).to.deep.equal({
+      phone: "+18095550001",
+      whatsappUserId: undefined
+    });
     expect(appUpdate.called).to.be.false;
     expect(jobUpdate.calledOnceWith({ where: { id: "job-2" }, data: { status: "CANCELLED" } })).to
       .be.true;

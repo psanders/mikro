@@ -156,6 +156,8 @@ describe("CX self-service tools", () => {
         applicationId: undefined,
         customerId: "cust-1",
         displayName: "Ana",
+        whatsappUserId: undefined,
+        username: undefined,
         summary: "Pide hablar del pago."
       });
     });

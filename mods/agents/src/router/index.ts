@@ -6,5 +6,7 @@ export type {
   RouteResult,
   RouterDependencies,
   UserLookupResult,
-  CustomerLookupResult
+  CustomerLookupResult,
+  ApplicationLookupResult,
+  SenderIdentity
 } from "./types.js";

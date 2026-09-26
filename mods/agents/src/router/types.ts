@@ -27,8 +27,19 @@ export type RouteResult =
   | { type: "reopen"; applicationId: string; sessionId: string; phone: string }
   /** Application in the review pipeline (RECEIVED → APPROVED). */
   | { type: "applicant"; applicationId: string; sessionId: string; phone: string }
-  /** `previouslyRejected`: their latest application was REJECTED. */
-  | { type: "guest"; phone: string; previouslyRejected?: true }
+  /**
+   * `previouslyRejected`: their latest application was REJECTED less than the
+   * reapply cooldown ago; `reapplyFrom` is when they may apply again.
+   * `unmatchedUsername`: a WhatsApp username sender (no phone) we can't tie
+   * to any customer or application; a person takes these.
+   */
+  | {
+      type: "guest";
+      phone: string;
+      previouslyRejected?: true;
+      reapplyFrom?: Date;
+      unmatchedUsername?: true;
+    }
   | { type: "ignored"; reason: string; phone: string };
 
 /** The latest application for a phone, as the router needs it. */
@@ -37,6 +48,24 @@ export interface ApplicationLookupResult {
   sessionId: string;
   status: ApplicationStatus;
   submittedAt: Date | null;
+  /** When it was approved or rejected; optional for older callers. */
+  decidedAt?: Date | null;
+}
+
+/**
+ * Who sent a message. `address` is where replies go and what conversations are
+ * keyed by: the phone when Meta included it, otherwise the business-scoped
+ * user id (BSUID) of a sender who hides their number behind a WhatsApp
+ * username. In every route, `phone` carries this address.
+ */
+export interface SenderIdentity {
+  address: string;
+  /** E.164 phone, when Meta included it. */
+  phone?: string;
+  /** Business-scoped user id, e.g. "DO.1610031533916997". */
+  bsuid?: string;
+  /** WhatsApp username, when the sender has one. */
+  username?: string;
 }
 
 /**
@@ -76,4 +105,8 @@ export interface RouterDependencies {
   getAgentForProfile: (profile: Profile) => Agent | undefined;
   /** Optional: look up the most recent loan application for a phone (prospect/applicant routing). */
   findApplicationByPhone?: (phone: string) => Promise<ApplicationLookupResult | null>;
+  /** Optional: the customer a WhatsApp BSUID was linked to (username senders). */
+  findCustomerByWhatsAppUserId?: (bsuid: string) => Promise<CustomerLookupResult | null>;
+  /** Optional: the latest application linked to a WhatsApp BSUID (username senders). */
+  findApplicationByWhatsAppUserId?: (bsuid: string) => Promise<ApplicationLookupResult | null>;
 }

@@ -116,6 +116,7 @@ import {
   createApplicationIntakeHandler,
   createFindLatestApplicationByPhone,
   createGetApplicationByPhone,
+  createGetApplicationByWhatsAppUserId,
   createSubmitApplicationFromFlow,
   createRecordOutboundMessage,
   createUpdateOutboundStatus
@@ -131,6 +132,9 @@ import {
   createOpenHandoff,
   createExtendHandoff,
   createGetOpenHandoffExpiry,
+  createLinkWhatsAppIdentity,
+  createRecordSharedWhatsAppPhone,
+  createFindCustomerByWhatsAppUserId,
   createListMyLoans,
   createListMyPayments,
   createSendMyReceipt,
@@ -355,6 +359,13 @@ const notifyChatwootHandoff = createNotifyChatwootHandoff({
 const openHandoff = createOpenHandoff(prisma, notifyChatwootHandoff);
 const extendHandoff = createExtendHandoff(prisma);
 const getOpenHandoffExpiry = createGetOpenHandoffExpiry(prisma);
+// WhatsApp username senders (openspec whatsapp-username-senders): the BSUID is
+// kept on customer / application rows so a sender who hides their phone still
+// matches their records.
+const linkWhatsAppIdentity = createLinkWhatsAppIdentity(prisma);
+const recordSharedWhatsAppPhone = createRecordSharedWhatsAppPhone(prisma);
+const findCustomerByWhatsAppUserId = createFindCustomerByWhatsAppUserId(prisma);
+const findApplicationByWhatsAppUserId = createGetApplicationByWhatsAppUserId(prisma);
 const recordMetaAd = createRecordMetaAd(dbClient);
 // Every intake path that makes a row RECEIVED puts it in the reviewers' queue
 // via this feed event (openspec add-application-review-flow).
@@ -569,7 +580,10 @@ async function initializeMessageProcessor() {
         };
       },
       getAgentForProfile,
-      findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient)
+      findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient),
+      // WhatsApp username senders: matched by the BSUID stored on their rows.
+      findCustomerByWhatsAppUserId,
+      findApplicationByWhatsAppUserId
     });
 
     // mikro/#115: resolve a copilot-supplied accounting account/category
@@ -978,7 +992,15 @@ async function initializeMessageProcessor() {
     // into an existing application for the sender's phone). Website POST is unaffected.
     const submitApplicationFromFlow = createSubmitApplicationFromFlow({
       upsertApplication,
-      findLatestApplicationByPhone
+      findLatestApplicationByPhone,
+      findLatestApplicationByWhatsAppUserId: async (bsuid: string) => {
+        const app = await prisma.loanApplication.findFirst({
+          where: { whatsappUserId: bsuid },
+          orderBy: { createdAt: "desc" },
+          select: { sessionId: true, phone: true }
+        });
+        return app;
+      }
     });
 
     // Mirror every bot reply into Chatwoot (no-op unless `chatwoot` is configured).
@@ -1021,6 +1043,8 @@ async function initializeMessageProcessor() {
       reopenApplication,
       extendHandoff,
       openHandoff,
+      linkWhatsAppIdentity,
+      recordSharedWhatsAppPhone,
       ...(transcribeVoiceNote && { transcribeVoiceNote })
     };
 

@@ -9,6 +9,15 @@ import type {
 import type { WhatsAppApiError } from "./types.js";
 import { GRAPH_API_BASE_URL } from "./constants.js";
 import { logger } from "../../logger.js";
+import { isBusinessScopedUserId } from "@mikro/common";
+
+/**
+ * Who a send goes to. A phone goes in `to`; a BSUID must go in `recipient`
+ * (Meta rejects it in `to`). Every caller keeps passing one address string.
+ */
+export function addressFields(address: string): { to: string } | { recipient: string } {
+  return isBusinessScopedUserId(address) ? { recipient: address } : { to: address };
+}
 
 /**
  * Determine the media type from the input parameters.
@@ -84,7 +93,7 @@ export async function sendMessage(
     const requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "interactive",
       interactive: {
         type: "button",
@@ -110,7 +119,7 @@ export async function sendMessage(
     const requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "interactive",
       interactive: {
         type: "flow",
@@ -159,7 +168,7 @@ export async function sendMessage(
     requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "text",
       text: {
         body: params.message
@@ -171,7 +180,7 @@ export async function sendMessage(
     requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "image",
       image: {
         ...mediaRef,
@@ -184,7 +193,7 @@ export async function sendMessage(
     requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "document",
       document: {
         ...mediaRef,
@@ -198,7 +207,7 @@ export async function sendMessage(
     requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "video",
       video: {
         ...mediaRef,
@@ -211,7 +220,7 @@ export async function sendMessage(
     requestBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: params.phone,
+      ...addressFields(params.phone),
       type: "audio",
       audio: {
         ...mediaRef
@@ -395,7 +404,7 @@ export async function sendTemplateMessage(
   const requestBody = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: params.phone,
+    ...addressFields(params.phone),
     type: "template",
     template: {
       name: params.templateName,

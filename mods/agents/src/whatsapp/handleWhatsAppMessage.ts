@@ -4,6 +4,9 @@
 import {
   withErrorHandlingAndValidation,
   whatsappWebhookSchema,
+  whatsappMessageSchema,
+  validatePhone,
+  type WhatsAppContact,
   type WhatsAppWebhookBody,
   type WhatsAppMessage,
   type WhatsAppStatus,
@@ -13,7 +16,7 @@ import {
 } from "@mikro/common";
 import type { Agent, Message } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
-import type { RouteResult } from "../router/types.js";
+import type { RouteResult, SenderIdentity } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
 import { getMessageMaxAgeSeconds, getWhatsAppAgentRepliesEnabled } from "../config.js";
 import { logger } from "../logger.js";
@@ -38,8 +41,8 @@ export interface HandleWhatsAppMessageResult {
  * Dependencies for message processing.
  */
 export interface MessageProcessorDependencies {
-  /** Route a phone number to determine which agent/handler to use */
-  routeMessage: (phone: string) => Promise<RouteResult>;
+  /** Decide who is writing (phone, or BSUID for a username sender) and so which agent answers. */
+  routeMessage: (sender: SenderIdentity | string) => Promise<RouteResult>;
   /** Invoke the LLM with messages */
   invokeLLM: (
     agent: Agent,
@@ -75,7 +78,10 @@ export interface MessageProcessorDependencies {
    * Receives the website-shaped intake payload (English keys, phone injected).
    * When unset, Flow submissions are ignored.
    */
-  submitApplicationFromFlow?: (payload: Record<string, string | boolean>) => Promise<void>;
+  submitApplicationFromFlow?: (
+    payload: Record<string, string | boolean>,
+    submitter?: { whatsappUserId?: string; whatsappUsername?: string }
+  ) => Promise<void>;
   /**
    * Optional: apply an async delivery-status update (from the `statuses` webhook)
    * to the tracked outbound message. When unset, statuses are ignored.
@@ -90,7 +96,7 @@ export interface MessageProcessorDependencies {
    * If a human hand-off is open for the phone, push its expiry out and return
    * true; agents then stay silent. False when none is open.
    */
-  extendHandoff?: (phone: string) => Promise<boolean>;
+  extendHandoff?: (key: { phone: string; whatsappUserId?: string }) => Promise<boolean>;
   /** Open a human hand-off (the explicit-request backstop). */
   openHandoff?: (input: {
     phone: string;
@@ -101,7 +107,28 @@ export interface MessageProcessorDependencies {
     displayName?: string;
     /** Last turns (oldest first) for the Chatwoot note; no agent summarized. */
     recentMessages?: Array<{ role: "user" | "assistant"; content: string }>;
+    /** The sender's BSUID / username when they write with a WhatsApp username. */
+    whatsappUserId?: string;
+    username?: string;
   }) => Promise<unknown>;
+  /**
+   * Record a sender's BSUID (and username) on their customer / application
+   * rows when a message carries both their phone and BSUID. Best-effort.
+   */
+  linkWhatsAppIdentity?: (link: {
+    phone: string;
+    bsuid: string;
+    username?: string;
+  }) => Promise<void>;
+  /**
+   * The sender shared their own number (a contact-info request answered, e.g.
+   * one sent from Chatwoot): fill it on their BSUID-linked rows and link.
+   */
+  recordSharedWhatsAppPhone?: (link: {
+    phone: string;
+    bsuid: string;
+    username?: string;
+  }) => Promise<void>;
 }
 
 // Global message processor (set by apiserver during initialization)
@@ -289,12 +316,28 @@ export const handleWhatsAppMessage = (() => {
 
       for (const change of changes) {
         const messages = change.value?.messages ?? [];
+        const contacts = change.value?.contacts ?? [];
 
-        for (const message of messages) {
-          await processMessage(message);
+        // Validated one by one: a message shape we don't know (Meta adds
+        // fields and types) must never take the rest of the delivery with it.
+        for (const raw of messages) {
+          const parsed = whatsappMessageSchema.safeParse(raw);
+          if (!parsed.success) {
+            logger.warn("skipping unparseable whatsapp message", {
+              issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`)
+            });
+            continue;
+          }
+          const message = parsed.data;
+          const sender = buildSenderIdentity(message, contacts);
+          if (!sender) {
+            logger.warn("skipping whatsapp message with no sender", { messageId: message.id });
+            continue;
+          }
+          await processMessage(message, sender);
           messagesProcessed++;
-          if (!senders.includes(message.from)) {
-            senders.push(message.from);
+          if (!senders.includes(sender.address)) {
+            senders.push(sender.address);
           }
         }
 
@@ -316,6 +359,46 @@ export const handleWhatsAppMessage = (() => {
 })();
 
 /**
+ * Who sent a message. Meta gives the phone in `from` (and `contacts[].wa_id`)
+ * unless the sender uses a WhatsApp username and hides their number; then only
+ * the business-scoped user id arrives (`from_user_id` / `contacts[].user_id`).
+ * Replies and conversations are keyed by the phone when there is one, else by
+ * the BSUID. Returns null when the message names no sender at all.
+ */
+export function buildSenderIdentity(
+  message: WhatsAppMessage,
+  contacts: WhatsAppContact[]
+): SenderIdentity | null {
+  const contact =
+    contacts.find(
+      (c) =>
+        (message.from_user_id && c.user_id === message.from_user_id) ||
+        (message.from && c.wa_id === message.from)
+    ) ?? (contacts.length === 1 ? contacts[0] : undefined);
+  const phone = message.from ?? contact?.wa_id;
+  const bsuid = message.from_user_id ?? contact?.user_id;
+  const username = contact?.profile?.username;
+  const address = phone ?? bsuid;
+  if (!address) return null;
+  return {
+    address,
+    ...(phone ? { phone } : {}),
+    ...(bsuid ? { bsuid } : {}),
+    ...(username ? { username } : {})
+  };
+}
+
+/** A WhatsApp phone ("18298717987") as stored E.164, or null if not a phone. */
+function toE164(raw: string): string | null {
+  if (!raw) return null;
+  try {
+    return validatePhone(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Process a single WhatsApp message.
  *
  * 1. Routes the message based on phone number
@@ -325,9 +408,12 @@ export const handleWhatsAppMessage = (() => {
  * 5. Sends response via WhatsApp
  *
  * @param message - The WhatsApp message to process
+ * @param sender - Who sent it (phone, or BSUID for a username sender)
  */
-async function processMessage(message: WhatsAppMessage): Promise<void> {
-  const { from: phone, type, id, text, image, audio, timestamp } = message;
+async function processMessage(message: WhatsAppMessage, sender: SenderIdentity): Promise<void> {
+  // Where replies go: the phone, or the BSUID of a username sender.
+  const phone = sender.address;
+  const { type, id, text, image, audio, timestamp } = message;
 
   const messageAgeSeconds = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
   const maxAgeSeconds = getMessageMaxAgeSeconds();
@@ -392,6 +478,40 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     submitApplicationFromFlow
   } = messageProcessor;
 
+  // Whenever Meta shows both the phone and the BSUID, remember the BSUID on
+  // the sender's customer / application rows, so they still match once they
+  // hide their number behind a username. Runs even with replies disabled.
+  if (sender.phone && sender.bsuid && messageProcessor.linkWhatsAppIdentity) {
+    const e164 = toE164(sender.phone);
+    if (e164) {
+      void messageProcessor
+        .linkWhatsAppIdentity({ phone: e164, bsuid: sender.bsuid, username: sender.username })
+        .catch((error: Error) =>
+          logger.error("failed to link whatsapp identity", { phone, error: error.message })
+        );
+    }
+  }
+
+  // The sender shared their OWN number (answering a contact-info request, e.g.
+  // one a person sent from Chatwoot). Record it and stay silent: it is not a
+  // conversation turn. Other contact cards may be third parties' — not trusted.
+  if (type === "contacts" && sender.bsuid) {
+    const own = message.contacts?.find((c) => c.origin === "contact_request");
+    const shared = own?.phones?.[0];
+    const e164 = toE164(shared?.wa_id ?? shared?.phone ?? "");
+    if (own && e164) {
+      if (messageProcessor.recordSharedWhatsAppPhone) {
+        await messageProcessor.recordSharedWhatsAppPhone({
+          phone: e164,
+          bsuid: sender.bsuid,
+          username: sender.username
+        });
+      }
+      logger.info("username sender shared their phone", { bsuid: sender.bsuid });
+      return;
+    }
+  }
+
   // `whatsapp.agentRepliesEnabled: false` in mikro.json makes the number stop
   // answering: no LLM, and none of the deterministic fallbacks below either.
   const repliesEnabled = getWhatsAppAgentRepliesEnabled();
@@ -407,7 +527,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
   if (type === "interactive" && message.interactive?.nfm_reply) {
     await processIntakeFlowSubmission(
       message,
-      phone,
+      sender,
       repliesEnabled ? sendWhatsAppMessage : silentSend,
       submitApplicationFromFlow
     );
@@ -425,13 +545,13 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     // A prospect writing in is still activity: it keeps their draft from being
     // abandoned even while the number is quiet. Only route when that matters.
     if (messageProcessor.recordProspectActivity) {
-      await recordActivityIfProspect(phone, messageProcessor);
+      await recordActivityIfProspect(sender, messageProcessor);
     }
     return;
   }
 
   // Start routing early so it runs in parallel with media download/transcription
-  const routePromise = routeMessage(phone);
+  const routePromise = routeMessage(sender);
 
   // Voice notes (audio): require optional transcriber; otherwise tell user not available
   const VOICE_NOT_AVAILABLE_MSG =
@@ -515,7 +635,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
       const mayReply =
         route.type === "user"
           ? !!getAgentForProfile(route.role)
-          : await passesCxGate(route, messageProcessor);
+          : await passesCxGate(route, messageProcessor, sender);
       if (mayReply) {
         try {
           await sendWhatsAppMessage({ phone, message: voiceNotice });
@@ -530,7 +650,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     if (route.type !== "user") {
-      await handleCxMessage(route, userMessage, imageUrl, messageProcessor);
+      await handleCxMessage(route, userMessage, imageUrl, messageProcessor, sender);
       return;
     }
 
@@ -625,12 +745,30 @@ export function isHumanRequest(message: string): boolean {
 }
 
 /**
- * Someone whose last application was rejected writes in. The guest agent knows
- * nothing about that decision and would invite them to apply again, so a
- * person takes it instead (founder decision, openspec cx-role-based-agents).
+ * Context for the guest agent when the sender's last application was rejected
+ * recently: without it the agent would invite them to apply again right away.
+ * No hand-off unless they ask for a person (founder decision 2026-09-26).
  */
-const REJECTED_HANDOFF_ACK =
-  "Hola, gracias por escribirnos. Vemos que tu solicitud anterior no fue aprobada. Ya le avisé al equipo; una persona te va a responder por aquí.";
+export function rejectedDirective(reapplyFrom: Date): string {
+  const date = new Intl.DateTimeFormat("es-DO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Santo_Domingo"
+  }).format(reapplyFrom);
+  return (
+    `[SISTEMA: Esta persona tuvo una solicitud que NO fue aprobada. Puede volver a ` +
+    `solicitar a partir del ${date}. Si pregunta por su solicitud o por volver a ` +
+    `aplicar, dile con amabilidad que su solicitud anterior no fue aprobada y que ` +
+    `puede volver a solicitar a partir del ${date} en https://mikro.do/solicitud. NO ` +
+    `la invites a solicitar antes de esa fecha. NO expliques motivos de la decisión. ` +
+    `Si pide hablar con una persona, usa requestHumanHandoff.] `
+  );
+}
+
+/** A WhatsApp username sender we couldn't match: a person takes it. */
+const UNMATCHED_USERNAME_ACK =
+  "Hola, gracias por escribirnos. Ya le avisé al equipo; una persona te va a responder por aquí.";
 
 const HANDOFF_ACK =
   "Claro, ya le avisé al equipo. Una persona te va a responder por aquí lo antes posible.";
@@ -671,10 +809,18 @@ function recentTurns(
 }
 
 /** Context every CX tool reads identity from (never from model arguments). */
-function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
+function cxContext(
+  route: CxRoute,
+  profile: Profile,
+  imageUrl: string | null,
+  sender?: SenderIdentity
+) {
   return {
     phone: route.phone,
     profile,
+    // A username sender's ids, so a hand-off from the agent can find them later.
+    ...(sender?.bsuid ? { whatsappUserId: sender.bsuid } : {}),
+    ...(sender?.username ? { username: sender.username } : {}),
     ...(route.type === "customer" ? { customerId: route.customerId, name: route.name } : {}),
     // A returning customer's new application, or the applicant's/prospect's own.
     ...(route.type === "customer" && route.applicationId
@@ -688,11 +834,12 @@ function cxContext(route: CxRoute, profile: Profile, imageUrl: string | null) {
 }
 
 async function recordActivityIfProspect(
-  phone: string,
+  sender: SenderIdentity,
   processor: MessageProcessorDependencies
 ): Promise<void> {
+  const phone = sender.address;
   try {
-    const route = await processor.routeMessage(phone);
+    const route = await processor.routeMessage(sender);
     if (route.type === "prospect") await processor.recordProspectActivity?.(route.applicationId);
   } catch (error) {
     logger.error("failed to record prospect activity", {
@@ -709,7 +856,8 @@ async function recordActivityIfProspect(
  */
 async function passesCxGate(
   route: CxRoute,
-  processor: MessageProcessorDependencies
+  processor: MessageProcessorDependencies,
+  sender?: SenderIdentity
 ): Promise<boolean> {
   const { phone } = route;
   const profile = profileFor(route);
@@ -718,7 +866,10 @@ async function passesCxGate(
     await processor.recordProspectActivity(route.applicationId);
   }
 
-  if (processor.extendHandoff && (await processor.extendHandoff(phone))) {
+  if (
+    processor.extendHandoff &&
+    (await processor.extendHandoff({ phone, whatsappUserId: sender?.bsuid }))
+  ) {
     logger.verbose("human hand-off open, agent stays silent", { phone, profile });
     return false;
   }
@@ -740,23 +891,32 @@ async function handleCxMessage(
   route: CxRoute,
   userMessage: string,
   imageUrl: string | null,
-  processor: MessageProcessorDependencies
+  processor: MessageProcessorDependencies,
+  sender?: SenderIdentity
 ): Promise<void> {
   const { phone } = route;
   const { invokeLLM, sendWhatsAppMessage, getAgentForProfile } = processor;
   const profile = profileFor(route);
+  const senderIds = {
+    ...(sender?.bsuid ? { whatsappUserId: sender.bsuid } : {}),
+    ...(sender?.username ? { username: sender.username } : {})
+  };
 
-  if (!(await passesCxGate(route, processor))) return;
+  if (!(await passesCxGate(route, processor, sender))) return;
   const agent = getAgentForProfile(profile)!;
 
-  if (route.type === "guest" && route.previouslyRejected && processor.openHandoff) {
+  // A WhatsApp username sender we can't tie to any application or customer:
+  // without a phone the agents can't look anything up for them, so a person
+  // takes it (founder decision, openspec whatsapp-username-senders).
+  if (route.type === "guest" && route.unmatchedUsername && processor.openHandoff) {
     await processor.openHandoff({
       phone,
       profile,
-      reason: "Solicitud anterior no aprobada",
-      recentMessages: recentTurns(route, userMessage)
+      reason: "Escribe con nombre de usuario, sin número",
+      recentMessages: recentTurns(route, userMessage),
+      ...senderIds
     });
-    await sendWhatsAppMessage({ phone, message: REJECTED_HANDOFF_ACK });
+    await sendWhatsAppMessage({ phone, message: UNMATCHED_USERNAME_ACK });
     return;
   }
 
@@ -771,7 +931,8 @@ async function handleCxMessage(
       applicationId: "applicationId" in ctx ? ctx.applicationId : undefined,
       customerId: "customerId" in ctx ? ctx.customerId : undefined,
       displayName: "name" in ctx ? ctx.name : undefined,
-      recentMessages: recentTurns(route, userMessage)
+      recentMessages: recentTurns(route, userMessage),
+      ...senderIds
     });
     await sendWhatsAppMessage({ phone, message: HANDOFF_ACK });
     return;
@@ -797,12 +958,17 @@ async function handleCxMessage(
   // GUEST, APPLICANT, CUSTOMER: phone-keyed in-memory conversation.
   const history = getGuestConversation(phone);
   const newSession = isNewSession(phone);
+  // Stored history keeps the person's words; only this turn's input carries it.
+  const llmInput =
+    route.type === "guest" && route.reapplyFrom
+      ? rejectedDirective(route.reapplyFrom) + userMessage
+      : userMessage;
   const result = await invokeLLM(
     agent,
     history,
-    userMessage,
+    llmInput,
     imageUrl,
-    cxContext(route, profile, imageUrl),
+    cxContext(route, profile, imageUrl, sender),
     newSession
   );
   touchSession(phone);
@@ -843,10 +1009,11 @@ async function processStatusUpdate(status: WhatsAppStatus): Promise<void> {
  */
 async function processIntakeFlowSubmission(
   message: WhatsAppMessage,
-  phone: string,
+  sender: SenderIdentity,
   sendWhatsAppMessage: MessageProcessorDependencies["sendWhatsAppMessage"],
   submitApplicationFromFlow: MessageProcessorDependencies["submitApplicationFromFlow"]
 ): Promise<void> {
+  const phone = sender.address;
   if (!submitApplicationFromFlow) {
     logger.warn("intake flow submission received but no submitter configured", { phone });
     return;
@@ -868,10 +1035,15 @@ async function processIntakeFlowSubmission(
 
   // sessionId keyed on the message id: a redelivered webhook upserts the same row.
   const sessionId = `wa-${message.id}`;
-  const payload = mapFlowAnswersToPayload(answers, phone, sessionId);
+  // The applicant's phone is the sender's; a username sender may have none, and
+  // is tied to the application by their BSUID instead.
+  const payload = mapFlowAnswersToPayload(answers, sender.phone, sessionId);
 
   try {
-    await submitApplicationFromFlow(payload);
+    await submitApplicationFromFlow(
+      payload,
+      sender.bsuid ? { whatsappUserId: sender.bsuid, whatsappUsername: sender.username } : {}
+    );
     logger.info("intake flow application submitted", { phone, sessionId });
     await sendWhatsAppMessage({ phone, message: INTAKE_RECEIVED_MESSAGE });
   } catch (error) {

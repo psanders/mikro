@@ -8,10 +8,24 @@ import { logger } from "../../logger.js";
 interface Deps {
   /** Upsert a normalized application by its `sessionId` (shared with the website path). */
   upsertApplication: (
-    normalized: NormalizedApplication & { source?: ApplicationSource }
+    normalized: NormalizedApplication & {
+      source?: ApplicationSource;
+      whatsappUserId?: string;
+      whatsappUsername?: string;
+    }
   ) => Promise<LoanApplication>;
   /** Most-recent application sessionId for a canonical E.164 phone, or null. */
   findLatestApplicationByPhone: (phone: string) => Promise<{ sessionId: string } | null>;
+  /** Most-recent application for a WhatsApp BSUID (username sender), or null. */
+  findLatestApplicationByWhatsAppUserId?: (
+    bsuid: string
+  ) => Promise<{ sessionId: string; phone: string | null } | null>;
+}
+
+/** Who submitted the Flow, beyond the phone: set for a WhatsApp username sender. */
+export interface FlowSubmitter {
+  whatsappUserId?: string;
+  whatsappUsername?: string;
 }
 
 /**
@@ -24,7 +38,10 @@ interface Deps {
  * website endpoint does not use this path — it stays a strict upsert-by-sessionId.
  */
 export function createSubmitApplicationFromFlow(deps: Deps) {
-  return async (payload: Record<string, string | boolean>): Promise<void> => {
+  return async (
+    payload: Record<string, string | boolean>,
+    submitter: FlowSubmitter = {}
+  ): Promise<void> => {
     const parsed = applicationPayloadSchema.safeParse(payload);
     if (!parsed.success) {
       logger.warn("intake flow: invalid payload", {
@@ -37,7 +54,24 @@ export function createSubmitApplicationFromFlow(deps: Deps) {
     if (normalized.phone) {
       const existing = await deps.findLatestApplicationByPhone(normalized.phone);
       if (existing) normalized.sessionId = existing.sessionId;
+    } else if (submitter.whatsappUserId && deps.findLatestApplicationByWhatsAppUserId) {
+      // A username sender has no phone in the webhook: fold into the
+      // application already linked to their BSUID, keeping its phone.
+      const existing = await deps.findLatestApplicationByWhatsAppUserId(submitter.whatsappUserId);
+      if (existing) {
+        normalized.sessionId = existing.sessionId;
+        normalized.phone = existing.phone;
+      }
     }
-    await deps.upsertApplication({ ...normalized, source: "WHATSAPP" });
+    await deps.upsertApplication({
+      ...normalized,
+      source: "WHATSAPP",
+      ...(submitter.whatsappUserId
+        ? {
+            whatsappUserId: submitter.whatsappUserId,
+            whatsappUsername: submitter.whatsappUsername
+          }
+        : {})
+    });
   };
 }

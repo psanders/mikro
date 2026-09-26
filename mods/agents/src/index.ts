@@ -52,6 +52,7 @@ export {
 export {
   createMessageRouter,
   type RouteResult,
+  type SenderIdentity,
   type RouterDependencies,
   type UserLookupResult,
   type CustomerLookupResult

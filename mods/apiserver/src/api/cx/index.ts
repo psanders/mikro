@@ -6,7 +6,8 @@ export {
   createOpenHandoff,
   createExtendHandoff,
   createGetOpenHandoffExpiry,
-  type OpenHandoffInput
+  type OpenHandoffInput,
+  type HandoffKey
 } from "./handoffs.js";
 export {
   createListMyLoans,
@@ -16,3 +17,9 @@ export {
   createAttachApplicationEvidence,
   createRequestHumanHandoff
 } from "./selfService.js";
+export {
+  createLinkWhatsAppIdentity,
+  createRecordSharedWhatsAppPhone,
+  createFindCustomerByWhatsAppUserId,
+  type WhatsAppIdentityLink
+} from "./whatsappIdentity.js";

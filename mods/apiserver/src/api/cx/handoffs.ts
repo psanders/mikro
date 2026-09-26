@@ -26,6 +26,10 @@ export interface OpenHandoffInput {
   customerId?: string;
   /** Shown on the feed card; the customer's name or the applicant's name. */
   displayName?: string;
+  /** The sender's BSUID, when they write with a WhatsApp username. */
+  whatsappUserId?: string;
+  /** Their WhatsApp username, for the Chatwoot note and conversation lookup. */
+  username?: string;
   /** 2–3 sentences from the agent that handed off, for the Chatwoot note. */
   summary?: string;
   /** Last turns (oldest first) for the note when no agent wrote a summary. */
@@ -37,15 +41,31 @@ export type OnHandoffOpened = (input: OpenHandoffInput) => Promise<unknown>;
 
 type HandoffClient = Pick<PrismaClient, "conversationHandoff" | "businessEvent" | "$transaction">;
 
-function openWhere(phone: string, now: Date) {
-  return { phone, closedAt: null, expiresAt: { gt: now } };
+/**
+ * Who a hand-off is for: the address replies go to (a phone, or a BSUID for a
+ * username-only sender) and the sender's BSUID when known. A hand-off matches
+ * on either, so it holds whether the person writes with their number visible
+ * or behind their WhatsApp username.
+ */
+export interface HandoffKey {
+  phone?: string | null;
+  whatsappUserId?: string | null;
+}
+
+function openWhere(key: HandoffKey, now: Date) {
+  const ids = [
+    ...(key.phone ? [{ phone: key.phone }] : []),
+    ...(key.whatsappUserId ? [{ whatsappUserId: key.whatsappUserId }] : [])
+  ];
+  // No identifier matches nothing (an empty OR would match everything).
+  return { OR: ids.length ? ids : [{ id: "" }], closedAt: null, expiresAt: { gt: now } };
 }
 
 /** When the phone's open hand-off expires, or null when none is open. */
 export function createGetOpenHandoffExpiry(db: Pick<PrismaClient, "conversationHandoff">) {
-  return async (phone: string): Promise<Date | null> => {
+  return async (key: HandoffKey): Promise<Date | null> => {
     const open = await db.conversationHandoff.findFirst({
-      where: openWhere(phone, new Date()),
+      where: openWhere(key, new Date()),
       orderBy: { expiresAt: "desc" },
       select: { expiresAt: true }
     });
@@ -58,10 +78,10 @@ export function createGetOpenHandoffExpiry(db: Pick<PrismaClient, "conversationH
  * Returns whether a hand-off was open.
  */
 export function createExtendHandoff(db: Pick<PrismaClient, "conversationHandoff">) {
-  return async (phone: string): Promise<boolean> => {
+  return async (key: HandoffKey): Promise<boolean> => {
     const now = new Date();
     const { count } = await db.conversationHandoff.updateMany({
-      where: openWhere(phone, now),
+      where: openWhere(key, now),
       data: { expiresAt: new Date(now.getTime() + HANDOFF_TTL_MS) }
     });
     return count > 0;
@@ -79,7 +99,7 @@ export function createOpenHandoff(db: HandoffClient, onOpened?: OnHandoffOpened)
     const expiresAt = new Date(now.getTime() + HANDOFF_TTL_MS);
     const opened = await db.$transaction(async (tx) => {
       const { count } = await tx.conversationHandoff.updateMany({
-        where: openWhere(input.phone, now),
+        where: openWhere({ phone: input.phone, whatsappUserId: input.whatsappUserId }, now),
         data: { expiresAt }
       });
       if (count > 0) return false;
@@ -90,6 +110,7 @@ export function createOpenHandoff(db: HandoffClient, onOpened?: OnHandoffOpened)
           reason: input.reason,
           applicationId: input.applicationId ?? null,
           customerId: input.customerId ?? null,
+          whatsappUserId: input.whatsappUserId ?? null,
           expiresAt
         }
       });
@@ -99,7 +120,7 @@ export function createOpenHandoff(db: HandoffClient, onOpened?: OnHandoffOpened)
         customerId: input.customerId,
         customerName: input.displayName,
         applicationId: input.applicationId,
-        summary: `${input.displayName ?? input.phone} pidió hablar con una persona.`,
+        summary: `${input.displayName ?? (input.username ? `@${input.username}` : input.phone)} pidió hablar con una persona.`,
         payload: {
           handoffId: handoff.id,
           phone: input.phone,

@@ -73,17 +73,54 @@ describe("human hand-offs", () => {
     const findFirst = sinon.stub().resolves(null);
     const db = { conversationHandoff: { findFirst } } as any;
 
-    expect(await createGetOpenHandoffExpiry(db)("+18095550001")).to.equal(null);
+    expect(await createGetOpenHandoffExpiry(db)({ phone: "+18095550001" })).to.equal(null);
     const { where } = findFirst.firstCall.args[0];
-    expect(where.phone).to.equal("+18095550001");
+    expect(where.OR).to.deep.equal([{ phone: "+18095550001" }]);
     expect(where.closedAt).to.equal(null);
     expect(where.expiresAt.gt).to.be.instanceOf(Date);
+  });
+
+  // A person may write with their number visible, then behind their username
+  // (or the reverse): the hand-off must hold either way.
+  it("matches an open hand-off by phone OR by the WhatsApp BSUID", async () => {
+    const updateMany = sinon.stub().resolves({ count: 1 });
+    const db = { conversationHandoff: { updateMany } } as any;
+
+    expect(
+      await createExtendHandoff(db)({
+        phone: "DO.1610031533916997",
+        whatsappUserId: "DO.1610031533916997"
+      })
+    ).to.be.true;
+    expect(updateMany.firstCall.args[0].where.OR).to.deep.equal([
+      { phone: "DO.1610031533916997" },
+      { whatsappUserId: "DO.1610031533916997" }
+    ]);
+  });
+
+  it("stores the BSUID on a new hand-off and looks it up by either id", async () => {
+    const { db, tx } = makeDb(0);
+
+    await createOpenHandoff(db)({
+      phone: "DO.1610031533916997",
+      profile: "GUEST",
+      reason: "Escribe con nombre de usuario, sin número",
+      whatsappUserId: "DO.1610031533916997",
+      username: "topacio1234"
+    });
+
+    expect(tx.conversationHandoff.create.firstCall.args[0].data.whatsappUserId).to.equal(
+      "DO.1610031533916997"
+    );
+    expect(tx.conversationHandoff.updateMany.firstCall.args[0].where.OR).to.have.length(2);
+    const event = tx.businessEvent.create.firstCall.args[0].data;
+    expect(event.summary).to.contain("@topacio1234");
   });
 
   it("extend reports whether a hand-off was open", async () => {
     const updateMany = sinon.stub().resolves({ count: 0 });
     const db = { conversationHandoff: { updateMany } } as any;
-    expect(await createExtendHandoff(db)("+18095550001")).to.be.false;
+    expect(await createExtendHandoff(db)({ phone: "+18095550001" })).to.be.false;
   });
 
   it("runs the follow-up (Chatwoot note) only for a NEW hand-off", async () => {

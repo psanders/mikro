@@ -42,6 +42,8 @@ CREATE TABLE "customers" (
     "name" TEXT NOT NULL,
     "nickname" TEXT,
     "phone" TEXT NOT NULL,
+    "whatsapp_user_id" TEXT,
+    "whatsapp_username" TEXT,
     "id_number" TEXT NOT NULL,
     "collection_point" TEXT,
     "map_url" TEXT,
@@ -234,6 +236,8 @@ CREATE TABLE "loan_applications" (
     "first_name" TEXT,
     "last_name" TEXT,
     "phone" TEXT,
+    "whatsapp_user_id" TEXT,
+    "whatsapp_username" TEXT,
     "id_number" TEXT,
     "date_of_birth" DATETIME,
     "marital_status" TEXT,
@@ -341,6 +345,7 @@ CREATE INDEX "follow_up_jobs_application_id_idx" ON "follow_up_jobs"("applicatio
 CREATE TABLE "conversation_handoffs" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "phone" TEXT NOT NULL,
+    "whatsapp_user_id" TEXT,
     "profile" TEXT NOT NULL,
     "reason" TEXT NOT NULL,
     "application_id" TEXT,
@@ -350,6 +355,9 @@ CREATE TABLE "conversation_handoffs" (
     "closed_at" DATETIME
 );
 CREATE INDEX "conversation_handoffs_phone_closed_at_idx" ON "conversation_handoffs"("phone", "closed_at");
+CREATE INDEX "conversation_handoffs_whatsapp_user_id_closed_at_idx" ON "conversation_handoffs"("whatsapp_user_id", "closed_at");
+CREATE INDEX "customers_whatsapp_user_id_idx" ON "customers"("whatsapp_user_id");
+CREATE INDEX "loan_applications_whatsapp_user_id_idx" ON "loan_applications"("whatsapp_user_id");
 
 -- Business events table (founder feed, append-only)
 CREATE TABLE "business_events" (

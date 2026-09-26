@@ -3,7 +3,10 @@
  */
 import { expect } from "chai";
 import sinon from "sinon";
-import { createMessageRouter } from "../../src/router/createMessageRouter.js";
+import {
+  createMessageRouter,
+  REAPPLY_COOLDOWN_DAYS
+} from "../../src/router/createMessageRouter.js";
 
 const COLLECTOR_PHONE = "+18095550001";
 const ADMIN_PHONE = "+18095550002";
@@ -167,11 +170,6 @@ describe("createMessageRouter — CX routing by role and application status", ()
     ],
     ["APPROVED → applicant", app("APPROVED", new Date()), { type: "applicant", ...ref }],
     [
-      "REJECTED → guest, flagged as previously rejected",
-      app("REJECTED", new Date()),
-      { type: "guest", phone: PHONE, previouslyRejected: true }
-    ],
-    [
       "CONVERTED without customer → guest",
       app("CONVERTED", new Date()),
       { type: "guest", phone: PHONE }
@@ -252,5 +250,41 @@ describe("createMessageRouter — CX routing by role and application status", ()
     );
     const result = await router(COLLECTOR_PHONE);
     expect(result.type === "user" && result.role).to.equal("REVIEWER");
+  });
+});
+
+// Founder decision 2026-09-26: a rejected applicant may apply again after 30 days.
+describe("createMessageRouter — rejected applicants' reapply cooldown", () => {
+  const PHONE = "+18095550011";
+  const DAY = 24 * 60 * 60 * 1000;
+  const rejected = (decidedAt: Date) => ({
+    applicationId: "app-9",
+    sessionId: "s-9",
+    status: "REJECTED" as never,
+    submittedAt: new Date(decidedAt.getTime() - DAY),
+    decidedAt
+  });
+
+  it("flags a recent rejection with the date they may apply again", async () => {
+    const decidedAt = new Date(Date.now() - 5 * DAY);
+    const router = createMessageRouter(
+      makeDeps({ findApplicationByPhone: sinon.stub().resolves(rejected(decidedAt)) })
+    );
+    const result = await router(PHONE);
+    expect(result).to.deep.equal({
+      type: "guest",
+      phone: PHONE,
+      previouslyRejected: true,
+      reapplyFrom: new Date(decidedAt.getTime() + REAPPLY_COOLDOWN_DAYS * DAY)
+    });
+  });
+
+  it("treats a rejection older than the cooldown as a regular guest", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        findApplicationByPhone: sinon.stub().resolves(rejected(new Date(Date.now() - 31 * DAY)))
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE });
   });
 });

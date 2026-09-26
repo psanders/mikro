@@ -118,4 +118,91 @@ describe("createNotifyChatwootHandoff", () => {
     });
     expect(await notify({ phone: PHONE, profile: "GUEST", reason: "x" })).to.be.false;
   });
+
+  // Chatwoot can't search a WhatsApp username contact (no phone; search matches
+  // neither the BSUID nor the username), so the lookup scans the inbox's
+  // recent conversations.
+  describe("username contacts", () => {
+    const BSUID = "DO.1610031533916997";
+
+    function fakeInbox(sender: Record<string, unknown>, sourceId = BSUID) {
+      const calls: Array<{ method: string; path: string; body?: unknown }> = [];
+      const fetchFn = sinon.stub().callsFake(async (url: string, init?: RequestInit) => {
+        const path = url.replace("https://cw.example.com/api/v1/accounts/1", "");
+        const method = init?.method ?? "GET";
+        calls.push({ method, path, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+        if (path.startsWith("/conversations?inbox_id=7") && path.endsWith("page=1"))
+          return json({
+            data: {
+              payload: [
+                {
+                  id: 90,
+                  inbox_id: 7,
+                  status: "open",
+                  meta: { sender: { id: 1, phone_number: "+1809" } }
+                },
+                { id: 91, inbox_id: 7, status: "open", meta: { sender } }
+              ]
+            }
+          });
+        if (path.startsWith("/conversations?")) return json({ data: { payload: [] } });
+        if (path === "/contacts/2")
+          return json({
+            payload: { contact_inboxes: [{ source_id: sourceId, inbox: { id: 7 } }] }
+          });
+        if (path === "/conversations/91/labels" && method === "GET") return json({ payload: [] });
+        return json({});
+      });
+      return { fetchFn, calls };
+    }
+
+    it("finds the conversation by the WhatsApp username", async () => {
+      const { fetchFn, calls } = fakeInbox({
+        id: 2,
+        phone_number: null,
+        additional_attributes: { social_whatsapp_user_name: "Topacio1234" }
+      });
+      const notify = createNotifyChatwootHandoff({
+        ...CFG,
+        fetchFn,
+        lookupFacts: sinon.stub().resolves({})
+      });
+
+      const ok = await notify({
+        phone: BSUID,
+        profile: "GUEST",
+        reason: "x",
+        username: "topacio1234"
+      });
+
+      expect(ok).to.be.true;
+      expect(calls.some((c) => c.path === "/conversations/91/messages")).to.be.true;
+      const note = calls.find((c) => c.path === "/conversations/91/messages");
+      expect((note?.body as { content: string }).content).to.contain("@topacio1234");
+    });
+
+    it("confirms by the contact's BSUID when there is no username to compare", async () => {
+      const { fetchFn, calls } = fakeInbox({ id: 2, phone_number: null });
+      const notify = createNotifyChatwootHandoff({
+        ...CFG,
+        fetchFn,
+        lookupFacts: sinon.stub().resolves({})
+      });
+
+      expect(await notify({ phone: BSUID, profile: "GUEST", reason: "x" })).to.be.true;
+      expect(calls.some((c) => c.path === "/contacts/2")).to.be.true;
+    });
+
+    it("gives up quietly when no conversation matches", async () => {
+      const { fetchFn } = fakeInbox({ id: 2, phone_number: null }, "DO.999");
+      const notify = createNotifyChatwootHandoff({
+        ...CFG,
+        fetchFn,
+        attempts: 1,
+        lookupFacts: sinon.stub().resolves({})
+      });
+
+      expect(await notify({ phone: BSUID, profile: "GUEST", reason: "x" })).to.be.false;
+    });
+  });
 });

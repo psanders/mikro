@@ -287,7 +287,7 @@ describe("handleWhatsAppMessage", () => {
 
     it("ignores unknown (guest) phones — no AI reply (Joan removed)", async () => {
       const guestPhone = "+15551112222";
-      mockMessageProcessor.routeMessage.withArgs(guestPhone).resolves({
+      mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: guestPhone })).resolves({
         type: "ignored" as const,
         reason: "unknown phone — onboarding over WhatsApp is disabled",
         phone: guestPhone
@@ -326,7 +326,7 @@ describe("handleWhatsAppMessage", () => {
     it("should pass isNewSession true for first user message", async () => {
       const userPhone = "+15556667777";
       const userId = "user-session-first";
-      mockMessageProcessor.routeMessage.withArgs(userPhone).resolves({
+      mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: userPhone })).resolves({
         type: "user" as const,
         userId,
         role: "ADMIN" as const,
@@ -366,7 +366,7 @@ describe("handleWhatsAppMessage", () => {
     it("should pass isNewSession false for second user message within session", async () => {
       const userPhone = "+15557778888";
       const userId = "user-session-second";
-      mockMessageProcessor.routeMessage.withArgs(userPhone).resolves({
+      mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: userPhone })).resolves({
         type: "user" as const,
         userId,
         role: "ADMIN" as const,
@@ -458,7 +458,7 @@ describe("handleWhatsAppMessage", () => {
     });
 
     it("does not respond to an unknown number (no greeting, no notification)", async () => {
-      mockMessageProcessor.routeMessage.withArgs(prospect).resolves({
+      mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: prospect })).resolves({
         type: "ignored" as const,
         reason: "unknown phone — no automated WhatsApp response",
         phone: prospect
@@ -535,7 +535,9 @@ describe("handleWhatsAppMessage", () => {
     });
 
     it("does not reply to a COLLECTOR with no agent assigned (Chatwoot has the message)", async () => {
-      mockMessageProcessor.routeMessage.withArgs(collectorPhone).resolves(collectorRoute);
+      mockMessageProcessor.routeMessage
+        .withArgs(sinon.match({ address: collectorPhone }))
+        .resolves(collectorRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
 
       await handleWhatsAppMessage(collectorWebhook("msg-col1"));
@@ -545,7 +547,9 @@ describe("handleWhatsAppMessage", () => {
     });
 
     it("falls through to the normal agent path when a COLLECTOR profile has an agent assigned", async () => {
-      mockMessageProcessor.routeMessage.withArgs(collectorPhone).resolves(collectorRoute);
+      mockMessageProcessor.routeMessage
+        .withArgs(sinon.match({ address: collectorPhone }))
+        .resolves(collectorRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns({
         name: "collector-bot",
         profile: "COLLECTOR",
@@ -597,7 +601,9 @@ describe("handleWhatsAppMessage", () => {
     });
 
     it("does not reply to an ADMIN with no agent assigned (Chatwoot has the message)", async () => {
-      mockMessageProcessor.routeMessage.withArgs(adminPhone).resolves(adminOnlyRoute);
+      mockMessageProcessor.routeMessage
+        .withArgs(sinon.match({ address: adminPhone }))
+        .resolves(adminOnlyRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns(undefined);
 
       await handleWhatsAppMessage(adminWebhook("msg-admin1"));
@@ -607,7 +613,9 @@ describe("handleWhatsAppMessage", () => {
     });
 
     it("falls through to the normal agent path when an ADMIN profile has an agent assigned", async () => {
-      mockMessageProcessor.routeMessage.withArgs(adminPhone).resolves(adminOnlyRoute);
+      mockMessageProcessor.routeMessage
+        .withArgs(sinon.match({ address: adminPhone }))
+        .resolves(adminOnlyRoute);
       mockMessageProcessor.getAgentForProfile = sinon.stub().returns({
         name: "custom-admin-bot",
         profile: "ADMIN",
@@ -707,7 +715,7 @@ describe("handleWhatsAppMessage", () => {
       });
 
       it("neither replies nor invokes the LLM for an ADMIN message", async () => {
-        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+        mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: silentPhone })).resolves({
           type: "user" as const,
           userId: "admin-1",
           name: "Founder",
@@ -730,7 +738,7 @@ describe("handleWhatsAppMessage", () => {
       it("still restarts a prospect's abandon clock, without replying", async () => {
         const recordProspectActivity = sinon.stub().resolves();
         setMessageProcessor({ ...mockMessageProcessor, recordProspectActivity });
-        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+        mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: silentPhone })).resolves({
           type: "prospect" as const,
           applicationId: "app-1",
           sessionId: "s-1",
@@ -759,7 +767,7 @@ describe("handleWhatsAppMessage", () => {
 
     describe("enabled (default)", () => {
       it("replies as usual when the flag is absent from mikro.json", async () => {
-        mockMessageProcessor.routeMessage.withArgs(silentPhone).resolves({
+        mockMessageProcessor.routeMessage.withArgs(sinon.match({ address: silentPhone })).resolves({
           type: "user" as const,
           userId: "admin-1",
           name: "Founder",

@@ -10,6 +10,9 @@ export interface Customer {
   name: string;
   nickname?: string | null;
   phone: string;
+  /** WhatsApp BSUID / username learned from inbound messages (internal matching only). */
+  whatsappUserId?: string | null;
+  whatsappUsername?: string | null;
   idNumber: string;
   collectionPoint?: string;
   /** Business location as a Google Maps link (copied from the application on conversion). */
