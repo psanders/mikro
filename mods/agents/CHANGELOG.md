@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.4.0](https://github.com/psanders/mikro/compare/v3.3.1...v3.4.0) (2026-09-26)
+
+### Features
+
+- **cx:** persist WhatsApp CX conversations + show them on the application panel ([#299](https://github.com/psanders/mikro/issues/299)) ([#303](https://github.com/psanders/mikro/issues/303)) ([8dc529c](https://github.com/psanders/mikro/commit/8dc529c53d98f3926a3a16a01ac26a043324e79c))
+
 ## [3.3.1](https://github.com/psanders/mikro/compare/v3.3.0...v3.3.1) (2026-09-25)
 
 **Note:** Version bump only for package @mikro/agents
