@@ -146,8 +146,69 @@ async function withEvidence(caller, id) {
 }
 
 // Queue: two new applications nobody has taken.
-await received("Yokasta", "Díaz", "Colmado Cola");
+const yokasta = await received("Yokasta", "Díaz", "Colmado Cola");
 await received("Carlos", "Ureña", "Frutería Cola");
+
+// Yokasta's WhatsApp transcript (#299): a guest question from before she
+// applied, José's intake, then a hand-off to a person.
+{
+  const phone = "+18095551001";
+  const minutesAgo = (m) => new Date(Date.now() - m * 60 * 1000);
+  const turns = [
+    { role: "INBOUND", content: "Hola, ¿qué necesito para un préstamo?", profile: "GUEST", at: 60 },
+    {
+      role: "AGENT",
+      content: "¡Hola! Te ayudo con tu solicitud. ¿Cuánto vende tu negocio al mes?",
+      profile: "GUEST",
+      agentName: "lucia",
+      at: 59
+    },
+    {
+      role: "INBOUND",
+      content: "Como 65 mil al mes",
+      profile: "PROSPECT",
+      applicationId: yokasta.id,
+      at: 50
+    },
+    {
+      role: "AGENT",
+      content: "Anotado. ¿Cuántos empleados tienes?",
+      profile: "PROSPECT",
+      applicationId: yokasta.id,
+      agentName: "jose",
+      toolCalls: JSON.stringify([{ name: "saveAnswer", args: { monthlySales: 65000 } }]),
+      at: 49
+    },
+    {
+      role: "INBOUND",
+      content: "Quiero hablar con una persona",
+      profile: "APPLICANT",
+      applicationId: yokasta.id,
+      at: 10
+    },
+    {
+      role: "SYSTEM",
+      content:
+        "Claro, ya le avisé al equipo. Una persona te va a responder por aquí lo antes posible.",
+      profile: "APPLICANT",
+      applicationId: yokasta.id,
+      at: 9
+    }
+  ];
+  for (const { at, ...turn } of turns) {
+    await prisma.conversationTurn.create({ data: { phone, ...turn, createdAt: minutesAgo(at) } });
+  }
+  await prisma.conversationHandoff.create({
+    data: {
+      phone,
+      profile: "APPLICANT",
+      reason: "Pidió hablar con una persona",
+      applicationId: yokasta.id,
+      openedAt: minutesAgo(9.5),
+      expiresAt: new Date(Date.now() + 24 * 3600 * 1000)
+    }
+  });
+}
 
 // Two waiting for the admin's decision (evaluated by Ana).
 for (const [first, last, biz] of [
