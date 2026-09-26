@@ -75,13 +75,13 @@ Creating, updating, or reversing records prompts for confirmation. Pass `--yes` 
 
 ### Command renames / splits
 
-| Old                                        | New                                             |
-| ------------------------------------------ | ----------------------------------------------- |
-| `accounting:transactions:show`             | `accounting:transactions:get`                   |
-| `payments:generateReceipt --manual`        | `payments:generateManualReceipt`                |
-| `collections:run --loan-id N`              | `collections:runSingle N`                       |
-| `chat:history --customer-id` / `--user-id` | `chat:historyByCustomer` / `chat:historyByUser` |
-| `reports:customers --collector`            | `reports:customers --collector-id`              |
+| Old                                        | New                                                               |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| `accounting:transactions:show`             | `accounting:transactions:get`                                     |
+| `payments:generateReceipt --manual`        | `payments:generateManualReceipt`                                  |
+| `collections:run --loan-id N`              | `collections:runSingle N`                                         |
+| `chat:history --customer-id` / `--user-id` | removed; use `conversations:export --customer` / `--phone` (#299) |
+| `reports:customers --collector`            | `reports:customers --collector-id`                                |
 
 ## Build
 

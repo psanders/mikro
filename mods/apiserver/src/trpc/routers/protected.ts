@@ -17,8 +17,6 @@ import {
   updateUserSchema,
   getUserSchema,
   listUsersSchema,
-  // Chat schemas
-  getChatHistorySchema,
   // Conversation transcript schemas (WhatsApp CX)
   getApplicationConversationSchema,
   listConversationTurnsSchema,
@@ -119,8 +117,6 @@ import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
 import { createGetUser } from "../../api/users/createGetUser.js";
 import { createListUsers } from "../../api/users/createListUsers.js";
-// Chat API functions
-import { createGetChatHistory } from "../../api/chat/createGetChatHistory.js";
 // Conversation transcript API functions (WhatsApp CX)
 import {
   createGetApplicationConversation,
@@ -488,16 +484,6 @@ export const protectedRouter = router({
    */
   listUsers: protectedProcedure.input(listUsersSchema).query(async ({ ctx, input }) => {
     const fn = createListUsers(ctx.db);
-    return fn(input);
-  }),
-
-  // ==================== Chat procedures ====================
-
-  /**
-   * Get chat history for a customer or user.
-   */
-  getChatHistory: protectedProcedure.input(getChatHistorySchema).query(async ({ ctx, input }) => {
-    const fn = createGetChatHistory(ctx.db);
     return fn(input);
   }),
 

@@ -201,11 +201,11 @@ describe("Authentication Integration", () => {
     });
   });
 
-  describe("protected procedures - Chat", () => {
-    it("should reject unauthenticated getChatHistory", async () => {
+  describe("protected procedures - Conversations", () => {
+    it("should reject unauthenticated getApplicationConversation", async () => {
       try {
-        await unauthenticatedCaller.getChatHistory({
-          customerId: "550e8400-e29b-41d4-a716-446655440000"
+        await unauthenticatedCaller.getApplicationConversation({
+          applicationId: "550e8400-e29b-41d4-a716-446655440000"
         });
         expect.fail("Expected UNAUTHORIZED error");
       } catch (error) {

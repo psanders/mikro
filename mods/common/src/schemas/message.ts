@@ -25,24 +25,6 @@ export const attachmentInputSchema = z.object({
 });
 
 /**
- * Schema for getting chat history.
- * Must provide either customerId OR userId, but not both.
- */
-export const getChatHistorySchema = z
-  .object({
-    customerId: z.uuid({ error: "Invalid customer ID" }).optional(),
-    userId: z.uuid({ error: "Invalid user ID" }).optional(),
-    limit: z.number().int().positive().max(100).optional(),
-    offset: z.number().int().nonnegative().optional()
-  })
-  .refine((data) => data.customerId || data.userId, {
-    message: "Either customerId or userId is required"
-  })
-  .refine((data) => !(data.customerId && data.userId), {
-    message: "Cannot specify both customerId and userId"
-  });
-
-/**
  * Schema for adding a message to chat history.
  * Must provide either customerId OR userId, but not both.
  */
@@ -61,11 +43,6 @@ export const addMessageSchema = z
   .refine((data) => !(data.customerId && data.userId), {
     message: "Cannot specify both customerId and userId"
   });
-
-/**
- * Input type for getting chat history.
- */
-export type GetChatHistoryInput = z.infer<typeof getChatHistorySchema>;
 
 /**
  * Input type for adding a message.
