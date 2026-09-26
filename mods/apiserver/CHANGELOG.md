@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.6.0](https://github.com/psanders/mikro/compare/v3.5.0...v3.6.0) (2026-09-26)
+
+### Features
+
+- **cx:** scheduled conversation audit with a feed card and findings panel ([#305](https://github.com/psanders/mikro/issues/305)) ([1c0a24f](https://github.com/psanders/mikro/commit/1c0a24f22abe7d1eb1c4af3ee27e01e6b5eccd1c))
+
 # [3.5.0](https://github.com/psanders/mikro/compare/v3.4.0...v3.5.0) (2026-09-26)
 
 ### Features
