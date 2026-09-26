@@ -8,7 +8,8 @@
  */
 import type { Agent, Message, ToolExecuted } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
-import { isNewSession, touchSession } from "../sessions/index.js";
+import { isNewSessionFrom } from "../conversations/index.js";
+import { getSessionTimeoutSeconds } from "../config.js";
 import { logger } from "../logger.js";
 
 export interface ProspectMessageDeps {
@@ -73,7 +74,7 @@ export async function handleProspectMessage(
 ): Promise<{ text: string; toolsExecuted: ToolExecuted[] }> {
   const { invokeLLM, joseAgent, history } = deps;
   const session = countTurns(history);
-  const newSession = isNewSession(phone);
+  const newSession = isNewSessionFrom(history, getSessionTimeoutSeconds());
 
   // Inject a directive into userMessage based on conversation state. Precedence:
   // an explicit decline closes the conversation as ABANDONED no matter what
@@ -126,7 +127,6 @@ export async function handleProspectMessage(
   });
 
   const result = await invokeLLM(joseAgent, history, effectiveMessage, null, context, newSession);
-  touchSession(phone);
 
   const responseText = typeof result === "string" ? result : result.text;
   const toolsExecuted: ToolExecuted[] =

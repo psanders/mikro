@@ -24,6 +24,7 @@ interface Turn {
   agentVersion: string | null;
   toolCalls: Array<{ name: string; args: Record<string, unknown> }>;
   hasImage: boolean;
+  failed: boolean;
   applicationId: string | null;
   customerId: string | null;
   createdAt: string | Date;
@@ -58,7 +59,8 @@ function textLine(turn: Turn): string {
   const tools = turn.toolCalls.length
     ? `  [tools: ${turn.toolCalls.map((t) => `${t.name}(${JSON.stringify(t.args)})`).join(", ")}]`
     : "";
-  return `${when}  ${turn.phone}  ${turn.profile ?? "-"}  ${who}: ${turn.content}${tools}`;
+  const failed = turn.failed ? "  [NOT DELIVERED]" : "";
+  return `${when}  ${turn.phone}  ${turn.profile ?? "-"}  ${who}: ${turn.content}${tools}${failed}`;
 }
 
 export default class ConversationsExport extends BaseCommand<typeof ConversationsExport> {

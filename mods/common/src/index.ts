@@ -57,6 +57,7 @@ export { ValidationError, type FieldError } from "./errors/index.js";
 export {
   withErrorHandlingAndValidation,
   validatePhone,
+  e164OrRaw,
   getCycleMetrics,
   countCuotasCovered,
   cuotaRemainingToClose,

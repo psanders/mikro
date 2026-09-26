@@ -120,6 +120,7 @@ import { createListUsers } from "../../api/users/createListUsers.js";
 // Conversation transcript API functions (WhatsApp CX)
 import {
   createGetApplicationConversation,
+  createGetApplicationChatwootUrl,
   createListConversationTurns,
   createDeleteConversation
 } from "../../api/conversations/index.js";
@@ -226,7 +227,6 @@ import {
   getLLMConfig
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
-import { logger } from "../../logger.js";
 // Accounting schemas
 import {
   createAccountSchema,
@@ -490,29 +490,28 @@ export const protectedRouter = router({
   // ==================== Conversation transcripts (WhatsApp CX, #299) ====================
 
   /**
-   * The applicant's WhatsApp conversation for the application panel, with a
-   * link to their Chatwoot contact (staff replies live there). Same access as
-   * getApplication. The Chatwoot lookup is best-effort and never fails the read.
+   * The applicant's WhatsApp conversation for the application panel, straight
+   * from the stored transcript. Same access as getApplication.
    */
   getApplicationConversation: reviewerProcedure
     .input(getApplicationConversationSchema)
     .query(async ({ ctx, input }) => {
-      const conversation = await createGetApplicationConversation(
-        ctx.db as unknown as PrismaClient
+      return createGetApplicationConversation(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /**
+   * Link to the applicant's Chatwoot contact, kept out of
+   * getApplicationConversation so the panel never waits on Chatwoot. Same
+   * access; null when Chatwoot is unconfigured, slow or has no such contact.
+   */
+  getApplicationChatwootUrl: reviewerProcedure
+    .input(getApplicationConversationSchema)
+    .query(async ({ ctx, input }) => {
+      const chatwoot = createChatwootClient(getConfig().chatwoot);
+      return createGetApplicationChatwootUrl(
+        ctx.db as unknown as PrismaClient,
+        chatwoot.findContactUrl
       )(input);
-      let chatwootUrl: string | null = null;
-      if (conversation.phone) {
-        try {
-          chatwootUrl = await createChatwootClient(getConfig().chatwoot).findContactUrl(
-            conversation.phone
-          );
-        } catch (err) {
-          logger.verbose("chatwoot contact lookup failed", {
-            error: err instanceof Error ? err.message : String(err)
-          });
-        }
-      }
-      return { ...conversation, chatwootUrl };
     }),
 
   /** Transcript turns matching filters, oldest first — the ctl eval export. ADMIN. */

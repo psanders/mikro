@@ -549,6 +549,8 @@ export interface LoanApplicationWriteData {
   customerId?: string | null;
   loanId?: number | null;
   submittedAt?: Date | null;
+  /** When an abandoned draft last came back to DRAFT (José memory boundary). */
+  reopenedAt?: Date | null;
   /**
    * Ad attribution. Optional and only ever written when the submission actually
    * carried the parameters — a later autosave that arrives without them must

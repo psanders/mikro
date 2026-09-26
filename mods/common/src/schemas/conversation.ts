@@ -33,7 +33,9 @@ export const recordConversationTurnSchema = z.object({
   hasImage: z.boolean().optional(),
   applicationId: z.string().optional(),
   customerId: z.string().optional(),
-  waMessageId: z.string().optional()
+  waMessageId: z.string().optional(),
+  /** The send failed: kept for audits, left out of the agents' memory. */
+  failed: z.boolean().optional()
 });
 
 /**

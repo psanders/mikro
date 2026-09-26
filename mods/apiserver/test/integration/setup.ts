@@ -288,6 +288,7 @@ CREATE TABLE "loan_applications" (
     "customer_id" TEXT,
     "loan_id" INTEGER,
     "submitted_at" DATETIME,
+    "reopened_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL
 );
@@ -365,6 +366,7 @@ CREATE TABLE "conversation_turns" (
     "application_id" TEXT,
     "customer_id" TEXT,
     "wa_message_id" TEXT,
+    "failed" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX "conversation_turns_phone_created_at_idx" ON "conversation_turns"("phone", "created_at");

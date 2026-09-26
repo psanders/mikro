@@ -15,7 +15,7 @@ import {
   listConversationTurnsSchema,
   getApplicationConversationSchema,
   deleteConversationSchema,
-  validatePhone,
+  e164OrRaw,
   withErrorHandlingAndValidation,
   type RecordConversationTurnInput,
   type GetApplicationConversationInput,
@@ -55,6 +55,8 @@ export interface ConversationTurnView {
   applicationId: string | null;
   customerId: string | null;
   waMessageId: string | null;
+  /** The send failed: the person never got this message. */
+  failed: boolean;
   createdAt: Date;
 }
 
@@ -71,6 +73,7 @@ interface TurnRow {
   applicationId: string | null;
   customerId: string | null;
   waMessageId: string | null;
+  failed: boolean;
   createdAt: Date;
 }
 
@@ -92,15 +95,6 @@ export function toTurnView(row: TurnRow): ConversationTurnView {
   };
 }
 
-/** Normalize to E.164 like the router does; keep the raw value if it does not parse. */
-function e164OrRaw(phone: string): string {
-  try {
-    return validatePhone(phone);
-  } catch {
-    return phone;
-  }
-}
-
 export function createRecordConversationTurn(db: TurnClient) {
   const fn = async (input: RecordConversationTurnInput): Promise<{ id: string }> => {
     const turn = await db.conversationTurn.create({
@@ -115,7 +109,8 @@ export function createRecordConversationTurn(db: TurnClient) {
         hasImage: input.hasImage ?? false,
         applicationId: input.applicationId ?? null,
         customerId: input.customerId ?? null,
-        waMessageId: input.waMessageId ?? null
+        waMessageId: input.waMessageId ?? null,
+        failed: input.failed ?? false
       },
       select: { id: true }
     });
@@ -129,29 +124,45 @@ export function createRecordConversationTurn(db: TurnClient) {
  * An agent's memory, oldest first, in LLM message shape. `cx` is the
  * guest/applicant/customer thread for the phone (every profile but PROSPECT,
  * SYSTEM replies included so the agent knows what the app already said);
- * `prospect` is José's INBOUND/AGENT turns for one application, which José's
- * turn counters are derived from.
+ * `prospect` is José's INBOUND/AGENT turns for one application since it was
+ * last reopened, which José's turn counters are derived from.
+ *
+ * Only turns stored before the current message (`excludeId`) are read: when
+ * two messages from one phone overlap, the later one must not show up as
+ * earlier history. Replies whose send failed are left out — the person never
+ * saw them.
  */
-export function createGetConversationHistory(db: TurnClient) {
+export function createGetConversationHistory(
+  db: Pick<PrismaClient, "conversationTurn" | "loanApplication">
+) {
   return async (query: ConversationHistoryQuery): Promise<Message[]> => {
     const phone = e164OrRaw(query.phone);
-    const excludeId = query.excludeId ? Number(query.excludeId) : NaN;
-    const exclude = Number.isInteger(excludeId) ? { id: { not: excludeId } } : {};
-    const where =
-      query.scope === "prospect"
-        ? {
-            phone,
-            profile: "PROSPECT",
-            applicationId: query.applicationId,
-            role: { in: ["INBOUND", "AGENT"] },
-            ...exclude
-          }
-        : {
-            phone,
-            OR: [{ profile: null }, { profile: { not: "PROSPECT" } }],
-            createdAt: { gte: new Date(Date.now() - CX_HISTORY_MAX_AGE_MS) },
-            ...exclude
-          };
+    const beforeId = query.excludeId ? Number(query.excludeId) : NaN;
+    const before = Number.isInteger(beforeId) ? { id: { lt: beforeId } } : {};
+    let where;
+    if (query.scope === "prospect") {
+      const app = await db.loanApplication.findUnique({
+        where: { id: query.applicationId },
+        select: { reopenedAt: true }
+      });
+      where = {
+        phone,
+        profile: "PROSPECT",
+        applicationId: query.applicationId,
+        role: { in: ["INBOUND", "AGENT"] },
+        failed: false,
+        ...(app?.reopenedAt ? { createdAt: { gte: app.reopenedAt } } : {}),
+        ...before
+      };
+    } else {
+      where = {
+        phone,
+        OR: [{ profile: null }, { profile: { not: "PROSPECT" } }],
+        failed: false,
+        createdAt: { gte: new Date(Date.now() - CX_HISTORY_MAX_AGE_MS) },
+        ...before
+      };
+    }
     const rows = await db.conversationTurn.findMany({
       where,
       orderBy: { id: "desc" },
@@ -162,6 +173,7 @@ export function createGetConversationHistory(db: TurnClient) {
       return {
         role: row.role === "INBOUND" ? ("user" as const) : ("assistant" as const),
         content: row.content,
+        timestamp: row.createdAt,
         ...(toolCalls.length > 0 ? { tools_executed: toolCalls } : {})
       };
     });
@@ -251,7 +263,7 @@ export function createGetApplicationConversation(
   const fn = async (input: GetApplicationConversationInput): Promise<ApplicationConversation> => {
     const phone = await applicationPhone(db, input.applicationId);
     if (!phone) return { phone: null, turns: [], handoffs: [] };
-    const [rows, handoffs] = await Promise.all([
+    const [rows, allHandoffs] = await Promise.all([
       db.conversationTurn.findMany({
         where: { phone },
         orderBy: { id: "desc" },
@@ -263,7 +275,38 @@ export function createGetApplicationConversation(
         select: { id: true, reason: true, openedAt: true, closedAt: true }
       })
     ]);
-    return { phone, turns: rows.reverse().map(toTurnView), handoffs };
+    const turns = rows.reverse().map(toTurnView);
+    // Truncated to the newest turns: hand-offs older than the first one shown
+    // would otherwise pile up at the top of the thread.
+    const handoffs =
+      rows.length === PANEL_TURNS && turns[0]
+        ? allHandoffs.filter((h) => h.openedAt >= turns[0].createdAt)
+        : allHandoffs;
+    return { phone, turns, handoffs };
+  };
+  return withErrorHandlingAndValidation(fn, getApplicationConversationSchema);
+}
+
+/**
+ * Link to the applicant's Chatwoot contact (staff replies live there). Its own
+ * read so the panel never waits on Chatwoot to show the stored turns.
+ * Best-effort: null when unconfigured, not found, slow or failing.
+ */
+export function createGetApplicationChatwootUrl(
+  db: Pick<PrismaClient, "loanApplication">,
+  findContactUrl: (phone: string) => Promise<string | null>
+) {
+  const fn = async (input: GetApplicationConversationInput): Promise<{ url: string | null }> => {
+    const phone = await applicationPhone(db, input.applicationId);
+    if (!phone) return { url: null };
+    try {
+      return { url: await findContactUrl(phone) };
+    } catch (err) {
+      logger.verbose("chatwoot contact lookup failed", {
+        error: err instanceof Error ? err.message : String(err)
+      });
+      return { url: null };
+    }
   };
   return withErrorHandlingAndValidation(fn, getApplicationConversationSchema);
 }

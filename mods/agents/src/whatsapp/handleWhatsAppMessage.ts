@@ -3,7 +3,7 @@
  */
 import {
   withErrorHandlingAndValidation,
-  validatePhone,
+  e164OrRaw,
   whatsappWebhookSchema,
   type WhatsAppWebhookBody,
   type WhatsAppMessage,
@@ -16,11 +16,16 @@ import type { Agent, Message, ToolExecuted } from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
-import { getMessageMaxAgeSeconds, getWhatsAppAgentRepliesEnabled } from "../config.js";
+import {
+  getMessageMaxAgeSeconds,
+  getSessionTimeoutSeconds,
+  getWhatsAppAgentRepliesEnabled
+} from "../config.js";
 import { logger } from "../logger.js";
 import type { Profile } from "../constants.js";
 import {
   agentVersionOf,
+  isNewSessionFrom,
   textOf,
   type ConversationTurnRecord,
   type ConversationHistoryQuery
@@ -544,10 +549,12 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
 
     // Every CX message is transcribed before anything decides whether to
     // answer it: silent turns (hand-off open, no agent) matter to an audit too.
-    let inboundId: string | undefined;
+    // The write runs alongside the reply gate; anything recorded after it (a
+    // reply) waits for it, so the transcript keeps the real order.
+    let inbound: Promise<string | undefined> = Promise.resolve(undefined);
     if (route.type !== "user") {
       cxRoute = route;
-      inboundId = await recordTurn(messageProcessor, {
+      inbound = recordTurn(messageProcessor, {
         ...inboundTurn(route, inboundContent(message, userMessage)),
         hasImage: !!image?.id,
         waMessageId: id
@@ -555,10 +562,12 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     if (voiceNotice !== null) {
-      const mayReply =
+      const [, mayReply] = await Promise.all([
+        inbound,
         route.type === "user"
           ? !!getAgentForProfile(route.role)
-          : await passesCxGate(route, messageProcessor);
+          : passesCxGate(route, messageProcessor)
+      ]);
       if (mayReply) {
         try {
           const send =
@@ -581,7 +590,7 @@ async function processMessage(message: WhatsAppMessage): Promise<void> {
     }
 
     if (route.type !== "user") {
-      await handleCxMessage(route, userMessage, imageUrl, messageProcessor, inboundId);
+      await handleCxMessage(route, userMessage, imageUrl, messageProcessor, inbound);
       return;
     }
 
@@ -739,15 +748,6 @@ function inboundContent(message: WhatsAppMessage, userMessage: string): string {
   return `[${message.type}]`;
 }
 
-/** Normalized phone for the transcript; the raw sender id when it does not parse. */
-function e164OrRaw(phone: string): string {
-  try {
-    return validatePhone(phone);
-  } catch {
-    return phone;
-  }
-}
-
 /** The application/customer a route knows about, for tagging its turns. */
 function routeIds(route: CxRoute): { applicationId?: string; customerId?: string } {
   switch (route.type) {
@@ -797,8 +797,9 @@ async function recordTurn(
 
 /**
  * Wrap a sender so every message it sends is also recorded as a turn, with the
- * wamid Meta returned. A failed send is still recorded (without a wamid): the
- * reply was produced, and an audit should see it.
+ * wamid Meta returned. A failed send is still recorded, marked `failed`: the
+ * reply was produced and an audit should see it, but the person never got it,
+ * so it stays out of the agents' memory.
  */
 function recordingSender(
   processor: MessageProcessorDependencies,
@@ -808,15 +809,20 @@ function recordingSender(
 ): MessageProcessorDependencies["sendWhatsAppMessage"] {
   return async (params) => {
     let response: Awaited<ReturnType<typeof send>> | undefined;
+    let failed = false;
     try {
       response = await send(params);
       return response;
+    } catch (error) {
+      failed = true;
+      throw error;
     } finally {
       await recordTurn(processor, {
         ...turn,
         phone: transcriptPhone,
         content: params.message ?? params.caption ?? "",
-        waMessageId: response?.messages?.[0]?.id
+        waMessageId: response?.messages?.[0]?.id,
+        ...(failed ? { failed: true } : {})
       });
     }
   };
@@ -904,13 +910,14 @@ async function handleCxMessage(
   userMessage: string,
   imageUrl: string | null,
   processor: MessageProcessorDependencies,
-  inboundId?: string
+  inbound: Promise<string | undefined> = Promise.resolve(undefined)
 ): Promise<void> {
   const { phone } = route;
   const { invokeLLM, getAgentForProfile, getConversationHistory } = processor;
   const profile = profileFor(route);
 
-  if (!(await passesCxGate(route, processor))) return;
+  const [inboundId, mayReply] = await Promise.all([inbound, passesCxGate(route, processor)]);
+  if (!mayReply) return;
   const agent = getAgentForProfile(profile)!;
   const agentTurn = {
     ...routeIds(route),
@@ -924,16 +931,17 @@ async function handleCxMessage(
     role: "SYSTEM",
     profile
   });
-  // The turn just recorded is the current message, which the agent gets
-  // separately, so it is left out of its memory.
-  const history = await getConversationHistory(historyQuery(route, inboundId));
+  // Read only when a path needs it (and, for a reopen, after the reopen moved
+  // José's memory boundary). The current message is left out: the agent gets
+  // it separately.
+  const loadHistory = () => getConversationHistory(historyQuery(route, inboundId));
 
   if (route.type === "guest" && route.previouslyRejected && processor.openHandoff) {
     await processor.openHandoff({
       phone,
       profile,
       reason: "Solicitud anterior no aprobada",
-      recentMessages: recentTurns(history, userMessage)
+      recentMessages: recentTurns(await loadHistory(), userMessage)
     });
     await systemReply({ phone, message: REJECTED_HANDOFF_ACK });
     return;
@@ -950,7 +958,7 @@ async function handleCxMessage(
       applicationId: "applicationId" in ctx ? ctx.applicationId : undefined,
       customerId: "customerId" in ctx ? ctx.customerId : undefined,
       displayName: "name" in ctx ? ctx.name : undefined,
-      recentMessages: recentTurns(history, userMessage)
+      recentMessages: recentTurns(await loadHistory(), userMessage)
     });
     await systemReply({ phone, message: HANDOFF_ACK });
     return;
@@ -963,6 +971,8 @@ async function handleCxMessage(
     }
   }
 
+  const history = await loadHistory();
+
   if (route.type === "prospect" || route.type === "reopen") {
     const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
       invokeLLM,
@@ -974,17 +984,17 @@ async function handleCxMessage(
     return;
   }
 
-  // GUEST, APPLICANT, CUSTOMER: one phone-keyed conversation.
-  const newSession = isNewSession(phone);
+  // GUEST, APPLICANT, CUSTOMER: one phone-keyed conversation. A new session is
+  // decided from the stored conversation, so a restart doesn't make the agent
+  // introduce itself mid-thread.
   const result = await invokeLLM(
     agent,
     history,
     userMessage,
     imageUrl,
     cxContext(route, profile, imageUrl),
-    newSession
+    isNewSessionFrom(history, getSessionTimeoutSeconds())
   );
-  touchSession(phone);
   const text = typeof result === "string" ? result : result.text;
   const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
   await replyAsAgent(processor, phone, text, toolsExecuted, agentTurn);

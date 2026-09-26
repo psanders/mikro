@@ -12,9 +12,13 @@ CREATE TABLE "conversation_turns" (
     "application_id" TEXT,
     "customer_id" TEXT,
     "wa_message_id" TEXT,
+    "failed" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX "conversation_turns_phone_created_at_idx" ON "conversation_turns"("phone", "created_at");
 CREATE INDEX "conversation_turns_application_id_idx" ON "conversation_turns"("application_id");
 CREATE INDEX "conversation_turns_customer_id_idx" ON "conversation_turns"("customer_id");
 CREATE INDEX "conversation_turns_created_at_idx" ON "conversation_turns"("created_at");
+
+-- AlterTable: when an abandoned draft last reopened (José memory boundary)
+ALTER TABLE "loan_applications" ADD COLUMN "reopened_at" DATETIME;

@@ -177,7 +177,18 @@ await received("Carlos", "Ureña", "Frutería Cola");
       applicationId: yokasta.id,
       agentName: "jose",
       toolCalls: JSON.stringify([{ name: "saveAnswer", args: { monthlySales: 65000 } }]),
+      failed: true,
       at: 49
+    },
+    // José only ran a tool: no text, so the panel draws nothing for it.
+    {
+      role: "AGENT",
+      content: "",
+      profile: "PROSPECT",
+      applicationId: yokasta.id,
+      agentName: "jose",
+      toolCalls: JSON.stringify([{ name: "saveAnswer", args: { employees: 2 } }]),
+      at: 48
     },
     {
       role: "INBOUND",

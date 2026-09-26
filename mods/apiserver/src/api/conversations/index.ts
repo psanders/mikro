@@ -9,6 +9,8 @@ export {
   createGetConversationHistory,
   createListConversationTurns,
   createGetApplicationConversation,
+  createGetApplicationChatwootUrl,
+  PANEL_TURNS,
   createDeleteConversation,
   toTurnView,
   type ConversationTurnView,

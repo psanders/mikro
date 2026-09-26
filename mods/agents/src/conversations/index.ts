@@ -3,6 +3,7 @@
  */
 export {
   agentVersionOf,
+  isNewSessionFrom,
   textOf,
   type ConversationTurnRole,
   type ConversationTurnRecord,

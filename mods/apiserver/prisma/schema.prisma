@@ -656,6 +656,10 @@ model LoanApplication {
   loanId     Int?    @map("loan_id")
 
   submittedAt DateTime? @map("submitted_at")
+  // When an abandoned draft last came back to DRAFT because the prospect wrote
+  // again. José's intake memory starts here, so the old intake's turn counters
+  // don't carry into the reopened one.
+  reopenedAt  DateTime? @map("reopened_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -778,6 +782,9 @@ model ConversationTurn {
   applicationId String?  @map("application_id")
   customerId    String?  @map("customer_id")
   waMessageId   String?  @map("wa_message_id")
+  // The send to WhatsApp failed: the reply was produced (kept for audits) but
+  // the person never got it, so it is left out of the agents' memory.
+  failed        Boolean  @default(false)
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([phone, createdAt])

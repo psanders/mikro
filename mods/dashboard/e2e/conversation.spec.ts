@@ -30,6 +30,9 @@ test("a reviewer reads the applicant's WhatsApp conversation in the full applica
   await expect(turns.first()).toContainText("¿qué necesito para un préstamo?");
   await expect(turns.nth(1)).toContainText("Lucía (agente)");
   await expect(turns.nth(3)).toContainText("José (agente)");
+  // Meta rejected this send: kept, but marked as never delivered.
+  await expect(turns.nth(3).getByTestId("conversation-turn-failed")).toHaveText(/No entregado/);
+  await expect(thread.getByTestId("conversation-turn-failed")).toHaveCount(1);
   await expect(turns.nth(5)).toHaveAttribute("data-role", "SYSTEM");
   await expect(turns.nth(5)).toContainText("Mikro (automático)");
 

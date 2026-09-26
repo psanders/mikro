@@ -29,6 +29,20 @@ export interface ConversationTurnRecord {
   customerId?: string;
   /** The inbound message's wamid, or the one Meta returned for our send. */
   waMessageId?: string;
+  /** The send failed: kept for audits, left out of the agents' memory. */
+  failed?: boolean;
+}
+
+/**
+ * Whether this turn starts a new session: nothing stored yet, or the last
+ * stored message is older than the session timeout. Read from the transcript
+ * (not process memory) so a restart mid-conversation is not a new session.
+ */
+export function isNewSessionFrom(history: Message[], timeoutSeconds: number): boolean {
+  const last = history.at(-1)?.timestamp;
+  if (!last) return true;
+  const at = new Date(last).getTime();
+  return Number.isNaN(at) || Date.now() - at > timeoutSeconds * 1000;
 }
 
 /**

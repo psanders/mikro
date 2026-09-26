@@ -40,6 +40,12 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
   });
   const activity = trpc.listFeedEvents.useQuery({ applicationId: app.id, limit: 50 });
   const conversation = trpc.getApplicationConversation.useQuery({ applicationId: app.id });
+  // Separate and cached: the thread never waits on Chatwoot, and a window
+  // refocus doesn't search Chatwoot again.
+  const chatwoot = trpc.getApplicationChatwootUrl.useQuery(
+    { applicationId: app.id },
+    { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false, retry: false }
+  );
   const record = app as unknown as Record<string, unknown>;
 
   const take = checkAction(rules, "assign", viewer);
@@ -212,7 +218,7 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
             turns={conversation.data?.turns ?? []}
             handoffs={conversation.data?.handoffs ?? []}
             personName={app.firstName?.trim() || "Solicitante"}
-            chatwootUrl={conversation.data?.chatwootUrl}
+            chatwootUrl={chatwoot.data?.url}
             loading={conversation.isPending}
             error={conversation.isError}
           />

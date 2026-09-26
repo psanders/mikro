@@ -95,6 +95,10 @@ function voiceWebhook() {
   };
 }
 
+/** History as role + text, without the stored timestamps. */
+const chat = (history: Array<{ role: string; content: unknown }>) =>
+  history.map(({ role, content }) => ({ role, content }));
+
 const agentFor = (profile: string) => ({
   name: `${profile.toLowerCase()}-agent`,
   profile,
@@ -459,7 +463,7 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(textWebhook("¿y los requisitos?"));
 
       expect(p.invokeLLM.firstCall.args[1]).to.deep.equal([]);
-      expect(p.invokeLLM.secondCall.args[1]).to.deep.equal([
+      expect(chat(p.invokeLLM.secondCall.args[1])).to.deep.equal([
         { role: "user", content: "hola" },
         { role: "assistant", content: "respuesta" }
       ]);
@@ -475,7 +479,7 @@ describe("WhatsApp CX routes", () => {
 
       await handleWhatsAppMessage(textWebhook("¿recuerdas mi nombre?"));
 
-      expect(p.invokeLLM.firstCall.args[1]).to.deep.equal([
+      expect(chat(p.invokeLLM.firstCall.args[1])).to.deep.equal([
         { role: "user", content: "me llamo Ana" },
         { role: "assistant", content: "¡Hola Ana!" }
       ]);
@@ -537,7 +541,90 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
 
       const agentTurn = p.turns.find((t) => t.role === "AGENT");
-      expect(agentTurn).to.include({ content: "respuesta", waMessageId: undefined });
+      expect(agentTurn).to.include({ content: "respuesta", waMessageId: undefined, failed: true });
+    });
+
+    it("keeps a reply whose send failed out of the agent's memory", async () => {
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "hola", profile: "GUEST" },
+        { phone: PHONE, role: "AGENT", content: "nunca llegó", profile: "GUEST", failed: true }
+      ]);
+      const p = setup({ type: "guest", phone: PHONE }, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("¿hola?"));
+
+      expect(chat(p.invokeLLM.firstCall.args[1])).to.deep.equal([
+        { role: "user", content: "hola" }
+      ]);
+    });
+
+    it("does not start a new session after a restart mid-conversation", async () => {
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "hola", profile: "GUEST" },
+        { phone: PHONE, role: "AGENT", content: "¡Hola!", profile: "GUEST" }
+      ]);
+      const p = setup({ type: "guest", phone: PHONE }, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("sigo aquí"));
+
+      expect(p.invokeLLM.firstCall.args[5]).to.equal(false);
+    });
+
+    it("starts a new session when the last stored message is past the timeout", async () => {
+      const old = new Date(Date.now() - 48 * 3600 * 1000);
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "hola", profile: "GUEST", createdAt: old },
+        { phone: PHONE, role: "AGENT", content: "¡Hola!", profile: "GUEST", createdAt: old }
+      ]);
+      const p = setup({ type: "guest", phone: PHONE }, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("hola otra vez"));
+
+      expect(p.invokeLLM.firstCall.args[5]).to.equal(true);
+    });
+
+    it("reads José's history only after reopening, so the reopen boundary applies", async () => {
+      const p = setup({ ...prospectRoute, type: "reopen" });
+
+      await handleWhatsAppMessage(textWebhook("hola, quiero seguir"));
+
+      expect(p.reopenApplication.calledOnce).to.be.true;
+      expect(p.getConversationHistory.calledOnce).to.be.true;
+      expect(p.getConversationHistory.calledAfter(p.reopenApplication)).to.be.true;
+    });
+
+    it("does not read history when the reopen is refused", async () => {
+      const p = setup(
+        { ...prospectRoute, type: "reopen" },
+        { reopenApplication: sinon.stub().resolves(false) }
+      );
+
+      await handleWhatsAppMessage(textWebhook("hola"));
+
+      expect(p.getConversationHistory.called).to.be.false;
+    });
+
+    it("leaves out a message that arrived after the current one", async () => {
+      const transcript = createFakeTranscript();
+      // A second message from the same phone lands while the first is still
+      // being answered: stored first, then the first message's turn is read.
+      const p = setup({ type: "guest", phone: PHONE }, {}, transcript);
+      const realRecord = p.recordConversationTurn;
+      let injected = false;
+      p.recordConversationTurn = sinon.spy(async (turn) => {
+        const result = await realRecord(turn);
+        if (!injected && turn.role === "INBOUND") {
+          injected = true;
+          await realRecord({ ...turn, content: "segundo mensaje", waMessageId: "later" });
+        }
+        return result;
+      }) as never;
+      setMessageProcessor(p as never);
+
+      await handleWhatsAppMessage(textWebhook("primer mensaje"));
+
+      expect(chat(p.invokeLLM.firstCall.args[1])).to.deep.equal([]);
+      expect(p.invokeLLM.firstCall.args[2]).to.equal("primer mensaje");
     });
 
     it("records the voice-note notice as a SYSTEM turn", async () => {

@@ -12,7 +12,8 @@ import {
   createRecordConversationTurn,
   createGetConversationHistory,
   CX_HISTORY_TURNS,
-  CX_HISTORY_MAX_AGE_MS
+  CX_HISTORY_MAX_AGE_MS,
+  PANEL_TURNS
 } from "../../src/api/conversations/index.js";
 import { createTestDb, applySchema, createAuthenticatedCaller, type TestDb } from "./setup.js";
 
@@ -84,7 +85,14 @@ describe("Conversation transcripts Integration", () => {
         toolCalls: [{ name: "getBalance", args: { loanId: 10034 } }]
       });
 
-      expect(await history({ phone: PHONE, scope: "cx" })).to.deep.equal([
+      const read = await history({ phone: PHONE, scope: "cx" });
+      expect(
+        read.map(({ role, content, tools_executed }) => ({
+          role,
+          content,
+          ...(tools_executed ? { tools_executed } : {})
+        }))
+      ).to.deep.equal([
         { role: "user", content: "¿cuánto debo?" },
         {
           role: "assistant",
@@ -92,6 +100,73 @@ describe("Conversation transcripts Integration", () => {
           tools_executed: [{ name: "getBalance", args: { loanId: 10034 } }]
         }
       ]);
+      // The stored time comes along so the agents can tell a new session.
+      expect(read[1].timestamp).to.be.instanceOf(Date);
+    });
+
+    it("reads only turns stored before the current one (overlapping messages)", async () => {
+      await record({ phone: PHONE, role: "INBOUND", content: "antes", profile: "GUEST" });
+      const current = await record({
+        phone: PHONE,
+        role: "INBOUND",
+        content: "hola",
+        profile: "GUEST"
+      });
+      // A second message from the same phone, stored while "hola" is answered.
+      await record({ phone: PHONE, role: "INBOUND", content: "después", profile: "GUEST" });
+
+      const read = await history({ phone: PHONE, scope: "cx", excludeId: current.id });
+      expect(read.map((m) => m.content)).to.deep.equal(["antes"]);
+    });
+
+    it("leaves failed sends out of the agent's memory but keeps them for audits", async () => {
+      await record({ phone: PHONE, role: "INBOUND", content: "hola", profile: "GUEST" });
+      await record({
+        phone: PHONE,
+        role: "AGENT",
+        content: "nunca llegó",
+        profile: "GUEST",
+        failed: true
+      });
+
+      expect((await history({ phone: PHONE, scope: "cx" })).map((m) => m.content)).to.deep.equal([
+        "hola"
+      ]);
+      const exported = await createAuthenticatedCaller(db).listConversationTurns({ phone: PHONE });
+      expect(exported.map((t) => [t.content, t.failed])).to.deep.equal([
+        ["hola", false],
+        ["nunca llegó", true]
+      ]);
+    });
+
+    it("starts José's memory at the application's last reopen", async () => {
+      const app = await makeApplication();
+      const prospect = { phone: PHONE, profile: "PROSPECT" as const, applicationId: app.id };
+      await db.conversationTurn.createMany({
+        data: [
+          {
+            ...prospect,
+            role: "INBOUND",
+            content: "intake viejo",
+            createdAt: new Date(Date.now() - 3_600_000)
+          },
+          {
+            ...prospect,
+            role: "AGENT",
+            content: "pregunta vieja",
+            createdAt: new Date(Date.now() - 3_599_000)
+          }
+        ]
+      });
+      await db.loanApplication.update({
+        where: { id: app.id },
+        data: { reopenedAt: new Date(Date.now() - 60_000) }
+      });
+      await record({ ...prospect, role: "INBOUND", content: "volví" });
+      await record({ ...prospect, role: "AGENT", content: "¡Bienvenida de vuelta!" });
+
+      const jose = await history({ phone: PHONE, scope: "prospect", applicationId: app.id });
+      expect(jose.map((m) => m.content)).to.deep.equal(["volví", "¡Bienvenida de vuelta!"]);
     });
 
     it("normalizes the phone to E.164 on write and read", async () => {
@@ -208,8 +283,50 @@ describe("Conversation transcripts Integration", () => {
       expect(result.turns[1]).to.include({ role: "AGENT", agentName: "jose" });
       expect(result.handoffs).to.have.length(1);
       expect(result.handoffs[0].reason).to.equal("Pidió hablar con una persona");
-      // Chatwoot is not configured in the test fixture.
-      expect(result.chatwootUrl).to.equal(null);
+      // The Chatwoot link is its own read; unconfigured in the test fixture.
+      const link = await callerAs(["REVIEWER"]).getApplicationChatwootUrl({
+        applicationId: app.id
+      });
+      expect(link).to.deep.equal({ url: null });
+    });
+
+    it("drops hand-offs older than the oldest turn shown when the thread is truncated", async () => {
+      const app = await makeApplication();
+      const start = Date.now() - (PANEL_TURNS + 100) * 1000;
+      await db.conversationHandoff.create({
+        data: {
+          phone: PHONE,
+          profile: "CUSTOMER",
+          reason: "vieja",
+          openedAt: new Date(start - 60_000),
+          expiresAt: new Date(start)
+        }
+      });
+      await db.conversationTurn.createMany({
+        data: Array.from({ length: PANEL_TURNS + 10 }, (_, i) => ({
+          phone: PHONE,
+          role: "INBOUND",
+          content: `m${i}`,
+          createdAt: new Date(start + i * 1000)
+        }))
+      });
+      await db.conversationHandoff.create({
+        data: {
+          phone: PHONE,
+          profile: "CUSTOMER",
+          reason: "reciente",
+          openedAt: new Date(start + (PANEL_TURNS + 5) * 1000),
+          expiresAt: new Date(Date.now() + 1000)
+        }
+      });
+
+      const result = await callerAs(["ADMIN"]).getApplicationConversation({
+        applicationId: app.id
+      });
+
+      expect(result.turns).to.have.length(PANEL_TURNS);
+      expect(result.turns[0].content).to.equal("m10");
+      expect(result.handoffs.map((h) => h.reason)).to.deep.equal(["reciente"]);
     });
 
     it("is empty for an application without a phone", async () => {

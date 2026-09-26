@@ -7,6 +7,8 @@
  * green — an agent's reply names the agent in violet, a fixed app reply says
  * so. Where a hand-off to a person began, a divider marks it: from there staff
  * reply in Chatwoot, which this thread does not include, so it links there.
+ * A turn where an agent only ran tools has no text and is not drawn; a reply
+ * whose send failed is marked "No entregado".
  */
 import { Image as ImageIcon, UserRound } from "lucide-react";
 import { SectionLabel } from "./ui";
@@ -17,6 +19,8 @@ export interface ThreadTurn {
   content: string;
   agentName: string | null;
   hasImage: boolean;
+  /** The send failed: the person never got it. */
+  failed?: boolean;
   createdAt: string | Date;
 }
 
@@ -72,7 +76,9 @@ function timeline(turns: ThreadTurn[], handoffs: ThreadHandoff[]): Item[] {
       at: new Date(h.openedAt).getTime(),
       handoff: h
     })),
-    ...turns.map((t) => ({ kind: "turn" as const, at: new Date(t.createdAt).getTime(), turn: t }))
+    ...turns
+      .filter((t) => t.content.trim() || t.hasImage)
+      .map((t) => ({ kind: "turn" as const, at: new Date(t.createdAt).getTime(), turn: t }))
   ];
   // Stable: turns keep their stored order among themselves.
   return items.sort((a, b) => a.at - b.at || (a.kind === b.kind ? 0 : a.kind === "turn" ? 1 : -1));
@@ -116,6 +122,12 @@ function Bubble({ turn, personName }: { turn: ThreadTurn; personName: string }) 
         )}
         <span className="whitespace-nowrap text-[10px] font-medium text-[#697A93]">
           {formatTurnTime(turn.createdAt)}
+          {turn.failed && (
+            <span className="font-semibold text-[#C2410C]" data-testid="conversation-turn-failed">
+              {" "}
+              · No entregado
+            </span>
+          )}
         </span>
       </div>
     </div>

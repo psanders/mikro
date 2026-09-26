@@ -235,7 +235,11 @@ Since issue #299 every CX message is stored in the `conversation_turns` table, n
 - **One row per message.** `INBOUND` is the person. `AGENT` is an agent's reply, with the agent's name, a version hash and the tools it called (name + arguments, never the results). `SYSTEM` is a fixed reply the app sent (hand-off ack, voice-note notice, error message, intake confirmation).
 - **Version hash** (`agent_version`): 12 characters derived from the agent's prompt, model, temperature, reply mode and tools. Editing an agent in `agents.yaml` changes it. Comparing conversations across versions is how you spot drift.
 - **Images and voice notes** are not stored. An image is recorded as its caption (or `[Imagen]`) with `has_image = true`. A voice note is recorded as its transcription, or as `[Nota de voz]` when it could not be transcribed.
-- **Agent memory reads from this table**, so a deploy no longer makes the bot forget. The guest/applicant/customer agents remember the last 40 messages from the last 30 days. José remembers his whole intake for that application, and his 7-turn cap keeps counting across restarts.
+- **Agent memory reads from this table**, so a deploy no longer makes the bot forget, and doesn't make it introduce itself again: a new session is decided from the time of the last stored message.
+  - The guest/applicant/customer agents remember the last 40 messages from the last 30 days.
+  - José remembers his intake for that application since it was last reopened. His 7-turn cap keeps counting across restarts, but starts over when an abandoned draft comes back.
+- **Failed sends** (Meta rejected the reply) are stored with `failed = true`. They show as "No entregado" on the panel and `[NOT DELIVERED]` in the text export. The agents don't remember them, because the person never saw them.
+- **Tool-only turns** (the agent ran a tool and said nothing) are stored with empty text. The panel doesn't draw them; the export includes them.
 - **Where to see it:** Ops app → open an application → **Conversación · WhatsApp**. It shows everything stored for the applicant's phone, including chats from before they applied, and marks where a hand-off began. Replies your team types in Chatwoot are **not** stored; use the **Abrir en Chatwoot →** link for those. The link only appears when `chatwoot` is configured.
 - **Export for evals** (ADMIN):
   - `mikro conversations:export --since 2026-09-01 > turns.jsonl` writes one JSON turn per line.
