@@ -842,6 +842,14 @@ const UNMATCHED_USERNAME_ACK =
 const HANDOFF_ACK =
   "Claro, ya le avisé al equipo. Una persona te va a responder por aquí lo antes posible.";
 
+/**
+ * A DRAFT José is getting submitted: its messages restart the abandon clock.
+ * A submitted application José is still completing has no abandon clock.
+ */
+function isDraftIntake(route: CxRoute): route is Extract<CxRoute, { type: "prospect" }> {
+  return route.type === "prospect" && (route.phase ?? "intake") === "intake";
+}
+
 function profileFor(route: CxRoute): Profile {
   switch (route.type) {
     case "customer":
@@ -1011,7 +1019,7 @@ async function noteQuietInbound(
       hasImage: !!message.image?.id,
       waMessageId: message.id
     });
-    if (route.type === "prospect") await processor.recordProspectActivity?.(route.applicationId);
+    if (isDraftIntake(route)) await processor.recordProspectActivity?.(route.applicationId);
   } catch (error) {
     logger.error("failed to note inbound message while replies are disabled", {
       phone: sender.address,
@@ -1033,7 +1041,7 @@ async function passesCxGate(
   const { phone } = route;
   const profile = profileFor(route);
 
-  if (route.type === "prospect" && processor.recordProspectActivity) {
+  if (isDraftIntake(route) && processor.recordProspectActivity) {
     await processor.recordProspectActivity(route.applicationId);
   }
 
@@ -1140,11 +1148,16 @@ async function handleCxMessage(
   const history = await loadHistory();
 
   if (route.type === "prospect" || route.type === "reopen") {
+    const phase = route.type === "prospect" ? (route.phase ?? "intake") : "intake";
     const result = await handleProspectMessage(phone, route.sessionId, userMessage, {
       invokeLLM,
       joseAgent: agent,
       applicationId: route.applicationId,
-      history
+      history,
+      phase,
+      // After submission José also takes the applicant's documents.
+      imageUrl: phase === "enrichment" ? imageUrl : null,
+      ...(sender?.bsuid ? { whatsappUserId: sender.bsuid } : {})
     });
     await replyAsAgent(processor, phone, result.text, result.toolsExecuted, agentTurn);
     return;

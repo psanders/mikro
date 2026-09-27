@@ -13,7 +13,6 @@ import type { AuditConversation, AuditTurn, JudgeConversation } from "../../src/
 import { agentConfigSchema } from "../../src/agents/agentSchema.js";
 import { agentVersionOf } from "../../src/conversations/transcript.js";
 import { PROCESSING_ERROR_REPLY } from "../../src/whatsapp/handleWhatsAppMessage.js";
-import { MAX_JOSE_TURNS } from "../../src/whatsapp/handleProspectMessage.js";
 import type { Agent } from "../../src/llm/types.js";
 
 const T0 = new Date("2026-09-26T12:00:00Z").getTime();
@@ -81,28 +80,6 @@ describe("conversation audit — code checks", () => {
     expect(
       ids(convo([turn({ role: "INBOUND", content: "mi asesor me dijo que viniera" })]))
     ).to.deep.equal([]);
-  });
-
-  it("flags José past the turn cap for one application, citing the first turn over", () => {
-    const jose = Array.from({ length: MAX_JOSE_TURNS + 1 }, () =>
-      turn({ role: "AGENT", content: "¿Cuánto vendes?", profile: "PROSPECT", agentName: "jose" })
-    );
-    const findings = runChecks(convo(jose)).filter((f) => f.checkId === "jose_turn_cap");
-    expect(findings).to.have.length(1);
-    expect(findings[0]!.turnId).to.equal(jose[MAX_JOSE_TURNS]!.id);
-  });
-
-  it("does not count failed José turns toward the cap", () => {
-    const jose = Array.from({ length: MAX_JOSE_TURNS + 1 }, (_, i) =>
-      turn({
-        role: "AGENT",
-        content: "¿Cuánto vendes?",
-        profile: "PROSPECT",
-        agentName: "jose",
-        failed: i === 0
-      })
-    );
-    expect(runChecks(convo(jose)).filter((f) => f.checkId === "jose_turn_cap")).to.have.length(0);
   });
 
   it("flags a score stated to the person as critical", () => {

@@ -21,8 +21,18 @@ export type RouteResult =
       /** A new application of theirs in the review pipeline, if any. */
       applicationId?: string;
     }
-  /** DRAFT application: José finishes the intake. */
-  | { type: "prospect"; applicationId: string; sessionId: string; phone: string }
+  /**
+   * José's application. `intake`: a DRAFT he gets submitted. `enrichment`: a
+   * submitted (RECEIVED) application whose remaining form fields he still
+   * asks while the conversation is live (openspec jose-keep-gathering).
+   */
+  | {
+      type: "prospect";
+      applicationId: string;
+      sessionId: string;
+      phone: string;
+      phase?: "intake" | "enrichment";
+    }
   /** Never-submitted ABANDONED application: reopen to DRAFT, then José. */
   | { type: "reopen"; applicationId: string; sessionId: string; phone: string }
   /** Application in the review pipeline (RECEIVED → APPROVED). */
@@ -50,6 +60,8 @@ export interface ApplicationLookupResult {
   submittedAt: Date | null;
   /** When it was approved or rejected; optional for older callers. */
   decidedAt?: Date | null;
+  /** RECEIVED and José still asks its missing fields (the lookup decides). */
+  intakeOpen?: boolean;
 }
 
 /**

@@ -176,6 +176,16 @@ export function createSaveAnswer(
         })
       );
 
+      // A submitted application whose form is now complete: José is done asking
+      // (openspec jose-keep-gathering), so the applicant agent answers next.
+      const intakeComplete = existing?.status === "RECEIVED" && missingFields.length === 0;
+      if (intakeComplete && existing && !existing.intakeClosedAt) {
+        await client.loanApplication.update({
+          where: { id: existing.id },
+          data: { intakeClosedAt: new Date() }
+        });
+      }
+
       logger.verbose("jose saveAnswer: fields saved", { sessionId, saved, simulatedIsc });
       return {
         success: true,
@@ -187,7 +197,9 @@ export function createSaveAnswer(
           simulatedIsc,
           isOutOfZone,
           isCriticalBusiness,
-          missingFields
+          missingFields,
+          submitted: existing?.status === "RECEIVED",
+          intakeComplete
         }
       };
     } catch (err) {

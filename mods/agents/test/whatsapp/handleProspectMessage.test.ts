@@ -50,7 +50,7 @@ const TEST_CONFIG = {
   applications: { coveredProvinces: ["PUERTO_PLATA"] }
 };
 
-describe("handleProspectMessage turn cap", () => {
+describe("handleProspectMessage submit-by turn", () => {
   before(() => {
     writeFileSync(TEST_CONFIG_PATH, JSON.stringify(TEST_CONFIG));
     clearConfigCache();
@@ -74,23 +74,24 @@ describe("handleProspectMessage turn cap", () => {
     return { invokeLLM, joseAgent: { name: "jose" } as any, history: [] as Message[] };
   }
 
-  it("does not force finalize during the first 6 turns", async () => {
+  it("does not force the submission during the first 6 turns", async () => {
     const deps = makeDeps();
     for (let i = 0; i < 6; i++) {
       await turn(deps, `respuesta ${i}`);
     }
     for (const call of deps.invokeLLM.getCalls()) {
-      expect(call.args[2]).to.not.contain("Límite de turnos");
+      expect(call.args[2]).to.not.contain("Es momento de enviar la solicitud");
     }
   });
 
-  it("injects the finalize directive on the 7th turn", async () => {
+  it("tells José to submit (and keep asking) on the 7th turn", async () => {
     const deps = makeDeps();
     for (let i = 0; i < 7; i++) {
       await turn(deps, `respuesta ${i}`);
     }
     const seventh = deps.invokeLLM.getCall(6);
-    expect(seventh.args[2]).to.contain("Límite de turnos alcanzado");
+    expect(seventh.args[2]).to.contain("Es momento de enviar la solicitud");
+    expect(seventh.args[2]).to.contain("seguir con unas preguntas más");
     // The prospect's original text is preserved after the directive.
     expect(seventh.args[2]).to.contain("respuesta 6");
   });
@@ -120,7 +121,7 @@ describe("handleProspectMessage counters from history", () => {
     }
   ];
 
-  it("forces the finalize directive when the stored history already has 6 José replies", async () => {
+  it("forces the submit directive when the stored history already has 6 José replies", async () => {
     const invokeLLM = sinon.stub().resolves({ text: "Listo", toolsExecuted: [] });
     const history = Array.from({ length: 6 }, () => exchange(true)).flat();
 
@@ -130,7 +131,7 @@ describe("handleProspectMessage counters from history", () => {
       history
     });
 
-    expect(invokeLLM.firstCall.args[2]).to.contain("Límite de turnos alcanzado");
+    expect(invokeLLM.firstCall.args[2]).to.contain("Es momento de enviar la solicitud");
     expect(invokeLLM.firstCall.args[1]).to.equal(history);
   });
 
@@ -210,5 +211,81 @@ describe("handleProspectMessage opt-out detection", () => {
     const arg = deps.invokeLLM.getCall(0).args[2] as string;
     expect(arg).to.not.contain("NO está interesado");
     expect(arg).to.equal("No");
+  });
+});
+
+// openspec jose-keep-gathering: after submission José keeps asking, with no cap,
+// and a decline or a stuck conversation only ends his questions.
+describe("handleProspectMessage after submission (enrichment)", () => {
+  before(() => {
+    writeFileSync(TEST_CONFIG_PATH, JSON.stringify(TEST_CONFIG));
+    clearConfigCache();
+    getConfig(TEST_CONFIG_PATH);
+  });
+  after(() => {
+    if (existsSync(TEST_CONFIG_PATH)) unlinkSync(TEST_CONFIG_PATH);
+    clearConfigCache();
+  });
+  afterEach(() => sinon.restore());
+
+  const exchange = (saved: boolean): Message[] => [
+    { role: "user", content: "algo" },
+    {
+      role: "assistant",
+      content: "ok",
+      tools_executed: saved ? [{ name: "saveAnswer", args: {} }] : []
+    }
+  ];
+
+  async function run(message: string, history: Message[], extra: Record<string, unknown> = {}) {
+    const invokeLLM = sinon.stub().resolves({ text: "ok", toolsExecuted: [] });
+    await handleProspectMessage(PHONE, SESSION, message, {
+      invokeLLM,
+      joseAgent: { name: "jose" } as any,
+      history,
+      phase: "enrichment",
+      applicationId: "app-1",
+      ...extra
+    });
+    return invokeLLM.firstCall;
+  }
+
+  it("has no turn cap: the 10th reply is still a normal FASE 2 turn", async () => {
+    const call = await run(
+      "mi negocio tiene 3 años",
+      Array.from({ length: 9 }, () => exchange(true)).flat()
+    );
+    expect(call.args[2]).to.contain("FASE 2");
+    expect(call.args[2]).to.not.contain("Es momento de enviar");
+    expect(call.args[4]).to.include({
+      submitted: true,
+      profile: "PROSPECT",
+      applicationId: "app-1"
+    });
+  });
+
+  it("a decline closes José's questions and says the application is not cancelled", async () => {
+    const call = await run("no gracias, ya no quiero seguir", exchange(true));
+    expect(call.args[2]).to.contain("YA está enviada y NO se cancela");
+    expect(call.args[2]).to.not.contain('outcome "abandoned"');
+  });
+
+  it("a stuck conversation closes José's questions, never abandons", async () => {
+    const history = [...exchange(true), ...exchange(false), ...exchange(false), ...exchange(false)];
+    const call = await run("jaja", history);
+    expect(call.args[2]).to.contain("sigue enviada");
+    expect(call.args[2]).to.not.contain('outcome "abandoned"');
+  });
+
+  it("greets a web-form applicant on José's first message", async () => {
+    const call = await run("hola", []);
+    expect(call.args[2]).to.contain("formulario web");
+    expect(call.args[2]).to.contain("getApplicationState");
+  });
+
+  it("passes the turn's image so José can take the applicant's documents", async () => {
+    const call = await run("mi cédula", exchange(true), { imageUrl: "data:image/png;base64,AAA" });
+    expect(call.args[3]).to.equal("data:image/png;base64,AAA");
+    expect(call.args[4]).to.include({ imageDataUrl: "data:image/png;base64,AAA" });
   });
 });

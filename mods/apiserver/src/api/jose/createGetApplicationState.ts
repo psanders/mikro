@@ -6,10 +6,11 @@
  * fields plus disqualifying flags for the LLM to reason over.
  */
 import type { DbClient } from "@mikro/common";
-import { APPLICATION_CONTENT_KEYS, sortByFieldPriority } from "@mikro/common";
+import { APPLICATION_CONTENT_KEYS } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { computeSimulatedIsc } from "./computeScore.js";
+import { applicationFields, missingApplicationFields } from "./missingFields.js";
 
 export function createGetApplicationState(client: DbClient) {
   return async (context?: Record<string, unknown>): Promise<ToolResult> => {
@@ -27,40 +28,16 @@ export function createGetApplicationState(client: DbClient) {
         return { success: false, message: `Application not found for sessionId: ${sessionId}` };
       }
 
-      // Merge stable columns + rawData into one flat map
       const rawData = (app.rawData as Record<string, unknown>) ?? {};
-      const allFields: Record<string, unknown> = {
-        firstName: app.firstName,
-        lastName: app.lastName,
-        phone: app.phone,
-        idNumber: app.idNumber,
-        dateOfBirth: app.dateOfBirth ? String(app.dateOfBirth) : null,
-        maritalStatus: app.maritalStatus,
-        businessType: app.businessType,
-        businessName: app.businessName,
-        requestedAmount: app.requestedAmount,
-        purpose: app.purpose,
-        requestedTermWeeks: app.requestedTermWeeks,
-        province: app.province,
-        homeAddress: app.homeAddress,
-        ...rawData
-      };
-
+      const allFields = applicationFields(app);
       const filledFields: Record<string, unknown> = {};
-      const missingFields: string[] = [];
-
       for (const key of APPLICATION_CONTENT_KEYS) {
         const val = allFields[key];
-        if (val !== null && val !== undefined && val !== "") {
-          filledFields[key] = val;
-        } else {
-          missingFields.push(key);
-        }
+        if (val !== null && val !== undefined && val !== "") filledFields[key] = val;
       }
-
-      // Order missing fields by knockout + scoring weight so José asks the
-      // highest-signal questions first (single source of truth: FIELD_PRIORITY).
-      const orderedMissingFields = sortByFieldPriority(missingFields);
+      // Highest-signal first (single source of truth: FIELD_PRIORITY).
+      const orderedMissingFields = missingApplicationFields(app);
+      const missingFields = orderedMissingFields;
 
       // Simulate score with partial: false
       const { simulatedIsc, isOutOfZone, isCriticalBusiness } = computeSimulatedIsc(app, rawData);

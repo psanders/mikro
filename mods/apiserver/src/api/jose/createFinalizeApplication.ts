@@ -41,6 +41,28 @@ export function createFinalizeApplication(
         return { success: false, message: `Application not found: ${sessionId}` };
       }
 
+      // Already submitted (José kept asking the remaining fields, openspec
+      // jose-keep-gathering): finalizing only ends his questions. It never
+      // abandons or re-submits a submitted application.
+      if (existing.status !== "DRAFT") {
+        if (!existing.intakeClosedAt) {
+          await client.loanApplication.update({
+            where: { id: existing.id },
+            data: { intakeClosedAt: new Date() }
+          });
+        }
+        logger.info("jose finalizeApplication: intake closed on a submitted application", {
+          sessionId,
+          status: existing.status,
+          outcome
+        });
+        return {
+          success: true,
+          message: "La solicitud ya está enviada; no hay más preguntas",
+          data: { finalized: true, outcome: "intake_closed" }
+        };
+      }
+
       if (outcome === "abandoned") {
         await client.loanApplication.update({
           where: { id: existing.id },

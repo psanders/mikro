@@ -26,15 +26,25 @@ export interface ProspectMessageDeps {
   applicationId?: string;
   /** José's conversation with this prospect so far, oldest first (no SYSTEM turns). */
   history: Message[];
+  /**
+   * `intake` (default): a DRAFT José gets submitted. `enrichment`: already
+   * submitted; José keeps asking the remaining fields (openspec
+   * jose-keep-gathering). Decides which directives apply.
+   */
+  phase?: "intake" | "enrichment";
+  /** The turn's image (enrichment only: José takes the applicant's documents). */
+  imageUrl?: string | null;
+  /** A username sender's BSUID, so a hand-off from José can find them later. */
+  whatsappUserId?: string;
 }
 
 /**
- * Hard cap on the number of messages José sends in one intake conversation.
- * The closing message is the last (7th) turn, so José has at most 6 turns to
- * collect data. This guarantees a short form regardless of ISC progress —
- * José finalizes earlier if simulatedIsc reaches the target threshold.
+ * José submits a DRAFT by this reply at the latest (earlier when the simulated
+ * score reaches the prompt's threshold), so a lead is never lost to a long
+ * conversation. It is not an end point: after submitting he keeps asking the
+ * remaining fields while the person answers (openspec jose-keep-gathering).
  */
-export const MAX_JOSE_TURNS = 7;
+export const SUBMIT_BY_TURN = 7;
 
 /**
  * Conservative detector for an explicit "not interested" / opt-out message.
@@ -73,50 +83,22 @@ export async function handleProspectMessage(
   deps: ProspectMessageDeps
 ): Promise<{ text: string; toolsExecuted: ToolExecuted[] }> {
   const { invokeLLM, joseAgent, history } = deps;
+  const phase = deps.phase ?? "intake";
   const session = countTurns(history);
   const newSession = isNewSessionFrom(history, getSessionTimeoutSeconds());
-
-  // Inject a directive into userMessage based on conversation state. Precedence:
-  // an explicit decline closes the conversation as ABANDONED no matter what
-  // (highest); then the hard turn cap (final allowed turn must close out as
-  // complete); then the stuck counter (no useful answers → abandoned).
-  let effectiveMessage = userMessage;
-  const isFinalTurn = session.joseTurns >= MAX_JOSE_TURNS - 1;
-  if (isDecline(userMessage)) {
-    effectiveMessage =
-      `[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. ` +
-      `Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta ` +
-      `anterior, y llama finalizeApplication con outcome "abandoned".] ` +
-      userMessage;
-    logger.verbose("jose decline detected, forcing abandon", { phone });
-  } else if (isFinalTurn) {
-    effectiveMessage =
-      `[SISTEMA: Límite de turnos alcanzado. Esta es tu última respuesta. ` +
-      `Primero guarda con saveAnswer cualquier dato útil en este mensaje, luego llama ` +
-      `finalizeApplication con outcome "complete" y responde SOLO con el mensaje de cierre. ` +
-      `No hagas más preguntas.] ` +
-      userMessage;
-    logger.verbose("jose turn cap reached, forcing finalize", {
-      phone,
-      joseTurns: session.joseTurns
-    });
-  } else if (session.turnsSinceLastSave >= 3) {
-    effectiveMessage =
-      `[SISTEMA: El prospecto lleva ${session.turnsSinceLastSave} turnos sin responder preguntas de intake. ` +
-      `Si este mensaje tampoco contiene datos útiles para guardar, despídete y llama ` +
-      `finalizeApplication con outcome "abandoned".] ` +
-      userMessage;
-    logger.verbose("jose stuck warning injected", {
-      phone,
-      turnsSinceLastSave: session.turnsSinceLastSave
-    });
+  const effectiveMessage = directiveFor(phase, userMessage, session) + userMessage;
+  if (effectiveMessage !== userMessage) {
+    logger.verbose("jose directive injected", { phone, phase, ...session });
   }
 
   const context: Record<string, unknown> = {
     sessionId,
     phone,
     profile: "PROSPECT",
-    ...(deps.applicationId ? { applicationId: deps.applicationId } : {})
+    ...(deps.applicationId ? { applicationId: deps.applicationId } : {}),
+    ...(phase === "enrichment" ? { submitted: true } : {}),
+    ...(deps.whatsappUserId ? { whatsappUserId: deps.whatsappUserId } : {}),
+    ...(deps.imageUrl ? { imageDataUrl: deps.imageUrl } : {})
   };
 
   logger.verbose("handling prospect message", {
@@ -126,11 +108,83 @@ export async function handleProspectMessage(
     turnsSinceLastSave: session.turnsSinceLastSave
   });
 
-  const result = await invokeLLM(joseAgent, history, effectiveMessage, null, context, newSession);
+  const result = await invokeLLM(
+    joseAgent,
+    history,
+    effectiveMessage,
+    deps.imageUrl ?? null,
+    context,
+    newSession
+  );
 
   const responseText = typeof result === "string" ? result : result.text;
   const toolsExecuted: ToolExecuted[] =
     typeof result === "string" ? [] : (result.toolsExecuted ?? []);
 
   return { text: responseText, toolsExecuted };
+}
+
+/**
+ * The system note prepended to the prospect's message, by phase. Precedence:
+ * an explicit decline first, then (intake) the submit-by turn, then the stuck
+ * counter. A decline or a stuck conversation abandons a DRAFT but never
+ * un-submits an application: after submission it only ends José's questions.
+ */
+function directiveFor(
+  phase: "intake" | "enrichment",
+  userMessage: string,
+  session: { joseTurns: number; turnsSinceLastSave: number }
+): string {
+  if (phase === "intake") {
+    if (isDecline(userMessage)) {
+      return (
+        `[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. ` +
+        `Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta ` +
+        `anterior, y llama finalizeApplication con outcome "abandoned".] `
+      );
+    }
+    if (session.joseTurns >= SUBMIT_BY_TURN - 1) {
+      return (
+        `[SISTEMA: Es momento de enviar la solicitud. Primero guarda con saveAnswer cualquier ` +
+        `dato útil de este mensaje y llama finalizeApplication con outcome "complete". En tu ` +
+        `respuesta confirma que la solicitud quedó recibida y ofrece, como algo opcional, seguir ` +
+        `con unas preguntas más para completarla: pregunta los siguientes 2 o 3 campos de ` +
+        `missingFields.] `
+      );
+    }
+    if (session.turnsSinceLastSave >= 3) {
+      return (
+        `[SISTEMA: El prospecto lleva ${session.turnsSinceLastSave} turnos sin responder preguntas de intake. ` +
+        `Si este mensaje tampoco contiene datos útiles para guardar, despídete y llama ` +
+        `finalizeApplication con outcome "abandoned".] `
+      );
+    }
+    return "";
+  }
+
+  // Enrichment: the application is already submitted.
+  if (isDecline(userMessage)) {
+    return (
+      `[SISTEMA: FASE 2. La persona no quiere responder más preguntas. Su solicitud YA está ` +
+      `enviada y NO se cancela. Agradece, dile que el equipo la está revisando, llama ` +
+      `finalizeApplication para cerrar tus preguntas y no preguntes nada más.] `
+    );
+  }
+  if (session.turnsSinceLastSave >= 3) {
+    return (
+      `[SISTEMA: FASE 2. La persona lleva ${session.turnsSinceLastSave} mensajes sin darte datos nuevos. ` +
+      `Si este tampoco trae datos para guardar, agradece, llama finalizeApplication para cerrar ` +
+      `tus preguntas y no preguntes más. La solicitud sigue enviada.] `
+    );
+  }
+  if (session.joseTurns === 0) {
+    return (
+      `[SISTEMA: FASE 2. Esta persona ya envió su solicitud (por el formulario web) y es tu ` +
+      `primer mensaje con ella. Llama getApplicationState, preséntate como José, confirma que ` +
+      `recibimos su solicitud y ofrece, como algo opcional, completarla con unas preguntas más: ` +
+      `pregunta los primeros 2 o 3 campos de missingFields. Si pregunta por el estado, usa ` +
+      `getMyApplicationStatus.] `
+    );
+  }
+  return `[SISTEMA: FASE 2. La solicitud ya está enviada.] `;
 }
