@@ -669,6 +669,10 @@ model LoanApplication {
   // again. José's intake memory starts here, so the old intake's turn counters
   // don't carry into the reopened one.
   reopenedAt  DateTime? @map("reopened_at")
+  // When José stopped asking the remaining form fields after submission (form
+  // complete, the person declined, or nothing more to save). Null while he may
+  // still ask; see intakeWindow.ts for the rest of the "intake open" rule.
+  intakeClosedAt DateTime? @map("intake_closed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 

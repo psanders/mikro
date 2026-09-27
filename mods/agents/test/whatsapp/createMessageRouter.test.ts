@@ -154,7 +154,7 @@ describe("createMessageRouter — CX routing by role and application status", ()
 
   const cases: Array<[string, ReturnType<typeof app> | null, Record<string, unknown>]> = [
     ["no application → guest", null, { type: "guest", phone: PHONE }],
-    ["DRAFT → prospect", app("DRAFT"), { type: "prospect", ...ref }],
+    ["DRAFT → prospect (intake)", app("DRAFT"), { type: "prospect", phase: "intake", ...ref }],
     ["never-submitted ABANDONED → reopen", app("ABANDONED"), { type: "reopen", ...ref }],
     [
       "ABANDONED after submission → guest",
@@ -162,6 +162,16 @@ describe("createMessageRouter — CX routing by role and application status", ()
       { type: "guest", phone: PHONE }
     ],
     ["RECEIVED → applicant", app("RECEIVED", new Date()), { type: "applicant", ...ref }],
+    [
+      "RECEIVED with intake open → prospect (enrichment)",
+      { ...app("RECEIVED", new Date()), intakeOpen: true },
+      { type: "prospect", phase: "enrichment", ...ref }
+    ],
+    [
+      "IN_REVIEW ignores intakeOpen → applicant",
+      { ...app("IN_REVIEW", new Date()), intakeOpen: true },
+      { type: "applicant", ...ref }
+    ],
     ["IN_REVIEW → applicant", app("IN_REVIEW", new Date()), { type: "applicant", ...ref }],
     [
       "PENDING_DECISION → applicant",

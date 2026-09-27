@@ -6,8 +6,10 @@ export { createApplicationIntakeHandler } from "./createApplicationIntakeHandler
 export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
 export {
   createGetApplicationByPhone,
-  createGetApplicationByWhatsAppUserId
+  createGetApplicationByWhatsAppUserId,
+  type ApplicationLookupDeps
 } from "./createGetApplicationByPhone.js";
+export { createIsIntakeOpen, INTAKE_WINDOW_MS } from "./intakeWindow.js";
 export { createSubmitApplicationFromFlow } from "./createSubmitApplicationFromFlow.js";
 export { createSendApplicationPromo, type PromoResult } from "./createSendApplicationPromo.js";
 export { createListApplications } from "./createListApplications.js";

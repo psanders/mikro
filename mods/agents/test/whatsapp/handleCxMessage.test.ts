@@ -171,6 +171,17 @@ describe("WhatsApp CX routes", () => {
       expect(p.sendWhatsAppMessage.called).to.be.false;
     });
 
+    it("a submitted application José is still completing has no abandon clock, and José answers", async () => {
+      const p = setup({ ...prospectRoute, phase: "enrichment" });
+
+      await handleWhatsAppMessage(textWebhook("tengo 3 empleados"));
+
+      expect(p.recordProspectActivity.called).to.be.false;
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[2]).to.contain("FASE 2");
+      expect(p.invokeLLM.firstCall.args[4]).to.include({ submitted: true, profile: "PROSPECT" });
+    });
+
     it("still records prospect activity during a hand-off", async () => {
       const p = setup(prospectRoute, { extendHandoff: sinon.stub().resolves(true) });
 

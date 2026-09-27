@@ -17,6 +17,7 @@ describe("createFinalizeApplication", () => {
   it("persists the application as complete (partial: false)", async () => {
     const findFirst = sinon.stub().resolves({
       sessionId: CTX.sessionId,
+      status: "DRAFT",
       firstName: "Pedro",
       lastName: "Sanders",
       rawData: {}
@@ -36,6 +37,7 @@ describe("createFinalizeApplication", () => {
     const findFirst = sinon.stub().resolves({
       id: "app-1",
       sessionId: CTX.sessionId,
+      status: "DRAFT",
       firstName: "Pedro",
       rawData: {}
     });
@@ -63,6 +65,7 @@ describe("createFinalizeApplication", () => {
     const findFirst = sinon.stub().resolves({
       id: "app-1",
       sessionId: CTX.sessionId,
+      status: "DRAFT",
       firstName: "Pedro",
       rawData: {}
     });
@@ -91,4 +94,33 @@ describe("createFinalizeApplication", () => {
     expect(result.success).to.be.false;
     expect(upsert.called).to.be.false;
   });
+
+  // openspec jose-keep-gathering: José keeps asking after submission; finalizing
+  // then only ends his questions.
+  for (const outcome of ["complete", "abandoned"]) {
+    it(`on a submitted application, '${outcome}' only closes intake (never abandons or re-submits)`, async () => {
+      const findFirst = sinon.stub().resolves({
+        id: "app-9",
+        sessionId: CTX.sessionId,
+        status: "RECEIVED",
+        intakeClosedAt: null,
+        rawData: {}
+      });
+      const update = sinon.stub().resolves(undefined);
+      const upsert = sinon.stub().resolves(undefined);
+      const tool = createFinalizeApplication(
+        { loanApplication: { findFirst, update } } as any,
+        upsert
+      );
+
+      const result = await tool({ outcome }, CTX);
+
+      expect(result.success).to.be.true;
+      expect(result.data!.outcome).to.equal("intake_closed");
+      expect(upsert.called).to.be.false;
+      expect(update.calledOnce).to.be.true;
+      expect(update.firstCall.args[0].where).to.deep.equal({ id: "app-9" });
+      expect(update.firstCall.args[0].data).to.have.keys(["intakeClosedAt"]);
+    });
+  }
 });

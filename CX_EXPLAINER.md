@@ -48,9 +48,10 @@ Each case lists what happens and how you can see it. Log lines are quoted exactl
 
 ### B. A prospect with an unfinished form writes
 
-1. Latest application is `DRAFT` → **José**, exactly as today (short intake, 7-turn cap, "no me interesa" closes it).
-2. **New:** every message they send restarts the draft's **8-hour abandon clock** (case C).
-3. **New:** if they are frustrated or ask for a person, José hands off (case I) instead of closing the application. The draft stays `DRAFT`.
+1. Latest application is `DRAFT` → **José**. He asks 2–3 fields per message and **submits early**: as soon as the estimated score reaches 50 or nothing is missing, and in any case by his 7th reply. "No me interesa" before submission abandons the draft.
+2. **After submitting he keeps going** (openspec jose-keep-gathering). If fields are still missing, he confirms the application was received and offers, as optional, to complete it. He keeps asking while the person answers, with no turn cap. He stops when the form is complete, when the person declines (the application stays submitted, it's never abandoned), after 3 replies with nothing new, after 24h of quiet, when a reviewer takes it, or on a hand-off. He only replies; he never writes first.
+3. **New:** every message they send before submission restarts the draft's **8-hour abandon clock** (case C).
+4. **New:** if they are frustrated or ask for a person, José hands off (case I) instead of closing the application. The draft stays `DRAFT`.
 
 **Monitor:** Chatwoot. Log line: `prospect activity — ABANDON rescheduled`.
 
@@ -76,6 +77,7 @@ Each case lists what happens and how you can see it. Log lines are quoted exactl
 
 ### E. A submitted applicant writes (`RECEIVED` or `IN_REVIEW`)
 
+0. **Exception, José first:** a `RECEIVED` application with form fields still missing stays with **José** while intake is open. That means he replied within the last 24h, or, for a web-form applicant, it's their first message and nobody has talked with them since they submitted. José then answers status questions and takes photos with Sofía's tools and rules. Once intake closes (see case B, item 2), it's Sofía.
 1. → **Sofía** (APPLICANT). The old fixed "Tu solicitud ya está en revisión" text is gone.
 2. On her first reply she checks the application and says the stage in plain words: _recibida_ or _en revisión_.
 3. If documents are missing (cédula front, cédula back, business photos below the configured minimum, 3 by default), she asks for them **one at a time**.
@@ -254,7 +256,7 @@ Since issue #299 every CX message is stored in the `conversation_turns` table, n
 - **Images and voice notes** are not stored. An image is recorded as its caption (or `[Imagen]`) with `has_image = true`. A voice note is recorded as its transcription, or as `[Nota de voz]` when it could not be transcribed.
 - **Agent memory reads from this table**, so a deploy no longer makes the bot forget, and doesn't make it introduce itself again: a new session is decided from the time of the last stored message.
   - The guest/applicant/customer agents remember the last 40 messages from the last 30 days.
-  - José remembers his intake for that application since it was last reopened. His 7-turn cap keeps counting across restarts, but starts over when an abandoned draft comes back.
+  - José remembers his intake for that application since it was last reopened, including after he submits it. His "submit by the 7th reply" count survives restarts and starts over when an abandoned draft comes back.
 - **Failed sends** (Meta rejected the reply) are stored with `failed = true`. They show as "No entregado" on the panel and `[NOT DELIVERED]` in the text export. The agents don't remember them, because the person never saw them.
 - **Tool-only turns** (the agent ran a tool and said nothing) are stored with empty text. The panel doesn't draw them; the export includes them.
 - **Where to see it:** Ops app → open an application → **Conversación · WhatsApp**. It shows everything stored for the applicant's phone, including chats from before they applied, and marks where a hand-off began. Replies your team types in Chatwoot are **not** stored; use the **Abrir en Chatwoot →** link for those. The link only appears when `chatwoot` is configured.
@@ -274,7 +276,6 @@ The stored conversations are reviewed automatically, on a schedule or when you a
   - **Mensaje no entregado**: a send Meta rejected.
   - **Respondió con el mensaje de error**: handling a message failed and the generic error reply went out.
   - **Pidió una persona y no se traspasó**: an explicit request for a person with no hand-off within 10 minutes.
-  - **José pasó el tope de turnos**: more replies than José's cap for one application. It only reports; the cap itself is unchanged (under review).
   - **Reveló el puntaje** (critical): a reply that states a score or band with a number.
 - **AI judge:** reads each conversation against the serving agent's `policies` in `agents.yaml` and reports every rule it breaks, with the message quoted. It uses the `evals` model (the same one as `npm run agents:eval`). Editing policies does not change an agent's version hash.
 - **Cap:** `maxConversations` is how many conversations the judge reads per run, most recent first. The rest get the fixed checks only, and the card says so.

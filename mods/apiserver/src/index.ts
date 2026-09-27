@@ -87,7 +87,8 @@ let runConversationAuditFn: ReturnType<typeof createRunConversationAudit> | unde
 import {
   createCopilotApproveApplication,
   createCopilotRejectApplication,
-  createDeleteApplication
+  createDeleteApplication,
+  createIsIntakeOpen
 } from "./api/applications/index.js";
 import { Octokit } from "@octokit/rest";
 import { fileGithubIssue } from "./api/feedback/fileGithubIssue.js";
@@ -382,7 +383,12 @@ const getOpenHandoffExpiry = createGetOpenHandoffExpiry(prisma);
 const linkWhatsAppIdentity = createLinkWhatsAppIdentity(prisma);
 const recordSharedWhatsAppPhone = createRecordSharedWhatsAppPhone(prisma);
 const findCustomerByWhatsAppUserId = createFindCustomerByWhatsAppUserId(prisma);
-const findApplicationByWhatsAppUserId = createGetApplicationByWhatsAppUserId(prisma);
+// José keeps a submitted application while he still asks its missing fields
+// (openspec jose-keep-gathering).
+const isIntakeOpen = createIsIntakeOpen(prisma);
+const findApplicationByWhatsAppUserId = createGetApplicationByWhatsAppUserId(prisma, {
+  isIntakeOpen
+});
 const recordMetaAd = createRecordMetaAd(dbClient);
 // Every intake path that makes a row RECEIVED puts it in the reviewers' queue
 // via this feed event (openspec add-application-review-flow).
@@ -610,7 +616,9 @@ async function initializeMessageProcessor() {
         };
       },
       getAgentForProfile,
-      findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient),
+      findApplicationByPhone: createGetApplicationByPhone(prisma as unknown as DbClient, {
+        isIntakeOpen
+      }),
       // WhatsApp username senders: matched by the BSUID stored on their rows.
       findCustomerByWhatsAppUserId,
       findApplicationByWhatsAppUserId

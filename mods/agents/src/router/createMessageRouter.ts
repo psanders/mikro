@@ -43,7 +43,9 @@ const ROLE_PRECEDENCE: readonly Role[] = ["ADMIN", "REVIEWER", "COLLECTOR"];
  *    the review pipeline (a returning borrower can follow it with the same agent).
  * 3. Latest application DRAFT → prospect (PROSPECT, José).
  * 4. Latest application ABANDONED and never submitted → reopen, then José.
- * 5. Latest application RECEIVED → APPROVED → applicant (APPLICANT).
+ * 5. Latest application RECEIVED with intake still open (José asks the
+ *    remaining fields; see `intakeOpen`) → prospect in its enrichment phase.
+ *    Otherwise RECEIVED → APPROVED → applicant (APPLICANT).
  * A sender with no phone (WhatsApp username; Meta sent only a BSUID) is
  * matched by the BSUID stored on customers and applications, then follows
  * rules 2–6; with no match they are an `unmatchedUsername` guest.
@@ -86,7 +88,10 @@ export function createMessageRouter(deps: RouterDependencies) {
         applicationId: app.applicationId,
         status: app.status
       });
-      if (app.status === "DRAFT") return { type: "prospect", ...ref };
+      if (app.status === "DRAFT") return { type: "prospect", phase: "intake", ...ref };
+      if (app.status === "RECEIVED" && app.intakeOpen) {
+        return { type: "prospect", phase: "enrichment", ...ref };
+      }
       if (app.status === "ABANDONED" && !app.submittedAt) return { type: "reopen", ...ref };
       if (IN_PIPELINE.has(app.status)) return { type: "applicant", ...ref };
       if (app.status === "REJECTED") {

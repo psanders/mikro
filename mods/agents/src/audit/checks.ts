@@ -7,7 +7,6 @@
  * registry in @mikro/common (id, title, severity, run).
  */
 import { isHumanRequest, PROCESSING_ERROR_REPLY } from "../whatsapp/handleWhatsAppMessage.js";
-import { MAX_JOSE_TURNS } from "../whatsapp/handleProspectMessage.js";
 import type { AuditConversation, AuditFinding, AuditSeverity, AuditTurn } from "./types.js";
 
 export interface CheckHit {
@@ -71,32 +70,6 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
           turn,
           reason: "Pidió hablar con una persona y no se abrió un traspaso."
         }))
-  },
-  {
-    id: "jose_turn_cap",
-    title: "José pasó el tope de turnos",
-    severity: "WARNING",
-    run: (c) => {
-      const byApplication = new Map<string, AuditTurn[]>();
-      for (const t of c.turns) {
-        if (t.role !== "AGENT" || t.profile !== "PROSPECT" || t.failed || !t.applicationId)
-          continue;
-        const list = byApplication.get(t.applicationId) ?? [];
-        list.push(t);
-        byApplication.set(t.applicationId, list);
-      }
-      const hits: CheckHit[] = [];
-      for (const turns of byApplication.values()) {
-        const over = turns[MAX_JOSE_TURNS];
-        if (over && inWindow(over)) {
-          hits.push({
-            turn: over,
-            reason: `José respondió ${turns.length} veces en la misma solicitud; el tope es ${MAX_JOSE_TURNS}.`
-          });
-        }
-      }
-      return hits;
-    }
   },
   {
     id: "sensitive_score",

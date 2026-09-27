@@ -293,6 +293,7 @@ CREATE TABLE "loan_applications" (
     "loan_id" INTEGER,
     "submitted_at" DATETIME,
     "reopened_at" DATETIME,
+    "intake_closed_at" DATETIME,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL
 );
