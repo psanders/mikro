@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.9.0](https://github.com/psanders/mikro/compare/v3.8.0...v3.9.0) (2026-09-27)
+
+### Features
+
+- **cx:** José submits early, then keeps gathering the remaining fields ([#312](https://github.com/psanders/mikro/issues/312)) ([22f35da](https://github.com/psanders/mikro/commit/22f35dab0aed7694c7b77d1b8e6274f4f59cce51))
+
 # [3.8.0](https://github.com/psanders/mikro/compare/v3.7.2...v3.8.0) (2026-09-27)
 
 ### Features
