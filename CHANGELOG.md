@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.7.2](https://github.com/psanders/mikro/compare/v3.7.1...v3.7.2) (2026-09-27)
+
+### Bug Fixes
+
+- **ci:** stamp release version into apiserver image for /health ([#310](https://github.com/psanders/mikro/issues/310)) ([c911074](https://github.com/psanders/mikro/commit/c911074c593e345a0f3d1ec40ce5b074170efa8e))
+
 ## [3.7.1](https://github.com/psanders/mikro/compare/v3.7.0...v3.7.1) (2026-09-27)
 
 ### Bug Fixes
