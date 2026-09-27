@@ -21,7 +21,17 @@ import {
   SolicitudSuccess
 } from "../solicitud/SolicitudParts";
 
-const TOTAL_STEPS = SECTION_DEFS.length;
+// The stepper opens on the loan, not on personal data: 60% of the applicants
+// who never submitted typed nothing on a first screen asking who they are
+// (2026-09-27), and they came from an ad about a loan. Only this layout
+// reorders — the accordion (/solicitud-v0) and the shared section order that
+// reports and the SolicitudProgress event read stay as they were.
+const STEP_ORDER = ["credito", "personal", "negocio", "familiar", "vivienda"];
+const STEPS = STEP_ORDER.map((id, index) => ({
+  ...SECTION_DEFS.find((s) => s.id === id)!,
+  num: String(index + 1).padStart(2, "0")
+}));
+const TOTAL_STEPS = STEPS.length;
 
 /** Required keys of a section that are still empty. */
 function missingFields(sectionId: string, form: Record<string, string>): string[] {
@@ -40,7 +50,7 @@ interface StepIndicatorProps {
 function StepIndicator({ step, maxReached, onJump }: StepIndicatorProps) {
   return (
     <ol className="flex items-center" aria-label="Progreso de la solicitud">
-      {SECTION_DEFS.map((section, index) => {
+      {STEPS.map((section, index) => {
         const Icon = section.icon;
         const done = index < step;
         const current = index === step;
@@ -86,7 +96,7 @@ export function SolicitudPage() {
   const [step, setStep] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
-  const section = SECTION_DEFS[step];
+  const section = STEPS[step];
   const isLast = step === TOTAL_STEPS - 1;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -131,10 +141,10 @@ export function SolicitudPage() {
       goNext();
       return;
     }
-    const firstIncomplete = SECTION_DEFS.findIndex((s) => missingFields(s.id, form).length > 0);
+    const firstIncomplete = STEPS.findIndex((s) => missingFields(s.id, form).length > 0);
     if (firstIncomplete !== -1) {
       if (firstIncomplete !== step) goTo(firstIncomplete);
-      setInvalid(new Set(missingFields(SECTION_DEFS[firstIncomplete].id, form)));
+      setInvalid(new Set(missingFields(STEPS[firstIncomplete].id, form)));
       setError("Completa los campos marcados para continuar.");
       return;
     }
@@ -228,6 +238,7 @@ export function SolicitudPage() {
                 form={form}
                 onChange={set}
                 invalidFields={stillInvalid}
+                birthDateDropdowns
               />
             </div>
 
