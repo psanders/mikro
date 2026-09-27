@@ -57,6 +57,7 @@ import {
   initializeLLM,
   getAgentByProfile,
   createJudgeConversation,
+  createWriteAuditStatus,
   createChatModel,
   getLLMConfig,
   getWhatsAppPromoTemplate,
@@ -523,6 +524,7 @@ async function initializeMessageProcessor() {
     const agentsByName = new Map([...agents.values()].map((a) => [a.name, a] as const));
     runConversationAuditFn = createRunConversationAudit(prisma, {
       judge: createJudgeConversation(),
+      writeStatus: createWriteAuditStatus(),
       getAgent: (name) => {
         const agent = agentsByName.get(name);
         return agent ? { name: agent.name, policies: agent.policies ?? [] } : undefined;

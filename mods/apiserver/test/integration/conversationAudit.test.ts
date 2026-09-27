@@ -6,7 +6,7 @@
  * `conversation.audited` feed event, and the detail query.
  */
 import { expect } from "chai";
-import type { JudgeConversation } from "@mikro/agents";
+import type { JudgeConversation, WriteAuditStatus } from "@mikro/agents";
 import { appRouter } from "../../src/trpc/index.js";
 import type { Context } from "../../src/trpc/context.js";
 import {
@@ -28,11 +28,12 @@ describe("Conversation audit Integration", () => {
     { id: "no_puntaje", rule: "No revela el puntaje.", severity: "critical" as const }
   ];
 
-  function makeRun(maxConversations = 200) {
+  function makeRun(maxConversations = 200, writeStatus?: WriteAuditStatus) {
     return createRunConversationAudit(db as any, {
       judge: (c, a) => judge(c, a),
       getAgent: (name) => (name === "sofia" ? { name, policies } : undefined),
-      getMaxConversations: () => maxConversations
+      getMaxConversations: () => maxConversations,
+      writeStatus
     });
   }
 
@@ -154,11 +155,19 @@ describe("Conversation audit Integration", () => {
 
     const [event] = await db.businessEvent.findMany({ where: { type: "conversation.audited" } });
     expect(event!.actorName).to.equal("Sistema");
-    expect(event!.summary).to.equal(
-      "Auditoría de conversaciones encontró 3 problemas en 2 conversaciones"
-    );
+    expect(event!.summary).to.equal("Auditoría de conversaciones las 2 conversaciones no cumplen");
     const payload = JSON.parse(event!.payload);
-    expect(payload).to.include({ runId: result.runId, trigger: "SCHEDULED", conversations: 2 });
+    expect(payload).to.include({
+      runId: result.runId,
+      trigger: "SCHEDULED",
+      conversations: 2,
+      flaggedConversations: 2
+    });
+    // No writer wired: the template status.
+    expect(payload.statusText).to.match(
+      /^Las 2 conversaciones revisadas no cumplen\. Lo más grave \(Sofía\)/
+    );
+    expect(result.statusText).to.equal(payload.statusText);
     expect(payload.topFinding).to.include({
       severity: "CRITICAL",
       personLabel: "Yokasta Medina",
@@ -184,9 +193,12 @@ describe("Conversation audit Integration", () => {
       orderBy: { occurredAt: "asc" }
     });
     expect(events).to.have.length(3);
-    expect(events[1]!.summary).to.equal(
-      "Auditoría de conversaciones sin problemas en 0 conversaciones"
+    // Two turns, one phone: one conversation.
+    expect(events[0]!.summary).to.equal("Auditoría de conversaciones la conversación cumple");
+    expect(JSON.parse(events[0]!.payload).statusText).to.equal(
+      "La conversación revisada cumple las reglas."
     );
+    expect(events[1]!.summary).to.equal("Auditoría de conversaciones sin conversaciones nuevas");
     expect(events[2]!.actorName).to.equal("Pedro S.");
   });
 
@@ -202,6 +214,37 @@ describe("Conversation audit Integration", () => {
     };
     await makeRun()({ trigger: "SCHEDULED", actorName: "Sistema" });
     expect(seen.map((t) => !!t.context)).to.deep.equal([true, false]);
+  });
+
+  it("uses the AI status when there are problems, and the template when it fails", async () => {
+    await turn({ role: "AGENT", content: "Listo", failed: true });
+    let seen: { flaggedConversations: number; findings: unknown[] } | undefined;
+    const written = await makeRun(200, async (input) => {
+      seen = input;
+      return "1 de 1 conversación revisada no cumple: un mensaje de Sofía no se entregó.";
+    })({ trigger: "SCHEDULED", actorName: "Sistema" });
+    expect(seen!.flaggedConversations).to.equal(1);
+    expect(seen!.findings).to.have.length(1);
+    expect(written.statusText).to.equal(
+      "1 de 1 conversación revisada no cumple: un mensaje de Sofía no se entregó."
+    );
+
+    await turn({ role: "AGENT", content: "Otra vez", failed: true });
+    const fallback = await makeRun(200, async () => {
+      throw new Error("LLM down");
+    })({ trigger: "SCHEDULED", actorName: "Sistema" });
+    expect(fallback.statusText).to.match(/^La conversación revisada no cumple\. Lo más grave/);
+  });
+
+  it("does not call the AI writer for a clean run", async () => {
+    await turn({ role: "INBOUND", content: "hola" });
+    let called = false;
+    const result = await makeRun(200, async () => {
+      called = true;
+      return "x";
+    })({ trigger: "SCHEDULED", actorName: "Sistema" });
+    expect(called).to.be.false;
+    expect(result.statusText).to.equal("La conversación revisada cumple las reglas.");
   });
 
   it("rejects a second run while one is in progress", async () => {

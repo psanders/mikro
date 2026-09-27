@@ -2,7 +2,7 @@
 
 ### Requirement: Run the conversation audit on demand
 
-The copilot SHALL offer a `runConversationAudit` tool that runs the conversation audit immediately, as a direct tool with no confirm card. The run SHALL have trigger `MANUAL` and the founder as actor. The tool SHALL work whether or not the scheduled audit is enabled. It SHALL return a short result for the copilot to relay: conversations reviewed, hand-offs, and critical and warning counts. When a run is already in progress, it SHALL return that error instead.
+The copilot SHALL offer a `runConversationAudit` tool that runs the conversation audit immediately, as a direct tool with no confirm card. The run SHALL have trigger `MANUAL` and the founder as actor. The tool SHALL work whether or not the scheduled audit is enabled. It SHALL return a short result for the copilot to relay, built from the run's status paragraph (the same words as the feed card). When a run is already in progress, it SHALL return that error instead.
 
 #### Scenario: Founder asks for an audit
 

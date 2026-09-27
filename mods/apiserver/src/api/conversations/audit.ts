@@ -17,6 +17,10 @@ import {
 } from "@mikro/common";
 import {
   runAudit,
+  auditHeadline,
+  auditStatusFallback,
+  type AuditStatusInput,
+  type WriteAuditStatus,
   type AgentPolicy,
   type AuditConversation,
   type AuditFinding,
@@ -61,11 +65,16 @@ export interface RunConversationAuditDeps {
   /** Policies of an agent by the name stored on its turns. */
   getAgent: (agentName: string) => { name: string; policies: AgentPolicy[] } | undefined;
   getMaxConversations: () => number;
+  /** Writes the card's status paragraph when there are problems (LLM). Falls back to the template. */
+  writeStatus?: WriteAuditStatus;
   now?: () => Date;
 }
 
 export interface ConversationAuditRunResult {
   runId: string;
+  /** The verdict in words, as on the feed card. */
+  statusText: string;
+  flaggedConversations: number;
   conversations: number;
   turns: number;
   handoffs: number;
@@ -149,10 +158,20 @@ function pickTopFinding(findings: AuditFinding[]): AuditFinding | undefined {
   return findings.find((f) => f.severity === "CRITICAL") ?? findings[0];
 }
 
-function summaryText(conversations: number, problems: number): string {
-  const conv = `${conversations} conversaci${conversations === 1 ? "ón" : "ones"}`;
-  if (problems === 0) return `Auditoría de conversaciones sin problemas en ${conv}`;
-  return `Auditoría de conversaciones encontró ${problems} problema${problems === 1 ? "" : "s"} en ${conv}`;
+/**
+ * The card's status paragraph: the LLM's words when there are problems, the
+ * fixed template for clean runs or when the LLM fails.
+ */
+async function statusFor(input: AuditStatusInput, writeStatus?: WriteAuditStatus): Promise<string> {
+  if (input.findings.length === 0 || !writeStatus) return auditStatusFallback(input);
+  try {
+    return await writeStatus(input);
+  } catch (error) {
+    logger.warn("conversation audit: status writer failed, using the template", {
+      error: (error as Error).message
+    });
+    return auditStatusFallback(input);
+  }
 }
 
 /**
@@ -323,15 +342,32 @@ export function createRunConversationAudit(db: AuditClient, deps: RunConversatio
           };
         }
 
-        const problems = counts.criticalCount + counts.warningCount;
+        const flaggedConversations = new Set(findings.map((f) => f.phone)).size;
+        const statusText = await statusFor(
+          {
+            conversations: counts.conversations,
+            flaggedConversations,
+            handoffs: counts.handoffs,
+            findings: findings.map((f) => ({
+              severity: f.severity,
+              agentName: f.agentName,
+              rule: f.rule,
+              reason: f.reason
+            }))
+          },
+          deps.writeStatus
+        );
+
         await recordEvent(db as unknown as PrismaClient, {
           type: "conversation.audited",
           actorName: trigger === "SCHEDULED" ? "Sistema" : actorName,
-          summary: summaryText(counts.conversations, problems),
+          summary: `Auditoría de conversaciones ${auditHeadline(counts.conversations, flaggedConversations)}`,
           payload: {
             runId,
             trigger,
             ...counts,
+            flaggedConversations,
+            statusText,
             windowStart: windowStart?.toISOString() ?? null,
             byAgent: result.byAgent,
             topFinding
@@ -339,7 +375,7 @@ export function createRunConversationAudit(db: AuditClient, deps: RunConversatio
         });
 
         logger.info("conversation audit done", { runId, trigger, ...counts });
-        return { runId, ...counts };
+        return { runId, statusText, flaggedConversations, ...counts };
       } catch (error) {
         await db.conversationAuditRun
           .update({

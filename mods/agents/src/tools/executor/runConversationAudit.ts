@@ -18,14 +18,9 @@ export async function handleRunConversationAudit(
   try {
     const r = await deps.runConversationAudit(actorName);
     logger.verbose("conversation audit run from copilot", { runId: r.runId });
-    const problems = r.criticalCount + r.warningCount;
-    const found =
-      problems === 0
-        ? "no encontré problemas"
-        : `encontré ${r.criticalCount} crítico(s) y ${r.warningCount} advertencia(s)`;
     return {
       success: true,
-      message: `Auditoría completada: revisé ${r.conversations} conversaciones y ${found}. ${r.handoffs} pasaron a persona. La tarjeta quedó en el feed.`,
+      message: `Auditoría completada. ${r.statusText} La tarjeta quedó en el feed.`,
       data: { ...r }
     };
   } catch (error) {

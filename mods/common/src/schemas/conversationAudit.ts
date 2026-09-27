@@ -43,6 +43,10 @@ export const conversationAuditedPayloadSchema = z.object({
   turns: z.number().int().nonnegative(),
   handoffs: z.number().int().nonnegative(),
   failedSends: z.number().int().nonnegative(),
+  /** Conversations with at least one finding (the card's "N de M no cumplen"). */
+  flaggedConversations: z.number().int().nonnegative(),
+  /** The run's verdict in words, shown on the card (AI-written, template fallback). */
+  statusText: z.string().min(1),
   criticalCount: z.number().int().nonnegative(),
   warningCount: z.number().int().nonnegative(),
   judged: z.number().int().nonnegative(),

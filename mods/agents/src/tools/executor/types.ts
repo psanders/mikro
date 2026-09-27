@@ -177,6 +177,8 @@ export interface ToolExecutorDependencies {
    */
   runConversationAudit?: (actorName: string) => Promise<{
     runId: string;
+    /** The run's verdict in words, as on the feed card. */
+    statusText: string;
     conversations: number;
     handoffs: number;
     criticalCount: number;

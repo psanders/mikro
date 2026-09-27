@@ -9,7 +9,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FeedCard } from "../components/FeedCard";
 import { SidePanel } from "../components/SidePanel";
 import type { FeedEvent } from "../components/types";
-import { AuditCardDetail, readAuditPayload } from "./ConversationAuditCard";
+import { ArrowRight } from "lucide-react";
 import { AuditFindingsView, type AuditDetail } from "./ConversationAuditPanel";
 
 const withProblems: FeedEvent = {
@@ -17,7 +17,7 @@ const withProblems: FeedEvent = {
   type: "conversation.audited",
   occurredAt: "2026-09-26T11:00:00Z",
   actorName: "Sistema",
-  summary: "Auditoría de conversaciones encontró 3 problemas en 42 conversaciones",
+  summary: "Auditoría de conversaciones 3 de 42 conversaciones no cumplen",
   payload: {
     runId: "run-1",
     trigger: "SCHEDULED",
@@ -25,6 +25,9 @@ const withProblems: FeedEvent = {
     turns: 186,
     handoffs: 4,
     failedSends: 1,
+    flaggedConversations: 3,
+    statusText:
+      "3 de las 42 conversaciones revisadas no cumplen. Lo más grave: Sofía le dio el puntaje a una solicitante. Además, José no pasó a una persona a quien la pidió y un mensaje de Carmen no se entregó.",
     criticalCount: 1,
     warningCount: 2,
     judged: 42,
@@ -86,7 +89,7 @@ const clean: FeedEvent = {
   type: "conversation.audited",
   occurredAt: "2026-09-25T20:40:00Z",
   actorName: "Pedro S.",
-  summary: "Auditoría de conversaciones sin problemas en 37 conversaciones",
+  summary: "Auditoría de conversaciones las 37 conversaciones cumplen",
   payload: {
     ...withProblems.payload,
     runId: "run-2",
@@ -95,6 +98,8 @@ const clean: FeedEvent = {
     turns: 150,
     handoffs: 3,
     failedSends: 0,
+    flaggedConversations: 0,
+    statusText: "Las 37 conversaciones revisadas cumplen las reglas. 3 pasaron a una persona.",
     criticalCount: 0,
     warningCount: 0,
     byAgent: [
@@ -220,20 +225,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** The live card's "Ver detalle" link (the live one opens the findings panel). */
+const detailLink = (
+  <span className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-[#1F4AA8]">
+    Ver detalle
+    <ArrowRight size={14} />
+  </span>
+);
+
 export const CardWithProblems: Story = {
   render: () => (
     <div style={{ width: 1100 }}>
-      <FeedCard
-        event={withProblems}
-        defaultExpanded
-        onAskCopilot={() => {}}
-        detailSlot={
-          <AuditCardDetail
-            payload={readAuditPayload(withProblems.payload)}
-            onOpenConversation={() => {}}
-          />
-        }
-      />
+      <FeedCard event={withProblems} defaultExpanded hideLinks detailSlot={detailLink} />
     </div>
   )
 };
@@ -241,7 +244,7 @@ export const CardWithProblems: Story = {
 export const CardClean: Story = {
   render: () => (
     <div style={{ width: 1100 }}>
-      <FeedCard event={clean} onAskCopilot={() => {}} />
+      <FeedCard event={clean} defaultExpanded hideLinks detailSlot={detailLink} />
     </div>
   )
 };

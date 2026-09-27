@@ -4,6 +4,15 @@
 export { CONVERSATION_CHECKS, runChecks, type ConversationCheck, type CheckHit } from "./checks.js";
 export { createJudgeConversation, formatTranscript } from "./judge.js";
 export {
+  auditHeadline,
+  auditCountingPhrase,
+  auditStatusFallback,
+  createWriteAuditStatus,
+  type AuditStatusInput,
+  type AuditStatusFinding,
+  type WriteAuditStatus
+} from "./status.js";
+export {
   runAudit,
   type RunAuditInput,
   type RunAuditResult,
