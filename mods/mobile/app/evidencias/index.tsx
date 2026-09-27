@@ -61,7 +61,7 @@ export default function EvidenciasScreen() {
         ) : items.length === 0 ? (
           <View style={styles.empty} testID="evidence-empty">
             <View style={styles.emptyIcon}>
-              <CircleCheckBig size={34} color={colors.status.success} />
+              <CircleCheckBig size={34} color={colors.brand.blue.primary} />
             </View>
             <Text style={styles.emptyTitle}>No hay evidencias por recoger</Text>
             <Text style={styles.emptyText}>
@@ -84,7 +84,7 @@ export default function EvidenciasScreen() {
                   key={item.id}
                   testID={`evidence-row-${item.id}`}
                   onPress={() => router.push(`/evidencias/${item.id}`)}
-                  style={[styles.row, item.complete && styles.rowDone]}
+                  style={styles.row}
                 >
                   <Avatar name={name} />
                   <View style={styles.rowMid}>
@@ -112,12 +112,7 @@ export default function EvidenciasScreen() {
                       </View>
                     ) : (
                       <>
-                        <Text
-                          style={[
-                            styles.count,
-                            item.progress.have === 0 && { color: colors.brand.orange.deep }
-                          ]}
-                        >
+                        <Text style={styles.count}>
                           {item.progress.have} de {item.progress.need}
                         </Text>
                         <View style={styles.bar}>
@@ -170,17 +165,14 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     borderRadius: 14,
-    backgroundColor: colors.brand.white,
-    borderWidth: 1,
-    borderColor: colors.border.light
+    backgroundColor: colors.brand.white
   },
-  rowDone: { backgroundColor: "#F7FBF8", borderColor: "#CFEBD9" },
   rowMid: { flex: 1, gap: 3 },
-  rowName: { fontFamily: "Geist_700Bold", fontSize: 15, color: colors.brand.ink },
+  rowName: { fontFamily: "Geist_600SemiBold", fontSize: 14, color: colors.brand.ink },
   rowBiz: { fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.blue.deep },
   rowAddr: { flexDirection: "row", alignItems: "center", gap: 4 },
   rowMeta: { flex: 1, fontFamily: "Geist_400Regular", fontSize: 12, color: colors.text.secondary },
-  rowAge: { fontFamily: "Geist_400Regular", fontSize: 11, color: "#9AA8BF" },
+  rowAge: { fontFamily: "Geist_400Regular", fontSize: 11, color: colors.text.secondary },
   rowTrail: { alignItems: "flex-end", gap: 6 },
   count: { fontFamily: "Geist_700Bold", fontSize: 13, color: colors.brand.blue.deep },
   bar: {
@@ -190,7 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand.mist,
     overflow: "hidden"
   },
-  barFill: { height: 6, borderRadius: 3, backgroundColor: colors.brand.orange.primary },
+  barFill: { height: 6, borderRadius: 3, backgroundColor: colors.brand.blue.primary },
   donePill: {
     flexDirection: "row",
     alignItems: "center",
@@ -206,7 +198,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: colors.status.successBg,
+    backgroundColor: colors.brand.mist,
     alignItems: "center",
     justifyContent: "center"
   },
