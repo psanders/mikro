@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.7.1](https://github.com/psanders/mikro/compare/v3.7.0...v3.7.1) (2026-09-27)
+
+### Bug Fixes
+
+- **mobile:** evidence thumbnail follow-ups + Pencil sync ([#309](https://github.com/psanders/mikro/issues/309)) ([9c90d36](https://github.com/psanders/mikro/commit/9c90d365bc6bec1bc7ad693f491dcc6ccd2c8161)), closes [#306](https://github.com/psanders/mikro/issues/306) [#306](https://github.com/psanders/mikro/issues/306)
+
 # [3.7.0](https://github.com/psanders/mikro/compare/v3.6.1...v3.7.0) (2026-09-27)
 
 **Note:** Version bump only for package @mikro/mobile
