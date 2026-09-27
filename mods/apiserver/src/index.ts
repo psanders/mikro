@@ -217,10 +217,12 @@ app.use("/v1/applications", express.text({ type: "text/plain", limit: "32kb" }))
 app.use(express.json());
 
 // Health check endpoint. Reports the running version so deploys can verify
-// the expected image actually came up.
-const apiserverVersion: string = JSON.parse(
-  readFileSync(resolve(__dirname, "../package.json"), "utf8")
-).version;
+// the expected image actually came up. Prefer the release version stamped into
+// the image (MIKRO_VERSION): on mobile-only releases lerna doesn't bump
+// apiserver's package.json, so it lags the image tag.
+const apiserverVersion: string =
+  process.env.MIKRO_VERSION ||
+  JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf8")).version;
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", version: apiserverVersion });
 });
