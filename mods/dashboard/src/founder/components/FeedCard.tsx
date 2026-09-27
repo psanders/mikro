@@ -53,6 +53,8 @@ export interface FeedCardProps {
   actionSlot?: React.ReactNode;
   /** Type-specific detail rendered right under the narrative, above the links. */
   detailSlot?: React.ReactNode;
+  /** Hide the Metadata / IA insights links (cards that only state a verdict). */
+  hideLinks?: boolean;
   className?: string;
 }
 
@@ -98,6 +100,7 @@ export function FeedCard({
   onAskCopilot,
   tint: tintOverride,
   detailSlot,
+  hideLinks = false,
   actionSlot,
   className
 }: FeedCardProps) {
@@ -183,26 +186,28 @@ export function FeedCard({
 
             {detailSlot}
 
-            <div className="flex items-center gap-[14px]">
-              <button
-                type="button"
-                onClick={() => setMetadataOpen((v) => !v)}
-                className={cn(LINK_BUTTON, "text-[#697A93] hover:text-[#14254A]")}
-              >
-                <Braces size={11} />
-                Metadata
-              </button>
-              {onAskCopilot && (
+            {!hideLinks && (
+              <div className="flex items-center gap-[14px]">
                 <button
                   type="button"
-                  onClick={() => onAskCopilot(insightsQuestion)}
-                  className={cn(LINK_BUTTON, "text-[#1F4AA8] hover:text-[#14356e]")}
+                  onClick={() => setMetadataOpen((v) => !v)}
+                  className={cn(LINK_BUTTON, "text-[#697A93] hover:text-[#14254A]")}
                 >
-                  <Sparkles size={11} />
-                  IA insights
+                  <Braces size={11} />
+                  Metadata
                 </button>
-              )}
-            </div>
+                {onAskCopilot && (
+                  <button
+                    type="button"
+                    onClick={() => onAskCopilot(insightsQuestion)}
+                    className={cn(LINK_BUTTON, "text-[#1F4AA8] hover:text-[#14356e]")}
+                  >
+                    <Sparkles size={11} />
+                    IA insights
+                  </button>
+                )}
+              </div>
+            )}
 
             {metadataOpen && (
               <EventMetadataPanel event={event} onClose={() => setMetadataOpen(false)} />
@@ -210,51 +215,57 @@ export function FeedCard({
 
             {actionSlot}
 
-            <div className="flex flex-wrap items-center gap-[10px]">
-              {deletion ? (
-                canRestore ? (
-                  <>
-                    <button type="button" onClick={() => onRestore?.(event)} className={ACT_BUTTON}>
-                      Restaurar
-                    </button>
-                    {askQuestion &&
-                      (onAskCopilot ? (
-                        <button
-                          type="button"
-                          onClick={() => onAskCopilot(askQuestion)}
-                          className="inline-flex items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
-                        >
-                          <Sparkles size={13} />
-                          {askQuestion}
-                        </button>
-                      ) : (
-                        <span
-                          title="Próximamente"
-                          aria-disabled="true"
-                          className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] opacity-80"
-                        >
-                          <Sparkles size={13} />
-                          {askQuestion}
-                        </span>
-                      ))}
-                  </>
+            {(!hideLinks || deletion || subjectLink) && (
+              <div className="flex flex-wrap items-center gap-[10px]">
+                {deletion ? (
+                  canRestore ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onRestore?.(event)}
+                        className={ACT_BUTTON}
+                      >
+                        Restaurar
+                      </button>
+                      {askQuestion &&
+                        (onAskCopilot ? (
+                          <button
+                            type="button"
+                            onClick={() => onAskCopilot(askQuestion)}
+                            className="inline-flex items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+                          >
+                            <Sparkles size={13} />
+                            {askQuestion}
+                          </button>
+                        ) : (
+                          <span
+                            title="Próximamente"
+                            aria-disabled="true"
+                            className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] opacity-80"
+                          >
+                            <Sparkles size={13} />
+                            {askQuestion}
+                          </span>
+                        ))}
+                    </>
+                  ) : (
+                    <span className="text-[13px] font-medium text-[#697A93]">
+                      Ventana de restauración vencida
+                    </span>
+                  )
                 ) : (
-                  <span className="text-[13px] font-medium text-[#697A93]">
-                    Ventana de restauración vencida
-                  </span>
-                )
-              ) : (
-                subjectLink && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate?.(subjectLink.target)}
-                    className={ACT_BUTTON}
-                  >
-                    {subjectLink.label}
-                  </button>
-                )
-              )}
-            </div>
+                  subjectLink && (
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.(subjectLink.target)}
+                      className={ACT_BUTTON}
+                    >
+                      {subjectLink.label}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

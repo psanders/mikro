@@ -80,6 +80,25 @@ Conversations beyond the cap, and conversations whose agent has no policies, SHA
 - **WHEN** the LLM call fails for one conversation
 - **THEN** that conversation keeps its code-check findings, the run's `judgeErrors` increases, and the run completes
 
+### Requirement: Each run states its verdict in words
+
+Each run SHALL produce a status paragraph (`statusText`) stored on its feed event, together with the number of conversations that have at least one finding (`flaggedConversations`). When there are findings, the paragraph SHALL be written by the evals LLM from the findings: it opens with the count ("3 de las 42 conversaciones revisadas no cumplen."), then the most serious problem, naming the agent, and SHALL NOT include customer names or phone numbers. When there are no findings, or the LLM call fails or returns an empty or too-long text, a fixed template SHALL be used instead.
+
+#### Scenario: Problems found
+
+- **WHEN** a run finds problems and the LLM writes the status
+- **THEN** the feed event's `statusText` is the LLM's paragraph
+
+#### Scenario: Writer fails
+
+- **WHEN** the LLM status call fails
+- **THEN** the run still completes and `statusText` is the template ("… no cumplen. Lo más grave (Agente): regla.")
+
+#### Scenario: Clean run
+
+- **WHEN** a run finds no problems
+- **THEN** the LLM is not called and `statusText` reads "Las N conversaciones revisadas cumplen las reglas."
+
 ### Requirement: Runs and findings are stored with agent versions
 
 Each run SHALL be stored with:

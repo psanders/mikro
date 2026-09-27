@@ -39,3 +39,11 @@
 ## 6. Docs
 
 - [x] 6.1 Add a CX_EXPLAINER section: how to enable the audit, the checks, policies, and rollout order (config after deploy).
+
+## 7. Card simplification (follow-up)
+
+- [x] 7.1 Pencil: the card states the verdict only (headline + status paragraph + "Ver detalle"). The panel screen, copilot screen and notes are updated.
+- [x] 7.2 Agents: `auditHeadline`, `auditCountingPhrase`, `auditStatusFallback`, and `createWriteAuditStatus` (the evals LLM).
+- [x] 7.3 Apiserver: the run writes `statusText` and `flaggedConversations` into the event (LLM only when there are findings, with the template as fallback), plus the new headline. The copilot relays the status.
+- [x] 7.4 Dashboard: the card shows the narrative (`statusText`) and a "Ver detalle" link. FeedCard gains `hideLinks`. The old detail components are removed.
+- [x] 7.5 Tests: status unit tests, integration (AI status, fallback, a clean run doesn't call the writer), e2e.

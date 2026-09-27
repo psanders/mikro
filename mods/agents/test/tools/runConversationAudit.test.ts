@@ -19,9 +19,10 @@ function deps(over: Partial<ToolExecutorDependencies>): ToolExecutorDependencies
 describe("handleRunConversationAudit", () => {
   afterEach(() => sinon.restore());
 
-  it("runs the audit as the founder and reports the counts", async () => {
+  it("runs the audit as the founder and relays the card's status", async () => {
     const stub = sinon.stub().resolves({
       runId: "run-1",
+      statusText: "Las 12 conversaciones revisadas cumplen las reglas.",
       conversations: 12,
       handoffs: 1,
       criticalCount: 0,
@@ -30,20 +31,9 @@ describe("handleRunConversationAudit", () => {
     const result = await handleRunConversationAudit(deps({ runConversationAudit: stub }), {}, CTX);
     expect(stub.calledOnceWith("Pedro S.")).to.be.true;
     expect(result.success).to.be.true;
-    expect(result.message).to.contain("revisé 12 conversaciones y no encontré problemas");
-    expect(result.message).to.contain("1 pasaron a persona");
-  });
-
-  it("reports critical and warning counts", async () => {
-    const stub = sinon.stub().resolves({
-      runId: "run-2",
-      conversations: 42,
-      handoffs: 4,
-      criticalCount: 1,
-      warningCount: 2
-    });
-    const result = await handleRunConversationAudit(deps({ runConversationAudit: stub }), {}, CTX);
-    expect(result.message).to.contain("1 crítico(s) y 2 advertencia(s)");
+    expect(result.message).to.equal(
+      "Auditoría completada. Las 12 conversaciones revisadas cumplen las reglas. La tarjeta quedó en el feed."
+    );
   });
 
   it("relays an audit already in progress as a failed result", async () => {

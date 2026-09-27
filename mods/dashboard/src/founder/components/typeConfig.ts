@@ -326,11 +326,7 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
           : "automática";
       const critical = count(payload.criticalCount);
       const warning = count(payload.warningCount);
-      if (critical + warning === 0) {
-        const handoffs = count(payload.handoffs);
-        const passed = `${handoffs} ${handoffs === 1 ? "pasó" : "pasaron"} a persona`;
-        return { text: `${trigger} · ${passed}`, tone: "muted" };
-      }
+      if (critical + warning === 0) return { text: trigger, tone: "muted" };
       const parts = [
         critical ? `${critical} crítico${critical === 1 ? "" : "s"}` : "",
         warning ? `${warning} advertencia${warning === 1 ? "" : "s"}` : ""
@@ -533,6 +529,9 @@ export function resolveNarrative(event: FeedEvent): string | null {
       // The compact meta line already carries who and why.
       return null;
     case "conversation.audited": {
+      // The run's verdict in words; events recorded before it existed fall back
+      // to a counts sentence.
+      if (typeof payload.statusText === "string" && payload.statusText) return payload.statusText;
       const turns = count(payload.turns);
       const conversations = count(payload.conversations);
       if (conversations === 0) return "No hubo conversaciones nuevas desde la auditoría anterior.";

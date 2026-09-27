@@ -2,28 +2,28 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Conversation audit card (openspec add-conversation-audit): the seeded run
- * found one problem (José's failed send to Yokasta). The admin expands the
- * card, opens the findings panel, and jumps to the conversation.
+ * found José's failed send to Yokasta. The card only states the verdict; the
+ * admin opens the findings panel from it and jumps to the conversation.
  */
 import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
-test("the admin reviews an audit run and jumps to the flagged conversation", async ({ page }) => {
+test("the admin reads the audit verdict and jumps to the flagged conversation", async ({
+  page
+}) => {
   await login(page, "admin");
 
   const auditCard = page.getByTestId("audit-card");
   await expect(auditCard).toHaveCount(1);
-  await expect(auditCard).toContainText("Auditoría de conversaciones");
-  await expect(auditCard).toContainText("encontró 1 problema en 1 conversación");
+  await expect(auditCard).toContainText("Auditoría de conversaciones la conversación no cumple");
   await expect(auditCard).toContainText("1 advertencia · automática");
 
   await auditCard.locator("[aria-expanded]").first().click();
-  await expect(auditCard.getByTestId("audit-stat-conversaciones")).toHaveText("1");
-  await expect(auditCard.getByTestId("audit-stat-no-entregado")).toHaveText("1");
-  await expect(auditCard.getByTestId("audit-agent-row")).toContainText(["José"]);
-  const top = auditCard.getByTestId("audit-top-finding");
-  await expect(top).toContainText("Mensaje no entregado");
-  await expect(top).toContainText("Yokasta");
+  await expect(auditCard).toContainText(
+    "La conversación revisada no cumple. Lo más grave (José): Mensaje no entregado."
+  );
+  // The card only states the verdict: no metadata / insights links.
+  await expect(auditCard.getByRole("button", { name: "Metadata" })).toHaveCount(0);
 
   await auditCard.getByTestId("audit-open-detail").click();
   const panel = page.getByTestId("audit-panel");
