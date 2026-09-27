@@ -128767,8 +128767,6 @@
                           "width": "fill_container",
                           "fill": "$brand.white",
                           "cornerRadius": 14,
-                          "stroke": "#FCD9B6",
-                          "strokeAlignment": "inner",
                           "gap": 12,
                           "padding": 14,
                           "alignItems": "center",
@@ -129091,9 +129089,6 @@
                           "width": "fill_container",
                           "fill": "$brand.white",
                           "cornerRadius": 14,
-                          "stroke": "#E3EBF7",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
                           "gap": 12,
                           "padding": 14,
                           "alignItems": "center",
@@ -129130,8 +129125,8 @@
                                   "fill": "$brand.ink",
                                   "content": "Yendri Paredes",
                                   "fontFamily": "Geist",
-                                  "fontSize": 15,
-                                  "fontWeight": "700"
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
                                 },
                                 {
                                   "type": "text",
@@ -129176,7 +129171,7 @@
                                   "type": "text",
                                   "id": "o7IjcG",
                                   "name": "meta",
-                                  "fill": "#9AA8BF",
+                                  "fill": "#7888A8",
                                   "content": "En evaluación hace 3 días",
                                   "fontFamily": "Geist",
                                   "fontSize": 11,
@@ -129220,7 +129215,7 @@
                                       "name": "barFill",
                                       "width": 9,
                                       "height": 6,
-                                      "fill": "$brand.orange.primary",
+                                      "fill": "$brand.blue.primary",
                                       "cornerRadius": 9999
                                     }
                                   ]
@@ -129234,11 +129229,8 @@
                           "id": "A3AAAQ",
                           "name": "row José Padilla",
                           "width": "fill_container",
-                          "fill": "#F7FBF8",
+                          "fill": "$brand.white",
                           "cornerRadius": 14,
-                          "stroke": "#CFEBD9",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
                           "gap": 12,
                           "padding": 14,
                           "alignItems": "center",
@@ -129275,8 +129267,8 @@
                                   "fill": "$brand.ink",
                                   "content": "José Padilla",
                                   "fontFamily": "Geist",
-                                  "fontSize": 15,
-                                  "fontWeight": "700"
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
                                 },
                                 {
                                   "type": "text",
@@ -129321,7 +129313,7 @@
                                   "type": "text",
                                   "id": "G1qnlm",
                                   "name": "meta",
-                                  "fill": "#9AA8BF",
+                                  "fill": "#7888A8",
                                   "content": "En evaluación hace 2 días",
                                   "fontFamily": "Geist",
                                   "fontSize": 11,
@@ -129383,9 +129375,6 @@
                           "width": "fill_container",
                           "fill": "$brand.white",
                           "cornerRadius": 14,
-                          "stroke": "#E3EBF7",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
                           "gap": 12,
                           "padding": 14,
                           "alignItems": "center",
@@ -129422,8 +129411,8 @@
                                   "fill": "$brand.ink",
                                   "content": "Adriana Liriano",
                                   "fontFamily": "Geist",
-                                  "fontSize": 15,
-                                  "fontWeight": "700"
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
                                 },
                                 {
                                   "type": "text",
@@ -129468,7 +129457,7 @@
                                   "type": "text",
                                   "id": "UMybc",
                                   "name": "meta",
-                                  "fill": "#9AA8BF",
+                                  "fill": "#7888A8",
                                   "content": "En evaluación desde ayer",
                                   "fontFamily": "Geist",
                                   "fontSize": 11,
@@ -129512,7 +129501,7 @@
                                       "name": "barFill",
                                       "width": 37,
                                       "height": 6,
-                                      "fill": "$brand.orange.primary",
+                                      "fill": "$brand.blue.primary",
                                       "cornerRadius": 9999
                                     }
                                   ]
@@ -129528,9 +129517,6 @@
                           "width": "fill_container",
                           "fill": "$brand.white",
                           "cornerRadius": 14,
-                          "stroke": "#E3EBF7",
-                          "strokeWidth": 1,
-                          "strokeAlignment": "inner",
                           "gap": 12,
                           "padding": 14,
                           "alignItems": "center",
@@ -129567,8 +129553,8 @@
                                   "fill": "$brand.ink",
                                   "content": "Nicole De la Cruz",
                                   "fontFamily": "Geist",
-                                  "fontSize": 15,
-                                  "fontWeight": "700"
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
                                 },
                                 {
                                   "type": "text",
@@ -129613,7 +129599,7 @@
                                   "type": "text",
                                   "id": "gjw61",
                                   "name": "meta",
-                                  "fill": "#9AA8BF",
+                                  "fill": "#7888A8",
                                   "content": "En evaluación desde hoy",
                                   "fontFamily": "Geist",
                                   "fontSize": 11,
@@ -129633,7 +129619,7 @@
                                   "type": "text",
                                   "id": "gHOQc",
                                   "name": "count",
-                                  "fill": "$brand.orange.deep",
+                                  "fill": "$brand.blue.deep",
                                   "content": "0 de 6",
                                   "fontFamily": "Geist",
                                   "fontSize": 13,
@@ -129939,7 +129925,7 @@
                                   "type": "text",
                                   "id": "P9g63Q",
                                   "name": "progMissing",
-                                  "fill": "$brand.orange.deep",
+                                  "fill": "#7888A8",
                                   "content": "Faltan 5",
                                   "fontFamily": "Geist",
                                   "fontSize": 12,
@@ -129965,7 +129951,7 @@
                                   "name": "fill",
                                   "width": 58,
                                   "height": 8,
-                                  "fill": "$brand.orange.primary",
+                                  "fill": "$brand.blue.primary",
                                   "cornerRadius": 9999
                                 }
                               ]
@@ -129996,7 +129982,7 @@
                               "type": "text",
                               "id": "glrDr",
                               "name": "secRight",
-                              "fill": "$brand.orange.deep",
+                              "fill": "#7888A8",
                               "content": "OBLIGATORIA",
                               "fontFamily": "Geist",
                               "fontSize": 11,
@@ -130011,7 +129997,7 @@
                           "width": "fill_container",
                           "fill": "$brand.white",
                           "cornerRadius": 16,
-                          "stroke": "#FCD9B6",
+                          "stroke": "#E6EEFB",
                           "strokeWidth": 1.5,
                           "strokeAlignment": "inner",
                           "layout": "vertical",
@@ -130032,7 +130018,7 @@
                                   "name": "locIconWrap",
                                   "width": 40,
                                   "height": 40,
-                                  "fill": "#FFF1E3",
+                                  "fill": "$brand.mist",
                                   "cornerRadius": 12,
                                   "justifyContent": "center",
                                   "alignItems": "center",
@@ -130045,7 +130031,7 @@
                                       "height": 20,
                                       "icon": "locate-fixed",
                                       "library": "lucide",
-                                      "fill": "$brand.orange.deep"
+                                      "fill": "$brand.blue.primary"
                                     }
                                   ]
                                 },
@@ -130134,9 +130120,20 @@
                                   "type": "frame",
                                   "id": "I7MpO",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "thedancingrain",
+                                    "link": "https://unsplash.com/@thedancingrain",
+                                    "author": "The Dancing Rain"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#1F4AA8",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1594570322022-e7026b28a6c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "layout": "vertical",
                                   "gap": 6,
@@ -130146,7 +130143,10 @@
                                     {
                                       "type": "icon",
                                       "id": "W9KFF",
+                                      "x": 70.5,
+                                      "y": 25,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 28,
                                       "height": 28,
                                       "icon": "id-card",
@@ -130156,7 +130156,10 @@
                                     {
                                       "type": "frame",
                                       "id": "yIw1P",
+                                      "x": 42.5,
+                                      "y": 59,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -130286,7 +130289,7 @@
                               "type": "text",
                               "id": "htbD9",
                               "name": "secRight",
-                              "fill": "$brand.orange.deep",
+                              "fill": "#7888A8",
                               "content": "0 de 3 mínimo",
                               "fontFamily": "Geist",
                               "fontSize": 11,
@@ -130902,7 +130905,7 @@
                                   "type": "text",
                                   "id": "tBKP3",
                                   "name": "progMissing",
-                                  "fill": "$ds.green",
+                                  "fill": "#7888A8",
                                   "content": "Completa",
                                   "fontFamily": "Geist",
                                   "fontSize": 12,
@@ -130928,7 +130931,7 @@
                                   "name": "fill",
                                   "width": 350,
                                   "height": 8,
-                                  "fill": "$ds.green",
+                                  "fill": "$brand.blue.primary",
                                   "cornerRadius": 9999
                                 }
                               ]
@@ -130959,7 +130962,7 @@
                               "type": "text",
                               "id": "sdQ82",
                               "name": "secRight",
-                              "fill": "$ds.green",
+                              "fill": "#7888A8",
                               "content": "GUARDADA",
                               "fontFamily": "Geist",
                               "fontSize": 11,
@@ -130992,7 +130995,7 @@
                                   "name": "iw",
                                   "width": 40,
                                   "height": 40,
-                                  "fill": "$ds.green.bg",
+                                  "fill": "$brand.mist",
                                   "cornerRadius": 12,
                                   "justifyContent": "center",
                                   "alignItems": "center",
@@ -131005,7 +131008,7 @@
                                       "height": 20,
                                       "icon": "map-pin-check",
                                       "library": "lucide",
-                                      "fill": "$ds.green"
+                                      "fill": "$brand.blue.primary"
                                     }
                                   ]
                                 },
@@ -131161,7 +131164,7 @@
                               "type": "text",
                               "id": "FmAVl",
                               "name": "secRight",
-                              "fill": "$ds.green",
+                              "fill": "#7888A8",
                               "content": "2 de 2",
                               "fontFamily": "Geist",
                               "fontSize": 11,
@@ -131188,9 +131191,20 @@
                                   "type": "frame",
                                   "id": "yL7JO",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "basallt",
+                                    "link": "https://unsplash.com/@basallt",
+                                    "author": "Andy Brown"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#1F4AA8",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1717079556907-0381e6a61cab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "layout": "vertical",
                                   "gap": 6,
@@ -131200,7 +131214,10 @@
                                     {
                                       "type": "icon",
                                       "id": "JhtmG",
+                                      "x": 70.5,
+                                      "y": 25,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 28,
                                       "height": 28,
                                       "icon": "id-card",
@@ -131210,7 +131227,10 @@
                                     {
                                       "type": "frame",
                                       "id": "DUNfG",
+                                      "x": 42.5,
+                                      "y": 59,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -131268,9 +131288,20 @@
                                   "type": "frame",
                                   "id": "juYGu",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "sumup",
+                                    "link": "https://unsplash.com/@sumup",
+                                    "author": "SumUp"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#16336F",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1726065235188-20092754fc29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "stroke": "#B9CBE6",
                                   "strokeAlignment": "inner",
@@ -131282,7 +131313,10 @@
                                     {
                                       "type": "icon",
                                       "id": "PdcPv",
+                                      "x": 71.5,
+                                      "y": 26,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 26,
                                       "height": 26,
                                       "icon": "id-card",
@@ -131292,7 +131326,10 @@
                                     {
                                       "type": "frame",
                                       "id": "G77eWh",
+                                      "x": 42.5,
+                                      "y": 58,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -131364,7 +131401,7 @@
                               "type": "text",
                               "id": "pmcSJ",
                               "name": "secRight",
-                              "fill": "$ds.green",
+                              "fill": "#7888A8",
                               "content": "3 de 3",
                               "fontFamily": "Geist",
                               "fontSize": 11,
@@ -131391,9 +131428,20 @@
                                   "type": "frame",
                                   "id": "mNHpa",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "lzvwsk",
+                                    "link": "https://unsplash.com/@lzvwsk",
+                                    "author": "Francesco Zivoli"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#B45309",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1645717477335-07b84ded6499?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "stroke": "#B9CBE6",
                                   "strokeAlignment": "inner",
@@ -131405,7 +131453,10 @@
                                     {
                                       "type": "icon",
                                       "id": "q49UoL",
+                                      "x": 42,
+                                      "y": 26,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 26,
                                       "height": 26,
                                       "icon": "store",
@@ -131415,7 +131466,10 @@
                                     {
                                       "type": "frame",
                                       "id": "rP8jG",
+                                      "x": 13,
+                                      "y": 58,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -131473,9 +131527,20 @@
                                   "type": "frame",
                                   "id": "f6SNj",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "babak22ir",
+                                    "link": "https://unsplash.com/@babak22ir",
+                                    "author": "Babak Eshaghian"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#15803D",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1771491458535-b23afd59ce79?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "stroke": "#B9CBE6",
                                   "strokeAlignment": "inner",
@@ -131487,7 +131552,10 @@
                                     {
                                       "type": "icon",
                                       "id": "RV5HN",
+                                      "x": 42,
+                                      "y": 26,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 26,
                                       "height": 26,
                                       "icon": "warehouse",
@@ -131497,7 +131565,10 @@
                                     {
                                       "type": "frame",
                                       "id": "I4ivd",
+                                      "x": 13,
+                                      "y": 58,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -131555,9 +131626,20 @@
                                   "type": "frame",
                                   "id": "x11pqt",
                                   "name": "box",
+                                  "metadata": {
+                                    "type": "unsplash",
+                                    "username": "adhitya_2505",
+                                    "link": "https://unsplash.com/@adhitya_2505",
+                                    "author": "Adhitya Sibikumar"
+                                  },
                                   "width": "fill_container",
                                   "height": 104,
-                                  "fill": "#7C3AED",
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "https://images.unsplash.com/photo-1774978612876-967903f8ab82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3OTA0NjY4MDJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                    "mode": "fill"
+                                  },
                                   "cornerRadius": 12,
                                   "stroke": "#B9CBE6",
                                   "strokeAlignment": "inner",
@@ -131569,7 +131651,10 @@
                                     {
                                       "type": "icon",
                                       "id": "b6XP3",
+                                      "x": 42,
+                                      "y": 26,
                                       "name": "i",
+                                      "enabled": false,
                                       "width": 26,
                                       "height": 26,
                                       "icon": "package",
@@ -131579,7 +131664,10 @@
                                     {
                                       "type": "frame",
                                       "id": "D14ivY",
+                                      "x": 13,
+                                      "y": 58,
                                       "name": "ok",
+                                      "enabled": false,
                                       "fill": "$ds.green.bg",
                                       "cornerRadius": 9999,
                                       "gap": 4,
@@ -131789,7 +131877,7 @@
                           "name": "iconWrap",
                           "width": 72,
                           "height": 72,
-                          "fill": "$ds.green.bg",
+                          "fill": "$brand.mist",
                           "cornerRadius": 9999,
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -131802,7 +131890,7 @@
                               "height": 34,
                               "icon": "circle-check-big",
                               "library": "lucide",
-                              "fill": "$ds.green"
+                              "fill": "$brand.blue.primary"
                             }
                           ]
                         },
