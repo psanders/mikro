@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.8.0](https://github.com/psanders/mikro/compare/v3.7.2...v3.8.0) (2026-09-27)
+
+### Features
+
+- **site:** open the solicitud stepper on the loan; fix ad-quality lead count ([#311](https://github.com/psanders/mikro/issues/311)) ([8102b2d](https://github.com/psanders/mikro/commit/8102b2dcd36edfcf0ae1bebf1acc24a4ead77349))
+
 ## [3.7.2](https://github.com/psanders/mikro/compare/v3.7.1...v3.7.2) (2026-09-27)
 
 ### Bug Fixes
