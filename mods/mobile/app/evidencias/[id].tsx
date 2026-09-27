@@ -7,7 +7,7 @@
  * from the camera or the gallery; each piece is saved as soon as it's taken.
  * Collectors can add, replace and remove anything while it's in review.
  */
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ import {
   CircleCheck,
   ExternalLink,
   FilePlus,
-  IdCard,
+  ImageOff,
   Link as LinkIcon,
   LocateFixed,
   MapPin,
@@ -112,7 +112,12 @@ export default function EvidenciaDetalleScreen() {
     if (!source) return;
     const img = await pickImage(source);
     if (!img) return;
-    await run(`id-${side}`, () => uploadId.mutateAsync({ id: id!, side, ...img }));
+    await run(`id-${side}`, async () => {
+      await uploadId.mutateAsync({ id: id!, side, ...img });
+      // Show the photo we already have instead of downloading it back, and so a
+      // retake never shows the replaced image from cache.
+      utils.getIdImage.setData({ id: id!, side }, { ...img, size: base64Size(img.dataBase64) });
+    });
   }
 
   async function addPhoto(label?: string) {
@@ -120,9 +125,18 @@ export default function EvidenciaDetalleScreen() {
     if (!source) return;
     const img = await pickImage(source);
     if (!img) return;
-    await run(`photo-${label ?? "extra"}`, () =>
-      uploadDoc.mutateAsync({ id: id!, kind: "BUSINESS_PHOTO", label, ...img })
-    );
+    await run(`photo-${label ?? "extra"}`, async () => {
+      const document = await uploadDoc.mutateAsync({
+        id: id!,
+        kind: "BUSINESS_PHOTO",
+        label,
+        ...img
+      });
+      utils.getApplicationDocument.setData(
+        { documentId: document.id },
+        { document, dataBase64: img.dataBase64 }
+      );
+    });
   }
 
   async function addOther() {
@@ -303,15 +317,15 @@ export default function EvidenciaDetalleScreen() {
                 key={side}
                 label={label}
                 present={present}
-                icon={IdCard}
-                source={{ kind: "id", applicationId: id!, side }}
+                thumb={<IdThumb applicationId={id!} side={side} />}
                 busy={busy === `id-${side}`}
                 testID={`id-slot-${side.toLowerCase()}`}
                 onAdd={() => void addIdSide(side)}
                 onRemove={() =>
-                  confirmRemove(`la cédula (${label.toLowerCase()})`, () =>
-                    deleteId.mutateAsync({ id: id!, side })
-                  )
+                  confirmRemove(`la cédula (${label.toLowerCase()})`, async () => {
+                    await deleteId.mutateAsync({ id: id!, side });
+                    await utils.getIdImage.reset({ id: id!, side });
+                  })
                 }
               />
             );
@@ -328,8 +342,7 @@ export default function EvidenciaDetalleScreen() {
               key={p.id}
               label={p.label ?? "Foto"}
               present
-              icon={Camera}
-              source={{ kind: "doc", documentId: p.id }}
+              thumb={<DocThumb documentId={p.id} />}
               busy={false}
               onRemove={() =>
                 confirmRemove(`la foto «${p.label ?? "Foto"}»`, () =>
@@ -343,7 +356,6 @@ export default function EvidenciaDetalleScreen() {
               key={l}
               label={l}
               present={false}
-              icon={Camera}
               busy={busy === `photo-${l}`}
               testID={`photo-slot-${l}`}
               onAdd={() => void addPhoto(l)}
@@ -472,8 +484,7 @@ function LocationCard({
 function Slot({
   label,
   present,
-  icon: Icon,
-  source,
+  thumb,
   busy,
   testID,
   onAdd,
@@ -481,8 +492,7 @@ function Slot({
 }: {
   label: string;
   present: boolean;
-  icon: typeof Camera;
-  source?: ThumbSource;
+  thumb?: ReactNode;
   busy: boolean;
   testID?: string;
   onAdd?: () => void;
@@ -498,7 +508,7 @@ function Slot({
         {busy ? (
           <ActivityIndicator color={colors.brand.blue.primary} />
         ) : present ? (
-          <Thumb source={source} icon={Icon} />
+          thumb
         ) : (
           <>
             <Camera size={22} color={colors.brand.blue.primary} />
@@ -520,34 +530,67 @@ function Slot({
   );
 }
 
-type ThumbSource =
-  | { kind: "id"; applicationId: string; side: "FRONT" | "BACK" }
-  | { kind: "doc"; documentId: string };
-
-/** The saved photo itself; a neutral tile while it loads or if it can't. */
-function Thumb({ source, icon: Icon }: { source?: ThumbSource; icon: typeof Camera }) {
-  const idImage = trpc.getIdImage.useQuery(
-    source?.kind === "id"
-      ? { id: source.applicationId, side: source.side }
-      : { id: "", side: "FRONT" },
-    { enabled: source?.kind === "id", staleTime: Infinity }
-  );
-  const doc = trpc.getApplicationDocument.useQuery(
-    { documentId: source?.kind === "doc" ? source.documentId : "" },
-    { enabled: source?.kind === "doc", staleTime: Infinity }
-  );
-  const uri =
-    source?.kind === "id" && idImage.data
-      ? `data:${idImage.data.mimeType};base64,${idImage.data.dataBase64}`
-      : source?.kind === "doc" && doc.data && doc.data.document.mimeType.startsWith("image/")
-        ? `data:${doc.data.document.mimeType};base64,${doc.data.dataBase64}`
-        : null;
-  return uri ? (
-    <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-  ) : (
-    <Icon size={24} color={colors.brand.blue.primary} />
-  );
+/** Decoded byte size of a base64 string. */
+function base64Size(b64: string): number {
+  return Math.floor((b64.length * 3) / 4) - (b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0);
 }
+
+/**
+ * The saved photo itself. A neutral tile while it loads; a crossed-out image if
+ * it can't be read, so a broken upload doesn't look like a slow one. Memoized:
+ * the screen re-renders on every GPS reading and the data URI is megabytes.
+ */
+function ThumbImage({
+  mimeType,
+  dataBase64,
+  isError
+}: {
+  mimeType?: string;
+  dataBase64?: string;
+  isError: boolean;
+}) {
+  const source = useMemo(
+    () =>
+      mimeType?.startsWith("image/") && dataBase64
+        ? { uri: `data:${mimeType};base64,${dataBase64}` }
+        : null,
+    [mimeType, dataBase64]
+  );
+  if (source) return <Image source={source} style={StyleSheet.absoluteFill} resizeMode="cover" />;
+  if (isError) {
+    return (
+      <>
+        <ImageOff size={22} color={colors.text.secondary} />
+        <Text style={styles.thumbError}>Sin vista previa</Text>
+      </>
+    );
+  }
+  return <ActivityIndicator color={colors.text.secondary} />;
+}
+
+const IdThumb = memo(function IdThumb({
+  applicationId,
+  side
+}: {
+  applicationId: string;
+  side: "FRONT" | "BACK";
+}) {
+  const q = trpc.getIdImage.useQuery({ id: applicationId, side }, { staleTime: Infinity });
+  return (
+    <ThumbImage mimeType={q.data?.mimeType} dataBase64={q.data?.dataBase64} isError={q.isError} />
+  );
+});
+
+const DocThumb = memo(function DocThumb({ documentId }: { documentId: string }) {
+  const q = trpc.getApplicationDocument.useQuery({ documentId }, { staleTime: Infinity });
+  return (
+    <ThumbImage
+      mimeType={q.data?.document.mimeType}
+      dataBase64={q.data?.dataBase64}
+      isError={q.isError}
+    />
+  );
+});
 
 function SectionHead({ label, right }: { label: string; right: string }) {
   return (
@@ -692,6 +735,7 @@ const styles = StyleSheet.create({
   },
   slotEmpty: { backgroundColor: "#F8FBFF", borderWidth: 1.5, borderColor: "#B9CBE6" },
   slotDone: { backgroundColor: colors.brand.mist },
+  thumbError: { fontFamily: "Geist_500Medium", fontSize: 11, color: colors.text.secondary },
   slotCta: { fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.blue.primary },
   slotFoot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   slotLabel: { flex: 1, fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.ink },
