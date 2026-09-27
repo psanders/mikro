@@ -21,6 +21,9 @@ function makeApplication(overrides: Partial<Record<string, unknown>> = {}) {
     lastSection: null,
     rawData: {},
     createdAt: new Date("2026-09-10T12:00:00Z"),
+    // Every status but DRAFT submitted by default; a test that needs a
+    // never-submitted non-DRAFT passes `submittedAt: null` itself.
+    submittedAt: overrides.status === "DRAFT" ? null : new Date("2026-09-10T12:30:00Z"),
     ...overrides
   };
 }
@@ -155,6 +158,32 @@ describe("createGenerateAdQualityReport", () => {
     expect(row?.leads).to.equal(1);
     expect(row?.drafts).to.equal(1);
     expect(row?.medianScore).to.equal(40); // the draft's 90 is not counted
+  });
+
+  it("counts a draft the abandon job moved to ABANDONED as a draft, not a lead", async () => {
+    const client = makeClient(
+      [
+        makeApplication({
+          id: "a",
+          adId: "120212",
+          status: "ABANDONED",
+          submittedAt: null,
+          lastSection: "personal"
+        }),
+        makeApplication({ id: "b", adId: "120212", status: "ABANDONED" }), // submitted, then withdrawn
+        makeApplication({ id: "c", adId: "120212", status: "RECEIVED" })
+      ],
+      [AD]
+    );
+
+    const { data } = await createGenerateAdQualityReport(client as never)({});
+
+    const row = data.rows.find((r) => r.adId === "120212");
+    expect(row?.leads).to.equal(2);
+    expect(row?.drafts).to.equal(1);
+    expect(row?.reachedSection.personal).to.equal(1);
+    expect(data.totals.leads).to.equal(2);
+    expect(data.totals.submitRate).to.be.closeTo(2 / 3, 1e-9);
   });
 
   it("counts CONVERTED and approved-then-withdrawn as approved, so a better outcome is not a worse number", async () => {

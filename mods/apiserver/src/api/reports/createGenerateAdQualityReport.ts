@@ -42,6 +42,14 @@ const APPROVED_STATUSES = new Set(["APPROVED", "CONVERTED"]);
 const wasApproved = (a: { status: string; approvedAmount?: unknown }) =>
   APPROVED_STATUSES.has(a.status) || (a.status === "ABANDONED" && a.approvedAmount != null);
 
+/**
+ * Whether the applicant ever submitted. Read off `submittedAt`, never the
+ * status: the abandon job moves a stale DRAFT to ABANDONED, and counting every
+ * non-DRAFT as a lead turned each walk-away into a submit (95% "submit rate"
+ * on a form most people quit).
+ */
+const wasSubmitted = (a: { submittedAt: Date | null }) => a.submittedAt != null;
+
 /** Bands worth having, and bands not. `OUT_OF_COVERAGE` is neither — it is a geography problem. */
 const GOOD_BANDS = new Set<RiskBand>(["LOW_RISK", "MODERATE_RISK"]);
 const BAD_BANDS = new Set<RiskBand>(["HIGH_RISK", "VERY_HIGH_RISK"]);
@@ -54,9 +62,9 @@ export interface AdQualityRow {
   adName: string | null;
   adsetName: string | null;
   campaignName: string | null;
-  /** Submitted applications (RECEIVED and beyond). */
+  /** Submitted applications (`submittedAt` set), whatever their status now. */
   leads: number;
-  /** Started but never submitted. Kept apart from `leads` rather than inflating them. */
+  /** Started but never submitted (DRAFT, or a DRAFT later auto-ABANDONED). Kept apart from `leads` rather than inflating them. */
   drafts: number;
   /** LOW_RISK + MODERATE_RISK among the leads. */
   lowOrModerate: number;
@@ -257,8 +265,8 @@ export function createGenerateAdQualityReport(client: DbClient) {
     const rows: AdQualityRow[] = [];
 
     for (const [adId, bucket] of buckets) {
-      const leads = bucket.applications.filter((a) => a.status !== "DRAFT");
-      const draftApplications = bucket.applications.filter((a) => a.status === "DRAFT");
+      const leads = bucket.applications.filter(wasSubmitted);
+      const draftApplications = bucket.applications.filter((a) => !wasSubmitted(a));
       const drafts = draftApplications.length;
       const started = bucket.applications.length;
       const bands: Record<string, number> = {};
@@ -307,8 +315,8 @@ export function createGenerateAdQualityReport(client: DbClient) {
       return (a.adName ?? a.adId).localeCompare(b.adName ?? b.adId);
     });
 
-    const allLeads = applications.filter((a) => a.status !== "DRAFT");
-    const allDrafts = applications.filter((a) => a.status === "DRAFT");
+    const allLeads = applications.filter(wasSubmitted);
+    const allDrafts = applications.filter((a) => !wasSubmitted(a));
     const data: AdQualityReportData = {
       since: toLocalDay(since),
       until: toLocalDay(until),

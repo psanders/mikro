@@ -5,7 +5,7 @@
  * the original accordion had them. Both form layouts render a section through
  * `SectionFields`, so the questions and their grouping cannot drift apart.
  */
-import type { ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import {
   ESTADO_CIVIL_OPTIONS,
   FORMALIZACION_OPTIONS,
@@ -133,6 +133,134 @@ function DateField({ label, name, value, onChange, required, invalid }: BaseFiel
   );
 }
 
+const MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre"
+];
+
+// Applicants are adults running a business: 18 to 80 years old, newest first.
+const THIS_YEAR = new Date().getFullYear();
+const BIRTH_YEARS = Array.from({ length: 63 }, (_, i) => String(THIS_YEAR - 18 - i));
+
+// Three selects share one field's width, so the roomy padding and chevron
+// inset of a full-width select would clip "Día".
+const compactSelectBase = selectBase
+  .replace("px-4", "pl-3")
+  .replace("pr-10", "pr-7")
+  .replace("bg-[right_16px_center]", "bg-[right_8px_center]");
+
+function daysInMonth(year: string, month: string): number {
+  // Leap-year safe; without a year yet, allow Feb 29.
+  return new Date(Number(year) || 2000, Number(month), 0).getDate();
+}
+
+/**
+ * Date of birth as three dropdowns instead of a native date input: on Android
+ * the date picker opens on today, so an adult scrolls back decades to find
+ * their year — and 4 of the 6 applicants who quit mid-way through the personal
+ * section stopped on this field (2026-09-27). Emits YYYY-MM-DD once all three
+ * are chosen, "" until then (so the stepper still flags it as missing).
+ */
+function BirthDateField({ label, name, value, onChange, required, invalid }: BaseFieldProps) {
+  const [initialYear = "", initialMonth = "", initialDay = ""] = value ? value.split("-") : [];
+  const [parts, setParts] = useState({
+    year: initialYear,
+    month: initialMonth ? String(Number(initialMonth)) : "",
+    day: initialDay ? String(Number(initialDay)) : ""
+  });
+
+  const update = (key: "year" | "month" | "day", next: string) => {
+    const merged = { ...parts, [key]: next };
+    // Drop a day the new month/year doesn't have (31 → February).
+    if (merged.day && merged.month && Number(merged.day) > daysInMonth(merged.year, merged.month)) {
+      merged.day = "";
+    }
+    setParts(merged);
+    const pad = (n: string) => n.padStart(2, "0");
+    onChange(
+      name,
+      merged.year && merged.month && merged.day
+        ? `${merged.year}-${pad(merged.month)}-${pad(merged.day)}`
+        : ""
+    );
+  };
+
+  const dayCount = parts.month ? daysInMonth(parts.year, parts.month) : 31;
+  const selectClass = (filled: string) =>
+    `${compactSelectBase} ${borderFor(invalid && !filled)} ${!filled ? placeholderSelect : ""}`;
+
+  return (
+    <FieldShell label={label} invalid={invalid}>
+      <div className="grid grid-cols-[1fr_1.6fr_1.2fr] gap-2">
+        <select
+          name={`${name}-day`}
+          aria-label="Día"
+          value={parts.day}
+          onChange={(e) => update("day", e.target.value)}
+          required={required}
+          aria-invalid={invalid || undefined}
+          className={selectClass(parts.day)}
+        >
+          <option value="" disabled>
+            Día
+          </option>
+          {Array.from({ length: dayCount }, (_, i) => String(i + 1)).map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+        <select
+          name={`${name}-month`}
+          aria-label="Mes"
+          value={parts.month}
+          onChange={(e) => update("month", e.target.value)}
+          required={required}
+          aria-invalid={invalid || undefined}
+          className={selectClass(parts.month)}
+        >
+          <option value="" disabled>
+            Mes
+          </option>
+          {MONTHS.map((m, i) => (
+            <option key={m} value={String(i + 1)}>
+              {m}
+            </option>
+          ))}
+        </select>
+        <select
+          name={`${name}-year`}
+          aria-label="Año"
+          value={parts.year}
+          onChange={(e) => update("year", e.target.value)}
+          required={required}
+          aria-invalid={invalid || undefined}
+          className={selectClass(parts.year)}
+        >
+          <option value="" disabled>
+            Año
+          </option>
+          {BIRTH_YEARS.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </div>
+    </FieldShell>
+  );
+}
+
 function SelectField({
   label,
   name,
@@ -202,10 +330,21 @@ interface SectionFieldsProps {
   onChange: OnChange;
   /** Field keys to flag as missing (stepper only; the accordion never sets it). */
   invalidFields?: ReadonlySet<string>;
+  /**
+   * Date of birth as day/month/year dropdowns (the stepper) instead of the
+   * native date input (the accordion, left as it was).
+   */
+  birthDateDropdowns?: boolean;
 }
 
 /** The inputs of one section, grouped exactly as the original form had them. */
-export function SectionFields({ sectionId, form, onChange, invalidFields }: SectionFieldsProps) {
+export function SectionFields({
+  sectionId,
+  form,
+  onChange,
+  invalidFields,
+  birthDateDropdowns
+}: SectionFieldsProps) {
   // Shared props for one field key: value, change handler, invalid flag.
   const f = (name: string) => ({
     name,
@@ -232,7 +371,11 @@ export function SectionFields({ sectionId, form, onChange, invalidFields }: Sect
             <CedulaField label="Cédula" {...f("idNumber")} required />
           </Row>
           <Row>
-            <DateField label="Fecha de nacimiento" {...f("dateOfBirth")} required />
+            {birthDateDropdowns ? (
+              <BirthDateField label="Fecha de nacimiento" {...f("dateOfBirth")} required />
+            ) : (
+              <DateField label="Fecha de nacimiento" {...f("dateOfBirth")} required />
+            )}
             <SelectField
               label="Estado civil"
               placeholder="Seleccionar"
