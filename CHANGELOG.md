@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.6.1](https://github.com/psanders/mikro/compare/v3.6.0...v3.6.1) (2026-09-27)
+
+### Bug Fixes
+
+- **mobile:** calm collector evidence colors, show real photos ([#306](https://github.com/psanders/mikro/issues/306)) ([16670dc](https://github.com/psanders/mikro/commit/16670dc2b882626f84356724a41f6ff35a0a5528))
+
 # [3.6.0](https://github.com/psanders/mikro/compare/v3.5.0...v3.6.0) (2026-09-26)
 
 ### Features
