@@ -23945,9 +23945,9 @@
     {
       "type": "frame",
       "id": "d1E5om",
-      "x": 17278,
-      "y": 6374.562913907284,
-      "name": "Founders Dashboard · Component Library",
+      "x": 9272,
+      "y": 6364,
+      "name": "Ops Dashboard · Component Library",
       "width": 1760,
       "fill": "#EAF1FB",
       "cornerRadius": 28,
@@ -32908,9 +32908,9 @@
     {
       "type": "frame",
       "id": "gzBYk",
-      "x": 7531,
+      "x": 35967,
       "y": 6364,
-      "name": "Evaluator App / User Flow — REEMPLAZADO (ver Founder Dashboard · sec-08 y Cobrador · Evidencias)",
+      "name": "Evaluator App / User Flow — REEMPLAZADO (ver Ops Dashboard · sec-08 y Cobrador · Evidencias)",
       "cornerRadius": 32,
       "layout": "vertical",
       "gap": 90,
@@ -43768,9 +43768,9 @@
     {
       "type": "frame",
       "id": "EzobQ",
-      "x": 19664,
-      "y": 6375,
-      "name": "Founder Dashboard",
+      "x": 11658,
+      "y": 6364.437086092716,
+      "name": "Ops Dashboard",
       "fill": "#0D1C40",
       "cornerRadius": 32,
       "layout": "vertical",
@@ -43789,7 +43789,7 @@
               "id": "bUpua",
               "name": "boardTitle",
               "fill": "#FFFFFF",
-              "content": "Founder Dashboard — Feed en vivo",
+              "content": "Ops Dashboard — Feed en vivo",
               "fontFamily": "Geist",
               "fontSize": 56,
               "fontWeight": "700"
@@ -128766,25 +128766,21 @@
                           "name": "evidenceEntry",
                           "width": "fill_container",
                           "fill": "$brand.white",
-                          "cornerRadius": 16,
+                          "cornerRadius": 14,
                           "stroke": "#FCD9B6",
-                          "strokeWidth": 1.5,
                           "strokeAlignment": "inner",
                           "gap": 12,
-                          "padding": [
-                            14,
-                            16
-                          ],
+                          "padding": 14,
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "frame",
                               "id": "c6HTpt",
                               "name": "entryIconWrap",
-                              "width": 42,
-                              "height": 42,
-                              "fill": "#FFF1E3",
-                              "cornerRadius": 12,
+                              "width": 36,
+                              "height": 36,
+                              "fill": "$brand.mist",
+                              "cornerRadius": 18,
                               "justifyContent": "center",
                               "alignItems": "center",
                               "children": [
@@ -128792,8 +128788,8 @@
                                   "type": "icon",
                                   "id": "NuIWO",
                                   "name": "entryIcon",
-                                  "width": 20,
-                                  "height": 20,
+                                  "width": 18,
+                                  "height": 18,
                                   "icon": "camera",
                                   "library": "lucide",
                                   "fill": "$brand.orange.deep"
@@ -128815,8 +128811,8 @@
                                   "fill": "$brand.ink",
                                   "content": "Evidencias por recoger",
                                   "fontFamily": "Geist",
-                                  "fontSize": 15,
-                                  "fontWeight": "700"
+                                  "fontSize": 14,
+                                  "fontWeight": "600"
                                 },
                                 {
                                   "type": "text",
@@ -128828,30 +128824,7 @@
                                   "content": "4 solicitudes · la más antigua hace 3 días",
                                   "fontFamily": "Geist",
                                   "fontSize": 12,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "WSZLi",
-                              "name": "entryCount",
-                              "fill": "$brand.orange.primary",
-                              "cornerRadius": 9999,
-                              "padding": [
-                                4,
-                                10
-                              ],
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "ZCaHh",
-                                  "name": "entryCountText",
-                                  "fill": "$brand.white",
-                                  "content": "4",
-                                  "fontFamily": "Geist",
-                                  "fontSize": 13,
-                                  "fontWeight": "700"
+                                  "fontWeight": "500"
                                 }
                               ]
                             },
@@ -128863,7 +128836,7 @@
                               "height": 18,
                               "icon": "chevron-right",
                               "library": "lucide",
-                              "fill": "$brand.blue.deep"
+                              "fill": "#7888A8"
                             }
                           ]
                         },

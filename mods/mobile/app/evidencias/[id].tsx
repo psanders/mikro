@@ -15,6 +15,7 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  Image,
   Linking,
   ActivityIndicator
 } from "react-native";
@@ -250,32 +251,22 @@ export default function EvidenciaDetalleScreen() {
             <Text style={styles.progLabel}>
               {t.progress.have} de {t.progress.need} recogidas
             </Text>
-            <Text
-              style={[styles.progMissing, t.status.complete && { color: colors.status.success }]}
-            >
+            <Text style={styles.progMissing}>
               {t.status.complete ? "Completa" : `Faltan ${t.progress.need - t.progress.have}`}
             </Text>
           </View>
           <ProgressBar
             progress={t.progress.need ? t.progress.have / t.progress.need : 0}
-            color={t.status.complete ? colors.status.success : colors.brand.orange.primary}
+            color={colors.brand.blue.primary}
           />
           {missing.length > 0 && <Text style={styles.muted}>Falta: {missing.join(" · ")}</Text>}
         </View>
 
-        <SectionHead
-          label="UBICACIÓN DEL NEGOCIO"
-          right={t.mapUrl ? "GUARDADA" : "OBLIGATORIA"}
-          ok={Boolean(t.mapUrl)}
-        />
+        <SectionHead label="UBICACIÓN DEL NEGOCIO" right={t.mapUrl ? "GUARDADA" : "OBLIGATORIA"} />
         {t.mapUrl && loc.kind === "idle" ? (
           <View style={styles.card} testID="location-saved">
             <View style={styles.locRow}>
-              <IconTile
-                icon={MapPinCheck}
-                bg={colors.status.successBg}
-                fg={colors.status.success}
-              />
+              <IconTile icon={MapPinCheck} bg={colors.brand.mist} fg={colors.brand.blue.primary} />
               <Text style={styles.locTitle}>Ubicación guardada</Text>
             </View>
             <View style={styles.linkRow}>
@@ -302,11 +293,7 @@ export default function EvidenciaDetalleScreen() {
           />
         )}
 
-        <SectionHead
-          label="CÉDULA"
-          right={`${Number(t.idFront) + Number(t.idBack)} de 2`}
-          ok={t.idFront && t.idBack}
-        />
+        <SectionHead label="CÉDULA" right={`${Number(t.idFront) + Number(t.idBack)} de 2`} />
         <View style={styles.slots}>
           {(["FRONT", "BACK"] as const).map((side) => {
             const present = side === "FRONT" ? t.idFront : t.idBack;
@@ -317,6 +304,7 @@ export default function EvidenciaDetalleScreen() {
                 label={label}
                 present={present}
                 icon={IdCard}
+                source={{ kind: "id", applicationId: id!, side }}
                 busy={busy === `id-${side}`}
                 testID={`id-slot-${side.toLowerCase()}`}
                 onAdd={() => void addIdSide(side)}
@@ -333,7 +321,6 @@ export default function EvidenciaDetalleScreen() {
         <SectionHead
           label="FOTOS DEL NEGOCIO"
           right={`${photos.length} de ${t.status.businessPhotos.need} mínimo`}
-          ok={photos.length >= t.status.businessPhotos.need}
         />
         <View style={styles.photoGrid}>
           {photos.map((p) => (
@@ -342,6 +329,7 @@ export default function EvidenciaDetalleScreen() {
               label={p.label ?? "Foto"}
               present
               icon={Camera}
+              source={{ kind: "doc", documentId: p.id }}
               busy={false}
               onRemove={() =>
                 confirmRemove(`la foto «${p.label ?? "Foto"}»`, () =>
@@ -408,8 +396,8 @@ function LocationCard({
   const accuracy = (r: Reading | null) =>
     r?.accuracy != null ? `±${Math.round(r.accuracy)} m` : "sin dato de precisión";
   let icon = LocateFixed;
-  let bg = "#FFF1E3";
-  let fg: string = colors.brand.orange.deep;
+  let bg: string = colors.brand.mist;
+  let fg: string = colors.brand.blue.primary;
   let text = "Cuando estés frente al negocio, guarda su ubicación. Se guarda como enlace de mapa.";
   let cta: { label: string; color: string; onPress: () => void; disabled?: boolean } = {
     label: "Estoy en el negocio",
@@ -485,6 +473,7 @@ function Slot({
   label,
   present,
   icon: Icon,
+  source,
   busy,
   testID,
   onAdd,
@@ -493,6 +482,7 @@ function Slot({
   label: string;
   present: boolean;
   icon: typeof Camera;
+  source?: ThumbSource;
   busy: boolean;
   testID?: string;
   onAdd?: () => void;
@@ -508,13 +498,7 @@ function Slot({
         {busy ? (
           <ActivityIndicator color={colors.brand.blue.primary} />
         ) : present ? (
-          <>
-            <Icon size={26} color={colors.brand.white} />
-            <View style={styles.savedPill}>
-              <CircleCheck size={11} color={colors.status.success} />
-              <Text style={styles.savedText}>Guardada</Text>
-            </View>
-          </>
+          <Thumb source={source} icon={Icon} />
         ) : (
           <>
             <Camera size={22} color={colors.brand.blue.primary} />
@@ -536,19 +520,40 @@ function Slot({
   );
 }
 
-function SectionHead({ label, right, ok }: { label: string; right: string; ok?: boolean }) {
+type ThumbSource =
+  | { kind: "id"; applicationId: string; side: "FRONT" | "BACK" }
+  | { kind: "doc"; documentId: string };
+
+/** The saved photo itself; a neutral tile while it loads or if it can't. */
+function Thumb({ source, icon: Icon }: { source?: ThumbSource; icon: typeof Camera }) {
+  const idImage = trpc.getIdImage.useQuery(
+    source?.kind === "id"
+      ? { id: source.applicationId, side: source.side }
+      : { id: "", side: "FRONT" },
+    { enabled: source?.kind === "id", staleTime: Infinity }
+  );
+  const doc = trpc.getApplicationDocument.useQuery(
+    { documentId: source?.kind === "doc" ? source.documentId : "" },
+    { enabled: source?.kind === "doc", staleTime: Infinity }
+  );
+  const uri =
+    source?.kind === "id" && idImage.data
+      ? `data:${idImage.data.mimeType};base64,${idImage.data.dataBase64}`
+      : source?.kind === "doc" && doc.data && doc.data.document.mimeType.startsWith("image/")
+        ? `data:${doc.data.document.mimeType};base64,${doc.data.dataBase64}`
+        : null;
+  return uri ? (
+    <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+  ) : (
+    <Icon size={24} color={colors.brand.blue.primary} />
+  );
+}
+
+function SectionHead({ label, right }: { label: string; right: string }) {
   return (
     <View style={styles.secHead}>
       <Text style={styles.secLabel}>{label}</Text>
-      <Text
-        style={[
-          styles.secRight,
-          ok === true && { color: colors.status.success },
-          ok === false && { color: colors.brand.orange.deep }
-        ]}
-      >
-        {right}
-      </Text>
+      <Text style={styles.secRight}>{right}</Text>
     </View>
   );
 }
@@ -600,7 +605,7 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: 20, paddingTop: 4, gap: 16 },
   muted: { fontFamily: "Geist_400Regular", fontSize: 12, color: colors.text.secondary },
   card: { backgroundColor: colors.brand.white, borderRadius: 16, padding: 16, gap: 12 },
-  locCard: { borderWidth: 1.5, borderColor: "#FCD9B6" },
+  locCard: { borderWidth: 1, borderColor: colors.border.card },
   addrRow: { flexDirection: "row", gap: 10 },
   street: { fontFamily: "Geist_600SemiBold", fontSize: 14, color: colors.brand.ink },
   actions: { flexDirection: "row", gap: 8 },
@@ -627,7 +632,7 @@ const styles = StyleSheet.create({
   doneText: { fontFamily: "Geist_400Regular", fontSize: 12, lineHeight: 16, color: "#166534" },
   progHead: { flexDirection: "row", justifyContent: "space-between" },
   progLabel: { fontFamily: "Geist_700Bold", fontSize: 14, color: colors.brand.ink },
-  progMissing: { fontFamily: "Geist_700Bold", fontSize: 12, color: colors.brand.orange.deep },
+  progMissing: { fontFamily: "Geist_700Bold", fontSize: 12, color: colors.text.secondary },
   secHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   secLabel: {
     fontFamily: "Geist_700Bold",
@@ -682,21 +687,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6
+    gap: 6,
+    overflow: "hidden"
   },
   slotEmpty: { backgroundColor: "#F8FBFF", borderWidth: 1.5, borderColor: "#B9CBE6" },
-  slotDone: { backgroundColor: colors.brand.blue.primary },
+  slotDone: { backgroundColor: colors.brand.mist },
   slotCta: { fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.blue.primary },
-  savedPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 9999,
-    backgroundColor: colors.status.successBg
-  },
-  savedText: { fontFamily: "Geist_700Bold", fontSize: 11, color: colors.status.success },
   slotFoot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   slotLabel: { flex: 1, fontFamily: "Geist_600SemiBold", fontSize: 12, color: colors.brand.ink },
   addMore: { flexDirection: "row", alignItems: "center", gap: 6 },
