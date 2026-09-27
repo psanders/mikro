@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.7.0](https://github.com/psanders/mikro/compare/v3.6.1...v3.7.0) (2026-09-27)
+
+### Features
+
+- **cx:** conversation audit card only states whether we comply ([#307](https://github.com/psanders/mikro/issues/307)) ([146bd5f](https://github.com/psanders/mikro/commit/146bd5fec85422247b141954bb264fb704023334))
+
 ## [3.6.1](https://github.com/psanders/mikro/compare/v3.6.0...v3.6.1) (2026-09-27)
 
 ### Bug Fixes
