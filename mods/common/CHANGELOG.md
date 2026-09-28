@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.11.0](https://github.com/psanders/mikro/compare/v3.10.0...v3.11.0) (2026-09-28)
+
+### Features
+
+- **applications:** text applicants via Twilio when their application is rejected ([#316](https://github.com/psanders/mikro/issues/316)) ([d4d9572](https://github.com/psanders/mikro/commit/d4d95726b50360c644a16944bf9a823d85fa4bd7))
+
 # [3.10.0](https://github.com/psanders/mikro/compare/v3.9.0...v3.10.0) (2026-09-28)
 
 ### Features
