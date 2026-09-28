@@ -131,6 +131,25 @@ const metaConversionsSchema = z.object({
 });
 
 /**
+ * Twilio SMS. Used to text the applicant `rejectionMessage` when a reviewer or
+ * admin rejects their application (not on the automatic out-of-area rejection
+ * at intake, and not on any other status change). Nothing is sent unless
+ * `accountSid`, `authToken`, `from` and `rejectionMessage` are all set.
+ */
+const twilioSchema = z
+  .object({
+    accountSid: z.string().default(""),
+    authToken: z.string().default(""),
+    /** Sender: an E.164 Twilio number ("+1809…") or a Messaging Service SID ("MG…"). */
+    from: z.string().default(""),
+    /** The exact SMS text sent on rejection. */
+    rejectionMessage: z.string().default("")
+  })
+  .strict();
+
+export type TwilioConfig = z.infer<typeof twilioSchema>;
+
+/**
  * Chatwoot mirror of the bot's WhatsApp replies. Chatwoot sees the customer's
  * inbound messages (it receives the same Meta webhook) but never the bot's
  * replies, because Meta does not echo Cloud API sends back as webhooks. When
@@ -571,7 +590,13 @@ export const mikroConfigSchema = z
       accessToken: "",
       testEventCode: ""
     })),
-    chatwoot: chatwootSchema.default(() => ({ url: "", accountId: 0, inboxId: 0, apiToken: "" }))
+    chatwoot: chatwootSchema.default(() => ({ url: "", accountId: 0, inboxId: 0, apiToken: "" })),
+    twilio: twilioSchema.default(() => ({
+      accountSid: "",
+      authToken: "",
+      from: "",
+      rejectionMessage: ""
+    }))
   })
   .strict();
 

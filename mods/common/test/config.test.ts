@@ -197,3 +197,40 @@ describe("mikroConfigSchema — accounting.disbursementAccounts", () => {
     ).to.equal(false);
   });
 });
+
+describe("mikroConfigSchema — twilio", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+  };
+
+  it("is optional and defaults to empty (SMS off)", () => {
+    const parsed = mikroConfigSchema.safeParse(base);
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) {
+      expect(parsed.data.twilio).to.deep.equal({
+        accountSid: "",
+        authToken: "",
+        from: "",
+        rejectionMessage: ""
+      });
+    }
+  });
+
+  it("accepts credentials and the rejection message", () => {
+    const twilio = {
+      accountSid: "AC123",
+      authToken: "secret",
+      from: "+18095550000",
+      rejectionMessage: "Lo sentimos, su solicitud no fue aprobada."
+    };
+    const parsed = mikroConfigSchema.safeParse({ ...base, twilio });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.twilio).to.deep.equal(twilio);
+  });
+
+  it("rejects unknown keys", () => {
+    const parsed = mikroConfigSchema.safeParse({ ...base, twilio: { apiKey: "x" } });
+    expect(parsed.success).to.equal(false);
+  });
+});

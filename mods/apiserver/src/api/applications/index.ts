@@ -27,8 +27,10 @@ export {
   loadActor,
   loadApplication,
   assertEvidenceWritable,
-  assertReviewDataWritable
+  assertReviewDataWritable,
+  type RejectApplicationDeps
 } from "./reviewApplication.js";
+export { createNotifyRejection, type NotifyRejectionDeps } from "./createNotifyRejection.js";
 export { createUploadSignedContract } from "./createUploadSignedContract.js";
 export {
   createGetApplicationContract,

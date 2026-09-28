@@ -284,21 +284,30 @@ export function createApproveApplication(client: DbClient) {
   };
 }
 
+export interface RejectApplicationDeps {
+  /** Runs after the rejection is committed; fire-and-forget, never fails the reject. */
+  onRejected?: (app: LoanApplication) => Promise<unknown>;
+}
+
 /** Reject with a reason: the assignee while IN_REVIEW, an admin while PENDING_DECISION. */
-export function createRejectApplication(client: DbClient) {
+export function createRejectApplication(client: DbClient, deps: RejectApplicationDeps = {}) {
   return async (
     input: RejectApplicationInput,
     actor: TransitionActor
   ): Promise<LoanApplication> => {
     const app = await loadApplication(client, input);
     const to = authorize(app, "reject", actor, { reason: input.reason, note: input.note });
-    return commitTransition(client, app, {
+    const updated = await commitTransition(client, app, {
       status: to,
       rejectionReason: input.reason,
       decidedById: actor.id,
       decidedAt: new Date(),
       decisionNote: input.note || null
     });
+    deps.onRejected?.(updated).catch((err: Error) => {
+      logger.error("post-rejection hook failed", { applicationId: app.id, error: err.message });
+    });
+    return updated;
   };
 }
 
@@ -351,8 +360,8 @@ export function createCopilotApproveApplication(client: DbClient) {
   };
 }
 
-export function createCopilotRejectApplication(client: DbClient) {
-  const reject = createRejectApplication(client);
+export function createCopilotRejectApplication(client: DbClient, deps: RejectApplicationDeps = {}) {
+  const reject = createRejectApplication(client, deps);
   return async (
     input: { id?: string; sessionId?: string; reason: string },
     reviewerId: string

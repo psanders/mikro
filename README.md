@@ -121,6 +121,25 @@ mikro accounting:transactions:reverse             # creates mirror + flags origi
 Receipt attachments (PNG, JPG, PDF, max 10 MB) are stored server-side under
 `accounting.attachmentsPath`.
 
+## Rejection SMS
+
+When a reviewer or admin rejects an application (dashboard, `mikro applications:reject`
+or the copilot), the applicant gets an SMS through Twilio. The automatic out-of-area
+rejection at intake and every other status change (e.g. abandoned) send nothing.
+Applicants with no phone on file are skipped. Configure it in `mikro.json`; nothing
+is sent unless all four fields are set:
+
+```json
+"twilio": {
+  "accountSid": "ACxxxxxxxx",
+  "authToken": "your-auth-token",
+  "from": "+18095550000",
+  "rejectionMessage": "Gracias por tu interés en Mikro. En este momento no podemos aprobar tu solicitud."
+}
+```
+
+`from` is a Twilio number or a Messaging Service SID (`MG…`). The message is sent as-is.
+
 ## Authentication
 
 The API only accepts per-user Bearer JWTs. There is no shared credential.
