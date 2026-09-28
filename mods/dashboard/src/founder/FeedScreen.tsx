@@ -21,7 +21,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Calculator, Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
 import { trpc } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
@@ -315,17 +315,31 @@ export function FeedScreen() {
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
         <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Feed</h1>
-        {viewer?.isAdmin && (
-          <button
-            type="button"
-            onClick={() => copilot.openWith()}
-            title="Copiloto"
-            aria-label="Copiloto"
-            className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
-          >
-            <Sparkles size={17} />
-          </button>
-        )}
+        <div className="flex items-center gap-[10px]">
+          {viewer?.isReviewer && (
+            <button
+              type="button"
+              onClick={() => applicationPanel.openCalculator()}
+              title="Calculadora"
+              aria-label="Calculadora"
+              data-testid="calculator-button"
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+            >
+              <Calculator size={17} />
+            </button>
+          )}
+          {viewer?.isAdmin && (
+            <button
+              type="button"
+              onClick={() => copilot.openWith()}
+              title="Copiloto"
+              aria-label="Copiloto"
+              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+            >
+              <Sparkles size={17} />
+            </button>
+          )}
+        </div>
       </header>
 
       <FilterBar value={filterValue} actors={actors} onApply={applyFilter} />
