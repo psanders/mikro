@@ -17,5 +17,5 @@
 
 ## 4. Close
 
-- [ ] 4.1 Sync delta into `openspec/specs/ops-application-flow`
+- [x] 4.1 Sync delta into `openspec/specs/ops-application-flow`
 - [ ] 4.2 Archive change
