@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.10.0](https://github.com/psanders/mikro/compare/v3.9.0...v3.10.0) (2026-09-28)
+
+### Features
+
+- **dashboard:** loan calculator in the Ops feed for admins and reviewers ([#314](https://github.com/psanders/mikro/issues/314)) ([b608580](https://github.com/psanders/mikro/commit/b608580767903cc03c0f2af5d0d9dcad3bd71800))
+
 # [3.9.0](https://github.com/psanders/mikro/compare/v3.8.0...v3.9.0) (2026-09-27)
 
 ### Features
