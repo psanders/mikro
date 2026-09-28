@@ -147,5 +147,11 @@
     "accountId": 0,
     "inboxId": 0,
     "apiToken": ""
+  },
+  "twilio": {
+    "accountSid": "",
+    "authToken": "",
+    "from": "",
+    "rejectionMessage": ""
   }
 }

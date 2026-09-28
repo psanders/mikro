@@ -162,6 +162,7 @@ import {
   createRejectApplication,
   createWithdrawApplication
 } from "../../api/applications/reviewApplication.js";
+import { createNotifyRejection } from "../../api/applications/createNotifyRejection.js";
 import {
   assertEvidenceReadable,
   getApplicationEvidence,
@@ -753,7 +754,8 @@ export const protectedRouter = router({
     .meta({ event: "application.rejected" })
     .input(rejectApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      return createRejectApplication(ctx.db)(input, actorOf(ctx));
+      const onRejected = createNotifyRejection(getConfig().twilio);
+      return createRejectApplication(ctx.db, { onRejected })(input, actorOf(ctx));
     }),
 
   /** The customer backed out after approval (APPROVED -> ABANDONED). */

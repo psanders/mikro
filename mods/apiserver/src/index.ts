@@ -88,7 +88,8 @@ import {
   createCopilotApproveApplication,
   createCopilotRejectApplication,
   createDeleteApplication,
-  createIsIntakeOpen
+  createIsIntakeOpen,
+  createNotifyRejection
 } from "./api/applications/index.js";
 import { Octokit } from "@octokit/rest";
 import { fileGithubIssue } from "./api/feedback/fileGithubIssue.js";
@@ -566,7 +567,9 @@ async function initializeMessageProcessor() {
     const getCustomer = createGetCustomer(dbClient);
     const getApplication = createGetApplication(dbClient);
     const approveApplication = createCopilotApproveApplication(dbClient);
-    const rejectApplication = createCopilotRejectApplication(dbClient);
+    const rejectApplication = createCopilotRejectApplication(dbClient, {
+      onRejected: createNotifyRejection(cfg.twilio)
+    });
     const deleteApplication = createDeleteApplication(dbClient);
     const createLoan = createCreateLoan(dbClient);
     const calculateLoan = createCalculateLoan();

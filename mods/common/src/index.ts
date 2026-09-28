@@ -47,6 +47,7 @@ export {
   type LLMVendor,
   type QCobroConfig,
   type ConversationAuditConfig,
+  type TwilioConfig,
   type QCobroSyncMode,
   type QCobroBalanceBasis,
   type QCobroPortfolioRule
