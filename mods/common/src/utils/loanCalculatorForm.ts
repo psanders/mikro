@@ -48,11 +48,21 @@ export function calculateFromForm(form: LoanCalculatorForm): LoanCalculatorOutco
     };
   }
 
-  const params = calculateLoanSchema.parse({
+  // Backstop for what the checks above let through (e.g. "1e999" → Infinity):
+  // never throw from here, the panel calls this during render.
+  const parsed = calculateLoanSchema.safeParse({
     principal,
     interestRate: ratePercent / 100,
     paymentFrequency: form.paymentFrequency,
     baseDuration
   });
-  return { ok: true, result: calculateLoanOptions(params) };
+  if (!parsed.success) {
+    const field = parsed.error.issues[0]?.path[0];
+    return {
+      ok: false,
+      field: field === "baseDuration" ? "baseDuration" : "principal",
+      message: "Revisa los valores: alguno está fuera de rango."
+    };
+  }
+  return { ok: true, result: calculateLoanOptions(parsed.data) };
 }

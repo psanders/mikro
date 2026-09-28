@@ -48,6 +48,11 @@ describe("calculateFromForm", () => {
     expect(out).to.include({ field: "ratePercent" });
   });
 
+  it("returns an error instead of throwing on an infinite monto", () => {
+    const out = calculateFromForm({ ...weekly, principal: "1e999" });
+    expect(out).to.include({ ok: false, field: "principal" });
+  });
+
   it("rejects a fractional or zero plazo", () => {
     for (const baseDuration of ["0", "2.5", "abc"]) {
       const out = calculateFromForm({ ...weekly, baseDuration });
