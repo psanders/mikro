@@ -49,7 +49,7 @@ RUN npm ci --omit=dev --ignore-scripts && \
 # Reinstall the native runtime packages so npm fetches the correct musl optionals
 # (sharp also pulls its @img/sharp-libvips-linuxmusl-* sub-package) for the build
 # arch — the alpine base already targets linux-musl. Versions track the lockfile.
-RUN npm install --no-save --include=optional sharp@0.34.5 @resvg/resvg-js@2.6.2
+RUN npm install --no-save --include=optional sharp@0.35.4 @resvg/resvg-js@2.6.2
 
 # Install Prisma CLI globally for migrations
 RUN npm install -g prisma@^7.3.0 && \
