@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.1](https://github.com/psanders/mikro/compare/v3.12.0...v3.12.1) (2026-09-29)
+
+### Bug Fixes
+
+- **applications:** Spanish status in the solicitud PDF header ([#324](https://github.com/psanders/mikro/issues/324)) ([8d080af](https://github.com/psanders/mikro/commit/8d080af392c047ad78130c8a9696d83bc5dacc2f))
+
 # [3.12.0](https://github.com/psanders/mikro/compare/v3.11.1...v3.12.0) (2026-09-29)
 
 ### Features
