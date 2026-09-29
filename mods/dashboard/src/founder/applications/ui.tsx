@@ -4,8 +4,8 @@
  * Small building blocks shared by the application card and side panel, styled
  * to Pencil EzobQ §08 tokens (ds.violet #7C3AED / bg #F1EAFE / tint #FAF7FF).
  */
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { ButtonHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { scoreTone, statusMeta, type StatusTone } from "../../lib/applications";
 
@@ -111,3 +111,21 @@ export function PanelField({ label, children }: { label: string; children: React
 
 export const INPUT_CLASS =
   "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-3 py-[9px] text-[13px] font-medium text-[#14254A] outline-none focus:border-[#7C3AED]";
+
+/**
+ * INPUT_CLASS select with its own chevron. The native WebKit select ignores
+ * padding, so a bare `<select className={INPUT_CLASS}>` renders shorter than
+ * the inputs beside it.
+ */
+export function PanelSelect({ className, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select {...rest} className={cn(INPUT_CLASS, "peer appearance-none pr-[34px]", className)} />
+      <ChevronDown
+        size={16}
+        strokeWidth={2}
+        className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93] peer-disabled:opacity-50"
+      />
+    </div>
+  );
+}

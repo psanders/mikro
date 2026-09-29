@@ -28,7 +28,7 @@ import {
   useApplicationInvalidation,
   type Frequency
 } from "../helpers";
-import { Btn, INPUT_CLASS, PanelField, SectionLabel } from "../ui";
+import { Btn, INPUT_CLASS, PanelField, PanelSelect, SectionLabel } from "../ui";
 import type { ViewProps } from "./types";
 
 export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps) {
@@ -156,8 +156,8 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
               size={15}
               className="pointer-events-none absolute left-3 top-[11px] text-[#697A93]"
             />
-            <select
-              className={cn(INPUT_CLASS, "pl-9")}
+            <PanelSelect
+              className="pl-9"
               value={collectorId}
               disabled={!writable}
               onChange={(e) => setCollectorId(e.target.value)}
@@ -169,7 +169,7 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
                   {c.name}
                 </option>
               ))}
-            </select>
+            </PanelSelect>
           </div>
         </PanelField>
 
@@ -296,8 +296,7 @@ function LegacyTerms({
           />
         </PanelField>
         <PanelField label="Frecuencia">
-          <select
-            className={INPUT_CLASS}
+          <PanelSelect
             value={value.frequency}
             disabled={disabled}
             onChange={(e) => {
@@ -310,7 +309,7 @@ function LegacyTerms({
                 {FREQUENCY_LABELS[f]}
               </option>
             ))}
-          </select>
+          </PanelSelect>
         </PanelField>
         <PanelField label="Primera cuota">
           <input
