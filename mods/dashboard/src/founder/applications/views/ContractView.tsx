@@ -24,7 +24,7 @@ import {
   useApplicationInvalidation,
   type Frequency
 } from "../helpers";
-import { Btn, INPUT_CLASS, PanelField, SectionLabel } from "../ui";
+import { Btn, INPUT_CLASS, PanelField, PanelSelect, SectionLabel } from "../ui";
 import type { ViewProps } from "./types";
 
 export function ContractView({ app, viewer, onView, panel }: ViewProps) {
@@ -136,8 +136,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
               />
             </PanelField>
             <PanelField label="Frecuencia">
-              <select
-                className={INPUT_CLASS}
+              <PanelSelect
                 value={frequency}
                 disabled={!writable}
                 onChange={(e) => {
@@ -151,7 +150,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
                     {FREQUENCY_LABELS[f]}
                   </option>
                 ))}
-              </select>
+              </PanelSelect>
             </PanelField>
             <PanelField label="Primera cuota">
               <input

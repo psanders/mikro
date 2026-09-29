@@ -20,7 +20,7 @@ import {
   sectionProgress
 } from "../fields";
 import { useApplicationInvalidation } from "../helpers";
-import { Btn, INPUT_CLASS, PanelField } from "../ui";
+import { Btn, INPUT_CLASS, PanelField, PanelSelect } from "../ui";
 import type { ViewProps } from "./types";
 
 export function EditView({ app, viewer, onView, panel }: ViewProps) {
@@ -117,7 +117,7 @@ export function EditView({ app, viewer, onView, panel }: ViewProps) {
                     return (
                       <PanelField key={f.key} label={f.label}>
                         {f.options ? (
-                          <select
+                          <PanelSelect
                             className={cls}
                             value={value}
                             disabled={!writable}
@@ -130,7 +130,7 @@ export function EditView({ app, viewer, onView, panel }: ViewProps) {
                                 {optionLabel(o)}
                               </option>
                             ))}
-                          </select>
+                          </PanelSelect>
                         ) : (
                           <input
                             className={cls}

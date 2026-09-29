@@ -15,7 +15,7 @@ import { DEFAULT_PAYMENT_ROUNDING_INCREMENT } from "@mikro/common/utils/loanCalc
 import { cn } from "../../lib/cn";
 import { SidePanel } from "../components/SidePanel";
 import { formatAmount } from "../components/format";
-import { INPUT_CLASS, PanelField, SectionLabel } from "../applications/ui";
+import { INPUT_CLASS, PanelField, PanelSelect, SectionLabel } from "../applications/ui";
 
 const FREQUENCIES: { value: PaymentFrequency; label: string; unit: string }[] = [
   { value: "DAILY", label: "Diario", unit: "días" },
@@ -114,7 +114,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
             {fieldError("ratePercent")}
           </PanelField>
           <PanelField label="Frecuencia">
-            <select
+            <PanelSelect
               className={inputCls("paymentFrequency")}
               value={form.paymentFrequency}
               onChange={(e) => set("paymentFrequency")(e.target.value)}
@@ -125,7 +125,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
                   {f.label}
                 </option>
               ))}
-            </select>
+            </PanelSelect>
           </PanelField>
           <PanelField label={`Plazo base (${PERIOD_NAMES[form.paymentFrequency]})`}>
             <input
