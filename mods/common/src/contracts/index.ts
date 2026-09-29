@@ -13,5 +13,9 @@ export type {
   SolicitudSummaryData,
   SummaryScoreCategory,
   SummaryScoreIndicators,
-  SummaryEvaluatorNote
+  SummaryEvaluatorNote,
+  SummaryDocument,
+  SummaryActivity,
+  SummaryTurn,
+  SummaryHandoff
 } from "./summaryGenerator.js";

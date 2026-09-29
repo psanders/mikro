@@ -7,9 +7,19 @@
  * conversation (the persisted WhatsApp transcript, #299).
  */
 import { useState } from "react";
-import { FileText, Images, Landmark, Pencil, Sparkles, UserCheck, UserPlus } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Images,
+  Landmark,
+  Pencil,
+  Sparkles,
+  UserCheck,
+  UserPlus
+} from "lucide-react";
 import { trpc } from "../../../lib/trpc";
 import { useToast } from "../../../components/ui/ToastProvider";
+import { base64ToBytes, saveFile, savedMessage } from "../../../lib/saveFile";
 import { checkAction, forTransition, formatDate, friendlyError } from "../../../lib/applications";
 import { SidePanel } from "../../components/SidePanel";
 import { APPLICATION_FIELD_SECTIONS, fieldDisplay } from "../fields";
@@ -47,6 +57,22 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
     { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false, retry: false }
   );
   const record = app as unknown as Record<string, unknown>;
+  const utils = trpc.useUtils();
+  const [downloading, setDownloading] = useState(false);
+
+  async function onDownload() {
+    setDownloading(true);
+    try {
+      const pdf = await utils.generateApplicationSummary.fetch({ id: app.id });
+      const result = await saveFile(base64ToBytes(pdf.dataBase64), pdf.filename, pdf.mimeType);
+      if (result.status === "saved")
+        toast.success(savedMessage("PDF de la solicitud", result, pdf.filename));
+    } catch (e) {
+      toast.error(friendlyError(e, "No se pudo generar el PDF de la solicitud."));
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const take = checkAction(rules, "assign", viewer);
   const canWorkEvidence = app.status === "IN_REVIEW" && app.assignedReviewerId === viewer.id;
@@ -109,6 +135,18 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
                 Registrar desembolso
               </Btn>
             </>
+          )}
+          {viewer.isReviewer && (
+            <Btn
+              icon={Download}
+              className="ml-auto px-3 py-[7px] text-[13px]"
+              disabled={downloading}
+              title="Descargar la solicitud completa en PDF"
+              onClick={onDownload}
+              data-testid="action-download-pdf"
+            >
+              {downloading ? "Generando…" : "PDF"}
+            </Btn>
           )}
         </div>
 

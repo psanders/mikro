@@ -2,12 +2,19 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { ApplicationScore, DbClient, GenerateApplicationSummaryInput } from "@mikro/common";
-import { renderSummaryPdf, type SolicitudSummaryData } from "@mikro/common/contracts";
+import {
+  renderSummaryPdf,
+  type SolicitudSummaryData,
+  type SummaryDocument
+} from "@mikro/common/contracts";
 import { TRPCError } from "@trpc/server";
 import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import type { PrismaClient } from "../../generated/prisma/client.js";
+import { readImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
+import { createGetApplicationConversation } from "../conversations/conversations.js";
 
 // Brand assets ship next to the apiserver build; resolve relative to this file
 // so paths hold both locally and in the container (assetsPath config points at
@@ -33,6 +40,79 @@ function loadFonts(): SolicitudSummaryData["fonts"] {
   const bold = readOptional(join(FONTS_DIR, "Inter-Bold.ttf"));
   if (!regular || !medium || !semibold || !bold) return null;
   return { regular, medium, semibold, bold };
+}
+
+/** A stored image's bytes, or null when the file is gone from disk. */
+function imageBytes(filename: string): Buffer | null {
+  try {
+    return Buffer.from(readImage(filename).dataBase64, "base64");
+  } catch {
+    return null;
+  }
+}
+
+function imageItem(label: string, filename: string | null): SummaryDocument {
+  if (!filename) return { label, note: "Sin archivo" };
+  const image = imageBytes(filename);
+  return image ? { label, image } : { label, note: "Archivo no encontrado" };
+}
+
+/**
+ * Everything the panel's "Ver solicitud completa" shows past the form fields:
+ * cédula + evidence files (images embedded, PDFs as tiles), the signed
+ * contract's state, the application's events and its WhatsApp conversation.
+ */
+async function loadPanelSections(
+  client: DbClient,
+  app: {
+    id: string;
+    idFrontFilename: string | null;
+    idBackFilename: string | null;
+    contractFilename: string | null;
+  }
+): Promise<Pick<SolicitudSummaryData, "documents" | "activity" | "conversation">> {
+  const db = client as unknown as PrismaClient;
+  const [docs, events, conversation] = await Promise.all([
+    db.applicationDocument.findMany({
+      where: { applicationId: app.id },
+      orderBy: { createdAt: "asc" }
+    }),
+    db.businessEvent.findMany({
+      where: { applicationId: app.id },
+      orderBy: [{ occurredAt: "asc" }, { id: "asc" }],
+      select: { summary: true, actorName: true, occurredAt: true }
+    }),
+    createGetApplicationConversation(db)({ applicationId: app.id })
+  ]);
+
+  const documents: SummaryDocument[] = [
+    imageItem("Cédula frente", app.idFrontFilename),
+    imageItem("Cédula reverso", app.idBackFilename),
+    ...docs.map((d) => {
+      const label = d.label || (d.kind === "BUSINESS_PHOTO" ? "Foto del negocio" : d.originalName);
+      return d.mimeType === "application/pdf"
+        ? { label, note: "PDF" }
+        : imageItem(label, d.filename);
+    }),
+    app.contractFilename
+      ? { label: "Contrato firmado", note: "PDF" }
+      : { label: "Contrato (pendiente)", note: "Pendiente" }
+  ];
+
+  return {
+    documents,
+    activity: events,
+    conversation: {
+      turns: conversation.turns.map((t) => ({
+        role: t.role,
+        content: t.content,
+        agentName: t.agentName,
+        hasImage: t.hasImage,
+        createdAt: t.createdAt
+      })),
+      handoffs: conversation.handoffs
+    }
+  };
 }
 
 export interface GeneratedSummary {
@@ -95,6 +175,9 @@ export function createGenerateApplicationSummary(client: DbClient) {
       scoreIndicators: scoreData?.indicators ?? null,
       evaluatorNotes: scoreData?.evaluator_notes ?? null,
       flags: scoreData?.flags ?? null,
+      aiSummary: app.aiSummary,
+      mapUrl: app.mapUrl,
+      ...(await loadPanelSections(client, app)),
       fonts: loadFonts()
     };
 

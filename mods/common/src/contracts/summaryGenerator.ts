@@ -6,9 +6,15 @@
  * if no fonts are supplied. Mirrors the Solicitud detail page: applicant,
  * business, credit, references, housing, the full Mikro Score (headline +
  * category breakdown + indicators + flags) and the suggested follow-up
- * questions. The Mikro Score always starts on its own page.
+ * questions. The Mikro Score always starts on its own page. When the caller
+ * supplies them, it also carries what the Ops panel shows past the form: the
+ * AI summary, the evidence (map link as a QR code, cédula and business photos
+ * embedded), the activity timeline and the WhatsApp conversation.
  */
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
+import sharp from "sharp";
+import { agentDisplayName } from "../utils/agentNames.js";
 import { BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "../schemas/application.js";
 import {
   PAGE_H,
@@ -27,6 +33,7 @@ import {
   GREEN,
   AMBER,
   RED,
+  BOTTOM,
   type Fonts,
   resolveFonts,
   needsPage,
@@ -56,6 +63,36 @@ export interface SummaryEvaluatorNote {
   topic: string;
   question: string;
   reason: string;
+}
+
+/** One evidence item: an image to embed, or a file shown as a placeholder (PDF, missing). */
+export interface SummaryDocument {
+  label: string;
+  /** Raw image bytes (any format sharp reads); null/absent draws a placeholder tile. */
+  image?: Buffer | null;
+  /** Placeholder text when there is no image (e.g. "PDF", "Pendiente"). */
+  note?: string;
+}
+
+/** One entry of the application's activity (its business events). */
+export interface SummaryActivity {
+  summary: string;
+  actorName: string;
+  occurredAt: Date;
+}
+
+/** One stored WhatsApp turn, as the panel's conversation thread shows it. */
+export interface SummaryTurn {
+  role: "INBOUND" | "AGENT" | "SYSTEM";
+  content: string;
+  agentName: string | null;
+  hasImage: boolean;
+  createdAt: Date;
+}
+
+export interface SummaryHandoff {
+  reason: string;
+  openedAt: Date;
 }
 
 export interface SolicitudSummaryData {
@@ -103,6 +140,12 @@ export interface SolicitudSummaryData {
   scoreIndicators?: SummaryScoreIndicators | null;
   evaluatorNotes?: SummaryEvaluatorNote[] | null;
   flags?: Array<{ code: string; message: string }> | null;
+  // Past the form — what the Ops panel shows (all optional; omitted sections are skipped)
+  aiSummary?: string | null;
+  mapUrl?: string | null;
+  documents?: SummaryDocument[] | null;
+  activity?: SummaryActivity[] | null;
+  conversation?: { turns: SummaryTurn[]; handoffs: SummaryHandoff[] } | null;
   // Inter font faces (TTF bytes). When absent, falls back to Times.
   fonts?: {
     regular: Buffer;
@@ -408,7 +451,273 @@ function renderScorePage(doc: PDFKit.PDFDocument, F: Fonts, data: SolicitudSumma
   }
 }
 
-export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
+const DR_TZ = "America/Santo_Domingo";
+
+/** "29/9/26, 3:04 p. m." in Dominican time. */
+function formatDateTime(d: Date): string {
+  return d.toLocaleString("es-DO", { timeZone: DR_TZ, dateStyle: "short", timeStyle: "short" });
+}
+
+/** Inter has no emoji glyphs; pdfkit would draw tofu boxes. */
+function pdfText(s: string): string {
+  return s
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+/** Downscaled, EXIF-rotated JPEG pdfkit can embed; null when the bytes aren't an image. */
+async function toPdfImage(bytes: Buffer): Promise<Buffer | null> {
+  try {
+    return await sharp(bytes)
+      .rotate()
+      .resize({ width: 1000, height: 1000, fit: "inside", withoutEnlargement: true })
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: 72 })
+      .toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+interface PreparedDocument {
+  label: string;
+  image: Buffer | null;
+  note: string;
+}
+
+/** Short AI summary panel under the header. */
+function renderAiSummary(doc: PDFKit.PDFDocument, F: Fonts, text: string) {
+  const pad = 12;
+  const w = CONTENT_W - pad * 2;
+  doc.font(F.reg).fontSize(9.5);
+  const h = doc.heightOfString(text, { width: w, lineGap: 1.5 }) + 16 + pad * 2;
+  needsPage(doc, h);
+  doc.moveDown(0.6);
+  const y = doc.y;
+  doc.save().roundedRect(MARGIN, y, CONTENT_W, h, 8).fill(PANEL).restore();
+  doc
+    .fillColor(BRAND_PRIMARY)
+    .font(F.semi)
+    .fontSize(7.5)
+    .text("RESUMEN", MARGIN + pad, y + pad, { width: w, characterSpacing: 0.6 });
+  doc
+    .fillColor(TEXT)
+    .font(F.reg)
+    .fontSize(9.5)
+    .text(text, MARGIN + pad, doc.y + 3, { width: w, lineGap: 1.5 });
+  doc.y = y + h;
+}
+
+/** Evidencia: map QR + photo/document grid. Starts on its own page. */
+function renderEvidence(
+  doc: PDFKit.PDFDocument,
+  F: Fonts,
+  mapUrl: string | null,
+  qr: Buffer | null,
+  documents: PreparedDocument[]
+) {
+  doc.addPage();
+  doc.fillColor(BRAND_INK).font(F.bold).fontSize(17).text("Evidencia", MARGIN, doc.y);
+
+  sectionHead(doc, F, "Ubicación del negocio");
+  if (mapUrl && qr) {
+    const size = 104;
+    const y = doc.y;
+    doc.image(qr, MARGIN, y, { width: size, height: size });
+    const tx = MARGIN + size + 18;
+    const tw = CONTENT_W - size - 18;
+    doc
+      .fillColor(BRAND_INK)
+      .font(F.semi)
+      .fontSize(10.5)
+      .text("Escanea para abrir el mapa", tx, y + 20, { width: tw });
+    doc
+      .fillColor(BRAND_PRIMARY)
+      .font(F.reg)
+      .fontSize(8.5)
+      .text(mapUrl, tx, doc.y + 4, { width: tw, link: mapUrl, underline: true });
+    doc.y = y + size + 4;
+  } else {
+    doc
+      .fillColor(MUTED)
+      .font(F.reg)
+      .fontSize(9.5)
+      .text("Sin ubicación registrada.", MARGIN, doc.y, { width: CONTENT_W });
+  }
+
+  sectionHead(doc, F, "Fotos y documentos");
+  const gap = 16;
+  const cellW = (CONTENT_W - gap) / 2;
+  const imgH = Math.round(cellW * 0.75);
+  const rowH = imgH + 24;
+  for (let i = 0; i < documents.length; i += 2) {
+    needsPage(doc, rowH);
+    const y = doc.y;
+    documents.slice(i, i + 2).forEach((d, j) => {
+      const x = MARGIN + j * (cellW + gap);
+      doc.save().roundedRect(x, y, cellW, imgH, 6).fill(PANEL).restore();
+      if (d.image) {
+        doc.image(d.image, x, y, { fit: [cellW, imgH], align: "center", valign: "center" });
+      } else {
+        doc
+          .fillColor(LIGHT)
+          .font(F.med)
+          .fontSize(9)
+          .text(d.note, x, y + imgH / 2 - 6, { width: cellW, align: "center" });
+      }
+      doc
+        .fillColor(TEXT)
+        .font(F.med)
+        .fontSize(8.5)
+        .text(d.label, x, y + imgH + 6, { width: cellW, lineBreak: false, ellipsis: true });
+    });
+    doc.y = y + rowH;
+  }
+}
+
+/** Actividad: the application's events, oldest first. */
+function renderActivity(doc: PDFKit.PDFDocument, F: Fonts, activity: SummaryActivity[]) {
+  sectionHead(doc, F, "Actividad");
+  const tx = MARGIN + 16;
+  const tw = CONTENT_W - 16;
+  activity.forEach((e, i) => {
+    doc.font(F.semi).fontSize(9.5);
+    const h = doc.heightOfString(e.summary, { width: tw }) + 16;
+    needsPage(doc, h);
+    const y = doc.y;
+    doc
+      .save()
+      .circle(MARGIN + 4, y + 5, 3)
+      .fill(BRAND_PRIMARY)
+      .restore();
+    if (i < activity.length - 1) {
+      doc
+        .save()
+        .strokeColor(RULE)
+        .lineWidth(1)
+        .moveTo(MARGIN + 4, y + 11)
+        .lineTo(MARGIN + 4, y + h + 2)
+        .stroke()
+        .restore();
+    }
+    doc.fillColor(BRAND_INK).text(e.summary, tx, y, { width: tw });
+    doc
+      .fillColor(MUTED)
+      .font(F.reg)
+      .fontSize(8)
+      .text(`${e.actorName}  ·  ${formatDateTime(e.occurredAt)}`, tx, doc.y + 1, { width: tw });
+    doc.y = y + h + 4;
+  });
+}
+
+const BUBBLE_IN = "#ffffff";
+const BUBBLE_OUT = "#dcf3e4";
+
+/** Conversación: WhatsApp turns as chat bubbles, hand-offs as centered markers. */
+function renderConversation(
+  doc: PDFKit.PDFDocument,
+  F: Fonts,
+  personName: string,
+  turns: SummaryTurn[],
+  handoffs: SummaryHandoff[]
+) {
+  doc.addPage();
+  doc.fillColor(BRAND_INK).font(F.bold).fontSize(17).text("Conversación · WhatsApp", MARGIN, doc.y);
+  doc.moveDown(0.6);
+
+  type Item =
+    | { kind: "turn"; at: number; turn: SummaryTurn }
+    | { kind: "handoff"; at: number; handoff: SummaryHandoff };
+  const items: Item[] = [
+    ...handoffs.map((h) => ({ kind: "handoff" as const, at: h.openedAt.getTime(), handoff: h })),
+    ...turns
+      .filter((t) => t.content.trim() || t.hasImage)
+      .map((t) => ({ kind: "turn" as const, at: t.createdAt.getTime(), turn: t }))
+  ].sort((a, b) => a.at - b.at || (a.kind === b.kind ? 0 : a.kind === "turn" ? 1 : -1));
+
+  const pad = 8;
+  const bw = Math.round(CONTENT_W * 0.72);
+  const tw = bw - pad * 2;
+  for (const item of items) {
+    if (item.kind === "handoff") {
+      needsPage(doc, 22);
+      doc
+        .fillColor(AMBER)
+        .font(F.semi)
+        .fontSize(8)
+        .text(
+          `Pasó a una persona  ·  ${item.handoff.reason}  ·  ${formatDateTime(item.handoff.openedAt)}`,
+          MARGIN,
+          doc.y + 2,
+          { width: CONTENT_W, align: "center" }
+        );
+      doc.moveDown(0.8);
+      continue;
+    }
+    const t = item.turn;
+    const inbound = t.role === "INBOUND";
+    const who = inbound
+      ? personName
+      : t.role === "AGENT"
+        ? agentDisplayName(t.agentName)
+        : "Mikro (automático)";
+    const photo = t.hasImage ? "[Foto]" : "";
+    const content = t.hasImage && t.content === "[Imagen]" ? "" : pdfText(t.content);
+    const body = [photo, content].filter(Boolean).join("\n");
+
+    doc.font(F.reg).fontSize(9.5);
+    const bodyH = body ? doc.heightOfString(body, { width: tw, lineGap: 1 }) : 0;
+    const h = pad + 11 + (body ? bodyH + 3 : 0) + 12 + pad;
+    // A message taller than a page can't sit in one box: draw it unboxed and
+    // let the text flow onto the next page.
+    const fits = h <= BOTTOM - MARGIN;
+    needsPage(doc, fits ? h : 60);
+    const x = inbound ? MARGIN : MARGIN + CONTENT_W - bw;
+    const y = doc.y;
+    if (fits) {
+      doc
+        .save()
+        .roundedRect(x, y, bw, h, 8)
+        .fillAndStroke(inbound ? BUBBLE_IN : BUBBLE_OUT, inbound ? RULE : BUBBLE_OUT)
+        .restore();
+    }
+    doc
+      .fillColor(t.role === "AGENT" ? BRAND_PRIMARY : MUTED)
+      .font(F.semi)
+      .fontSize(8)
+      .text(who, x + pad, y + pad, { width: tw });
+    if (body) {
+      doc
+        .fillColor(BRAND_INK)
+        .font(F.reg)
+        .fontSize(9.5)
+        .text(body, x + pad, doc.y + 3, { width: tw, lineGap: 1 });
+    }
+    doc
+      .fillColor(LIGHT)
+      .font(F.reg)
+      .fontSize(7.5)
+      .text(formatDateTime(t.createdAt), x + pad, doc.y + 3, { width: tw });
+    doc.y = (fits ? Math.max(doc.y + pad, y + h) : doc.y + pad) + 6;
+  }
+}
+
+export async function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
+  // Async prep first (image re-encode, QR); drawing below is synchronous.
+  const mapUrl = data.mapUrl?.trim() || null;
+  const qr = mapUrl
+    ? await QRCode.toBuffer(mapUrl, { errorCorrectionLevel: "M", margin: 1, width: 400 })
+    : null;
+  const documents: PreparedDocument[] = await Promise.all(
+    (data.documents ?? []).map(async (d) => ({
+      label: d.label,
+      image: d.image ? await toPdfImage(d.image) : null,
+      note: d.note ?? (d.image ? "No se pudo mostrar la imagen" : "Sin archivo")
+    }))
+  );
+
   const doc = new PDFDocument({
     size: "LETTER",
     bufferPages: true,
@@ -462,6 +771,10 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
     .stroke()
     .restore();
   doc.moveDown(0.3);
+
+  if (data.aiSummary?.trim()) {
+    renderAiSummary(doc, F, pdfText(data.aiSummary));
+  }
 
   // ── Solicitante ──────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Solicitante");
@@ -540,6 +853,23 @@ export function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buffer> {
     sectionHead(doc, F, "Preguntas sugeridas");
     doc.moveDown(0.1);
     for (const n of data.evaluatorNotes) noteBlock(doc, F, n);
+  }
+
+  // ── Evidencia, Actividad, Conversación (the panel's sections) ──────────────────
+  if (documents.length > 0 || mapUrl) {
+    renderEvidence(doc, F, mapUrl, qr, documents);
+  }
+  if (data.activity && data.activity.length > 0) {
+    renderActivity(doc, F, data.activity);
+  }
+  if (data.conversation && data.conversation.turns.length > 0) {
+    renderConversation(
+      doc,
+      F,
+      data.firstName?.trim() || "Solicitante",
+      data.conversation.turns,
+      data.conversation.handoffs
+    );
   }
 
   // ── Footer on every page ──────────────────────────────────────────────────────
