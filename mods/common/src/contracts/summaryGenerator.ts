@@ -15,7 +15,11 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import { agentDisplayName } from "../utils/agentNames.js";
-import { BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "../schemas/application.js";
+import {
+  APPLICATION_STATUS_LABELS,
+  BUSINESS_TYPE_LABELS,
+  PROVINCE_LABELS
+} from "../schemas/application.js";
 import {
   PAGE_H,
   MARGIN,
@@ -154,16 +158,6 @@ export interface SolicitudSummaryData {
     bold: Buffer;
   } | null;
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Borrador",
-  RECEIVED: "Nueva",
-  IN_REVIEW: "En evaluación",
-  APPROVED: "Aprobada",
-  REJECTED: "Rechazada",
-  SIGNED: "Firmada",
-  CONVERTED: "Convertida"
-};
 
 const RISK_LABELS: Record<string, string> = {
   LOW_RISK: "Riesgo bajo",
@@ -736,7 +730,8 @@ export async function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buff
   const F = resolveFonts(doc, data.fonts);
 
   const name = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || "—";
-  const statusLabel = STATUS_LABELS[data.status] ?? data.status;
+  const statusLabel =
+    APPLICATION_STATUS_LABELS[data.status as keyof typeof APPLICATION_STATUS_LABELS] ?? data.status;
   const businessTypeLabel = data.businessType
     ? (BUSINESS_TYPE_LABELS[data.businessType] ?? data.businessType)
     : "—";

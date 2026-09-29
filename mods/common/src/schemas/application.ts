@@ -384,6 +384,18 @@ export const applicationStatusEnum = z.enum([
   "ABANDONED"
 ]);
 
+/** Spanish label per status — the one list the Ops app and the solicitud PDF share. */
+export const APPLICATION_STATUS_LABELS: Record<z.infer<typeof applicationStatusEnum>, string> = {
+  DRAFT: "Borrador",
+  RECEIVED: "Recibida",
+  IN_REVIEW: "En evaluación",
+  PENDING_DECISION: "Esperando decisión",
+  APPROVED: "Aprobada",
+  CONVERTED: "Convertida",
+  REJECTED: "Rechazada",
+  ABANDONED: "Desistida"
+};
+
 export const listApplicationsSchema = z.object({
   status: applicationStatusEnum.optional(),
   limit: z.number().int().positive().max(100).optional(),
