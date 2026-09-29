@@ -13,6 +13,7 @@ export {
   type ApplicationTracking,
   type ApplicationAttribution,
   applicationStatusEnum,
+  APPLICATION_STATUS_LABELS,
   listApplicationsSchema,
   getApplicationSchema,
   assignApplicationSchema,

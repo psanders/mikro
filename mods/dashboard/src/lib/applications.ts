@@ -6,6 +6,7 @@
  * `evaluateTransition` from @mikro/common, the same rules the server enforces.
  */
 import {
+  APPLICATION_STATUS_LABELS as L,
   evaluateTransition,
   TRANSITION_BLOCK_LABELS,
   type ApplicationForTransition,
@@ -29,14 +30,14 @@ export type ApplicationStatus =
  * the application is in progress, green/red only for the final outcome.
  */
 export const STATUS_META: Record<ApplicationStatus, { label: string; tone: StatusTone }> = {
-  DRAFT: { label: "Borrador", tone: "muted" },
-  RECEIVED: { label: "Recibida", tone: "violet" },
-  IN_REVIEW: { label: "En evaluación", tone: "violet" },
-  PENDING_DECISION: { label: "Esperando decisión", tone: "violet" },
-  APPROVED: { label: "Aprobada", tone: "violet" },
-  CONVERTED: { label: "Convertida", tone: "green" },
-  REJECTED: { label: "Rechazada", tone: "red" },
-  ABANDONED: { label: "Desistida", tone: "muted" }
+  DRAFT: { label: L.DRAFT, tone: "muted" },
+  RECEIVED: { label: L.RECEIVED, tone: "violet" },
+  IN_REVIEW: { label: L.IN_REVIEW, tone: "violet" },
+  PENDING_DECISION: { label: L.PENDING_DECISION, tone: "violet" },
+  APPROVED: { label: L.APPROVED, tone: "violet" },
+  CONVERTED: { label: L.CONVERTED, tone: "green" },
+  REJECTED: { label: L.REJECTED, tone: "red" },
+  ABANDONED: { label: L.ABANDONED, tone: "muted" }
 };
 
 export type StatusTone = "violet" | "green" | "red" | "muted";

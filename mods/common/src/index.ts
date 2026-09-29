@@ -151,6 +151,7 @@ export {
   APPLICATION_TRACKING_KEYS,
   APPLICATION_ATTRIBUTION_KEYS,
   applicationStatusEnum,
+  APPLICATION_STATUS_LABELS,
   listApplicationsSchema,
   getApplicationSchema,
   assignApplicationSchema,
