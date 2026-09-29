@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.12.0](https://github.com/psanders/mikro/compare/v3.11.1...v3.12.0) (2026-09-29)
+
+### Bug Fixes
+
+- **dashboard:** full-height selects in the Ops side panels ([#322](https://github.com/psanders/mikro/issues/322)) ([1d87672](https://github.com/psanders/mikro/commit/1d87672b1a0433670368013b6fb033ba9a2caffe))
+
+### Features
+
+- **applications:** download the full solicitud as a PDF from the Ops panel ([#323](https://github.com/psanders/mikro/issues/323)) ([0445f9d](https://github.com/psanders/mikro/commit/0445f9daf21197d408b5f54fa3c54ab9c86160fe))
+
 ## [3.11.1](https://github.com/psanders/mikro/compare/v3.11.0...v3.11.1) (2026-09-28)
 
 **Note:** Version bump only for package mikro
