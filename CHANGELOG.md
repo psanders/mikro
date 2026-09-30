@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.2](https://github.com/psanders/mikro/compare/v3.12.1...v3.12.2) (2026-09-30)
+
+### Bug Fixes
+
+- **applications:** refresh the Resumen IA when the cédula changes ([#325](https://github.com/psanders/mikro/issues/325)) ([ab46eaa](https://github.com/psanders/mikro/commit/ab46eaa42953a10df9a4b5a3c656a0709ebe1685))
+
 ## [3.12.1](https://github.com/psanders/mikro/compare/v3.12.0...v3.12.1) (2026-09-29)
 
 ### Bug Fixes
