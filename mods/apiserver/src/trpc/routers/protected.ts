@@ -727,7 +727,11 @@ export const protectedRouter = router({
     .input(sendToDecisionSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createSendToDecision(ctx.db, { minBusinessPhotos: getMinBusinessPhotos() });
-      return fn(input, actorOf(ctx));
+      const sent = await fn(input, actorOf(ctx));
+      // Backstop: the decider reads the Resumen IA now, so make sure it reflects
+      // every fact and document gathered during review.
+      void refreshApplicationSummary(ctx.db, sent.id);
+      return sent;
     }),
 
   /** Admin returns a pending application to its reviewer with a note (-> IN_REVIEW). */
@@ -981,12 +985,15 @@ export const protectedRouter = router({
    */
   uploadIdImage: evidenceProcedure.input(uploadIdImageSchema).mutation(async ({ ctx, input }) => {
     const actor = actorOf(ctx);
-    return trackEvidenceCompletion(
+    const app = await trackEvidenceCompletion(
       ctx.db,
       (app) => app.id,
       actor,
       () => createUploadIdImage(ctx.db)(input, actor)
     );
+    // The Resumen IA states whether each cédula side is on file.
+    void refreshApplicationSummary(ctx.db, app.id);
+    return app;
   }),
 
   /**
@@ -1002,12 +1009,14 @@ export const protectedRouter = router({
   /** Remove one side of the applicant's cédula. Assignee or collector, IN_REVIEW only. */
   deleteIdImage: evidenceProcedure.input(deleteIdImageSchema).mutation(async ({ ctx, input }) => {
     const actor = actorOf(ctx);
-    return trackEvidenceCompletion(
+    const app = await trackEvidenceCompletion(
       ctx.db,
       (app) => app.id,
       actor,
       () => createDeleteIdImage(ctx.db)(input, actor)
     );
+    void refreshApplicationSummary(ctx.db, app.id);
+    return app;
   }),
 
   /** Remove the stored signed contract of an APPROVED application. Assignee or ADMIN. */

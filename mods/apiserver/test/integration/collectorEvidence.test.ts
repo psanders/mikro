@@ -9,6 +9,7 @@
 import { expect } from "chai";
 import { createTestDb, applySchema, type TestDb } from "./setup.js";
 import { appRouter } from "../../src/trpc/index.js";
+import { setApplicationSummaryModel } from "../../src/api/applications/applicationSummary.js";
 
 const ADMIN_ID = "00000000-0000-4000-8000-000000000001";
 const ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1";
@@ -137,6 +138,48 @@ describe("collector evidence (integration)", () => {
 
   const completedEvents = () =>
     db.businessEvent.findMany({ where: { type: "application.evidence_completed" } });
+
+  describe("the Resumen IA", () => {
+    // Echoes the facts it was given, so the stored summary shows what the model saw.
+    const echoModel = () =>
+      ({
+        invoke: async (messages: Array<{ content: unknown }>) => ({
+          content: String(messages[1].content)
+        })
+      }) as any;
+
+    afterEach(() => setApplicationSummaryModel(undefined));
+
+    async function summaryOnceMatching(id: string, pattern: RegExp): Promise<string> {
+      for (let i = 0; i < 50; i++) {
+        const app = await db.loanApplication.findUnique({ where: { id } });
+        if (app?.aiSummary && pattern.test(app.aiSummary)) return app.aiSummary;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      const app = await db.loanApplication.findUnique({ where: { id } });
+      return app?.aiSummary ?? "";
+    }
+
+    it("is refreshed when the cédula is uploaded during review", async () => {
+      const app = await inReview();
+      setApplicationSummaryModel(echoModel);
+      await collector.uploadIdImage(idSide(app.id, "FRONT"));
+      await collector.uploadIdImage(idSide(app.id, "BACK"));
+      const summary = await summaryOnceMatching(app.id, /Cédula reverso: sí/);
+      expect(summary).to.contain("Cédula frente: sí");
+      expect(summary).to.contain("Cédula reverso: sí");
+    });
+
+    it("is refreshed when a cédula side is removed", async () => {
+      const app = await inReview();
+      await collector.uploadIdImage(idSide(app.id, "FRONT"));
+      setApplicationSummaryModel(echoModel);
+      await collector.deleteIdImage({ id: app.id, side: "FRONT" });
+      expect(await summaryOnceMatching(app.id, /Cédula frente: no/)).to.contain(
+        "Cédula frente: no"
+      );
+    });
+  });
 
   describe("the map link", () => {
     it("is required: sending to decision without it names the location", async () => {
