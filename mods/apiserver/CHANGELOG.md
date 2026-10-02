@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.3](https://github.com/psanders/mikro/compare/v3.12.2...v3.12.3) (2026-10-02)
+
+### Bug Fixes
+
+- **cx:** named evidence photos, one reply per burst, agent sign-offs, José/Lucía fixes ([#326](https://github.com/psanders/mikro/issues/326)) ([5d2940e](https://github.com/psanders/mikro/commit/5d2940eb86c130c8fc2aaa818a18aced47899bf3))
+
 ## [3.12.2](https://github.com/psanders/mikro/compare/v3.12.1...v3.12.2) (2026-09-30)
 
 ### Bug Fixes
