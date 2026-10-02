@@ -19,6 +19,8 @@ export interface ApplicationByPhone {
   submittedAt: Date | null;
   /** When it was approved or rejected (a REJECTED application's cooldown starts here). */
   decidedAt: Date | null;
+  /** Why it was rejected; OUT_OF_COVERAGE_AREA gets no reapply cooldown. */
+  rejectionReason: string | null;
   /** Still a DRAFT. Kept for callers that only care about intake. */
   partial: boolean;
   /** RECEIVED and José still asks its remaining fields (openspec jose-keep-gathering). */
@@ -26,7 +28,11 @@ export interface ApplicationByPhone {
 }
 
 async function toLookup(
-  app: IntakeWindowApplication & { sessionId: string; decidedAt: Date | null },
+  app: IntakeWindowApplication & {
+    sessionId: string;
+    decidedAt: Date | null;
+    rejectionReason?: string | null;
+  },
   deps: ApplicationLookupDeps
 ): Promise<ApplicationByPhone> {
   return {
@@ -35,6 +41,7 @@ async function toLookup(
     status: app.status as ApplicationStatus,
     submittedAt: app.submittedAt ?? null,
     decidedAt: app.decidedAt ?? null,
+    rejectionReason: app.rejectionReason ?? null,
     partial: app.status === "DRAFT",
     intakeOpen:
       app.status === "RECEIVED" && deps.isIntakeOpen ? await deps.isIntakeOpen(app) : false

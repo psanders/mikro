@@ -29,6 +29,13 @@ const IN_PIPELINE: ReadonlySet<ApplicationStatus> = new Set([
  * are a regular guest.
  */
 export const REAPPLY_COOLDOWN_DAYS = 30;
+
+/**
+ * Rejected for the business's province, not its credit: no reapply date
+ * applies (they would be rejected again), so the guest agent explains the
+ * coverage area instead.
+ */
+const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A user with several roles routes as the most privileged one. */
@@ -52,7 +59,8 @@ const ROLE_PRECEDENCE: readonly Role[] = ["ADMIN", "REVIEWER", "COLLECTOR"];
  *
  * 6. Anyone else → guest (GUEST): no application, REJECTED (within
  *    REAPPLY_COOLDOWN_DAYS of the decision it carries `reapplyFrom`, so the
- *    guest agent tells them when they may apply again), CONVERTED without a
+ *    guest agent tells them when they may apply again; a rejection for being
+ *    outside the coverage area carries `outOfArea` instead), CONVERTED without a
  *    customer match, or withdrawn after submission.
  *
  * Which agent serves each profile is config (agents.yaml); a profile with no
@@ -94,6 +102,9 @@ export function createMessageRouter(deps: RouterDependencies) {
       }
       if (app.status === "ABANDONED" && !app.submittedAt) return { type: "reopen", ...ref };
       if (IN_PIPELINE.has(app.status)) return { type: "applicant", ...ref };
+      if (app.status === "REJECTED" && app.rejectionReason === OUT_OF_COVERAGE_AREA) {
+        return { type: "guest", phone: address, outOfArea: true };
+      }
       if (app.status === "REJECTED") {
         const rejectedAt = app.decidedAt ?? app.submittedAt;
         const reapplyFrom = rejectedAt

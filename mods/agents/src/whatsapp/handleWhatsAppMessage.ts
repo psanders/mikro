@@ -893,6 +893,20 @@ export function rejectedDirective(reapplyFrom: Date): string {
   );
 }
 
+/**
+ * Context for the guest agent when the sender's last application was closed
+ * because the business is outside the coverage area. That is not a credit
+ * decision and waiting changes nothing, so no "no fue aprobada" and no date.
+ */
+export const OUT_OF_AREA_DIRECTIVE =
+  `[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera ` +
+  `de nuestra zona de cobertura. NO digas que "no fue aprobada" ni le des una fecha para ` +
+  `volver a solicitar. Si pregunta por su solicitud o por volver a aplicar, dile con ` +
+  `amabilidad que por el momento solo atendemos negocios en Puerto Plata. Si te dice que ` +
+  `su negocio sí está en Puerto Plata (se mudó o puso otra provincia por error), puede ` +
+  `llenar la solicitud de nuevo en https://mikro.do/solicitud. Si pide hablar con una ` +
+  `persona, usa requestHumanHandoff.] `;
+
 /** A WhatsApp username sender we couldn't match: a person takes it. */
 const UNMATCHED_USERNAME_ACK =
   "Hola, gracias por escribirnos. Ya le avisé al equipo; una persona te va a responder por aquí.";
@@ -1227,11 +1241,16 @@ async function handleCxMessage(
   // decided from the stored conversation, so a restart doesn't make the agent
   // introduce itself mid-thread.
   // A recently rejected guest: the agent's input (not the stored transcript)
-  // carries when they may apply again.
-  const llmInput =
-    route.type === "guest" && route.reapplyFrom
-      ? rejectedDirective(route.reapplyFrom) + userMessage
-      : userMessage;
+  // carries when they may apply again, or that they were outside the area.
+  const directive =
+    route.type !== "guest"
+      ? ""
+      : route.outOfArea
+        ? OUT_OF_AREA_DIRECTIVE
+        : route.reapplyFrom
+          ? rejectedDirective(route.reapplyFrom)
+          : "";
+  const llmInput = directive + userMessage;
   const result = await invokeLLM(
     agent,
     llmHistory,
