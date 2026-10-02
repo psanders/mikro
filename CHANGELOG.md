@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.4](https://github.com/psanders/mikro/compare/v3.12.3...v3.12.4) (2026-10-02)
+
+### Bug Fixes
+
+- **cx:** no reapply date for applicants rejected as out of area ([#328](https://github.com/psanders/mikro/issues/328)) ([56b194e](https://github.com/psanders/mikro/commit/56b194ee9b0dd014a0e9f0e991dbaf12b2df8c5e)), closes [#327](https://github.com/psanders/mikro/issues/327)
+
 ## [3.12.3](https://github.com/psanders/mikro/compare/v3.12.2...v3.12.3) (2026-10-02)
 
 ### Bug Fixes
