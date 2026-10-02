@@ -10,16 +10,35 @@
  * (partial: false → RECEIVED). outcome "abandoned" marks it ABANDONED — used
  * when the prospect declines ("no me interesa") or goes silent — so the ops
  * dashboard never shows a declined lead as a finished application.
+ *
+ * A business outside the covered provinces is closed like the website closes
+ * it: REJECTED as a system decision (OUT_OF_COVERAGE_AREA), whatever outcome
+ * José asked for, and whether it was a draft or already submitted. José has
+ * just told the person we don't serve their province; it must not wait in the
+ * reviewers' queue.
  */
-import type { DbClient, NormalizedApplication } from "@mikro/common";
-import { normalizeApplication } from "@mikro/common";
+import type { DbClient, LoanApplication, NormalizedApplication } from "@mikro/common";
+import { isOutOfCoverageArea, normalizeApplication } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { createCancelApplicationJobs } from "../../follow-up/index.js";
+import { OUT_OF_COVERAGE_AREA } from "../applications/createUpsertApplication.js";
+import { missingApplicationFields } from "./missingFields.js";
+
+interface CoverageDeps {
+  /** Provinces Mikro lends in (`applications.coveredProvinces`). */
+  coveredProvinces?: readonly string[];
+  /** Records the system's `application.rejected` feed event. */
+  recordOutOfArea?: (application: LoanApplication) => Promise<void>;
+}
+
+/** Statuses José may still close as out of area (nobody has taken it yet). */
+const OPEN_FOR_INTAKE = new Set(["DRAFT", "RECEIVED"]);
 
 export function createFinalizeApplication(
   client: DbClient,
-  upsertApplication: (input: NormalizedApplication) => Promise<unknown>
+  upsertApplication: (input: NormalizedApplication) => Promise<unknown>,
+  coverage: CoverageDeps = {}
 ) {
   return async (
     args: Record<string, unknown>,
@@ -39,6 +58,46 @@ export function createFinalizeApplication(
 
       if (!existing) {
         return { success: false, message: `Application not found: ${sessionId}` };
+      }
+
+      if (
+        coverage.coveredProvinces &&
+        OPEN_FOR_INTAKE.has(existing.status) &&
+        isOutOfCoverageArea(existing.province, coverage.coveredProvinces)
+      ) {
+        const now = new Date();
+        const rejected = await client.loanApplication.update({
+          where: { id: existing.id },
+          data: {
+            status: "REJECTED",
+            decidedById: null,
+            decidedAt: now,
+            rejectionReason: OUT_OF_COVERAGE_AREA,
+            intakeClosedAt: existing.intakeClosedAt ?? now,
+            submittedAt: existing.submittedAt ?? now
+          }
+        });
+        createCancelApplicationJobs(client)(existing.id).catch((err: Error) => {
+          logger.error("jose finalizeApplication: failed to cancel follow-up jobs", {
+            sessionId,
+            error: err.message
+          });
+        });
+        coverage.recordOutOfArea?.(rejected).catch((err: Error) => {
+          logger.error("jose finalizeApplication: failed to record out-of-area event", {
+            sessionId,
+            error: err.message
+          });
+        });
+        logger.info("jose finalizeApplication: rejected, out of coverage area", {
+          sessionId,
+          province: existing.province
+        });
+        return {
+          success: true,
+          message: "Solicitud cerrada: el negocio está fuera de la zona de cobertura",
+          data: { finalized: true, outcome: "out_of_zone" }
+        };
       }
 
       // Already submitted (José kept asking the remaining fields, openspec
@@ -110,10 +169,16 @@ export function createFinalizeApplication(
 
       logger.info("jose finalizeApplication: application finalized", { sessionId });
 
+      // What is still missing, so José never tells someone their information
+      // is complete when it isn't.
       return {
         success: true,
         message: "Solicitud finalizada",
-        data: { finalized: true, outcome: "complete" }
+        data: {
+          finalized: true,
+          outcome: "complete",
+          missingFields: missingApplicationFields(existing)
+        }
       };
     } catch (err) {
       logger.error("jose finalizeApplication failed", { sessionId, error: (err as Error).message });

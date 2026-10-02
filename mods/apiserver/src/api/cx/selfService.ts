@@ -140,16 +140,67 @@ const STAGE: Partial<Record<ApplicationStatus, string>> = {
 /** Statuses in which the applicant can still add evidence (before any decision). */
 const EVIDENCE_OPEN: ReadonlySet<ApplicationStatus> = new Set(["RECEIVED", "IN_REVIEW"]);
 
-async function missingEvidence(client: DbClient, applicationId: string): Promise<string[]> {
+/**
+ * The business photos an applicant is asked for over WhatsApp, in order. The
+ * labels match the Ops evidence view's suggestions, so a reviewer sees what
+ * each photo was meant to show. Naming the shot keeps people from sending the
+ * same picture again and again.
+ */
+const BUSINESS_SHOTS = [
+  { label: "Fachada", ask: "el frente del negocio por fuera, con el letrero si tiene" },
+  { label: "Interior", ask: "el interior del negocio, donde atiende o trabaja" },
+  { label: "Mercancía", ask: "la mercancía, los productos o las herramientas de trabajo" }
+] as const;
+
+/** Asked for once every named shot is in and more photos are still required. */
+const EXTRA_SHOT = { label: null, ask: "otra parte del negocio, distinta a las anteriores" };
+
+interface EvidenceProgress {
+  missingEvidence: string[];
+  /** Present while business photos are missing: how many and which one is next. */
+  businessPhotos?: { received: number; required: number; next: string };
+}
+
+/** The next business photo to ask for, skipping shots already labeled. */
+function nextShot(labels: Array<string | null>): { label: string | null; ask: string } {
+  const taken = new Set(labels.map((l) => l?.toLowerCase()));
+  return BUSINESS_SHOTS.find((s) => !taken.has(s.label.toLowerCase())) ?? EXTRA_SHOT;
+}
+
+function businessPhotos(client: DbClient, applicationId: string) {
+  return client.applicationDocument.findMany({ where: { applicationId, kind: "BUSINESS_PHOTO" } });
+}
+
+async function evidenceProgress(
+  client: DbClient,
+  applicationId: string
+): Promise<EvidenceProgress> {
   const app = await client.loanApplication.findUnique({ where: { id: applicationId } });
-  if (!app || !EVIDENCE_OPEN.has(app.status)) return [];
+  if (!app || !EVIDENCE_OPEN.has(app.status)) return { missingEvidence: [] };
   const status = await loadEvidenceStatus(client, app, getMinBusinessPhotos());
   const missing: string[] = [];
   if (!status.idFront) missing.push("ID_FRONT");
   if (!status.idBack) missing.push("ID_BACK");
-  const photos = status.businessPhotos.need - status.businessPhotos.have;
-  for (let i = 0; i < photos; i++) missing.push("BUSINESS_PHOTO");
-  return missing;
+  const { have, need } = status.businessPhotos;
+  for (let i = have; i < need; i++) missing.push("BUSINESS_PHOTO");
+  if (have >= need) return { missingEvidence: missing };
+  const next = nextShot((await businessPhotos(client, app.id)).map((d) => d.label));
+  return {
+    missingEvidence: missing,
+    businessPhotos: { received: have, required: need, next: next.ask }
+  };
+}
+
+/** Whether this exact image is already on the application (cédula or business photo). */
+async function isDuplicate(
+  client: DbClient,
+  app: { id: string; idFrontFilename?: string | null; idBackFilename?: string | null },
+  sha256: string
+): Promise<boolean> {
+  const idFiles = [app.idFrontFilename, app.idBackFilename];
+  if (idFiles.some((f) => f?.startsWith(`${sha256}.`))) return true;
+  const docs = await client.applicationDocument.findMany({ where: { applicationId: app.id } });
+  return docs.some((d) => d.sha256 === sha256);
 }
 
 /** The applicant's stage in plain words, plus the evidence still missing. */
@@ -163,7 +214,7 @@ export function createGetMyApplicationStatus(client: DbClient) {
     return {
       success: true,
       message: `Solicitud ${stage}.`,
-      data: { stage, missingEvidence: await missingEvidence(client, app.id) }
+      data: { stage, ...(await evidenceProgress(client, app.id)) }
     };
   };
 }
@@ -207,12 +258,23 @@ export function createAttachApplicationEvidence(client: DbClient) {
     const uploadedById = `whatsapp:${phone}`;
     const originalName = `whatsapp-${Date.now()}`;
 
+    // Files are content-addressed, so the same picture sent again has the same
+    // sha256. Keep nothing and ask for a different one.
+    if (await isDuplicate(client, app, saved.sha256)) {
+      return {
+        success: false,
+        message:
+          "Esa foto ya la habíamos recibido; no se adjuntó de nuevo. Pide una foto distinta de lo que falta.",
+        data: await evidenceProgress(client, app.id)
+      };
+    }
+
     if (kind === "BUSINESS_PHOTO") {
       await client.applicationDocument.create({
         data: {
           applicationId: app.id,
           kind: "BUSINESS_PHOTO",
-          label: null,
+          label: nextShot((await businessPhotos(client, app.id)).map((d) => d.label)).label,
           filename: saved.filename,
           originalName,
           mimeType: match[1],
@@ -248,7 +310,7 @@ export function createAttachApplicationEvidence(client: DbClient) {
     return {
       success: true,
       message: "Foto adjuntada.",
-      data: { missingEvidence: await missingEvidence(client, app.id) }
+      data: await evidenceProgress(client, app.id)
     };
   };
 }

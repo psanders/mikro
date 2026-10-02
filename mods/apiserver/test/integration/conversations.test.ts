@@ -177,7 +177,7 @@ describe("Conversation transcripts Integration", () => {
       expect(await history({ phone: "18095551234", scope: "cx" })).to.have.length(1);
     });
 
-    it("leaves out the current message and keeps José's intake separate", async () => {
+    it("leaves out the current message; José keeps his intake, the CX thread sees it all", async () => {
       const app = await makeApplication();
       await record({ phone: PHONE, role: "INBOUND", content: "requisitos?", profile: "GUEST" });
       await record({
@@ -218,8 +218,14 @@ describe("Conversation transcripts Integration", () => {
       });
       expect(jose.map((m) => m.content)).to.deep.equal(["vendo 50 mil", "Anotado"]);
 
-      const cx = await history({ phone: PHONE, scope: "cx" });
-      expect(cx.map((m) => m.content)).to.deep.equal(["requisitos?"]);
+      // The applicant agent picks up after José's intake instead of greeting again.
+      const cx = await history({ phone: PHONE, scope: "cx", excludeId: current.id });
+      expect(cx.map((m) => m.content)).to.deep.equal([
+        "requisitos?",
+        "vendo 50 mil",
+        "Anotado",
+        "Ya le avisé al equipo"
+      ]);
     });
 
     it("keeps only the latest turns inside the window for the CX thread", async () => {

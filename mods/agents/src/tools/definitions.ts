@@ -836,7 +836,7 @@ export const attachApplicationEvidenceTool: ToolFunction = {
   function: {
     name: "attachApplicationEvidence",
     description:
-      "Adjuntar a la solicitud la foto que la persona envió en ESTE mensaje. Úsala solo cuando el mensaje trae una foto. kind: ID_FRONT (cédula frente), ID_BACK (cédula reverso) o BUSINESS_PHOTO (foto del negocio). Devuelve lo que aún falta.",
+      "Adjuntar a la solicitud la foto que la persona envió en ESTE mensaje. Úsala solo cuando el mensaje trae una foto. kind: ID_FRONT (cédula frente), ID_BACK (cédula reverso) o BUSINESS_PHOTO (foto del negocio). Devuelve lo que aún falta y, si faltan fotos del negocio, cuál pedir después (businessPhotos.next). Rechaza una foto que ya se había recibido.",
     parameters: {
       type: "object",
       properties: {

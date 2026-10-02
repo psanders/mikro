@@ -180,7 +180,8 @@ function directiveFor(
   if (session.joseTurns === 0) {
     return (
       `[SISTEMA: FASE 2. Esta persona ya envió su solicitud (por el formulario web) y es tu ` +
-      `primer mensaje con ella. Llama getApplicationState, preséntate como José, confirma que ` +
+      `primer mensaje con ella. Llama getApplicationState, saluda en nombre del equipo de ` +
+      `Mikro Créditos (sin decir tu nombre), confirma que ` +
       `recibimos su solicitud y ofrece, como algo opcional, completarla con unas preguntas más: ` +
       `pregunta los primeros 2 o 3 campos de missingFields. Si pregunta por el estado, usa ` +
       `getMyApplicationStatus.] `

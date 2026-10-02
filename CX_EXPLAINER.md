@@ -52,6 +52,8 @@ Each case lists what happens and how you can see it. Log lines are quoted exactl
 2. **After submitting he keeps going** (openspec jose-keep-gathering). If fields are still missing, he confirms the application was received and offers, as optional, to complete it. He keeps asking while the person answers, with no turn cap. He stops when the form is complete, when the person declines (the application stays submitted, it's never abandoned), after 3 replies with nothing new, after 24h of quiet, when a reviewer takes it, or on a hand-off. He only replies; he never writes first.
 3. **New:** every message they send before submission restarts the draft's **8-hour abandon clock** (case C).
 4. **New:** if they are frustrated or ask for a person, José hands off (case I) instead of closing the application. The draft stays `DRAFT`.
+5. **Outside Puerto Plata:** when José learns the province isn't covered, he says so and closes the application the way the web form does: `REJECTED` as a system decision (`OUT_OF_COVERAGE_AREA`), with the automatic "rechazada: fuera de zona" feed event. This applies to a draft or a submitted application nobody has taken yet; it never reaches the reviewers' queue.
+6. He never tells someone their information is complete while fields are missing, even when the score lets him submit on a bare "Hola". His closing line promises no timing: "El equipo va a revisar tu solicitud y te avisa por aquí."
 
 **Monitor:** Chatwoot. Log line: `prospect activity — ABANDON rescheduled`.
 
@@ -81,9 +83,10 @@ Each case lists what happens and how you can see it. Log lines are quoted exactl
 1. → **Sofía** (APPLICANT). The old fixed "Tu solicitud ya está en revisión" text is gone.
 2. On her first reply she checks the application and says the stage in plain words: _recibida_ or _en revisión_.
 3. If documents are missing (cédula front, cédula back, business photos below the configured minimum, 3 by default), she asks for them **one at a time**.
-4. When they send a photo, she attaches it to the application and asks for the next missing item.
-5. **She can never say:** score, risk band, recommendation, reasons, who is reviewing, dates or timelines ("pronto", "24 horas"), or chances of approval. She cannot see them either: her tool only returns the stage and the missing list.
-6. Anything else (change the amount, complaints, "¿por qué tarda?") → hand-off (case I).
+4. Business photos are asked for by name and count: "la 1 de 3: el frente del negocio por fuera" (Fachada), then the inside (Interior), then the goods or tools (Mercancía). Each photo is saved with that label, which the Ops evidence view shows.
+5. When they send a photo, she attaches it to the application and asks for the next missing item. The exact same picture sent twice (or the cédula again as a business photo) is not attached; she asks for a different one.
+6. **She can never say:** score, risk band, recommendation, reasons, who is reviewing, dates or timelines ("pronto", "24 horas"), or chances of approval. She cannot see them either: her tool only returns the stage and the missing list.
+7. Anything else (change the amount, complaints, "¿por qué tarda?") → hand-off (case I).
 
 **Monitor:** Chatwoot. Log `applicant attached evidence over whatsapp`. The photos appear in the application's evidence in the Ops app, uploaded by `whatsapp:<phone>`.
 
@@ -255,8 +258,10 @@ Since issue #299 every CX message is stored in the `conversation_turns` table, n
 - **Version hash** (`agent_version`): 12 characters derived from the agent's prompt, model, temperature, reply mode and tools. Editing an agent in `agents.yaml` changes it. Comparing conversations across versions is how you spot drift.
 - **Images and voice notes** are not stored. An image is recorded as its caption (or `[Imagen]`) with `has_image = true`. A voice note is recorded as its transcription, or as `[Nota de voz]` when it could not be transcribed.
 - **Agent memory reads from this table**, so a deploy no longer makes the bot forget, and doesn't make it introduce itself again: a new session is decided from the time of the last stored message.
-  - The guest/applicant/customer agents remember the last 40 messages from the last 30 days.
+  - The guest/applicant/customer agents remember the last 40 messages from the last 30 days, José's included, so Sofía picks up where his intake ended instead of greeting again.
   - José remembers his intake for that application since it was last reopened, including after he submits it. His "submit by the 7th reply" count survives restarts and starts over when an abandoned draft comes back.
+- **Agents don't use names with customers.** They speak as "el equipo de Mikro Créditos" and sign their first reply of a conversation with their initials for the team's review: `^JO` José, `^SO` Sofía, `^LU` Lucía, `^CA` Carmen. A conversation here is the session: after a silence longer than the session timeout, the next reply is signed again. The sign-off is stored in the transcript but removed from what the model reads, so it never writes one itself.
+- **Quick follow-ups get one reply.** A message without an image waits 2.5 seconds. If the same person sent another message meanwhile ("Ok", "Gracias"), only the newer one is answered, with both in the agent's history. Images are always answered: each one is evidence to attach.
 - **Failed sends** (Meta rejected the reply) are stored with `failed = true`. They show as "No entregado" on the panel and `[NOT DELIVERED]` in the text export. The agents don't remember them, because the person never saw them.
 - **Tool-only turns** (the agent ran a tool and said nothing) are stored with empty text. The panel doesn't draw them; the export includes them.
 - **Where to see it:** Ops app → open an application → **Conversación · WhatsApp**. It shows everything stored for the applicant's phone, including chats from before they applied, and marks where a hand-off began. Replies your team types in Chatwoot are **not** stored; use the **Abrir en Chatwoot →** link for those. The link only appears when `chatwoot` is configured.

@@ -424,7 +424,8 @@ const sendLeadConversion = createSendLeadConversion({
 
 // The website form's intake. Its own upsert instance carries the covered area,
 // so an out-of-area final submit is auto-rejected here; the WhatsApp paths below
-// keep using `upsertApplication`, which does not enforce coverage.
+// keep using `upsertApplication`, which does not enforce coverage (José's
+// finalizeApplication rejects out-of-area applications itself).
 const upsertWebApplication = createUpsertApplication(dbClient, {
   scheduleFollowUpJob,
   recordMetaAd,
@@ -893,7 +894,11 @@ async function initializeMessageProcessor() {
       joseSaveAnswer: createSaveAnswer(prisma as unknown as DbClient, upsertApplication),
       joseFinalizeApplication: createFinalizeApplication(
         prisma as unknown as DbClient,
-        upsertApplication
+        upsertApplication,
+        {
+          coveredProvinces: cfg.applications.coveredProvinces,
+          recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app)
+        }
       ),
       // WhatsApp CX self-service: identity comes from the message context.
       cx: {

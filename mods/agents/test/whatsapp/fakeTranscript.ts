@@ -3,7 +3,7 @@
  *
  * In-memory stand-in for the apiserver's persisted transcript
  * (recordConversationTurn / getConversationHistory), with the same history
- * rules: `cx` is every non-PROSPECT turn for the phone, `prospect` is José's
+ * rules: `cx` is every turn for the phone, `prospect` is José's
  * INBOUND/AGENT turns for one application; only turns stored before the
  * current one are read, and failed sends are left out.
  */
@@ -46,7 +46,7 @@ export function createFakeTranscript(seed: SeedTurn[] = []) {
             ? t.profile === "PROSPECT" &&
               t.applicationId === query.applicationId &&
               t.role !== "SYSTEM"
-            : t.profile !== "PROSPECT"
+            : true
         )
         .map((t) => ({
           role: t.role === "INBOUND" ? ("user" as const) : ("assistant" as const),

@@ -12,6 +12,7 @@ import {
   setMessageProcessor,
   markInitializationComplete,
   resetProcessedMessageIdsForTesting,
+  setBurstWindowMsForTesting,
   buildSenderIdentity
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
@@ -81,6 +82,7 @@ function setup(route: unknown, over: Record<string, unknown> = {}) {
 describe("WhatsApp username senders", () => {
   beforeEach(() => {
     resetProcessedMessageIdsForTesting();
+    setBurstWindowMsForTesting(0);
     clearSessionsForTesting();
   });
   afterEach(() => sinon.restore());
