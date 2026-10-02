@@ -29,7 +29,11 @@ import type { Profile } from "../constants.js";
 import {
   agentVersionOf,
   isNewSessionFrom,
+  signatureOf,
+  signedThisSession,
   textOf,
+  unsignedHistory,
+  withoutSignature,
   type ConversationTurnRecord,
   type ConversationHistoryQuery
 } from "../conversations/index.js";
@@ -191,10 +195,43 @@ const silentSend: MessageProcessorDependencies["sendWhatsAppMessage"] = async (p
 };
 
 /**
+ * People often send two or three short messages in a row ("Ok", "Gracias").
+ * Answering each gives two replies a second apart. So a message without an
+ * image waits this long, and is left unanswered when a newer message from the
+ * same sender arrived meanwhile: the newer one answers, with this one already
+ * in its history. Images are always answered (each one is evidence to attach).
+ */
+const DEFAULT_BURST_WINDOW_MS = 2500;
+let burstWindowMs = DEFAULT_BURST_WINDOW_MS;
+let inboundSeq = 0;
+/** The newest inbound message seen per sender address. */
+const latestInbound = new Map<string, number>();
+
+function noteInbound(address: string): number {
+  inboundSeq++;
+  latestInbound.set(address, inboundSeq);
+  return inboundSeq;
+}
+
+/** Wait out the burst window; true when a newer message from the sender arrived. */
+async function supersededByNewer(address: string, seq: number): Promise<boolean> {
+  if (burstWindowMs > 0) await new Promise((resolve) => setTimeout(resolve, burstWindowMs));
+  if (latestInbound.get(address) !== seq) return true;
+  latestInbound.delete(address);
+  return false;
+}
+
+/** Tests: shorten (or disable with 0) the burst window. */
+export function setBurstWindowMsForTesting(ms: number): void {
+  burstWindowMs = ms;
+}
+
+/**
  * Clear processed message IDs (for testing only).
  * Ensures dedup state from previous tests doesn't affect the current test.
  */
 export function resetProcessedMessageIdsForTesting(): void {
+  latestInbound.clear();
   processedMessageIds.clear();
 }
 
@@ -343,6 +380,7 @@ export const handleWhatsAppMessage = (() => {
 
         // Validated one by one: a message shape we don't know (Meta adds
         // fields and types) must never take the rest of the delivery with it.
+        const valid: Array<{ message: WhatsAppMessage; sender: SenderIdentity }> = [];
         for (const raw of messages) {
           const parsed = whatsappMessageSchema.safeParse(raw);
           if (!parsed.success) {
@@ -357,7 +395,12 @@ export const handleWhatsAppMessage = (() => {
             logger.warn("skipping whatsapp message with no sender", { messageId: message.id });
             continue;
           }
-          await processMessage(message, sender);
+          valid.push({ message, sender });
+        }
+
+        for (const [i, { message, sender }] of valid.entries()) {
+          const followed = valid.slice(i + 1).some((v) => v.sender.address === sender.address);
+          await processMessage(message, sender, followed);
           messagesProcessed++;
           if (!senders.includes(sender.address)) {
             senders.push(sender.address);
@@ -432,7 +475,11 @@ function toE164(raw: string): string | null {
  *
  * @param message - The WhatsApp message to process
  */
-async function processMessage(message: WhatsAppMessage, sender: SenderIdentity): Promise<void> {
+async function processMessage(
+  message: WhatsAppMessage,
+  sender: SenderIdentity,
+  followedInDelivery = false
+): Promise<void> {
   // Where replies go: the phone, or the BSUID of a username sender.
   const phone = sender.address;
   const { type, id, text, image, audio, timestamp } = message;
@@ -455,6 +502,7 @@ async function processMessage(message: WhatsAppMessage, sender: SenderIdentity):
     return;
   }
   markMessageProcessed(id);
+  const seq = noteInbound(phone);
 
   logger.verbose("incoming whatsapp message", {
     messageId: id,
@@ -709,6 +757,16 @@ async function processMessage(message: WhatsAppMessage, sender: SenderIdentity):
     }
 
     if (route.type !== "user") {
+      // A newer message from this sender (later in this delivery, or arriving
+      // during the burst window) answers for both.
+      if (!image?.id && (followedInDelivery || (await supersededByNewer(phone, seq)))) {
+        await inbound;
+        logger.verbose("newer message from the same sender, it answers for this one", {
+          phone,
+          messageId: id
+        });
+        return;
+      }
       await handleCxMessage(route, userMessage, imageUrl, messageProcessor, inbound, sender);
       return;
     }
@@ -1146,6 +1204,8 @@ async function handleCxMessage(
   }
 
   const history = await loadHistory();
+  // The model never sees the sign-offs, so it doesn't start writing its own.
+  const llmHistory = unsignedHistory(history);
 
   if (route.type === "prospect" || route.type === "reopen") {
     const phase = route.type === "prospect" ? (route.phase ?? "intake") : "intake";
@@ -1153,13 +1213,13 @@ async function handleCxMessage(
       invokeLLM,
       joseAgent: agent,
       applicationId: route.applicationId,
-      history,
+      history: llmHistory,
       phase,
       // After submission José also takes the applicant's documents.
       imageUrl: phase === "enrichment" ? imageUrl : null,
       ...(sender?.bsuid ? { whatsappUserId: sender.bsuid } : {})
     });
-    await replyAsAgent(processor, phone, result.text, result.toolsExecuted, agentTurn);
+    await replyAsAgent(processor, phone, result.text, result.toolsExecuted, agentTurn, history);
     return;
   }
 
@@ -1174,7 +1234,7 @@ async function handleCxMessage(
       : userMessage;
   const result = await invokeLLM(
     agent,
-    history,
+    llmHistory,
     llmInput,
     imageUrl,
     cxContext(route, profile, imageUrl, sender),
@@ -1182,21 +1242,31 @@ async function handleCxMessage(
   );
   const text = typeof result === "string" ? result : result.text;
   const toolsExecuted = typeof result === "string" ? [] : (result.toolsExecuted ?? []);
-  await replyAsAgent(processor, phone, text, toolsExecuted, agentTurn);
+  await replyAsAgent(processor, phone, text, toolsExecuted, agentTurn, history);
 }
 
 /**
  * Send an agent's reply and record it with the tools it ran. A turn with no
  * text but with tool calls is still recorded (nothing is sent): what the agent
  * did matters to an eval even when it said nothing.
+ *
+ * The agent signs its first reply of a conversation ("^JO"), for the team's
+ * review; customers aren't told which agent they are talking to.
  */
 async function replyAsAgent(
   processor: MessageProcessorDependencies,
   phone: string,
-  text: string,
+  reply: string,
   toolsExecuted: ToolExecuted[],
-  turn: Omit<ConversationTurnRecord, "phone" | "content" | "waMessageId" | "toolCalls">
+  turn: Omit<ConversationTurnRecord, "phone" | "content" | "waMessageId" | "toolCalls">,
+  history: Message[]
 ): Promise<void> {
+  const signature = turn.agentName ? signatureOf(turn.agentName) : null;
+  const unsigned = withoutSignature(reply);
+  const text =
+    unsigned && signature && !signedThisSession(history, signature, getSessionTimeoutSeconds())
+      ? `${unsigned}\n\n${signature}`
+      : unsigned;
   const withTools = {
     ...turn,
     ...(toolsExecuted.length > 0

@@ -7,7 +7,8 @@ import {
   handleWhatsAppMessage,
   setMessageProcessor,
   markInitializationComplete,
-  resetProcessedMessageIdsForTesting
+  resetProcessedMessageIdsForTesting,
+  setBurstWindowMsForTesting
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
 import { ValidationError, clearConfigCache, getConfig } from "@mikro/common";
@@ -95,6 +96,7 @@ describe("handleWhatsAppMessage", () => {
     mockMessageProcessor.updateOutboundStatus = sinon.stub().resolves();
 
     resetProcessedMessageIdsForTesting();
+    setBurstWindowMsForTesting(0);
     clearSessionsForTesting();
     setMessageProcessor(mockMessageProcessor);
     markInitializationComplete();

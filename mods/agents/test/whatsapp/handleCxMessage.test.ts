@@ -11,6 +11,7 @@ import {
   setMessageProcessor,
   markInitializationComplete,
   resetProcessedMessageIdsForTesting,
+  setBurstWindowMsForTesting,
   isHumanRequest
 } from "../../src/whatsapp/handleWhatsAppMessage.js";
 import { clearSessionsForTesting } from "../../src/sessions/sessionStore.js";
@@ -156,6 +157,7 @@ function setup(
 describe("WhatsApp CX routes", () => {
   beforeEach(() => {
     resetProcessedMessageIdsForTesting();
+    setBurstWindowMsForTesting(0);
     clearSessionsForTesting();
   });
   afterEach(() => sinon.restore());
@@ -293,7 +295,7 @@ describe("WhatsApp CX routes", () => {
         applicationId: "app-1",
         sessionId: "s-1"
       });
-      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta");
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta\n\n^AP");
     });
 
     it("passes the turn's photo to the tools through context", async () => {
@@ -441,7 +443,7 @@ describe("WhatsApp CX routes", () => {
       expect(inbound.waMessageId).to.match(/^cx-/);
       expect(reply).to.include({
         phone: PHONE,
-        content: "Debes 1,500",
+        content: "Debes 1,500\n\n^CU",
         profile: "CUSTOMER",
         customerId: "cust-1",
         agentName: "customer-agent",
@@ -555,7 +557,7 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
 
       expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
-      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta");
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta\n\n^CU");
     });
 
     it("records a failed send, without a wamid", async () => {
@@ -566,7 +568,11 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(textWebhook("¿cuánto debo?"));
 
       const agentTurn = p.turns.find((t) => t.role === "AGENT");
-      expect(agentTurn).to.include({ content: "respuesta", waMessageId: undefined, failed: true });
+      expect(agentTurn).to.include({
+        content: "respuesta\n\n^CU",
+        waMessageId: undefined,
+        failed: true
+      });
     });
 
     it("keeps a reply whose send failed out of the agent's memory", async () => {
@@ -669,6 +675,118 @@ describe("WhatsApp CX routes", () => {
       await handleWhatsAppMessage(textWebhook("hola"));
 
       expect(p.turns).to.deep.equal([]);
+    });
+  });
+  describe("agent sign-off", () => {
+    const guest = { type: "guest" as const, phone: PHONE };
+
+    it("signs the first reply of a conversation with the agent's initials", async () => {
+      const p = setup(guest);
+
+      await handleWhatsAppMessage(textWebhook("hola"));
+
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta\n\n^GU");
+    });
+
+    it("signs only once per conversation, and the model never sees the sign-off", async () => {
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "INBOUND", content: "hola", profile: "GUEST" },
+        { phone: PHONE, role: "AGENT", content: "¡Hola!\n\n^GU", profile: "GUEST" }
+      ]);
+      const p = setup(guest, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("gracias"));
+
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta");
+      expect(chat(p.invokeLLM.firstCall.args[1])).to.deep.equal([
+        { role: "user", content: "hola" },
+        { role: "assistant", content: "¡Hola!" }
+      ]);
+    });
+
+    it("signs again in a new conversation, after the session timeout", async () => {
+      const old = new Date(Date.now() - 48 * 3600 * 1000);
+      const stored = createFakeTranscript([
+        { phone: PHONE, role: "AGENT", content: "¡Hola!\n\n^GU", profile: "GUEST", createdAt: old }
+      ]);
+      const p = setup(guest, {}, stored);
+
+      await handleWhatsAppMessage(textWebhook("hola otra vez"));
+
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta\n\n^GU");
+    });
+
+    it("never doubles a sign-off the model wrote itself", async () => {
+      const p = setup(guest, {
+        invokeLLM: sinon.stub().resolves({ text: "respuesta ^GU", toolsExecuted: [] })
+      });
+
+      await handleWhatsAppMessage(textWebhook("hola"));
+
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.equal("respuesta\n\n^GU");
+    });
+
+    it("leaves fixed system replies unsigned", async () => {
+      const p = setup(guest);
+
+      await handleWhatsAppMessage(textWebhook("quiero hablar con una persona"));
+
+      expect(p.sendWhatsAppMessage.firstCall.args[0].message).to.not.include("^");
+    });
+  });
+
+  describe("message bursts", () => {
+    afterEach(() => setBurstWindowMsForTesting(0));
+
+    it("answers two quick messages once, with the first already in the history", async () => {
+      setBurstWindowMsForTesting(30);
+      const p = setup({ type: "guest", phone: PHONE });
+
+      const first = handleWhatsAppMessage(textWebhook("Ok"));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await Promise.all([first, handleWhatsAppMessage(textWebhook("Gracias"))]);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[2]).to.equal("Gracias");
+      expect(chat(p.invokeLLM.firstCall.args[1])).to.deep.equal([{ role: "user", content: "Ok" }]);
+      expect(p.turns.filter((t) => t.role === "INBOUND").map((t) => t.content)).to.deep.equal([
+        "Ok",
+        "Gracias"
+      ]);
+    });
+
+    it("answers each message that arrives after the window", async () => {
+      setBurstWindowMsForTesting(10);
+      const p = setup({ type: "guest", phone: PHONE });
+
+      await handleWhatsAppMessage(textWebhook("Hola"));
+      await handleWhatsAppMessage(textWebhook("¿Qué necesito?"));
+
+      expect(p.invokeLLM.calledTwice).to.be.true;
+    });
+
+    it("always answers an image, even when another message follows", async () => {
+      setBurstWindowMsForTesting(30);
+      const p = setup(applicantRoute);
+
+      const photo = handleWhatsAppMessage(imageWebhook());
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await Promise.all([photo, handleWhatsAppMessage(textWebhook("ahí va"))]);
+
+      expect(p.invokeLLM.calledTwice).to.be.true;
+      expect(p.invokeLLM.firstCall.args[4]).to.have.property("imageDataUrl");
+    });
+
+    it("answers only the last text of a sender within one delivery", async () => {
+      const p = setup({ type: "guest", phone: PHONE });
+      const a = textWebhook("Hola");
+      const b = textWebhook("Buenas tardes");
+      a.entry[0].changes[0].value.messages.push(b.entry[0].changes[0].value.messages[0]);
+
+      await handleWhatsAppMessage(a);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[2]).to.equal("Buenas tardes");
     });
   });
 });

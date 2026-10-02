@@ -122,8 +122,9 @@ export function createRecordConversationTurn(db: TurnClient) {
 
 /**
  * An agent's memory, oldest first, in LLM message shape. `cx` is the
- * guest/applicant/customer thread for the phone (every profile but PROSPECT,
- * SYSTEM replies included so the agent knows what the app already said);
+ * guest/applicant/customer thread for the phone: every turn, José's included
+ * (so the applicant agent picks up right where his intake ended instead of
+ * greeting again), and SYSTEM replies so the agent knows what the app said;
  * `prospect` is José's INBOUND/AGENT turns for one application since it was
  * last reopened, which José's turn counters are derived from.
  *
@@ -157,7 +158,6 @@ export function createGetConversationHistory(
     } else {
       where = {
         phone,
-        OR: [{ profile: null }, { profile: { not: "PROSPECT" } }],
         failed: false,
         createdAt: { gte: new Date(Date.now() - CX_HISTORY_MAX_AGE_MS) },
         ...before

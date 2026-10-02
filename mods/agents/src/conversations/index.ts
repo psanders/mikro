@@ -5,6 +5,10 @@ export {
   agentVersionOf,
   isNewSessionFrom,
   textOf,
+  signatureOf,
+  signedThisSession,
+  unsignedHistory,
+  withoutSignature,
   type ConversationTurnRole,
   type ConversationTurnRecord,
   type ConversationHistoryQuery

@@ -70,10 +70,13 @@ describe("CX self-service tools", () => {
   });
 
   describe("getMyApplicationStatus", () => {
-    function client(app: Record<string, unknown>, photos = 0) {
+    function client(app: Record<string, unknown>, labels: Array<string | null> = []) {
       return {
         loanApplication: { findUnique: async () => app },
-        applicationDocument: { count: async () => photos }
+        applicationDocument: {
+          count: async () => labels.length,
+          findMany: async () => labels.map((label) => ({ label }))
+        }
       } as any;
     }
 
@@ -89,16 +92,41 @@ describe("CX self-service tools", () => {
         idBackFilename: null
       };
 
-      const result = await createGetMyApplicationStatus(client(app, 1))({
+      const result = await createGetMyApplicationStatus(client(app, ["Fachada"]))({
         applicationId: "app-1"
       });
 
       expect(result.success).to.be.true;
       expect(result.data).to.deep.equal({
         stage: "en revisión",
-        missingEvidence: ["ID_BACK", "BUSINESS_PHOTO", "BUSINESS_PHOTO"]
+        missingEvidence: ["ID_BACK", "BUSINESS_PHOTO", "BUSINESS_PHOTO"],
+        businessPhotos: {
+          received: 1,
+          required: 3,
+          next: "el interior del negocio, donde atiende o trabaja"
+        }
       });
       expect(JSON.stringify(result)).to.not.match(/71|APPROVE|secret|riskBand/);
+    });
+
+    it("asks for the first unlabeled shot, whatever order earlier photos came in", async () => {
+      const app = { id: "app-1", status: "RECEIVED", idFrontFilename: "a", idBackFilename: "b" };
+      const result = await createGetMyApplicationStatus(client(app, ["Interior", null]))({
+        applicationId: "app-1"
+      });
+      expect(result.data?.businessPhotos).to.deep.equal({
+        received: 2,
+        required: 3,
+        next: "el frente del negocio por fuera, con el letrero si tiene"
+      });
+    });
+
+    it("leaves businessPhotos out once enough photos are in", async () => {
+      const app = { id: "app-1", status: "RECEIVED", idFrontFilename: "a", idBackFilename: "b" };
+      const result = await createGetMyApplicationStatus(
+        client(app, ["Fachada", "Interior", "Mercancía"])
+      )({ applicationId: "app-1" });
+      expect(result.data).to.deep.equal({ stage: "recibida", missingEvidence: [] });
     });
 
     it("asks for no evidence once the application is with the decider", async () => {
@@ -138,6 +166,75 @@ describe("CX self-service tools", () => {
         }
       );
       expect(result.success).to.be.false;
+    });
+  });
+
+  describe("attachApplicationEvidence (WhatsApp photos)", () => {
+    // saveImage only checks mime + size and hashes the bytes (fixture contractsPath).
+    const IMAGE = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+    const OTHER_SHA = "0".repeat(64);
+    const ctx = { applicationId: "app-1", phone: "+18095550001", imageDataUrl: IMAGE };
+
+    function db(docs: Array<{ label: string | null; sha256: string }>, app = {}) {
+      const create = sinon.stub().callsFake(async ({ data }) => {
+        docs.push({ label: data.label, sha256: data.sha256 });
+        return data;
+      });
+      return {
+        create,
+        client: {
+          loanApplication: {
+            findUnique: async () => ({
+              id: "app-1",
+              status: "RECEIVED",
+              idFrontFilename: "front.jpg",
+              idBackFilename: "back.jpg",
+              ...app
+            })
+          },
+          applicationDocument: {
+            create,
+            count: async () => docs.length,
+            findMany: async ({ where }: any) =>
+              where.kind ? docs.map((d) => ({ ...d, kind: "BUSINESS_PHOTO" })) : docs
+          }
+        } as any
+      };
+    }
+
+    it("labels each business photo with the shot it was asked for", async () => {
+      const { client, create } = db([{ label: "Fachada", sha256: OTHER_SHA }]);
+      const result = await createAttachApplicationEvidence(client)(
+        { kind: "BUSINESS_PHOTO" },
+        { ...ctx, imageDataUrl: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAg==" }
+      );
+      expect(result.success).to.be.true;
+      expect(create.firstCall.args[0].data.label).to.equal("Interior");
+      expect(result.data?.businessPhotos?.next).to.equal(
+        "la mercancía, los productos o las herramientas de trabajo"
+      );
+    });
+
+    it("refuses the same picture sent twice and keeps nothing", async () => {
+      const docs: Array<{ label: string | null; sha256: string }> = [];
+      const { client, create } = db(docs);
+      const first = await createAttachApplicationEvidence(client)({ kind: "BUSINESS_PHOTO" }, ctx);
+      const again = await createAttachApplicationEvidence(client)({ kind: "BUSINESS_PHOTO" }, ctx);
+      expect(first.success).to.be.true;
+      expect(again.success).to.be.false;
+      expect(again.message).to.match(/ya la habíamos recibido/);
+      expect(create.calledOnce).to.be.true;
+    });
+
+    it("refuses a business photo that is the cédula picture again", async () => {
+      const { createHash } = await import("node:crypto");
+      const sha = createHash("sha256")
+        .update(Buffer.from(IMAGE.split(",")[1], "base64"))
+        .digest("hex");
+      const { client, create } = db([], { idFrontFilename: `${sha}.jpg` });
+      const result = await createAttachApplicationEvidence(client)({ kind: "BUSINESS_PHOTO" }, ctx);
+      expect(result.success).to.be.false;
+      expect(create.called).to.be.false;
     });
   });
 

@@ -78,3 +78,52 @@ export function textOf(message: Message): string {
     .map((part) => part.text ?? "")
     .join("\n");
 }
+
+/**
+ * An agent's sign-off: "^" and the first two letters of its name ("^JO" for
+ * jose, "^SO" for sofia). Customers don't need to know which agent answered;
+ * the team does, when reviewing a conversation in Chatwoot.
+ */
+export function signatureOf(agentName: string): string {
+  const letters = agentName.normalize("NFD").replace(/[^A-Za-z]/g, "");
+  return `^${letters.slice(0, 2).toUpperCase()}`;
+}
+
+const SIGNATURE_RE = /\s*\^[A-Z]{2}\s*$/;
+
+/** A reply without a trailing sign-off, so the model never learns to write one. */
+export function withoutSignature(text: string): string {
+  return text.replace(SIGNATURE_RE, "");
+}
+
+/** The history the model sees: the same turns with sign-offs removed. */
+export function unsignedHistory(history: Message[]): Message[] {
+  return history.map((m) =>
+    m.role === "assistant" && typeof m.content === "string"
+      ? { ...m, content: withoutSignature(m.content) }
+      : m
+  );
+}
+
+/**
+ * Whether the agent already signed in this conversation: walking back from
+ * the newest turn, until a silence longer than the session timeout.
+ */
+export function signedThisSession(
+  history: Message[],
+  signature: string,
+  timeoutSeconds: number
+): boolean {
+  let newer = Date.now();
+  for (let i = history.length - 1; i >= 0; i--) {
+    const at = history[i].timestamp ? new Date(history[i].timestamp!).getTime() : NaN;
+    if (!Number.isNaN(at)) {
+      if (newer - at > timeoutSeconds * 1000) return false;
+      newer = at;
+    }
+    if (history[i].role === "assistant" && textOf(history[i]).trimEnd().endsWith(signature)) {
+      return true;
+    }
+  }
+  return false;
+}
