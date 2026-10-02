@@ -706,6 +706,11 @@
                 mockResponse:
                   success: true
                   message: Conversación pasada a una persona del equipo.
+      - id: guest-out-of-area-rejected
+        description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area, never "no fue aprobada" or a reapply date
+        turns:
+          - human: "[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que \"no fue aprobada\" ni le des una fecha para volver a solicitar. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata. Si te dice que su negocio sí está en Puerto Plata (se mudó o puso otra provincia por error), puede llenar la solicitud de nuevo en https://mikro.do/solicitud. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
+            expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Si tu negocio sí está en Puerto Plata, puedes llenar la solicitud de nuevo en https://mikro.do/solicitud."
       - id: guest-asks-payment-frequency
         description: Payment frequency comes from the FAQ (weekly, biweekly or monthly), never invented
         turns:

@@ -40,6 +40,8 @@ export type RouteResult =
   /**
    * `previouslyRejected`: their latest application was REJECTED less than the
    * reapply cooldown ago; `reapplyFrom` is when they may apply again.
+   * `outOfArea`: their latest application was rejected because the business
+   * is outside the coverage area; there is no reapply date for that.
    * `unmatchedUsername`: a WhatsApp username sender (no phone) we can't tie
    * to any customer or application; a person takes these.
    */
@@ -48,6 +50,7 @@ export type RouteResult =
       phone: string;
       previouslyRejected?: true;
       reapplyFrom?: Date;
+      outOfArea?: true;
       unmatchedUsername?: true;
     }
   | { type: "ignored"; reason: string; phone: string };
@@ -60,6 +63,8 @@ export interface ApplicationLookupResult {
   submittedAt: Date | null;
   /** When it was approved or rejected; optional for older callers. */
   decidedAt?: Date | null;
+  /** Why it was rejected (e.g. OUT_OF_COVERAGE_AREA); optional for older callers. */
+  rejectionReason?: string | null;
   /** RECEIVED and José still asks its missing fields (the lookup decides). */
   intakeOpen?: boolean;
 }

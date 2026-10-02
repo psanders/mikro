@@ -148,6 +148,7 @@ What happens next:
 3. **No hand-off**, unless they ask for a person (case I).
 4. **After 30 days** they are a regular guest: Lucía answers as usual and invites them to apply.
 5. The web form isn't blocked: someone could still reapply earlier on their own.
+6. **Rejected for being outside the coverage area** (`OUT_OF_COVERAGE_AREA`, set by the web form or by José): no 30-day date, at any age. Lucía's note says the business is outside the area, so she never says "no fue aprobada" or gives a date. She says we only serve Puerto Plata for now; if their business is in fact in Puerto Plata (moved, or picked the wrong province), they can fill in the form again.
 
 **Monitor:** Chatwoot. Changed on 2026-09-26: before this, every rejected applicant was handed to a person.
 

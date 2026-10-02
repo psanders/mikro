@@ -297,4 +297,18 @@ describe("createMessageRouter — rejected applicants' reapply cooldown", () => 
     );
     expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE });
   });
+
+  it("gives an out-of-area rejection no reapply date, at any age", async () => {
+    for (const daysAgo of [2, 90]) {
+      const router = createMessageRouter(
+        makeDeps({
+          findApplicationByPhone: sinon.stub().resolves({
+            ...rejected(new Date(Date.now() - daysAgo * DAY)),
+            rejectionReason: "OUT_OF_COVERAGE_AREA"
+          })
+        })
+      );
+      expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE, outOfArea: true });
+    }
+  });
 });

@@ -26,9 +26,29 @@ describe("createGetApplicationByPhone", () => {
       status: "IN_REVIEW",
       submittedAt,
       decidedAt: null,
+      rejectionReason: null,
       partial: false,
       intakeOpen: false
     });
+  });
+
+  it("carries the rejection reason, so the router can skip the reapply cooldown", async () => {
+    const client = {
+      loanApplication: {
+        findFirst: async () => ({
+          id: "app-4",
+          sessionId: "s-4",
+          status: "REJECTED",
+          submittedAt: new Date(),
+          decidedAt: new Date(),
+          rejectionReason: "OUT_OF_COVERAGE_AREA"
+        })
+      }
+    } as any;
+
+    const result = await createGetApplicationByPhone(client)("+18095550001");
+
+    expect(result!.rejectionReason).to.equal("OUT_OF_COVERAGE_AREA");
   });
 
   it("asks isIntakeOpen only for a RECEIVED application", async () => {

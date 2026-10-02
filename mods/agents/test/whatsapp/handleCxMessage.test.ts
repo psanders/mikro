@@ -348,6 +348,17 @@ describe("WhatsApp CX routes", () => {
       expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
     });
 
+    it("tells an out-of-area guest about the coverage area, never a reapply date", async () => {
+      const p = setup({ type: "guest", phone: PHONE, outOfArea: true });
+
+      await handleWhatsAppMessage(textWebhook("hola, ¿puedo volver a aplicar?"));
+
+      const input: string = p.invokeLLM.firstCall.args[2];
+      expect(input).to.contain("fuera de nuestra zona");
+      expect(input).to.not.match(/a partir del/);
+      expect(input).to.match(/hola, ¿puedo volver a aplicar\?$/);
+    });
+
     it("still hands a rejected guest to a person when they ask for one", async () => {
       const p = setup({
         type: "guest",
