@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       # Lerna only cuts a version when commits touch a lerna package
-      # (mods/common|agents|apiserver|ctl|mobile). Dashboard/CI-only changes
+      # (mods/common|agents|apiserver|ctl|mobile|creditscore). Dashboard/CI-only changes
       # never trigger one on their own — this forces a release that includes
       # them (version bump still derived from conventional commits).
       force_release:
@@ -113,6 +113,7 @@ jobs:
           - **Desktop** (macOS \`.dmg\`, Windows \`.msi\`/\`.exe\`, updater files) — attached below by [Build Dashboard]($workflows/build-dashboard.yaml)
           - **Android APK** — attached below by [Build Android APK]($workflows/build-android.yaml)
           - **iOS** (\`.ipa\`, App Store distribution) — attached below by [Build iOS (EAS)]($workflows/build-ios.yaml); submit with \`eas submit --platform ios\` → [EAS builds page](https://expo.dev/accounts/psanders/projects/mikro/builds)
+          - **Chrome extension** (\`mikro-creditscore-$tag.zip\`, Riesgo de buró) — attached below by [Build Credit Score Extension]($workflows/build-creditscore.yaml)
           - **API server** — \`docker pull ghcr.io/psanders/mikro:$version\` → [GitHub Container Registry](https://github.com/psanders/mikro/pkgs/container/mikro)
           EOF
           gh release create "$tag" --verify-tag --title "Mikro $tag" \

@@ -1,0 +1,320 @@
+{
+  "_note": "Anonymized report in BureauReport shape (transcribed from an Interactive Reports PDF). Amounts scaled by one factor, dates shifted by a fixed offset; no identification data.",
+  "reportDate": "2026-05-13",
+  "inquiries": [
+    {
+      "date": "2026-04-07",
+      "sector": "OTRO"
+    },
+    {
+      "date": "2026-02-08",
+      "sector": "OTRO"
+    },
+    {
+      "date": "2026-01-08",
+      "sector": "FINANCIERO"
+    }
+  ],
+  "summary": {
+    "oldestCredit": "2021-08",
+    "newestCredit": "2026-01"
+  },
+  "accounts": [
+    {
+      "ref": 1,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "000000000000",
+      "util": "000000000000"
+    },
+    {
+      "ref": 2,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "000000000000",
+      "util": "000000000000"
+    },
+    {
+      "ref": 3,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CASTIGADO",
+      "pdv": "IIIIIIIL221.",
+      "util": "666666666666",
+      "approved": 5100.0,
+      "owed": 10258.68,
+      "installment": 1113.5,
+      "overdue": 4325.65,
+      "legal": 0.0,
+      "writtenOff": 10258.68
+    },
+    {
+      "ref": 4,
+      "sector": "COP",
+      "product": "PRE",
+      "status": "MORA",
+      "pdv": "-----SS2..--",
+      "util": "-----05555--"
+    },
+    {
+      "ref": 5,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 6,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 7,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 8,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 9,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 10,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 11,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 12,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 13,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 14,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 15,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 16,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "-----------0",
+      "util": "-----------0"
+    },
+    {
+      "ref": 17,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "--------0---",
+      "util": "--------0---"
+    },
+    {
+      "ref": 18,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "-----0------",
+      "util": "-----0------"
+    },
+    {
+      "ref": 19,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "-0----------",
+      "util": "-0----------"
+    },
+    {
+      "ref": 20,
+      "sector": "MYE",
+      "product": "CCO",
+      "status": "CANCELADA",
+      "pdv": "-00000000000",
+      "util": "-00000000000"
+    },
+    {
+      "ref": 21,
+      "sector": "MYE",
+      "product": "CCO",
+      "status": "CANCELADA",
+      "pdv": "-00000000000",
+      "util": "-00000000000"
+    },
+    {
+      "ref": 22,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "-----0------",
+      "util": "-----0------"
+    },
+    {
+      "ref": 23,
+      "sector": "MYE",
+      "product": "CCO",
+      "status": "MORA",
+      "pdv": "-----0-..--.",
+      "util": "-----0-22--2"
+    },
+    {
+      "ref": 24,
+      "sector": "BCO",
+      "product": "TCR",
+      "status": "LEGAL",
+      "pdv": "-LLLLLLLLLLL",
+      "util": "-55555555555",
+      "approved": 8875.7,
+      "owed": 8874.85,
+      "installment": 2180.25,
+      "overdue": 1989.0,
+      "legal": 8874.85,
+      "writtenOff": 0.0
+    },
+    {
+      "ref": 25,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 26,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 27,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 28,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "NORMAL",
+      "pdv": "--0---------",
+      "util": "--2---------",
+      "approved": 8500.0,
+      "owed": 3400.0,
+      "installment": 1105.0,
+      "overdue": 0.0,
+      "legal": 0.0,
+      "writtenOff": 0.0
+    },
+    {
+      "ref": 29,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 30,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 31,
+      "sector": "FIN",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 32,
+      "sector": "PRE",
+      "product": "PRE",
+      "status": "CANCELADA",
+      "pdv": "------------",
+      "util": "------------"
+    },
+    {
+      "ref": 33,
+      "sector": "TEL",
+      "product": "TEL",
+      "status": "CANCELADA",
+      "pdv": "0001.0...0..",
+      "util": "000666666666"
+    },
+    {
+      "ref": 34,
+      "sector": "VMO",
+      "product": "CCO",
+      "status": "LEGAL",
+      "pdv": "---L-L------",
+      "util": "---2-2------",
+      "approved": 99450.0,
+      "owed": 31637.0,
+      "installment": 3163.7,
+      "overdue": 56950.0,
+      "legal": 56950.0,
+      "writtenOff": 0.0
+    }
+  ]
+}

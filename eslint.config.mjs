@@ -23,6 +23,7 @@ export default tseslint.config(
       "**/generated/**",
       "**/storybook-static/**",
       "**/src-tauri/target/**",
+      "mods/creditscore/chrome-extension/**",
       "eval-results/**",
       "contracts/**",
       // Agent worktrees are full second checkouts of this repo; linting them

@@ -1,7 +1,14 @@
 {
   "version": "3.12.4",
   "npmClient": "npm",
-  "packages": ["mods/common", "mods/agents", "mods/apiserver", "mods/ctl", "mods/mobile"],
+  "packages": [
+    "mods/common",
+    "mods/agents",
+    "mods/apiserver",
+    "mods/ctl",
+    "mods/mobile",
+    "mods/creditscore"
+  ],
   "command": {
     "version": {
       "conventionalCommits": true,

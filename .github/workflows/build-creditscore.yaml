@@ -1,0 +1,72 @@
+name: Build Credit Score Extension
+
+# Packages the "Mikro · Riesgo de buró" Chrome extension (mods/creditscore) and,
+# on release commits, attaches mikro-creditscore-vX.Y.Z.zip to the consolidated
+# GitHub Release — same pattern as build-android.yaml.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "mods/creditscore/**"
+      - "package.json"
+      - "package-lock.json"
+
+# contents: write lets the job attach the zip to the GitHub Release.
+permissions:
+  contents: write
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  build-creditscore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test -w @mikro/creditscore
+
+      - name: Package extension
+        run: npm run package -w @mikro/creditscore
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v7
+        with:
+          name: mikro-creditscore-${{ github.run_number }}-${{ github.sha }}
+          path: mods/creditscore/mikro-creditscore-v*.zip
+          retention-days: 30
+
+      # Release commits (pushed by release.yaml) carry a vX.Y.Z tag on HEAD.
+      # release.yaml creates the Release seconds after pushing the tag; the
+      # retry loop covers any gap. Non-release pushes keep the artifact only.
+      - name: Attach zip to GitHub Release (release commits only)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags --quiet
+          tag="$(git tag --points-at HEAD | grep '^v' | head -1 || true)"
+          if [ -z "$tag" ]; then
+            echo "HEAD is not a release commit; keeping the workflow artifact only"
+            exit 0
+          fi
+          zip="$(ls mods/creditscore/mikro-creditscore-v*.zip)"
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$tag" "$zip" --clobber; then
+              exit 0
+            fi
+            echo "Release $tag not ready yet (attempt $attempt); retrying in 60s"
+            sleep 60
+          done
+          echo "::warning::Could not attach extension zip to release $tag"
