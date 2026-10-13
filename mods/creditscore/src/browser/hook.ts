@@ -8,23 +8,58 @@ import { CREDIT_BLOCKS, fromInteractiveReport } from "../adapter.js";
 import { scoreReport } from "../scorecard.js";
 import { renderError, renderScore } from "./panel.js";
 
-const REPORT_URL = /\/products\/DATACREDITO\/reports(\?|$)/;
+// Any Interactive Reports API call that can carry a report: the POST from "Generar Reporte"
+// (…/products/DATACREDITO/reports) and the GET that reopens a saved one from the history
+// (…/reports/<reportId>). Responses are then recognized by content, not by URL.
+export const REPORT_URL = /\/ar-interactive-reports[^/]*\/.*\/reports(\/[^/?]+)?(\?|$)/;
 
-/** Scores a raw report response body (or a saved copy of it). */
-export function handleReportText(text: string) {
+const MAX_DEPTH = 3;
+
+/** Finds the object holding the credit blocks, wherever the response nests it. */
+export function findReportData(json: unknown, depth = 0): Record<string, unknown> | null {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return null;
+  const obj = json as Record<string, unknown>;
+  if ("bloque_actividadcred" in obj || "actividadcred" in obj) return obj;
+  if (depth >= MAX_DEPTH) return null;
+  for (const v of Object.values(obj)) {
+    const found = findReportData(v, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Scores a raw report response body (or a saved copy of it). Returns false when the body
+ * isn't a report. `silent` is for intercepted traffic, where non-report responses
+ * (e.g. the history list) are expected and shouldn't show an error.
+ */
+export function handleReportText(text: string, { silent = false } = {}): boolean {
+  let data: Record<string, unknown> | null = null;
   try {
-    const json = JSON.parse(text);
-    const data = json.data ?? json;
+    data = findReportData(JSON.parse(text));
+  } catch {
+    // not JSON
+  }
+  if (!data) {
+    if (!silent) renderError("El archivo no contiene un reporte de DataCrédito.");
+    return false;
+  }
+  const found = data;
+  try {
     // Keep only the credit-history blocks; accept saved files keyed with or without "bloque_".
     const credit = Object.fromEntries(
-      CREDIT_BLOCKS.map((k) => [k, data[k] ?? data[k.replace("bloque_", "")]])
+      CREDIT_BLOCKS.map((k) => [k, found[k] ?? found[k.replace("bloque_", "")]])
     );
     renderScore(scoreReport(fromInteractiveReport(credit)));
+    return true;
   } catch (e) {
     console.warn("[mikro-creditscore] could not score report", e);
     renderError("No se pudo leer el reporte.");
+    return false;
   }
 }
+
+const onIntercepted = (text: string) => handleReportText(text, { silent: true });
 
 type Patched = { __mikroCreditscore?: boolean };
 
@@ -42,7 +77,7 @@ export function installHook() {
       res
         .clone()
         .text()
-        .then(handleReportText, () => {});
+        .then(onIntercepted, () => {});
     return res;
   };
 
@@ -60,7 +95,7 @@ export function installHook() {
     if (REPORT_URL.test(this.__mikroUrl ?? "")) {
       this.addEventListener("load", () => {
         if (this.status < 200 || this.status >= 300) return;
-        handleReportText(
+        onIntercepted(
           this.responseType === "json" ? JSON.stringify(this.response) : this.responseText
         );
       });
