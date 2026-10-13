@@ -28,6 +28,9 @@
     },
     {
       "path": "./mods/ctl"
+    },
+    {
+      "path": "./mods/creditscore"
     }
   ],
   "files": [],

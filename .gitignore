@@ -57,3 +57,7 @@ mikro.csv
 # copied into the Docker image from the CI runner. Tracking it broke CI when a
 # partial copy was committed (prisma refuses to overwrite an unrecognized dir).
 mods/apiserver/src/generated/prisma/
+
+# Chrome extension build output and release archive (mods/creditscore)
+mods/creditscore/chrome-extension/
+mods/creditscore/*.zip

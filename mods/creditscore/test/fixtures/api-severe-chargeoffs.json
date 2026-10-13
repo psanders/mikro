@@ -1,0 +1,2728 @@
+{
+  "_note": "Anonymized Interactive Reports API response (credit blocks only). Creditor names replaced, amounts scaled by one factor, dates shifted by a fixed offset; no identification data.",
+  "actividadcred": {
+    "actividadcred": [
+      {
+        "porcentajeMontosAdeudados": [
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "-",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "-",
+              "%>60<80",
+              "-",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "%>60<80",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "PRE",
+            "identificador": 1,
+            "productTypeCode": "PRE",
+            "referencia": 1
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "BCO",
+            "identificador": 2,
+            "productTypeCode": "TCR",
+            "referencia": 2
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "%>100",
+              "%>100",
+              "-",
+              "%>100",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "PRE",
+            "identificador": 3,
+            "productTypeCode": "PRE",
+            "referencia": 3
+          },
+          {
+            "amount": [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "TEL",
+            "identificador": 4,
+            "productTypeCode": "TEL",
+            "referencia": 4
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "%>100",
+              "%>100",
+              "%>100",
+              "%>100",
+              "%>100",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "FIN",
+            "identificador": 5,
+            "productTypeCode": "PRE",
+            "referencia": 5
+          }
+        ],
+        "ventana48Meses": [
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "-",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "-",
+              ".",
+              "-",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              ".",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "PRE",
+            "identificador": 1,
+            "productTypeCode": "PRE",
+            "referencia": 1
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "BCO",
+            "identificador": 2,
+            "productTypeCode": "TCR",
+            "referencia": 2
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "2",
+              "L",
+              "-",
+              "I",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "PRE",
+            "identificador": 3,
+            "productTypeCode": "PRE",
+            "referencia": 3
+          },
+          {
+            "amount": [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "TEL",
+            "identificador": 4,
+            "productTypeCode": "TEL",
+            "referencia": 4
+          },
+          {
+            "amount": [
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "-",
+              "1",
+              "2",
+              "I",
+              "I",
+              "I",
+              "-"
+            ],
+            "currencyCode": "DO",
+            "economicAreaDescr": "FIN",
+            "identificador": 5,
+            "productTypeCode": "PRE",
+            "referencia": 5
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "orden": 4,
+      "nameToShow": "Actividad crediticia",
+      "iconName": "recent_actors",
+      "titleToShow": true,
+      "blockToShow": true
+    }
+  },
+  "balancevenci": {
+    "balancevenci": [
+      {
+        "creditosPorTipo": {
+          "creditoComercial": {
+            "detallePorCredito": [],
+            "totalDetalleYDeuda": 0.0,
+            "totalDetalleYDeudaDolares": 0.0,
+            "totalVecesVencido1": 0,
+            "totalVecesVencido120": 0,
+            "totalVecesVencido120Dolares": 0,
+            "totalVecesVencido1Dolares": 0,
+            "totalVecesVencido30": 0,
+            "totalVecesVencido30Dolares": 0,
+            "totalVecesVencido60": 0,
+            "totalVecesVencido60Dolares": 0,
+            "totalVecesVencido90": 0,
+            "totalVecesVencido90Dolares": 0,
+            "totalesPorPeriodo": [
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ],
+            "totalesPorPeriodoDolares": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ]
+          },
+          "prestamos": {
+            "detallePorCredito": [
+              {
+                "creditoAprobado": 13175.0,
+                "cuota": 0.0,
+                "diasDeAtraso": "0",
+                "fechaApertura": "12/08/2022",
+                "fechaReportado": "06/05/2026",
+                "fechaUltimaTransaccion": null,
+                "frd": 0.0,
+                "identificador": 1,
+                "mesConsolidado": "202604",
+                "moneda": "DO",
+                "nombreInstitucionAcreedora": "ACREEDOR A",
+                "plazo": 0,
+                "referencia": 1,
+                "status": "MORA",
+                "statusCuentaCerrada": false,
+                "tipoPrestamo": "CON",
+                "tipoProducto": "Cuenta Vencida",
+                "totalAdeudado": 8245.0,
+                "totalVencido": 8245.0,
+                "valoresPorMes": ["-", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"],
+                "vecesVencido1": 36,
+                "vecesVencido120": 0,
+                "vecesVencido30": 0,
+                "vecesVencido60": 0,
+                "vecesVencido90": 0
+              },
+              {
+                "creditoAprobado": 1275.0,
+                "cuota": 0.0,
+                "diasDeAtraso": "0",
+                "fechaApertura": "23/10/2025",
+                "fechaReportado": "07/04/2026",
+                "fechaUltimaTransaccion": null,
+                "frd": 0.0,
+                "identificador": 3,
+                "mesConsolidado": "202604",
+                "moneda": "DO",
+                "nombreInstitucionAcreedora": "ACREEDOR B",
+                "plazo": 1,
+                "referencia": 3,
+                "status": "CASTIGADA",
+                "statusCuentaCerrada": false,
+                "tipoPrestamo": "CON",
+                "tipoProducto": "Cuenta en Defecto",
+                "totalAdeudado": 1734.42,
+                "totalVencido": 3519.0,
+                "valoresPorMes": ["-", "9", "-", "8", "2", "-", "-", "-", "-", "-", "-", "-"],
+                "vecesVencido1": 0,
+                "vecesVencido120": 1,
+                "vecesVencido30": 0,
+                "vecesVencido60": 1,
+                "vecesVencido90": 1
+              },
+              {
+                "creditoAprobado": 3400.0,
+                "cuota": 7133.2,
+                "diasDeAtraso": "0",
+                "fechaApertura": "03/10/2025",
+                "fechaReportado": "09/05/2026",
+                "fechaUltimaTransaccion": null,
+                "frd": 0.0,
+                "identificador": 5,
+                "mesConsolidado": "202604",
+                "moneda": "DO",
+                "nombreInstitucionAcreedora": "ACREEDOR C",
+                "plazo": 1,
+                "referencia": 5,
+                "status": "CASTIGADA",
+                "statusCuentaCerrada": false,
+                "tipoPrestamo": "CON",
+                "tipoProducto": "Cuenta en Defecto",
+                "totalAdeudado": 7133.2,
+                "totalVencido": 7133.2,
+                "valoresPorMes": ["-", "9", "9", "9", "2", "1", "-", "-", "-", "-", "-", "-"],
+                "vecesVencido1": 0,
+                "vecesVencido120": 3,
+                "vecesVencido30": 1,
+                "vecesVencido60": 1,
+                "vecesVencido90": 0
+              }
+            ],
+            "totalDetalleYDeuda": 18897.62,
+            "totalDetalleYDeudaDolares": 0.0,
+            "totalVecesVencido1": 36,
+            "totalVecesVencido120": 4,
+            "totalVecesVencido120Dolares": 0,
+            "totalVecesVencido1Dolares": 0,
+            "totalVecesVencido30": 1,
+            "totalVecesVencido30Dolares": 0,
+            "totalVecesVencido60": 2,
+            "totalVecesVencido60Dolares": 0,
+            "totalVecesVencido90": 1,
+            "totalVecesVencido90Dolares": 0,
+            "totalesPorPeriodo": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 8245.0,
+                "montoTotalVencido": 8245.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 15208.2,
+                "montoTotalVencido": 15208.2
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": -1785.0,
+                "montoTotalAdeudado": 17112.62,
+                "montoTotalVencido": 18897.62
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": -1785.0,
+                "montoTotalAdeudado": 17112.62,
+                "montoTotalVencido": 18897.62
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 15378.2,
+                "montoTotalVencido": 15378.2
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": -1785.0,
+                "montoTotalAdeudado": 17112.62,
+                "montoTotalVencido": 18897.62
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ],
+            "totalesPorPeriodoDolares": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ]
+          },
+          "servicios": {
+            "detallePorCredito": [],
+            "totalDetalleYDeuda": 0.0,
+            "totalDetalleYDeudaDolares": 0.0,
+            "totalVecesVencido1": 0,
+            "totalVecesVencido120": 0,
+            "totalVecesVencido120Dolares": 0,
+            "totalVecesVencido1Dolares": 0,
+            "totalVecesVencido30": 0,
+            "totalVecesVencido30Dolares": 0,
+            "totalVecesVencido60": 0,
+            "totalVecesVencido60Dolares": 0,
+            "totalVecesVencido90": 0,
+            "totalVecesVencido90Dolares": 0,
+            "totalesPorPeriodo": [
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ],
+            "totalesPorPeriodoDolares": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ]
+          },
+          "tarjetasDeCredito": {
+            "detallePorCredito": [
+              {
+                "creditoAprobado": 6800.0,
+                "cuota": 0.0,
+                "diasDeAtraso": "0",
+                "fechaApertura": "21/01/2017",
+                "fechaReportado": "01/05/2026",
+                "fechaUltimaTransaccion": "30/01/2017",
+                "frd": 0.0,
+                "identificador": 2,
+                "mesConsolidado": "202604",
+                "moneda": "DO",
+                "nombreInstitucionAcreedora": "ACREEDOR D",
+                "plazo": 0,
+                "referencia": 2,
+                "status": "ART.68, P.3 LEY 172-13",
+                "statusCuentaCerrada": true,
+                "tipoPrestamo": "TCR",
+                "tipoProducto": "Cuenta Cerrada",
+                "totalAdeudado": 0.0,
+                "totalVencido": 0.0,
+                "valoresPorMes": ["-", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+                "vecesVencido1": 0,
+                "vecesVencido120": 0,
+                "vecesVencido30": 0,
+                "vecesVencido60": 0,
+                "vecesVencido90": 0
+              }
+            ],
+            "totalDetalleYDeuda": 0.0,
+            "totalDetalleYDeudaDolares": 0.0,
+            "totalVecesVencido1": 0,
+            "totalVecesVencido120": 0,
+            "totalVecesVencido120Dolares": 0,
+            "totalVecesVencido1Dolares": 0,
+            "totalVecesVencido30": 0,
+            "totalVecesVencido30Dolares": 0,
+            "totalVecesVencido60": 0,
+            "totalVecesVencido60Dolares": 0,
+            "totalVecesVencido90": 0,
+            "totalVecesVencido90Dolares": 0,
+            "totalesPorPeriodo": [
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ],
+            "totalesPorPeriodoDolares": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ]
+          },
+          "telecomunicaciones": {
+            "detallePorCredito": [
+              {
+                "creditoAprobado": 2493.05,
+                "cuota": 0.0,
+                "diasDeAtraso": "0",
+                "fechaApertura": "02/11/2016",
+                "fechaReportado": "16/11/2025",
+                "fechaUltimaTransaccion": "30/05/2017",
+                "frd": 0.0,
+                "identificador": 4,
+                "mesConsolidado": "202511",
+                "moneda": "DO",
+                "nombreInstitucionAcreedora": "ACREEDOR E",
+                "plazo": 0,
+                "referencia": 4,
+                "status": "NORMAL",
+                "statusCuentaCerrada": true,
+                "tipoPrestamo": "TEL",
+                "tipoProducto": "Cuenta Cerrada",
+                "totalAdeudado": 0.0,
+                "totalVencido": 0.0,
+                "valoresPorMes": ["-", "-", "-", "-", "-", "-", "0", "0", "0", "0", "0", "0"],
+                "vecesVencido1": 0,
+                "vecesVencido120": 0,
+                "vecesVencido30": 0,
+                "vecesVencido60": 0,
+                "vecesVencido90": 0
+              }
+            ],
+            "totalDetalleYDeuda": 0.0,
+            "totalDetalleYDeudaDolares": 0.0,
+            "totalVecesVencido1": 0,
+            "totalVecesVencido120": 0,
+            "totalVecesVencido120Dolares": 0,
+            "totalVecesVencido1Dolares": 0,
+            "totalVecesVencido30": 0,
+            "totalVecesVencido30Dolares": 0,
+            "totalVecesVencido60": 0,
+            "totalVecesVencido60Dolares": 0,
+            "totalVecesVencido90": 0,
+            "totalVecesVencido90Dolares": 0,
+            "totalesPorPeriodo": [
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ],
+            "totalesPorPeriodoDolares": [
+              {
+                "mesAnioPeriodo": "202406",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202407",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202408",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202409",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202410",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202411",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202412",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202501",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202502",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202503",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202504",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202505",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202506",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202507",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202508",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202509",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202510",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202511",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202512",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202601",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202602",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202603",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202604",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              },
+              {
+                "mesAnioPeriodo": "202605",
+                "montoAdeudado": 0.0,
+                "montoTotalAdeudado": 0.0,
+                "montoTotalVencido": 0.0
+              }
+            ]
+          }
+        },
+        "deudaConsolidadaPorAcreedor": [
+          {
+            "castigado": 3519.0,
+            "creditoAprobado": 1275.0,
+            "cuota": 0.0,
+            "enLegal": 0.0,
+            "estadoDeLaCuenta": "Cuenta en Defecto",
+            "frd": 0.0,
+            "nombreAcreedor": "ACREEDOR B",
+            "pais": "DO",
+            "sector": "PRE",
+            "sumatoriaCtaXAcreedor": 1,
+            "totalAdeudado": 1734.42,
+            "vencido": 3519.0
+          },
+          {
+            "castigado": 0.0,
+            "creditoAprobado": 13175.0,
+            "cuota": 0.0,
+            "enLegal": 0.0,
+            "estadoDeLaCuenta": "Cuenta Vencida",
+            "frd": 0.0,
+            "nombreAcreedor": "ACREEDOR A",
+            "pais": "DO",
+            "sector": "PRE",
+            "sumatoriaCtaXAcreedor": 1,
+            "totalAdeudado": 8245.0,
+            "vencido": 8245.0
+          },
+          {
+            "castigado": 7133.2,
+            "creditoAprobado": 3400.0,
+            "cuota": 7133.2,
+            "enLegal": 0.0,
+            "estadoDeLaCuenta": "Cuenta en Defecto",
+            "frd": 0.0,
+            "nombreAcreedor": "ACREEDOR C",
+            "pais": "DO",
+            "sector": "FIN",
+            "sumatoriaCtaXAcreedor": 1,
+            "totalAdeudado": 7133.2,
+            "vencido": 7133.2
+          }
+        ],
+        "deudaConsolidadaPorAcreedorDolares": [],
+        "deudaPorTipoProducto": {
+          "detallesDeudasPorProducto": [
+            {
+              "castigado": 0.0,
+              "creditoAprobado": 6800.0,
+              "cuota": 0.0,
+              "enLegal": 0.0,
+              "estadoDeLaCuenta": "Cuenta Cerrada",
+              "frd": 0.0,
+              "moneda": "RD$",
+              "sumatoria": 1,
+              "tipoDeProducto": "Tarjetas de Crédito",
+              "totalAdeudado": 0.0,
+              "vencido": 0.0
+            },
+            {
+              "castigado": 10652.2,
+              "creditoAprobado": 17850.0,
+              "cuota": 7133.2,
+              "enLegal": 0.0,
+              "estadoDeLaCuenta": "Cuenta en Defecto",
+              "frd": 0.0,
+              "moneda": "RD$",
+              "sumatoria": 3,
+              "tipoDeProducto": "Préstamos",
+              "totalAdeudado": 17112.2,
+              "vencido": 18897.2
+            },
+            {
+              "castigado": 0.0,
+              "creditoAprobado": 2493.05,
+              "cuota": 0.0,
+              "enLegal": 0.0,
+              "estadoDeLaCuenta": "Cuenta Cerrada",
+              "frd": 0.0,
+              "moneda": "RD$",
+              "sumatoria": 1,
+              "tipoDeProducto": "Producto de Telecomunicaciones",
+              "totalAdeudado": 0.0,
+              "vencido": 0.0
+            }
+          ],
+          "detallesTotalDeudasPorMoneda": [
+            {
+              "moneda": "RD$",
+              "totalAdeudado": 17112.2,
+              "totalCastigado": 10652.2,
+              "totalCreditoAprobado": 27143.05,
+              "totalCuota": 7133.2,
+              "totalEnLegal": 0.0,
+              "totalVencido": 18897.2
+            },
+            {
+              "moneda": "US$",
+              "totalAdeudado": 0.0,
+              "totalCastigado": 0.0,
+              "totalCreditoAprobado": 0.0,
+              "totalCuota": 0.0,
+              "totalEnLegal": 0.0,
+              "totalVencido": 0.0
+            }
+          ]
+        },
+        "resumenGlobalDolares": [
+          {
+            "mesAnioPeriodo": "202605",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 1
+          },
+          {
+            "mesAnioPeriodo": "202604",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 2
+          },
+          {
+            "mesAnioPeriodo": "202603",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 3
+          },
+          {
+            "mesAnioPeriodo": "202602",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 4
+          },
+          {
+            "mesAnioPeriodo": "202601",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 5
+          },
+          {
+            "mesAnioPeriodo": "202512",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 6
+          },
+          {
+            "mesAnioPeriodo": "202511",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 7
+          },
+          {
+            "mesAnioPeriodo": "202510",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 8
+          },
+          {
+            "mesAnioPeriodo": "202509",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 9
+          },
+          {
+            "mesAnioPeriodo": "202508",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 10
+          },
+          {
+            "mesAnioPeriodo": "202507",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 11
+          },
+          {
+            "mesAnioPeriodo": "202506",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 12
+          }
+        ],
+        "resumenGlobalPesos": [
+          {
+            "mesAnioPeriodo": "202605",
+            "montoTotalAdeudado": 0.0,
+            "montoTotalVencido": 0.0,
+            "referencia": 1
+          },
+          {
+            "mesAnioPeriodo": "202604",
+            "montoTotalAdeudado": 17112.62,
+            "montoTotalVencido": 18897.62,
+            "referencia": 2
+          },
+          {
+            "mesAnioPeriodo": "202603",
+            "montoTotalAdeudado": 15378.2,
+            "montoTotalVencido": 15378.2,
+            "referencia": 3
+          },
+          {
+            "mesAnioPeriodo": "202602",
+            "montoTotalAdeudado": 17112.62,
+            "montoTotalVencido": 18897.62,
+            "referencia": 4
+          },
+          {
+            "mesAnioPeriodo": "202601",
+            "montoTotalAdeudado": 17112.62,
+            "montoTotalVencido": 18897.62,
+            "referencia": 5
+          },
+          {
+            "mesAnioPeriodo": "202512",
+            "montoTotalAdeudado": 15208.2,
+            "montoTotalVencido": 15208.2,
+            "referencia": 6
+          },
+          {
+            "mesAnioPeriodo": "202511",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 7
+          },
+          {
+            "mesAnioPeriodo": "202510",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 8
+          },
+          {
+            "mesAnioPeriodo": "202509",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 9
+          },
+          {
+            "mesAnioPeriodo": "202508",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 10
+          },
+          {
+            "mesAnioPeriodo": "202507",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 11
+          },
+          {
+            "mesAnioPeriodo": "202506",
+            "montoTotalAdeudado": 8245.0,
+            "montoTotalVencido": 8245.0,
+            "referencia": 12
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "orden": 6,
+      "nameToShow": "Balances y vencimientos",
+      "iconName": "monitoring",
+      "titleToShow": true,
+      "blockToShow": true
+    }
+  },
+  "analisiscred": {
+    "analisiscred": [
+      {
+        "analisisDeLosCreditos": {
+          "anioCreditoMasAntiguo": "9.53",
+          "anioCreditoMasAntiguoDolar": null,
+          "anioCreditoMasReciente": "0.55",
+          "anioCreditoMasRecienteDolar": null,
+          "anioCreditoMayorAdeud": "0.03",
+          "anioCreditoMayorAdeudDolar": null,
+          "anioCreditoMayorAprob": "3.75",
+          "anioCreditoMayorAprobDolar": null,
+          "fechaCreditoMasAntiguo": "11/2016",
+          "fechaCreditoMasAntiguoDolar": null,
+          "fechaCreditoMasReciente": "10/2025",
+          "fechaCreditoMasRecienteDolar": null,
+          "fechaCreditoMayorAdeud": "04/2026",
+          "fechaCreditoMayorAdeudDolar": null,
+          "fechaCreditoMayorAprob": "08/2022",
+          "fechaCreditoMayorAprobDolar": null,
+          "montoCreditoMasAntiguo": "2,493",
+          "montoCreditoMasAntiguoDolar": "0",
+          "montoCreditoMasReciente": "1,275",
+          "montoCreditoMasRecienteDolar": "0",
+          "montoCreditoMayorAdeud": "8,245",
+          "montoCreditoMayorAdeudDolar": "0",
+          "montoCreditoMayorAprob": "13,175",
+          "montoCreditoMayorAprobDolar": "0"
+        },
+        "analisisDeLosVencimientos": {
+          "anioVencimientoMasAntiguo": "3.28",
+          "anioVencimientoMasAntiguoDolar": null,
+          "anioVencimientoMasReciente": "0.11",
+          "anioVencimientoMasRecienteDolar": null,
+          "anioVencimientoMontoMayor": "0.11",
+          "anioVencimientoMontoMayorDolar": null,
+          "diasVencimientoMasAntiguo": "30",
+          "diasVencimientoMasAntiguoDolar": "0",
+          "diasVencimientoMasReciente": "30",
+          "diasVencimientoMasRecienteDolar": "0",
+          "diasVencimientoMontoMayor": "30",
+          "diasVencimientoMontoMayorDolar": "0",
+          "fechaVencimientoMasAntiguo": "02/2023",
+          "fechaVencimientoMasAntiguoDolar": null,
+          "fechaVencimientoMasReciente": "04/2026",
+          "fechaVencimientoMasRecienteDolar": null,
+          "fechaVencimientoMontoMayor": "04/2026",
+          "fechaVencimientoMontoMayorDolar": null,
+          "montoVencimientoMasAntiguo": "8,245",
+          "montoVencimientoMasAntiguoDolar": "0",
+          "montoVencimientoMasReciente": "8,245",
+          "montoVencimientoMasRecienteDolar": "0",
+          "montoVencimientoMontoMayor": "8,245",
+          "montoVencimientoMontoMayorDolar": "0"
+        },
+        "cantidadTotalDeCuentas": {
+          "detalleCuentasActivas": [
+            {
+              "moneda": "RD$",
+              "numAcuerdoPago": 0,
+              "numCastigado": 2,
+              "numEnLegal": 0,
+              "numNormal": 0,
+              "numVencido": 1
+            },
+            {
+              "moneda": "US$",
+              "numAcuerdoPago": 0,
+              "numCastigado": 0,
+              "numEnLegal": 0,
+              "numNormal": 0,
+              "numVencido": 0
+            }
+          ],
+          "detalleTotalCuentas": [
+            {
+              "moneda": "RD$",
+              "numCuentasAbiertas": 3,
+              "numCuentasCerradas": 2,
+              "numTotalCuentasM": 5
+            },
+            {
+              "moneda": "US$",
+              "numCuentasAbiertas": 0,
+              "numCuentasCerradas": 0,
+              "numTotalCuentasM": 0
+            }
+          ],
+          "numTotalCuentas": 5,
+          "numTotalCuentasAbiertas": 3,
+          "numTotalCuentasActivasAcuerd": 0,
+          "numTotalCuentasActivasCastigado": 2,
+          "numTotalCuentasActivasLegal": 0,
+          "numTotalCuentasActivasNorm": 0,
+          "numTotalCuentasActivasVenc": 1,
+          "numTotalCuentasCerradas": 2
+        },
+        "peorVencimiento": {
+          "anioPeorVencimiento": "0.28",
+          "anioPeorVencimientoDolar": null,
+          "creditoAprobadoPeorVencimiento": "3,400",
+          "creditoAprobadoPeorVencimientoDolar": "0",
+          "diasPeorVencimiento": "90+",
+          "diasPeorVencimientoDolar": "0",
+          "fechaPeorVencimiento": "02/2026",
+          "fechaPeorVencimientoDolar": null,
+          "monedaPeorVencimiento": "DO",
+          "monedaPeorVencimientoDolar": "-",
+          "montoPeorVencimiento": "7,133",
+          "montoPeorVencimientoDolar": "0",
+          "productoPeorVencimiento": "PRESTAMO",
+          "productoPeorVencimientoDolar": "-"
+        }
+      }
+    ],
+    "metadata": {
+      "orden": 5,
+      "nameToShow": "Análisis crediticio",
+      "iconName": "account_balance",
+      "titleToShow": true,
+      "blockToShow": true
+    }
+  },
+  "consul": {
+    "consul": [
+      {
+        "consultasMensuales": [
+          {
+            "periodo": "202604",
+            "rubro": "FINANCIERO"
+          },
+          {
+            "periodo": "202604",
+            "rubro": "OTROS"
+          },
+          {
+            "periodo": "202603",
+            "rubro": "FINANCIERO"
+          },
+          {
+            "periodo": "202603",
+            "rubro": "FINANCIERO"
+          },
+          {
+            "periodo": "202512",
+            "rubro": "FINANCIERO"
+          }
+        ],
+        "historial": [
+          {
+            "historyAffiliate": "ACREEDOR F",
+            "historyDateHour": "20260411",
+            "historyDepartment": null,
+            "historyEconomicSector": "FINANCIERO"
+          },
+          {
+            "historyAffiliate": "ACREEDOR G",
+            "historyDateHour": "20260409",
+            "historyDepartment": null,
+            "historyEconomicSector": "OTROS"
+          },
+          {
+            "historyAffiliate": "ACREEDOR H",
+            "historyDateHour": "20260320",
+            "historyDepartment": null,
+            "historyEconomicSector": "FINANCIERO"
+          },
+          {
+            "historyAffiliate": "ACREEDOR F",
+            "historyDateHour": "20260318",
+            "historyDepartment": null,
+            "historyEconomicSector": "FINANCIERO"
+          },
+          {
+            "historyAffiliate": "ACREEDOR H",
+            "historyDateHour": "20251225",
+            "historyDepartment": null,
+            "historyEconomicSector": "FINANCIERO"
+          }
+        ],
+        "nConsultasHistoricoFinanciero": "4",
+        "nConsultasHistoricoNoFinanciero": "0",
+        "nConsultasHistoricoOtros": "1",
+        "nConsultasHistoricoTotal": "5"
+      }
+    ],
+    "metadata": {
+      "orden": 7,
+      "nameToShow": "Consultas previas al buró",
+      "iconName": "search",
+      "titleToShow": true,
+      "blockToShow": true
+    }
+  }
+}
