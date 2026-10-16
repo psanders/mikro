@@ -20,8 +20,13 @@ export function formatCedula(raw: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 10)}-${digits.slice(10)}`;
 }
 
+/**
+ * "(829) 871-7987" as the person types. A leading "1" is a country code (no
+ * Dominican area code starts with 1), so it's dropped instead of eating one of
+ * the 10 digits — "1 809…" once became "+11809…" (issue #301).
+ */
 export function formatPhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  const digits = raw.replace(/\D/g, "").replace(/^1/, "").slice(0, 10);
   if (digits.length <= 3) return digits;
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;

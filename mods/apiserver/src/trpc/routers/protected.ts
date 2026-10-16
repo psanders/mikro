@@ -4,6 +4,7 @@
 import { randomUUID } from "crypto";
 import type { Role, TransitionActor } from "@mikro/common";
 import {
+  drPhoneDigits,
   // Customer schemas
   createCustomerSchema,
   updateCustomerSchema,
@@ -1050,14 +1051,9 @@ export const protectedRouter = router({
       imageUrl,
       recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
     });
-    // Normalize to E.164 — same logic as normalizeApplication's parsePhone.
-    const digits = input.phone.replace(/\D/g, "");
-    const e164 =
-      digits.length === 10
-        ? `+1${digits}`
-        : digits.length === 11 && digits.startsWith("1")
-          ? `+${digits}`
-          : null;
+    // Normalize to E.164 — same rule as normalizeApplication's parsePhone.
+    const digits = drPhoneDigits(input.phone);
+    const e164 = digits ? `+1${digits}` : null;
     return sendFn({ phone: e164, flowToken: randomUUID() });
   }),
 

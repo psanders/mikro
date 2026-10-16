@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
-import { PROVINCES } from "./applicationForm.js";
+import { PROVINCES, drPhoneDigits } from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
 import { isMapUrl } from "./mapUrl.js";
 
@@ -199,17 +199,13 @@ function parseTermWeeks(v: unknown): number | null {
 }
 
 /**
- * "(829) 871-7987" -> "+18298717987". Lenient, non-throwing: a 10-digit NANP
- * number gets a "1" country code; an 11-digit number starting with 1 is used
- * as-is; anything else returns null.
+ * "(829) 871-7987" -> "+18298717987". Non-throwing: anything that isn't a
+ * Dominican number (see `drPhoneDigits`) returns null rather than storing an
+ * impossible "+11…" phone (issue #301).
  */
 function parsePhone(v: unknown): string | null {
-  const s = trimToNull(v);
-  if (!s) return null;
-  const digits = s.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+  const digits = drPhoneDigits(trimToNull(v));
+  return digits ? `+1${digits}` : null;
 }
 
 /** ISO date string ("2004-06-18") -> Date; empty/invalid -> null. */

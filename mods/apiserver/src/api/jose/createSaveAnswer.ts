@@ -8,7 +8,9 @@
 import type { DbClient, NormalizedApplication } from "@mikro/common";
 import {
   APPLICATION_CONTENT_KEYS,
+  PHONE_FIELDS,
   applicationPayloadSchema,
+  isDrPhone,
   normalizeApplication,
   sortByFieldPriority
 } from "@mikro/common";
@@ -20,24 +22,7 @@ const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
 
 // Fields that must be valid phone numbers when provided. José re-asks on failure
 // instead of persisting a malformed number that an asesor cannot dial.
-const PHONE_KEYS = new Set<string>(["phone", "businessPhone", "referencePhone", "spousePhone"]);
-
-// Dominican Republic area codes (NANP). A valid local number is 10 digits with
-// one of these area codes, optionally prefixed by the country code 1.
-const DR_AREA_CODES = /^(809|829|849)/;
-
-/**
- * Accepts Dominican phone numbers in the formats prospects actually type:
- * "809-234-5678", "8092345678", "1 809 234 5678", "+18092345678". Rejects
- * short/garbage numbers like "892222222".
- */
-function isValidPhone(value: string): boolean {
-  let digits = value.replace(/\D/g, "");
-  if (digits.length === 11 && digits.startsWith("1")) {
-    digits = digits.slice(1);
-  }
-  return digits.length === 10 && DR_AREA_CODES.test(digits);
-}
+const PHONE_KEYS = new Set<string>(PHONE_FIELDS);
 
 export function createSaveAnswer(
   client: DbClient,
@@ -71,7 +56,7 @@ export function createSaveAnswer(
         continue;
       }
       const strVal = String(val);
-      if (PHONE_KEYS.has(key) && !isValidPhone(strVal)) {
+      if (PHONE_KEYS.has(key) && !isDrPhone(strVal)) {
         invalid.push(key);
         invalidReasons[key] = "Número de teléfono inválido; pide el número completo (10 dígitos).";
         continue;
