@@ -268,13 +268,49 @@ export function buildAutosavePayload(
 
 export type SelectOption = string | { value: string; label: string };
 
-export const ESTADO_CIVIL_OPTIONS = [
-  "Soltero(a)",
-  "Casado(a)",
-  "Unión libre",
-  "Divorciado(a)",
-  "Viudo(a)"
-];
+/**
+ * Marital status: what the form posts, the column stores and José's tool
+ * accepts. The Spanish label is display-only. Spouse fields only apply to the
+ * statuses `hasPartner` accepts.
+ */
+export const MARITAL_STATUSES = [
+  "SOLTERO",
+  "CASADO",
+  "UNION_LIBRE",
+  "DIVORCIADO",
+  "VIUDO"
+] as const;
+
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  SOLTERO: "Soltero(a)",
+  CASADO: "Casado(a)",
+  UNION_LIBRE: "Unión libre",
+  DIVORCIADO: "Divorciado(a)",
+  VIUDO: "Viudo(a)"
+};
+
+export const ESTADO_CIVIL_OPTIONS: SelectOption[] = MARITAL_STATUSES.map((value) => ({
+  value,
+  label: MARITAL_STATUS_LABELS[value]
+}));
+
+/** A marital status code (labels are display text, never input). */
+export function isMaritalStatus(value: unknown): value is MaritalStatus {
+  return typeof value === "string" && (MARITAL_STATUSES as readonly string[]).includes(value);
+}
+
+/** Married or in a common-law union: the only statuses where spouse fields apply. */
+export function hasPartner(value: unknown): boolean {
+  return value === "CASADO" || value === "UNION_LIBRE";
+}
+
+/** Display label for a status code; anything else is shown as-is. */
+export function maritalStatusLabel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return isMaritalStatus(value) ? MARITAL_STATUS_LABELS[value] : value;
+}
 
 // Business type — enum value + display label. Risk is scored downstream, not here.
 export const TIPO_NEGOCIO_OPTIONS: SelectOption[] = [

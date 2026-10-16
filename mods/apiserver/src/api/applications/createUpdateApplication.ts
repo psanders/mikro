@@ -10,6 +10,7 @@ import type {
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { assertReviewDataWritable } from "./reviewApplication.js";
 
 async function loadByRef(
@@ -38,7 +39,13 @@ export function createUpdateApplication(client: DbClient) {
     assertReviewDataWritable(app, actor);
 
     const existing = (app.rawData as Record<string, unknown> | null) ?? {};
-    const merged = { ...existing, ...input.patch };
+    // An old desktop build edits with the old labels: keep the stored status
+    // rather than replace it with nothing.
+    const patch = { ...input.patch };
+    if (droppedMaritalStatus(patch, "updateApplication", { id: app.id })) {
+      delete patch.maritalStatus;
+    }
+    const merged = { ...existing, ...patch };
     const payload = applicationPayloadSchema.parse({ sessionId: app.sessionId, ...merged });
     const normalized = normalizeApplication(payload);
     const result = scoreApplication(normalized);

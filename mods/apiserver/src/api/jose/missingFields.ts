@@ -5,7 +5,7 @@
  * order José asks in). Shared by getApplicationState and the "intake open"
  * check that keeps José on a submitted application while fields are missing.
  */
-import { APPLICATION_CONTENT_KEYS, sortByFieldPriority } from "@mikro/common";
+import { APPLICATION_CONTENT_KEYS, hasPartner, sortByFieldPriority } from "@mikro/common";
 
 /** The application columns José's form fields live in (plus `rawData`). */
 export interface ApplicationFieldsRow {
@@ -34,7 +34,6 @@ export function applicationFields(app: ApplicationFieldsRow): Record<string, unk
     phone: app.phone,
     idNumber: app.idNumber,
     dateOfBirth: app.dateOfBirth ? String(app.dateOfBirth) : null,
-    maritalStatus: app.maritalStatus,
     businessType: app.businessType,
     businessName: app.businessName,
     requestedAmount: app.requestedAmount,
@@ -42,14 +41,42 @@ export function applicationFields(app: ApplicationFieldsRow): Record<string, unk
     requestedTermWeeks: app.requestedTermWeeks,
     province: app.province,
     homeAddress: app.homeAddress,
-    ...rawData
+    ...rawData,
+    // Only the column: it holds a valid code or null (a dropped value is asked again).
+    maritalStatus: app.maritalStatus
   };
 }
 
+/**
+ * rawData key listing optional fields the person said they don't have (set by
+ * José's saveAnswer). They no longer count as missing.
+ */
+export const DECLINED_FIELDS_KEY = "declinedFields";
+
 const isEmpty = (value: unknown) => value === null || value === undefined || value === "";
+
+/** Spouse fields only apply to someone married or in a common-law union. */
+const SPOUSE_KEYS = new Set<string>(["spouseName", "spousePhone"]);
+
+/**
+ * Missing form fields in a flat field map, ordered by knockout + scoring
+ * weight. A single, divorced or widowed applicant is never asked about a
+ * spouse (nor is someone whose marital status is still unknown: that question
+ * comes first), and an optional contact the person said they don't have is
+ * not asked again.
+ */
+export function missingFieldsOf(fields: Record<string, unknown>): string[] {
+  const partnered = hasPartner(fields.maritalStatus);
+  const rawDeclined = fields[DECLINED_FIELDS_KEY];
+  const declined = new Set(Array.isArray(rawDeclined) ? rawDeclined : []);
+  return sortByFieldPriority(
+    APPLICATION_CONTENT_KEYS.filter(
+      (key) => isEmpty(fields[key]) && !declined.has(key) && (partnered || !SPOUSE_KEYS.has(key))
+    )
+  );
+}
 
 /** Missing form fields, ordered by knockout + scoring weight. */
 export function missingApplicationFields(app: ApplicationFieldsRow): string[] {
-  const fields = applicationFields(app);
-  return sortByFieldPriority(APPLICATION_CONTENT_KEYS.filter((key) => isEmpty(fields[key])));
+  return missingFieldsOf(applicationFields(app));
 }

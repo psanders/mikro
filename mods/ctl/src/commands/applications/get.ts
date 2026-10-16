@@ -4,7 +4,12 @@
 import { Args } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
-import { formatMoney, BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "@mikro/common";
+import {
+  formatMoney,
+  BUSINESS_TYPE_LABELS,
+  PROVINCE_LABELS,
+  maritalStatusLabel
+} from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
 import { promptApplicationSelectIfMissing } from "../../lib/prompts.js";
@@ -60,7 +65,7 @@ export default class Get extends BaseCommand<typeof Get> {
           `PHONE: \t${app.phone ?? "N/A"}\n` +
           `ID NUMBER: \t${app.idNumber ?? "N/A"}\n` +
           `DATE OF BIRTH: \t${app.dateOfBirth ? moment(app.dateOfBirth).format("YYYY-MM-DD") : "N/A"}\n` +
-          `MARITAL STATUS: \t${app.maritalStatus ?? "N/A"}\n` +
+          `MARITAL STATUS: \t${maritalStatusLabel(app.maritalStatus) ?? "N/A"}\n` +
           `\n` +
           `BUSINESS TYPE: \t${app.businessType ? (BUSINESS_TYPE_LABELS[app.businessType] ?? app.businessType) : "N/A"}\n` +
           `BUSINESS NAME: \t${app.businessName ?? "N/A"}\n` +

@@ -5,6 +5,7 @@ export { safeOptionalDate, safeRequiredDate, MIN_ACCEPTED_DATE_MS } from "./date
 
 export {
   applicationPayloadSchema,
+  maritalStatusEnum,
   normalizeApplication,
   extractTracking,
   extractAttribution,
@@ -130,6 +131,12 @@ export {
   drPhoneDigits,
   isDrPhone,
   PHONE_FIELDS,
+  MARITAL_STATUSES,
+  MARITAL_STATUS_LABELS,
+  isMaritalStatus,
+  hasPartner,
+  maritalStatusLabel,
+  type MaritalStatus,
   TIPO_NEGOCIO_OPTIONS,
   TIEMPO_OPERANDO_OPTIONS,
   VENTAS_MENSUALES_OPTIONS,

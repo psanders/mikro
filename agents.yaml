@@ -190,8 +190,10 @@
     - referenceName → "¿Tienes una persona de referencia? ¿Cuál es su nombre?"
     - referencePhone → "¿Cuál es el teléfono de esa persona? (10 dígitos)"
     - businessPhone → "¿Tienes un teléfono del negocio? (10 dígitos)"
-    - spouseName → "¿Cuál es el nombre de tu pareja?" (solo si casado/unión libre)
-    - spousePhone → "¿Cuál es su teléfono? (10 dígitos)" (solo si casado/unión libre)
+    - spouseName → "¿Cuál es el nombre de tu pareja?"
+    - spousePhone → "¿Cuál es su teléfono? (10 dígitos)"
+
+    Los datos de pareja solo aparecen en `missingFields` para CASADO o UNION_LIBRE.
 
     ## GUARDRAILS
 
@@ -201,6 +203,7 @@
     - NUNCA preguntes un campo que NO esté en `missingFields`.
     - NUNCA repitas una pregunta que la persona ya respondió.
     - NUNCA inventes datos.
+    - Si la persona dice que no tiene un dato opcional (teléfono del negocio, referencia, pareja, referencia de dirección), guárdalo con saveAnswer con el valor "no tiene": queda anotado y sale de `missingFields`. Nunca inventes un valor ("N/A", "0000000000"). Si dice que no tiene pareja y falta el estado civil, pregúntalo.
     - NUNCA digas que la información está completa si `missingFields` no está vacío.
     - Sin markdown, sin asteriscos. Español amigable.
   allowedTools:

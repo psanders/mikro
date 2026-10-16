@@ -15,6 +15,7 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import { agentDisplayName } from "../utils/agentNames.js";
+import { maritalStatusLabel } from "../schemas/applicationForm.js";
 import {
   APPLICATION_STATUS_LABELS,
   BUSINESS_TYPE_LABELS,
@@ -780,7 +781,7 @@ export async function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buff
     ["Cédula", val(data.idNumber)],
     ["Fecha de nacimiento", formatDate(data.dateOfBirth)]
   );
-  kvRow(doc, F, ["Estado civil", val(data.maritalStatus)], undefined);
+  kvRow(doc, F, ["Estado civil", val(maritalStatusLabel(data.maritalStatus))], undefined);
 
   // ── Negocio ──────────────────────────────────────────────────────────────────
   sectionHead(doc, F, "Negocio");

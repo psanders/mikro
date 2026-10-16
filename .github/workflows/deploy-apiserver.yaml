@@ -153,7 +153,7 @@ jobs:
               "phone": "(809) 555-0100",
               "idNumber": "001-0000000-1",
               "dateOfBirth": "1990-01-15",
-              "maritalStatus": "Soltero(a)",
+              "maritalStatus": "SOLTERO",
               "businessType": "COLMADO",
               "businessName": "Colmado CI",
               "businessAge": "1 a 3 años",

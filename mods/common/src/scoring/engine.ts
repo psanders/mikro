@@ -10,6 +10,7 @@
  */
 import type { NormalizedApplication } from "../schemas/application.js";
 import { MAPA_CODIGOS, PUNTAJE_POR_NIVEL, type RiskLevel } from "./data.js";
+import { hasPartner, isDrPhone } from "../schemas/applicationForm.js";
 import type {
   ApplicationScore,
   Confidence,
@@ -281,11 +282,14 @@ interface SupportInfo {
 
 function scoreSupport(input: ScoreInput): { score: number; info: SupportInfo } {
   let s = 0;
-  const ref = has(input.referenceName) && has(input.referencePhone);
+  // Real contacts only: filler like "N/A" / "0000000000" earns nothing, and a
+  // spouse counts only for someone married or in a common-law union.
+  const ref = has(input.referenceName) && isDrPhone(input.referencePhone);
   s += ref ? 45 : has(input.referenceName) ? 20 : 0;
-  const cony = has(input.spouseName) && has(input.spousePhone);
+  const cony =
+    hasPartner(input.maritalStatus) && has(input.spouseName) && isDrPhone(input.spousePhone);
   s += cony ? 25 : 0;
-  const tel = has(input.businessPhone);
+  const tel = isDrPhone(input.businessPhone);
   s += tel ? 30 : 0;
   return {
     score: Math.min(s, 100),
@@ -418,7 +422,7 @@ function evaluatorNotes(
       reason: "Solicitar al menos una referencia verificable."
     });
   }
-  if (["Casado(a)", "Unión libre"].includes(input.maritalStatus || "") && !has(input.spouseName)) {
+  if (hasPartner(input.maritalStatus) && !has(input.spouseName)) {
     n.push({
       topic: "Codeudor",
       question: "Estado civil en pareja pero sin datos del conyuge.",

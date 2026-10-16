@@ -19,6 +19,15 @@ enum Role {
   @@map("roles")
 }
 
+/// Applicant marital status (labels in @mikro/common MARITAL_STATUS_LABELS).
+enum MaritalStatus {
+  SOLTERO
+  CASADO
+  UNION_LIBRE
+  DIVORCIADO
+  VIUDO
+}
+
 enum LoanType {
   SAN // Fixed periodic payments until paid in full
 
@@ -576,7 +585,7 @@ model LoanApplication {
   whatsappUsername  String?   @map("whatsapp_username")
   idNumber          String?   @map("id_number")
   dateOfBirth       DateTime? @map("date_of_birth")
-  maritalStatus     String?   @map("marital_status")
+  maritalStatus     MaritalStatus? @map("marital_status")
   businessType      String?   @map("business_type")
   businessName      String?   @map("business_name")
   requestedAmount   Decimal?  @map("requested_amount")
