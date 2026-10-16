@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
+
+### Bug Fixes
+
+- **applications:** reject impossible phone numbers instead of storing +11… ([#301](https://github.com/psanders/mikro/issues/301)) ([#338](https://github.com/psanders/mikro/issues/338)) ([8a04c41](https://github.com/psanders/mikro/commit/8a04c41ab0f1c0d1acdc0f168ba75f28e412f7a6))
+
 ## [3.12.1](https://github.com/psanders/mikro/compare/v3.12.0...v3.12.1) (2026-09-29)
 
 ### Bug Fixes

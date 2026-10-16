@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
+
+### Bug Fixes
+
+- **applications:** reject impossible phone numbers instead of storing +11… ([#301](https://github.com/psanders/mikro/issues/301)) ([#338](https://github.com/psanders/mikro/issues/338)) ([8a04c41](https://github.com/psanders/mikro/commit/8a04c41ab0f1c0d1acdc0f168ba75f28e412f7a6))
+- **cx:** Lucía never guesses an application's status ([#337](https://github.com/psanders/mikro/issues/337)) ([a33c697](https://github.com/psanders/mikro/commit/a33c697357b3db0bf04682d5c880a3d5d913d6b9))
+
 ## [3.13.1](https://github.com/psanders/mikro/compare/v3.13.0...v3.13.1) (2026-10-13)
 
 ### Bug Fixes
