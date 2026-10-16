@@ -53,6 +53,30 @@ describe("createGetApplicationByPhone", () => {
     expect(result!.recentRejection).to.deep.equal({ decidedAt, rejectionReason: "OTHER" });
   });
 
+  it("keeps serving the application in process when a newer draft exists (#302)", async () => {
+    const client = {
+      loanApplication: {
+        findFirst: async (args: { where: { status?: unknown } }) => {
+          if (args.where.status === "REJECTED") return null;
+          if (args.where.status) {
+            return {
+              id: "app-rec",
+              sessionId: "s-rec",
+              status: "RECEIVED",
+              submittedAt: new Date()
+            };
+          }
+          return { id: "app-new", sessionId: "s-new", status: "DRAFT", submittedAt: null };
+        }
+      }
+    } as any;
+
+    const result = await createGetApplicationByPhone(client)("+18095550001");
+
+    expect(result!.applicationId).to.equal("app-rec");
+    expect(result!.status).to.equal("RECEIVED");
+  });
+
   it("carries the rejection reason, so the router can skip the reapply cooldown", async () => {
     const client = {
       loanApplication: {

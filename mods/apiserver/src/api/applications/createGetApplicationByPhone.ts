@@ -32,6 +32,9 @@ export interface ApplicationByPhone {
   recentRejection?: { decidedAt: Date; rejectionReason: string | null };
 }
 
+/** Applications someone is still handling (same set as the intake's "in process"). */
+const IN_PROCESS = ["RECEIVED", "IN_REVIEW", "PENDING_DECISION", "APPROVED"] as const;
+
 type RejectionRow = {
   decidedAt: Date | null;
   submittedAt: Date | null;
@@ -75,18 +78,31 @@ async function toLookup(
  */
 export function createGetApplicationByPhone(client: DbClient, deps: ApplicationLookupDeps = {}) {
   return async (phone: string): Promise<ApplicationByPhone | null> => {
-    const app = await client.loanApplication.findFirst({
+    const latest = await client.loanApplication.findFirst({
       where: { phone },
       orderBy: { createdAt: "desc" }
     });
-    if (!app) return null;
+    if (!latest) return null;
+    // DbClient's narrow findFirst type has no status/select; the client is Prisma.
+    const db = client as unknown as Pick<PrismaClient, "loanApplication">;
+    // One application per person (issue #302): a DRAFT or never-submitted
+    // ABANDONED started after the person already has one in process (a blocked
+    // second form, a late autosave) must not hide it. The applicant agent keeps
+    // serving the application being handled.
+    const startedOver =
+      latest.status === "DRAFT" || (latest.status === "ABANDONED" && !latest.submittedAt);
+    const inProcess = startedOver
+      ? await db.loanApplication.findFirst({
+          where: { phone, status: { in: [...IN_PROCESS] } },
+          orderBy: { createdAt: "desc" }
+        })
+      : null;
+    const app = (inProcess as typeof latest | null) ?? latest;
     const lookup = await toLookup(
       { ...app, intakeClosedAt: app.intakeClosedAt ?? null, decidedAt: app.decidedAt ?? null },
       deps
     );
     if (app.status === "REJECTED") return lookup;
-    // DbClient's narrow findFirst type has no status/select; the client is Prisma.
-    const db = client as unknown as Pick<PrismaClient, "loanApplication">;
     const rejected = await db.loanApplication.findFirst({
       where: { phone, status: "REJECTED" },
       orderBy: { decidedAt: "desc" },
