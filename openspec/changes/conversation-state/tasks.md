@@ -1,13 +1,13 @@
 ## 1. Config and shared types
 
-- [ ] 1.1 `@mikro/common` config:
+- [x] 1.1 `@mikro/common` config (classifier section done; `conversationState` section pending with actions):
   - optional top-level `classifier` section, a discriminated union on `provider`: `openai-decisions` `{ apiKey, model }` | `chat` `{ vendor, apiKey, model }` (any text model in `MODEL_REGISTRY`);
   - optional `.strict()` `conversationState` section (`actionsEnabled` defaults to false);
   - `getConversationStateConfig()`;
   - never required at startup;
   - tests: boots without both keys, rejects unknown keys.
 - [ ] 1.2 Intent, state and resolution enums plus `recordConversationTurn` schema fields, exported from both barrels (`schemas/index.ts` and root `index.ts`).
-- [ ] 1.3 `mikro.example.json`: document both keys, commented as "add after the release is live".
+- [x] 1.3 `mikro.example.json`: document both keys, commented as "add after the release is live".
 
 ## 2. Data
 
@@ -19,7 +19,7 @@
 
 ## 3. Classifier and state reducer (mods/agents)
 
-- [ ] 3.1 Classifier:
+- [x] 3.1 Classifier:
   - `DecisionProvider` interface (`ask(input, questions) → answers`, Decisions-API-shaped types);
   - OpenAI Decisions adapter (`POST /v1/decisions`, `gpt-6-luna`; verify numeric limits and error format against the official docs first, they are undocumented today; treat `refusal` as unlabeled);
   - chat-model adapter: structured output, temperature 0, text-only;
@@ -52,7 +52,7 @@
 ## 6. Visibility
 
 - [ ] 6.1 `conversations:export`: intent, confidence, state and resolution columns, plus the summary block.
-- [ ] 6.2 Audit: `stuck_loop` and `unresolved` checks; `resolutionCounts` stored on the run; tests.
+- [x] 6.2 Audit: `stuck_loop`, `unanswered`, `double_reply`, `closing_loop` checks (`resolutionCounts` pending with state); `resolutionCounts` stored on the run; tests.
 - [ ] 6.3 Pencil EzobQ sec-09 detail panel: a resolution counts block, card unchanged. Then the dashboard detail panel.
 
 ## 7. Backfill and model bake-off
@@ -60,7 +60,7 @@
 - [ ] 7.1 Protected procedure plus `mikro conversations:classify --since [--phone] [--force]`: idempotent, labels and state only, never actions or Chatwoot. Tests.
 - [ ] 7.2 `--dry-run --providers <spec,…>` compare mode: no DB writes; agreement against a hand-labeled sample (overall and for `closing` / `opt_out`), confusion summary, cost (tokens × list price), p50/p95 latency.
 - [ ] 7.3 Build the hand-labeled sample (about 60 inbound turns from the 305, every intent represented) as a fixture; the founder checks the labels.
-- [ ] 7.4 Run the bake-off: `openai-decisions:gpt-6-luna`, `chat:openai:gpt-4o-mini`, `chat:google:gemini-2.5-flash-lite`, and Jev through its API for comparison only if a key is available. Report agreement, `closing` precision at the threshold, confidence calibration, cost (Spanish tokens) and latency to the founder. Record the provider pick and the final `INTENT_MIN_CONFIDENCE` in design.md D2.
+- [x] 7.4 Run the bake-off: `openai-decisions:gpt-6-luna`, `chat:openai:gpt-4o-mini`, `chat:google:gemini-2.5-flash-lite`, and Jev through its API for comparison only if a key is available. Report agreement, `closing` precision at the threshold, confidence calibration, cost (Spanish tokens) and latency to the founder. Record the provider pick and the final `INTENT_MIN_CONFIDENCE` in design.md D2.
 
 ## 8. Verification and rollout
 
@@ -70,3 +70,8 @@
 - [ ] 8.4 Backfill: run `mikro conversations:classify --since 2026-09-26`. The founder spot-checks the labels over a few days of live traffic.
 - [ ] 8.5 Founder go-ahead: add `"conversationState": { "actionsEnabled": true }` to the prod `mikro.json` and restart. Verify in production that a closing gets no reply and the Chatwoot conversation shows resolved.
 - [ ] 8.6 Upload the prod `agents.yaml` copy if prompts changed.
+
+## Progress note (2026-10-16)
+
+- Done in this branch: config, decision provider (OpenAI Decisions + chat fallback), classifier, label columns `intent` / `intent_confidence` / `classification` (migration 20261016140000), live labeling (labels only, never awaited), `mikro conversations:classify` with `--dry-run` / `--force` (single provider per run; the multi-provider comparison ran as an experiment script), and the bake-off (D2).
+- Not yet: `conversation_states` table and state reducer (3.2), actions (5.x), export columns (6.1), Pencil (6.3).

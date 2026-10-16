@@ -50,12 +50,12 @@ They can't return a value outside the schema, are priced on input only, and answ
 
 The request asks independent questions in parallel:
 
-| name           | type                                                                                                                                                       | used for                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `intent`       | choice: `answer`, `question`, `closing`, `opt_out`, `repeat`, `frustration`, `human_request`, `greeting`, `other`, each with a Spanish-context description | the turn's label                                          |
-| `settled`      | predicate: "El último mensaje del agente dejó el asunto resuelto y no espera respuesta"                                                                    | closing vs. answer: an "Ok" after a question is an answer |
-| `affirms`      | predicate: "El mensaje confirma lo que el agente preguntó"                                                                                                 | opt-out confirmation (D5)                                 |
-| `same_request` | predicate: "El mensaje repite el mismo contenido no útil que el agente ya rechazó"                                                                         | stuck loops                                               |
+| name           | type                                                                                                                                                                                                            | used for                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `intent`       | choice: `answer`, `question`, `closing`, `opt_out`, `repeat`, `frustration`, `human_request`, `greeting`, `other`, each with a Spanish-context description                                                      | the turn's label                                          |
+| `settled`      | predicate: "El último mensaje del AGENTE ya resolvió lo que la persona necesitaba o cerró el tema … Una pregunta de cortesía como '¿Hay algo más en lo que pueda ayudarte?' NO cuenta como pregunta pendiente." | closing vs. answer: an "Ok" after a question is an answer |
+| `affirms`      | predicate: "El mensaje confirma lo que el agente preguntó"                                                                                                                                                      | opt-out confirmation (D5)                                 |
+| `same_request` | predicate: "El mensaje repite el mismo contenido no útil que el agente ya rechazó"                                                                                                                              | stuck loops                                               |
 
 The founder's label set was extended with two intents:
 
@@ -134,6 +134,21 @@ So a low-confidence label never triggers an action. The bake-off (D2) re-picks t
    - cost, with Spanish token counts;
    - p50/p95 latency.
 4. The founder picks the provider and model, and it goes into `mikro.json` after the release. The choice and the final threshold are recorded here.
+
+**Bake-off result (2026-10-16, all 179 stored inbound turns, provisional hand labels):**
+
+|                                                             | OpenAI Decisions `gpt-6-luna`    | chat `gpt-4o-mini`                                               |
+| ----------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| Agreement with hand labels (150 model-labeled turns)        | 85% (127)                        | 71% (106)                                                        |
+| On the 111 unambiguous turns                                | 95% (106)                        | 82% (91)                                                         |
+| Accuracy at confidence ≥ 0.7 / ≥ 0.9                        | 97% (101/104) / 100% (82/82)     | 70% / 70% (confidence ≈ 0.95 on almost everything)               |
+| Turns below 0.7 (become `other`)                            | 31%                              | 1%                                                               |
+| `closing` that would act (intent ≥ 0.7 and `settled` ≥ 0.7) | 24 of 34, 0 wrong                | 39, 6 wrong (real answers like "Ahora mismo", "Ok" to a request) |
+| Cost / latency for 179 turns                                | $0.0139 · p50 236 ms, p95 469 ms | $0.0181 · p50 815 ms, p95 1.2 s                                  |
+
+- **Calibration:** the decision model's confidence is meaningful; the chat model's is not. A chat classifier at the same threshold would have silently dropped 6 real replies.
+- **The `settled` predicate:** the first wording read a courtesy "¿Hay algo más…?" as an open question, and only 12 of 34 closings would have acted. The wording above raises that to 24 with no false positives.
+- **Recommendation:** `openai-decisions:gpt-6-luna`, `INTENT_MIN_CONFIDENCE = 0.7` (kept). Its low-confidence share is mostly messages answering staff replies typed in Chatwoot, which are not stored.
 
 **Sources:**
 

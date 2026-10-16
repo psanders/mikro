@@ -8,8 +8,10 @@ Every reviewed conversation SHALL pass through the code-check registry. Each hit
 - `error_reply` (warning): the generic processing-error reply was sent.
 - `handoff_ignored` (warning): an explicit request for a person, detected with the same matcher the handler uses, with no hand-off opened for that phone between 1 minute before and 10 minutes after the request.
 - `sensitive_score` (critical): an agent reply to a non-staff person that states a score or band with a number.
-- `stuck_loop` (warning): two consecutive inbound turns labeled `repeat`, or three consecutive agent replies making the same request, with no hand-off opened afterwards.
-- `unresolved` (warning): a conversation whose last turn is older than 48 hours, whose state is neither `resolved` nor `waiting_human`, and whose last turn is an agent reply that asked nothing of the person.
+- `double_reply` (warning): an agent reply within 90 seconds of a previous delivered agent reply, with no inbound message between them.
+- `stuck_loop` (warning): three consecutive agent replies making the same request (content-word overlap ≥ 0.45).
+- `unanswered` (warning): the conversation's last turn is an inbound message more than 10 minutes old with no reply, unless it was a `closing` after a settled exchange or a hand-off was opened in the 24 hours before it.
+- `closing_loop` (warning): the agent replied to a second consecutive `closing` after a settled exchange (needs classifier labels).
 
 José no longer has a turn cap. His submit-by rule is enforced in code, and the judge covers it through his `envia_pronto` policy.
 
@@ -33,10 +35,15 @@ José no longer has a turn cap. His submit-by rule is enforced in code, and the 
 - **WHEN** José sends more than seven replies on one application
 - **THEN** no code-check finding is created for the number of replies
 
-#### Scenario: Repeated links
+#### Scenario: Repeated request
 
-- **WHEN** a guest sends a Facebook link three times and Lucía answers each one with the same request, with no hand-off
+- **WHEN** Sofía asks for "la foto de tu negocio" three times in a row while the person keeps sending videos
 - **THEN** a `stuck_loop` warning finding cites the third agent reply
+
+#### Scenario: Goodbyes answered
+
+- **WHEN** Lucía answers "Ok", "Ya" and "Esta bien" after the matter was settled
+- **THEN** a `closing_loop` warning finding cites the reply to the second closing
 
 #### Scenario: Finished but never closed
 
