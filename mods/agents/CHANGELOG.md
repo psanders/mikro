@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.5](https://github.com/psanders/mikro/compare/v3.13.4...v3.13.5) (2026-10-16)
+
+### Bug Fixes
+
+- **applications:** one application per person, enforce the reapply cooldown ([#302](https://github.com/psanders/mikro/issues/302)) ([#339](https://github.com/psanders/mikro/issues/339)) ([b5d640f](https://github.com/psanders/mikro/commit/b5d640f9633cf8ba086921690aa910987ea4688c))
+
 ## [3.13.4](https://github.com/psanders/mikro/compare/v3.13.3...v3.13.4) (2026-10-16)
 
 ### Bug Fixes
