@@ -55,4 +55,14 @@ describe("normalizeApplication phone (issue #301)", () => {
     expect(phoneOf("+11809392630")).to.be.null;
     expect(phoneOf("(180) 939-2630")).to.be.null;
   });
+
+  it("keeps a WhatsApp sender's international number (Flow, José, re-saves)", () => {
+    expect(phoneOf("+17852264391")).to.equal("+17852264391");
+    expect(phoneOf("+34612345678")).to.equal("+34612345678");
+  });
+
+  it("still requires a Dominican number when typed without a country code", () => {
+    expect(phoneOf("7852264391")).to.be.null;
+    expect(phoneOf("+1 (180) 939-2630")).to.be.null;
+  });
 });
