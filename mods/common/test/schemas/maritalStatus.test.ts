@@ -6,34 +6,26 @@ import {
   ESTADO_CIVIL_OPTIONS,
   hasPartner,
   isDrPhone,
-  maritalStatusLabel,
-  parseMaritalStatus
+  isMaritalStatus,
+  maritalStatusLabel
 } from "../../src/schemas/applicationForm.js";
-import { normalizeApplication } from "../../src/schemas/application.js";
+import { maritalStatusEnum, normalizeApplication } from "../../src/schemas/application.js";
 
 describe("marital status", () => {
-  const cases: Array<[string, string | null]> = [
-    ["SOLTERO", "SOLTERO"],
-    ["Soltero(a)", "SOLTERO"],
-    ["Soltero/a", "SOLTERO"],
-    ["soltera", "SOLTERO"],
-    ["Casada", "CASADO"],
-    ["Unión libre", "UNION_LIBRE"],
-    ["UNION LIBRE", "UNION_LIBRE"],
-    ["Divorciado(a)", "DIVORCIADO"],
-    ["Viuda", "VIUDO"],
-    ["N/A", null],
-    ["", null]
-  ];
-  for (const [input, code] of cases) {
-    it(`parses ${JSON.stringify(input)} as ${code}`, () => {
-      expect(parseMaritalStatus(input)).to.equal(code);
-    });
-  }
+  it("accepts only the codes", () => {
+    for (const code of ["SOLTERO", "CASADO", "UNION_LIBRE", "DIVORCIADO", "VIUDO"]) {
+      expect(isMaritalStatus(code), code).to.equal(true);
+      expect(maritalStatusEnum.safeParse(code).success, code).to.equal(true);
+    }
+    for (const other of ["Soltero(a)", "soltera", "casado", "", null]) {
+      expect(isMaritalStatus(other), String(other)).to.equal(false);
+      expect(maritalStatusEnum.safeParse(other).success, String(other)).to.equal(false);
+    }
+  });
 
   it("only married and common-law have a partner", () => {
     expect(["CASADO", "UNION_LIBRE"].every(hasPartner)).to.equal(true);
-    expect(["SOLTERO", "DIVORCIADO", "VIUDO", null].some(hasPartner)).to.equal(false);
+    expect(["SOLTERO", "DIVORCIADO", "VIUDO", "Casado(a)", null].some(hasPartner)).to.equal(false);
   });
 
   it("form options post codes and show the labels", () => {
@@ -41,10 +33,14 @@ describe("marital status", () => {
     expect(maritalStatusLabel("SOLTERO")).to.equal("Soltero(a)");
   });
 
-  it("normalizes an old form label to a code", () => {
+  it("normalizes a code and drops anything else to null (never throws)", () => {
     expect(
-      normalizeApplication({ sessionId: "s1", maritalStatus: "Casado(a)" }).maritalStatus
+      normalizeApplication({ sessionId: "s1", maritalStatus: "CASADO" }).maritalStatus
     ).to.equal("CASADO");
+    const stale = normalizeApplication({ sessionId: "s1", maritalStatus: "Casado(a)" });
+    expect(stale.maritalStatus).to.equal(null);
+    // The answer as sent is still kept with the submission.
+    expect(stale.rawData.maritalStatus).to.equal("Casado(a)");
   });
 });
 

@@ -133,7 +133,7 @@ export {
   PHONE_FIELDS,
   MARITAL_STATUSES,
   MARITAL_STATUS_LABELS,
-  parseMaritalStatus,
+  isMaritalStatus,
   hasPartner,
   maritalStatusLabel,
   type MaritalStatus,

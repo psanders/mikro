@@ -5,6 +5,7 @@ import { applicationPayloadSchema, normalizeApplication, extractTracking } from 
 import type { LoanApplication, NormalizedApplication } from "@mikro/common";
 import type { LeadConversion } from "../marketing/createSendLeadConversion.js";
 import { logger } from "../../logger.js";
+import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { OUT_OF_COVERAGE_AREA } from "./createUpsertApplication.js";
 
 /** The slice of an Express request the intake reads. */
@@ -70,6 +71,8 @@ export function createApplicationIntakeHandler(deps: Deps) {
     }
 
     try {
+      // A stale tab posting the old label: stored as null, never a lost submission.
+      droppedMaritalStatus(parsed.data, "intake", { sessionId: parsed.data.sessionId });
       const normalized = normalizeApplication(parsed.data);
       const application = await deps.upsertApplication(normalized);
       const outOfArea =

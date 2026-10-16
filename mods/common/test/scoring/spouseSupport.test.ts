@@ -3,7 +3,7 @@
  *
  * The spouse share of SUPPORT_NETWORK needs a real contact: filler like
  * "N/A" / "0000000000" once counted as a spouse. The codeudor note keys off
- * the marital status code (and still reads the old form labels).
+ * the marital status code.
  */
 import { expect } from "chai";
 import { scoreInput } from "../../src/scoring/engine.js";
@@ -60,7 +60,7 @@ describe("scoring: spouse support", () => {
 });
 
 describe("scoring: codeudor note", () => {
-  for (const status of ["CASADO", "UNION_LIBRE", "Casado(a)", "Unión libre"]) {
+  for (const status of ["CASADO", "UNION_LIBRE"]) {
     it(`asks for the spouse when ${status} and no spouse given`, () => {
       expect(codeudorNote({ maritalStatus: status })).to.equal(true);
     });

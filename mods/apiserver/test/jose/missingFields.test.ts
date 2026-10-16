@@ -46,4 +46,13 @@ describe("missingApplicationFields", () => {
     expect(missing).to.include("maritalStatus");
     expect(missing).to.not.include("spouseName");
   });
+
+  it("asks again when a stale form's label was dropped (column null, label in rawData)", () => {
+    const missing = missingApplicationFields({
+      ...base,
+      maritalStatus: null,
+      rawData: { maritalStatus: "Soltero(a)" }
+    });
+    expect(missing).to.include("maritalStatus");
+  });
 });

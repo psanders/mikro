@@ -12,8 +12,8 @@ import {
   PHONE_FIELDS,
   applicationPayloadSchema,
   isDrPhone,
-  normalizeApplication,
-  parseMaritalStatus
+  maritalStatusEnum,
+  normalizeApplication
 } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
@@ -80,7 +80,7 @@ export function createSaveAnswer(
       }
       const strVal = String(val).trim();
       if (key === "maritalStatus") {
-        const status = parseMaritalStatus(strVal);
+        const status = maritalStatusEnum.safeParse(strVal).data;
         if (!status) {
           invalid.push(key);
           invalidReasons[key] =

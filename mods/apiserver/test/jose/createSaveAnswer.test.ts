@@ -86,31 +86,25 @@ describe("createSaveAnswer", () => {
     expect(upsert.called).to.be.false;
   });
 
-  it("stores marital status as a code, accepting form labels and typed variants", async () => {
-    for (const [input, code] of [
-      ["SOLTERO", "SOLTERO"],
-      ["Soltero(a)", "SOLTERO"],
-      ["Soltera", "SOLTERO"],
-      ["Soltero/a", "SOLTERO"],
-      ["unión libre", "UNION_LIBRE"]
-    ]) {
-      const { tool, upsert } = makeTool(null);
-      const result = await tool({ fields: { maritalStatus: input } }, CTX);
-      expect(result.success, input).to.be.true;
-      expect(upsert.firstCall.args[0].maritalStatus, input).to.equal(code);
-    }
+  it("stores a marital status code", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { maritalStatus: "UNION_LIBRE" } }, CTX);
+    expect(result.success).to.be.true;
+    expect(upsert.firstCall.args[0].maritalStatus).to.equal("UNION_LIBRE");
   });
 
-  it("rejects an unknown marital status, naming the valid codes", async () => {
-    const { tool, upsert } = makeTool(null);
+  it("rejects anything but a code (labels too), naming the valid codes", async () => {
+    for (const value of ["complicado", "Soltero(a)", "soltera"]) {
+      const { tool, upsert } = makeTool(null);
 
-    const result = await tool({ fields: { maritalStatus: "complicado" } }, CTX);
+      const result = await tool({ fields: { maritalStatus: value } }, CTX);
 
-    expect(result.success).to.be.false;
-    expect((result.data!.invalidReasons as Record<string, string>).maritalStatus).to.include(
-      "SOLTERO, CASADO, UNION_LIBRE, DIVORCIADO, VIUDO"
-    );
-    expect(upsert.called).to.be.false;
+      expect(result.success, value).to.be.false;
+      expect((result.data!.invalidReasons as Record<string, string>).maritalStatus).to.include(
+        "SOLTERO, CASADO, UNION_LIBRE, DIVORCIADO, VIUDO"
+      );
+      expect(upsert.called, value).to.be.false;
+    }
   });
 
   it("never asks a single applicant about a spouse", async () => {

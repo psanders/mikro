@@ -9,7 +9,6 @@ import {
   PROVINCES,
   MARITAL_STATUSES,
   drPhoneDigits,
-  parseMaritalStatus,
   type MaritalStatus
 } from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
@@ -274,7 +273,8 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
     phone: parsePhone(raw.phone),
     idNumber: trimToNull(raw.idNumber),
     dateOfBirth: parseDate(raw.dateOfBirth),
-    maritalStatus: parseMaritalStatus(raw.maritalStatus),
+    // Codes only; anything else (a stale form posting a label) is dropped.
+    maritalStatus: maritalStatusEnum.safeParse(raw.maritalStatus).data ?? null,
     businessType: trimToNull(raw.businessType),
     businessName: trimToNull(raw.businessName),
     requestedAmount: parseCurrency(raw.requestedAmount),

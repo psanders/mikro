@@ -42,8 +42,8 @@ export function applicationFields(app: ApplicationFieldsRow): Record<string, unk
     province: app.province,
     homeAddress: app.homeAddress,
     ...rawData,
-    // The column holds the normalized code; rawData may hold the form label.
-    maritalStatus: app.maritalStatus ?? rawData.maritalStatus ?? null
+    // Only the column: it holds a valid code or null (a dropped value is asked again).
+    maritalStatus: app.maritalStatus
   };
 }
 
