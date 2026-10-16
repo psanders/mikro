@@ -215,12 +215,21 @@ let inboundSeq = 0;
 /** The newest inbound message seen per sender address. */
 const latestInbound = new Map<string, number>();
 /** Photos of a sender's burst not yet answered, oldest first (by arrival). */
-const pendingPhotos = new Map<string, Array<{ seq: number; url: string }>>();
+const pendingPhotos = new Map<string, Array<{ seq: number; url: string; heldAt: number }>>();
+/**
+ * Messages per sender still being handled (counted from the start of their
+ * delivery). A held photo nobody took is answered when the sender's last one
+ * finishes (`answerHeldPhotos`), so a photo is never lost to a newer message
+ * that ended early (a voice notice, a duplicate, a Flow submission).
+ */
+const activeInbound = new Map<string, number>();
+/** A held photo older than this is stale: dropped rather than answered late. */
+const HELD_PHOTO_TTL_MS = 10 * 60 * 1000;
 
 /** Hold a photo for whichever message answers this sender's burst. */
 function holdPhoto(address: string, seq: number, url: string): void {
   const held = pendingPhotos.get(address) ?? [];
-  held.push({ seq, url });
+  held.push({ seq, url, heldAt: Date.now() });
   pendingPhotos.set(address, held);
 }
 
@@ -228,7 +237,26 @@ function holdPhoto(address: string, seq: number, url: string): void {
 function takePhotos(address: string): string[] {
   const held = pendingPhotos.get(address) ?? [];
   pendingPhotos.delete(address);
-  return held.sort((a, b) => a.seq - b.seq).map((p) => p.url);
+  const fresh = Date.now() - HELD_PHOTO_TTL_MS;
+  return held
+    .filter((p) => p.heldAt >= fresh)
+    .sort((a, b) => a.seq - b.seq)
+    .map((p) => p.url);
+}
+
+function markActive(address: string): void {
+  activeInbound.set(address, (activeInbound.get(address) ?? 0) + 1);
+}
+
+/** One of the sender's messages is done; true when it was the last one in flight. */
+function releaseActive(address: string): boolean {
+  const left = (activeInbound.get(address) ?? 1) - 1;
+  if (left > 0) {
+    activeInbound.set(address, left);
+    return false;
+  }
+  activeInbound.delete(address);
+  return true;
 }
 
 function noteInbound(address: string): number {
@@ -239,9 +267,9 @@ function noteInbound(address: string): number {
 
 /**
  * Wait out the burst window; true when a newer message from the sender
- * answers for this one. A newer message that already answered took every
- * photo held then; a photo held after that (a slow download) is answered by
- * its own message instead of waiting for the sender's next one.
+ * answers for this one. A photo the newer message didn't take (it ended
+ * early, or answered before a slow download finished) is answered after the
+ * sender's last message in flight, never alongside it (`answerHeldPhotos`).
  */
 async function supersededByNewer(address: string, seq: number): Promise<boolean> {
   if (burstWindowMs > 0) await new Promise((resolve) => setTimeout(resolve, burstWindowMs));
@@ -250,8 +278,31 @@ async function supersededByNewer(address: string, seq: number): Promise<boolean>
     latestInbound.delete(address);
     return false;
   }
-  if (latest !== undefined) return true;
-  return !(pendingPhotos.get(address) ?? []).some((p) => p.seq === seq);
+  return true;
+}
+
+/**
+ * The sender's last message in flight is done and photos are still held:
+ * nothing answered them, so they get their own turn now. Only CX routes take
+ * photos; anything else (staff, ignored, replies off) drops them.
+ */
+async function answerHeldPhotos(sender: SenderIdentity): Promise<void> {
+  const photos = takePhotos(sender.address);
+  if (photos.length === 0 || !messageProcessor || !getWhatsAppAgentRepliesEnabled()) return;
+  try {
+    const route = await messageProcessor.routeMessage(sender);
+    if (route.type === "user" || route.type === "ignored") return;
+    logger.verbose("answering photos no newer message took", {
+      phone: sender.address,
+      photos: photos.length
+    });
+    await handleCxMessage(route, "", photos, messageProcessor, Promise.resolve(undefined), sender);
+  } catch (error) {
+    logger.error("failed to answer held photos", {
+      phone: sender.address,
+      error: (error as Error).message
+    });
+  }
 }
 
 /** Tests: shorten (or disable with 0) the burst window. */
@@ -266,6 +317,7 @@ export function setBurstWindowMsForTesting(ms: number): void {
 export function resetProcessedMessageIdsForTesting(): void {
   latestInbound.clear();
   pendingPhotos.clear();
+  activeInbound.clear();
   processedMessageIds.clear();
 }
 
@@ -432,9 +484,16 @@ export const handleWhatsAppMessage = (() => {
           valid.push({ message, sender });
         }
 
+        // Counted up front: a photo held by an earlier message in this
+        // delivery waits for the sender's later ones before anyone answers it.
+        for (const { sender } of valid) markActive(sender.address);
         for (const [i, { message, sender }] of valid.entries()) {
           const followed = valid.slice(i + 1).some((v) => v.sender.address === sender.address);
-          await processMessage(message, sender, followed);
+          try {
+            await processMessage(message, sender, followed);
+          } finally {
+            if (releaseActive(sender.address)) await answerHeldPhotos(sender);
+          }
           messagesProcessed++;
           if (!senders.includes(sender.address)) {
             senders.push(sender.address);

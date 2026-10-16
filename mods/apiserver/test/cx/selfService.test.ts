@@ -245,6 +245,17 @@ describe("CX self-service tools", () => {
       expect(new Set(docs.map((d) => d.sha256)).size).to.equal(2);
     });
 
+    it("asks which photo when a burst has several and none is named", async () => {
+      const { client, create } = db([]);
+      const result = await createAttachApplicationEvidence(client)(
+        { kind: "BUSINESS_PHOTO" },
+        { ...ctx, imageDataUrls: [IMAGE, IMAGE] }
+      );
+      expect(result.success).to.be.false;
+      expect(result.message).to.match(/indica image \(1 a 2\)/);
+      expect(create.called).to.be.false;
+    });
+
     it("refuses a photo number the turn doesn't have", async () => {
       const { client, create } = db([]);
       const result = await createAttachApplicationEvidence(client)(

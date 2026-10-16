@@ -198,6 +198,9 @@ export function currentUserMessage(
 
   if (userMessage) {
     userContent.push({ type: "text", text: toolPrefix + userMessage });
+  } else if (toolPrefix && imageUrls.length > 0) {
+    // A photo-only turn still carries what the agent ran last turn.
+    userContent.push({ type: "text", text: toolPrefix.trimEnd() });
   }
 
   imageUrls.forEach((url, i) => {

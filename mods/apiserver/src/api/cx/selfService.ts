@@ -254,6 +254,14 @@ export function createAttachApplicationEvidence(client: DbClient) {
     if (photos.length === 0) {
       return { success: false, message: "No hay una foto en este mensaje para adjuntar." };
     }
+    // With several photos the agent must say which one: defaulting to the
+    // first would attach it twice and never the others.
+    if (args.image === undefined && photos.length > 1) {
+      return {
+        success: false,
+        message: `Este mensaje trae ${photos.length} fotos; indica image (1 a ${photos.length}) para cada una.`
+      };
+    }
     const index = args.image === undefined ? 1 : Number(args.image);
     if (!Number.isInteger(index) || index < 1 || index > photos.length) {
       return {

@@ -53,6 +53,14 @@ describe("currentUserMessage", () => {
     ]);
   });
 
+  it("keeps the note of last turn's tools on a photo-only turn", () => {
+    const msg = currentUserMessage("[SISTEMA: x]\n", "", ["data:a"]);
+    expect(msg.content).to.deep.equal([
+      { type: "text", text: "[SISTEMA: x]" },
+      { type: "image_url", image_url: { url: "data:a" } }
+    ]);
+  });
+
   it("sends a single photo without a number", () => {
     const msg = currentUserMessage("", "", ["data:a"]);
     expect(msg.content).to.deep.equal([{ type: "image_url", image_url: { url: "data:a" } }]);
