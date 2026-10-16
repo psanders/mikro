@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.4](https://github.com/psanders/mikro/compare/v3.13.3...v3.13.4) (2026-10-16)
+
+### Bug Fixes
+
+- **jose:** marital status enum; no spouse questions for singles, no filler answers ([#335](https://github.com/psanders/mikro/issues/335)) ([40f9526](https://github.com/psanders/mikro/commit/40f9526249f57765c798c391e9fc81fdda732d31))
+
 ## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
 
 ### Bug Fixes
