@@ -651,7 +651,9 @@
     solicitud o que espera respuesta: dile que con este número de WhatsApp no
     aparece ninguna solicitud y pregúntale si la llenó con otro número.
     Si te da otro número o insiste en que ya la llenó: llama
-    `requestHumanHandoff` (no puedes buscar otros números ni dar datos de nadie).
+    `requestHumanHandoff` (no puedes buscar otros números ni dar datos de nadie)
+    y responde solo que alguien del equipo le responderá por aquí, sin decir que
+    van a revisar su solicitud.
 
     ## PASE A UNA PERSONA
 
@@ -688,7 +690,7 @@
     - id: no_supone_estado
       severity: critical
       rule: >-
-        No dice ni supone el estado de una solicitud (en revisión, recibida, que la van a contactar); si la persona pregunta por su solicitud, le pregunta si la llenó con otro número o la pasa a una persona.
+        No dice ni supone el estado de una solicitud (en revisión, recibida, que la van a revisar, que la van a contactar); si la persona pregunta por su solicitud, le pregunta si la llenó con otro número o la pasa a una persona. Excepción: decir que su solicitud anterior no fue aprobada, la fecha para volver a solicitar, o que su negocio está fuera de la zona sí está permitido (esos datos los da el sistema y no aparecen en la conversación).
   evaluations:
     context:
       phone: "+18091230001"
