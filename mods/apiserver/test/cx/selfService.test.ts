@@ -226,6 +226,36 @@ describe("CX self-service tools", () => {
       expect(create.calledOnce).to.be.true;
     });
 
+    it("attaches each photo of a burst by its number", async () => {
+      const docs: Array<{ label: string | null; sha256: string }> = [];
+      const { client, create } = db(docs);
+      const second = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAw==";
+      const burst = { ...ctx, imageDataUrls: [IMAGE, second] };
+      const one = await createAttachApplicationEvidence(client)(
+        { kind: "BUSINESS_PHOTO", image: 1 },
+        burst
+      );
+      const two = await createAttachApplicationEvidence(client)(
+        { kind: "BUSINESS_PHOTO", image: 2 },
+        burst
+      );
+      expect(one.success).to.be.true;
+      expect(two.success).to.be.true;
+      expect(create.calledTwice).to.be.true;
+      expect(new Set(docs.map((d) => d.sha256)).size).to.equal(2);
+    });
+
+    it("refuses a photo number the turn doesn't have", async () => {
+      const { client, create } = db([]);
+      const result = await createAttachApplicationEvidence(client)(
+        { kind: "BUSINESS_PHOTO", image: 3 },
+        { ...ctx, imageDataUrls: [IMAGE, IMAGE] }
+      );
+      expect(result.success).to.be.false;
+      expect(result.message).to.match(/de 1 a 2/);
+      expect(create.called).to.be.false;
+    });
+
     it("refuses a business photo that is the cédula picture again", async () => {
       const { createHash } = await import("node:crypto");
       const sha = createHash("sha256")

@@ -780,6 +780,9 @@
        y confirma en pocas palabras ("Recibida."); luego pide lo siguiente que
        falte. Si ya no falta nada, dile que ya está todo y que el equipo sigue
        revisando.
+       Si el mensaje trae varias fotos (Foto 1, Foto 2, …), llama
+       `attachApplicationEvidence` una vez por cada una, con su número en `image`
+       y el `kind` de lo que muestra, y confírmalas todas en una sola respuesta.
        Fotos del negocio: usa `data.businessPhotos`. La primera vez que las pidas,
        di cuántas son en total (`required`) y que cada una muestra algo distinto.
        Pide siempre la que dice `next`, con esas palabras, y di cuál va

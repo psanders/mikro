@@ -6,7 +6,14 @@
  * `history` (read from the persisted transcript), and the turn counters are
  * derived from it, so an intake survives an apiserver restart.
  */
-import type { Agent, Message, ToolExecuted } from "../llm/types.js";
+import {
+  imageList,
+  photoContext,
+  type Agent,
+  type Message,
+  type ToolExecuted,
+  type TurnImages
+} from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import { isNewSessionFrom } from "../conversations/index.js";
 import { getSessionTimeoutSeconds } from "../config.js";
@@ -17,7 +24,7 @@ export interface ProspectMessageDeps {
     agent: Agent,
     messages: Message[],
     userMessage: string,
-    imageUrl?: string | null,
+    images?: TurnImages,
     context?: Record<string, unknown>,
     isNewSession?: boolean
   ) => Promise<InvokeLLMResult>;
@@ -32,8 +39,8 @@ export interface ProspectMessageDeps {
    * jose-keep-gathering). Decides which directives apply.
    */
   phase?: "intake" | "enrichment";
-  /** The turn's image (enrichment only: José takes the applicant's documents). */
-  imageUrl?: string | null;
+  /** The turn's photo(s) (enrichment only: José takes the applicant's documents). */
+  imageUrl?: TurnImages;
   /** A username sender's BSUID, so a hand-off from José can find them later. */
   whatsappUserId?: string;
 }
@@ -91,6 +98,7 @@ export async function handleProspectMessage(
     logger.verbose("jose directive injected", { phone, phase, ...session });
   }
 
+  const images = imageList(deps.imageUrl);
   const context: Record<string, unknown> = {
     sessionId,
     phone,
@@ -98,7 +106,7 @@ export async function handleProspectMessage(
     ...(deps.applicationId ? { applicationId: deps.applicationId } : {}),
     ...(phase === "enrichment" ? { submitted: true } : {}),
     ...(deps.whatsappUserId ? { whatsappUserId: deps.whatsappUserId } : {}),
-    ...(deps.imageUrl ? { imageDataUrl: deps.imageUrl } : {})
+    ...photoContext(images)
   };
 
   logger.verbose("handling prospect message", {
@@ -108,14 +116,7 @@ export async function handleProspectMessage(
     turnsSinceLastSave: session.turnsSinceLastSave
   });
 
-  const result = await invokeLLM(
-    joseAgent,
-    history,
-    effectiveMessage,
-    deps.imageUrl ?? null,
-    context,
-    newSession
-  );
+  const result = await invokeLLM(joseAgent, history, effectiveMessage, images, context, newSession);
 
   const responseText = typeof result === "string" ? result : result.text;
   const toolsExecuted: ToolExecuted[] =

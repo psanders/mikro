@@ -20,8 +20,10 @@ export type {
   ExpectedToolCall,
   ConversationTurn,
   EvaluationScenario,
-  AgentEvaluation
+  AgentEvaluation,
+  TurnImages
 } from "./types.js";
+export { imageList, photoContext } from "./types.js";
 
 // LLM invocation
 export { createInvokeLLM, type InvokeLLMOptions, type InvokeLLMResult } from "./createInvokeLLM.js";

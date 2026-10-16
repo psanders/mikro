@@ -15,7 +15,13 @@ import {
   type SendWhatsAppTemplateInput,
   type WhatsAppSendResponse
 } from "@mikro/common";
-import type { Agent, Message, ToolExecuted } from "../llm/types.js";
+import {
+  photoContext,
+  type Agent,
+  type Message,
+  type ToolExecuted,
+  type TurnImages
+} from "../llm/types.js";
 import type { InvokeLLMResult } from "../llm/createInvokeLLM.js";
 import type { RouteResult, SenderIdentity } from "../router/types.js";
 import { isNewSession, touchSession } from "../sessions/index.js";
@@ -63,7 +69,7 @@ export interface MessageProcessorDependencies {
     agent: Agent,
     messages: Message[],
     userMessage: string,
-    imageUrl?: string | null,
+    images?: TurnImages,
     context?: Record<string, unknown>,
     isNewSession?: boolean
   ) => Promise<InvokeLLMResult>;
@@ -195,17 +201,35 @@ const silentSend: MessageProcessorDependencies["sendWhatsAppMessage"] = async (p
 };
 
 /**
- * People often send two or three short messages in a row ("Ok", "Gracias").
- * Answering each gives two replies a second apart. So a message without an
- * image waits this long, and is left unanswered when a newer message from the
- * same sender arrived meanwhile: the newer one answers, with this one already
- * in its history. Images are always answered (each one is evidence to attach).
+ * People often send two or three messages in a row ("Ok", "Gracias", or the
+ * cédula front and back). Answering each gives two replies a second apart,
+ * and two replies racing on the same application. So a message waits this
+ * long, and is left unanswered when a newer message from the same sender
+ * arrived meanwhile: the newer one answers, with this one already in its
+ * history. Photos are not in the stored history (only "[Imagen]"), so they
+ * are handed to the message that answers the burst (`pendingPhotos`).
  */
 const DEFAULT_BURST_WINDOW_MS = 2500;
 let burstWindowMs = DEFAULT_BURST_WINDOW_MS;
 let inboundSeq = 0;
 /** The newest inbound message seen per sender address. */
 const latestInbound = new Map<string, number>();
+/** Photos of a sender's burst not yet answered, oldest first (by arrival). */
+const pendingPhotos = new Map<string, Array<{ seq: number; url: string }>>();
+
+/** Hold a photo for whichever message answers this sender's burst. */
+function holdPhoto(address: string, seq: number, url: string): void {
+  const held = pendingPhotos.get(address) ?? [];
+  held.push({ seq, url });
+  pendingPhotos.set(address, held);
+}
+
+/** Every photo held for this sender, in the order they were sent. */
+function takePhotos(address: string): string[] {
+  const held = pendingPhotos.get(address) ?? [];
+  pendingPhotos.delete(address);
+  return held.sort((a, b) => a.seq - b.seq).map((p) => p.url);
+}
 
 function noteInbound(address: string): number {
   inboundSeq++;
@@ -213,12 +237,21 @@ function noteInbound(address: string): number {
   return inboundSeq;
 }
 
-/** Wait out the burst window; true when a newer message from the sender arrived. */
+/**
+ * Wait out the burst window; true when a newer message from the sender
+ * answers for this one. A newer message that already answered took every
+ * photo held then; a photo held after that (a slow download) is answered by
+ * its own message instead of waiting for the sender's next one.
+ */
 async function supersededByNewer(address: string, seq: number): Promise<boolean> {
   if (burstWindowMs > 0) await new Promise((resolve) => setTimeout(resolve, burstWindowMs));
-  if (latestInbound.get(address) !== seq) return true;
-  latestInbound.delete(address);
-  return false;
+  const latest = latestInbound.get(address);
+  if (latest === seq) {
+    latestInbound.delete(address);
+    return false;
+  }
+  if (latest !== undefined) return true;
+  return !(pendingPhotos.get(address) ?? []).some((p) => p.seq === seq);
 }
 
 /** Tests: shorten (or disable with 0) the burst window. */
@@ -232,6 +265,7 @@ export function setBurstWindowMsForTesting(ms: number): void {
  */
 export function resetProcessedMessageIdsForTesting(): void {
   latestInbound.clear();
+  pendingPhotos.clear();
   processedMessageIds.clear();
 }
 
@@ -757,17 +791,21 @@ async function processMessage(
     }
 
     if (route.type !== "user") {
+      // Held before waiting, so the message that answers the burst finds it.
+      if (imageUrl) holdPhoto(phone, seq, imageUrl);
       // A newer message from this sender (later in this delivery, or arriving
-      // during the burst window) answers for both.
-      if (!image?.id && (followedInDelivery || (await supersededByNewer(phone, seq)))) {
+      // during the burst window) answers for both, photos included.
+      if (followedInDelivery || (await supersededByNewer(phone, seq))) {
         await inbound;
         logger.verbose("newer message from the same sender, it answers for this one", {
           phone,
-          messageId: id
+          messageId: id,
+          heldPhoto: !!imageUrl
         });
         return;
       }
-      await handleCxMessage(route, userMessage, imageUrl, messageProcessor, inbound, sender);
+      const photos = takePhotos(phone);
+      await handleCxMessage(route, userMessage, photos, messageProcessor, inbound, sender);
       return;
     }
 
@@ -1049,12 +1087,7 @@ function recordingSender(
 }
 
 /** Context every CX tool reads identity from (never from model arguments). */
-function cxContext(
-  route: CxRoute,
-  profile: Profile,
-  imageUrl: string | null,
-  sender?: SenderIdentity
-) {
+function cxContext(route: CxRoute, profile: Profile, photos: TurnImages, sender?: SenderIdentity) {
   return {
     phone: route.phone,
     profile,
@@ -1069,7 +1102,7 @@ function cxContext(
     ...(route.type === "applicant" || route.type === "prospect" || route.type === "reopen"
       ? { applicationId: route.applicationId, sessionId: route.sessionId }
       : {}),
-    ...(imageUrl ? { imageDataUrl: imageUrl } : {})
+    ...photoContext(photos)
   };
 }
 
@@ -1141,7 +1174,7 @@ async function passesCxGate(
 async function handleCxMessage(
   route: CxRoute,
   userMessage: string,
-  imageUrl: string | null,
+  photos: string[],
   processor: MessageProcessorDependencies,
   inbound: Promise<string | undefined> = Promise.resolve(undefined),
   sender?: SenderIdentity
@@ -1230,7 +1263,7 @@ async function handleCxMessage(
       history: llmHistory,
       phase,
       // After submission José also takes the applicant's documents.
-      imageUrl: phase === "enrichment" ? imageUrl : null,
+      imageUrl: phase === "enrichment" ? photos : null,
       ...(sender?.bsuid ? { whatsappUserId: sender.bsuid } : {})
     });
     await replyAsAgent(processor, phone, result.text, result.toolsExecuted, agentTurn, history);
@@ -1255,8 +1288,8 @@ async function handleCxMessage(
     agent,
     llmHistory,
     llmInput,
-    imageUrl,
-    cxContext(route, profile, imageUrl, sender),
+    photos,
+    cxContext(route, profile, photos, sender),
     isNewSessionFrom(history, getSessionTimeoutSeconds())
   );
   const text = typeof result === "string" ? result : result.text;

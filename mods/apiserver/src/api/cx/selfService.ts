@@ -222,6 +222,20 @@ export function createGetMyApplicationStatus(client: DbClient) {
 const DATA_URL_RE = /^data:(image\/[a-z+]+);base64,(.+)$/;
 
 /**
+ * The photos of this turn, in the order they were sent: several when the
+ * person sent a burst of photos that one reply answers (`imageDataUrls`),
+ * else the single `imageDataUrl`.
+ */
+function turnPhotos(ctx: Context): string[] {
+  const many = ctx?.imageDataUrls;
+  if (Array.isArray(many) && many.length > 0) {
+    return many.filter((p): p is string => typeof p === "string");
+  }
+  const one = str(ctx, "imageDataUrl");
+  return one ? [one] : [];
+}
+
+/**
  * Attach the image the applicant sent this turn. The image comes from the
  * handler's context, never from a model-supplied URL. Allowed only before a
  * decision is in progress (RECEIVED, IN_REVIEW): once sent to decision the
@@ -236,7 +250,18 @@ export function createAttachApplicationEvidence(client: DbClient) {
     if (kind !== "ID_FRONT" && kind !== "ID_BACK" && kind !== "BUSINESS_PHOTO") {
       return { success: false, message: "kind debe ser ID_FRONT, ID_BACK o BUSINESS_PHOTO." };
     }
-    const match = DATA_URL_RE.exec(str(context, "imageDataUrl") ?? "");
+    const photos = turnPhotos(context);
+    if (photos.length === 0) {
+      return { success: false, message: "No hay una foto en este mensaje para adjuntar." };
+    }
+    const index = args.image === undefined ? 1 : Number(args.image);
+    if (!Number.isInteger(index) || index < 1 || index > photos.length) {
+      return {
+        success: false,
+        message: `Este mensaje trae ${photos.length} foto(s); image debe ser un número de 1 a ${photos.length}.`
+      };
+    }
+    const match = DATA_URL_RE.exec(photos[index - 1]);
     if (!match) {
       return { success: false, message: "No hay una foto en este mensaje para adjuntar." };
     }

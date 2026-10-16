@@ -31,7 +31,8 @@ export {
   type ToolExecuted,
   type ToolFunction,
   type ToolResult,
-  type ToolExecutor
+  type ToolExecutor,
+  type TurnImages
 } from "./llm/index.js";
 
 // Tools
