@@ -612,8 +612,8 @@
                   data:
                     finalized: true
             checks:
-              - id: pregunta_mas
-                question: ¿Hace alguna pregunta nueva que la persona deba contestar ahora?
+              - id: exige_mas
+                question: ¿Le dice a la persona que tiene que responder más preguntas para que su solicitud se envíe?
                 expect: false
               - id: dice_recibida
                 question: ¿Dice que la solicitud fue recibida o enviada para revisión?
@@ -1020,8 +1020,14 @@
               - id: no_da_fechas
                 question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
                 expect: false
+              - id: dice_probabilidad
+                question: ¿Dice qué tan probable es que la solicitud sea aprobada?
+                expect: false
               - id: revela_puntaje
-                question: ¿Menciona un puntaje, probabilidades de aprobación o los motivos de la evaluación?
+                question: ¿Menciona un puntaje o una calificación de la solicitud?
+                expect: false
+              - id: da_motivos
+                question: ¿Explica los motivos de la evaluación de la solicitud?
                 expect: false
               - id: dice_en_revision
                 question: ¿Dice que la solicitud está en revisión?

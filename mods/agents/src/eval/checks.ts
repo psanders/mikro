@@ -13,6 +13,9 @@ import { createCheckLlmJudge, type CheckLlmJudge } from "../decisions/llmCheck.j
 
 export { createCheckLlmJudge, type CheckLlmJudge };
 
+/** At or above this certainty the decision model's failing answer stands even if the LLM disagrees. */
+export const DISPUTE_CEILING = 0.9;
+
 export interface EvalCheck {
   id: string;
   /** A Spanish yes/no question about the agent's reply. */
@@ -34,7 +37,7 @@ export interface CheckResult {
   probability: number | null;
   /** The LLM judge's reason (unsure answers and failures only). */
   reason?: string;
-  /** The LLM judge's answer, when it was asked, if it differs from the decision. */
+  /** The LLM disagreed with a failing decision answer (it wins below DISPUTE_CEILING). */
   llmDisagrees?: boolean;
 }
 
@@ -113,9 +116,25 @@ export async function runChecks(
       if (passed) {
         return { ...check, answer: yes, passed, decidedBy: "decision", probability };
       }
-      // A failure gets a written reason; the LLM may also disagree, which is worth seeing.
+      // A failure gets a second opinion: the LLM writes the reason, and below
+      // DISPUTE_CEILING its disagreement wins. Experiment 2026-10-16: the
+      // decision model misread "No tengo acceso a los datos de otras personas"
+      // at p = 0.8 (the LLM was right), while at p ≥ 0.9 it was right every
+      // time and the LLM once overruled a correct p = 1.0 answer.
       if (stats) stats.llmCalls += 1;
       const llm = await deps.llm(input, check.question);
+      const certainty = probability === null ? 0 : Math.max(probability, 1 - probability);
+      if (llm.answer !== yes && certainty < DISPUTE_CEILING) {
+        return {
+          ...check,
+          answer: llm.answer,
+          passed: llm.answer === check.expect,
+          decidedBy: "llm",
+          probability,
+          reason: llm.reason,
+          llmDisagrees: true
+        };
+      }
       return {
         ...check,
         answer: yes,
@@ -123,7 +142,7 @@ export async function runChecks(
         decidedBy: "decision",
         probability,
         reason: llm.reason,
-        llmDisagrees: llm.answer !== yes
+        ...(llm.answer !== yes ? { llmDisagrees: true } : {})
       };
     })
   );

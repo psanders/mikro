@@ -81,8 +81,36 @@ describe("eval rubric checks", () => {
       passed: false,
       answer: true,
       decidedBy: "decision",
-      reason: "Menciona pagos diarios.",
-      llmDisagrees: false
+      reason: "Menciona pagos diarios."
+    });
+  });
+
+  it("keeps a near-certain decision answer even when the LLM disagrees", async () => {
+    const provider = decisions({ invented_frequency: 0.99, mentions_link: 0.9 });
+    const llm = sinon.stub().resolves({ answer: false, reason: "No menciona otra frecuencia." });
+    const [invented] = await runChecks(checks, transcript, { decisions: provider, llm });
+
+    expect(invented).to.deep.include({
+      passed: false,
+      answer: true,
+      decidedBy: "decision",
+      llmDisagrees: true
+    });
+  });
+
+  it("lets the LLM overrule a less certain failing decision answer", async () => {
+    const provider = decisions({ invented_frequency: 0.8, mentions_link: 0.9 });
+    const llm = sinon
+      .stub()
+      .resolves({ answer: false, reason: "Solo menciona semanal y quincenal." });
+    const [invented] = await runChecks(checks, transcript, { decisions: provider, llm });
+
+    expect(invented).to.deep.include({
+      passed: true,
+      answer: false,
+      decidedBy: "llm",
+      llmDisagrees: true,
+      probability: 0.8
     });
   });
 
