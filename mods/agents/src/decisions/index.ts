@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Decision-model layer (openspec conversation-state): one interface for the
- * CX classifier, the eval checks and the audit screen.
+ * CX classifier and the eval checks.
  */
 import { getClassifierConfig, type ClassifierConfig } from "@mikro/common";
 import { createOpenAIDecisionsProvider } from "./openaiDecisions.js";

@@ -74,11 +74,6 @@ export {
   runChecks,
   runAudit,
   createJudgeConversation,
-  createDecisionScreenJudge,
-  newScreenStats,
-  replySimilarity,
-  type ScreenStats,
-  type ScreenFlag,
   formatTranscript,
   auditHeadline,
   auditStatusFallback,
@@ -151,5 +146,5 @@ export {
   type AgentConfigInput
 } from "./agents/index.js";
 
-// Decision models (openspec conversation-state): classifier, eval checks, audit screen
+// Decision models (openspec conversation-state): CX classifier and eval checks
 export * from "./decisions/index.js";

@@ -55,13 +55,6 @@ export interface AgentPolicy {
   id: string;
   rule: string;
   severity: "critical" | "warning";
-  /**
-   * Whether the decision model screens this rule turn by turn (default true).
-   * False for rules a single message can't show — e.g. "no inventa
-   * información" needs the agent's instructions and tool results — which the
-   * whole-conversation judge grades whenever the conversation is escalated.
-   */
-  screen?: boolean;
 }
 
 /**

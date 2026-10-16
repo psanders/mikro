@@ -17,15 +17,12 @@ A decision model (OpenAI Decisions) answers closed yes/no questions with a proba
   - `agents:eval --judge auto|similarity|checks|both` compares the two judges.
   - The four agents' 21 scenarios now carry 54 checks.
 - **Audit, judge per agent:** each agent that wrote in a conversation is judged against its own rules, and the judge is told which agent's turns to grade.
-- **Audit, layered judge:** applies when a `classifier` is configured.
-  - The decision model screens every agent turn against every screenable rule. The question names what the rule forbids, because "incumple la regla «No da…»" confused it with a double negative.
-  - Each flag is confirmed by one focused LLM question; the turn is the evidence.
-  - Rules a single message can't show (`screen: false`: `no_inventar`, `numeros_exactos`) are graded by the whole-conversation judge, only for conversations already escalated.
 - **New audit code checks:**
   - `double_reply`;
   - `stuck_loop` (the same request three times);
   - `unanswered`;
-  - `closing_loop` (kept answering goodbyes, from the classifier labels).
+  - `closing_loop` (kept answering goodbyes, from the classifier labels; silent without them).
+- **Not in this change: a layered audit judge** (decision model screens every agent turn, LLM confirms flags). The experiment found 4 of 5 problem conversations against 3 for the per-agent judge, but with noisier findings, and two rules (`no_inventar`, `numeros_exactos`) can't be judged until tool results and SISTEMA notes are stored. Revisit after that (task 3.2).
 
 ## Capabilities
 
@@ -35,14 +32,13 @@ A decision model (OpenAI Decisions) answers closed yes/no questions with a proba
 
 ### Modified Capabilities
 
-- `conversation-audit`: per-agent judging and the layered decision screen.
+- `conversation-audit`: per-agent judging and four new code checks.
 
 ## Impact
 
 - **`mods/agents`:**
   - `eval/checks.ts`, `eval/runner.ts`, `eval/cli.ts`;
-  - `audit/screen.ts`, `audit/runAudit.ts`, `audit/judge.ts`, `audit/checks.ts`;
+  - `audit/runAudit.ts`, `audit/judge.ts`, `audit/checks.ts`;
   - `decisions/llmCheck.ts`.
-- **`agents.yaml`:** eval `checks`, and `screen: false` on two rules. Prod reads its own copy, which must be updated by hand.
-- **`mods/apiserver/src/index.ts`:** the layered judge is wired when `classifier` is set.
-- **No migration, no new config key.** The layered audit and the decision checks turn on with the `classifier` section from `conversation-state`.
+- **`agents.yaml`:** eval `checks` and reworded policies. Prod reads its own copy, which must be updated by hand.
+- **No migration, no new config key.** The decision checks in evals use the `classifier` section from `conversation-state`; the audit changes need no config.

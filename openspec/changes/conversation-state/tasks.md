@@ -52,12 +52,12 @@
 ## 6. Visibility
 
 - [ ] 6.1 `conversations:export`: intent, confidence, state and resolution columns, plus the summary block.
-- [x] 6.2 Audit: `stuck_loop`, `unanswered`, `double_reply`, `closing_loop` checks (`resolutionCounts` pending with state); `resolutionCounts` stored on the run; tests.
+- [x] 6.2 Audit: `stuck_loop`, `unanswered`, `double_reply`, `closing_loop` checks with tests (shipped with `decision-judges`). `resolutionCounts` on the run is pending with state.
 - [ ] 6.3 Pencil EzobQ sec-09 detail panel: a resolution counts block, card unchanged. Then the dashboard detail panel.
 
 ## 7. Backfill and model bake-off
 
-- [ ] 7.1 Protected procedure plus `mikro conversations:classify --since [--phone] [--force]`: idempotent, labels and state only, never actions or Chatwoot. Tests.
+- [x] 7.1 Protected procedure plus `mikro conversations:classify --since [--phone] [--force]`: idempotent, labels and state only, never actions or Chatwoot. Tests. (Labels only until state exists.)
 - [ ] 7.2 `--dry-run --providers <spec,…>` compare mode: no DB writes; agreement against a hand-labeled sample (overall and for `closing` / `opt_out`), confusion summary, cost (tokens × list price), p50/p95 latency.
 - [ ] 7.3 Build the hand-labeled sample (about 60 inbound turns from the 305, every intent represented) as a fixture; the founder checks the labels.
 - [x] 7.4 Run the bake-off: `openai-decisions:gpt-6-luna`, `chat:openai:gpt-4o-mini`, `chat:google:gemini-2.5-flash-lite`, and Jev through its API for comparison only if a key is available. Report agreement, `closing` precision at the threshold, confidence calibration, cost (Spanish tokens) and latency to the founder. Record the provider pick and the final `INTENT_MIN_CONFIDENCE` in design.md D2.

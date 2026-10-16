@@ -58,8 +58,7 @@ const policiesSchema = z
     z.object({
       id: z.string().min(1),
       rule: z.string().min(1),
-      severity: z.enum(["critical", "warning"]),
-      screen: z.boolean().optional()
+      severity: z.enum(["critical", "warning"])
     })
   )
   .refine((list) => new Set(list.map((p) => p.id)).size === list.length, {

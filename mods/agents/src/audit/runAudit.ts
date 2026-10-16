@@ -8,7 +8,7 @@
  */
 import type { AgentPolicy } from "../llm/types.js";
 import { logger } from "../logger.js";
-import { runChecks, servingAgentOf, subjectOf } from "./checks.js";
+import { runChecks, subjectOf } from "./checks.js";
 import type { AuditConversation, AuditFinding, AuditTurn, JudgeConversation } from "./types.js";
 
 /** How many judge calls run at once. */
@@ -67,6 +67,11 @@ function servingAgent(c: AuditConversation): AuditTurn | undefined {
   return [...reviewed(c)].reverse().find((t) => t.role === "AGENT" && t.agentName);
 }
 
+/** The agent's latest turn in the reviewed part of a conversation. */
+function lastTurnBy(c: AuditConversation, agentName: string): AuditTurn | undefined {
+  return [...reviewed(c)].reverse().find((t) => t.role === "AGENT" && t.agentName === agentName);
+}
+
 async function judgeOne(
   conversation: AuditConversation,
   agent: { name: string; policies: AgentPolicy[] },
@@ -82,14 +87,16 @@ async function judgeOne(
     if (!policy) continue;
     // A cited turn outside the window (context, or made up) isn't this run's to report.
     const turn = verdict.turnId != null ? windowTurns.get(verdict.turnId) : undefined;
-    const attributed = servingAgentOf(conversation, turn);
+    // These are this agent's rules: a cited message from another agent isn't its violation.
+    if (turn?.role === "AGENT" && turn.agentName && turn.agentName !== agent.name) continue;
+    const own = turn?.agentName === agent.name ? turn : lastTurnBy(conversation, agent.name);
     findings.push({
       phone: conversation.phone,
       applicationId: turn?.applicationId ?? subject.applicationId,
       customerId: turn?.customerId ?? subject.customerId,
-      profile: attributed.profile,
-      agentName: attributed.agentName ?? agent.name,
-      agentVersion: attributed.agentVersion,
+      profile: own?.profile ?? turn?.profile ?? null,
+      agentName: agent.name,
+      agentVersion: own?.agentVersion ?? null,
       checkId: policy.id,
       source: "JUDGE",
       severity: policy.severity === "critical" ? "CRITICAL" : "WARNING",
@@ -125,17 +132,21 @@ export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
     judgeable.length - Math.min(judgeable.length, Math.max(0, input.maxConversations));
 
   let judgeErrors = 0;
+  const judgedConversations = new Set<AuditConversation>();
   for (let i = 0; i < toJudge.length; i += JUDGE_CONCURRENCY) {
     const batch = toJudge.slice(i, i + JUDGE_CONCURRENCY);
     const results = await Promise.allSettled(
       batch.map(({ conversation, agent }) => judgeOne(conversation, agent, input.judge))
     );
     results.forEach((r, j) => {
-      if (r.status === "fulfilled") findings.push(...r.value);
-      else {
+      if (r.status === "fulfilled") {
+        findings.push(...r.value);
+        judgedConversations.add(batch[j]!.conversation);
+      } else {
         judgeErrors += 1;
         logger.warn("conversation audit: judge failed", {
           phone: batch[j]!.conversation.phone,
+          agent: batch[j]!.agent.name,
           error: (r.reason as Error)?.message
         });
       }
@@ -179,7 +190,7 @@ export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
     conversations: conversations.length,
     turns: allReviewed.length,
     failedSends: allReviewed.filter((t) => t.role !== "INBOUND" && t.failed).length,
-    judged: new Set(toJudge.map((j) => j.conversation)).size - judgeErrors,
+    judged: judgedConversations.size,
     judgeSkipped,
     judgeErrors,
     criticalCount: findings.filter((f) => f.severity === "CRITICAL").length,

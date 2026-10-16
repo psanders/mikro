@@ -196,6 +196,50 @@ describe("conversation audit — runAudit", () => {
     expect(r.judged).to.equal(0);
   });
 
+  it("judges each agent against its own rules and ignores citations of another agent", async () => {
+    const josePolicies = [
+      { id: "no_relleno", rule: "No guarda datos de relleno.", severity: "warning" as const }
+    ];
+    const byName = (name: string) =>
+      name === "sofia"
+        ? { name, policies }
+        : name === "jose"
+          ? { name, policies: josePolicies }
+          : undefined;
+    const joseTurn = turn({ role: "AGENT", content: "¿Nombre de tu esposa?", agentName: "jose" });
+    const sofiaTurn = turn({ role: "AGENT", content: "Tu solicitud está en revisión." });
+    const c = convo([
+      turn({ role: "INBOUND", content: "hola" }),
+      joseTurn,
+      turn({ role: "INBOUND", content: "Soy soltero" }),
+      sofiaTurn
+    ]);
+    const seen: Array<[string, string[]]> = [];
+    const judge: JudgeConversation = async (_c, agent) => {
+      seen.push([agent.name, agent.policies.map((p) => p.id)]);
+      // Each judge cites both agents' turns; only its own agent's turn counts.
+      const id = agent.name === "jose" ? "no_relleno" : "no_puntaje";
+      return [joseTurn, sofiaTurn].map((t) => ({
+        policyId: id,
+        pass: false,
+        turnId: t.id,
+        reason: "x"
+      }));
+    };
+    const r = await runAudit({ conversations: [c], getAgent: byName, maxConversations: 10, judge });
+    expect(seen).to.deep.equal([
+      ["jose", ["no_relleno"]],
+      ["sofia", ["no_puntaje", "handoff"]]
+    ]);
+    expect(
+      r.findings.filter((f) => f.source === "JUDGE").map((f) => [f.agentName, f.checkId, f.turnId])
+    ).to.deep.equal([
+      ["jose", "no_relleno", joseTurn.id],
+      ["sofia", "no_puntaje", sofiaTurn.id]
+    ]);
+    expect(r).to.include({ judged: 1, judgeErrors: 0 });
+  });
+
   it("builds the per-agent breakdown with versions and marks a changed version as new", async () => {
     const c = convo([
       turn({ role: "INBOUND", content: "hola" }),

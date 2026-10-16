@@ -19,7 +19,7 @@ Experiment run on 2026-10-16 against a copy of the production database (305 turn
 
 `runAudit` creates one judge task per agent that wrote in the window. It is the biggest single improvement in the experiment: it took the existing judge from 0 to 3 of 5 problem conversations.
 
-### D3. Layered audit: screen, then focused confirm
+### D3. Layered audit (screen, then focused confirm): measured, not shipped
 
 - **The screen question:** "La regla del agente dice: «…». ¿El mensaje hace lo que esta regla prohíbe, o deja de hacer lo que exige?".
 - **Flag threshold:** p ≥ 0.7.
@@ -32,7 +32,9 @@ Measured against the old judge (after the D2 fix):
 | Old judge | 3                                  | 34        | 0              |
 | Layered   | 4                                  | 30        | 113            |
 
-The layered judge produces more findings, partly because overlapping rules (`no_insiste`, `no_interesa`, `handoff`, `envia_pronto`) all fire on the same spouse loop. Rules that need data the transcript lacks (`no_inventar`) produced most of the noise, so they are not screened.
+The layered judge produces more findings, partly because overlapping rules (`no_insiste`, `no_interesa`, `handoff`, `envia_pronto`) all fire on the same spouse loop. Rules that need data the transcript lacks (`no_inventar`) produced most of the noise.
+
+**Decision:** not shipped in this change. One more conversation found doesn't justify the noise and a second judge path while the transcript lacks the data two rules need. The audit keeps the whole-conversation judge, now per agent (D2), plus the code checks. Revisit once tool results and SISTEMA notes are stored.
 
 ## Risks / Trade-offs
 

@@ -8,13 +8,12 @@
 ## 2. Audit
 
 - [x] 2.1 Judge each agent's turns against its own rules; the judge prompt names the agent.
-- [x] 2.2 Decision screen with the rule-forbids question, focused confirm, and `screen: false` rules on escalation.
-- [x] 2.3 Code checks `double_reply`, `stuck_loop`, `unanswered` and `closing_loop`, with tests.
-- [x] 2.4 Wire the layered judge in the apiserver when `classifier` is configured.
+- [x] 2.2 Code checks `double_reply`, `stuck_loop`, `unanswered` and `closing_loop`, with tests.
 
 ## 3. Follow-ups
 
 - [ ] 3.1 Founder confirms the provisional labels (hand-labels.json, policy-truth.json) and the check wording.
-- [ ] 3.2 Store tool results and SISTEMA notes in `conversation_turns`, so `no_inventar` and `numeros_exactos` can be screened.
+- [ ] 3.2 Store tool results and SISTEMA notes in `conversation_turns`, so `no_inventar` and `numeros_exactos` can be judged.
 - [ ] 3.3 Consolidate overlapping policies (`no_insiste` / `no_interesa` / `handoff` / `envia_pronto`).
 - [ ] 3.4 Copy `agents.yaml` to prod after merge.
+- [ ] 3.5 Revisit the layered audit judge (design D3) once 3.2 is done.
