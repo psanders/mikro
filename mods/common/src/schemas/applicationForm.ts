@@ -268,13 +268,80 @@ export function buildAutosavePayload(
 
 export type SelectOption = string | { value: string; label: string };
 
-export const ESTADO_CIVIL_OPTIONS = [
-  "Soltero(a)",
-  "Casado(a)",
-  "Unión libre",
-  "Divorciado(a)",
-  "Viudo(a)"
-];
+/**
+ * Marital status: what the form posts, the column stores and José's tool
+ * accepts. The Spanish label is display-only. Spouse fields only apply to the
+ * statuses `hasPartner` accepts.
+ */
+export const MARITAL_STATUSES = [
+  "SOLTERO",
+  "CASADO",
+  "UNION_LIBRE",
+  "DIVORCIADO",
+  "VIUDO"
+] as const;
+
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  SOLTERO: "Soltero(a)",
+  CASADO: "Casado(a)",
+  UNION_LIBRE: "Unión libre",
+  DIVORCIADO: "Divorciado(a)",
+  VIUDO: "Viudo(a)"
+};
+
+export const ESTADO_CIVIL_OPTIONS: SelectOption[] = MARITAL_STATUSES.map((value) => ({
+  value,
+  label: MARITAL_STATUS_LABELS[value]
+}));
+
+/** Lowercase, no accents, no "(a)" / "/a" / "a" gender endings, letters only. */
+function maritalKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\(a\)|\/a\b/g, "")
+    .replace(/[^a-z]/g, "");
+}
+
+const MARITAL_ALIASES: Record<string, MaritalStatus> = {
+  soltero: "SOLTERO",
+  soltera: "SOLTERO",
+  casado: "CASADO",
+  casada: "CASADO",
+  unionlibre: "UNION_LIBRE",
+  divorciado: "DIVORCIADO",
+  divorciada: "DIVORCIADO",
+  viudo: "VIUDO",
+  viuda: "VIUDO"
+};
+
+/**
+ * Lenient read of a marital status: a code ("SOLTERO"), a form label
+ * ("Soltero(a)", what the website posted before codes) or a typed variant
+ * ("soltera", "Soltero/a", "Unión Libre"). Anything else is null.
+ */
+export function parseMaritalStatus(value: unknown): MaritalStatus | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const trimmed = value.trim();
+  if ((MARITAL_STATUSES as readonly string[]).includes(trimmed)) return trimmed as MaritalStatus;
+  return MARITAL_ALIASES[maritalKey(trimmed)] ?? null;
+}
+
+/** Married or in a common-law union: the only statuses where spouse fields apply. */
+export function hasPartner(value: unknown): boolean {
+  const status = parseMaritalStatus(value);
+  return status === "CASADO" || status === "UNION_LIBRE";
+}
+
+/** Display label for a stored status; an unrecognized value is shown as-is. */
+export function maritalStatusLabel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const status = parseMaritalStatus(value);
+  return status ? MARITAL_STATUS_LABELS[status] : value;
+}
 
 // Business type — enum value + display label. Risk is scored downstream, not here.
 export const TIPO_NEGOCIO_OPTIONS: SelectOption[] = [

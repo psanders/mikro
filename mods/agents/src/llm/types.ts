@@ -132,6 +132,15 @@ export interface ToolCall {
 /**
  * OpenAI function tool definition.
  */
+/** A JSON Schema for one tool parameter (the subset the providers accept). */
+export interface ToolParameterSchema {
+  type: string;
+  description: string;
+  enum?: string[];
+  pattern?: string;
+  properties?: Record<string, ToolParameterSchema>;
+}
+
 export interface ToolFunction {
   type: "function";
   function: {
@@ -139,14 +148,7 @@ export interface ToolFunction {
     description: string;
     parameters: {
       type: "object";
-      properties: Record<
-        string,
-        {
-          type: string;
-          description: string;
-          enum?: string[];
-        }
-      >;
+      properties: Record<string, ToolParameterSchema>;
       required: string[];
     };
   };

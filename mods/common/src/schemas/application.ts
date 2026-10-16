@@ -5,7 +5,13 @@ import { z } from "zod/v4";
 import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
-import { PROVINCES, drPhoneDigits } from "./applicationForm.js";
+import {
+  PROVINCES,
+  MARITAL_STATUSES,
+  drPhoneDigits,
+  parseMaritalStatus,
+  type MaritalStatus
+} from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
 import { isMapUrl } from "./mapUrl.js";
 
@@ -146,7 +152,7 @@ export interface NormalizedApplicationFields {
   phone: string | null;
   idNumber: string | null;
   dateOfBirth: Date | null;
-  maritalStatus: string | null;
+  maritalStatus: MaritalStatus | null;
   businessType: string | null;
   businessName: string | null;
   requestedAmount: number | null;
@@ -155,6 +161,9 @@ export interface NormalizedApplicationFields {
   province: string | null;
   homeAddress: string | null;
 }
+
+/** A marital status code, as stored on the application. */
+export const maritalStatusEnum = z.enum(MARITAL_STATUSES);
 
 /** Result of normalizing a payload: stable fields + the full content as rawData. */
 export interface NormalizedApplication extends NormalizedApplicationFields {
@@ -265,7 +274,7 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
     phone: parsePhone(raw.phone),
     idNumber: trimToNull(raw.idNumber),
     dateOfBirth: parseDate(raw.dateOfBirth),
-    maritalStatus: trimToNull(raw.maritalStatus),
+    maritalStatus: parseMaritalStatus(raw.maritalStatus),
     businessType: trimToNull(raw.businessType),
     businessName: trimToNull(raw.businessName),
     requestedAmount: parseCurrency(raw.requestedAmount),

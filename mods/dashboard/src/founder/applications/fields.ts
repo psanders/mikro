@@ -114,7 +114,8 @@ export function optionLabel(o: SelectOption): string {
 /** The value as entered (display string), from rawData first, then the stable column. */
 export function fieldValue(app: Record<string, unknown>, key: string): string {
   const raw = (app.rawData ?? {}) as Record<string, unknown>;
-  const v = raw[key] ?? app[key];
+  // Marital status: the column holds the code; older rawData holds the form label.
+  const v = key === "maritalStatus" ? (app[key] ?? raw[key]) : (raw[key] ?? app[key]);
   if (v == null) return "";
   if (v instanceof Date) return v.toISOString().slice(0, 10);
   return String(v);

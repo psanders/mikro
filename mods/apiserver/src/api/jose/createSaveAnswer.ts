@@ -8,21 +8,44 @@
 import type { DbClient, NormalizedApplication } from "@mikro/common";
 import {
   APPLICATION_CONTENT_KEYS,
+  MARITAL_STATUSES,
   PHONE_FIELDS,
   applicationPayloadSchema,
   isDrPhone,
   normalizeApplication,
-  sortByFieldPriority
+  parseMaritalStatus
 } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { computeSimulatedIsc } from "./computeScore.js";
+import { missingFieldsOf } from "./missingFields.js";
 
 const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
 
 // Fields that must be valid phone numbers when provided. José re-asks on failure
 // instead of persisting a malformed number that an asesor cannot dial.
 const PHONE_KEYS = new Set<string>(PHONE_FIELDS);
+
+/**
+ * Placeholder answers ("N/A", "no tengo", "ninguno", "0000000000"): never a real
+ * value for any field. Saving one marks the field answered with nothing in it,
+ * so José is told to move on instead.
+ */
+const FILLER =
+  /^(n\/?a|no aplica|no tiene|no tengo.*|no hay|ningun[oa]?|nada|none|null|sin .*|-+|\.+|x+|0+)$/;
+
+function isFiller(value: string): boolean {
+  const key = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s.]+$/, "")
+    .trim();
+  return key === "" || FILLER.test(key);
+}
+
+const FILLER_REASON =
+  "No aplica: no lo guardes. Si no tiene ese dato, sigue con el siguiente campo.";
 
 export function createSaveAnswer(
   client: DbClient,
@@ -55,7 +78,24 @@ export function createSaveAnswer(
         invalid.push(key);
         continue;
       }
-      const strVal = String(val);
+      const strVal = String(val).trim();
+      if (key === "maritalStatus") {
+        const status = parseMaritalStatus(strVal);
+        if (!status) {
+          invalid.push(key);
+          invalidReasons[key] =
+            `Estado civil inválido; usa uno de: ${MARITAL_STATUSES.join(", ")}.`;
+          continue;
+        }
+        patch[key] = status;
+        saved.push(key);
+        continue;
+      }
+      if (isFiller(strVal)) {
+        invalid.push(key);
+        invalidReasons[key] = FILLER_REASON;
+        continue;
+      }
       if (PHONE_KEYS.has(key) && !isDrPhone(strVal)) {
         invalid.push(key);
         invalidReasons[key] = "Número de teléfono inválido; pide el número completo (10 dígitos).";
@@ -151,15 +191,12 @@ export function createSaveAnswer(
       const allMerged: Record<string, unknown> = {
         ...mergedApp,
         ...mergedRaw,
+        dateOfBirth: patch["dateOfBirth"] ?? existing?.dateOfBirth ?? mergedRaw["dateOfBirth"],
+        maritalStatus: mergedApp.maritalStatus,
         requestedAmount: mergedApp.requestedAmount,
         requestedTermWeeks: mergedApp.requestedTermWeeks
       };
-      const missingFields = sortByFieldPriority(
-        APPLICATION_CONTENT_KEYS.filter((key) => {
-          const val = allMerged[key];
-          return val === null || val === undefined || val === "";
-        })
-      );
+      const missingFields = missingFieldsOf(allMerged);
 
       // A submitted application whose form is now complete: José is done asking
       // (openspec jose-keep-gathering), so the applicant agent answers next.

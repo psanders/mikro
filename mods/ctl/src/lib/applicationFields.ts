@@ -38,7 +38,8 @@ export const applicationStableFlags = {
     required: false
   }),
   "marital-status": Flags.string({
-    description: "Marital status (free text, e.g. 'Casado(a)')",
+    description:
+      "Marital status: SOLTERO, CASADO, UNION_LIBRE, DIVORCIADO or VIUDO (form labels like 'Casado(a)' are accepted)",
     required: false
   }),
   "business-type": Flags.string({

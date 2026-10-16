@@ -4,7 +4,8 @@
  * Tool definitions for OpenAI function calling.
  * These define what tools the LLM can call and their parameters.
  */
-import type { ToolFunction } from "../llm/types.js";
+import { MARITAL_STATUSES } from "@mikro/common";
+import type { ToolFunction, ToolParameterSchema } from "../llm/types.js";
 
 /**
  * Tool definition for creating a new customer.
@@ -731,19 +732,61 @@ export const getApplicationStateTool: ToolFunction = {
   }
 };
 
+/** A Dominican phone: 10 digits with a 809/829/849 area code. */
+const DR_PHONE_PATTERN = "^(809|829|849)\\d{7}$";
+
+const text = (description: string): ToolParameterSchema => ({ type: "string", description });
+const phone = (description: string): ToolParameterSchema => ({
+  type: "string",
+  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234).`,
+  pattern: DR_PHONE_PATTERN
+});
+
 export const saveAnswerTool: ToolFunction = {
   type: "function",
   function: {
     name: "saveAnswer",
     description:
-      "Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo.",
+      'Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo. Nunca guardes valores de relleno ("N/A", "no tengo", "ninguno", "0000000000"): si el prospecto no tiene un dato, no lo guardes y sigue con el siguiente campo.',
     parameters: {
       type: "object",
       properties: {
         fields: {
           type: "object",
-          description:
-            "Objeto con pares campo:valor. Claves válidas: firstName, lastName, phone, idNumber, dateOfBirth, maritalStatus, businessType, businessName, requestedAmount, purpose, requestedTermWeeks, province, homeAddress, businessAge, monthlySales, locationType, formalization, employeeCount, businessPhone, spouseName, spousePhone, referenceName, referencePhone, housingType, residenceTime, addressReference"
+          description: "Pares campo:valor; solo los campos que el prospecto respondió.",
+          properties: {
+            firstName: text("Nombre"),
+            lastName: text("Apellido"),
+            phone: phone("Teléfono del prospecto"),
+            idNumber: text("Cédula"),
+            dateOfBirth: text("Fecha de nacimiento (AAAA-MM-DD)"),
+            maritalStatus: {
+              type: "string",
+              description:
+                "Estado civil: SOLTERO = soltero(a), CASADO = casado(a), UNION_LIBRE = unión libre, DIVORCIADO = divorciado(a), VIUDO = viudo(a). Solo CASADO y UNION_LIBRE tienen pareja.",
+              enum: [...MARITAL_STATUSES]
+            },
+            businessType: text("Tipo de negocio"),
+            businessName: text("Nombre del negocio"),
+            requestedAmount: text("Monto solicitado en pesos"),
+            purpose: text("Para qué es el préstamo"),
+            requestedTermWeeks: text("Plazo en semanas"),
+            province: text("Provincia del negocio"),
+            homeAddress: text("Dirección de la casa"),
+            businessAge: text("Tiempo operando el negocio"),
+            monthlySales: text("Ventas mensuales"),
+            locationType: text("Tipo de local"),
+            formalization: text("Formalización (RNC o informal)"),
+            employeeCount: text("Cantidad de empleados"),
+            businessPhone: phone("Teléfono del negocio"),
+            spouseName: text("Nombre de la pareja (solo CASADO o UNION_LIBRE)"),
+            spousePhone: phone("Teléfono de la pareja (solo CASADO o UNION_LIBRE)"),
+            referenceName: text("Nombre de la referencia personal"),
+            referencePhone: phone("Teléfono de la referencia personal"),
+            housingType: text("Tipo de vivienda"),
+            residenceTime: text("Tiempo residiendo"),
+            addressReference: text("Referencia de la dirección")
+          }
         }
       },
       required: ["fields"]
