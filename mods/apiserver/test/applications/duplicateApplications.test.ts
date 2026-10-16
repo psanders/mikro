@@ -393,6 +393,37 @@ describe("José finalize: one application per person (issue #302)", () => {
     expect(result.data).to.deep.include({ finalized: false, outcome: "in_process" });
   });
 
+  it("never re-rejects an out-of-area draft inside the cooldown (the 30 days don't restart)", async () => {
+    const findFirst = sinon.stub().resolves({
+      id: "app-j",
+      sessionId: CTX.sessionId,
+      status: "DRAFT",
+      phone: "+18095550000",
+      idNumber: CEDULA,
+      province: "SANTO_DOMINGO",
+      rawData: {}
+    });
+    const update = sinon.stub().resolves({});
+    const updateMany = sinon.stub().resolves({ count: 0 });
+    const findPriorApplication = sinon.stub().resolves({
+      kind: "cooldown",
+      applicationId: "a1",
+      reapplyFrom: new Date("2026-10-26T12:00:00Z"),
+      rejectionReason: "OUT_OF_COVERAGE_AREA"
+    });
+    const finalize = createFinalizeApplication(
+      { loanApplication: { findFirst, update }, followUpJob: { updateMany } } as any,
+      sinon.stub().resolves(undefined),
+      { coveredProvinces: ["PUERTO_PLATA"], findPriorApplication }
+    );
+
+    const result = await finalize({ outcome: "complete" }, CTX);
+
+    expect(update.calledOnce).to.be.true;
+    expect(update.firstCall.args[0].data).to.deep.equal({ status: "ABANDONED" });
+    expect(result.data).to.deep.include({ finalized: false, outcome: "cooldown" });
+  });
+
   it("submits as before when the person has no other application", async () => {
     const t = tool(null);
     const result = await t.finalize({ outcome: "complete" }, CTX);

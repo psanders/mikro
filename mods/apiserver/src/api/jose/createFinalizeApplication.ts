@@ -73,6 +73,52 @@ export function createFinalizeApplication(
         return { success: false, message: `Application not found: ${sessionId}` };
       }
 
+      // One application per person (issue #302): a draft from someone rejected
+      // less than 30 days ago, or who already has one in process, is not
+      // submitted. It is closed so it doesn't linger as a second application.
+      // Checked before the coverage area, so an out-of-area draft never adds a
+      // second rejection that would restart the 30 days.
+      const prior =
+        existing.status === "DRAFT" && outcome === "complete" && coverage.findPriorApplication
+          ? await coverage.findPriorApplication({
+              phone: existing.phone,
+              idNumber: existing.idNumber,
+              sessionId
+            })
+          : null;
+      if (prior?.kind === "cooldown" || prior?.kind === "in_process") {
+        await client.loanApplication.update({
+          where: { id: existing.id },
+          data: { status: "ABANDONED" }
+        });
+        createCancelApplicationJobs(client)(existing.id).catch((err: Error) => {
+          logger.error("jose finalizeApplication: failed to cancel follow-up jobs", {
+            sessionId,
+            error: err.message
+          });
+        });
+        logger.info("jose finalizeApplication: not submitted, person has another application", {
+          sessionId,
+          prior: prior.kind,
+          priorApplicationId: prior.applicationId
+        });
+        return prior.kind === "cooldown"
+          ? {
+              success: true,
+              message: "Solicitud no enviada: fue rechazada hace menos de 30 días",
+              data: {
+                finalized: false,
+                outcome: "cooldown",
+                reapplyDate: reapplyDateText(prior.reapplyFrom)
+              }
+            }
+          : {
+              success: true,
+              message: "Solicitud no enviada: ya tiene una solicitud en proceso",
+              data: { finalized: false, outcome: "in_process" }
+            };
+      }
+
       if (
         coverage.coveredProvinces &&
         OPEN_FOR_INTAKE.has(existing.status) &&
@@ -153,49 +199,6 @@ export function createFinalizeApplication(
           message: "Solicitud marcada como abandonada",
           data: { finalized: true, outcome: "abandoned" }
         };
-      }
-
-      // One application per person (issue #302): a draft from someone rejected
-      // less than 30 days ago, or who already has one in process, is not
-      // submitted. It is closed so it doesn't linger as a second application.
-      const prior = coverage.findPriorApplication
-        ? await coverage.findPriorApplication({
-            phone: existing.phone,
-            idNumber: existing.idNumber,
-            sessionId
-          })
-        : null;
-      if (prior?.kind === "cooldown" || prior?.kind === "in_process") {
-        await client.loanApplication.update({
-          where: { id: existing.id },
-          data: { status: "ABANDONED" }
-        });
-        createCancelApplicationJobs(client)(existing.id).catch((err: Error) => {
-          logger.error("jose finalizeApplication: failed to cancel follow-up jobs", {
-            sessionId,
-            error: err.message
-          });
-        });
-        logger.info("jose finalizeApplication: not submitted, person has another application", {
-          sessionId,
-          prior: prior.kind,
-          priorApplicationId: prior.applicationId
-        });
-        return prior.kind === "cooldown"
-          ? {
-              success: true,
-              message: "Solicitud no enviada: fue rechazada hace menos de 30 días",
-              data: {
-                finalized: false,
-                outcome: "cooldown",
-                reapplyDate: reapplyDateText(prior.reapplyFrom)
-              }
-            }
-          : {
-              success: true,
-              message: "Solicitud no enviada: ya tiene una solicitud en proceso",
-              data: { finalized: false, outcome: "in_process" }
-            };
       }
 
       const existingRaw = (existing.rawData as Record<string, unknown>) ?? {};
