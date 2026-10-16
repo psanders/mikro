@@ -22,6 +22,7 @@ import {
   getApplicationConversationSchema,
   listConversationTurnsSchema,
   deleteConversationSchema,
+  classifyConversationTurnsSchema,
   listConversationAuditFindingsSchema,
   // Loan schemas
   createLoanSchema,
@@ -125,7 +126,8 @@ import {
   createGetApplicationChatwootUrl,
   createListConversationTurns,
   createDeleteConversation,
-  createListConversationAuditFindings
+  createListConversationAuditFindings,
+  createClassifyConversationTurns
 } from "../../api/conversations/index.js";
 import { createChatwootClient } from "../../api/chatwoot/index.js";
 // Dashboard API functions
@@ -228,7 +230,8 @@ import {
   getWhatsAppPromoTemplate,
   getDeepgramApiKey,
   createChatModel,
-  getLLMConfig
+  getLLMConfig,
+  getDecisionProvider
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
@@ -540,6 +543,24 @@ export const protectedRouter = router({
     .input(deleteConversationSchema)
     .mutation(async ({ ctx, input }) => {
       return createDeleteConversation(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /**
+   * Label stored INBOUND turns with the decision-model classifier (openspec
+   * conversation-state): the backfill behind `mikro conversations:classify`.
+   * Labels only. `dryRun` reports without writing. ADMIN.
+   */
+  classifyConversationTurns: adminProcedure
+    .input(classifyConversationTurnsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const provider = getDecisionProvider();
+      if (!provider) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "No classifier configured: add the `classifier` section to mikro.json."
+        });
+      }
+      return createClassifyConversationTurns(ctx.db as unknown as PrismaClient, provider)(input);
     }),
 
   // ==================== Loan procedures ====================

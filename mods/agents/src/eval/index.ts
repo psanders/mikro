@@ -14,8 +14,8 @@ export {
 // Output formatters
 export { toJSON, toTable, printEval } from "./output.js";
 
-// Similarity judge
-export { similarityTest, compareArgs, type SimilarityResult } from "./similarityJudge.js";
+// Tool-argument judge (matchMode "judge")
+export { compareArgs } from "./argJudge.js";
 
 // Mock tool executor
 export {

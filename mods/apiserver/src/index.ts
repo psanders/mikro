@@ -61,6 +61,7 @@ import {
   createChatModel,
   getLLMConfig,
   getWhatsAppPromoTemplate,
+  getDecisionProvider,
   type Message,
   type Profile,
   type ToolExecutorDependencies,
@@ -76,7 +77,8 @@ import { createEchoToChatwoot, createNotifyChatwootHandoff } from "./api/chatwoo
 import {
   createRecordConversationTurn,
   createGetConversationHistory,
-  createRunConversationAudit
+  createRunConversationAudit,
+  createLabelInboundTurn
 } from "./api/conversations/index.js";
 import { createConversationAuditWorker } from "./audit/createConversationAuditWorker.js";
 
@@ -1086,6 +1088,7 @@ async function initializeMessageProcessor() {
       return response;
     };
 
+    const decisionProvider = getDecisionProvider();
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -1098,6 +1101,10 @@ async function initializeMessageProcessor() {
       // turn is written here, and the agents' memory is read back from it.
       recordConversationTurn: createRecordConversationTurn(prisma),
       getConversationHistory: createGetConversationHistory(prisma),
+      // Decision-model labels on inbound CX turns; off without a `classifier` config.
+      ...(decisionProvider && {
+        labelInboundTurn: createLabelInboundTurn(prisma, decisionProvider)
+      }),
       getAgentForProfile,
       submitApplicationFromFlow,
       // Apply async delivery receipts (sent/delivered/read/failed) to the tracked

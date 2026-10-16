@@ -9,6 +9,7 @@ import { writeFileSync, unlinkSync, existsSync } from "fs";
 import { resolve } from "path";
 import { clearConfigCache, getConfig } from "@mikro/common";
 import { loadAgents } from "../../src/agents/index.js";
+import { assertJudged } from "../../src/eval/runner.js";
 
 const REPO_AGENTS = resolve(process.cwd(), "../../agents.yaml");
 const CONFIG_PATH = resolve(process.cwd(), "mikro-test-agents-load.json");
@@ -48,6 +49,18 @@ describe("loadAgents — CX profiles", () => {
       expect(agent!.allowedTools).to.include("requestHumanHandoff");
     }
     expect(agents.get("PROSPECT")!.allowedTools).to.include("requestHumanHandoff");
+  });
+
+  it("judges every eval turn of the tracked agents.yaml by checks (openspec decision-judges)", () => {
+    useAgentsFile(REPO_AGENTS);
+    let scenarios = 0;
+    for (const agent of loadAgents().values()) {
+      for (const scenario of agent.evaluations?.scenarios ?? []) {
+        scenarios += 1;
+        expect(() => assertJudged(scenario), agent.name).to.not.throw();
+      }
+    }
+    expect(scenarios).to.be.greaterThan(0);
   });
 
   it("still rejects two agents claiming the same profile", () => {

@@ -209,12 +209,14 @@ export interface ConversationTurn {
   human?: string;
   /** Optional image as URL or base64 data URL (e.g., "data:image/jpeg;base64,...") */
   image?: string;
-  /** Expected AI response */
-  expectedAI: string;
   /** Optional tool calls expected in this turn */
   tools?: ExpectedToolCall[];
-  /** Skip response similarity check for this turn (tools check still runs). Use when pre-tool text is non-deterministic. */
-  skipResponseCheck?: boolean;
+  /**
+   * Rubric checks: Spanish yes/no questions about the reply with the expected
+   * answer, judged by the decision model (openspec decision-judges). They
+   * decide the reply part of the turn; every turn needs at least one.
+   */
+  checks: Array<{ id: string; question: string; expect: boolean }>;
 }
 
 /**

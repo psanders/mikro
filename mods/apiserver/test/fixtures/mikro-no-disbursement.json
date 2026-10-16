@@ -42,7 +42,6 @@
     "deepgramApiKey": ""
   },
   "evals": {
-    "similarityThreshold": 0.7,
     "vendors": {}
   },
   "applications": {

@@ -29,3 +29,12 @@ export {
   type ConversationAuditFindingView,
   type ConversationAuditDetail
 } from "./audit.js";
+export {
+  createClassifyConversationTurns,
+  createLabelInboundTurn,
+  labelColumns,
+  toClassifierTurn,
+  isMediaTurn,
+  type ClassifiedTurn,
+  type ClassifyTurnsResult
+} from "./classifyTurns.js";

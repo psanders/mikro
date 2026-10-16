@@ -152,10 +152,3 @@ export function getDeepgramApiKey(): string | undefined {
   const key = getConfig().voiceNotes.deepgramApiKey;
   return key && key.trim().length > 0 ? key.trim() : undefined;
 }
-
-/**
- * Get the similarity confidence threshold for eval judge (0-1).
- */
-export function getEvalSimilarityThreshold(): number {
-  return getConfig().evals.similarityThreshold;
-}

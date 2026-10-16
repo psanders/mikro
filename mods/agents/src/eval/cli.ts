@@ -17,8 +17,33 @@ loadDotenv({ path: resolve(__dirname, "../../../../.env") });
 import { getConfig, type LLMConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../agents/index.js";
-import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
-import { runAgentEval, runScenario, type EvalResults, type ScenarioResult } from "./runner.js";
+import { clearLLMConfigCache, getLLMConfig } from "../config.js";
+import {
+  runAgentEval,
+  runScenario,
+  type EvalResults,
+  type EvalRunOptions,
+  type ScenarioResult
+} from "./runner.js";
+import { getDecisionProvider } from "../decisions/index.js";
+
+/**
+ * Replies are judged by each turn's rubric checks, answered by the decision
+ * model (the `classifier` in mikro.json). Without one there is no judge.
+ */
+function checkOptions(): EvalRunOptions {
+  const decisions = getDecisionProvider();
+  if (!decisions) {
+    console.error(
+      "Evals judge replies with rubric checks answered by a decision model: add the `classifier` section to mikro.json."
+    );
+    process.exit(1);
+  }
+  return {
+    decisions,
+    stats: { decisionCalls: 0, decisionInputTokens: 0, decisionLatencyMs: 0, llmCalls: 0 }
+  };
+}
 import {
   toJSON,
   printScenarioStart,
@@ -80,21 +105,23 @@ function printUsage() {
 Usage: npm run agents:eval [options] [agent] [scenario]
 
 Config is read from mikro.json (default: project root). Use MIKRO_CONFIG_FILE in
-.env to point to a different path. Judge model: llm.evals.
+.env to point to a different path. Each turn's rubric checks are answered by
+the classifier (decision model); llm.evals settles unsure answers and explains
+failures.
 
 Options:
   --vendors <list>  Run scenarios for each vendor. Agent models come from
                     evals.vendors.<vendor>.text/vision (openai falls back to llm.text/vision).
-                    Judge always uses llm.evals.
+                    The judges stay the same.
 
 Arguments:
   agent     - Optional. Agent name (e.g. jose, collector)
   scenario  - Optional. Single scenario id (use with agent)
 
 Config (mikro.json):
-  llm.evals                 Judge model
-  evals.similarityThreshold  Min confidence for "similar" (default 0.7)
-  evals.vendors.<vendor>     Optional per-vendor text/vision overrides
+  classifier                Decision model that answers the checks (required)
+  llm.evals                 LLM for unsure answers and failure reasons
+  evals.vendors.<vendor>    Optional per-vendor text/vision overrides
 
 Examples:
   npm run agents:eval jose happy-path-short-isc50
@@ -105,7 +132,7 @@ Examples:
 }
 
 /**
- * Run evals using current config: llm.text/vision for the agent, llm.evals for the judge.
+ * Run evals using current config: llm.text/vision for the agent; the classifier and llm.evals judge.
  */
 async function runEvalsForCurrentConfig(
   agentsToEval: Agent[],
@@ -113,6 +140,7 @@ async function runEvalsForCurrentConfig(
 ): Promise<{ results: EvalResults[]; hasFailures: boolean }> {
   const allResults: EvalResults[] = [];
   let hasFailures = false;
+  const options = checkOptions();
 
   for (const agent of agentsToEval) {
     console.log(`\n=== Evaluating Agent: ${agent.name} ===`);
@@ -123,9 +151,15 @@ async function runEvalsForCurrentConfig(
       if (!scenario) continue;
       const context = agent.evaluations.context;
       printScenarioStart(agent.name, 1, scenario);
-      const scenarioResult: ScenarioResult = await runScenario(agent, scenario, context, {
-        onTurnResult: (turnResult) => printTurnResult(agent.name, scenario, turnResult)
-      });
+      const scenarioResult: ScenarioResult = await runScenario(
+        agent,
+        scenario,
+        context,
+        {
+          onTurnResult: (turnResult) => printTurnResult(agent.name, scenario, turnResult)
+        },
+        options
+      );
       printScenarioResult(scenarioResult);
       results = {
         agentName: agent.name,
@@ -140,11 +174,15 @@ async function runEvalsForCurrentConfig(
         }
       };
     } else {
-      results = await runAgentEval(agent, {
-        onScenarioStart: (idx, scenario) => printScenarioStart(agent.name, idx, scenario),
-        onTurnResult: (scenario, turnResult) => printTurnResult(agent.name, scenario, turnResult),
-        onScenarioResult: printScenarioResult
-      });
+      results = await runAgentEval(
+        agent,
+        {
+          onScenarioStart: (idx, scenario) => printScenarioStart(agent.name, idx, scenario),
+          onTurnResult: (scenario, turnResult) => printTurnResult(agent.name, scenario, turnResult),
+          onScenarioResult: printScenarioResult
+        },
+        options
+      );
     }
 
     allResults.push(results);
@@ -152,6 +190,14 @@ async function runEvalsForCurrentConfig(
     if (results.summary.failedScenarios > 0 || results.summary.failedTurns > 0) {
       hasFailures = true;
     }
+  }
+
+  const { stats } = options;
+  if (stats && (stats.decisionCalls > 0 || stats.llmCalls > 0)) {
+    const avg = stats.decisionCalls ? Math.round(stats.decisionLatencyMs / stats.decisionCalls) : 0;
+    console.log(
+      `\nRubric checks: ${stats.decisionCalls} decision calls (${stats.decisionInputTokens} input tokens, ${avg} ms avg), ${stats.llmCalls} LLM calls`
+    );
   }
 
   return { results: allResults, hasFailures };
@@ -170,9 +216,9 @@ async function main() {
     // Log judge config
     try {
       const evalsConfig = getLLMConfig("evals");
-      const threshold = getEvalSimilarityThreshold();
+      const classifier = getConfig().classifier;
       console.log(
-        `Judge: ${evalsConfig.vendor}/${evalsConfig.model} (similarity threshold: ${threshold})`
+        `Judge: checks by ${classifier ? `${classifier.provider}/${classifier.model}` : "(no classifier)"}, LLM ${evalsConfig.vendor}/${evalsConfig.model}`
       );
     } catch {
       // evals not configured yet

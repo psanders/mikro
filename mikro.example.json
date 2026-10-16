@@ -62,7 +62,6 @@
     "minBusinessPhotos": 3
   },
   "evals": {
-    "similarityThreshold": 0.7,
     "vendors": {
       "openai": { "text": null, "vision": null },
       "anthropic": { "text": null, "vision": null },
@@ -132,6 +131,11 @@
     "enabled": false,
     "schedule": "0 7 * * *",
     "maxConversations": 200
+  },
+  "classifier": {
+    "provider": "openai-decisions",
+    "apiKey": "your-openai-api-key",
+    "model": "gpt-6-luna"
   },
   "githubFeedback": {
     "token": "",

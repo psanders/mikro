@@ -98,6 +98,12 @@ export interface MessageProcessorDependencies {
   recordConversationTurn: (turn: ConversationTurnRecord) => Promise<{ id: string }>;
   /** A CX agent's memory for a phone, oldest first, read from the transcript. */
   getConversationHistory: (query: ConversationHistoryQuery) => Promise<Message[]>;
+  /**
+   * Label a stored inbound turn with the decision-model classifier (openspec
+   * conversation-state). Labels only, best-effort and never awaited by the
+   * reply path; absent when no classifier is configured.
+   */
+  labelInboundTurn?: (turnId: string) => Promise<void>;
   /** Resolve the agent assigned to a profile (undefined when none is assigned). */
   getAgentForProfile: (profile: Profile) => Agent | undefined;
   /** Send an approved WhatsApp template message (used by the collector promo flow). */
@@ -821,6 +827,15 @@ async function processMessage(
         hasImage: !!image?.id,
         waMessageId: id
       });
+      // Labels only: runs beside the reply and never delays or changes it.
+      const label = messageProcessor.labelInboundTurn;
+      if (label) {
+        void inbound
+          .then((turnId) => (turnId ? label(turnId) : undefined))
+          .catch((error: Error) =>
+            logger.warn("failed to label inbound turn", { phone, error: error.message })
+          );
+      }
     }
 
     if (voiceNotice !== null) {

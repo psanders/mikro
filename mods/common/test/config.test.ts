@@ -234,3 +234,61 @@ describe("mikroConfigSchema — twilio", () => {
     expect(parsed.success).to.equal(false);
   });
 });
+
+describe("mikroConfigSchema — classifier (openspec conversation-state)", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
+  };
+
+  it("is optional: a config without it parses and has no classifier", () => {
+    const parsed = mikroConfigSchema.safeParse(base);
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.classifier).to.equal(undefined);
+  });
+
+  it("accepts the OpenAI Decisions provider and defaults its model", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      classifier: { provider: "openai-decisions", apiKey: "k" }
+    });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.classifier).to.deep.include({ model: "gpt-6-luna" });
+  });
+
+  it("accepts a chat model as the decision provider", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      classifier: { provider: "chat", vendor: "openai", apiKey: "k", model: "gpt-4o-mini" }
+    });
+    expect(parsed.success).to.equal(true);
+  });
+
+  it("rejects unknown providers and unknown keys", () => {
+    expect(
+      mikroConfigSchema.safeParse({ ...base, classifier: { provider: "jev", apiKey: "k" } }).success
+    ).to.equal(false);
+    expect(
+      mikroConfigSchema.safeParse({
+        ...base,
+        classifier: { provider: "openai-decisions", apiKey: "k", threshold: 0.5 }
+      }).success
+    ).to.equal(false);
+  });
+});
+
+describe("mikroConfigSchema — evals", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
+  };
+
+  it("still boots with the removed evals.similarityThreshold, dropping it", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      evals: { similarityThreshold: 0.7, vendors: {} }
+    });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.evals).to.deep.equal({ vendors: {} });
+  });
+});
