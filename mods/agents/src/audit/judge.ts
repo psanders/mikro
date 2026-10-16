@@ -78,7 +78,7 @@ export function createJudgeConversation(): JudgeConversation {
     const result = await structured.invoke([
       new SystemMessage(SYSTEM_PROMPT),
       new HumanMessage(
-        `Agente: ${agent.name}\n\nReglas:\n${formatPolicies(agent.policies)}\n\nConversación:\n${formatTranscript(conversation)}`
+        `Agente: ${agent.name}. Evalúa solo los mensajes de AGENTE ${agent.name}; los de otros agentes son contexto.\n\nReglas:\n${formatPolicies(agent.policies)}\n\nConversación:\n${formatTranscript(conversation)}`
       )
     ]);
     const known = new Set(agent.policies.map((p) => p.id));

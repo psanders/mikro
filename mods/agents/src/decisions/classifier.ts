@@ -79,7 +79,7 @@ export const CLASSIFIER_QUESTIONS: DecisionQuestion[] = [
     type: "predicate",
     name: "settled",
     instructions:
-      "El último mensaje del AGENTE dejó el asunto resuelto: se despidió, confirmó algo o informó, y no hizo ninguna pregunta ni espera respuesta."
+      "El último mensaje del AGENTE ya resolvió lo que la persona necesitaba o cerró el tema (se despidió, confirmó, informó o dijo que una persona le responderá). Una pregunta de cortesía como '¿Hay algo más en lo que pueda ayudarte?' o '¿En qué puedo ayudarte?' NO cuenta como pregunta pendiente."
   },
   {
     type: "predicate",

@@ -58,6 +58,7 @@ import {
   getAgentByProfile,
   createJudgeConversation,
   createDecisionScreenJudge,
+  createCheckLlmJudge,
   createWriteAuditStatus,
   createChatModel,
   getLLMConfig,
@@ -551,7 +552,8 @@ async function initializeMessageProcessor() {
       judge: auditDecisions
         ? createDecisionScreenJudge({
             decisions: auditDecisions,
-            confirm: createJudgeConversation()
+            confirmTurn: createCheckLlmJudge(),
+            conversationJudge: createJudgeConversation()
           })
         : createJudgeConversation(),
       writeStatus: createWriteAuditStatus(),

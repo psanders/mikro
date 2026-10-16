@@ -7,6 +7,7 @@ export {
   createDecisionScreenJudge,
   newScreenStats,
   screenInput,
+  policyQuestion,
   SCREEN_CONTEXT_TURNS,
   type DecisionScreenDeps,
   type ScreenStats,

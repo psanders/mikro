@@ -14,6 +14,7 @@ export { createOpenAIDecisionsProvider } from "./openaiDecisions.js";
 export { createChatDecisionProvider } from "./chatDecisions.js";
 export * from "./verdict.js";
 export * from "./classifier.js";
+export { createCheckLlmJudge, type CheckLlmJudge } from "./llmCheck.js";
 
 /** A provider from a `classifier` config section. */
 export function createDecisionProvider(config: ClassifierConfig): DecisionProvider {

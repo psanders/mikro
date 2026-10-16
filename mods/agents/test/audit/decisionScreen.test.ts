@@ -8,7 +8,11 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { CONVERSATION_CHECKS, replySimilarity } from "../../src/audit/checks.js";
-import { createDecisionScreenJudge, newScreenStats } from "../../src/audit/screen.js";
+import {
+  createDecisionScreenJudge,
+  newScreenStats,
+  policyQuestion
+} from "../../src/audit/screen.js";
 import type { AuditConversation, AuditTurn } from "../../src/audit/types.js";
 import type { DecisionProvider } from "../../src/decisions/index.js";
 
@@ -118,7 +122,13 @@ describe("audit code checks (decision-judges)", () => {
 describe("decision screen judge", () => {
   const policies = [
     { id: "no_fechas", rule: "No da fechas ni plazos.", severity: "critical" as const },
-    { id: "no_puntaje", rule: "No revela el puntaje.", severity: "critical" as const }
+    { id: "no_puntaje", rule: "No revela el puntaje.", severity: "critical" as const },
+    {
+      id: "no_inventar",
+      rule: "No inventa información.",
+      severity: "warning" as const,
+      screen: false
+    }
   ];
   const conversation = convo([
     turn("INBOUND", "¿cuándo me dan el dinero?", 0),
@@ -129,14 +139,17 @@ describe("decision screen judge", () => {
 
   function provider(
     byTurn: Array<Record<string, number>>
-  ): DecisionProvider & { inputs: string[] } {
+  ): DecisionProvider & { inputs: string[]; names: string[][] } {
     const inputs: string[] = [];
+    const names: string[][] = [];
     return {
       id: "stub",
       inputs,
+      names,
       async ask(input, questions) {
         const probs = byTurn[inputs.length] ?? {};
         inputs.push(input);
+        names.push(questions.map((q) => q.name));
         return {
           answers: questions.map((q) => ({
             type: "predicate" as const,
@@ -152,20 +165,25 @@ describe("decision screen judge", () => {
     };
   }
 
-  it("screens each agent turn once and skips the LLM when nothing is flagged", async () => {
+  it("screens each agent turn once, skips unscreened rules, and calls no LLM when clean", async () => {
     const decisions = provider([{}, {}]);
-    const confirm = sinon.stub().resolves([]);
+    const confirmTurn = sinon.stub();
+    const conversationJudge = sinon.stub().resolves([]);
     const stats = newScreenStats();
-    const verdicts = await createDecisionScreenJudge({ decisions, confirm, stats })(conversation, {
-      name: "sofia",
-      policies
-    });
+    const verdicts = await createDecisionScreenJudge({
+      decisions,
+      confirmTurn,
+      conversationJudge,
+      stats
+    })(conversation, { name: "sofia", policies });
     expect(verdicts).to.deep.equal([]);
     expect(decisions.inputs).to.have.length(2);
+    expect(decisions.names[0]).to.deep.equal(["no_fechas", "no_puntaje"]);
     expect(decisions.inputs[1]).to.contain(
       "MENSAJE DEL AGENTE A REVISAR: Te desembolsamos el viernes."
     );
-    expect(confirm.called).to.equal(false);
+    expect(confirmTurn.called).to.equal(false);
+    expect(conversationJudge.called).to.equal(false);
     expect(stats).to.deep.include({
       turnsScreened: 2,
       decisionCalls: 2,
@@ -174,36 +192,57 @@ describe("decision screen judge", () => {
     });
   });
 
-  it("sends only the flagged policies to the LLM judge", async () => {
+  it("asks what the rule forbids, not whether it is broken (no double negative)", () => {
+    expect(policyQuestion({ rule: "No da fechas." })).to.contain("hace lo que esta regla prohíbe");
+  });
+
+  it("confirms a flagged turn with one focused question and cites the turn", async () => {
     const decisions = provider([{}, { no_fechas: 0.93 }]);
-    const verdict = {
-      policyId: "no_fechas",
-      pass: false,
-      turnId: 4,
-      evidence: "el viernes",
-      reason: "Da una fecha."
-    };
-    const confirm = sinon.stub().resolves([verdict]);
+    const confirmTurn = sinon
+      .stub()
+      .resolves({ answer: true, reason: "Da una fecha de desembolso." });
+    const conversationJudge = sinon.stub().resolves([]);
     const flags: unknown[] = [];
     const verdicts = await createDecisionScreenJudge({
       decisions,
-      confirm,
+      confirmTurn,
+      conversationJudge,
       onFlag: (f) => flags.push(f)
     })(conversation, { name: "sofia", policies });
-    expect(verdicts).to.deep.equal([verdict]);
-    expect(confirm.firstCall.args[1].policies.map((p: { id: string }) => p.id)).to.deep.equal([
-      "no_fechas"
+    expect(verdicts).to.deep.equal([
+      {
+        policyId: "no_fechas",
+        pass: false,
+        turnId: conversation.turns[3]!.id,
+        evidence: "Te desembolsamos el viernes.",
+        reason: "Da una fecha de desembolso."
+      }
     ]);
+    expect(confirmTurn.firstCall.args[1]).to.contain("No da fechas ni plazos.");
     expect(flags).to.have.length(1);
+    // Escalated: the unscreened rule is graded over the whole conversation.
+    expect(
+      conversationJudge.firstCall.args[1].policies.map((p: { id: string }) => p.id)
+    ).to.deep.equal(["no_inventar"]);
   });
 
-  it("an unsure answer is flagged too", async () => {
-    const decisions = provider([{ no_puntaje: 0.4 }, {}]);
-    const confirm = sinon.stub().resolves([]);
-    await createDecisionScreenJudge({ decisions, confirm })(conversation, {
+  it("drops a flag the focused LLM rejects", async () => {
+    const decisions = provider([{ no_puntaje: 0.8 }, {}]);
+    const confirmTurn = sinon.stub().resolves({ answer: false, reason: "No menciona un puntaje." });
+    const verdicts = await createDecisionScreenJudge({ decisions, confirmTurn })(conversation, {
       name: "sofia",
       policies
     });
-    expect(confirm.calledOnce).to.equal(true);
+    expect(verdicts).to.deep.equal([]);
+  });
+
+  it("grades a turn only against the rules of the agent that wrote it", async () => {
+    const decisions = provider([]);
+    const other = convo([turn("AGENT", "Envíame tu cédula.", 0, { agentName: "sofia" })]);
+    await createDecisionScreenJudge({ decisions, confirmTurn: sinon.stub() })(other, {
+      name: "lucia",
+      policies
+    });
+    expect(decisions.inputs).to.have.length(0);
   });
 });
