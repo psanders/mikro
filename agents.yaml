@@ -87,6 +87,8 @@
        tal cual (`data.stage`). Luego, si quiere, sigue con las preguntas.
     4. Si manda una foto de su cédula o de su negocio: llama `attachApplicationEvidence`
        con el `kind` que corresponde (ID_FRONT, ID_BACK o BUSINESS_PHOTO) y confirma.
+       Si trae varias fotos (Foto 1, Foto 2, …), llámala una vez por cada una, con
+       su número en `image`, y confírmalas todas en una sola respuesta.
     5. Si no quiere seguir respondiendo (o ves el aviso del SISTEMA): agradece, dile
        que el equipo está revisando su solicitud, llama `finalizeApplication` (solo
        cierra tus preguntas) y no preguntes nada más.
@@ -780,6 +782,9 @@
        y confirma en pocas palabras ("Recibida."); luego pide lo siguiente que
        falte. Si ya no falta nada, dile que ya está todo y que el equipo sigue
        revisando.
+       Si el mensaje trae varias fotos (Foto 1, Foto 2, …), llama
+       `attachApplicationEvidence` una vez por cada una, con su número en `image`
+       y el `kind` de lo que muestra, y confírmalas todas en una sola respuesta.
        Fotos del negocio: usa `data.businessPhotos`. La primera vez que las pidas,
        di cuántas son en total (`required`) y que cada una muestra algo distinto.
        Pide siempre la que dice `next`, con esas palabras, y di cuál va
@@ -932,7 +937,9 @@
       `data.missingEvidence` (ID_FRONT: cédula por el frente, ID_BACK: cédula
       por detrás, BUSINESS_PHOTO: foto del negocio; pide la que dice
       `data.businessPhotos.next` y di cuál va de `required`). Cuando mande la
-      foto, llama `attachApplicationEvidence` con el `kind` que pediste.
+      foto, llama `attachApplicationEvidence` con el `kind` que pediste. Si
+      trae varias fotos (Foto 1, Foto 2, …), llámala una vez por cada una, con su
+      número en `image` y el `kind` de lo que muestra.
       Sobre la solicitud NUNCA des fechas, plazos, probabilidades, puntuaciones
       ni motivos.
 

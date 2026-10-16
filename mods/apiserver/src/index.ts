@@ -63,7 +63,8 @@ import {
   getWhatsAppPromoTemplate,
   type Message,
   type Profile,
-  type ToolExecutorDependencies
+  type ToolExecutorDependencies,
+  type TurnImages
 } from "@mikro/agents";
 import { setCopilotDeps } from "./api/copilot/index.js";
 import { createTaskWorker } from "./tasks/index.js";
@@ -958,7 +959,7 @@ async function initializeMessageProcessor() {
       agent: Parameters<typeof createInvokeLLM>[0],
       messages: Message[],
       userMessage: string,
-      imageUrl?: string | null,
+      images?: TurnImages,
       context?: Record<string, unknown>,
       isNewSession?: boolean
     ) => {
@@ -970,7 +971,7 @@ async function initializeMessageProcessor() {
           }
         }
       });
-      return invokeFn(messages, userMessage, imageUrl, context, isNewSession ?? true);
+      return invokeFn(messages, userMessage, images, context, isNewSession ?? true);
     };
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)

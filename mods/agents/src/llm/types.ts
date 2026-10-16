@@ -69,6 +69,30 @@ export interface MessageContentItem {
 }
 
 /**
+ * The photos of one turn, as base64 data URLs: one, several (a burst of photos
+ * answered together), or none.
+ */
+export type TurnImages = string | readonly string[] | null | undefined;
+
+/** A turn's photos as a list, empty when it has none. */
+export function imageList(images: TurnImages): string[] {
+  if (!images) return [];
+  return typeof images === "string" ? [images] : images.filter(Boolean);
+}
+
+/**
+ * Where tools read a turn's photos from: all of them as `imageDataUrls`, and
+ * the first as `imageDataUrl` too (the single-photo key tools always read).
+ */
+export function photoContext(images: TurnImages): {
+  imageDataUrl?: string;
+  imageDataUrls?: string[];
+} {
+  const list = imageList(images);
+  return list.length > 0 ? { imageDataUrl: list[0], imageDataUrls: list } : {};
+}
+
+/**
  * Message in conversation history.
  * Content can be a string or array for multimodal messages.
  */

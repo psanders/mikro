@@ -285,7 +285,8 @@ describe("handleProspectMessage after submission (enrichment)", () => {
 
   it("passes the turn's image so José can take the applicant's documents", async () => {
     const call = await run("mi cédula", exchange(true), { imageUrl: "data:image/png;base64,AAA" });
-    expect(call.args[3]).to.equal("data:image/png;base64,AAA");
+    expect(call.args[3]).to.deep.equal(["data:image/png;base64,AAA"]);
     expect(call.args[4]).to.include({ imageDataUrl: "data:image/png;base64,AAA" });
+    expect(call.args[4].imageDataUrls).to.deep.equal(["data:image/png;base64,AAA"]);
   });
 });

@@ -46,7 +46,7 @@ function textWebhook(body: string) {
   };
 }
 
-function imageWebhook() {
+function imageWebhook(mediaId = "media-1", caption: string | undefined = "mi negocio") {
   return {
     object: "whatsapp_business_account",
     entry: [
@@ -60,7 +60,7 @@ function imageWebhook() {
                   type: "image",
                   id: `cx-${++seq}`,
                   timestamp: recentTs(),
-                  image: { id: "media-1", caption: "mi negocio" }
+                  image: { id: mediaId, ...(caption ? { caption } : {}) }
                 }
               ]
             }
@@ -305,6 +305,8 @@ describe("WhatsApp CX routes", () => {
 
       const ctx = p.invokeLLM.firstCall.args[4];
       expect(ctx.imageDataUrl).to.equal("data:image/jpeg;base64,/9j/4AAQ");
+      expect(ctx.imageDataUrls).to.deep.equal(["data:image/jpeg;base64,/9j/4AAQ"]);
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal(["data:image/jpeg;base64,/9j/4AAQ"]);
     });
   });
 
@@ -776,16 +778,142 @@ describe("WhatsApp CX routes", () => {
       expect(p.invokeLLM.calledTwice).to.be.true;
     });
 
-    it("always answers an image, even when another message follows", async () => {
-      setBurstWindowMsForTesting(30);
-      const p = setup(applicantRoute);
+    const photoOf = (mediaId: string) => `data:image/jpeg;base64,${mediaId}`;
+    const photoDownloads = () =>
+      sinon.stub().callsFake(async (mediaId: string) => photoOf(mediaId));
 
-      const photo = handleWhatsAppMessage(imageWebhook());
+    it("answers two photos sent together once, with both photos", async () => {
+      setBurstWindowMsForTesting(30);
+      const p = setup(applicantRoute, { downloadMedia: photoDownloads() });
+
+      const front = handleWhatsAppMessage(imageWebhook("front", undefined));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await Promise.all([front, handleWhatsAppMessage(imageWebhook("back", undefined))]);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      const photos = [photoOf("front"), photoOf("back")];
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal(photos);
+      expect(p.invokeLLM.firstCall.args[4].imageDataUrls).to.deep.equal(photos);
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+      // Each photo is still its own turn in the transcript.
+      expect(p.turns.filter((t) => t.role === "INBOUND" && t.hasImage)).to.have.length(2);
+    });
+
+    it("answers a photo and the text after it once, with the photo", async () => {
+      setBurstWindowMsForTesting(30);
+      const p = setup(applicantRoute, { downloadMedia: photoDownloads() });
+
+      const photo = handleWhatsAppMessage(imageWebhook("cedula", undefined));
       await new Promise((resolve) => setTimeout(resolve, 5));
       await Promise.all([photo, handleWhatsAppMessage(textWebhook("ahí va"))]);
 
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[2]).to.equal("ahí va");
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal([photoOf("cedula")]);
+    });
+
+    it("answers two photos in one delivery once, with both photos", async () => {
+      const p = setup(applicantRoute, { downloadMedia: photoDownloads() });
+      const a = imageWebhook("front", undefined);
+      const b = imageWebhook("back", undefined);
+      a.entry[0].changes[0].value.messages.push(b.entry[0].changes[0].value.messages[0]);
+
+      await handleWhatsAppMessage(a);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal([photoOf("front"), photoOf("back")]);
+    });
+
+    it("answers a slow photo itself when the burst was already answered", async () => {
+      setBurstWindowMsForTesting(20);
+      let release: () => void = () => {};
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const downloadMedia = sinon.stub().callsFake(async (mediaId: string) => {
+        if (mediaId === "slow") await gate;
+        return photoOf(mediaId);
+      });
+      const p = setup(applicantRoute, { downloadMedia });
+
+      const slow = handleWhatsAppMessage(imageWebhook("slow", undefined));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await handleWhatsAppMessage(textWebhook("¿la recibieron?"));
+      release();
+      await slow;
+
       expect(p.invokeLLM.calledTwice).to.be.true;
-      expect(p.invokeLLM.firstCall.args[4]).to.have.property("imageDataUrl");
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal([]);
+      expect(p.invokeLLM.secondCall.args[3]).to.deep.equal([photoOf("slow")]);
+    });
+
+    it("answers a photo the next message in its delivery didn't take", async () => {
+      // The voice note after it can't be transcribed: it gets the notice and
+      // ends early. The photo must still be answered, not held forever.
+      const p = setup(applicantRoute, { downloadMedia: photoDownloads() });
+      const a = imageWebhook("cedula", undefined);
+      a.entry[0].changes[0].value.messages.push(
+        voiceWebhook().entry[0].changes[0].value.messages[0] as never
+      );
+
+      await handleWhatsAppMessage(a);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal([photoOf("cedula")]);
+      // The voice notice, then the agent's reply about the photo.
+      expect(p.sendWhatsAppMessage.calledTwice).to.be.true;
+    });
+
+    it("answers a photo the next message in its delivery didn't take (duplicate)", async () => {
+      const p = setup(applicantRoute, { downloadMedia: photoDownloads() });
+      // "Hola" was already processed in an earlier delivery: Meta redelivers it.
+      const earlier = textWebhook("Hola");
+      await handleWhatsAppMessage(earlier);
+      p.invokeLLM.resetHistory();
+      const a = imageWebhook("cedula", undefined);
+      a.entry[0].changes[0].value.messages.push(earlier.entry[0].changes[0].value.messages[0]);
+
+      await handleWhatsAppMessage(a);
+
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.invokeLLM.firstCall.args[3]).to.deep.equal([photoOf("cedula")]);
+    });
+
+    it("answers a slow photo only after the reply already running", async () => {
+      setBurstWindowMsForTesting(20);
+      let releaseDownload: () => void = () => {};
+      const downloadGate = new Promise<void>((resolve) => (releaseDownload = resolve));
+      let releaseReply: () => void = () => {};
+      const replyGate = new Promise<void>((resolve) => (releaseReply = resolve));
+      const order: string[] = [];
+      const downloadMedia = sinon.stub().callsFake(async (mediaId: string) => {
+        if (mediaId === "slow") await downloadGate;
+        return photoOf(mediaId);
+      });
+      const invokeLLM = sinon.stub().callsFake(async (_agent, _history, message: string) => {
+        order.push(`start:${message || "photo"}`);
+        if (message) await replyGate;
+        order.push(`end:${message || "photo"}`);
+        return { text: "respuesta", toolsExecuted: [] };
+      });
+      const p = setup(applicantRoute, { downloadMedia, invokeLLM });
+
+      const slow = handleWhatsAppMessage(imageWebhook("slow", undefined));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const text = handleWhatsAppMessage(textWebhook("¿la recibieron?"));
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      // The text's reply is running; the photo finishes downloading now.
+      releaseDownload();
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      expect(order).to.deep.equal(["start:¿la recibieron?"]);
+      releaseReply();
+      await Promise.all([slow, text]);
+
+      expect(p.invokeLLM.calledTwice).to.be.true;
+      expect(order).to.deep.equal([
+        "start:¿la recibieron?",
+        "end:¿la recibieron?",
+        "start:photo",
+        "end:photo"
+      ]);
     });
 
     it("answers only the last text of a sender within one delivery", async () => {
