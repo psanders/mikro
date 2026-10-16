@@ -3,7 +3,7 @@
  *
  * The audit's rules judge: reads one stored conversation and grades it
  * against the serving agent's `policies` from agents.yaml. Same plumbing as
- * the eval similarity judge (evals LLM, low temperature, structured output).
+ * the eval check judge (evals LLM, low temperature, structured output).
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";

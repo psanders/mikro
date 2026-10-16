@@ -10,6 +10,7 @@
  */
 import { verdictOf, type DecisionProvider, type DecisionResult } from "../decisions/index.js";
 import { createCheckLlmJudge, type CheckLlmJudge } from "../decisions/llmCheck.js";
+import { logger } from "../logger.js";
 
 export { createCheckLlmJudge, type CheckLlmJudge };
 
@@ -84,10 +85,25 @@ export async function runChecks(
 ): Promise<CheckResult[]> {
   if (checks.length === 0) return [];
   const input = checkInput(transcript);
-  const result: DecisionResult = await deps.decisions.ask(
-    input,
-    checks.map((c) => ({ type: "predicate", name: c.id, instructions: c.question }))
-  );
+  // The decision model failing (timeout, outage) leaves every check unsure, so
+  // the LLM answers them instead of one failed request aborting the whole run.
+  const result: DecisionResult = await deps.decisions
+    .ask(
+      input,
+      checks.map((c) => ({ type: "predicate", name: c.id, instructions: c.question }))
+    )
+    .catch((error: Error) => {
+      logger.warn("decision model failed; the LLM answers this turn's checks", {
+        error: error.message
+      });
+      return {
+        answers: [],
+        model: deps.decisions.id,
+        inputTokens: 0,
+        outputTokens: 0,
+        latencyMs: 0
+      };
+    });
   if (stats) {
     stats.decisionCalls += 1;
     stats.decisionInputTokens += result.inputTokens;

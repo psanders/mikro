@@ -4,7 +4,6 @@
 import type { Agent, Message, ConversationTurn, EvaluationScenario } from "../llm/types.js";
 import { createInvokeLLM } from "../llm/createInvokeLLM.js";
 import { allTools } from "../tools/index.js";
-import { similarityTest } from "./similarityJudge.js";
 import {
   createCheckLlmJudge,
   runChecks,
@@ -23,11 +22,6 @@ export interface TurnResult {
   turnNumber: number;
   turn: ConversationTurn;
   actualAI: string;
-  similarity: {
-    similar: boolean;
-    confidence: number;
-    reason: string;
-  };
   tools: {
     expected: string[];
     actual: string[];
@@ -43,23 +37,14 @@ export interface TurnResult {
       unexpected: string[];
     };
   };
-  /** Rubric check results (when the turn has checks and they ran). */
-  checks?: CheckResult[];
-  /** Which judge decided the reply part of `passed`. */
-  responseJudge: "similarity" | "checks";
+  /** The turn's rubric checks, which decide the reply part of `passed`. */
+  checks: CheckResult[];
   passed: boolean;
 }
 
-/**
- * How replies are judged. `auto`: a turn's checks when it has them and a
- * decision model is configured, else similarity. `both` computes both (for
- * comparing judges) and decides by checks when present.
- */
-export type EvalJudgeMode = "auto" | "similarity" | "checks" | "both";
-
 export interface EvalRunOptions {
-  judge?: EvalJudgeMode;
-  decisions?: DecisionProvider | null;
+  /** Answers the rubric checks (the `classifier` in mikro.json). */
+  decisions: DecisionProvider;
   checkLlm?: CheckLlmJudge;
   /** Accumulates decision/LLM call counts across a run. */
   stats?: CheckRunStats;
@@ -96,6 +81,21 @@ export interface EvalResults {
 }
 
 /**
+ * Every turn is judged by its rubric checks: a turn without any can't pass or
+ * fail on its reply, so the scenario is refused before anything runs.
+ */
+export function assertJudged(scenario: EvaluationScenario): void {
+  const unjudged = scenario.turns
+    .map((turn, i) => (turn.checks?.length ? null : i + 1))
+    .filter((n): n is number => n !== null);
+  if (unjudged.length > 0) {
+    throw new Error(
+      `Scenario "${scenario.id}": turn ${unjudged.join(", ")} has no checks; every turn needs at least one.`
+    );
+  }
+}
+
+/**
  * Run a single conversation turn.
  */
 async function runTurn(
@@ -104,7 +104,7 @@ async function runTurn(
   turnNumber: number,
   conversationHistory: Message[],
   context?: Record<string, unknown>,
-  options: EvalRunOptions = {}
+  options: EvalRunOptions
 ): Promise<TurnResult> {
   logger.verbose("running turn", { turnNumber, agent: agent.name });
 
@@ -135,42 +135,20 @@ async function runTurn(
     isNewSession
   );
 
-  const mode = options.judge ?? "auto";
-  const hasChecks = !!turn.checks?.length && !!options.decisions;
-  const useChecks = hasChecks && mode !== "similarity";
-  const runSimilarity = mode === "similarity" || mode === "both" || !useChecks;
-
-  // Test similarity (skip if turn marks pre-tool text as non-deterministic)
-  const similarity =
-    turn.skipResponseCheck || !runSimilarity
-      ? {
-          similar: true,
-          confidence: 1,
-          reason: turn.skipResponseCheck
-            ? "Response check skipped (pre-tool text non-deterministic)"
-            : "Not run: the turn's rubric checks decide"
-        }
-      : await similarityTest(turn.expectedAI, actualAI);
-
-  const checks = useChecks
-    ? await runChecks(
-        turn.checks!,
-        {
-          history: conversationHistory.map((m) => ({
-            role: m.role === "user" ? ("user" as const) : ("assistant" as const),
-            content: typeof m.content === "string" ? m.content : ""
-          })),
-          human: userMessage || (imageUrl ? "[Imagen]" : ""),
-          reply: actualAI,
-          tools: toolsExecuted
-        },
-        {
-          decisions: options.decisions!,
-          llm: options.checkLlm ?? createCheckLlmJudge()
-        },
-        options.stats
-      )
-    : undefined;
+  const checks = await runChecks(
+    turn.checks,
+    {
+      history: conversationHistory.map((m) => ({
+        role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+        content: typeof m.content === "string" ? m.content : ""
+      })),
+      human: userMessage || (imageUrl ? "[Imagen]" : ""),
+      reply: actualAI,
+      tools: toolsExecuted
+    },
+    { decisions: options.decisions, llm: options.checkLlm ?? createCheckLlmJudge() },
+    options.stats
+  );
 
   // Verify tools
   const toolVerification = await verifyTools();
@@ -181,8 +159,7 @@ async function runTurn(
   const noUnexpectedCalls = toolVerification.unexpected.length === 0;
   const toolsPassed =
     noUnexpectedCalls && toolVerification.allExpectedCalled && toolVerification.allArgsMatched;
-  const responsePassed = checks ? checks.every((c) => c.passed) : similarity.similar;
-  const passed = toolsPassed && responsePassed;
+  const passed = toolsPassed && checks.every((c) => c.passed);
 
   // Update conversation history (include tools_executed so LLM sees what was actually done)
   // Use text placeholder for image-only turns to avoid: (1) empty user messages
@@ -200,7 +177,6 @@ async function runTurn(
     turnNumber,
     turn,
     actualAI,
-    similarity,
     tools: {
       expected: expectedToolNames,
       actual: actualToolNames,
@@ -216,8 +192,7 @@ async function runTurn(
         unexpected: toolVerification.unexpected.map((u) => u.name)
       }
     },
-    ...(checks ? { checks } : {}),
-    responseJudge: checks ? "checks" : "similarity",
+    checks,
     passed
   };
 }
@@ -235,10 +210,11 @@ export async function runScenario(
   agent: Agent,
   scenario: EvaluationScenario,
   context?: Record<string, unknown>,
-  callbacks?: RunScenarioCallbacks,
-  options: EvalRunOptions = {}
+  callbacks: RunScenarioCallbacks | undefined,
+  options: EvalRunOptions
 ): Promise<ScenarioResult> {
   logger.verbose("running scenario", { scenario: scenario.id, agent: agent.name });
+  assertJudged(scenario);
 
   callbacks?.onScenarioStart?.();
 
@@ -284,8 +260,8 @@ export type RunAgentEvalCallbacks = {
  */
 export async function runAgentEval(
   agent: Agent,
-  callbacks?: RunAgentEvalCallbacks,
-  options: EvalRunOptions = {}
+  callbacks: RunAgentEvalCallbacks | undefined,
+  options: EvalRunOptions
 ): Promise<EvalResults> {
   if (!agent.evaluations) {
     throw new Error(`Agent ${agent.name} has no evaluations configured`);

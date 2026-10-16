@@ -62,7 +62,6 @@
     "minBusinessPhotos": 3
   },
   "evals": {
-    "similarityThreshold": 0.7,
     "vendors": {
       "openai": { "text": null, "vision": null },
       "anthropic": { "text": null, "vision": null },

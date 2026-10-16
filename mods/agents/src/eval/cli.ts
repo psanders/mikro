@@ -17,33 +17,29 @@ loadDotenv({ path: resolve(__dirname, "../../../../.env") });
 import { getConfig, type LLMConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../agents/index.js";
-import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
+import { clearLLMConfigCache, getLLMConfig } from "../config.js";
 import {
   runAgentEval,
   runScenario,
-  type EvalJudgeMode,
   type EvalResults,
   type EvalRunOptions,
   type ScenarioResult
 } from "./runner.js";
 import { getDecisionProvider } from "../decisions/index.js";
 
-/** `--judge auto|similarity|checks|both` (default auto). */
-function judgeOptions(): EvalRunOptions {
-  const idx = process.argv.indexOf("--judge");
-  const value = idx >= 0 ? process.argv[idx + 1] : "auto";
-  const judge = (
-    ["auto", "similarity", "checks", "both"].includes(value ?? "") ? value : "auto"
-  ) as EvalJudgeMode;
-  const decisions = judge === "similarity" ? null : getDecisionProvider();
-  if (!decisions && (judge === "checks" || judge === "both")) {
+/**
+ * Replies are judged by each turn's rubric checks, answered by the decision
+ * model (the `classifier` in mikro.json). Without one there is no judge.
+ */
+function checkOptions(): EvalRunOptions {
+  const decisions = getDecisionProvider();
+  if (!decisions) {
     console.error(
-      `--judge ${judge} needs a decision model: add the \`classifier\` section to mikro.json.`
+      "Evals judge replies with rubric checks answered by a decision model: add the `classifier` section to mikro.json."
     );
     process.exit(1);
   }
   return {
-    judge,
     decisions,
     stats: { decisionCalls: 0, decisionInputTokens: 0, decisionLatencyMs: 0, llmCalls: 0 }
   };
@@ -109,24 +105,23 @@ function printUsage() {
 Usage: npm run agents:eval [options] [agent] [scenario]
 
 Config is read from mikro.json (default: project root). Use MIKRO_CONFIG_FILE in
-.env to point to a different path. Judge model: llm.evals.
+.env to point to a different path. Each turn's rubric checks are answered by
+the classifier (decision model); llm.evals settles unsure answers and explains
+failures.
 
 Options:
-  --judge <mode>    auto (default): a turn's rubric checks when it has them and
-                    a classifier is configured, else similarity. similarity,
-                    checks, or both (compute both, decide by checks).
   --vendors <list>  Run scenarios for each vendor. Agent models come from
                     evals.vendors.<vendor>.text/vision (openai falls back to llm.text/vision).
-                    Judge always uses llm.evals.
+                    The judges stay the same.
 
 Arguments:
   agent     - Optional. Agent name (e.g. jose, collector)
   scenario  - Optional. Single scenario id (use with agent)
 
 Config (mikro.json):
-  llm.evals                 Judge model
-  evals.similarityThreshold  Min confidence for "similar" (default 0.7)
-  evals.vendors.<vendor>     Optional per-vendor text/vision overrides
+  classifier                Decision model that answers the checks (required)
+  llm.evals                 LLM for unsure answers and failure reasons
+  evals.vendors.<vendor>    Optional per-vendor text/vision overrides
 
 Examples:
   npm run agents:eval jose happy-path-short-isc50
@@ -137,7 +132,7 @@ Examples:
 }
 
 /**
- * Run evals using current config: llm.text/vision for the agent, llm.evals for the judge.
+ * Run evals using current config: llm.text/vision for the agent; the classifier and llm.evals judge.
  */
 async function runEvalsForCurrentConfig(
   agentsToEval: Agent[],
@@ -145,7 +140,7 @@ async function runEvalsForCurrentConfig(
 ): Promise<{ results: EvalResults[]; hasFailures: boolean }> {
   const allResults: EvalResults[] = [];
   let hasFailures = false;
-  const options = judgeOptions();
+  const options = checkOptions();
 
   for (const agent of agentsToEval) {
     console.log(`\n=== Evaluating Agent: ${agent.name} ===`);
@@ -221,9 +216,9 @@ async function main() {
     // Log judge config
     try {
       const evalsConfig = getLLMConfig("evals");
-      const threshold = getEvalSimilarityThreshold();
+      const classifier = getConfig().classifier;
       console.log(
-        `Judge: ${evalsConfig.vendor}/${evalsConfig.model} (similarity threshold: ${threshold})`
+        `Judge: checks by ${classifier ? `${classifier.provider}/${classifier.model}` : "(no classifier)"}, LLM ${evalsConfig.vendor}/${evalsConfig.model}`
       );
     } catch {
       // evals not configured yet

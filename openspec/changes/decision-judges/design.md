@@ -8,9 +8,11 @@ Experiment run on 2026-10-16 against a copy of the production database (305 turn
 
 ## Decisions
 
-### D1. Checks replace similarity when present
+### D1. Checks replace similarity
 
 - **The problem:** "similar to expected" punished wording and rewarded plausible but wrong replies.
+- **Checks are the only judge.** The similarity judge and the expected reply (`expectedAI`) are removed, with `skipResponseCheck` (it only skipped similarity) and `evals.similarityThreshold`. The evals schema isn't strict, so a leftover `similarityThreshold` in a deployed mikro.json is dropped, not a boot failure.
+- **Literal beats inferred.** A check like "¿Dice o da a entender que la van a revisar?" let both judges read "alguien del equipo te responderá" as a review promise. Ask about what the reply says ("¿contiene la palabra «revisar»?"), not what it might imply.
 - **What a check is:** one closed question about one concept. A compound question ("¿puntaje, probabilidades o motivos?") made the LLM misread a correct answer, so compound checks are split.
 - **Order of judges:** the decision model answers first. Unsure answers (0.3–0.7) go to the LLM.
 - **Failures:** every failure gets the LLM's reason. Below 0.9 certainty the LLM's disagreement wins. It caught a decision misreading at p = 0.8, and the LLM had once overruled a correct p = 1.0 answer.

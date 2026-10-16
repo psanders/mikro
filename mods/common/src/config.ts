@@ -88,8 +88,9 @@ const evalsVendorsSchema = z.object({
   google: evalsVendorOverrideSchema.optional()
 });
 
+// Not strict: a key dropped from here (similarityThreshold, removed with the
+// similarity judge) is stripped from an existing mikro.json instead of failing boot.
 const evalsSchema = z.object({
-  similarityThreshold: z.number().min(0).max(1).default(0.7),
   vendors: evalsVendorsSchema.default(() => ({}))
 });
 
@@ -599,10 +600,7 @@ export const mikroConfigSchema = z
       enabled: false,
       deepgramApiKey: ""
     })),
-    evals: evalsSchema.default(() => ({
-      similarityThreshold: 0.7,
-      vendors: {}
-    })),
+    evals: evalsSchema.default(() => ({ vendors: {} })),
     reports: reportsSchema.default(() => ({})),
     accounting: accountingSchema,
     applications: applicationsSchema,

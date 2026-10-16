@@ -10,13 +10,15 @@
 import { z } from "zod/v4";
 import { AGENT_PROFILES } from "../constants.js";
 
-/** A single conversation turn in an evaluation scenario (kept lenient — the eval harness owns the deep shape). */
+/**
+ * A single conversation turn in an evaluation scenario (kept lenient — the eval
+ * harness owns the deep shape). `checks` stays optional here: evaluations are
+ * ignored at runtime, and the eval runner refuses a turn without checks.
+ */
 const evalTurnSchema = z
   .object({
     human: z.string().optional(),
     image: z.string().optional(),
-    expectedAI: z.string(),
-    skipResponseCheck: z.boolean().optional(),
     checks: z
       .array(z.object({ id: z.string().min(1), question: z.string().min(1), expect: z.boolean() }))
       .optional(),

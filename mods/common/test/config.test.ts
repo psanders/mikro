@@ -276,3 +276,19 @@ describe("mikroConfigSchema — classifier (openspec conversation-state)", () =>
     ).to.equal(false);
   });
 });
+
+describe("mikroConfigSchema — evals", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
+  };
+
+  it("still boots with the removed evals.similarityThreshold, dropping it", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      evals: { similarityThreshold: 0.7, vendors: {} }
+    });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.evals).to.deep.equal({ vendors: {} });
+  });
+});

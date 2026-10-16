@@ -1,8 +1,8 @@
 ## 1. Eval rubric checks
 
 - [x] 1.1 `checks` on scenario turns (schema and types). The runner judges them via the decision model, with the LLM for unsure answers and for the reasons behind failures, and a dispute ceiling of 0.9.
-- [x] 1.2 `--judge auto|similarity|checks|both` and stats.
-- [x] 1.3 Add checks to every José/Lucía/Sofía/Carmen scenario (54), one concept per check.
+- [x] 1.2 Checks are the only judge: the similarity judge, `expectedAI`, `skipResponseCheck` and `evals.similarityThreshold` are removed; evals require the `classifier`; a failed decision request falls back to the LLM; stats.
+- [x] 1.3 Add checks to every turn of every José/Lucía/Sofía/Carmen scenario (59 checks, 23 scenarios), one concept per check; a test fails if a turn has none.
 - [x] 1.4 Unit tests (stubbed decision provider and LLM).
 
 ## 2. Audit

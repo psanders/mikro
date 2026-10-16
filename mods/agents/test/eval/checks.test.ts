@@ -128,6 +128,22 @@ describe("eval rubric checks", () => {
     expect(llm.calledOnce).to.equal(true);
   });
 
+  it("lets the LLM answer every check when the decision model fails", async () => {
+    const provider: DecisionProvider = {
+      id: "stub",
+      ask: () => Promise.reject(new Error("The operation was aborted due to timeout"))
+    };
+    const llm = sinon.stub();
+    llm.onFirstCall().resolves({ answer: false, reason: "Solo menciona semanal y quincenal." });
+    llm.onSecondCall().resolves({ answer: true, reason: "Incluye el enlace." });
+    const results = await runChecks(checks, transcript, { decisions: provider, llm });
+
+    expect(results.map((r) => [r.decidedBy, r.passed, r.probability])).to.deep.equal([
+      ["llm", true, null],
+      ["llm", true, null]
+    ]);
+  });
+
   it("does nothing for a turn without checks", async () => {
     const provider = decisions({});
     expect(

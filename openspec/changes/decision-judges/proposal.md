@@ -13,9 +13,8 @@ A decision model (OpenAI Decisions) answers closed yes/no questions with a proba
   - The decision model answers all of a turn's checks in one request.
   - An unsure answer (probability between 0.3 and 0.7) goes to the LLM judge.
   - A failing answer gets an LLM-written reason. Below 0.9 certainty, the LLM's disagreement wins.
-  - When a turn has checks and a classifier is configured, the checks decide the turn instead of similarity.
-  - `agents:eval --judge auto|similarity|checks|both` compares the two judges.
-  - The four agents' 21 scenarios now carry 54 checks.
+  - The checks decide every turn. **BREAKING:** the similarity judge, the expected reply (`expectedAI`), `skipResponseCheck` and `evals.similarityThreshold` are removed; `agents:eval` requires the `classifier`.
+  - Every turn of the four agents' 23 scenarios carries checks (59 in all).
 - **Audit, judge per agent:** each agent that wrote in a conversation is judged against its own rules, and the judge is told which agent's turns to grade.
 - **New audit code checks:**
   - `double_reply`;
@@ -41,4 +40,4 @@ A decision model (OpenAI Decisions) answers closed yes/no questions with a proba
   - `audit/runAudit.ts`, `audit/judge.ts`, `audit/checks.ts`;
   - `decisions/llmCheck.ts`.
 - **`agents.yaml`:** eval `checks` and reworded policies. Prod reads its own copy, which must be updated by hand.
-- **No migration, no new config key.** The decision checks in evals use the `classifier` section from `conversation-state`; the audit changes need no config.
+- **No migration, no new config key.** The decision checks in evals use the `classifier` section from `conversation-state`; the audit changes need no config. `evals.similarityThreshold` is removed; a leftover value in mikro.json is ignored.

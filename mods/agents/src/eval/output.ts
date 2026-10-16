@@ -82,24 +82,19 @@ function turnFailureReason(turnResult: TurnResult): string {
       .map((d) => d.tool);
     return `missing tools: ${missing.join(", ")}`;
   }
-  const failedChecks = turnResult.checks?.filter((c) => !c.passed) ?? [];
-  if (failedChecks.length > 0) {
-    return failedChecks
-      .map(
-        (c) =>
-          `check ${c.id}: "${c.question}" → ${c.answer ? "sí" : "no"} (esperado ${c.expect ? "sí" : "no"})${c.reason ? ` — ${c.reason}` : ""}`
-      )
-      .join("; ");
+  if (!turnResult.tools.verification.allArgsMatched) {
+    const mismatched = turnResult.tools.verification.details
+      .filter((d) => d.called && !d.argsMatched)
+      .map((d) => `${d.tool}${d.reason ? ` (${d.reason})` : ""}`);
+    return `tool args mismatch: ${mismatched.join(", ")}`;
   }
-  const pct = Math.round(turnResult.similarity.confidence * 100);
-  return `AI response with ${pct}% similarity`;
-}
-
-/** A failed turn's detail line: the failure reason, plus the similarity verdict when it ran. */
-function failedTurnDetail(turnResult: TurnResult): string {
-  const reason = turnFailureReason(turnResult);
-  if (turnResult.checks?.length) return reason;
-  return `${turnResult.similarity.confidence.toFixed(0)}% similar - ${turnResult.similarity.reason}`;
+  return turnResult.checks
+    .filter((c) => !c.passed)
+    .map(
+      (c) =>
+        `check ${c.id}: "${c.question}" → ${c.answer ? "sí" : "no"} (esperado ${c.expect ? "sí" : "no"})${c.reason ? ` — ${c.reason}` : ""}`
+    )
+    .join("; ");
 }
 
 /**
@@ -200,12 +195,11 @@ export function printEval(results: EvalResults): void {
     );
 
     const table = new Table({
-      head: ["Turn", "Human Input", "Expected", "AI Response", "Tool Calls", "Pass"],
+      head: ["Turn", "Human Input", "AI Response", "Tool Calls", "Pass"],
       colWidths: [
         6, // Turn
-        24, // Human Input
-        24, // Expected
-        24, // AI Response
+        32, // Human Input
+        40, // AI Response
         14, // Tool Calls
         6 // Pass
       ],
@@ -216,16 +210,15 @@ export function printEval(results: EvalResults): void {
       table.push([
         turnResult.turnNumber,
         formatHumanInput(turnResult),
-        turnResult.turn.expectedAI,
         turnResult.actualAI,
         formatToolCalls(turnResult),
         turnResult.passed ? ansis.green("✔") : ansis.red("✘")
       ]);
 
-      // Print why it failed (failed checks, tools, or similarity)
+      // Print why it failed (tools or failed checks)
       if (!turnResult.passed) {
         console.log(
-          ansis.yellow(`  Turn ${turnResult.turnNumber}: ${failedTurnDetail(turnResult)}`)
+          ansis.yellow(`  Turn ${turnResult.turnNumber}: ${turnFailureReason(turnResult)}`)
         );
       }
 
@@ -267,8 +260,8 @@ export function toTable(results: EvalResults): string {
     lines.push(`Overall: ${scenarioResult.passed ? "PASSED" : "FAILED"}`);
 
     const table = new Table({
-      head: ["Turn", "Human Input", "Expected", "AI Response", "Tool Calls", "Pass"],
-      colWidths: [6, 24, 24, 24, 14, 6],
+      head: ["Turn", "Human Input", "AI Response", "Tool Calls", "Pass"],
+      colWidths: [6, 32, 40, 14, 6],
       wordWrap: true
     });
 
@@ -276,7 +269,6 @@ export function toTable(results: EvalResults): string {
       table.push([
         turnResult.turnNumber,
         formatHumanInput(turnResult),
-        turnResult.turn.expectedAI,
         turnResult.actualAI,
         formatToolCalls(turnResult),
         turnResult.passed ? "✔" : "✘"
@@ -289,7 +281,7 @@ export function toTable(results: EvalResults): string {
     scenarioResult.turns
       .filter((t) => !t.passed)
       .forEach((turnResult) => {
-        lines.push(`  Turn ${turnResult.turnNumber}: ${failedTurnDetail(turnResult)}`);
+        lines.push(`  Turn ${turnResult.turnNumber}: ${turnFailureReason(turnResult)}`);
       });
   });
 
