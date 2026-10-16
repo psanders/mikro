@@ -50,6 +50,7 @@ export {
   createApplicationIntakeHandler,
   OUT_OF_COVERAGE_AREA,
   createFindLatestApplicationByPhone,
+  createFindPriorApplication,
   createGetApplicationByPhone,
   createGetApplicationByWhatsAppUserId,
   createSubmitApplicationFromFlow,

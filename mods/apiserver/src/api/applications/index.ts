@@ -5,6 +5,13 @@ export { createUpsertApplication, OUT_OF_COVERAGE_AREA } from "./createUpsertApp
 export { createApplicationIntakeHandler } from "./createApplicationIntakeHandler.js";
 export { createFindLatestApplicationByPhone } from "./createFindLatestApplicationByPhone.js";
 export {
+  createFindPriorApplication,
+  reapplyDateOf,
+  REAPPLY_COOLDOWN_DAYS,
+  type FindPriorApplication,
+  type PriorApplication
+} from "./createFindPriorApplication.js";
+export {
   createGetApplicationByPhone,
   createGetApplicationByWhatsAppUserId,
   type ApplicationLookupDeps

@@ -9,12 +9,16 @@ describe("createGetApplicationByPhone", () => {
     const submittedAt = new Date("2026-09-20T10:00:00Z");
     const client = {
       loanApplication: {
-        findFirst: async () => ({
-          id: "app-1",
-          sessionId: "s-1",
-          status: "IN_REVIEW",
-          submittedAt
-        })
+        // The second lookup (an older rejection) finds none.
+        findFirst: async (args: { where: { status?: string } }) =>
+          args.where.status
+            ? null
+            : {
+                id: "app-1",
+                sessionId: "s-1",
+                status: "IN_REVIEW",
+                submittedAt
+              }
       }
     } as any;
 
@@ -30,6 +34,23 @@ describe("createGetApplicationByPhone", () => {
       partial: false,
       intakeOpen: false
     });
+  });
+
+  it("carries an older rejection when the latest application is a newer draft (#302)", async () => {
+    const decidedAt = new Date("2026-10-09T15:00:00Z");
+    const client = {
+      loanApplication: {
+        findFirst: async (args: { where: { status?: string } }) =>
+          args.where.status === "REJECTED"
+            ? { decidedAt, submittedAt: decidedAt, updatedAt: decidedAt, rejectionReason: "OTHER" }
+            : { id: "app-2", sessionId: "s-2", status: "DRAFT", submittedAt: null }
+      }
+    } as any;
+
+    const result = await createGetApplicationByPhone(client)("+18095550001");
+
+    expect(result!.status).to.equal("DRAFT");
+    expect(result!.recentRejection).to.deep.equal({ decidedAt, rejectionReason: "OTHER" });
   });
 
   it("carries the rejection reason, so the router can skip the reapply cooldown", async () => {

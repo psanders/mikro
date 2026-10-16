@@ -350,14 +350,22 @@ describe("WhatsApp CX routes", () => {
       expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
     });
 
-    it("tells an out-of-area guest about the coverage area, never a reapply date", async () => {
-      const p = setup({ type: "guest", phone: PHONE, outOfArea: true });
+    it("tells an out-of-area guest about the coverage area and the reapply date", async () => {
+      const p = setup({
+        type: "guest",
+        phone: PHONE,
+        previouslyRejected: true,
+        reapplyFrom: new Date("2026-10-26T12:00:00Z"),
+        outOfArea: true
+      });
 
       await handleWhatsAppMessage(textWebhook("hola, ¿puedo volver a aplicar?"));
 
       const input: string = p.invokeLLM.firstCall.args[2];
       expect(input).to.contain("fuera de nuestra zona");
-      expect(input).to.not.match(/a partir del/);
+      expect(input).to.contain("a partir del 26 de octubre de 2026");
+      // Not the credit-rejection directive.
+      expect(input).to.not.contain("solicitud que NO fue aprobada");
       expect(input).to.match(/hola, ¿puedo volver a aplicar\?$/);
     });
 

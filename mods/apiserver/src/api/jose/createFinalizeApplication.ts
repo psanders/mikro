@@ -24,12 +24,25 @@ import { logger } from "../../logger.js";
 import { createCancelApplicationJobs } from "../../follow-up/index.js";
 import { OUT_OF_COVERAGE_AREA } from "../applications/createUpsertApplication.js";
 import { missingApplicationFields } from "./missingFields.js";
+import type { FindPriorApplication } from "../applications/createFindPriorApplication.js";
+
+/** "22 de octubre de 2026", the date José gives a person in the reapply cooldown. */
+function reapplyDateText(date: Date): string {
+  return new Intl.DateTimeFormat("es-DO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Santo_Domingo"
+  }).format(date);
+}
 
 interface CoverageDeps {
   /** Provinces Mikro lends in (`applications.coveredProvinces`). */
   coveredProvinces?: readonly string[];
   /** Records the system's `application.rejected` feed event. */
   recordOutOfArea?: (application: LoanApplication) => Promise<void>;
+  /** The same person's other applications (issue #302: one per person). */
+  findPriorApplication?: FindPriorApplication;
 }
 
 /** Statuses José may still close as out of area (nobody has taken it yet). */
@@ -140,6 +153,49 @@ export function createFinalizeApplication(
           message: "Solicitud marcada como abandonada",
           data: { finalized: true, outcome: "abandoned" }
         };
+      }
+
+      // One application per person (issue #302): a draft from someone rejected
+      // less than 30 days ago, or who already has one in process, is not
+      // submitted. It is closed so it doesn't linger as a second application.
+      const prior = coverage.findPriorApplication
+        ? await coverage.findPriorApplication({
+            phone: existing.phone,
+            idNumber: existing.idNumber,
+            sessionId
+          })
+        : null;
+      if (prior?.kind === "cooldown" || prior?.kind === "in_process") {
+        await client.loanApplication.update({
+          where: { id: existing.id },
+          data: { status: "ABANDONED" }
+        });
+        createCancelApplicationJobs(client)(existing.id).catch((err: Error) => {
+          logger.error("jose finalizeApplication: failed to cancel follow-up jobs", {
+            sessionId,
+            error: err.message
+          });
+        });
+        logger.info("jose finalizeApplication: not submitted, person has another application", {
+          sessionId,
+          prior: prior.kind,
+          priorApplicationId: prior.applicationId
+        });
+        return prior.kind === "cooldown"
+          ? {
+              success: true,
+              message: "Solicitud no enviada: fue rechazada hace menos de 30 días",
+              data: {
+                finalized: false,
+                outcome: "cooldown",
+                reapplyDate: reapplyDateText(prior.reapplyFrom)
+              }
+            }
+          : {
+              success: true,
+              message: "Solicitud no enviada: ya tiene una solicitud en proceso",
+              data: { finalized: false, outcome: "in_process" }
+            };
       }
 
       const existingRaw = (existing.rawData as Record<string, unknown>) ?? {};

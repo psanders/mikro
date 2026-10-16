@@ -133,6 +133,7 @@ import {
   createUpsertApplication,
   createApplicationIntakeHandler,
   createFindLatestApplicationByPhone,
+  createFindPriorApplication,
   createGetApplicationByPhone,
   createGetApplicationByWhatsAppUserId,
   createSubmitApplicationFromFlow,
@@ -435,9 +436,16 @@ const upsertWebApplication = createUpsertApplication(dbClient, {
   recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app),
   recordProspectActivity
 });
+// One application per person (issue #302): checked on every intake path that
+// submits — the website, the WhatsApp Flow and José.
+const findPriorApplication = createFindPriorApplication(prisma);
 const handleApplicationIntake = createApplicationIntakeHandler({
   upsertApplication: upsertWebApplication,
-  sendLeadConversion
+  sendLeadConversion,
+  findPriorApplication,
+  discardDraft: async (sessionId: string) => {
+    await prisma.loanApplication.deleteMany({ where: { sessionId, status: "DRAFT" } });
+  }
 });
 
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
@@ -898,7 +906,8 @@ async function initializeMessageProcessor() {
         upsertApplication,
         {
           coveredProvinces: cfg.applications.coveredProvinces,
-          recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app)
+          recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app),
+          findPriorApplication
         }
       ),
       // WhatsApp CX self-service: identity comes from the message context.
@@ -1044,6 +1053,7 @@ async function initializeMessageProcessor() {
     const submitApplicationFromFlow = createSubmitApplicationFromFlow({
       upsertApplication,
       findLatestApplicationByPhone,
+      findPriorApplication,
       findLatestApplicationByWhatsAppUserId: async (bsuid: string) => {
         const app = await prisma.loanApplication.findFirst({
           where: { whatsappUserId: bsuid },

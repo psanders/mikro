@@ -25,6 +25,26 @@ export interface ApplicationByPhone {
   partial: boolean;
   /** RECEIVED and José still asks its remaining fields (openspec jose-keep-gathering). */
   intakeOpen: boolean;
+  /**
+   * The person's most recent rejection, when the latest application isn't it
+   * (issue #302): a newer DRAFT doesn't lift the reapply cooldown.
+   */
+  recentRejection?: { decidedAt: Date; rejectionReason: string | null };
+}
+
+type RejectionRow = {
+  decidedAt: Date | null;
+  submittedAt: Date | null;
+  updatedAt: Date;
+  rejectionReason: string | null;
+} | null;
+
+function rejectionOf(row: RejectionRow): ApplicationByPhone["recentRejection"] {
+  if (!row) return undefined;
+  return {
+    decidedAt: row.decidedAt ?? row.submittedAt ?? row.updatedAt,
+    rejectionReason: row.rejectionReason ?? null
+  };
 }
 
 async function toLookup(
@@ -60,10 +80,20 @@ export function createGetApplicationByPhone(client: DbClient, deps: ApplicationL
       orderBy: { createdAt: "desc" }
     });
     if (!app) return null;
-    return toLookup(
+    const lookup = await toLookup(
       { ...app, intakeClosedAt: app.intakeClosedAt ?? null, decidedAt: app.decidedAt ?? null },
       deps
     );
+    if (app.status === "REJECTED") return lookup;
+    // DbClient's narrow findFirst type has no status/select; the client is Prisma.
+    const db = client as unknown as Pick<PrismaClient, "loanApplication">;
+    const rejected = await db.loanApplication.findFirst({
+      where: { phone, status: "REJECTED" },
+      orderBy: { decidedAt: "desc" },
+      select: { decidedAt: true, submittedAt: true, updatedAt: true, rejectionReason: true }
+    });
+    const recentRejection = rejectionOf(rejected as RejectionRow);
+    return recentRejection ? { ...lookup, recentRejection } : lookup;
   };
 }
 

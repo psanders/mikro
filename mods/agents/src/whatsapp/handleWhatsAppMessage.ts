@@ -45,7 +45,9 @@ import {
 } from "../conversations/index.js";
 import {
   mapFlowAnswersToPayload,
-  INTAKE_RECEIVED_MESSAGE
+  flowReplyFor,
+  reapplyDateText,
+  type FlowSubmitOutcome
 } from "./loanApplicationFlowSubmission.js";
 import { handleProspectMessage, isDecline } from "./handleProspectMessage.js";
 
@@ -110,7 +112,7 @@ export interface MessageProcessorDependencies {
   submitApplicationFromFlow?: (
     payload: Record<string, string | boolean>,
     submitter?: { whatsappUserId?: string; whatsappUsername?: string }
-  ) => Promise<void>;
+  ) => Promise<FlowSubmitOutcome | void>;
   /**
    * Optional: apply an async delivery-status update (from the `statuses` webhook)
    * to the tracked outbound message. When unset, statuses are ignored.
@@ -974,12 +976,7 @@ export function isHumanRequest(message: string): boolean {
  * No hand-off unless they ask for a person (founder decision 2026-09-26).
  */
 export function rejectedDirective(reapplyFrom: Date): string {
-  const date = new Intl.DateTimeFormat("es-DO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "America/Santo_Domingo"
-  }).format(reapplyFrom);
+  const date = reapplyDateText(reapplyFrom);
   return (
     `[SISTEMA: Esta persona tuvo una solicitud que NO fue aprobada. Puede volver a ` +
     `solicitar a partir del ${date}. Si pregunta por su solicitud o por volver a ` +
@@ -993,16 +990,20 @@ export function rejectedDirective(reapplyFrom: Date): string {
 /**
  * Context for the guest agent when the sender's last application was closed
  * because the business is outside the coverage area. That is not a credit
- * decision and waiting changes nothing, so no "no fue aprobada" and no date.
+ * decision, so no "no fue aprobada"; the same reapply cooldown applies
+ * (founder decision 2026-10-16, issue #302), so they get the date.
  */
-export const OUT_OF_AREA_DIRECTIVE =
-  `[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera ` +
-  `de nuestra zona de cobertura. NO digas que "no fue aprobada" ni le des una fecha para ` +
-  `volver a solicitar. Si pregunta por su solicitud o por volver a aplicar, dile con ` +
-  `amabilidad que por el momento solo atendemos negocios en Puerto Plata. Si te dice que ` +
-  `su negocio sí está en Puerto Plata (se mudó o puso otra provincia por error), puede ` +
-  `llenar la solicitud de nuevo en https://mikro.do/solicitud. Si pide hablar con una ` +
-  `persona, usa requestHumanHandoff.] `;
+export function outOfAreaDirective(reapplyFrom: Date): string {
+  const date = reapplyDateText(reapplyFrom);
+  return (
+    `[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera ` +
+    `de nuestra zona de cobertura. NO digas que "no fue aprobada". Si pregunta por su ` +
+    `solicitud o por volver a aplicar, dile con amabilidad que por el momento solo ` +
+    `atendemos negocios en Puerto Plata y que puede volver a solicitar a partir del ` +
+    `${date} en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. ` +
+    `Si pide hablar con una persona, usa requestHumanHandoff.] `
+  );
+}
 
 /** A WhatsApp username sender we couldn't match: a person takes it. */
 const UNMATCHED_USERNAME_ACK =
@@ -1337,8 +1338,8 @@ async function handleCxMessage(
   const directive =
     route.type !== "guest"
       ? ""
-      : route.outOfArea
-        ? OUT_OF_AREA_DIRECTIVE
+      : route.outOfArea && route.reapplyFrom
+        ? outOfAreaDirective(route.reapplyFrom)
         : route.reapplyFrom
           ? rejectedDirective(route.reapplyFrom)
           : "";
@@ -1449,12 +1450,16 @@ async function processIntakeFlowSubmission(
   const payload = mapFlowAnswersToPayload(answers, sender.phone, sessionId);
 
   try {
-    await submitApplicationFromFlow(
+    const result = await submitApplicationFromFlow(
       payload,
       sender.bsuid ? { whatsappUserId: sender.bsuid, whatsappUsername: sender.username } : {}
     );
-    logger.info("intake flow application submitted", { phone, sessionId });
-    await sendWhatsAppMessage({ phone, message: INTAKE_RECEIVED_MESSAGE });
+    logger.info("intake flow application submitted", {
+      phone,
+      sessionId,
+      outcome: result?.outcome ?? "received"
+    });
+    await sendWhatsAppMessage({ phone, message: flowReplyFor(result) });
   } catch (error) {
     logger.error("failed to submit intake flow application", {
       phone,

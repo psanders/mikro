@@ -33,6 +33,13 @@ export const REVIEW_ACTIONS = [
 export type ReviewAction = (typeof REVIEW_ACTIONS)[number];
 
 /** Why an application was rejected. `OUT_OF_COVERAGE_AREA` is also set by intake. */
+/**
+ * How long after a rejection someone may apply again, for every rejection
+ * reason (founder decisions 2026-09-26 and 2026-10-16, issue #302). The
+ * intake paths enforce it and the WhatsApp agents tell people the date.
+ */
+export const REAPPLY_COOLDOWN_DAYS = 30;
+
 export const rejectionReasonEnum = z.enum([
   "OUT_OF_COVERAGE_AREA",
   "PAYMENT_CAPACITY",

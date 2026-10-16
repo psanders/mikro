@@ -18,6 +18,8 @@ import { useSolicitud } from "../solicitud/useSolicitud";
 import {
   ConsentAndSubmit,
   SolicitudOutOfArea,
+  SolicitudCooldown,
+  SolicitudInProcess,
   SolicitudSuccess
 } from "../solicitud/SolicitudParts";
 
@@ -124,6 +126,7 @@ export function SolicitudPage() {
     setAgreed,
     submitting,
     outcome,
+    reapply,
     error,
     setError,
     leaveSection,
@@ -170,6 +173,10 @@ export function SolicitudPage() {
 
   if (outcome === "success") return <SolicitudSuccess />;
   if (outcome === "out_of_area") return <SolicitudOutOfArea />;
+  if (outcome === "in_process") return <SolicitudInProcess />;
+  if (outcome === "cooldown" && reapply) {
+    return <SolicitudCooldown reapplyFrom={reapply.reapplyFrom} outOfArea={reapply.outOfArea} />;
+  }
 
   // Only flag fields that are still empty (or a still-malformed phone), so a
   // flag clears as soon as it's answered.
