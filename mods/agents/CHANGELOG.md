@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.3](https://github.com/psanders/mikro/compare/v3.13.2...v3.13.3) (2026-10-16)
+
+### Bug Fixes
+
+- **cx:** answer a burst of photos once, attaching every photo ([#336](https://github.com/psanders/mikro/issues/336)) ([517024a](https://github.com/psanders/mikro/commit/517024a71a78906280c17d2bfd0cf2445ee94c3e))
+
 ## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
 
 **Note:** Version bump only for package @mikro/agents
