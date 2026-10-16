@@ -2,7 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { expect } from "chai";
-import { mapFlowAnswersToPayload } from "../../src/whatsapp/loanApplicationFlowSubmission.js";
+import {
+  flowReplyFor,
+  INTAKE_IN_PROCESS_MESSAGE,
+  INTAKE_RECEIVED_MESSAGE,
+  mapFlowAnswersToPayload
+} from "../../src/whatsapp/loanApplicationFlowSubmission.js";
 
 describe("loanApplicationFlowSubmission", () => {
   describe("mapFlowAnswersToPayload", () => {
@@ -61,6 +66,32 @@ describe("loanApplicationFlowSubmission", () => {
       expect(p.requestedAmount).to.equal("30000");
       expect(p).to.not.have.property("spouseName");
       expect(p).to.not.have.property("referenceName");
+    });
+  });
+
+  describe("flowReplyFor (issue #302)", () => {
+    const reapplyFrom = new Date("2026-10-26T12:00:00Z");
+
+    it("confirms a received application", () => {
+      expect(flowReplyFor({ outcome: "received" })).to.equal(INTAKE_RECEIVED_MESSAGE);
+      expect(flowReplyFor(undefined)).to.equal(INTAKE_RECEIVED_MESSAGE);
+    });
+
+    it("gives a recently rejected person the date they may apply again", () => {
+      const reply = flowReplyFor({ outcome: "cooldown", reapplyFrom });
+      expect(reply).to.contain("no fue aprobada");
+      expect(reply).to.contain("a partir del 26 de octubre de 2026");
+    });
+
+    it("explains the coverage area to an out-of-area rejection, with the same date", () => {
+      const reply = flowReplyFor({ outcome: "cooldown", reapplyFrom, outOfArea: true });
+      expect(reply).to.contain("Puerto Plata");
+      expect(reply).to.not.contain("no fue aprobada");
+      expect(reply).to.contain("a partir del 26 de octubre de 2026");
+    });
+
+    it("tells someone with an application in process that no other was created", () => {
+      expect(flowReplyFor({ outcome: "in_process" })).to.equal(INTAKE_IN_PROCESS_MESSAGE);
     });
   });
 });

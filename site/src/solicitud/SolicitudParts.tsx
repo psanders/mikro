@@ -4,7 +4,7 @@
  * Pieces both solicitud layouts render identically: the result screens shown
  * after submitting, and the buró consent + submit block.
  */
-import { ArrowRight, Check, Clock, Loader2, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Clock, FileCheck, Loader2, MapPin } from "lucide-react";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
 
@@ -59,6 +59,60 @@ export function SolicitudOutOfArea() {
       }
       title="Aún no llegamos a tu ciudad"
       body="Lo sentimos, por el momento no estamos disponibles en tu ciudad. Estamos creciendo: vuelve a consultar en unos meses."
+    />
+  );
+}
+
+/** "22 de octubre de 2026", in the Dominican Republic's time zone. */
+function reapplyDateText(date: Date): string {
+  return new Intl.DateTimeFormat("es-DO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Santo_Domingo"
+  }).format(date);
+}
+
+/**
+ * Rejected less than 30 days ago: no new application yet (issue #302). An
+ * out-of-area rejection says so instead of "no fue aprobada".
+ */
+export function SolicitudCooldown({
+  reapplyFrom,
+  outOfArea
+}: {
+  reapplyFrom: Date;
+  outOfArea: boolean;
+}) {
+  const date = reapplyDateText(reapplyFrom);
+  return (
+    <ResultScreen
+      icon={
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF1DC]">
+          <CalendarClock className="h-8 w-8 text-brand-orange-deep" strokeWidth={2.25} />
+        </div>
+      }
+      title="Aún no puedes volver a solicitar"
+      body={
+        outOfArea
+          ? `Tu solicitud anterior se cerró porque por el momento solo atendemos negocios en Puerto Plata. Puedes volver a solicitar a partir del ${date}.`
+          : `Tu solicitud anterior no fue aprobada. Puedes volver a solicitar a partir del ${date}.`
+      }
+    />
+  );
+}
+
+/** They already have an application being handled: no second one (issue #302). */
+export function SolicitudInProcess() {
+  return (
+    <ResultScreen
+      icon={
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E6EEFB]">
+          <FileCheck className="h-8 w-8 text-brand-blue-primary" strokeWidth={2.25} />
+        </div>
+      }
+      title="Ya tienes una solicitud en proceso"
+      body="No creamos otra. Nuestro equipo te escribirá por WhatsApp; si tienes preguntas, escríbenos por ahí."
     />
   );
 }

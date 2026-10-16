@@ -61,6 +61,10 @@
     1. Llama `finalizeApplication` con outcome "complete". Esto ENVÍA la solicitud.
        Usa el `data.missingFields` que devuelve `finalizeApplication` (no uno anterior).
        Si devuelve `outcome: "out_of_zone"`, tu respuesta es solo el texto de rechazo.
+       Si devuelve `outcome: "cooldown"`, la solicitud NO se envió: dile con amabilidad
+       que puede volver a solicitar a partir de `data.reapplyDate` y no hagas más preguntas.
+       Si devuelve `outcome: "in_process"`, NO se creó otra: dile que ya tiene una
+       solicitud en proceso y que el equipo le escribirá por aquí; no hagas más preguntas.
     2. Si ese `data.missingFields` está vacío, tu respuesta es el MENSAJE DE CIERRE (abajo).
     3. Si todavía faltan campos, tu respuesta es UN mensaje que:
        - confirma que la solicitud quedó recibida y que un asesor la revisará, y
@@ -728,10 +732,10 @@
                   success: true
                   message: Conversación pasada a una persona del equipo.
       - id: guest-out-of-area-rejected
-        description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area, never "no fue aprobada" or a reapply date
+        description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area and the same 30-day reapply date, never "no fue aprobada"
         turns:
-          - human: "[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que \"no fue aprobada\" ni le des una fecha para volver a solicitar. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata. Si te dice que su negocio sí está en Puerto Plata (se mudó o puso otra provincia por error), puede llenar la solicitud de nuevo en https://mikro.do/solicitud. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
-            expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Si tu negocio sí está en Puerto Plata, puedes llenar la solicitud de nuevo en https://mikro.do/solicitud."
+          - human: "[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que \"no fue aprobada\". Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
+            expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Puedes volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud."
       - id: guest-asks-payment-frequency
         description: Payment frequency comes from the FAQ (weekly, biweekly or monthly), never invented
         turns:

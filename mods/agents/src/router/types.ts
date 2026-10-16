@@ -38,10 +38,10 @@ export type RouteResult =
   /** Application in the review pipeline (RECEIVED → APPROVED). */
   | { type: "applicant"; applicationId: string; sessionId: string; phone: string }
   /**
-   * `previouslyRejected`: their latest application was REJECTED less than the
-   * reapply cooldown ago; `reapplyFrom` is when they may apply again.
-   * `outOfArea`: their latest application was rejected because the business
-   * is outside the coverage area; there is no reapply date for that.
+   * `previouslyRejected`: they were REJECTED less than the reapply cooldown
+   * ago (even if they have started a newer DRAFT since); `reapplyFrom` is
+   * when they may apply again. `outOfArea`: that rejection was because the
+   * business is outside the coverage area; the same cooldown applies.
    * `unmatchedUsername`: a WhatsApp username sender (no phone) we can't tie
    * to any customer or application; a person takes these.
    */
@@ -67,6 +67,11 @@ export interface ApplicationLookupResult {
   rejectionReason?: string | null;
   /** RECEIVED and José still asks its missing fields (the lookup decides). */
   intakeOpen?: boolean;
+  /**
+   * The person's most recent rejection when the latest application isn't it
+   * (a newer DRAFT doesn't lift the reapply cooldown, issue #302).
+   */
+  recentRejection?: { decidedAt: Date; rejectionReason: string | null };
 }
 
 /**

@@ -10,16 +10,16 @@ A plain-language guide to how the WhatsApp number handles each kind of person: w
 
 When a WhatsApp message arrives, the server decides **who is writing**. That picks **one agent**, or nobody.
 
-| Who is writing                     | How we know                                                                     | Who answers                          |
-| ---------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------ |
-| Staff (admin, reviewer, collector) | phone matches an enabled user                                                   | **Nobody.** You read it in Chatwoot. |
-| Customer                           | phone matches a customer (a new application of theirs in review is attached)    | **Carmen**                           |
-| Prospect with an unfinished form   | latest application is `DRAFT`                                                   | **José** (as today)                  |
-| Prospect whose draft expired       | latest application is `ABANDONED` and was **never submitted**                   | the draft reopens, then **José**     |
-| Applicant in review                | latest application is `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION` or `APPROVED` | **Sofía**                            |
-| Rejected applicant (last 30 days)  | latest application is `REJECTED`, decided less than 30 days ago                 | **Lucía**, with the reapply date (L) |
-| Username sender we can't match     | no phone (WhatsApp username), no linked customer or application                 | **A person** (hand-off, case M)      |
-| Everyone else                      | no application, withdrawn after approval, etc.                                  | **Lucía**                            |
+| Who is writing                     | How we know                                                                      | Who answers                          |
+| ---------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------ |
+| Staff (admin, reviewer, collector) | phone matches an enabled user                                                    | **Nobody.** You read it in Chatwoot. |
+| Customer                           | phone matches a customer (a new application of theirs in review is attached)     | **Carmen**                           |
+| Prospect with an unfinished form   | latest application is `DRAFT`                                                    | **José** (as today)                  |
+| Prospect whose draft expired       | latest application is `ABANDONED` and was **never submitted**                    | the draft reopens, then **José**     |
+| Applicant in review                | latest application is `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION` or `APPROVED`  | **Sofía**                            |
+| Rejected applicant (last 30 days)  | a `REJECTED` application decided less than 30 days ago (wins over a newer draft) | **Lucía**, with the reapply date (L) |
+| Username sender we can't match     | no phone (WhatsApp username), no linked customer or application                  | **A person** (hand-off, case M)      |
+| Everyone else                      | no application, withdrawn after approval, etc.                                   | **Lucía**                            |
 
 The checks run in that order. For example, a collector who is also a customer is treated as staff.
 
@@ -143,12 +143,12 @@ What happens next:
 
 ### L. A rejected applicant writes again
 
-1. Their latest application is `REJECTED`, and the decision was **less than 30 days ago** → **Lucía** answers, with a note she gets from the system: the application wasn't approved, and they may apply again from a date (decision + 30 days).
+1. They have a `REJECTED` application decided **less than 30 days ago** — even if they started a newer draft since (issue #302) → **Lucía** answers, with a note she gets from the system: the application wasn't approved, and they may apply again from a date (decision + 30 days).
 2. If they ask about their application or about reapplying, she says it wasn't approved and gives that date, with the form link. She **doesn't invite them to apply before then** and **doesn't explain the decision**. Other questions get normal FAQ answers.
 3. **No hand-off**, unless they ask for a person (case I).
 4. **After 30 days** they are a regular guest: Lucía answers as usual and invites them to apply.
-5. The web form isn't blocked: someone could still reapply earlier on their own.
-6. **Rejected for being outside the coverage area** (`OUT_OF_COVERAGE_AREA`, set by the web form or by José): no 30-day date, at any age. Lucía's note says the business is outside the area, so she never says "no fue aprobada" or gives a date. She says we only serve Puerto Plata for now; if their business is in fact in Puerto Plata (moved, or picked the wrong province), they can fill in the form again.
+5. **Reapplying early is blocked** (issue #302): the web form, the WhatsApp Flow and José don't submit a new application from the same person (same phone or cédula) inside the 30 days; they show or say the date instead.
+6. **Rejected for being outside the coverage area** (`OUT_OF_COVERAGE_AREA`, set by the web form or by José): the same 30 days (founder decision 2026-10-16). Lucía's note says the business is outside the area, so she never says "no fue aprobada"; she says we only serve Puerto Plata for now and gives the date.
 
 **Monitor:** Chatwoot. Changed on 2026-09-26: before this, every rejected applicant was handed to a person.
 

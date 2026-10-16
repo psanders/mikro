@@ -16,13 +16,25 @@ import { useSolicitud } from "../solicitud/useSolicitud";
 import {
   ConsentAndSubmit,
   SolicitudOutOfArea,
+  SolicitudCooldown,
+  SolicitudInProcess,
   SolicitudSuccess
 } from "../solicitud/SolicitudParts";
 
 export function SolicitudV0Page() {
   const [openSection, setOpenSection] = useState("personal");
-  const { form, set, agreed, setAgreed, submitting, outcome, error, leaveSection, submit } =
-    useSolicitud(openSection);
+  const {
+    form,
+    set,
+    agreed,
+    setAgreed,
+    submitting,
+    outcome,
+    reapply,
+    error,
+    leaveSection,
+    submit
+  } = useSolicitud(openSection);
 
   const handleToggle = (sectionId: string) => {
     leaveSection(openSection);
@@ -36,6 +48,10 @@ export function SolicitudV0Page() {
 
   if (outcome === "success") return <SolicitudSuccess />;
   if (outcome === "out_of_area") return <SolicitudOutOfArea />;
+  if (outcome === "in_process") return <SolicitudInProcess />;
+  if (outcome === "cooldown" && reapply) {
+    return <SolicitudCooldown reapplyFrom={reapply.reapplyFrom} outOfArea={reapply.outOfArea} />;
+  }
 
   return (
     <div className="min-h-screen bg-brand-white font-sans text-brand-ink selection:bg-brand-blue-sky/30">

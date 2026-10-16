@@ -13,6 +13,42 @@ export const INTAKE_RECEIVED_MESSAGE =
   "Si tienes preguntas, escríbenos por aquí.";
 
 /**
+ * What the apiserver did with a Flow submission (issue #302: one application
+ * per person). `cooldown`: rejected less than 30 days ago, nothing created
+ * until `reapplyFrom`; `in_process`: they already have one being handled.
+ */
+export type FlowSubmitOutcome =
+  | { outcome: "received" | "in_process" | "invalid" }
+  | { outcome: "cooldown"; reapplyFrom: Date; outOfArea?: boolean };
+
+/** "22 de octubre de 2026", in the Dominican Republic's time zone. */
+export function reapplyDateText(reapplyFrom: Date): string {
+  return new Intl.DateTimeFormat("es-DO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Santo_Domingo"
+  }).format(reapplyFrom);
+}
+
+export const INTAKE_IN_PROCESS_MESSAGE =
+  "Ya tienes una solicitud en proceso, así que no creamos otra. " +
+  "Si tienes preguntas sobre ella, escríbenos por aquí.";
+
+/** The WhatsApp reply for a Flow submission's outcome. */
+export function flowReplyFor(result: FlowSubmitOutcome | void): string {
+  if (result?.outcome === "cooldown") {
+    const date = reapplyDateText(result.reapplyFrom);
+    return result.outOfArea
+      ? `Tu solicitud anterior se cerró porque por el momento solo atendemos negocios en ` +
+          `Puerto Plata. Puedes volver a solicitar a partir del ${date}.`
+      : `Tu solicitud anterior no fue aprobada. Puedes volver a solicitar a partir del ${date}.`;
+  }
+  if (result?.outcome === "in_process") return INTAKE_IN_PROCESS_MESSAGE;
+  return INTAKE_RECEIVED_MESSAGE;
+}
+
+/**
  * Convert a Flow DatePicker value (Unix epoch milliseconds as a string) to the
  * ISO `YYYY-MM-DD` the intake normalizer expects. Pass through values that are
  * already date-like.
