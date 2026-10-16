@@ -18,7 +18,7 @@ import {
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { computeSimulatedIsc } from "./computeScore.js";
-import { missingFieldsOf } from "./missingFields.js";
+import { DECLINED_FIELDS_KEY, missingFieldsOf } from "./missingFields.js";
 
 const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
 
@@ -27,12 +27,11 @@ const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
 const PHONE_KEYS = new Set<string>(PHONE_FIELDS);
 
 /**
- * Placeholder answers ("N/A", "no tengo", "ninguno", "0000000000"): never a real
- * value for any field. Saving one marks the field answered with nothing in it,
- * so José is told to move on instead.
+ * Placeholder answers ("N/A", "no tengo", "ninguno", "0000000000"). Saved as a
+ * value, one would mark the field answered with nothing in it.
  */
 const FILLER =
-  /^(n\/?a|no aplica|no tiene|no tengo.*|no hay|ningun[oa]?|nada|none|null|sin .*|-+|\.+|x+|0+)$/;
+  /^(n\/?a|no aplica|no tiene|no tengo( (pareja|referencia|telefono|numero|ninguno|nada))?|no hay|ningun[oa]?|nada|none|null|sin (pareja|referencia|telefono|numero|dato)|-+|\.+|x+|0+)$/;
 
 function isFiller(value: string): boolean {
   const key = value
@@ -44,8 +43,38 @@ function isFiller(value: string): boolean {
   return key === "" || FILLER.test(key);
 }
 
-const FILLER_REASON =
-  "No aplica: no lo guardes. Si no tiene ese dato, sigue con el siguiente campo.";
+/**
+ * Optional contacts a person may simply not have (no business phone, no
+ * reference, no partner). A filler answer for one of these records that the
+ * person declined it, so it leaves `missingFields` and José never asks again.
+ * Other fields keep their answer as given ("ninguno" is a valid employee count).
+ */
+const DECLINABLE_KEYS = new Set<string>([
+  "businessPhone",
+  "referenceName",
+  "referencePhone",
+  "spouseName",
+  "spousePhone",
+  "addressReference"
+]);
+
+/** Identity and address answers every applicant has: filler is never accepted. */
+const REQUIRED_TEXT_KEYS = new Set<string>([
+  "firstName",
+  "lastName",
+  "idNumber",
+  "homeAddress",
+  "businessName"
+]);
+
+const DECLINED_REASON =
+  "Anotado que no tiene este dato; no lo vuelvas a preguntar y sigue con el siguiente campo.";
+
+/** Fields the person said they don't have, as stored in rawData. */
+function declinedOf(raw: Record<string, unknown>): string[] {
+  const value = raw[DECLINED_FIELDS_KEY];
+  return Array.isArray(value) ? value.filter((k): k is string => typeof k === "string") : [];
+}
 
 export function createSaveAnswer(
   client: DbClient,
@@ -68,6 +97,7 @@ export function createSaveAnswer(
     const invalid: string[] = [];
     const invalidReasons: Record<string, string> = {};
     const patch: Record<string, string> = {};
+    const declined: string[] = [];
 
     for (const [key, val] of Object.entries(fields)) {
       if (!VALID_KEYS.has(key)) {
@@ -91,9 +121,14 @@ export function createSaveAnswer(
         saved.push(key);
         continue;
       }
-      if (isFiller(strVal)) {
+      if (DECLINABLE_KEYS.has(key) && isFiller(strVal)) {
+        declined.push(key);
+        invalidReasons[key] = DECLINED_REASON;
+        continue;
+      }
+      if (REQUIRED_TEXT_KEYS.has(key) && isFiller(strVal)) {
         invalid.push(key);
-        invalidReasons[key] = FILLER_REASON;
+        invalidReasons[key] = "Respuesta sin dato; pide el dato real, no guardes un relleno.";
         continue;
       }
       if (PHONE_KEYS.has(key) && !isDrPhone(strVal)) {
@@ -105,7 +140,7 @@ export function createSaveAnswer(
       saved.push(key);
     }
 
-    if (saved.length === 0) {
+    if (saved.length === 0 && declined.length === 0) {
       return {
         success: false,
         message: "No valid fields to save",
@@ -119,7 +154,14 @@ export function createSaveAnswer(
         where: { sessionId }
       });
 
-      const existingRaw = (existing?.rawData as Record<string, unknown>) ?? {};
+      const storedRaw = (existing?.rawData as Record<string, unknown>) ?? {};
+      // A field answered now is no longer declined; a newly declined one is added.
+      const declinedFields = [
+        ...new Set([...declinedOf(storedRaw).filter((k) => !(k in patch)), ...declined])
+      ];
+      const existingRaw: Record<string, unknown> = { ...storedRaw };
+      if (declinedFields.length > 0) existingRaw[DECLINED_FIELDS_KEY] = declinedFields;
+      else delete existingRaw[DECLINED_FIELDS_KEY];
       const mergedPayload = {
         sessionId,
         partial: true,
@@ -211,9 +253,13 @@ export function createSaveAnswer(
       logger.verbose("jose saveAnswer: fields saved", { sessionId, saved, simulatedIsc });
       return {
         success: true,
-        message: `Campos guardados: ${saved.join(", ")}`,
+        message:
+          saved.length > 0
+            ? `Campos guardados: ${saved.join(", ")}`
+            : `Sin dato (no preguntar más): ${declined.join(", ")}`,
         data: {
           saved,
+          declined,
           invalid,
           invalidReasons,
           simulatedIsc,

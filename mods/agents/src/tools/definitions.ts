@@ -732,14 +732,15 @@ export const getApplicationStateTool: ToolFunction = {
   }
 };
 
-/** A Dominican phone: 10 digits with a 809/829/849 area code. */
-const DR_PHONE_PATTERN = "^(809|829|849)\\d{7}$";
-
 const text = (description: string): ToolParameterSchema => ({ type: "string", description });
 const phone = (description: string): ToolParameterSchema => ({
   type: "string",
-  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234).`,
-  pattern: DR_PHONE_PATTERN
+  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234).`
+});
+/** An optional contact's phone: a DR number, or "no tiene" when they don't have one. */
+const optionalPhone = (description: string): ToolParameterSchema => ({
+  type: "string",
+  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234), o "no tiene".`
 });
 
 export const saveAnswerTool: ToolFunction = {
@@ -747,7 +748,7 @@ export const saveAnswerTool: ToolFunction = {
   function: {
     name: "saveAnswer",
     description:
-      'Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo. Nunca guardes valores de relleno ("N/A", "no tengo", "ninguno", "0000000000"): si el prospecto no tiene un dato, no lo guardes y sigue con el siguiente campo.',
+      'Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo. Nunca inventes valores de relleno ("N/A", "0000000000"). Si el prospecto no tiene un dato opcional (businessPhone, referenceName, referencePhone, spouseName, spousePhone, addressReference), guárdalo con el valor "no tiene": queda anotado y no se vuelve a preguntar.',
     parameters: {
       type: "object",
       properties: {
@@ -778,11 +779,11 @@ export const saveAnswerTool: ToolFunction = {
             locationType: text("Tipo de local"),
             formalization: text("Formalización (RNC o informal)"),
             employeeCount: text("Cantidad de empleados"),
-            businessPhone: phone("Teléfono del negocio"),
+            businessPhone: optionalPhone("Teléfono del negocio"),
             spouseName: text("Nombre de la pareja (solo CASADO o UNION_LIBRE)"),
-            spousePhone: phone("Teléfono de la pareja (solo CASADO o UNION_LIBRE)"),
+            spousePhone: optionalPhone("Teléfono de la pareja (solo CASADO o UNION_LIBRE)"),
             referenceName: text("Nombre de la referencia personal"),
-            referencePhone: phone("Teléfono de la referencia personal"),
+            referencePhone: optionalPhone("Teléfono de la referencia personal"),
             housingType: text("Tipo de vivienda"),
             residenceTime: text("Tiempo residiendo"),
             addressReference: text("Referencia de la dirección")

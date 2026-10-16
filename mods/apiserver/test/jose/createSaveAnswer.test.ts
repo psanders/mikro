@@ -72,18 +72,51 @@ describe("createSaveAnswer", () => {
     expect(missing.indexOf("monthlySales")).to.be.lessThan(missing.indexOf("referencePhone"));
   });
 
-  it("refuses filler answers instead of saving them", async () => {
-    const { tool, upsert } = makeTool(null);
+  it("records a declined optional contact instead of saving filler", async () => {
+    for (const filler of ["N/A", "n/a", "No tengo", "no tiene", "ninguno", "-", "0000000000"]) {
+      const { tool, upsert } = makeTool(null);
+      const result = await tool({ fields: { businessPhone: filler } }, CTX);
 
-    for (const filler of ["N/A", "n/a", "No tengo", "ninguno", "-", "0000000000"]) {
-      const result = await tool({ fields: { spouseName: filler } }, CTX);
-      expect(result.success, filler).to.be.false;
-      expect(result.data!.invalid).to.include("spouseName");
-      expect((result.data!.invalidReasons as Record<string, string>).spouseName).to.match(
-        /No aplica/
-      );
+      expect(result.success, filler).to.be.true;
+      expect(result.data!.saved, filler).to.not.include("businessPhone");
+      expect(result.data!.declined, filler).to.deep.equal(["businessPhone"]);
+      expect(result.data!.missingFields, filler).to.not.include("businessPhone");
+      const raw = upsert.firstCall.args[0].rawData as Record<string, unknown>;
+      expect(raw.businessPhone, filler).to.equal(undefined);
+      expect(raw.declinedFields, filler).to.deep.equal(["businessPhone"]);
     }
+  });
+
+  it("keeps earlier declines and drops one the person later answers", async () => {
+    const { tool, upsert } = makeTool({
+      sessionId: CTX.sessionId,
+      status: "DRAFT",
+      rawData: { declinedFields: ["businessPhone", "referenceName"] }
+    });
+
+    const result = await tool({ fields: { referenceName: "Rocío Cabrera" } }, CTX);
+
+    expect(result.data!.saved).to.include("referenceName");
+    const raw = upsert.firstCall.args[0].rawData as Record<string, unknown>;
+    expect(raw.declinedFields).to.deep.equal(["businessPhone"]);
+    expect(result.data!.missingFields).to.not.include("businessPhone");
+  });
+
+  it("refuses filler for identity fields every applicant has", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { firstName: "N/A" } }, CTX);
+    expect(result.success).to.be.false;
+    expect(result.data!.invalid).to.include("firstName");
     expect(upsert.called).to.be.false;
+  });
+
+  it("keeps a real answer that only looks like filler on other fields", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { employeeCount: "ninguno" } }, CTX);
+    expect(result.data!.saved).to.include("employeeCount");
+    expect((upsert.firstCall.args[0].rawData as Record<string, unknown>).employeeCount).to.equal(
+      "ninguno"
+    );
   });
 
   it("stores a marital status code", async () => {

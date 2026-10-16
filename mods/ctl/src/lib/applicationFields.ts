@@ -9,9 +9,14 @@
  */
 import { input, select } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import { BUSINESS_TYPE_LABELS, PROVINCE_LABELS } from "@mikro/common";
+import { BUSINESS_TYPE_LABELS, MARITAL_STATUS_LABELS, PROVINCE_LABELS } from "@mikro/common";
 
 export const businessTypeChoices = Object.entries(BUSINESS_TYPE_LABELS).map(([value, name]) => ({
+  name,
+  value
+}));
+
+export const maritalStatusChoices = Object.entries(MARITAL_STATUS_LABELS).map(([value, name]) => ({
   name,
   value
 }));
@@ -38,9 +43,9 @@ export const applicationStableFlags = {
     required: false
   }),
   "marital-status": Flags.string({
-    description:
-      "Marital status: SOLTERO, CASADO, UNION_LIBRE, DIVORCIADO or VIUDO (form labels like 'Casado(a)' are accepted)",
-    required: false
+    description: "Marital status code",
+    required: false,
+    options: Object.keys(MARITAL_STATUS_LABELS)
   }),
   "business-type": Flags.string({
     description: "Business type code",
@@ -142,7 +147,12 @@ export async function resolveStableFields(
     phone: await field("phone", "Phone (e.g. +18091234567)", d.phone),
     idNumber: await field("id-number", "Cédula (000-0000000-0)", d["id-number"]),
     dateOfBirth: await field("date-of-birth", "Date of birth (YYYY-MM-DD)", d["date-of-birth"]),
-    maritalStatus: await field("marital-status", "Marital status", d["marital-status"]),
+    maritalStatus: await selectField(
+      "marital-status",
+      "Marital status",
+      maritalStatusChoices,
+      d["marital-status"]
+    ),
     businessType: await selectField(
       "business-type",
       "Business type",

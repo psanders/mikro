@@ -49,12 +49,35 @@ const codeudorNote = (over: Partial<ScoreInput>) =>
 
 describe("scoring: spouse support", () => {
   it("counts a spouse with a real Dominican phone", () => {
-    expect(support({ spouseName: "Eblis", spousePhone: "(849) 876-8235" })).to.equal(25);
+    expect(
+      support({ maritalStatus: "CASADO", spouseName: "Eblis", spousePhone: "(849) 876-8235" })
+    ).to.equal(25);
+  });
+
+  it("ignores spouse data left over on a single applicant", () => {
+    expect(
+      support({ maritalStatus: "SOLTERO", spouseName: "Eblis", spousePhone: "(849) 876-8235" })
+    ).to.equal(0);
+  });
+
+  it("gives reference and business phones points only for real numbers", () => {
+    expect(
+      support({
+        referenceName: "Rocío",
+        referencePhone: "8295245888",
+        businessPhone: "(809) 555-1234"
+      })
+    ).to.equal(75);
+    expect(
+      support({ referenceName: "Rocío", referencePhone: "0000000000", businessPhone: "N/A" })
+    ).to.equal(20);
   });
 
   for (const phone of ["0000000000", "N/A", "12345", ""]) {
     it(`gives nothing for spouse phone ${JSON.stringify(phone)}`, () => {
-      expect(support({ spouseName: "N/A", spousePhone: phone })).to.equal(0);
+      expect(support({ maritalStatus: "CASADO", spouseName: "N/A", spousePhone: phone })).to.equal(
+        0
+      );
     });
   }
 });

@@ -282,12 +282,14 @@ interface SupportInfo {
 
 function scoreSupport(input: ScoreInput): { score: number; info: SupportInfo } {
   let s = 0;
-  const ref = has(input.referenceName) && has(input.referencePhone);
+  // Real contacts only: filler like "N/A" / "0000000000" earns nothing, and a
+  // spouse counts only for someone married or in a common-law union.
+  const ref = has(input.referenceName) && isDrPhone(input.referencePhone);
   s += ref ? 45 : has(input.referenceName) ? 20 : 0;
-  // A real spouse contact only: filler like "N/A" / "0000000000" earns nothing.
-  const cony = has(input.spouseName) && isDrPhone(input.spousePhone);
+  const cony =
+    hasPartner(input.maritalStatus) && has(input.spouseName) && isDrPhone(input.spousePhone);
   s += cony ? 25 : 0;
-  const tel = has(input.businessPhone);
+  const tel = isDrPhone(input.businessPhone);
   s += tel ? 30 : 0;
   return {
     score: Math.min(s, 100),

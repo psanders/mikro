@@ -12,11 +12,16 @@ describe("saveAnswer tool schema", () => {
     expect(fields.maritalStatus.enum).to.deep.equal([...MARITAL_STATUSES]);
   });
 
-  it("constrains every phone to a 10-digit Dominican number", () => {
+  it("describes phones without a schema pattern (the server validates formats)", () => {
     for (const key of ["phone", "businessPhone", "referencePhone", "spousePhone"]) {
-      const pattern = new RegExp(fields[key].pattern!);
-      expect(pattern.test("8095551234"), key).to.equal(true);
-      expect(pattern.test("0000000000"), key).to.equal(false);
+      expect(fields[key].pattern, key).to.equal(undefined);
+      expect(fields[key].description, key).to.contain("809, 829 u 849");
+    }
+  });
+
+  it('lets optional contact phones be declined with "no tiene"', () => {
+    for (const key of ["businessPhone", "referencePhone", "spousePhone"]) {
+      expect(fields[key].description, key).to.contain("no tiene");
     }
   });
 });

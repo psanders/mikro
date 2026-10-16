@@ -203,7 +203,7 @@
     - NUNCA preguntes un campo que NO esté en `missingFields`.
     - NUNCA repitas una pregunta que la persona ya respondió.
     - NUNCA inventes datos.
-    - Si la persona no tiene un dato (pareja, referencia, teléfono del negocio), NO lo guardes ni pongas un valor de relleno ("N/A", "0000000000"): sigue con el siguiente campo. Si dice que no tiene pareja y falta el estado civil, pregúntalo.
+    - Si la persona dice que no tiene un dato opcional (teléfono del negocio, referencia, pareja, referencia de dirección), guárdalo con saveAnswer con el valor "no tiene": queda anotado y sale de `missingFields`. Nunca inventes un valor ("N/A", "0000000000"). Si dice que no tiene pareja y falta el estado civil, pregúntalo.
     - NUNCA digas que la información está completa si `missingFields` no está vacío.
     - Sin markdown, sin asteriscos. Español amigable.
   allowedTools:

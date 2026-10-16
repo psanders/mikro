@@ -55,4 +55,15 @@ describe("missingApplicationFields", () => {
     });
     expect(missing).to.include("maritalStatus");
   });
+
+  it("never lists an optional contact the person declined", () => {
+    const missing = missingApplicationFields({
+      ...base,
+      maritalStatus: "SOLTERO",
+      rawData: { declinedFields: ["businessPhone", "referencePhone"] }
+    });
+    expect(missing).to.not.include("businessPhone");
+    expect(missing).to.not.include("referencePhone");
+    expect(missing).to.include("referenceName");
+  });
 });
