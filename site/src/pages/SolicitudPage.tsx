@@ -9,7 +9,7 @@
  */
 import { useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { APPLICATION_SECTIONS } from "@mikro/application-form";
+import { APPLICATION_SECTIONS, PHONE_FIELDS, isDrPhone } from "@mikro/application-form";
 import { Nav } from "../components/Nav";
 import { Footer } from "../components/Footer";
 import { SECTION_DEFS } from "../solicitud/formConfig";
@@ -34,10 +34,27 @@ const STEPS = STEP_ORDER.map((id, index) => ({
 const TOTAL_STEPS = STEPS.length;
 
 /** Required keys of a section that are still empty. */
+/** The step each phone field is on (SectionFields.tsx); optional ones aren't in requiredFields. */
+const PHONE_STEP: Record<(typeof PHONE_FIELDS)[number], string> = {
+  phone: "personal",
+  businessPhone: "negocio",
+  spousePhone: "familiar",
+  referencePhone: "familiar"
+};
+
+/** A filled phone field that isn't a valid Dominican number (809/829/849, 10 digits). */
+function badPhone(key: string, form: Record<string, string>): boolean {
+  const value = (form[key] ?? "").trim();
+  return (PHONE_FIELDS as readonly string[]).includes(key) && value !== "" && !isDrPhone(value);
+}
+
+/** Fields of a step that block moving on: required and empty, or a malformed phone. */
 function missingFields(sectionId: string, form: Record<string, string>): string[] {
   const section = APPLICATION_SECTIONS.find((s) => s.id === sectionId);
   if (!section) return [];
-  return section.requiredFields.filter((key) => !(form[key] ?? "").trim());
+  const missing = section.requiredFields.filter((key) => !(form[key] ?? "").trim());
+  const phones = PHONE_FIELDS.filter((key) => PHONE_STEP[key] === sectionId && badPhone(key, form));
+  return [...new Set([...missing, ...phones])];
 }
 
 interface StepIndicatorProps {
@@ -128,7 +145,7 @@ export function SolicitudPage() {
     const missing = missingFields(section.id, form);
     if (missing.length > 0) {
       setInvalid(new Set(missing));
-      setError("Completa los campos marcados para continuar.");
+      setError("Completa o corrige los campos marcados para continuar.");
       return;
     }
     goTo(step + 1);
@@ -145,7 +162,7 @@ export function SolicitudPage() {
     if (firstIncomplete !== -1) {
       if (firstIncomplete !== step) goTo(firstIncomplete);
       setInvalid(new Set(missingFields(STEPS[firstIncomplete].id, form)));
-      setError("Completa los campos marcados para continuar.");
+      setError("Completa o corrige los campos marcados para continuar.");
       return;
     }
     void submit();
@@ -154,8 +171,11 @@ export function SolicitudPage() {
   if (outcome === "success") return <SolicitudSuccess />;
   if (outcome === "out_of_area") return <SolicitudOutOfArea />;
 
-  // Only flag fields that are still empty, so a flag clears as soon as it's answered.
-  const stillInvalid = new Set([...invalid].filter((key) => !(form[key] ?? "").trim()));
+  // Only flag fields that are still empty (or a still-malformed phone), so a
+  // flag clears as soon as it's answered.
+  const stillInvalid = new Set(
+    [...invalid].filter((key) => !(form[key] ?? "").trim() || badPhone(key, form))
+  );
   const Icon = section.icon;
   const percent = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 

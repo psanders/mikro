@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
-import { PROVINCES } from "./applicationForm.js";
+import { PROVINCES, drPhoneDigits } from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
 import { isMapUrl } from "./mapUrl.js";
 
@@ -199,17 +199,26 @@ function parseTermWeeks(v: unknown): number | null {
 }
 
 /**
- * "(829) 871-7987" -> "+18298717987". Lenient, non-throwing: a 10-digit NANP
- * number gets a "1" country code; an 11-digit number starting with 1 is used
- * as-is; anything else returns null.
+ * "(829) 871-7987" -> "+18298717987". Non-throwing. A typed number must be
+ * Dominican (see `drPhoneDigits`), so an impossible "+11…" phone is never
+ * stored (issue #301).
+ *
+ * A number already in international form ("+17852264391") is kept when it is
+ * a possible one: the WhatsApp sender's own number, which the Flow and José
+ * pass in, or a phone stored earlier and re-normalized on every save. Dropping
+ * those would detach the application from the person writing. NANP numbers
+ * still need an area code starting 2–9, so "+11809392630" stays rejected.
  */
 function parsePhone(v: unknown): string | null {
   const s = trimToNull(v);
   if (!s) return null;
-  const digits = s.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+  const dr = drPhoneDigits(s);
+  if (dr) return `+1${dr}`;
+  const compact = s.replace(/[\s().-]/g, "");
+  if (!/^\+\d{8,15}$/.test(compact)) return null;
+  const digits = compact.slice(1);
+  if (digits.startsWith("1")) return /^1[2-9]\d{9}$/.test(digits) ? `+${digits}` : null;
+  return `+${digits}`;
 }
 
 /** ISO date string ("2004-06-18") -> Date; empty/invalid -> null. */
