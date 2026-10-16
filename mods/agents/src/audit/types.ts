@@ -24,6 +24,10 @@ export interface AuditTurn {
   customerId: string | null;
   failed: boolean;
   createdAt: Date;
+  /** Decision-model label of an INBOUND turn (openspec conversation-state), when classified. */
+  intent?: string | null;
+  /** Probability that the agent's previous message had settled the matter. */
+  settled?: number | null;
   /**
    * True for turns from before the reviewed window, loaded only so the judge
    * has context. Findings never cite them.
@@ -37,6 +41,8 @@ export interface AuditConversation {
   turns: AuditTurn[];
   /** When hand-offs were opened for this phone (any time). */
   handoffsOpenedAt: Date[];
+  /** When the audit looks at the conversation; checks about silence need it. */
+  asOf?: Date;
 }
 
 export interface AuditFinding {

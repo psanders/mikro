@@ -30,6 +30,36 @@ const SCORE_RE = /\b(puntaje|puntuaci[oó]n|score|banda)\b[^.\n]{0,25}?\b\d{1,3}
 
 const inWindow = (t: AuditTurn) => !t.context;
 
+/** Two replies to the same message closer than this are a double reply. */
+const DOUBLE_REPLY_MS = 90_000;
+/** A message left without any reply for longer than this is unanswered. */
+const UNANSWERED_AFTER_MS = 10 * 60_000;
+/** A hand-off covers silence for this long (its TTL). */
+const HANDOFF_COVERS_MS = 24 * 60 * 60_000;
+/** Consecutive agent replies this similar count as the same request repeated. */
+const SAME_REQUEST_SIMILARITY = 0.45;
+const STUCK_AFTER_REPEATS = 3;
+
+const WORD_RE = /[a-záéíóúñü]{4,}/g;
+const SIGNATURE_RE = /\s*\^[A-Z]{2}\s*$/;
+
+/** Content words of a reply, for comparing two replies. */
+function words(text: string): Set<string> {
+  return new Set(text.replace(SIGNATURE_RE, "").toLowerCase().match(WORD_RE) ?? []);
+}
+
+/** Overlap of two replies' content words (0–1). */
+export function replySimilarity(a: string, b: string): number {
+  const x = words(a);
+  const y = words(b);
+  if (x.size === 0 || y.size === 0) return 0;
+  let shared = 0;
+  for (const w of x) if (y.has(w)) shared += 1;
+  return shared / Math.min(x.size, y.size);
+}
+
+const isReply = (t: AuditTurn) => (t.role === "AGENT" || t.role === "SYSTEM") && !t.failed;
+
 export const CONVERSATION_CHECKS: ConversationCheck[] = [
   {
     id: "failed_send",
@@ -70,6 +100,102 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
           turn,
           reason: "Pidió hablar con una persona y no se abrió un traspaso."
         }))
+  },
+  {
+    id: "double_reply",
+    title: "Respondió dos veces al mismo mensaje",
+    severity: "WARNING",
+    run: (c) => {
+      const hits: CheckHit[] = [];
+      for (let i = 1; i < c.turns.length; i++) {
+        const prev = c.turns[i - 1]!;
+        const turn = c.turns[i]!;
+        // A failed send never reached the person, so the next reply isn't a second one.
+        if (!inWindow(turn) || turn.role !== "AGENT" || prev.role !== "AGENT" || prev.failed) {
+          continue;
+        }
+        if (turn.createdAt.getTime() - prev.createdAt.getTime() > DOUBLE_REPLY_MS) continue;
+        hits.push({
+          turn,
+          reason: "Dos respuestas seguidas sin un mensaje de la persona entre ellas."
+        });
+      }
+      return hits;
+    }
+  },
+  {
+    id: "stuck_loop",
+    title: "Repitió lo mismo sin avanzar",
+    severity: "WARNING",
+    run: (c) => {
+      const replies = c.turns.filter((t) => t.role === "AGENT" && !t.failed);
+      const hits: CheckHit[] = [];
+      let streak = 1;
+      for (let i = 1; i < replies.length; i++) {
+        const same =
+          replySimilarity(replies[i - 1]!.content, replies[i]!.content) >= SAME_REQUEST_SIMILARITY;
+        streak = same ? streak + 1 : 1;
+        if (streak === STUCK_AFTER_REPEATS && inWindow(replies[i]!)) {
+          hits.push({
+            turn: replies[i]!,
+            reason: `El agente repitió la misma petición ${STUCK_AFTER_REPEATS} veces seguidas sin pasar a una persona.`
+          });
+        }
+      }
+      return hits;
+    }
+  },
+  {
+    id: "unanswered",
+    title: "Mensaje sin respuesta",
+    severity: "WARNING",
+    run: (c) => {
+      const last = c.turns[c.turns.length - 1];
+      if (!last || !inWindow(last) || last.role !== "INBOUND" || !c.asOf) return [];
+      const at = last.createdAt.getTime();
+      if (c.asOf.getTime() - at < UNANSWERED_AFTER_MS) return [];
+      // A closing needs no answer; an open hand-off means a person has it.
+      if (last.intent === "closing" && (last.settled ?? 0) >= 0.7) return [];
+      if (
+        c.handoffsOpenedAt.some((h) => h.getTime() <= at && at - h.getTime() < HANDOFF_COVERS_MS)
+      ) {
+        return [];
+      }
+      const lastReply = [...c.turns].reverse().find(isReply);
+      return [
+        {
+          turn: last,
+          reason: lastReply
+            ? "El último mensaje de la persona no recibió respuesta."
+            : "La persona escribió y nunca recibió respuesta."
+        }
+      ];
+    }
+  },
+  {
+    id: "closing_loop",
+    title: "Siguió respondiendo a despedidas",
+    severity: "WARNING",
+    run: (c) => {
+      const hits: CheckHit[] = [];
+      let streak = 0;
+      for (let i = 0; i < c.turns.length; i++) {
+        const t = c.turns[i]!;
+        if (t.role !== "INBOUND") continue;
+        const answered = c.turns.slice(i + 1).find((x) => x.role !== "INBOUND");
+        const repliedToClosing =
+          t.intent === "closing" && (t.settled ?? 0) >= 0.7 && answered?.role === "AGENT";
+        streak = repliedToClosing ? streak + 1 : 0;
+        if (streak === 2 && answered && inWindow(answered)) {
+          hits.push({
+            turn: answered,
+            reason:
+              "Respondió de nuevo a un agradecimiento o despedida cuando el asunto ya estaba resuelto."
+          });
+        }
+      }
+      return hits;
+    }
   },
   {
     id: "sensitive_score",

@@ -4,6 +4,16 @@
 export { CONVERSATION_CHECKS, runChecks, type ConversationCheck, type CheckHit } from "./checks.js";
 export { createJudgeConversation, formatTranscript } from "./judge.js";
 export {
+  createDecisionScreenJudge,
+  newScreenStats,
+  screenInput,
+  SCREEN_CONTEXT_TURNS,
+  type DecisionScreenDeps,
+  type ScreenStats,
+  type ScreenFlag
+} from "./screen.js";
+export { replySimilarity } from "./checks.js";
+export {
   auditHeadline,
   auditCountingPhrase,
   auditStatusFallback,

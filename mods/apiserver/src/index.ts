@@ -57,6 +57,7 @@ import {
   initializeLLM,
   getAgentByProfile,
   createJudgeConversation,
+  createDecisionScreenJudge,
   createWriteAuditStatus,
   createChatModel,
   getLLMConfig,
@@ -543,8 +544,16 @@ async function initializeMessageProcessor() {
 
     // Conversation audit: agents are matched by the name stored on their turns.
     const agentsByName = new Map([...agents.values()].map((a) => [a.name, a] as const));
+    // With a classifier configured, the decision model screens every agent turn
+    // and only flagged policies reach the LLM judge (openspec decision-judges).
+    const auditDecisions = getDecisionProvider();
     runConversationAuditFn = createRunConversationAudit(prisma, {
-      judge: createJudgeConversation(),
+      judge: auditDecisions
+        ? createDecisionScreenJudge({
+            decisions: auditDecisions,
+            confirm: createJudgeConversation()
+          })
+        : createJudgeConversation(),
       writeStatus: createWriteAuditStatus(),
       getAgent: (name) => {
         const agent = agentsByName.get(name);
