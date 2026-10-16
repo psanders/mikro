@@ -8,7 +8,7 @@ The CX agents answer every inbound message, and nothing records where a conversa
 - **Stuck loops repeat.** +18093587775 sent Facebook links five times over ten days and Lucía answered each one the same way. +18094283758 and +18098601534 sent videos instead of photos while Sofía kept asking for "una foto" up to five times.
 - **Nothing is ever closed.** None of the 14 hand-offs has a `closed_at`, and every Chatwoot conversation stays open until staff resolve it manually.
 
-Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the founder wants a holistic answer: understand what each message *is*, keep it as metadata, and let the conversation's state drive replies and Chatwoot.
+Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the founder wants a holistic answer: understand what each message _is_, keep it as metadata, and let the conversation's state drive replies and Chatwoot.
 
 ## What Changes
 
@@ -17,6 +17,7 @@ Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the fou
   - yes/no predicates: did the agent's last message settle the matter, does this message confirm what the agent asked, is this the same unusable input again.
 
   The label, its confidence and the predicate probabilities are stored on `conversation_turns`. Below a confidence threshold, a label never triggers an action. The provider is picked by a bake-off on our Spanish turns. Spanish is untested by every published benchmark.
+
 - **Each conversation has a state.** It is one of `open`, `waiting_customer`, `waiting_human` or `resolved`, plus a resolution reason: `closing`, `opt_out`, `out_of_area`, `rejected_informed`, `intake_complete`, `evidence_complete` or `stuck`. The state is derived from the intents and from signals the agents already emit (finalize outcomes, hand-offs, the out-of-area and rejected directives, evidence completion). It is stored on every turn and on a per-phone row.
 - **Actions, behind `conversationState.actionsEnabled` (default off):**
   - A `closing` after a settled exchange is recorded but gets no reply and no agent LLM call, and the Chatwoot conversation is resolved.

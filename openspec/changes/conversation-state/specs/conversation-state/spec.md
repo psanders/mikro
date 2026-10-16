@@ -31,6 +31,7 @@ When the `classifier` section is not configured, classification SHALL be skipped
 ### Requirement: The classifier is a pluggable decision provider
 
 The `classifier` section SHALL be optional, and SHALL select a provider:
+
 - `openai-decisions`: the OpenAI Decisions API, model `gpt-6-luna`;
 - `chat`: any text model in the agents' model registry, asked the same questions through structured output at temperature 0.
 
@@ -51,6 +52,7 @@ Both SHALL return answers of the same shape. The intent, state and action code S
 The system SHALL keep, per address (phone or BSUID), a conversation state: `open`, `waiting_customer`, `waiting_human` or `resolved`. A resolved state SHALL carry a resolution of `closing`, `opt_out`, `out_of_area`, `rejected_informed`, `intake_complete`, `evidence_complete` or `stuck`.
 
 The state SHALL be computed in code from intents and existing agent signals:
+
 - finalize outcomes;
 - hand-offs;
 - the out-of-area and rejected-applicant directives;
@@ -124,6 +126,7 @@ A Chatwoot failure SHALL be logged and SHALL NOT fail the reply.
 With actions on, a turn labeled `opt_out` SHALL make the agent ask for confirmation. The system SHALL record a pending opt-out, which expires after 24 hours.
 
 A reply with `affirms` true SHALL then:
+
 1. move a DRAFT, RECEIVED or IN_REVIEW application to ABANDONED, recording an `application.abandoned` business event attributed to the applicant;
 2. send one short goodbye;
 3. resolve the conversation with resolution `opt_out`.
@@ -148,6 +151,7 @@ An application in PENDING_DECISION or APPROVED SHALL NOT be cancelled automatica
 ### Requirement: Stuck loops are handed to a person
 
 With actions on, when two consecutive inbound turns are labeled `repeat` (the same unusable input after the agent's request), the system SHALL NOT invoke the agent. It SHALL instead:
+
 - send one fixed hand-off message;
 - open a hand-off with reason "Conversación atascada";
 - add the `stuck` label to the Chatwoot conversation, with a private note of the recent turns.
@@ -164,6 +168,7 @@ The state SHALL become `waiting_human`.
 `mikro conversations:classify --since <date>` SHALL label inbound turns that have no intent, and recompute turn and conversation state. It SHALL be idempotent, skipping labeled turns unless `--force` is given. It SHALL never send messages, change Chatwoot, or transition applications.
 
 With `--dry-run --providers <spec,…>`, it SHALL write nothing and SHALL report, per model:
+
 - agreement with a hand-labeled sample file (overall and for `closing` and `opt_out`);
 - a confusion summary;
 - the estimated cost;
