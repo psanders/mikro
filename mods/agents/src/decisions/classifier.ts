@@ -41,6 +41,12 @@ const INTENT_DESCRIPTIONS: Record<(typeof INTENTS)[number], string> = {
 /** How many earlier turns the classifier sees. */
 export const CLASSIFIER_CONTEXT_TURNS = 6;
 
+/**
+ * Inbound content the handler stores for a message without text: `[imagen]`,
+ * `[video]`, `[nota de voz]`, `[location]`, `[reaction]`, …
+ */
+export const MEDIA_PLACEHOLDER_RE = /^\[(nota de voz|[a-z_]+)\]$/i;
+
 export interface ClassifierTurn {
   role: "INBOUND" | "AGENT" | "SYSTEM";
   content: string;
@@ -115,7 +121,7 @@ export function classifierInput(input: ClassifyInput): string {
 export function isMediaOnly(input: ClassifyInput): boolean {
   if (!input.isMedia) return false;
   const text = input.message.trim();
-  return !text || /^\[(imagen|video|audio|unsupported|sticker|nota de voz|document)\]$/i.test(text);
+  return !text || MEDIA_PLACEHOLDER_RE.test(text);
 }
 
 export async function classifyInbound(

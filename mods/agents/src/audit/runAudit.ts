@@ -62,11 +62,6 @@ function agentsIn(c: AuditConversation): string[] {
   ];
 }
 
-/** The agent that served the reviewed part of a conversation, if any. */
-function servingAgent(c: AuditConversation): AuditTurn | undefined {
-  return [...reviewed(c)].reverse().find((t) => t.role === "AGENT" && t.agentName);
-}
-
 /** The agent's latest turn in the reviewed part of a conversation. */
 function lastTurnBy(c: AuditConversation, agentName: string): AuditTurn | undefined {
   return [...reviewed(c)].reverse().find((t) => t.role === "AGENT" && t.agentName === agentName);
@@ -153,7 +148,7 @@ export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
     });
   }
 
-  // Per-agent breakdown: conversations by serving agent, findings by attributed agent.
+  // Per-agent breakdown: conversations each agent wrote in, findings by attributed agent.
   const summaries = new Map<string, AuditAgentSummary>();
   const summaryFor = (name: string, from?: Partial<AuditTurn>) => {
     let s = summaries.get(name);
@@ -174,8 +169,7 @@ export async function runAudit(input: RunAuditInput): Promise<RunAuditResult> {
     return s;
   };
   for (const c of conversations) {
-    const served = servingAgent(c);
-    if (served?.agentName) summaryFor(served.agentName, served).conversations += 1;
+    for (const name of agentsIn(c)) summaryFor(name, lastTurnBy(c, name)).conversations += 1;
   }
   for (const f of findings) {
     if (!f.agentName) continue;

@@ -84,7 +84,7 @@ describe("audit code checks (decision-judges)", () => {
     const closing = convo(
       [
         turn("AGENT", "¡Listo!", 0),
-        turn("INBOUND", "Gracias", 1, { intent: "closing", settled: 0.95 })
+        turn("INBOUND", "Gracias", 1, { intent: "closing", intentConfidence: 0.9, settled: 0.95 })
       ],
       { asOf }
     );
@@ -98,7 +98,7 @@ describe("audit code checks (decision-judges)", () => {
   });
 
   it("flags replying to a second closing in a row (Lucía 10-08)", () => {
-    const closing = { intent: "closing", settled: 0.95 };
+    const closing = { intent: "closing", intentConfidence: 0.9, settled: 0.95 };
     const c = convo([
       turn("AGENT", "Si estás listo, puedes llenar tu solicitud.", 0),
       turn("INBOUND", "Ok", 1, closing),
@@ -109,5 +109,58 @@ describe("audit code checks (decision-judges)", () => {
       turn("AGENT", "Genial. Aquí estamos.", 6)
     ]);
     expect(check("closing_loop").run(c)).to.have.length(1);
+  });
+
+  it("does not count a burst of closings answered once as two replies", () => {
+    const closing = { intent: "closing", intentConfidence: 0.9, settled: 0.95 };
+    const c = convo([
+      turn("AGENT", "Listo, recibimos tu solicitud.", 0),
+      turn("INBOUND", "Ok", 1, closing),
+      turn("INBOUND", "Gracias", 1.01, closing),
+      turn("AGENT", "¡Con gusto!", 2)
+    ]);
+    expect(check("closing_loop").run(c)).to.have.length(0);
+  });
+
+  it("ignores a low-confidence closing label", () => {
+    const asOf = new Date(t0 + 120 * 60_000);
+    const c = convo(
+      [
+        turn("AGENT", "¡Listo!", 0),
+        turn("INBOUND", "ok y el préstamo?", 1, {
+          intent: "closing",
+          intentConfidence: 0.4,
+          settled: 0.8
+        })
+      ],
+      { asOf }
+    );
+    expect(check("unanswered").run(c)).to.have.length(1);
+  });
+
+  it("treats a tool-only agent turn (nothing sent) as no reply", () => {
+    const asOf = new Date(t0 + 120 * 60_000);
+    const c = convo(
+      [
+        turn("AGENT", "¿Cuánto vende al mes?", 0),
+        turn("INBOUND", "Unos 30 mil", 1),
+        turn("AGENT", "", 1.1, { toolNames: ["saveAnswer"] })
+      ],
+      { asOf }
+    );
+    expect(check("unanswered").run(c)).to.have.length(1);
+    const followed = convo([...c.turns, turn("AGENT", "Perfecto, ¿y tu cédula?", 1.2)]);
+    expect(check("double_reply").run(followed)).to.have.length(0);
+  });
+
+  it("does not call short replies that share one word a stuck loop", () => {
+    const c = convo([
+      turn("AGENT", "Perfecto ^JO", 0),
+      turn("INBOUND", "Colmado", 1),
+      turn("AGENT", "Perfecto, ¿cuánto vende al mes?", 2),
+      turn("INBOUND", "30 mil", 3),
+      turn("AGENT", "Perfecto, ¿cuál es tu cédula?", 4)
+    ]);
+    expect(check("stuck_loop").run(c)).to.have.length(0);
   });
 });

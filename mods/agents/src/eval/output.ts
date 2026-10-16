@@ -95,6 +95,13 @@ function turnFailureReason(turnResult: TurnResult): string {
   return `AI response with ${pct}% similarity`;
 }
 
+/** A failed turn's detail line: the failure reason, plus the similarity verdict when it ran. */
+function failedTurnDetail(turnResult: TurnResult): string {
+  const reason = turnFailureReason(turnResult);
+  if (turnResult.checks?.length) return reason;
+  return `${turnResult.similarity.confidence.toFixed(0)}% similar - ${turnResult.similarity.reason}`;
+}
+
 /**
  * Print scenario header at start of scenario (conversation-style).
  */
@@ -215,12 +222,10 @@ export function printEval(results: EvalResults): void {
         turnResult.passed ? ansis.green("✔") : ansis.red("✘")
       ]);
 
-      // Print similarity info if failed
+      // Print why it failed (failed checks, tools, or similarity)
       if (!turnResult.passed) {
         console.log(
-          ansis.yellow(
-            `  Turn ${turnResult.turnNumber}: ${turnResult.similarity.confidence.toFixed(0)}% similar - ${turnResult.similarity.reason}`
-          )
+          ansis.yellow(`  Turn ${turnResult.turnNumber}: ${failedTurnDetail(turnResult)}`)
         );
       }
 
@@ -280,13 +285,11 @@ export function toTable(results: EvalResults): string {
 
     lines.push(table.toString());
 
-    // Add similarity details for failed turns
+    // Add failure details for failed turns
     scenarioResult.turns
       .filter((t) => !t.passed)
       .forEach((turnResult) => {
-        lines.push(
-          `  Turn ${turnResult.turnNumber}: ${turnResult.similarity.confidence.toFixed(0)}% similar - ${turnResult.similarity.reason}`
-        );
+        lines.push(`  Turn ${turnResult.turnNumber}: ${failedTurnDetail(turnResult)}`);
       });
   });
 

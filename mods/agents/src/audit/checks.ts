@@ -7,6 +7,7 @@
  * registry in @mikro/common (id, title, severity, run).
  */
 import { isHumanRequest, PROCESSING_ERROR_REPLY } from "../whatsapp/handleWhatsAppMessage.js";
+import { DECISION_MIN_CONFIDENCE } from "../decisions/verdict.js";
 import type { AuditConversation, AuditFinding, AuditSeverity, AuditTurn } from "./types.js";
 
 export interface CheckHit {
@@ -48,17 +49,31 @@ function words(text: string): Set<string> {
   return new Set(text.replace(SIGNATURE_RE, "").toLowerCase().match(WORD_RE) ?? []);
 }
 
+/** Fewer content words than this can't show a repeated request ("Perfecto ^JO"). */
+const MIN_COMPARABLE_WORDS = 3;
+
 /** Overlap of two replies' content words (0–1). */
 export function replySimilarity(a: string, b: string): number {
   const x = words(a);
   const y = words(b);
-  if (x.size === 0 || y.size === 0) return 0;
+  if (x.size < MIN_COMPARABLE_WORDS || y.size < MIN_COMPARABLE_WORDS) return 0;
   let shared = 0;
   for (const w of x) if (y.has(w)) shared += 1;
   return shared / Math.min(x.size, y.size);
 }
 
 const isReply = (t: AuditTurn) => (t.role === "AGENT" || t.role === "SYSTEM") && !t.failed;
+/**
+ * An AGENT turn that reached the person. A tool-only turn (no text) is stored
+ * with empty content and sent nothing.
+ */
+const isSentAgentReply = (t: AuditTurn) =>
+  t.role === "AGENT" && !t.failed && t.content.trim() !== "";
+/** A confidently labeled closing after the agent had settled the matter. */
+const isSettledClosing = (t: AuditTurn) =>
+  t.intent === "closing" &&
+  (t.intentConfidence ?? 0) >= DECISION_MIN_CONFIDENCE &&
+  (t.settled ?? 0) >= DECISION_MIN_CONFIDENCE;
 
 export const CONVERSATION_CHECKS: ConversationCheck[] = [
   {
@@ -107,13 +122,12 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
     severity: "WARNING",
     run: (c) => {
       const hits: CheckHit[] = [];
-      for (let i = 1; i < c.turns.length; i++) {
-        const prev = c.turns[i - 1]!;
-        const turn = c.turns[i]!;
-        // A failed send never reached the person, so the next reply isn't a second one.
-        if (!inWindow(turn) || turn.role !== "AGENT" || prev.role !== "AGENT" || prev.failed) {
-          continue;
-        }
+      // Only messages that reached the person: a failed send or a tool-only turn isn't a reply.
+      const turns = c.turns.filter((t) => t.role !== "AGENT" || isSentAgentReply(t));
+      for (let i = 1; i < turns.length; i++) {
+        const prev = turns[i - 1]!;
+        const turn = turns[i]!;
+        if (!inWindow(turn) || turn.role !== "AGENT" || prev.role !== "AGENT") continue;
         if (turn.createdAt.getTime() - prev.createdAt.getTime() > DOUBLE_REPLY_MS) continue;
         hits.push({
           turn,
@@ -128,7 +142,7 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
     title: "Repitió lo mismo sin avanzar",
     severity: "WARNING",
     run: (c) => {
-      const replies = c.turns.filter((t) => t.role === "AGENT" && !t.failed);
+      const replies = c.turns.filter(isSentAgentReply);
       const hits: CheckHit[] = [];
       let streak = 1;
       for (let i = 1; i < replies.length; i++) {
@@ -150,12 +164,13 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
     title: "Mensaje sin respuesta",
     severity: "WARNING",
     run: (c) => {
-      const last = c.turns[c.turns.length - 1];
+      // A tool-only AGENT turn sent nothing, so it doesn't answer the message before it.
+      const last = c.turns.filter((t) => t.role !== "AGENT" || isSentAgentReply(t)).at(-1);
       if (!last || !inWindow(last) || last.role !== "INBOUND" || !c.asOf) return [];
       const at = last.createdAt.getTime();
       if (c.asOf.getTime() - at < UNANSWERED_AFTER_MS) return [];
       // A closing needs no answer; an open hand-off means a person has it.
-      if (last.intent === "closing" && (last.settled ?? 0) >= 0.7) return [];
+      if (isSettledClosing(last)) return [];
       if (
         c.handoffsOpenedAt.some((h) => h.getTime() <= at && at - h.getTime() < HANDOFF_COVERS_MS)
       ) {
@@ -178,17 +193,21 @@ export const CONVERSATION_CHECKS: ConversationCheck[] = [
     severity: "WARNING",
     run: (c) => {
       const hits: CheckHit[] = [];
+      // Per agent reply: did it answer only settled closings? Messages of one
+      // burst share a reply, so the streak counts replies, not messages.
       let streak = 0;
-      for (let i = 0; i < c.turns.length; i++) {
-        const t = c.turns[i]!;
-        if (t.role !== "INBOUND") continue;
-        const answered = c.turns.slice(i + 1).find((x) => x.role !== "INBOUND");
-        const repliedToClosing =
-          t.intent === "closing" && (t.settled ?? 0) >= 0.7 && answered?.role === "AGENT";
-        streak = repliedToClosing ? streak + 1 : 0;
-        if (streak === 2 && answered && inWindow(answered)) {
+      let pending: AuditTurn[] = [];
+      for (const t of c.turns) {
+        if (t.role === "INBOUND") {
+          pending.push(t);
+          continue;
+        }
+        if (!isSentAgentReply(t) || pending.length === 0) continue;
+        streak = pending.every(isSettledClosing) ? streak + 1 : 0;
+        pending = [];
+        if (streak === 2 && inWindow(t)) {
           hits.push({
-            turn: answered,
+            turn: t,
             reason:
               "Respondió de nuevo a un agradecimiento o despedida cuando el asunto ya estaba resuelto."
           });

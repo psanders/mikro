@@ -35,9 +35,16 @@ function judgeOptions(): EvalRunOptions {
   const judge = (
     ["auto", "similarity", "checks", "both"].includes(value ?? "") ? value : "auto"
   ) as EvalJudgeMode;
+  const decisions = judge === "similarity" ? null : getDecisionProvider();
+  if (!decisions && (judge === "checks" || judge === "both")) {
+    console.error(
+      `--judge ${judge} needs a decision model: add the \`classifier\` section to mikro.json.`
+    );
+    process.exit(1);
+  }
   return {
     judge,
-    decisions: judge === "similarity" ? null : getDecisionProvider(),
+    decisions,
     stats: { decisionCalls: 0, decisionInputTokens: 0, decisionLatencyMs: 0, llmCalls: 0 }
   };
 }
@@ -188,6 +195,14 @@ async function runEvalsForCurrentConfig(
     if (results.summary.failedScenarios > 0 || results.summary.failedTurns > 0) {
       hasFailures = true;
     }
+  }
+
+  const { stats } = options;
+  if (stats && (stats.decisionCalls > 0 || stats.llmCalls > 0)) {
+    const avg = stats.decisionCalls ? Math.round(stats.decisionLatencyMs / stats.decisionCalls) : 0;
+    console.log(
+      `\nRubric checks: ${stats.decisionCalls} decision calls (${stats.decisionInputTokens} input tokens, ${avg} ms avg), ${stats.llmCalls} LLM calls`
+    );
   }
 
   return { results: allResults, hasFailures };

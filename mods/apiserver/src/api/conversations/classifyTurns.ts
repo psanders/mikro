@@ -14,6 +14,7 @@ import {
 } from "@mikro/common";
 import {
   CLASSIFIER_CONTEXT_TURNS,
+  MEDIA_PLACEHOLDER_RE,
   classifyInbound,
   costOf,
   type Classification,
@@ -24,9 +25,6 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
 import { logger } from "../../logger.js";
 
 type TurnDb = Pick<PrismaClient, "conversationTurn">;
-
-/** Inbound content the handler stores for media without text. */
-const MEDIA_RE = /^\[(imagen|video|audio|unsupported|sticker|nota de voz|document|[a-z_]+)\]$/i;
 
 interface TurnRow {
   id: number;
@@ -76,7 +74,7 @@ export function toClassifierTurn(row: Pick<TurnRow, "role" | "content">): Classi
 }
 
 export function isMediaTurn(row: Pick<TurnRow, "content" | "hasImage">): boolean {
-  return row.hasImage || MEDIA_RE.test(row.content.trim());
+  return row.hasImage || MEDIA_PLACEHOLDER_RE.test(row.content.trim());
 }
 
 export function createClassifyConversationTurns(db: TurnDb, provider: DecisionProvider) {
@@ -101,7 +99,11 @@ export function createClassifyConversationTurns(db: TurnDb, provider: DecisionPr
 
     // Each phone's thread in order; the classifier sees the turns before each message.
     const threads = new Map<string, TurnRow[]>();
-    for (const row of rows) threads.set(row.phone, [...(threads.get(row.phone) ?? []), row]);
+    for (const row of rows) {
+      const thread = threads.get(row.phone);
+      if (thread) thread.push(row);
+      else threads.set(row.phone, [row]);
+    }
 
     const result: ClassifyTurnsResult = {
       classified: 0,
@@ -112,6 +114,20 @@ export function createClassifyConversationTurns(db: TurnDb, provider: DecisionPr
       turns: []
     };
     for (const thread of threads.values()) {
+      const needsLabels = thread.some((r) => r.role === "INBOUND" && (!r.intent || input.force));
+      // The turns just before `since` too, so an early "gracias" is read in context.
+      const before = !needsLabels
+        ? []
+        : (
+            await db.conversationTurn.findMany({
+              where: { phone: thread[0]!.phone, id: { lt: thread[0]!.id }, failed: false },
+              orderBy: { id: "desc" },
+              take: CLASSIFIER_CONTEXT_TURNS,
+              select: { role: true, content: true }
+            })
+          )
+            .reverse()
+            .map(toClassifierTurn);
       for (let i = 0; i < thread.length; i++) {
         const row = thread[i]!;
         if (row.role !== "INBOUND") continue;
@@ -120,10 +136,13 @@ export function createClassifyConversationTurns(db: TurnDb, provider: DecisionPr
           continue;
         }
         if (result.classified + result.errors >= input.limit) return result;
-        const history = thread
-          .slice(0, i)
-          .filter((t) => !t.failed)
-          .map(toClassifierTurn);
+        const history = [
+          ...before,
+          ...thread
+            .slice(Math.max(0, i - CLASSIFIER_CONTEXT_TURNS * 2), i)
+            .filter((t) => !t.failed)
+            .map(toClassifierTurn)
+        ];
         try {
           const c = await classifyInbound(provider, {
             history,

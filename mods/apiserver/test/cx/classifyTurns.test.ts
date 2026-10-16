@@ -23,13 +23,15 @@ function turn(id: number, role: string, content: string, extra: Record<string, u
   };
 }
 
-function fakeDb(rows: ReturnType<typeof turn>[]) {
+function fakeDb(rows: ReturnType<typeof turn>[], earlier: ReturnType<typeof turn>[] = []) {
   const updates: Array<{ id: number; data: Record<string, unknown> }> = [];
   return {
     updates,
     db: {
       conversationTurn: {
-        findMany: async () => rows,
+        // The backfill query (by `since`) gets `rows`; the context query (`id < first`) gets `earlier`, newest first.
+        findMany: async ({ where }: { where: { id?: { lt: number } } }) =>
+          where.id ? [...earlier].reverse() : rows,
         update: async ({
           where,
           data
@@ -96,6 +98,14 @@ describe("classifyConversationTurns", () => {
       sameRequest: 0.05
     });
     expect(result.costUsd).to.be.closeTo((2 * 400 * 0.1) / 1_000_000, 1e-12);
+  });
+
+  it("reads the turns from before `since` as context for the first message", async () => {
+    const earlier = [turn(0, "AGENT", "Listo, tu solicitud fue recibida.\n\n^SO")];
+    const { db } = fakeDb([turn(1, "INBOUND", "Gracias")], earlier);
+    const provider = stubProvider("closing");
+    await createClassifyConversationTurns(db, provider)({ since: at(1) });
+    expect(provider.inputs[0]).to.contain("AGENTE: Listo, tu solicitud fue recibida.");
   });
 
   it("writes nothing on a dry run", async () => {

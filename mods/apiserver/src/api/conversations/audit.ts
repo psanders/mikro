@@ -122,6 +122,7 @@ function toAuditTurn(row: TurnRow, context = false): AuditTurn {
     failed: row.failed,
     createdAt: row.createdAt,
     intent: row.intent,
+    intentConfidence: row.intentConfidence,
     settled: settledOf(row.classification),
     ...(context ? { context: true } : {})
   };

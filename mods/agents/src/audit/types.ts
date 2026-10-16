@@ -26,6 +26,8 @@ export interface AuditTurn {
   createdAt: Date;
   /** Decision-model label of an INBOUND turn (openspec conversation-state), when classified. */
   intent?: string | null;
+  /** The classifier's confidence in `intent`. */
+  intentConfidence?: number | null;
   /** Probability that the agent's previous message had settled the matter. */
   settled?: number | null;
   /**
