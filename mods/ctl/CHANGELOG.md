@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.14.0](https://github.com/psanders/mikro/compare/v3.13.5...v3.14.0) (2026-10-16)
+
+### Features
+
+- **cx:** decision-model eval checks, live intent labels, per-agent audit judging + code checks ([#341](https://github.com/psanders/mikro/issues/341)) ([0843e5b](https://github.com/psanders/mikro/commit/0843e5b9a940a8b967a56d1d5ca942b946a6dd05))
+
 ## [3.13.5](https://github.com/psanders/mikro/compare/v3.13.4...v3.13.5) (2026-10-16)
 
 **Note:** Version bump only for package @mikro/ctl
