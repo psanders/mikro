@@ -376,6 +376,9 @@ CREATE TABLE "conversation_turns" (
     "customer_id" TEXT,
     "wa_message_id" TEXT,
     "failed" BOOLEAN NOT NULL DEFAULT false,
+    "intent" TEXT,
+    "intent_confidence" REAL,
+    "classification" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX "conversation_turns_phone_created_at_idx" ON "conversation_turns"("phone", "created_at");

@@ -133,6 +133,11 @@
     "schedule": "0 7 * * *",
     "maxConversations": 200
   },
+  "classifier": {
+    "provider": "openai-decisions",
+    "apiKey": "your-openai-api-key",
+    "model": "gpt-6-luna"
+  },
   "githubFeedback": {
     "token": "",
     "repo": ""

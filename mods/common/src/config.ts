@@ -392,6 +392,34 @@ const conversationAuditSchema = z
   .default(() => ({ enabled: false, schedule: "0 7 * * *", maxConversations: 200 }));
 
 export type ConversationAuditConfig = z.infer<typeof conversationAuditSchema>;
+
+/**
+ * Decision model used to classify CX turns and to screen eval/audit checks
+ * (openspec conversation-state). Optional: when absent, classification and
+ * decision-model judging are off and nothing else changes. A decision model
+ * answers typed questions (choice / yes-no) with probabilities instead of
+ * writing text. `openai-decisions` calls OpenAI's Decisions API; `chat` asks
+ * any registered text model the same questions through structured output.
+ */
+const classifierSchema = z.discriminatedUnion("provider", [
+  z
+    .object({
+      provider: z.literal("openai-decisions"),
+      apiKey: z.string().min(1, "API key is required"),
+      model: z.string().min(1).default("gpt-6-luna")
+    })
+    .strict(),
+  z
+    .object({
+      provider: z.literal("chat"),
+      vendor: z.enum(LLM_VENDORS),
+      apiKey: z.string().min(1, "API key is required"),
+      model: z.string().min(1, "Model name is required")
+    })
+    .strict()
+]);
+
+export type ClassifierConfig = z.infer<typeof classifierSchema>;
 export type QCobroPortfolioRule = z.infer<typeof qcobroPortfolioRuleSchema>;
 
 /** Past-due (mora) fee policy. See README "Past-due fee". */
@@ -584,6 +612,7 @@ export const mikroConfigSchema = z
     updates: updatesSchema,
     qcobro: qcobroSchema,
     conversationAudit: conversationAuditSchema,
+    classifier: classifierSchema.optional(),
     githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" })),
     metaConversions: metaConversionsSchema.default(() => ({
       pixelId: "",
@@ -821,6 +850,11 @@ export function getUpdatesConfig(): ResolvedMikroConfig["updates"] {
 /** QCobro integration settings (credentials, syncMode, balanceBasis, schedule, portfolios[]). */
 export function getQCobroConfig(): ResolvedMikroConfig["qcobro"] {
   return getConfig().qcobro;
+}
+
+/** The decision-model classifier, or null when not configured (feature off). */
+export function getClassifierConfig(): ClassifierConfig | null {
+  return getConfig().classifier ?? null;
 }
 
 /** Conversation audit settings (enabled, schedule, maxConversations). */

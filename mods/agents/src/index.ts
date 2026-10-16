@@ -145,3 +145,6 @@ export {
   agentConfigSchema,
   type AgentConfigInput
 } from "./agents/index.js";
+
+// Decision models (openspec conversation-state): classifier, eval checks, audit screen
+export * from "./decisions/index.js";

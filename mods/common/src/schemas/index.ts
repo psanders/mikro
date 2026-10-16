@@ -211,12 +211,14 @@ export {
   listConversationTurnsSchema,
   getApplicationConversationSchema,
   deleteConversationSchema,
+  classifyConversationTurnsSchema,
   type ConversationTurnRole,
   type ConversationToolCall,
   type RecordConversationTurnInput,
   type ListConversationTurnsInput,
   type GetApplicationConversationInput,
-  type DeleteConversationInput
+  type DeleteConversationInput,
+  type ClassifyConversationTurnsInput
 } from "./conversation.js";
 
 export {

@@ -812,6 +812,14 @@ model ConversationTurn {
   // The send to WhatsApp failed: the reply was produced (kept for audits) but
   // the person never got it, so it is left out of the agents' memory.
   failed        Boolean  @default(false)
+  // Decision-model label of an INBOUND turn (openspec conversation-state):
+  // answer, question, closing, opt_out, repeat, frustration, human_request,
+  // greeting, other, or media (set by code). Null until classified.
+  intent           String?
+  intentConfidence Float?  @map("intent_confidence")
+  // JSON: predicate probabilities (settled, affirms, sameRequest) and the
+  // provider:model that answered, so labels from different models compare.
+  classification   String?
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([phone, createdAt])

@@ -62,8 +62,23 @@ export const deleteConversationSchema = z.object({
   phone: z.string().min(1, "Phone is required")
 });
 
+/**
+ * Label stored INBOUND turns with the decision-model classifier (openspec
+ * conversation-state D8). Labels only: never sends, never touches Chatwoot or
+ * applications. `dryRun` classifies and reports without writing.
+ */
+export const classifyConversationTurnsSchema = z.object({
+  since: z.coerce.date(),
+  phone: z.string().min(1).optional(),
+  /** Re-label turns that already have an intent. */
+  force: z.boolean().default(false),
+  dryRun: z.boolean().default(false),
+  limit: z.number().int().positive().max(5000).default(1000)
+});
+
 export type ConversationTurnRole = z.infer<typeof conversationTurnRoleEnum>;
 export type ConversationToolCall = z.infer<typeof conversationToolCallSchema>;
+export type ClassifyConversationTurnsInput = z.infer<typeof classifyConversationTurnsSchema>;
 export type RecordConversationTurnInput = z.infer<typeof recordConversationTurnSchema>;
 export type ListConversationTurnsInput = z.input<typeof listConversationTurnsSchema>;
 export type GetApplicationConversationInput = z.infer<typeof getApplicationConversationSchema>;
