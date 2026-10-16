@@ -13,6 +13,7 @@ import {
   type ClassifyConversationTurnsInput
 } from "@mikro/common";
 import {
+  CLASSIFIER_CONTEXT_TURNS,
   classifyInbound,
   costOf,
   type Classification,
@@ -159,4 +160,32 @@ export function createClassifyConversationTurns(db: TurnDb, provider: DecisionPr
     return result;
   };
   return withErrorHandlingAndValidation(fn, classifyConversationTurnsSchema);
+}
+
+/**
+ * The live labeler: classify one just-recorded inbound turn from the turns
+ * before it. Best-effort; the handler never waits for it.
+ */
+export function createLabelInboundTurn(db: TurnDb, provider: DecisionProvider) {
+  return async (turnId: string): Promise<void> => {
+    const id = Number(turnId);
+    if (!Number.isInteger(id)) return;
+    const row = await db.conversationTurn.findUnique({
+      where: { id },
+      select: { id: true, phone: true, role: true, content: true, hasImage: true }
+    });
+    if (!row || row.role !== "INBOUND") return;
+    const earlier = await db.conversationTurn.findMany({
+      where: { phone: row.phone, id: { lt: id }, failed: false },
+      orderBy: { id: "desc" },
+      take: CLASSIFIER_CONTEXT_TURNS,
+      select: { role: true, content: true }
+    });
+    const c = await classifyInbound(provider, {
+      history: earlier.reverse().map(toClassifierTurn),
+      message: row.content,
+      isMedia: isMediaTurn(row)
+    });
+    await db.conversationTurn.update({ where: { id }, data: labelColumns(c) });
+  };
 }

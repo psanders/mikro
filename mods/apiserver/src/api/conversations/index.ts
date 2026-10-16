@@ -31,6 +31,7 @@ export {
 } from "./audit.js";
 export {
   createClassifyConversationTurns,
+  createLabelInboundTurn,
   labelColumns,
   toClassifierTurn,
   isMediaTurn,

@@ -698,6 +698,32 @@ describe("WhatsApp CX routes", () => {
       expect(p.turns).to.deep.equal([]);
     });
   });
+  describe("decision-model labels (openspec conversation-state)", () => {
+    it("labels the recorded inbound turn and still replies as before", async () => {
+      const labelInboundTurn = sinon.stub().resolves();
+      const p = setup(customerRoute, { labelInboundTurn });
+
+      await handleWhatsAppMessage(textWebhook("gracias"));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      const inbound = p.turns.find((t) => t.role === "INBOUND")!;
+      expect(labelInboundTurn.calledOnceWith(String(inbound.id))).to.be.true;
+      expect(p.invokeLLM.calledOnce).to.be.true;
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+    });
+
+    it("a labeling failure never affects the reply", async () => {
+      const p = setup(customerRoute, {
+        labelInboundTurn: sinon.stub().rejects(new Error("Decisions API 500"))
+      });
+
+      await handleWhatsAppMessage(textWebhook("ok"));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(p.sendWhatsAppMessage.calledOnce).to.be.true;
+    });
+  });
+
   describe("agent sign-off", () => {
     const guest = { type: "guest" as const, phone: PHONE };
 
