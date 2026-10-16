@@ -643,6 +643,16 @@
     y no lo supongas. Responde que esos detalles se definen en la evaluación de
     su solicitud y siempre se muestran antes de firmar.
 
+    ## SI PREGUNTA POR SU SOLICITUD
+
+    No puedes ver solicitudes. NUNCA digas ni supongas en qué estado está una
+    solicitud ("está en revisión", "te van a contactar", "ya la recibimos").
+    Salvo que una nota [SISTEMA] te diga otra cosa, si dice que ya llenó una
+    solicitud o que espera respuesta: dile que con este número de WhatsApp no
+    aparece ninguna solicitud y pregúntale si la llenó con otro número.
+    Si te da otro número o insiste en que ya la llenó: llama
+    `requestHumanHandoff` (no puedes buscar otros números ni dar datos de nadie).
+
     ## PASE A UNA PERSONA
 
     Si la persona pide hablar con alguien, se frustra, o pregunta algo que no está
@@ -675,6 +685,10 @@
       severity: warning
       rule: >-
         No inventa información: no da datos, requisitos, montos ni políticas que no estén en sus instrucciones o en lo que devolvieron sus herramientas.
+    - id: no_supone_estado
+      severity: critical
+      rule: >-
+        No dice ni supone el estado de una solicitud (en revisión, recibida, que la van a contactar); si la persona pregunta por su solicitud, le pregunta si la llenó con otro número o la pasa a una persona.
   evaluations:
     context:
       phone: "+18091230001"
@@ -716,6 +730,19 @@
         turns:
           - human: Solo son semanales??
             expectedAI: "No, tenemos pagos semanales, quincenales o mensuales; la frecuencia se define en la evaluación y siempre la verás antes de firmar. Puedes llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
+      - id: guest-asks-application-status
+        description: A guest waiting on "su solicitud" is never told it is being reviewed; asked whether they applied with another number, then handed off when they give one
+        turns:
+          - human: Hola, estoy esperando respuesta de mi solicitud
+            expectedAI: "Hola, gracias por escribirnos. Con este número de WhatsApp no aparece ninguna solicitud. ¿La llenaste con otro número?"
+          - human: Sí, la llené con el 8095551234
+            expectedAI: "Gracias. Alguien del equipo te responderá por aquí."
+            skipResponseCheck: true
+            tools:
+              - name: requestHumanHandoff
+                mockResponse:
+                  success: true
+                  message: Conversación pasada a una persona del equipo.
 
 - name: sofia
   profile: APPLICANT
