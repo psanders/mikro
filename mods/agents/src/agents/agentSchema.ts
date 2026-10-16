@@ -17,6 +17,9 @@ const evalTurnSchema = z
     image: z.string().optional(),
     expectedAI: z.string(),
     skipResponseCheck: z.boolean().optional(),
+    checks: z
+      .array(z.object({ id: z.string().min(1), question: z.string().min(1), expect: z.boolean() }))
+      .optional(),
     tools: z
       .array(
         z.object({

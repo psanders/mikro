@@ -18,7 +18,29 @@ import { getConfig, type LLMConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../agents/index.js";
 import { clearLLMConfigCache, getLLMConfig, getEvalSimilarityThreshold } from "../config.js";
-import { runAgentEval, runScenario, type EvalResults, type ScenarioResult } from "./runner.js";
+import {
+  runAgentEval,
+  runScenario,
+  type EvalJudgeMode,
+  type EvalResults,
+  type EvalRunOptions,
+  type ScenarioResult
+} from "./runner.js";
+import { getDecisionProvider } from "../decisions/index.js";
+
+/** `--judge auto|similarity|checks|both` (default auto). */
+function judgeOptions(): EvalRunOptions {
+  const idx = process.argv.indexOf("--judge");
+  const value = idx >= 0 ? process.argv[idx + 1] : "auto";
+  const judge = (
+    ["auto", "similarity", "checks", "both"].includes(value ?? "") ? value : "auto"
+  ) as EvalJudgeMode;
+  return {
+    judge,
+    decisions: judge === "similarity" ? null : getDecisionProvider(),
+    stats: { decisionCalls: 0, decisionInputTokens: 0, decisionLatencyMs: 0, llmCalls: 0 }
+  };
+}
 import {
   toJSON,
   printScenarioStart,
@@ -83,6 +105,9 @@ Config is read from mikro.json (default: project root). Use MIKRO_CONFIG_FILE in
 .env to point to a different path. Judge model: llm.evals.
 
 Options:
+  --judge <mode>    auto (default): a turn's rubric checks when it has them and
+                    a classifier is configured, else similarity. similarity,
+                    checks, or both (compute both, decide by checks).
   --vendors <list>  Run scenarios for each vendor. Agent models come from
                     evals.vendors.<vendor>.text/vision (openai falls back to llm.text/vision).
                     Judge always uses llm.evals.
@@ -113,6 +138,7 @@ async function runEvalsForCurrentConfig(
 ): Promise<{ results: EvalResults[]; hasFailures: boolean }> {
   const allResults: EvalResults[] = [];
   let hasFailures = false;
+  const options = judgeOptions();
 
   for (const agent of agentsToEval) {
     console.log(`\n=== Evaluating Agent: ${agent.name} ===`);
@@ -123,9 +149,15 @@ async function runEvalsForCurrentConfig(
       if (!scenario) continue;
       const context = agent.evaluations.context;
       printScenarioStart(agent.name, 1, scenario);
-      const scenarioResult: ScenarioResult = await runScenario(agent, scenario, context, {
-        onTurnResult: (turnResult) => printTurnResult(agent.name, scenario, turnResult)
-      });
+      const scenarioResult: ScenarioResult = await runScenario(
+        agent,
+        scenario,
+        context,
+        {
+          onTurnResult: (turnResult) => printTurnResult(agent.name, scenario, turnResult)
+        },
+        options
+      );
       printScenarioResult(scenarioResult);
       results = {
         agentName: agent.name,
@@ -140,11 +172,15 @@ async function runEvalsForCurrentConfig(
         }
       };
     } else {
-      results = await runAgentEval(agent, {
-        onScenarioStart: (idx, scenario) => printScenarioStart(agent.name, idx, scenario),
-        onTurnResult: (scenario, turnResult) => printTurnResult(agent.name, scenario, turnResult),
-        onScenarioResult: printScenarioResult
-      });
+      results = await runAgentEval(
+        agent,
+        {
+          onScenarioStart: (idx, scenario) => printScenarioStart(agent.name, idx, scenario),
+          onTurnResult: (scenario, turnResult) => printTurnResult(agent.name, scenario, turnResult),
+          onScenarioResult: printScenarioResult
+        },
+        options
+      );
     }
 
     allResults.push(results);

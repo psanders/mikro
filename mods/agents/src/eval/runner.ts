@@ -5,6 +5,14 @@ import type { Agent, Message, ConversationTurn, EvaluationScenario } from "../ll
 import { createInvokeLLM } from "../llm/createInvokeLLM.js";
 import { allTools } from "../tools/index.js";
 import { similarityTest } from "./similarityJudge.js";
+import {
+  createCheckLlmJudge,
+  runChecks,
+  type CheckLlmJudge,
+  type CheckResult,
+  type CheckRunStats
+} from "./checks.js";
+import type { DecisionProvider } from "../decisions/index.js";
 import { createMockToolExecutor } from "./mockToolExecutor.js";
 import { logger } from "../logger.js";
 
@@ -35,7 +43,26 @@ export interface TurnResult {
       unexpected: string[];
     };
   };
+  /** Rubric check results (when the turn has checks and they ran). */
+  checks?: CheckResult[];
+  /** Which judge decided the reply part of `passed`. */
+  responseJudge: "similarity" | "checks";
   passed: boolean;
+}
+
+/**
+ * How replies are judged. `auto`: a turn's checks when it has them and a
+ * decision model is configured, else similarity. `both` computes both (for
+ * comparing judges) and decides by checks when present.
+ */
+export type EvalJudgeMode = "auto" | "similarity" | "checks" | "both";
+
+export interface EvalRunOptions {
+  judge?: EvalJudgeMode;
+  decisions?: DecisionProvider | null;
+  checkLlm?: CheckLlmJudge;
+  /** Accumulates decision/LLM call counts across a run. */
+  stats?: CheckRunStats;
 }
 
 /**
@@ -76,7 +103,8 @@ async function runTurn(
   turn: ConversationTurn,
   turnNumber: number,
   conversationHistory: Message[],
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
+  options: EvalRunOptions = {}
 ): Promise<TurnResult> {
   logger.verbose("running turn", { turnNumber, agent: agent.name });
 
@@ -107,14 +135,42 @@ async function runTurn(
     isNewSession
   );
 
+  const mode = options.judge ?? "auto";
+  const hasChecks = !!turn.checks?.length && !!options.decisions;
+  const useChecks = hasChecks && mode !== "similarity";
+  const runSimilarity = mode === "similarity" || mode === "both" || !useChecks;
+
   // Test similarity (skip if turn marks pre-tool text as non-deterministic)
-  const similarity = turn.skipResponseCheck
-    ? {
-        similar: true,
-        confidence: 1,
-        reason: "Response check skipped (pre-tool text non-deterministic)"
-      }
-    : await similarityTest(turn.expectedAI, actualAI);
+  const similarity =
+    turn.skipResponseCheck || !runSimilarity
+      ? {
+          similar: true,
+          confidence: 1,
+          reason: turn.skipResponseCheck
+            ? "Response check skipped (pre-tool text non-deterministic)"
+            : "Not run: the turn's rubric checks decide"
+        }
+      : await similarityTest(turn.expectedAI, actualAI);
+
+  const checks = useChecks
+    ? await runChecks(
+        turn.checks!,
+        {
+          history: conversationHistory.map((m) => ({
+            role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+            content: typeof m.content === "string" ? m.content : ""
+          })),
+          human: userMessage || (imageUrl ? "[Imagen]" : ""),
+          reply: actualAI,
+          tools: toolsExecuted
+        },
+        {
+          decisions: options.decisions!,
+          llm: options.checkLlm ?? createCheckLlmJudge()
+        },
+        options.stats
+      )
+    : undefined;
 
   // Verify tools
   const toolVerification = await verifyTools();
@@ -125,7 +181,7 @@ async function runTurn(
   const noUnexpectedCalls = toolVerification.unexpected.length === 0;
   const toolsPassed =
     noUnexpectedCalls && toolVerification.allExpectedCalled && toolVerification.allArgsMatched;
-  const responsePassed = similarity.similar;
+  const responsePassed = checks ? checks.every((c) => c.passed) : similarity.similar;
   const passed = toolsPassed && responsePassed;
 
   // Update conversation history (include tools_executed so LLM sees what was actually done)
@@ -160,6 +216,8 @@ async function runTurn(
         unexpected: toolVerification.unexpected.map((u) => u.name)
       }
     },
+    ...(checks ? { checks } : {}),
+    responseJudge: checks ? "checks" : "similarity",
     passed
   };
 }
@@ -177,7 +235,8 @@ export async function runScenario(
   agent: Agent,
   scenario: EvaluationScenario,
   context?: Record<string, unknown>,
-  callbacks?: RunScenarioCallbacks
+  callbacks?: RunScenarioCallbacks,
+  options: EvalRunOptions = {}
 ): Promise<ScenarioResult> {
   logger.verbose("running scenario", { scenario: scenario.id, agent: agent.name });
 
@@ -191,7 +250,7 @@ export async function runScenario(
     const turn = scenario.turns[i];
     const turnNumber = i + 1;
 
-    const result = await runTurn(agent, turn, turnNumber, conversationHistory, context);
+    const result = await runTurn(agent, turn, turnNumber, conversationHistory, context, options);
     turnResults.push(result);
     callbacks?.onTurnResult?.(result);
   }
@@ -225,7 +284,8 @@ export type RunAgentEvalCallbacks = {
  */
 export async function runAgentEval(
   agent: Agent,
-  callbacks?: RunAgentEvalCallbacks
+  callbacks?: RunAgentEvalCallbacks,
+  options: EvalRunOptions = {}
 ): Promise<EvalResults> {
   if (!agent.evaluations) {
     throw new Error(`Agent ${agent.name} has no evaluations configured`);
@@ -240,12 +300,18 @@ export async function runAgentEval(
   for (let i = 0; i < scenarios.length; i++) {
     const scenario = scenarios[i];
     const scenarioIndex = i + 1;
-    const result = await runScenario(agent, scenario, context, {
-      onScenarioStart: () => callbacks?.onScenarioStart?.(scenarioIndex, scenario),
-      onTurnResult: callbacks?.onTurnResult
-        ? (tr) => callbacks.onTurnResult!(scenario, tr)
-        : undefined
-    });
+    const result = await runScenario(
+      agent,
+      scenario,
+      context,
+      {
+        onScenarioStart: () => callbacks?.onScenarioStart?.(scenarioIndex, scenario),
+        onTurnResult: callbacks?.onTurnResult
+          ? (tr) => callbacks.onTurnResult!(scenario, tr)
+          : undefined
+      },
+      options
+    );
     scenarioResults.push(result);
     callbacks?.onScenarioResult?.(result);
   }

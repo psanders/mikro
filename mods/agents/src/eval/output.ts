@@ -82,6 +82,15 @@ function turnFailureReason(turnResult: TurnResult): string {
       .map((d) => d.tool);
     return `missing tools: ${missing.join(", ")}`;
   }
+  const failedChecks = turnResult.checks?.filter((c) => !c.passed) ?? [];
+  if (failedChecks.length > 0) {
+    return failedChecks
+      .map(
+        (c) =>
+          `check ${c.id}: "${c.question}" → ${c.answer ? "sí" : "no"} (esperado ${c.expect ? "sí" : "no"})${c.reason ? ` — ${c.reason}` : ""}`
+      )
+      .join("; ");
+  }
   const pct = Math.round(turnResult.similarity.confidence * 100);
   return `AI response with ${pct}% similarity`;
 }

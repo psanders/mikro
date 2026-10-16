@@ -289,6 +289,13 @@
                     simulatedIsc: 8
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
+              - id: no_promete
+                question: ¿Promete aprobación, montos, tasas o tiempos de desembolso?
+                expect: false
           - human: Puerto Plata, tengo un colmado
             expectedAI: "Perfecto. ¿Cuánto vende tu negocio al mes aproximadamente? ¿Cuánto necesitas en préstamo? ¿En cuántas semanas planeas pagarlo?"
             # Batch size (2-3 questions) varies; assert the saveAnswer call, not wording.
@@ -315,6 +322,13 @@
                       - homeAddress
                       - referenceName
                       - referencePhone
+            checks:
+              - id: pide_ventas_o_monto
+                question: ¿Pregunta cuánto vende el negocio, cuánto necesita o en cuántas semanas pagaría?
+                expect: true
+              - id: repite_pregunta
+                question: ¿Vuelve a preguntar la provincia o el tipo de negocio, que la persona ya respondió?
+                expect: false
           - human: Vendo como 80 mil al mes, necesito 25 mil y lo pago en 12 semanas
             expectedAI: "¡Listo, Juan! Ya recibimos tu solicitud y un asesor la va a revisar. Si quieres, con unas preguntas más la dejamos completa: ¿Cuánto tiempo llevas con tu negocio? ¿Tu negocio está formalizado?"
             skipResponseCheck: true
@@ -343,6 +357,13 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para que el equipo la revise?
+                expect: true
+              - id: dice_aprobado
+                question: ¿Dice o da a entender que el préstamo ya está aprobado?
+                expect: false
       - id: phone-validation-reask
         description: Prospect gives an invalid reference phone; saveAnswer flags it via invalidReasons and José re-asks before continuing
         turns:
@@ -370,6 +391,10 @@
                     simulatedIsc: 44
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_referencia
+                question: ¿Pide datos de una persona de referencia (nombre o teléfono)?
+                expect: true
           - human: Antonio Miguel, su número es 892222222
             expectedAI: "Anotado. Ese número parece incompleto, ¿me das el número completo de 10 dígitos?"
             tools:
@@ -387,6 +412,13 @@
                     isCriticalBusiness: false
                     missingFields:
                       - referencePhone
+            checks:
+              - id: pide_numero_completo
+                question: ¿Dice que el número parece incompleto o pide el número completo de 10 dígitos?
+                expect: true
+              - id: acepta_numero_malo
+                question: ¿Da por bueno el número 892222222 sin pedir que lo corrija?
+                expect: false
           - human: Ah perdón, es 809-234-5678
             expectedAI: "¡Listo, Ana! Ya tenemos toda tu información. El equipo va a revisar tu solicitud y te avisa por aquí. ¡Gracias por tu interés!"
             skipResponseCheck: true
@@ -409,6 +441,13 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: cierra_enviada
+                question: ¿Cierra diciendo que la solicitud quedó enviada o que el equipo la va a revisar?
+                expect: true
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
       - id: out-of-zone
         description: Province is not Puerto Plata; José declines gracefully and finalizes
         turns:
@@ -437,6 +476,13 @@
                   data:
                     finalized: true
                     outcome: out_of_zone
+            checks:
+              - id: solo_puerto_plata
+                question: ¿Dice que por ahora solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: invita_seguir
+                question: ¿Invita a la persona a seguir con la solicitud o a llenar el formulario?
+                expect: false
       - id: greeting-only-submit-not-complete
         description: A bare greeting on a draft that can be sent; José sends it but never says the information is complete while fields are missing
         turns:
@@ -468,6 +514,13 @@
                     missingFields:
                       - province
                       - businessAge
+            checks:
+              - id: dice_info_completa
+                question: ¿Dice que la información está completa o que ya tienen todo lo necesario?
+                expect: false
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para revisión?
+                expect: true
       - id: critical-business
         description: Business type is critical; José declines gracefully and finalizes
         turns:
@@ -494,6 +547,13 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: no_puede_procesar
+                question: ¿Dice que no pueden procesar solicitudes para ese tipo de negocio?
+                expect: true
+              - id: no_promete
+                question: ¿Promete aprobación, montos, tasas o tiempos de desembolso?
+                expect: false
       - id: turn-cap-finalize
         description: On the final allowed turn the handler injects the turn-cap directive; José saves the last answer, finalizes, and sends one closing message — no more questions
         turns:
@@ -521,6 +581,10 @@
                     simulatedIsc: 18
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
           - human: "[SISTEMA: Es momento de enviar la solicitud. Primero guarda con saveAnswer cualquier dato útil de este mensaje y llama finalizeApplication con outcome \"complete\". En tu respuesta confirma que la solicitud quedó recibida y ofrece, como algo opcional, seguir con unas preguntas más para completarla: pregunta los siguientes 2 o 3 campos de missingFields.] Puerto Plata y tengo un colmado"
             expectedAI: "¡Listo, Luis! Ya recibimos tu solicitud y un asesor la va a revisar. Si quieres, con unas preguntas más la dejamos completa: ¿Cuánto vende tu negocio al mes aproximadamente? ¿Cuánto tiempo llevas con tu negocio?"
             skipResponseCheck: true
@@ -546,6 +610,13 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva que la persona deba contestar ahora?
+                expect: false
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para revisión?
+                expect: true
       - id: after-submit-person-stops
         description: FASE 2 — the application is already submitted; the person declines more questions. José thanks them, closes his questions with finalizeApplication (never abandoned) and asks nothing else
         turns:
@@ -559,6 +630,13 @@
                   data:
                     finalized: true
                     outcome: intake_closed
+            checks:
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
+              - id: insiste
+                question: ¿Insiste en que responda más preguntas?
+                expect: false
       - id: not-interested-abandon
         description: Prospect declines; the handler injects the not-interested directive and José finalizes with outcome abandoned and a respectful goodbye — no more questions, no "info complete" closing
         turns:
@@ -582,6 +660,10 @@
                     simulatedIsc: 8
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
           - human: "[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta anterior, y llama finalizeApplication con outcome \"abandoned\".] La verdad ya no me interesa, gracias"
             expectedAI: "Entendido, no hay problema. Si más adelante quieres retomar tu solicitud, escríbenos cuando gustes. ¡Que estés bien!"
             skipResponseCheck: true
@@ -595,6 +677,13 @@
                   message: Solicitud marcada como abandonada
                   data:
                     finalized: true
+            checks:
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
+              - id: dice_completa
+                question: ¿Dice que la información está completa o que la solicitud quedó enviada?
+                expect: false
 
 # ── WhatsApp CX agents (openspec cx-role-based-agents) ──────────────────────
 # Enabled in production since 2026-09-25 (all at once). Production reads its own
@@ -710,16 +799,40 @@
         turns:
           - human: Hola, qué necesito para un préstamo?
             expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. Necesitas tu cédula vigente, evidencia de ingresos de tu negocio (recibos, depósitos o ventas, en cualquier formato) y autorizar la consulta de tu buró de crédito. Te invito a llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
+            checks:
+              - id: da_enlace
+                question: ¿Incluye el enlace https://mikro.do/solicitud?
+                expect: true
+              - id: pide_datos
+                question: ¿Pide datos de la solicitud por el chat (nombre, cédula, monto)?
+                expect: false
       - id: guest-out-of-zone
         description: States the coverage area without promising anything
         turns:
           - human: Tengo un colmado en Santiago, me pueden prestar?
             expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata, así que lamentablemente no podemos prestarte para tu colmado en Santiago. ¡Gracias por escribirnos!"
+            checks:
+              - id: solo_puerto_plata
+                question: ¿Dice que por ahora solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: invita_formulario
+                question: ¿Invita a llenar la solicitud?
+                expect: false
       - id: guest-recently-rejected
         description: A recently rejected applicant (the handler adds the SISTEMA note) is told when they may apply again; no form link before that date, no reasons, no hand-off
         turns:
           - human: "[SISTEMA: Esta persona tuvo una solicitud que NO fue aprobada. Puede volver a solicitar a partir del 26 de octubre de 2026. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que su solicitud anterior no fue aprobada y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. NO expliques motivos de la decisión. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
             expectedAI: "Hola, gracias por escribirnos. Tu solicitud anterior no fue aprobada, pero puedes volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud."
+            checks:
+              - id: da_fecha_reaplicar
+                question: ¿Dice a partir de qué fecha puede volver a solicitar?
+                expect: true
+              - id: da_motivos
+                question: ¿Explica los motivos por los que no fue aprobada?
+                expect: false
+              - id: pasa_a_persona
+                question: ¿Dice que lo va a pasar con una persona del equipo?
+                expect: false
       - id: guest-asks-for-person
         description: A request for a person hands off instead of answering
         turns:
@@ -731,21 +844,49 @@
                 mockResponse:
                   success: true
                   message: Conversación pasada a una persona del equipo.
+            checks:
+              - id: pasa_a_persona
+                question: ¿Dice que una persona del equipo le va a responder o atender?
+                expect: true
       - id: guest-out-of-area-rejected
         description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area and the same 30-day reapply date, never "no fue aprobada"
         turns:
           - human: "[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que \"no fue aprobada\". Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
             expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Puedes volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud."
+            checks:
+              - id: dice_no_aprobada
+                question: ¿Dice que la solicitud 'no fue aprobada'?
+                expect: false
+              - id: explica_zona
+                question: ¿Explica que solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: da_fecha_reaplicar
+                question: ¿Dice a partir de qué fecha puede volver a solicitar?
+                expect: true
       - id: guest-asks-payment-frequency
         description: Payment frequency comes from the FAQ (weekly, biweekly or monthly), never invented
         turns:
           - human: Solo son semanales??
             expectedAI: "No, tenemos pagos semanales, quincenales o mensuales; la frecuencia se define en la evaluación y siempre la verás antes de firmar. Puedes llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
+            checks:
+              - id: inventa_frecuencia
+                question: ¿Menciona alguna frecuencia de pago distinta de semanal, quincenal o mensual (por ejemplo, diaria)?
+                expect: false
+              - id: da_frecuencias
+                question: ¿Dice que hay pagos semanales, quincenales o mensuales?
+                expect: true
       - id: guest-asks-application-status
         description: A guest waiting on "su solicitud" is never told it is being reviewed; asked whether they applied with another number, then handed off when they give one
         turns:
           - human: Hola, estoy esperando respuesta de mi solicitud
             expectedAI: "Hola, gracias por escribirnos. Con este número de WhatsApp no aparece ninguna solicitud. ¿La llenaste con otro número?"
+            checks:
+              - id: supone_estado
+                question: ¿Dice o da a entender que su solicitud está en revisión, fue recibida o que la van a contactar?
+                expect: false
+              - id: pregunta_otro_numero
+                question: ¿Le pregunta si llenó la solicitud con otro número?
+                expect: true
           - human: Sí, la llené con el 8095551234
             expectedAI: "Gracias. Alguien del equipo te responderá por aquí."
             skipResponseCheck: true
@@ -872,6 +1013,16 @@
                   data:
                     stage: en revisión
                     missingEvidence: []
+            checks:
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
+              - id: revela_puntaje
+                question: ¿Menciona un puntaje, probabilidades de aprobación o los motivos de la evaluación?
+                expect: false
+              - id: dice_en_revision
+                question: ¿Dice que la solicitud está en revisión?
+                expect: true
       - id: applicant-asks-missing-evidence
         description: Asks for the first missing document
         turns:
@@ -885,6 +1036,13 @@
                   data:
                     stage: en revisión
                     missingEvidence: [ID_BACK, BUSINESS_PHOTO]
+            checks:
+              - id: pide_documento
+                question: ¿Pide enviar un documento o una foto específica?
+                expect: true
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
       - id: applicant-names-business-photo
         description: Asks for business photos by name and count, never a bare "otra foto"
         turns:
@@ -902,6 +1060,13 @@
                       received: 0
                       required: 3
                       next: el frente del negocio por fuera, con el letrero si tiene
+            checks:
+              - id: nombra_fotos_negocio
+                question: ¿Pide fotos del negocio diciendo cuántas o de qué?
+                expect: true
+              - id: otra_foto_sin_decir
+                question: ¿Pide solo 'otra foto' sin decir de qué es?
+                expect: false
       - id: applicant-change-amount-hands-off
         description: Out-of-scope request (change amount) hands off to a human
         turns:
@@ -913,6 +1078,13 @@
                 mockResponse:
                   success: true
                   message: Conversación pasada a una persona del equipo.
+            checks:
+              - id: pasa_a_persona
+                question: ¿Dice que una persona del equipo le va a responder o atender?
+                expect: true
+              - id: promete_cambio
+                question: ¿Promete cambiar el monto?
+                expect: false
 
 - name: carmen
   profile: CUSTOMER
@@ -1022,11 +1194,22 @@
                       proximoPago: "2026-10-02"
                       atrasado: false
                       diasAtraso: 0
+            checks:
+              - id: da_balance
+                question: ¿Dice que el balance pendiente es RD$12,000?
+                expect: true
       - id: customer-other-persons-loan
         description: Declines to talk about someone else's loan
         turns:
           - human: y cuánto debe mi hermano? su número es 8095551234
             expectedAI: "Solo puedo darte información de tus propios préstamos. Si tu hermano tiene dudas, puede escribirnos desde su número."
+            checks:
+              - id: info_de_otro
+                question: ¿Da información sobre el préstamo de otra persona?
+                expect: false
+              - id: solo_propios
+                question: ¿Dice que solo puede dar información de los préstamos propios de quien escribe?
+                expect: true
       - id: customer-resend-receipt
         description: Finds the last payment and resends its receipt
         turns:
@@ -1070,6 +1253,10 @@
                 mockResponse:
                   success: true
                   message: Recibo enviado.
+            checks:
+              - id: dice_enviado
+                question: ¿Dice que envió o reenvió el recibo?
+                expect: true
       - id: customer-new-application-status
         description: A returning customer asks about a new application; stage only, then the first missing document, no dates
         turns:
@@ -1083,3 +1270,10 @@
                   data:
                     stage: en revisión
                     missingEvidence: [BUSINESS_PHOTO]
+            checks:
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
+              - id: pide_documento
+                question: ¿Pide enviar un documento o una foto?
+                expect: true

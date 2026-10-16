@@ -215,6 +215,13 @@ export interface ConversationTurn {
   tools?: ExpectedToolCall[];
   /** Skip response similarity check for this turn (tools check still runs). Use when pre-tool text is non-deterministic. */
   skipResponseCheck?: boolean;
+  /**
+   * Rubric checks: Spanish yes/no questions about the reply with the expected
+   * answer, judged by the decision model (openspec decision-judges). When
+   * present (and a decision model is configured) they decide the turn instead
+   * of the similarity check.
+   */
+  checks?: Array<{ id: string; question: string; expect: boolean }>;
 }
 
 /**
