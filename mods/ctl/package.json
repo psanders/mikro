@@ -30,7 +30,7 @@
     "@oclif/core": "^4.8.0",
     "@trpc/client": "^11.8.1",
     "cliui": "^8.0.1",
-    "figlet": "^1.8.0",
+    "figlet": "^1.11.3",
     "moment": "^2.30.1"
   },
   "devDependencies": {
