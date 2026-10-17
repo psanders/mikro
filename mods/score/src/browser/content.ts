@@ -7,6 +7,7 @@
  * rules — the same tRPC procedures the Ops app uses, tagged via "extension".
  */
 import type { CreditReportPush } from "../facts/schema.js";
+import { lookupSummary } from "../facts/summary.js";
 import { isPageMessage, type ApiRequest, type ApiResponse, type PanelData } from "./protocol.js";
 import { render, type Handlers, type View } from "./panel.js";
 
@@ -52,45 +53,8 @@ async function whoami() {
   }
 }
 
-/** "Lo que vio …": a few facts from the lookup itself, as the evaluator saw them. */
-function seenOf(push: CreditReportPush): View["seen"] {
-  const money = (n: number) => `RD$${Math.round(n).toLocaleString("en-US")}`;
-  if (push.source === "PRESTAMOSCLOUD") {
-    const k = push.facts.kpis;
-    const bad = push.facts.lenders.flatMap((l) => l.loans).filter((l) => l.uncollectible).length;
-    return [
-      {
-        label: "Score Datapréstamos",
-        value: k.score ? `${k.score.value} · ${k.score.label}` : "Sin datos",
-        bad: !!k.score && k.score.value < 580
-      },
-      ...(k.onTimePct === null
-        ? []
-        : [{ label: "Pagos a tiempo", value: `${k.onTimePct}%`, bad: k.onTimePct < 60 }]),
-      { label: "Cliente moroso", value: k.isDelinquent ? "Sí" : "No", bad: k.isDelinquent },
-      ...(bad ? [{ label: "Préstamos incobrables", value: String(bad), bad: true }] : []),
-      { label: "Empresas con el cliente", value: String(k.lenderCount) },
-      { label: "Capital adeudado", value: money(k.totalOwed) }
-    ];
-  }
-  const f = push.facts;
-  const count = (s: string) => f.accounts.filter((a) => a.status === s).length;
-  return [
-    ...(f.bureauScore
-      ? [
-          {
-            label: "Score Equifax",
-            value: `${f.bureauScore.value}${f.bureauScore.label ? ` · ${f.bureauScore.label}` : ""}`
-          }
-        ]
-      : []),
-    { label: "Cuentas", value: String(f.accounts.length) },
-    ...(["MORA", "LEGAL", "CASTIGADO"] as const)
-      .filter((s) => count(s) > 0)
-      .map((s) => ({ label: `En ${s.toLowerCase()}`, value: String(count(s)), bad: true })),
-    { label: "Consultas recientes", value: String(f.inquiries.length) }
-  ];
-}
+/** "Lo que vio …": a few facts from the lookup itself (shared with the solicitud PDF). */
+const seenOf = (push: CreditReportPush): View["seen"] => lookupSummary(push.source, push.facts);
 
 async function save(push: CreditReportPush) {
   pending = push;

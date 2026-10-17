@@ -24,6 +24,7 @@ export {
   type PcloudScrape
 } from "./facts/prestamoscloud.js";
 export { nameMatches, birthDateMatches } from "./facts/identity.js";
+export { lookupSummary, pcloudSummary, equifaxSummary, type LookupRow } from "./facts/summary.js";
 export {
   kpisFromLines,
   summaryFromLines,

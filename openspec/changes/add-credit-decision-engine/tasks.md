@@ -44,6 +44,8 @@
 - [x] 5.2 Approve disabled with an explanation when the decision is `REJECT`.
 - [x] 5.3 Pencil: board `Extension / Mikro · Decisión` (panel states 1–8, Ops feed card A/B, rules); the deprecated `Riesgo de buró` board is removed (Mikro Decisión replaces it).
 - [x] 5.4 Feed: show "desde la extensión" on applications closed from the panel.
+- [x] 5.5 Solicitud PDF: "Decisión de crédito" on the Mikro Score page (score + outcome, hard NO, each source, not verified, optional next steps, what each lookup showed — the panel's summary, shared via `lookupSummary`).
+- [x] 5.6 Extension login like the Ops dashboard (in the panel and the options page); server built in (`MIKRO_API_URL`, default https://mikro.ngrok-free.dev); an expired session asks to log in again.
 
 ## 6. Rollout
 

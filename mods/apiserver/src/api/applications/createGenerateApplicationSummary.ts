@@ -15,6 +15,8 @@ import type { PrismaClient } from "../../generated/prisma/client.js";
 import { readImage } from "../../applications/storage.js";
 import { logger } from "../../logger.js";
 import { createGetApplicationConversation } from "../conversations/conversations.js";
+import { lookupSummary, normalizeCedula, type EquifaxFacts, type PcloudFacts } from "@mikro/score";
+import { latestDecision } from "../credit/decide.js";
 
 // Brand assets ship next to the apiserver build; resolve relative to this file
 // so paths hold both locally and in the container (assetsPath config points at
@@ -121,6 +123,50 @@ export interface GeneratedSummary {
   mimeType: "application/pdf";
 }
 
+/**
+ * The credit decision for the PDF: the current decision plus what the latest
+ * lookup of each bureau showed (the Mikro Decisión panel's summary).
+ */
+async function loadCreditSummary(
+  client: DbClient,
+  app: { id: string; idNumber: string | null }
+): Promise<SolicitudSummaryData["credit"]> {
+  const db = client as unknown as PrismaClient;
+  if (typeof (db as { creditDecision?: unknown }).creditDecision !== "object") return null;
+  const decision = await latestDecision(db, app.id);
+  if (!decision) return null;
+  const cedula = normalizeCedula(app.idNumber);
+  const lookups: NonNullable<SolicitudSummaryData["credit"]>["lookups"] = [];
+  if (cedula) {
+    for (const source of ["EQUIFAX", "PRESTAMOSCLOUD"] as const) {
+      const r = await db.creditReport.findFirst({
+        where: { cedula, source },
+        orderBy: { capturedAt: "desc" }
+      });
+      if (!r) continue;
+      lookups.push({
+        source: source === "EQUIFAX" ? "Equifax" : "PrestamosCloud",
+        capturedAt: r.capturedAt,
+        rows: lookupSummary(source, r.facts as unknown as EquifaxFacts | PcloudFacts)
+      });
+    }
+  }
+  return {
+    outcome: decision.outcome,
+    mikroScore: decision.mikroScore,
+    policyVersion: decision.policyVersion,
+    decidedAt: decision.createdAt,
+    reasons: decision.reasons,
+    components: decision.components.map((c) => ({
+      label: c.label,
+      value: c.used ? c.mapped : null
+    })),
+    unchecked: decision.unchecked.filter((u) => u.outcome === "REJECT"),
+    nextSteps: decision.nextSteps,
+    lookups
+  };
+}
+
 /** Render a printable solicitud summary PDF. Stateless — no side effects. */
 export function createGenerateApplicationSummary(client: DbClient) {
   return async (input: GenerateApplicationSummaryInput): Promise<GeneratedSummary> => {
@@ -177,6 +223,7 @@ export function createGenerateApplicationSummary(client: DbClient) {
       flags: scoreData?.flags ?? null,
       aiSummary: app.aiSummary,
       mapUrl: app.mapUrl,
+      credit: await loadCreditSummary(client, app),
       ...(await loadPanelSections(client, app)),
       fonts: loadFonts()
     };

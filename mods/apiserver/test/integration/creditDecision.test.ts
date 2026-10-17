@@ -239,6 +239,10 @@ describe("credit decision engine (integration)", () => {
     expect(panel.actions.hardNoReason).to.equal("CREDIT_POLICY");
     expect(panel.previousScore).to.be.a("number");
 
+    // The solicitud PDF renders with the credit section (decision + lookups).
+    const pdf = await admin.generateApplicationSummary({ id: app.id });
+    expect(Buffer.from(pdf.dataBase64, "base64").subarray(0, 4).toString()).to.equal("%PDF");
+
     const closed = await reviewer.rejectApplication({
       id: app.id,
       reason: "CREDIT_POLICY",
