@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.15.0](https://github.com/psanders/mikro/compare/v3.14.1...v3.15.0) (2026-10-17)
+
+### Bug Fixes
+
+- **cx:** Lucía's hand-off reply is fixed text, never mentions reviewing ([#349](https://github.com/psanders/mikro/issues/349)) ([6322945](https://github.com/psanders/mikro/commit/6322945648150ce3550d5c4191336f7629f8964e))
+
+### Features
+
+- credit decision engine, Mikro Score from every source, Mikro Decisión extension ([#351](https://github.com/psanders/mikro/issues/351)) ([f91ca6f](https://github.com/psanders/mikro/commit/f91ca6f26bf18d88c4c8be0277bccb651711877e))
+
 ## [3.14.1](https://github.com/psanders/mikro/compare/v3.14.0...v3.14.1) (2026-10-17)
 
 **Note:** Version bump only for package mikro

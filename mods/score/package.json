@@ -1,6 +1,6 @@
 {
   "name": "@mikro/score",
-  "version": "3.13.1",
+  "version": "3.15.0",
   "description": "Mikro Score: bureau facts, credit policy engine, and the Mikro Decisión Chrome extension for evaluators",
   "type": "module",
   "private": true,
