@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.16.0](https://github.com/psanders/mikro/compare/v3.15.0...v3.16.0) (2026-10-17)
+
+### Features
+
+- dark mode for Ops (Sistema/Claro/Oscuro) and the Mikro Decisión extension ([#352](https://github.com/psanders/mikro/issues/352)) ([f81fba3](https://github.com/psanders/mikro/commit/f81fba34aa4728082bde580fce3e8a9ad797b490))
+
 # [3.15.0](https://github.com/psanders/mikro/compare/v3.14.1...v3.15.0) (2026-10-17)
 
 ### Bug Fixes
