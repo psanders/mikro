@@ -36,6 +36,8 @@ interface PrestamoRowProps {
   statusLabel?: string;
   statusTone?: BadgeTone;
   onSelect: () => void;
+  /** Offered only for ACTIVE loans: opens the copilot's renewal card. */
+  onRenew?: () => void;
   className?: string;
 }
 
@@ -86,6 +88,7 @@ function PrestamoRow({
   statusLabel,
   statusTone = "neutral",
   onSelect,
+  onRenew,
   className
 }: PrestamoRowProps) {
   return (
@@ -109,6 +112,11 @@ function PrestamoRow({
           </span>
         )}
       </div>
+      {onRenew && (
+        <button type="button" onClick={onRenew} className={VER_BUTTON}>
+          Renovar
+        </button>
+      )}
       <button type="button" onClick={onSelect} className={VER_BUTTON}>
         Ver préstamo
       </button>

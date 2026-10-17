@@ -433,7 +433,9 @@ describe("Founder Feed Integration", () => {
         // Written by the WhatsApp hand-off (createOpenHandoff), not a tRPC boundary.
         "cx.handoff_requested",
         // Written by the conversation audit run (cron or copilot tool).
-        "conversation.audited"
+        "conversation.audited",
+        // Written inside renewLoan's own transaction (createRenewLoan).
+        "loan.renewed"
       ]);
       for (const type of businessEventTypeEnum.options) {
         if (noBoundaryMapper.has(type)) {

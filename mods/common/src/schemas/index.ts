@@ -287,6 +287,10 @@ export {
   listLoansSchema,
   listLoansByCollectorSchema,
   listLoansByCustomerSchema,
+  getRenewalQuoteSchema,
+  renewLoanSchema,
+  type GetRenewalQuoteInput,
+  type RenewLoanInput,
   type CreateLoanInput,
   type CalculateLoanInput,
   type GetLoanInput,
@@ -469,6 +473,7 @@ export {
   copilotChatReplySchema,
   copilotCustomerFormSchema,
   copilotLoanFormSchema,
+  copilotRenewalFormSchema,
   copilotDocumentSchema,
   COPILOT_ACTION_EXPIRY_MINUTES,
   type CopilotPendingAction,
@@ -476,6 +481,7 @@ export {
   type CopilotChatReply,
   type CopilotCustomerForm,
   type CopilotLoanForm,
+  type CopilotRenewalForm,
   type CopilotDocument,
   type ClearCopilotHistoryResult
 } from "./copilot.js";

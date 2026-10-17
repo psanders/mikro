@@ -257,7 +257,7 @@ function computeLoanSeverity(
 const REMINDER_STATUSES: ReadonlySet<StatusTag> = new Set(["status:new", "status:current"]);
 
 /**
- * Worst-loan aggregation across a customer's loans (CANCELLED loans excluded).
+ * Worst-loan aggregation across a customer's loans (CANCELLED and RENEWED loans excluded).
  * Returns `{ statusTag: null, dpdTag: null, dueTag: null }` when the customer
  * has no eligible loan (no loans, or all CANCELLED) — the caller clears any
  * stale AUTO tags in that case.
@@ -277,7 +277,9 @@ export function computeCustomerTags(
   let soonestDue: number | null = null;
 
   for (const loan of loans) {
-    if (loan.status === "CANCELLED") continue;
+    // RENEWED loans were rolled into a newer loan that now carries the
+    // customer's state; their leftover balance must not read as delinquency.
+    if (loan.status === "CANCELLED" || loan.status === "RENEWED") continue;
     const candidate = computeLoanSeverity(loan, loansPolicy, asOf);
     if (
       !best ||

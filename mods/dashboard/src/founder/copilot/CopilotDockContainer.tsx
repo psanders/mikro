@@ -28,6 +28,7 @@ import { useCopilot } from "./CopilotContext";
 import { PendingActionCard } from "./PendingActionCard";
 import { CustomerFormCard } from "./CustomerFormCard";
 import { LoanFormCard } from "./LoanFormCard";
+import { RenewalFormCard, type RenewalQuoteStatus } from "./RenewalFormCard";
 import { DocumentCard, type DocumentDownloadStatus } from "./DocumentCard";
 import { UserBubble } from "./UserBubble";
 import type {
@@ -38,7 +39,10 @@ import type {
   CustomerFormValues,
   CustomerPickerResult,
   LoanFormValues,
-  PendingActionState
+  PendingActionState,
+  RenewalFormValues,
+  RenewalOutcome,
+  RenewalQuoteView
 } from "./types";
 
 type HistoryResult = RouterOutputs["getCopilotHistory"];
@@ -145,6 +149,34 @@ export function CopilotDockContainer() {
   const createCustomer = trpc.createCustomer.useMutation();
   const createLoan = trpc.createLoan.useMutation();
   const generateContract = trpc.generateCustomerContract.useMutation();
+  const renewLoan = trpc.renewLoan.useMutation();
+
+  // Renewal card: the quote for the loan the founder picked (one open card at
+  // a time, like the loan form's picker) and the disbursement accounts.
+  const [renewalQuoteLoanId, setRenewalQuoteLoanId] = useState<number | null>(null);
+  const renewalQuoteQuery = trpc.getRenewalQuote.useQuery(
+    { loanId: renewalQuoteLoanId ?? 0 },
+    {
+      enabled: renewalQuoteLoanId !== null,
+      retry: false,
+      // The card pre-fills editable fields from the quote; a background
+      // refetch would overwrite what the founder typed.
+      staleTime: Infinity,
+      refetchOnWindowFocus: false
+    }
+  );
+  const renewalQuote = renewalQuoteQuery.data as RenewalQuoteView | undefined;
+  const renewalQuoteStatus: RenewalQuoteStatus =
+    renewalQuoteLoanId === null
+      ? "idle"
+      : renewalQuoteQuery.isError
+        ? "error"
+        : renewalQuote
+          ? "ready"
+          : "loading";
+  const disbursementAccounts = trpc.listDisbursementAccounts.useQuery(undefined, {
+    staleTime: 60_000
+  });
 
   // Loan form card's customer picker (the dock holds at most one open form at
   // a time), plus per-card create status keyed by message id.
@@ -176,6 +208,9 @@ export function CopilotDockContainer() {
   >({});
   const [loanFormStatus, setLoanFormStatus] = useState<
     Record<string, { status: CreateFormStatus; error?: string }>
+  >({});
+  const [renewalStatus, setRenewalStatus] = useState<
+    Record<string, { status: CreateFormStatus; error?: string; outcome?: RenewalOutcome }>
   >({});
   const [documentStatus, setDocumentStatus] = useState<
     Record<string, { status: DocumentDownloadStatus; error?: string }>
@@ -209,6 +244,15 @@ export function CopilotDockContainer() {
           kind: "loanForm",
           id: uid(),
           customerHint: res.loanForm.customerHint,
+          provenance: provUsed ? undefined : prov
+        });
+        provUsed = true;
+      }
+      if (res.renewalForm) {
+        next.push({
+          kind: "renewalForm",
+          id: uid(),
+          loanId: res.renewalForm.loanId,
           provenance: provUsed ? undefined : prov
         });
         provUsed = true;
@@ -381,6 +425,59 @@ export function CopilotDockContainer() {
     [createLoan, generateContract, utils, toast]
   );
 
+  const handleRenewLoan = useCallback(
+    (messageId: string, values: RenewalFormValues) => {
+      setRenewalStatus((prev) => ({ ...prev, [messageId]: { status: "creating" } }));
+      renewLoan.mutate(values, {
+        onSuccess: (res) => {
+          setRenewalStatus((prev) => ({
+            ...prev,
+            [messageId]: {
+              status: "done",
+              outcome: {
+                oldLoanId: res.oldLoanId,
+                newLoanId: res.newLoan.loanId,
+                netDisbursed: res.disbursement.amount,
+                accountName: res.disbursement.accountName
+              }
+            }
+          }));
+          void utils.listFeedEvents.invalidate();
+          const contract = res.contract;
+          if (!contract) return;
+          // Same OS-level save + toast as the loan card's contract download.
+          void (async () => {
+            try {
+              const saved = await saveFile(
+                base64ToBytes(contract.dataBase64),
+                contract.filename,
+                contract.mimeType
+              );
+              if (saved.status === "saved") {
+                toast.success(savedMessage("Contrato", saved, contract.filename), {
+                  durationMs: SAVED_TOAST_MS
+                });
+              }
+            } catch {
+              toast.error(
+                "El préstamo se renovó y el contrato quedó guardado en el cliente, pero no se pudo descargar el archivo."
+              );
+            }
+          })();
+        },
+        onError: (err) =>
+          setRenewalStatus((prev) => ({
+            ...prev,
+            [messageId]: {
+              status: "error",
+              error: err.message || "No se pudo renovar el préstamo. Inténtalo de nuevo."
+            }
+          }))
+      });
+    },
+    [renewLoan, utils, toast]
+  );
+
   const handleDownloadDocument = useCallback(
     (messageId: string, document: { filename: string; mimeType: string; base64: string }) => {
       setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "saving" } }));
@@ -496,6 +593,23 @@ export function CopilotDockContainer() {
                   onCreate={(values) => handleCreateLoan(item.id, values)}
                   status={loanFormStatus[item.id]?.status ?? "idle"}
                   error={loanFormStatus[item.id]?.error}
+                />
+              </AssistantMessage>
+            );
+          case "renewalForm":
+            return (
+              <AssistantMessage key={item.id} provenance={item.provenance}>
+                <RenewalFormCard
+                  loanId={item.loanId}
+                  quote={renewalQuote}
+                  quoteStatus={renewalQuoteStatus}
+                  quoteError={renewalQuoteQuery.error?.message}
+                  onLoadQuote={setRenewalQuoteLoanId}
+                  accounts={disbursementAccounts.data ?? []}
+                  onRenew={(values) => handleRenewLoan(item.id, values)}
+                  status={renewalStatus[item.id]?.status ?? "idle"}
+                  error={renewalStatus[item.id]?.error}
+                  outcome={renewalStatus[item.id]?.outcome}
                 />
               </AssistantMessage>
             );

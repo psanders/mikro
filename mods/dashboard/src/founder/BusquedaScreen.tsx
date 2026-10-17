@@ -193,6 +193,11 @@ export function BusquedaScreen() {
                       onSelect={() =>
                         copilot.openWith(`Muéstrame los detalles del préstamo ${l.loanId}`)
                       }
+                      onRenew={
+                        l.status === "ACTIVE"
+                          ? () => copilot.openWith(`Renovar el préstamo ${l.loanId}`)
+                          : undefined
+                      }
                     />
                   );
                 })}

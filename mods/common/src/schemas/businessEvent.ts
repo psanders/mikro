@@ -29,6 +29,9 @@ export const businessEventTypeEnum = z.enum([
   "application.restored",
   "loan.created",
   "loan.status_changed",
+  // A loan was renewed mid-term: old loan → RENEWED, new loan opened, net
+  // disbursement posted (openspec add-loan-renewal, issue #334).
+  "loan.renewed",
   "customer.created",
   // RETIRED: a contract is created as part of a loan, so `loan.created` covers
   // it and a standalone contract event was redundant noise. No longer produced;
@@ -156,6 +159,24 @@ const loanStatusChangedPayloadSchema = z.object({
   to: z.string()
 });
 
+const loanRenewedPayloadSchema = z.object({
+  /** Internal ids (uuid) of both loans. */
+  oldLoanId: z.uuid(),
+  newLoanId: z.uuid(),
+  /** Human-facing sequential numbers (e.g. 10034 → 10051). */
+  oldLoanNumber: z.number().int(),
+  newLoanNumber: z.number().int(),
+  principal: z.number(),
+  installments: z.number().int(),
+  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  installmentAmount: z.number(),
+  payoff: z.number(),
+  netDisbursed: z.number(),
+  transactionId: z.uuid(),
+  accountName: z.string(),
+  contractFilename: z.string().optional()
+});
+
 const customerCreatedPayloadSchema = z.object({
   customerId: z.uuid()
 });
@@ -260,6 +281,7 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "application.restored": applicationRestoredPayloadSchema,
   "loan.created": loanCreatedPayloadSchema,
   "loan.status_changed": loanStatusChangedPayloadSchema,
+  "loan.renewed": loanRenewedPayloadSchema,
   "customer.created": customerCreatedPayloadSchema,
   "contract.generated": contractGeneratedPayloadSchema,
   "copilot.action": copilotActionPayloadSchema,

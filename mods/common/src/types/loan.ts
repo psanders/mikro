@@ -9,7 +9,7 @@ export interface Loan {
   id: string;
   loanId: number;
   type: "SAN";
-  status: "ACTIVE" | "COMPLETED" | "DEFAULTED" | "CANCELLED";
+  status: "ACTIVE" | "COMPLETED" | "DEFAULTED" | "CANCELLED" | "RENEWED";
   principal: number;
   termLength: number;
   paymentAmount: number;
@@ -18,6 +18,10 @@ export interface Loan {
   nickname: string | null;
   /** When set, overrides global default mora rate (0–1, e.g. 0.1). */
   moraRate: number | null;
+  /** When the loan was closed by a renewal (RENEWED). */
+  closedAt?: Date | null;
+  /** Internal id of the loan this one replaced, when it came from a renewal. */
+  renewedFromLoanId?: string | null;
   customerId: string;
   createdAt: Date;
   updatedAt: Date;

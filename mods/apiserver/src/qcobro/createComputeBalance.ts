@@ -60,6 +60,7 @@ function computeLoanBalanceFigures(
     asOfDate: asOf,
     loanStatus: loan.status,
     loanUpdatedAt: new Date(loan.updatedAt),
+    loanClosedAt: loan.closedAt ?? null,
     policy: loansPolicy,
     collectedLateFeePayments: toCollectedLateFeePayments(loan)
   });

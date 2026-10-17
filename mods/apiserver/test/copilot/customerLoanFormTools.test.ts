@@ -35,3 +35,12 @@ describe("openCustomerForm / openLoanForm tool policy", () => {
     expect(getBoundToolNames()).to.not.include("openContractForm");
   });
 });
+
+describe("openRenewalForm tool policy", () => {
+  it("binds openRenewalForm as a direct (no-confirm) tool", () => {
+    expect(getBoundToolNames()).to.include("openRenewalForm");
+    expect(isDirectTool("openRenewalForm")).to.be.true;
+    expect(isWriteTool("openRenewalForm")).to.be.false;
+    expect(isReadTool("openRenewalForm")).to.be.false;
+  });
+});

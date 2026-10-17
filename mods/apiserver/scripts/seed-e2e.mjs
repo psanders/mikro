@@ -300,6 +300,40 @@ for (const [first, last, biz] of [
   });
 }
 
+// An ACTIVE loan mid-term for the renewal spec (openspec add-loan-renewal):
+// 10 weekly cuotas of RD$1,300, 8 already paid → RD$2,600 still owed.
+{
+  const customer = await admin.createCustomer({
+    name: "Rosa Renovación",
+    phone: "+18292000050",
+    idNumber: "001-0000050-1",
+    homeAddress: "Calle Renovación 1",
+    isBusinessOwner: true,
+    assignedCollectorId: USERS.miguel.id,
+    isActive: true,
+    preferredPaymentDay: null
+  });
+  const loan = await admin.createLoan({
+    customerId: customer.id,
+    principal: 10000,
+    termLength: 10,
+    paymentAmount: 1300,
+    paymentFrequency: "WEEKLY",
+    startingDate: new Date()
+  });
+  await prisma.payment.createMany({
+    data: Array.from({ length: 8 }, () => ({
+      amount: 1300,
+      paidAt: new Date(),
+      method: "CASH",
+      status: "COMPLETED",
+      kind: "INSTALLMENT",
+      loanId: loan.id,
+      collectedById: USERS.miguel.id
+    }))
+  });
+}
+
 // A conversation audit over the seeded transcripts, through the real run (no
 // LLM in e2e: the judge finds nothing, so only the code checks report — José's
 // failed send to Yokasta).

@@ -154,6 +154,7 @@ export function createCreatePayment(client: DbClient, options?: CreateCreatePaym
       asOfDate: paidAt,
       loanStatus: loan.status,
       loanUpdatedAt: new Date(loan.updatedAt),
+      loanClosedAt: loan.closedAt ?? null,
       policy: cfg.loans,
       collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });

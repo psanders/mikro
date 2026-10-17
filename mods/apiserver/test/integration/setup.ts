@@ -92,9 +92,11 @@ CREATE TABLE "loans" (
     "mora_rate" DECIMAL,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "closed_at" DATETIME,
+    "renewed_from_loan_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "customer_id" TEXT NOT NULL,
+    CONSTRAINT "loans_renewed_from_loan_id_fkey" FOREIGN KEY ("renewed_from_loan_id") REFERENCES "loans" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "loans_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -194,9 +196,11 @@ CREATE TABLE "customer_documents" (
     "source" TEXT NOT NULL,
     "customer_id" TEXT NOT NULL,
     "uploaded_by_id" TEXT,
+    "loan_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "customer_documents_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "customer_documents_uploaded_by_id_fkey" FOREIGN KEY ("uploaded_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "customer_documents_uploaded_by_id_fkey" FOREIGN KEY ("uploaded_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "customer_documents_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Indexes
@@ -214,6 +218,8 @@ CREATE UNIQUE INDEX "notification_policies_customer_id_key" ON "notification_pol
 CREATE UNIQUE INDEX "loans_loan_id_key" ON "loans"("loan_id");
 CREATE INDEX "loans_customer_id_idx" ON "loans"("customer_id");
 CREATE INDEX "loans_status_idx" ON "loans"("status");
+CREATE UNIQUE INDEX "loans_renewed_from_loan_id_key" ON "loans"("renewed_from_loan_id");
+CREATE INDEX "customer_documents_loan_id_idx" ON "customer_documents"("loan_id");
 CREATE INDEX "payments_loan_id_idx" ON "payments"("loan_id");
 CREATE INDEX "payments_collected_by_id_idx" ON "payments"("collected_by_id");
 CREATE INDEX "payments_paid_at_idx" ON "payments"("paid_at");

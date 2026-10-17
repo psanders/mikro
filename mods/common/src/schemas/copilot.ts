@@ -81,6 +81,19 @@ export const copilotLoanFormSchema = z.object({
 export type CopilotLoanForm = z.infer<typeof copilotLoanFormSchema>;
 
 /**
+ * The interactive renewal form the copilot opens when the founder asks to
+ * renew a loan. Carries only an optional loan number to pre-seed the card —
+ * nothing is written here; the card loads `getRenewalQuote` and calls
+ * `renewLoan` directly.
+ */
+export const copilotRenewalFormSchema = z.object({
+  /** Loan number (e.g. 10034) the founder named, if any. */
+  loanId: z.number().int().positive().optional()
+});
+
+export type CopilotRenewalForm = z.infer<typeof copilotRenewalFormSchema>;
+
+/**
  * A generated document (currently: a loan statement) delivered directly in a
  * copilotChat reply. Read-only by construction — nothing is created or
  * mutated to produce it, unlike `pendingAction`. `base64` carries the file
@@ -108,6 +121,7 @@ export const copilotChatReplySchema = z.object({
   pendingAction: copilotPendingActionSchema.optional(),
   customerForm: copilotCustomerFormSchema.optional(),
   loanForm: copilotLoanFormSchema.optional(),
+  renewalForm: copilotRenewalFormSchema.optional(),
   document: copilotDocumentSchema.optional()
 });
 

@@ -75,6 +75,8 @@ import {
   getApplicationContractSchema,
   generateApplicationContractSchema,
   generateCustomerContractSchema,
+  getRenewalQuoteSchema,
+  renewLoanSchema,
   listCustomerDocumentsSchema,
   convertApplicationSchema,
   updateApplicationSchema,
@@ -145,6 +147,8 @@ import { createListLoansByCustomer } from "../../api/loans/createListLoansByCust
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 import { createGetLoanByLoanId } from "../../api/loans/createGetLoanByLoanId.js";
 import { createGetLoanEvaluationSnapshot } from "../../api/loans/createGetLoanEvaluationSnapshot.js";
+import { createGetRenewalQuote } from "../../api/loans/createGetRenewalQuote.js";
+import { createRenewLoan } from "../../api/loans/createRenewLoan.js";
 import {
   createGetLoanHealth,
   type GetLoanHealthOptions
@@ -609,6 +613,25 @@ export const protectedRouter = router({
       const fn = createGetLoanEvaluationSnapshot(ctx.db);
       return fn(input);
     }),
+
+  /**
+   * What the customer still owes on an ACTIVE loan, for renewing it mid-term:
+   * snapshot remaining balance + net mora = suggested payoff.
+   */
+  getRenewalQuote: adminProcedure.input(getRenewalQuoteSchema).query(async ({ ctx, input }) => {
+    return createGetRenewalQuote(ctx.db)(input);
+  }),
+
+  /**
+   * Renew a loan mid-term, atomically: old loan → RENEWED, new loan for the
+   * full principal, net WITHDRAWAL (principal − payoff), optional contract tied
+   * to the new loan. The `loan.renewed` event is written inside the same
+   * transaction (no `.meta({event})`), so the feed never shows a rolled-back
+   * renewal.
+   */
+  renewLoan: adminProcedure.input(renewLoanSchema).mutation(async ({ ctx, input }) => {
+    return createRenewLoan(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+  }),
 
   /**
    * Single-loan health check: snapshot + deterministic spec checks, plus an LLM
