@@ -24,6 +24,14 @@ export {
   type PcloudScrape
 } from "./facts/prestamoscloud.js";
 export { nameMatches, birthDateMatches } from "./facts/identity.js";
+export {
+  kpisFromLines,
+  summaryFromLines,
+  identityFromLines,
+  inquiriesFromLines,
+  cedulaFromLookupUrl,
+  PCLOUD_SUMMARY_LABELS
+} from "./facts/pcloudText.js";
 export * from "./policy/schema.js";
 export { evaluateCreditPolicy } from "./policy/evaluate.js";
 export type {
