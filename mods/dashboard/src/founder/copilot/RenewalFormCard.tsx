@@ -48,9 +48,9 @@ const FREQUENCY_LABEL: Record<ContractFrequency, string> = {
 
 const parseNumeric = (value: string): number => Number(value.replace(/[\s,]/g, ""));
 
-const LABEL = "text-[12px] font-semibold text-[#14254A]";
+const LABEL = "text-[12px] font-semibold text-brand-ink";
 const INPUT =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93] focus:border-[#1F4AA8]";
+  "w-full rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px] text-[14px] font-medium text-brand-ink outline-none placeholder:text-ds-muted focus:border-brand-blue-primary";
 
 export type RenewalQuoteStatus = "idle" | "loading" | "ready" | "error";
 
@@ -156,17 +156,17 @@ export function RenewalFormCard({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-[12px] border border-[#E5EAF1] bg-white",
+        "w-full overflow-hidden rounded-[12px] border border-ds-border bg-ds-surface",
         className
       )}
     >
-      <div className="flex items-center gap-[10px] border-b border-[#E5EAF1] bg-[#EEF3F9] px-[14px] py-[11px]">
-        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
+      <div className="flex items-center gap-[10px] border-b border-ds-border bg-ds-subtle px-[14px] py-[11px]">
+        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-brand-blue-primary">
           <RefreshCw size={14} strokeWidth={2} className="text-white" />
         </span>
         <div className="flex min-w-0 flex-col gap-[1px]">
-          <span className="text-[14px] font-semibold text-[#14254A]">Renovar préstamo</span>
-          <span className="text-[11px] font-medium text-[#697A93]">
+          <span className="text-[14px] font-semibold text-brand-ink">Renovar préstamo</span>
+          <span className="text-[11px] font-medium text-ds-muted">
             Cierra el actual · abre uno nuevo que cubre el saldo
           </span>
         </div>
@@ -178,22 +178,22 @@ export function RenewalFormCard({
           <div className="flex flex-col gap-[7px]">
             <span className={LABEL}>Préstamo a renovar</span>
             <div className="flex gap-[8px]">
-              <div className="flex flex-1 items-center gap-[10px] rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px]">
-                <Search size={16} strokeWidth={2} className="shrink-0 text-[#697A93]" />
+              <div className="flex flex-1 items-center gap-[10px] rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px]">
+                <Search size={16} strokeWidth={2} className="shrink-0 text-ds-muted" />
                 <input
                   inputMode="numeric"
                   value={loanQuery}
                   onChange={(e) => setLoanQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && lookUp()}
                   placeholder="Número de préstamo, p. ej. 10034"
-                  className="w-full bg-transparent text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93]"
+                  className="w-full bg-transparent text-[14px] font-medium text-brand-ink outline-none placeholder:text-ds-muted"
                 />
               </div>
               <button
                 type="button"
                 onClick={lookUp}
                 disabled={quoteStatus === "loading"}
-                className="rounded-[8px] border border-[#E5EAF1] px-[14px] text-[13px] font-medium text-[#1F4AA8]"
+                className="rounded-[8px] border border-ds-border px-[14px] text-[13px] font-medium text-brand-blue-primary"
               >
                 {quoteStatus === "loading" ? (
                   <Loader2 size={14} strokeWidth={2} className="animate-spin" />
@@ -203,7 +203,7 @@ export function RenewalFormCard({
               </button>
             </div>
             {quoteStatus === "error" && quoteError && (
-              <p className="text-[12px] font-medium text-[#B42121]">{quoteError}</p>
+              <p className="text-[12px] font-medium text-ds-red">{quoteError}</p>
             )}
           </div>
         )}
@@ -211,27 +211,27 @@ export function RenewalFormCard({
         {quote && (
           <>
             {/* Current loan + what's owed */}
-            <div className="flex flex-col gap-[8px] rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px]">
+            <div className="flex flex-col gap-[8px] rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px]">
               <div className="flex items-center gap-[10px]">
-                <UserRound size={16} strokeWidth={2} className="shrink-0 text-[#697A93]" />
+                <UserRound size={16} strokeWidth={2} className="shrink-0 text-ds-muted" />
                 <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
-                  <span className="truncate text-[14px] font-medium text-[#14254A]">
+                  <span className="truncate text-[14px] font-medium text-brand-ink">
                     {quote.customer.name}
                   </span>
-                  <span className="text-[11px] font-medium text-[#697A93]">
+                  <span className="text-[11px] font-medium text-ds-muted">
                     Préstamo #{quote.loanId} · {formatDop(quote.currentTerms.principal)} ·{" "}
                     {quote.cuotasCovered}/{quote.currentTerms.termLength} cuotas{" "}
                     {FREQUENCY_LABEL[quote.currentTerms.paymentFrequency]} pagadas
                   </span>
                 </div>
               </div>
-              <div className="flex justify-between text-[12px] font-medium text-[#697A93]">
+              <div className="flex justify-between text-[12px] font-medium text-ds-muted">
                 <span>Saldo pendiente</span>
-                <span className="text-[#14254A]">{formatDop(quote.remainingBalance)}</span>
+                <span className="text-brand-ink">{formatDop(quote.remainingBalance)}</span>
               </div>
-              <div className="flex justify-between text-[12px] font-medium text-[#697A93]">
+              <div className="flex justify-between text-[12px] font-medium text-ds-muted">
                 <span>Mora</span>
-                <span className="text-[#14254A]">{formatDop(quote.moraAccrued)}</span>
+                <span className="text-brand-ink">{formatDop(quote.moraAccrued)}</span>
               </div>
             </div>
 
@@ -285,7 +285,7 @@ export function RenewalFormCard({
                   <ChevronDown
                     size={16}
                     strokeWidth={2}
-                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
                   />
                 </div>
               </div>
@@ -306,7 +306,7 @@ export function RenewalFormCard({
                 <Calendar
                   size={16}
                   strokeWidth={2}
-                  className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-[#697A93]"
+                  className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-ds-muted"
                 />
                 <input
                   type="date"
@@ -321,19 +321,19 @@ export function RenewalFormCard({
             <div
               className={cn(
                 "flex items-center justify-between rounded-[8px] px-[14px] py-[10px]",
-                netValid ? "bg-[#E8F7EE]" : "bg-[#FCEBEB]"
+                netValid ? "bg-ds-green-bg" : "bg-ds-red-bg"
               )}
             >
               <span
                 className={cn(
                   "text-[12px] font-semibold",
-                  netValid ? "text-[#16A34A]" : "text-[#DC2626]"
+                  netValid ? "text-ds-green" : "text-ds-red"
                 )}
               >
                 {netValid ? "A desembolsar" : "El saldo debe ser menor que el principal"}
               </span>
               {netValid && (
-                <span className="text-[16px] font-semibold text-[#14254A]">{formatDop(net)}</span>
+                <span className="text-[16px] font-semibold text-brand-ink">{formatDop(net)}</span>
               )}
             </div>
 
@@ -355,7 +355,7 @@ export function RenewalFormCard({
                   <ChevronDown
                     size={16}
                     strokeWidth={2}
-                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
                   />
                 </div>
               </div>
@@ -369,18 +369,20 @@ export function RenewalFormCard({
               <span
                 className={cn(
                   "flex h-[18px] w-[18px] items-center justify-center rounded-[5px]",
-                  generateContract ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
+                  generateContract
+                    ? "bg-brand-blue-primary"
+                    : "border border-ds-border bg-ds-surface"
                 )}
               >
                 {generateContract && <Check size={12} strokeWidth={2} className="text-white" />}
               </span>
-              <span className="text-[13px] font-medium text-[#14254A]">
+              <span className="text-[13px] font-medium text-brand-ink">
                 Generar contrato con estos términos
               </span>
             </button>
 
             {done && outcome && (
-              <div className="flex items-center gap-[6px] text-[12px] font-medium text-[#16A34A]">
+              <div className="flex items-center gap-[6px] text-[12px] font-medium text-ds-green">
                 <span>#{outcome.oldLoanId}</span>
                 <ArrowRight size={12} strokeWidth={2} />
                 <span>
@@ -391,7 +393,7 @@ export function RenewalFormCard({
             )}
 
             {status === "error" && error && (
-              <p className="text-[12px] font-medium text-[#B42121]">{error}</p>
+              <p className="text-[12px] font-medium text-ds-red">{error}</p>
             )}
 
             <button
@@ -401,9 +403,9 @@ export function RenewalFormCard({
               className={cn(
                 "flex w-full items-center justify-center gap-[7px] rounded-[9px] px-[18px] py-[11px] text-[14px] font-medium text-white transition",
                 done
-                  ? "bg-[#16A34A]"
+                  ? "bg-ds-green-solid"
                   : valid && !renewing
-                    ? "bg-[#1F4AA8] hover:bg-[#103A8A]"
+                    ? "bg-brand-blue-primary hover:bg-brand-blue-deep"
                     : "cursor-not-allowed bg-[#9DB0D4]"
               )}
             >

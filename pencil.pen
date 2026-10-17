@@ -57012,7 +57012,7 @@
                             },
                             {
                               "type": "frame",
-                              "id": "Vt7UC",
+                              "id": "qHOCL",
                               "name": "loanCard",
                               "width": "fill_container",
                               "fill": "$ds.surface",
@@ -57028,7 +57028,7 @@
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "dPQKH",
+                                  "id": "Tt8bH",
                                   "name": "chip",
                                   "width": 40,
                                   "height": 40,
@@ -57039,7 +57039,7 @@
                                   "children": [
                                     {
                                       "type": "icon",
-                                      "id": "u8xx1c",
+                                      "id": "btqH3",
                                       "name": "i",
                                       "width": 18,
                                       "height": 18,
@@ -57051,7 +57051,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "TVdAe",
+                                  "id": "k3RZsZ",
                                   "name": "t",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -57059,7 +57059,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "eVI3v",
+                                      "id": "m8upic",
                                       "name": "a",
                                       "fill": "$brand.ink",
                                       "content": "#218 · RD$60,000 · 48 cuotas quincenales — Juana Peralta",
@@ -57069,7 +57069,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "L2pOUG",
+                                      "id": "Q9kJT",
                                       "name": "progress",
                                       "width": "fill_container",
                                       "gap": 10,
@@ -57077,7 +57077,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "lH7ES",
+                                          "id": "tyLm5",
                                           "name": "track",
                                           "clip": true,
                                           "width": "fill_container",
@@ -57087,7 +57087,7 @@
                                           "children": [
                                             {
                                               "type": "rectangle",
-                                              "id": "jquNE",
+                                              "id": "erTYM",
                                               "name": "fill",
                                               "fill": "$ds.green",
                                               "width": 150,
@@ -57097,7 +57097,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "MVpHJ",
+                                          "id": "NOvYn",
                                           "name": "m",
                                           "fill": "$ds.muted",
                                           "content": "14/48 cuotas · próxima 8 jul",
@@ -57110,7 +57110,25 @@
                                   ]
                                 },
                                 {
-                                  "id": "k5tKZp",
+                                  "id": "NbKDM",
+                                  "type": "ref",
+                                  "ref": "pTmK7",
+                                  "name": "renovar",
+                                  "padding": [
+                                    9,
+                                    16
+                                  ],
+                                  "descendants": {
+                                    "fizSa": {
+                                      "enabled": false
+                                    },
+                                    "sPbzF": {
+                                      "content": "Renovar"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "x29P9",
                                   "type": "ref",
                                   "ref": "pTmK7",
                                   "name": "ver",
@@ -65444,6 +65462,3040 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JEmaR",
+                  "name": "renewalCards",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "s6lboe",
+                      "name": "cap",
+                      "fill": "#8FA3C8",
+                      "content": "Renovar préstamo — cierra el actual (RENEWED), abre el nuevo, desembolsa el neto y genera el contrato",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "n6PTKi",
+                      "name": "row",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "uf915",
+                          "name": "cp/renewal-form-card",
+                          "reusable": true,
+                          "clip": true,
+                          "width": 398,
+                          "fill": "$ds.surface",
+                          "cornerRadius": 12,
+                          "stroke": "$ds.border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "MBiJp",
+                              "name": "head",
+                              "width": "fill_container",
+                              "fill": "$ds.subtle",
+                              "stroke": "$ds.border",
+                              "strokeWidth": {
+                                "bottom": 1
+                              },
+                              "gap": 10,
+                              "padding": [
+                                11,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "Y5FIiE",
+                                  "name": "chip",
+                                  "width": 26,
+                                  "height": 26,
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "qqfvy",
+                                      "name": "i",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "DNVAt",
+                                  "name": "htxt",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "L5MdM",
+                                      "name": "title",
+                                      "fill": "$brand.ink",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "AOJcn",
+                                      "name": "sub",
+                                      "fill": "$ds.muted",
+                                      "content": "Cierra el actual · abre uno nuevo que cubre el saldo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "uPAOQ",
+                              "name": "body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": [
+                                12,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "E365J0",
+                                  "name": "current",
+                                  "width": "fill_container",
+                                  "fill": "$ds.bg",
+                                  "cornerRadius": 8,
+                                  "stroke": "$ds.border",
+                                  "strokeWidth": 1,
+                                  "layout": "vertical",
+                                  "gap": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "MdeJq",
+                                      "name": "who",
+                                      "width": "fill_container",
+                                      "gap": 10,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "hYHED",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "user-round",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "ywLY3",
+                                          "name": "col",
+                                          "width": "fill_container",
+                                          "layout": "vertical",
+                                          "gap": 1,
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "b8m6W",
+                                              "name": "name",
+                                              "fill": "$brand.ink",
+                                              "content": "Ana Pérez",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "qLO71",
+                                              "name": "meta",
+                                              "fill": "$ds.muted",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Préstamo #10034 · RD$10,000 · 8/10 cuotas semanales pagadas",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 11,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "C8WD6P",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "aFnIQ",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Saldo pendiente",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "fM42A",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$2,600",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "QYjmJ",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "nwGkj",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Mora",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "z3R5c1",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$200",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "StjSq",
+                                  "name": "f-saldo",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "DHdvt",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Saldo a cubrir con el nuevo préstamo (RD$)",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "HmLzp",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "PXS3U",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "2,800",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "z2IIx",
+                                  "name": "row1",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "DovEH",
+                                      "name": "f-principal",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "PxB9J",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Nuevo principal (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "YwwM0",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "eBGIU",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10,000",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "l4UVj",
+                                      "name": "f-cuotas",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "T6n4g",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Cuotas",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "TtzrY",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "m99Fd",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "dnZrA",
+                                  "name": "row2",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "VE6ZJ",
+                                      "name": "f-frecuencia",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "oXMCX",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Frecuencia",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "GeNHo",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "zlU9E",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Semanal",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "icon",
+                                              "id": "H2vrLt",
+                                              "name": "chev",
+                                              "width": 16,
+                                              "height": 16,
+                                              "icon": "chevron-down",
+                                              "library": "lucide",
+                                              "fill": "$ds.muted"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "ehp8V",
+                                      "name": "f-monto",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "nf1Bm",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Monto cuota (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "yulzN",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "eLEl5",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "1,300",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "XTRLG",
+                                  "name": "f-fecha",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "cTh6t",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Fecha de inicio",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "exCe3",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "aL13h",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "calendar",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "L9qUK",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "17 oct 2026",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "VWbeR",
+                                  "name": "net",
+                                  "width": "fill_container",
+                                  "fill": "$ds.green.bg",
+                                  "cornerRadius": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "j674u",
+                                      "name": "k",
+                                      "fill": "$ds.green",
+                                      "content": "A desembolsar",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "o6PeJf",
+                                      "name": "v",
+                                      "fill": "$brand.ink",
+                                      "content": "RD$7,200",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 16,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "KVG8Q",
+                                  "name": "f-cuenta",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "EBkRr",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Desembolsar desde",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "N5Nst",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "PX8QB",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Caja General",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "icon",
+                                          "id": "e8HFU",
+                                          "name": "chev",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "chevron-down",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "J8pLg",
+                                  "name": "f-generar-contrato",
+                                  "width": "fill_container",
+                                  "gap": 8,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "sRJQ8",
+                                      "name": "checkbox",
+                                      "width": 18,
+                                      "height": 18,
+                                      "fill": "$brand.blue.primary",
+                                      "cornerRadius": 5,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "m3i9oP",
+                                          "name": "check",
+                                          "width": 12,
+                                          "height": 12,
+                                          "icon": "check",
+                                          "library": "lucide",
+                                          "fill": "#FFFFFF"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "JJMqb",
+                                      "name": "t",
+                                      "fill": "$brand.ink",
+                                      "content": "Generar contrato con estos términos",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "b7hvFd",
+                                  "name": "renewBtn",
+                                  "width": "fill_container",
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 9,
+                                  "gap": 7,
+                                  "padding": [
+                                    11,
+                                    18
+                                  ],
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "R3hbi",
+                                      "name": "i",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "yscAo",
+                                      "name": "t",
+                                      "fill": "#FFFFFF",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SNsbi",
+                          "name": "renewal · saldo inválido",
+                          "clip": true,
+                          "width": 398,
+                          "fill": "$ds.surface",
+                          "cornerRadius": 12,
+                          "stroke": "$ds.border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "J4nP7",
+                              "name": "head",
+                              "width": "fill_container",
+                              "fill": "$ds.subtle",
+                              "stroke": "$ds.border",
+                              "strokeWidth": {
+                                "bottom": 1
+                              },
+                              "gap": 10,
+                              "padding": [
+                                11,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "VWCfr",
+                                  "name": "chip",
+                                  "width": 26,
+                                  "height": 26,
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "q0HDb",
+                                      "name": "i",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "hFEYs",
+                                  "name": "htxt",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "tRc0K",
+                                      "name": "title",
+                                      "fill": "$brand.ink",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "bEHw3",
+                                      "name": "sub",
+                                      "fill": "$ds.muted",
+                                      "content": "Cierra el actual · abre uno nuevo que cubre el saldo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "JxLoS",
+                              "name": "body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": [
+                                12,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "dj1W9",
+                                  "name": "current",
+                                  "width": "fill_container",
+                                  "fill": "$ds.bg",
+                                  "cornerRadius": 8,
+                                  "stroke": "$ds.border",
+                                  "strokeWidth": 1,
+                                  "layout": "vertical",
+                                  "gap": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "hyMCP",
+                                      "name": "who",
+                                      "width": "fill_container",
+                                      "gap": 10,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "EW2kr",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "user-round",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "XMgMG",
+                                          "name": "col",
+                                          "width": "fill_container",
+                                          "layout": "vertical",
+                                          "gap": 1,
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "ejfLS",
+                                              "name": "name",
+                                              "fill": "$brand.ink",
+                                              "content": "Ana Pérez",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "tyjx9",
+                                              "name": "meta",
+                                              "fill": "$ds.muted",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Préstamo #10034 · RD$10,000 · 8/10 cuotas semanales pagadas",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 11,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "DsJqU",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "SfEZn",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Saldo pendiente",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "NevFe",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$2,600",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "cCjwF",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "B40Cq",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Mora",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "RB7rs",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$200",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "z2Cul",
+                                  "name": "f-saldo",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ekpkn",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Saldo a cubrir con el nuevo préstamo (RD$)",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "ejugG",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "tCdiW",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "12,000",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "cX4XA",
+                                  "name": "row1",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "jUp18",
+                                      "name": "f-principal",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "j80FV",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Nuevo principal (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "cPXtF",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "C0SVR",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10,000",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "a0bkuD",
+                                      "name": "f-cuotas",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "U78r7",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Cuotas",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "xrzaT",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "xaupV",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "jSZ0h",
+                                  "name": "row2",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "C9OPbT",
+                                      "name": "f-frecuencia",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "yCH12",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Frecuencia",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "fa2xG",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "O5pZCq",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Semanal",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "icon",
+                                              "id": "S34A1",
+                                              "name": "chev",
+                                              "width": 16,
+                                              "height": 16,
+                                              "icon": "chevron-down",
+                                              "library": "lucide",
+                                              "fill": "$ds.muted"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "Z5p90h",
+                                      "name": "f-monto",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "vExju",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Monto cuota (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "iEnow",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "SVMYm",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "1,300",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "pnELS",
+                                  "name": "f-fecha",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "t0B1y3",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Fecha de inicio",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "w9i3w",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "yNnYi",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "calendar",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "dCmrV",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "17 oct 2026",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "HNQza",
+                                  "name": "net",
+                                  "width": "fill_container",
+                                  "fill": "$ds.red.bg",
+                                  "cornerRadius": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "yIw8e",
+                                      "name": "k",
+                                      "fill": "$ds.red",
+                                      "content": "El saldo debe ser menor que el principal",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "NPqC1",
+                                  "name": "f-cuenta",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "yZ6kY",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Desembolsar desde",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "uqNfQ",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "UgoqZ",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Caja General",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "icon",
+                                          "id": "aiYXC",
+                                          "name": "chev",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "chevron-down",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Pg0IS",
+                                  "name": "f-generar-contrato",
+                                  "width": "fill_container",
+                                  "gap": 8,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "GzmOb",
+                                      "name": "checkbox",
+                                      "width": 18,
+                                      "height": 18,
+                                      "fill": "$brand.blue.primary",
+                                      "cornerRadius": 5,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "KO1t0",
+                                          "name": "check",
+                                          "width": 12,
+                                          "height": 12,
+                                          "icon": "check",
+                                          "library": "lucide",
+                                          "fill": "#FFFFFF"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "f0V8Vn",
+                                      "name": "t",
+                                      "fill": "$brand.ink",
+                                      "content": "Generar contrato con estos términos",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "K1KyA",
+                                  "name": "renewBtn",
+                                  "width": "fill_container",
+                                  "fill": "#9DB0D4",
+                                  "cornerRadius": 9,
+                                  "gap": 7,
+                                  "padding": [
+                                    11,
+                                    18
+                                  ],
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "BDizt",
+                                      "name": "i",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "k3EOP",
+                                      "name": "t",
+                                      "fill": "#FFFFFF",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "twcth",
+                          "name": "renewal · renovado",
+                          "clip": true,
+                          "width": 398,
+                          "fill": "$ds.surface",
+                          "cornerRadius": 12,
+                          "stroke": "$ds.border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Xrtus",
+                              "name": "head",
+                              "width": "fill_container",
+                              "fill": "$ds.subtle",
+                              "stroke": "$ds.border",
+                              "strokeWidth": {
+                                "bottom": 1
+                              },
+                              "gap": 10,
+                              "padding": [
+                                11,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "CgEyz",
+                                  "name": "chip",
+                                  "width": 26,
+                                  "height": 26,
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "Jf0IC",
+                                      "name": "i",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "oxpKy",
+                                  "name": "htxt",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "NP1SH",
+                                      "name": "title",
+                                      "fill": "$brand.ink",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "PdzCI",
+                                      "name": "sub",
+                                      "fill": "$ds.muted",
+                                      "content": "Cierra el actual · abre uno nuevo que cubre el saldo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "smgvI",
+                              "name": "body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": [
+                                12,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "yrOCH",
+                                  "name": "current",
+                                  "width": "fill_container",
+                                  "fill": "$ds.bg",
+                                  "cornerRadius": 8,
+                                  "stroke": "$ds.border",
+                                  "strokeWidth": 1,
+                                  "layout": "vertical",
+                                  "gap": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "CF0WH",
+                                      "name": "who",
+                                      "width": "fill_container",
+                                      "gap": 10,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "PO51O",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "user-round",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "zsub0",
+                                          "name": "col",
+                                          "width": "fill_container",
+                                          "layout": "vertical",
+                                          "gap": 1,
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "l34cZY",
+                                              "name": "name",
+                                              "fill": "$brand.ink",
+                                              "content": "Ana Pérez",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "IYHnx",
+                                              "name": "meta",
+                                              "fill": "$ds.muted",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Préstamo #10034 · RD$10,000 · 8/10 cuotas semanales pagadas",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 11,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "my1uS",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "ccfxK",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Saldo pendiente",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "BoKEz",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$2,600",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "O7fcFc",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "S0SGu",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Mora",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "CnBJi",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$200",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "etdRC",
+                                  "name": "f-saldo",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ZXI54",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Saldo a cubrir con el nuevo préstamo (RD$)",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "xkehf",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "M8JC0H",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "2,800",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "S0dUc",
+                                  "name": "row1",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "oXbv4",
+                                      "name": "f-principal",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "Ldx3Y",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Nuevo principal (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "kXAIf",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "aOXx6",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10,000",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "TEp4c",
+                                      "name": "f-cuotas",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "hvf2F",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Cuotas",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "F1GZti",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "tl8zG",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "synVP",
+                                  "name": "row2",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "UysWx",
+                                      "name": "f-frecuencia",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "x6ETq",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Frecuencia",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "Z1IuFX",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "CzVAy",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Semanal",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "icon",
+                                              "id": "ztjgc",
+                                              "name": "chev",
+                                              "width": 16,
+                                              "height": 16,
+                                              "icon": "chevron-down",
+                                              "library": "lucide",
+                                              "fill": "$ds.muted"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "CUcw5",
+                                      "name": "f-monto",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "V25IJ",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Monto cuota (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "T7QYh",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "jmMEV",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "1,300",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "l8Xu2",
+                                  "name": "f-fecha",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "LHSHH",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Fecha de inicio",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "y5DsFn",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "RLeJf",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "calendar",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "x5xgJ",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "17 oct 2026",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "oljuw",
+                                  "name": "net",
+                                  "width": "fill_container",
+                                  "fill": "$ds.green.bg",
+                                  "cornerRadius": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "lU7JA",
+                                      "name": "k",
+                                      "fill": "$ds.green",
+                                      "content": "A desembolsar",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "ILYMZ",
+                                      "name": "v",
+                                      "fill": "$brand.ink",
+                                      "content": "RD$7,200",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 16,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "k78Wt",
+                                  "name": "f-cuenta",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "KE2qu",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Desembolsar desde",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "wycSt",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "Cz1sh",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Caja General",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "icon",
+                                          "id": "MRuVK",
+                                          "name": "chev",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "chevron-down",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ehEIR",
+                                  "name": "f-generar-contrato",
+                                  "width": "fill_container",
+                                  "gap": 8,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "vpjhe",
+                                      "name": "checkbox",
+                                      "width": 18,
+                                      "height": 18,
+                                      "fill": "$brand.blue.primary",
+                                      "cornerRadius": 5,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "NUb0R",
+                                          "name": "check",
+                                          "width": 12,
+                                          "height": 12,
+                                          "icon": "check",
+                                          "library": "lucide",
+                                          "fill": "#FFFFFF"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "QgZC6",
+                                      "name": "t",
+                                      "fill": "$brand.ink",
+                                      "content": "Generar contrato con estos términos",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "FWxcA",
+                                  "name": "outcome",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "M0BKl",
+                                      "name": "a",
+                                      "fill": "$ds.green",
+                                      "content": "#10034",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "zY3HV",
+                                      "name": "arr",
+                                      "width": 12,
+                                      "height": 12,
+                                      "icon": "arrow-right",
+                                      "library": "lucide",
+                                      "fill": "$ds.green"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "r9sGHF",
+                                      "name": "b",
+                                      "fill": "$ds.green",
+                                      "content": "#10051 · RD$7,200 desde Caja General",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "hPjpF",
+                                  "name": "renewBtn",
+                                  "width": "fill_container",
+                                  "fill": "$ds.green",
+                                  "cornerRadius": 9,
+                                  "gap": 7,
+                                  "padding": [
+                                    11,
+                                    18
+                                  ],
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "mUmgd",
+                                      "name": "i",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "circle-check",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "rELXq",
+                                      "name": "t",
+                                      "fill": "#FFFFFF",
+                                      "content": "Préstamo renovado",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "j7Y4v",
+                          "name": "renewal · error",
+                          "clip": true,
+                          "width": 398,
+                          "fill": "$ds.surface",
+                          "cornerRadius": 12,
+                          "stroke": "$ds.border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "iX5o1",
+                              "name": "head",
+                              "width": "fill_container",
+                              "fill": "$ds.subtle",
+                              "stroke": "$ds.border",
+                              "strokeWidth": {
+                                "bottom": 1
+                              },
+                              "gap": 10,
+                              "padding": [
+                                11,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "S1nUP",
+                                  "name": "chip",
+                                  "width": 26,
+                                  "height": 26,
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 8,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "OWk2C",
+                                      "name": "i",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZXX09",
+                                  "name": "htxt",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "E19Xyc",
+                                      "name": "title",
+                                      "fill": "$brand.ink",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "dKqfl",
+                                      "name": "sub",
+                                      "fill": "$ds.muted",
+                                      "content": "Cierra el actual · abre uno nuevo que cubre el saldo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "T1u7F",
+                              "name": "body",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": [
+                                12,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "x671Oq",
+                                  "name": "current",
+                                  "width": "fill_container",
+                                  "fill": "$ds.bg",
+                                  "cornerRadius": 8,
+                                  "stroke": "$ds.border",
+                                  "strokeWidth": 1,
+                                  "layout": "vertical",
+                                  "gap": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "eW7zi",
+                                      "name": "who",
+                                      "width": "fill_container",
+                                      "gap": 10,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "U7jKhi",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "user-round",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "V7tDA9",
+                                          "name": "col",
+                                          "width": "fill_container",
+                                          "layout": "vertical",
+                                          "gap": 1,
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "d9mUVp",
+                                              "name": "name",
+                                              "fill": "$brand.ink",
+                                              "content": "Ana Pérez",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "text",
+                                              "id": "rgbY3",
+                                              "name": "meta",
+                                              "fill": "$ds.muted",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Préstamo #10034 · RD$10,000 · 8/10 cuotas semanales pagadas",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 11,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "IX5Jd",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "jCFzO",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Saldo pendiente",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "CfUXI",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$2,600",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "IOe8E",
+                                      "name": "kv",
+                                      "width": "fill_container",
+                                      "justifyContent": "space_between",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "mJ5cT",
+                                          "name": "k",
+                                          "fill": "$ds.muted",
+                                          "content": "Mora",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "vbciA",
+                                          "name": "v",
+                                          "fill": "$brand.ink",
+                                          "content": "RD$200",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "CdUyY",
+                                  "name": "f-saldo",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "yxB5l",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Saldo a cubrir con el nuevo préstamo (RD$)",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "BmFD8",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "J1TDj",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "2,800",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "A3BBo",
+                                  "name": "row1",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "frnDW",
+                                      "name": "f-principal",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "gSfkg",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Nuevo principal (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "YVvQu",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "uUxua",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10,000",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "x3viSM",
+                                      "name": "f-cuotas",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "zHv74",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Cuotas",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "Baxza",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "L95msp",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "10",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "XoY20",
+                                  "name": "row2",
+                                  "width": "fill_container",
+                                  "gap": 10,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "v2yuA",
+                                      "name": "f-frecuencia",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "HkIFV",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Frecuencia",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "Kihu5",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "dXRDl",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "Semanal",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            },
+                                            {
+                                              "type": "icon",
+                                              "id": "bJ5yz",
+                                              "name": "chev",
+                                              "width": 16,
+                                              "height": 16,
+                                              "icon": "chevron-down",
+                                              "library": "lucide",
+                                              "fill": "$ds.muted"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "NZTcB",
+                                      "name": "f-monto",
+                                      "width": "fill_container",
+                                      "layout": "vertical",
+                                      "gap": 7,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "njHJb",
+                                          "name": "lbl",
+                                          "fill": "$brand.ink",
+                                          "content": "Monto cuota (RD$)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 12,
+                                          "fontWeight": "600"
+                                        },
+                                        {
+                                          "type": "frame",
+                                          "id": "H1H9f",
+                                          "name": "input",
+                                          "width": "fill_container",
+                                          "fill": "$ds.bg",
+                                          "cornerRadius": 8,
+                                          "stroke": "$ds.border",
+                                          "strokeWidth": 1,
+                                          "gap": 10,
+                                          "padding": [
+                                            10,
+                                            14
+                                          ],
+                                          "alignItems": "center",
+                                          "children": [
+                                            {
+                                              "type": "text",
+                                              "id": "b5eiyt",
+                                              "name": "t",
+                                              "fill": "$brand.ink",
+                                              "textGrowth": "fixed-width",
+                                              "width": "fill_container",
+                                              "content": "1,300",
+                                              "fontFamily": "Geist",
+                                              "fontSize": 14,
+                                              "fontWeight": "500"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "WBglT",
+                                  "name": "f-fecha",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "M38j62",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Fecha de inicio",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "USMiU",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "k10SB5",
+                                          "name": "i",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "calendar",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "x4PNT",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "17 oct 2026",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "el8c7",
+                                  "name": "net",
+                                  "width": "fill_container",
+                                  "fill": "$ds.green.bg",
+                                  "cornerRadius": 8,
+                                  "padding": [
+                                    10,
+                                    14
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "J1Ztc2",
+                                      "name": "k",
+                                      "fill": "$ds.green",
+                                      "content": "A desembolsar",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "SXlLD",
+                                      "name": "v",
+                                      "fill": "$brand.ink",
+                                      "content": "RD$7,200",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 16,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "K1d5y",
+                                  "name": "f-cuenta",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 7,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ub1pY",
+                                      "name": "lbl",
+                                      "fill": "$brand.ink",
+                                      "content": "Desembolsar desde",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "n0Vx2",
+                                      "name": "input",
+                                      "width": "fill_container",
+                                      "fill": "$ds.bg",
+                                      "cornerRadius": 8,
+                                      "stroke": "$ds.border",
+                                      "strokeWidth": 1,
+                                      "gap": 10,
+                                      "padding": [
+                                        10,
+                                        14
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "zNXae",
+                                          "name": "t",
+                                          "fill": "$brand.ink",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Caja General",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        },
+                                        {
+                                          "type": "icon",
+                                          "id": "vwIGy",
+                                          "name": "chev",
+                                          "width": 16,
+                                          "height": 16,
+                                          "icon": "chevron-down",
+                                          "library": "lucide",
+                                          "fill": "$ds.muted"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "t0hdv4",
+                                  "name": "f-generar-contrato",
+                                  "width": "fill_container",
+                                  "gap": 8,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "AgYlE",
+                                      "name": "checkbox",
+                                      "width": 18,
+                                      "height": 18,
+                                      "fill": "$brand.blue.primary",
+                                      "cornerRadius": 5,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "JMYsy",
+                                          "name": "check",
+                                          "width": 12,
+                                          "height": 12,
+                                          "icon": "check",
+                                          "library": "lucide",
+                                          "fill": "#FFFFFF"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "lnpof",
+                                      "name": "t",
+                                      "fill": "$brand.ink",
+                                      "content": "Generar contrato con estos términos",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "eJviF",
+                                  "name": "err",
+                                  "fill": "$ds.red",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "El préstamo #10034 cambió mientras lo renovabas; recarga e intenta de nuevo.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "Geist",
+                                  "fontSize": 12,
+                                  "fontWeight": "500"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "D0xSTw",
+                                  "name": "renewBtn",
+                                  "width": "fill_container",
+                                  "fill": "$brand.blue.primary",
+                                  "cornerRadius": 9,
+                                  "gap": 7,
+                                  "padding": [
+                                    11,
+                                    18
+                                  ],
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "oH8kA",
+                                      "name": "i",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "#FFFFFF"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "qp6MJ",
+                                      "name": "t",
+                                      "fill": "#FFFFFF",
+                                      "content": "Renovar préstamo",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 14,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -66830,6 +69882,7 @@
                   "type": "frame",
                   "id": "nMbKG",
                   "name": "r3",
+                  "width": 1496,
                   "gap": 28,
                   "children": [
                     {
@@ -67288,6 +70341,213 @@
                                     },
                                     "sPbzF": {
                                       "content": "Asignar ruta",
+                                      "fontSize": 13
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UGEkK",
+                      "name": "spec",
+                      "width": 480,
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tsbg1",
+                          "name": "lbl",
+                          "fill": "#8FA3C8",
+                          "content": "Préstamo renovado",
+                          "fontFamily": "Geist",
+                          "fontSize": 15,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "c37VT",
+                          "name": "card",
+                          "width": "fill_container",
+                          "fill": "$ds.surface",
+                          "cornerRadius": 14,
+                          "stroke": "$ds.border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "x8UdTp",
+                              "name": "head",
+                              "width": "fill_container",
+                              "gap": 12,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "voRn9",
+                                  "name": "chip",
+                                  "width": 36,
+                                  "height": 36,
+                                  "fill": "$brand.mist",
+                                  "cornerRadius": 11,
+                                  "justifyContent": "center",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "lS9r2",
+                                      "name": "i",
+                                      "width": 17,
+                                      "height": 17,
+                                      "icon": "refresh-cw",
+                                      "library": "lucide",
+                                      "fill": "$brand.blue.primary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "GWUWe",
+                                  "name": "t",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 3,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "F6a9qw",
+                                      "name": "l1",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "A8UrLX",
+                                          "name": "a",
+                                          "fill": "$brand.ink",
+                                          "content": "Rosa M.",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "700"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "FJw1x",
+                                          "name": "b",
+                                          "fill": "$brand.ink",
+                                          "content": "renovó #10034 → #10051 · desembolso RD$7,200",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 14,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "hzxmi",
+                                      "name": "m",
+                                      "fill": "$ds.muted",
+                                      "content": "Renovación · saldo cubierto RD$2,800",
+                                      "fontFamily": "Geist",
+                                      "fontSize": 12,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "I8XnUM",
+                                  "name": "r",
+                                  "gap": 8,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "elSNA",
+                                      "name": "ch",
+                                      "width": 15,
+                                      "height": 15,
+                                      "icon": "chevron-up",
+                                      "library": "lucide",
+                                      "fill": "$ds.muted"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "d2C3K",
+                              "name": "narrative",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "C0ja0",
+                                  "name": "sentence",
+                                  "fill": "$brand.ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Nuevo préstamo de RD$10,000 a 10 cuotas semanales; el préstamo anterior quedó como renovado y el desembolso salió de Caja General. Se generó el contrato nuevo.",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "Geist",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "D0pASJ",
+                                  "name": "links",
+                                  "gap": 14,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "lpIJX",
+                                      "type": "ref",
+                                      "ref": "n1zzN",
+                                      "name": "metadata"
+                                    },
+                                    {
+                                      "id": "biB0R",
+                                      "type": "ref",
+                                      "ref": "UIEXj",
+                                      "name": "insights"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "GwxtN",
+                              "name": "actions",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "cxkn1",
+                                  "type": "ref",
+                                  "ref": "pTmK7",
+                                  "name": "act",
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "descendants": {
+                                    "fizSa": {
+                                      "enabled": false
+                                    },
+                                    "sPbzF": {
+                                      "content": "Ver préstamo",
                                       "fontSize": 13
                                     }
                                   }
