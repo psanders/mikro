@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.16.1](https://github.com/psanders/mikro/compare/v3.16.0...v3.16.1) (2026-10-17)
+
+### Bug Fixes
+
+- **apiserver:** seed applications with the current review fields ([#353](https://github.com/psanders/mikro/issues/353)) ([03b76e0](https://github.com/psanders/mikro/commit/03b76e03d763d4034856f96325f0e64983f36c35)), closes [#291](https://github.com/psanders/mikro/issues/291)
+
 # [3.16.0](https://github.com/psanders/mikro/compare/v3.15.0...v3.16.0) (2026-10-17)
 
 ### Features
