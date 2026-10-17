@@ -7,7 +7,7 @@
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
+import { getAuditModel } from "../config.js";
 import { createChatModel } from "../llm/providers.js";
 import type { AgentPolicy } from "../llm/types.js";
 import type { AuditConversation, AuditTurn, JudgeConversation, JudgeVerdict } from "./types.js";
@@ -73,7 +73,7 @@ function formatPolicies(policies: AgentPolicy[]): string {
  */
 export function createJudgeConversation(): JudgeConversation {
   return async (conversation, agent) => {
-    const model = createChatModel(getLLMConfig("evals"), { temperature: 0.1 });
+    const model = createChatModel(getAuditModel(), { temperature: 0.1 });
     const structured = model.withStructuredOutput(verdictsSchema);
     const result = await structured.invoke([
       new SystemMessage(SYSTEM_PROMPT),

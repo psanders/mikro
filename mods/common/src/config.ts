@@ -23,12 +23,6 @@ export const llmConfigSchema = z.object({
 });
 export type LLMConfig = z.infer<typeof llmConfigSchema>;
 
-const llmPurposesSchema = z.object({
-  text: llmConfigSchema,
-  vision: llmConfigSchema,
-  evals: llmConfigSchema
-});
-
 // All templates are registered under the single shared `whatsapp.languageCode`
 // (es_DO). There are intentionally no per-template language overrides.
 const whatsappTemplatesSchema = z.object({
@@ -77,23 +71,6 @@ const whatsappSchema = z.object({
   }))
 });
 
-const evalsVendorOverrideSchema = z.object({
-  text: llmConfigSchema.nullable(),
-  vision: llmConfigSchema.nullable()
-});
-
-const evalsVendorsSchema = z.object({
-  openai: evalsVendorOverrideSchema.optional(),
-  anthropic: evalsVendorOverrideSchema.optional(),
-  google: evalsVendorOverrideSchema.optional()
-});
-
-// Not strict: a key dropped from here (similarityThreshold, removed with the
-// similarity judge) is stripped from an existing mikro.json instead of failing boot.
-const evalsSchema = z.object({
-  vendors: evalsVendorsSchema.default(() => ({}))
-});
-
 const voiceNotesSchema = z.object({
   enabled: z.boolean().default(false),
   deepgramApiKey: z.string().default("")
@@ -106,10 +83,18 @@ const voiceNotesSchema = z.object({
  * `createSubmitFeedback` fails fast with a clear error rather than a
  * confusing GitHub 401/404 when unconfigured.
  */
-const githubFeedbackSchema = z.object({
-  token: z.string().default(""),
-  repo: z.string().default("")
-});
+const githubFeedbackSchema = z
+  .object({
+    token: z.string().default(""),
+    repo: z.string().default(""),
+    /** Writes the issue from the feedback (and its voice note). Required once `token` is set. */
+    model: llmConfigSchema.optional()
+  })
+  .strict()
+  .refine((g) => !g.token || g.model, {
+    message: "githubFeedback.model is required when githubFeedback.token is set",
+    path: ["model"]
+  });
 
 /**
  * Meta Conversions API: the server-side twin of the browser pixel in
@@ -179,10 +164,12 @@ export const DEFAULT_NEAR_COMPLETION_THRESHOLDS: Record<string, number> = {
 
 const reportsSchema = z
   .object({
+    /** Writes the narrative of the defaulted and renewal-candidates reports. */
+    model: llmConfigSchema,
     /** Max remaining installments by payment frequency to include in renewal candidates report. */
     nearCompletionThresholds: z.record(z.string(), z.number().int().min(0)).optional()
   })
-  .default(() => ({}));
+  .strict();
 
 const accountingSchema = z
   .object({
@@ -245,7 +232,9 @@ const applicationsSchema = z
      * Business photos a reviewer must upload before sending an application to
      * decision. Optional (default 3) so adding this release needs no mikro.json edit.
      */
-    minBusinessPhotos: z.number().int().min(0).default(3)
+    minBusinessPhotos: z.number().int().min(0).default(3),
+    /** Writes the application summary (Ops panel and PDF). */
+    summaryModel: llmConfigSchema
   })
   .strict();
 
@@ -387,17 +376,25 @@ const conversationAuditSchema = z
     /** Cron expression for the scheduled run. Evaluated in `timezone`. */
     schedule: cronExpressionSchema.default("0 7 * * *"),
     /** Most conversations the AI judge reads per run; the rest get code checks only. */
-    maxConversations: z.number().int().positive().default(200)
+    maxConversations: z.number().int().positive().default(200),
+    /**
+     * The rules judge and the feed card's status paragraph. Required to run the
+     * audit at all (scheduled, or on demand from the copilot).
+     */
+    model: llmConfigSchema.optional()
   })
   .strict()
+  .refine((a) => !a.enabled || a.model, {
+    message: "conversationAudit.model is required when conversationAudit.enabled is true",
+    path: ["model"]
+  })
   .default(() => ({ enabled: false, schedule: "0 7 * * *", maxConversations: 200 }));
 
 export type ConversationAuditConfig = z.infer<typeof conversationAuditSchema>;
 
 /**
- * Decision model used to classify CX turns and to screen eval/audit checks
- * (openspec conversation-state). Optional: when absent, classification and
- * decision-model judging are off and nothing else changes. A decision model
+ * A decision model (openspec conversation-state): `cx.classifier` labels
+ * inbound CX turns, `evals.classifier` answers the eval checks. A decision model
  * answers typed questions (choice / yes-no) with probabilities instead of
  * writing text. `openai-decisions` calls OpenAI's Decisions API; `chat` asks
  * any registered text model the same questions through structured output.
@@ -421,6 +418,42 @@ const classifierSchema = z.discriminatedUnion("provider", [
 ]);
 
 export type ClassifierConfig = z.infer<typeof classifierSchema>;
+
+/**
+ * The WhatsApp agents (CX: José, Lucía, Sofía, Carmen, and any other agent
+ * in agents.yaml). `visionModel` answers turns with photos. Without
+ * `classifier`, inbound turns are not labeled.
+ */
+const cxSchema = z
+  .object({
+    model: llmConfigSchema,
+    visionModel: llmConfigSchema,
+    classifier: classifierSchema.optional()
+  })
+  .strict();
+
+/** The founder copilot's chat model. */
+const copilotSchema = z.object({ model: llmConfigSchema }).strict();
+
+/**
+ * `agents:eval`. `model` settles checks the classifier is unsure of, writes
+ * failure reasons and judges tool arguments; `classifier` answers the checks.
+ * Both are required to run evals (not to boot). `candidates` are named agent
+ * models to compare against the baseline (`cx.model` / `cx.visionModel`) with
+ * `--candidates <name,…>`; a candidate without `visionModel` uses `cx.visionModel`.
+ */
+const evalsSchema = z
+  .object({
+    model: llmConfigSchema.optional(),
+    classifier: classifierSchema.optional(),
+    candidates: z
+      .record(
+        z.string().min(1),
+        z.object({ model: llmConfigSchema, visionModel: llmConfigSchema.optional() }).strict()
+      )
+      .default(() => ({}))
+  })
+  .strict();
 export type QCobroPortfolioRule = z.infer<typeof qcobroPortfolioRuleSchema>;
 
 /** Past-due (mora) fee policy. See README "Past-due fee". */
@@ -594,14 +627,15 @@ export const mikroConfigSchema = z
     // mikro.json directory. Agents enable/disable themselves in that file, so
     // there is no disable list here.
     agentsFile: z.string().default("agents.yaml"),
-    llm: llmPurposesSchema,
+    cx: cxSchema,
+    copilot: copilotSchema,
     whatsapp: whatsappSchema,
     voiceNotes: voiceNotesSchema.default(() => ({
       enabled: false,
       deepgramApiKey: ""
     })),
-    evals: evalsSchema.default(() => ({ vendors: {} })),
-    reports: reportsSchema.default(() => ({})),
+    evals: evalsSchema.default(() => ({ candidates: {} })),
+    reports: reportsSchema,
     accounting: accountingSchema,
     applications: applicationsSchema,
     loans: loansSchema.default(defaultLoansConfig),
@@ -610,7 +644,6 @@ export const mikroConfigSchema = z
     updates: updatesSchema,
     qcobro: qcobroSchema,
     conversationAudit: conversationAuditSchema,
-    classifier: classifierSchema.optional(),
     githubFeedback: githubFeedbackSchema.default(() => ({ token: "", repo: "" })),
     metaConversions: metaConversionsSchema.default(() => ({
       pixelId: "",
@@ -635,7 +668,6 @@ export type ResolvedMikroConfig = Omit<
   | "whatsapp"
   | "voiceNotes"
   | "evals"
-  | "reports"
   | "loans"
   | "contract"
   | "updates"
@@ -647,9 +679,8 @@ export type ResolvedMikroConfig = Omit<
   };
   voiceNotes: NonNullable<MikroConfig["voiceNotes"]>;
   evals: NonNullable<MikroConfig["evals"]> & {
-    vendors: NonNullable<NonNullable<MikroConfig["evals"]>["vendors"]>;
+    candidates: NonNullable<NonNullable<MikroConfig["evals"]>["candidates"]>;
   };
-  reports: NonNullable<MikroConfig["reports"]>;
   loans: LoansConfig;
   contract: ContractConfig;
   updates: NonNullable<MikroConfig["updates"]>;
@@ -850,9 +881,14 @@ export function getQCobroConfig(): ResolvedMikroConfig["qcobro"] {
   return getConfig().qcobro;
 }
 
-/** The decision-model classifier, or null when not configured (feature off). */
-export function getClassifierConfig(): ClassifierConfig | null {
-  return getConfig().classifier ?? null;
+/** The classifier that labels inbound CX turns, or null when not configured (labels off). */
+export function getCxClassifierConfig(): ClassifierConfig | null {
+  return getConfig().cx.classifier ?? null;
+}
+
+/** The classifier that answers eval checks, or null when not configured. */
+export function getEvalsClassifierConfig(): ClassifierConfig | null {
+  return getConfig().evals.classifier ?? null;
 }
 
 /** Conversation audit settings (enabled, schedule, maxConversations). */

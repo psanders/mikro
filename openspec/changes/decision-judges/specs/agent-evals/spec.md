@@ -29,12 +29,12 @@ For each turn the runner SHALL:
 
 ### Requirement: Evals need a decision model and checks on every turn
 
-`agents:eval` SHALL refuse to run without the `classifier` section in mikro.json, with an error that names it. The runner SHALL refuse a scenario with a turn that has no checks, naming the turn, before running it.
+`agents:eval` SHALL refuse to run without the `evals.classifier` in mikro.json, with an error that names it. The runner SHALL refuse a scenario with a turn that has no checks, naming the turn, before running it.
 
 #### Scenario: No classifier configured
 
-- **WHEN** `classifier` is absent from mikro.json
-- **THEN** `agents:eval` exits with an error asking for the `classifier` section
+- **WHEN** `evals.classifier` is absent from mikro.json
+- **THEN** `agents:eval` exits with an error asking for the `evals.classifier`
 
 #### Scenario: A turn without checks
 

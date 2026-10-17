@@ -14,10 +14,10 @@ import path from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotenv({ path: resolve(__dirname, "../../../../.env") });
 
-import { getConfig, type LLMConfig } from "@mikro/common";
+import { getConfig } from "@mikro/common";
 import type { Agent } from "../llm/types.js";
 import { loadAgents } from "../agents/index.js";
-import { clearLLMConfigCache, getLLMConfig } from "../config.js";
+import { getCxModel, getCxVisionModel, getEvalsModel } from "../config.js";
 import {
   runAgentEval,
   runScenario,
@@ -25,22 +25,30 @@ import {
   type EvalRunOptions,
   type ScenarioResult
 } from "./runner.js";
-import { getDecisionProvider } from "../decisions/index.js";
+import { getEvalsDecisionProvider } from "../decisions/index.js";
 
 /**
  * Replies are judged by each turn's rubric checks, answered by the decision
- * model (the `classifier` in mikro.json). Without one there is no judge.
+ * model (`evals.classifier`), with `evals.model` for unsure answers and failure
+ * reasons. Without both there is no judge.
  */
-function checkOptions(): EvalRunOptions {
-  const decisions = getDecisionProvider();
+function checkOptions(models: EvalRunOptions["models"]): EvalRunOptions {
+  const decisions = getEvalsDecisionProvider();
   if (!decisions) {
     console.error(
-      "Evals judge replies with rubric checks answered by a decision model: add the `classifier` section to mikro.json."
+      "Evals judge replies with rubric checks answered by a decision model: add `evals.classifier` to mikro.json."
     );
+    process.exit(1);
+  }
+  try {
+    getEvalsModel();
+  } catch {
+    console.error("Evals need an LLM judge too: add `evals.model` to mikro.json.");
     process.exit(1);
   }
   return {
     decisions,
+    models,
     stats: { decisionCalls: 0, decisionInputTokens: 0, decisionLatencyMs: 0, llmCalls: 0 }
   };
 }
@@ -52,48 +60,59 @@ import {
   printSummary
 } from "./output.js";
 
-const EVALS_VENDORS = ["openai", "anthropic", "google"] as const;
-type EvalsVendor = (typeof EVALS_VENDORS)[number];
-
-/**
- * Per-vendor text/vision LLM config from mikro.json (evals.vendors.<vendor>).
- * For openai, falls back to llm.text / llm.vision when no override is set.
- */
-function getTextVisionForVendor(vendor: EvalsVendor): {
-  text: LLMConfig | null;
-  vision: LLMConfig | null;
-} {
-  const cfg = getConfig();
-  const vendorOverrides = cfg.evals.vendors?.[vendor];
-  let text = vendorOverrides?.text ?? null;
-  let vision = vendorOverrides?.vision ?? null;
-  if (vendor === "openai") {
-    text = text ?? cfg.llm.text;
-    vision = vision ?? cfg.llm.vision;
-  }
-  return { text, vision };
+/** The agent's models for one run: the baseline (`cx`) or a named candidate. */
+interface ModelRun {
+  name: string;
+  models: NonNullable<EvalRunOptions["models"]>;
 }
 
 /**
- * Parse argv for --vendors and positional [agent] [scenario].
- * Without --vendors, a single run uses llm.text and llm.vision from mikro.json.
+ * The runs for `--candidates a,b`: the baseline (`cx.model` / `cx.visionModel`)
+ * first, then each candidate from `evals.candidates`. A candidate without
+ * `visionModel` uses `cx.visionModel`. Exits on an unknown candidate name.
  */
+function candidateRuns(names: string[]): ModelRun[] {
+  const baseline = { model: getCxModel(), visionModel: getCxVisionModel() };
+  const candidates = getConfig().evals.candidates;
+  const unknown = names.filter((n) => !candidates[n]);
+  if (unknown.length > 0) {
+    const known = Object.keys(candidates);
+    console.error(
+      `Unknown candidate(s): ${unknown.join(", ")}. evals.candidates has: ${known.length ? known.join(", ") : "(none)"}.`
+    );
+    process.exit(1);
+  }
+  return [
+    { name: "baseline", models: baseline },
+    ...names.map((name) => ({
+      name,
+      models: {
+        model: candidates[name].model,
+        visionModel: candidates[name].visionModel ?? baseline.visionModel
+      }
+    }))
+  ];
+}
+
+/** Parse argv for --candidates and positional [agent] [scenario]. */
 function parseArgs(): {
-  vendors: EvalsVendor[] | null;
+  candidates: string[] | null;
   agentName?: string;
   scenarioId?: string;
 } {
-  const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
-  const vendorIdx = process.argv.indexOf("--vendors");
-  let vendors: EvalsVendor[] | null = null;
-  if (vendorIdx !== -1 && process.argv[vendorIdx + 1]) {
-    const raw = process.argv[vendorIdx + 1].toLowerCase();
-    const list = raw.split(",").map((v) => v.trim()) as string[];
-    const valid = list.filter((v): v is EvalsVendor => EVALS_VENDORS.includes(v as EvalsVendor));
-    if (valid.length > 0) vendors = valid;
-  }
+  const idx = process.argv.indexOf("--candidates");
+  const value = idx !== -1 ? process.argv[idx + 1] : undefined;
+  const args = process.argv
+    .slice(2)
+    .filter((a, i, all) => !a.startsWith("--") && all[i - 1] !== "--candidates");
+  const candidates = value
+    ? value
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : null;
   return {
-    vendors,
+    candidates: candidates && candidates.length > 0 ? candidates : null,
     agentName: args[0],
     scenarioId: args[1]
   };
@@ -105,42 +124,44 @@ function printUsage() {
 Usage: npm run agents:eval [options] [agent] [scenario]
 
 Config is read from mikro.json (default: project root). Use MIKRO_CONFIG_FILE in
-.env to point to a different path. Each turn's rubric checks are answered by
-the classifier (decision model); llm.evals settles unsure answers and explains
-failures.
+.env to point to a different path. Agents answer with cx.model / cx.visionModel.
+Each turn's rubric checks are answered by evals.classifier (decision model);
+evals.model settles unsure answers and explains failures.
 
 Options:
-  --vendors <list>  Run scenarios for each vendor. Agent models come from
-                    evals.vendors.<vendor>.text/vision (openai falls back to llm.text/vision).
-                    The judges stay the same.
+  --candidates <list>  Also run with these named models from evals.candidates,
+                       after the baseline (cx.model / cx.visionModel). The
+                       judges stay the same.
 
 Arguments:
   agent     - Optional. Agent name (e.g. jose, collector)
   scenario  - Optional. Single scenario id (use with agent)
 
 Config (mikro.json):
-  classifier                Decision model that answers the checks (required)
-  llm.evals                 LLM for unsure answers and failure reasons
-  evals.vendors.<vendor>    Optional per-vendor text/vision overrides
+  evals.classifier          Decision model that answers the checks (required)
+  evals.model               LLM for unsure answers and failure reasons (required)
+  evals.candidates.<name>   Optional agent models to compare: { model, visionModel? }
 
 Examples:
   npm run agents:eval jose happy-path-short-isc50
   npm run agents:eval jose
   npm run agents:eval
-  npm run agents:eval -- --vendors openai,anthropic
+  npm run agents:eval -- --candidates claude
 `);
 }
 
 /**
- * Run evals using current config: llm.text/vision for the agent; the classifier and llm.evals judge.
+ * Run evals with the given agent models (default `cx`); judged by
+ * `evals.classifier` and `evals.model`.
  */
-async function runEvalsForCurrentConfig(
+async function runEvals(
   agentsToEval: Agent[],
-  scenarioIdArg?: string
+  scenarioIdArg?: string,
+  models?: EvalRunOptions["models"]
 ): Promise<{ results: EvalResults[]; hasFailures: boolean }> {
   const allResults: EvalResults[] = [];
   let hasFailures = false;
-  const options = checkOptions();
+  const options = checkOptions(models);
 
   for (const agent of agentsToEval) {
     console.log(`\n=== Evaluating Agent: ${agent.name} ===`);
@@ -205,7 +226,7 @@ async function runEvalsForCurrentConfig(
 
 /** CLI entry: load config from mikro.json, run evals, write results to eval-results/. */
 async function main() {
-  const { vendors, agentName: agentNameArg, scenarioId: scenarioIdArg } = parseArgs();
+  const { candidates, agentName: agentNameArg, scenarioId: scenarioIdArg } = parseArgs();
 
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     printUsage();
@@ -214,15 +235,10 @@ async function main() {
 
   try {
     // Log judge config
-    try {
-      const evalsConfig = getLLMConfig("evals");
-      const classifier = getConfig().classifier;
-      console.log(
-        `Judge: checks by ${classifier ? `${classifier.provider}/${classifier.model}` : "(no classifier)"}, LLM ${evalsConfig.vendor}/${evalsConfig.model}`
-      );
-    } catch {
-      // evals not configured yet
-    }
+    const { model: judge, classifier } = getConfig().evals;
+    console.log(
+      `Judge: checks by ${classifier ? `${classifier.provider}/${classifier.model}` : "(no evals.classifier)"}, LLM ${judge ? `${judge.vendor}/${judge.model}` : "(no evals.model)"}`
+    );
 
     const agents = loadAgents();
     const agentsWithEvals = Array.from(agents.values()).filter(
@@ -264,45 +280,26 @@ async function main() {
 
     let exitFailures = false;
 
-    if (vendors && vendors.length > 0) {
-      const vendorResults: Record<string, EvalResults[]> = {};
-      for (const vendor of vendors) {
-        const { text, vision } = getTextVisionForVendor(vendor);
-        if (!text || !vision) {
-          console.warn(
-            `Skipping vendor "${vendor}": evals.vendors.${vendor}.text and ` +
-              `.vision must be set in mikro.json` +
-              (vendor === "openai" ? " (or use llm.text / llm.vision)." : ".")
-          );
-          continue;
-        }
-        // Temporarily override llm.text/vision in the cached config for this vendor's run
-        const cfg = getConfig();
-        const origText = cfg.llm.text;
-        const origVision = cfg.llm.vision;
-        cfg.llm.text = text;
-        cfg.llm.vision = vision;
+    if (candidates) {
+      const runResults: Record<string, EvalResults[]> = {};
+      for (const run of candidateRuns(candidates)) {
         console.log(`\n${"═".repeat(60)}`);
-        console.log(`  Text/Vision: ${vendor.toUpperCase()} (scenario runs use these models)`);
-        console.log(`${"═".repeat(60)}`);
-        const { results, hasFailures } = await runEvalsForCurrentConfig(
-          agentsToEval,
-          scenarioIdArg
+        console.log(
+          `  ${run.name}: ${run.models.model.vendor}/${run.models.model.model}, vision ${run.models.visionModel.vendor}/${run.models.visionModel.model}`
         );
-        vendorResults[vendor] = results;
+        console.log(`${"═".repeat(60)}`);
+        const { results, hasFailures } = await runEvals(agentsToEval, scenarioIdArg, run.models);
+        runResults[run.name] = results;
         if (hasFailures) exitFailures = true;
-        cfg.llm.text = origText;
-        cfg.llm.vision = origVision;
-        clearLLMConfigCache();
       }
-      const outputFile = path.join(outputDir, `eval-${timestamp}-vendors.json`);
-      fs.writeFileSync(outputFile, JSON.stringify(vendorResults, null, 2));
+      const outputFile = path.join(outputDir, `eval-${timestamp}-candidates.json`);
+      fs.writeFileSync(outputFile, JSON.stringify(runResults, null, 2));
       console.log(`\nResults saved to: ${outputFile}`);
     } else {
       if (scenarioIdArg && agentsToEval.length === 1) {
         console.log(`Running scenario: ${scenarioIdArg}`);
       }
-      const { results, hasFailures } = await runEvalsForCurrentConfig(agentsToEval, scenarioIdArg);
+      const { results, hasFailures } = await runEvals(agentsToEval, scenarioIdArg);
       exitFailures = hasFailures;
       const outputFile = path.join(outputDir, `eval-${timestamp}.json`);
       const jsonOutput =

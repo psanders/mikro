@@ -14,7 +14,7 @@ import {
   type DefaultedReportData,
   type RenderReportDeps
 } from "@mikro/common";
-import { invokeTextPrompt } from "@mikro/agents";
+import { getReportsModel, invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { PaymentStatus } from "../../generated/prisma/enums.js";
@@ -102,7 +102,7 @@ export async function computeDefaultedReportInputs(
       createdBy: n.createdBy.name
     }));
     const prompt = buildLoanNotesSummaryPrompt(notesForPrompt);
-    const raw = await invokeTextPrompt(prompt);
+    const raw = await invokeTextPrompt(getReportsModel(), prompt);
     return parseLoanNotesSummaryResponse(raw);
   });
 

@@ -17,11 +17,12 @@ const TEST_CONFIG_PATH = resolve(process.cwd(), "mikro-test-session.json");
 function makeTestConfig(sessionTimeoutSeconds: number): object {
   return {
     sessionTimeoutSeconds,
-    llm: {
-      text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
-      vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
-      evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+    cx: {
+      model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+      visionModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" }
     },
+    copilot: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
+    reports: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
     whatsapp: {
       phoneNumberId: "test",
       accessToken: "test"
@@ -29,7 +30,10 @@ function makeTestConfig(sessionTimeoutSeconds: number): object {
     accounting: {
       disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
     },
-    applications: { coveredProvinces: ["PUERTO_PLATA"] }
+    applications: {
+      coveredProvinces: ["PUERTO_PLATA"],
+      summaryModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+    }
   };
 }
 

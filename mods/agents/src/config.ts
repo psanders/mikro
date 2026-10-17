@@ -2,47 +2,65 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { getConfig, clearConfigCache, LOAN_APPLICATION_PROMO_ASSET_ROUTE } from "@mikro/common";
-import { type LLMConfig, type LLMPurpose, validateModelForVendor } from "./llm/providers.js";
+import { type LLMConfig, validateModelForVendor } from "./llm/providers.js";
 
-/** LLM purposes required at apiserver/agents startup. Evals is only required when running evals. */
-const LLM_PURPOSES_REQUIRED_AT_STARTUP: readonly LLMPurpose[] = ["text", "vision"];
+/** The WhatsApp agents' model (`cx.model`). */
+export function getCxModel(): LLMConfig {
+  return getConfig().cx.model;
+}
 
-/**
- * Get LLM configuration for a specific purpose from mikro.json.
- *
- * @param purpose - The LLM purpose (text, vision, evals)
- * @returns The validated LLM configuration
- */
-export function getLLMConfig(purpose: LLMPurpose): LLMConfig {
-  const config = getConfig().llm[purpose];
+/** The WhatsApp agents' model for turns with photos (`cx.visionModel`). */
+export function getCxVisionModel(): LLMConfig {
+  return getConfig().cx.visionModel;
+}
+
+/** The founder copilot's model (`copilot.model`). */
+export function getCopilotModel(): LLMConfig {
+  return getConfig().copilot.model;
+}
+
+/** The application summary's model (`applications.summaryModel`). */
+export function getApplicationSummaryModel(): LLMConfig {
+  return getConfig().applications.summaryModel;
+}
+
+/** The report narratives' model (`reports.model`). */
+export function getReportsModel(): LLMConfig {
+  return getConfig().reports.model;
+}
+
+/** Throws a clear error naming the missing key of an optional feature. */
+function required(config: LLMConfig | undefined, key: string): LLMConfig {
+  if (!config) throw new Error(`${key} is not configured in mikro.json`);
   return config;
 }
 
+/** The feedback button's model (`githubFeedback.model`, required once its token is set). */
+export function getFeedbackModel(): LLMConfig {
+  return required(getConfig().githubFeedback.model, "githubFeedback.model");
+}
+
+/** The conversation audit's judge model (`conversationAudit.model`). */
+export function getAuditModel(): LLMConfig {
+  return required(getConfig().conversationAudit.model, "conversationAudit.model");
+}
+
+/** The evals' LLM judge (`evals.model`): unsure checks, failure reasons, tool arguments. */
+export function getEvalsModel(): LLMConfig {
+  return required(getConfig().evals.model, "evals.model");
+}
+
 /**
- * Validate LLM configurations required at startup (text, vision).
- * Evals config is only validated when evals are run.
- * Should be called during application initialization to fail fast on misconfiguration.
+ * Validate the models of the always-on features at startup, to fail fast on
+ * misconfiguration: `cx.visionModel` must support images.
  *
- * @throws Error if any required LLM configuration is invalid
+ * @throws Error if a model is invalid
  */
 export function validateAllLLMConfigs(): void {
-  const errors: string[] = [];
-
-  for (const purpose of LLM_PURPOSES_REQUIRED_AT_STARTUP) {
-    try {
-      const config = getLLMConfig(purpose);
-
-      // Additional validation for vision purpose - must support vision
-      if (purpose === "vision") {
-        validateModelForVendor(config, { requireVision: true });
-      }
-    } catch (error) {
-      errors.push(`${purpose}: ${(error as Error).message}`);
-    }
-  }
-
-  if (errors.length > 0) {
-    throw new Error(`LLM configuration errors:\n${errors.map((e) => `  - ${e}`).join("\n")}`);
+  try {
+    validateModelForVendor(getCxVisionModel(), { requireVision: true });
+  } catch (error) {
+    throw new Error(`LLM configuration error: cx.visionModel: ${(error as Error).message}`);
   }
 }
 
@@ -53,8 +71,7 @@ export function clearLLMConfigCache(): void {
   clearConfigCache();
 }
 
-// Re-export types and utilities for convenience
-export type { LLMConfig, LLMPurpose };
+export type { LLMConfig };
 
 /**
  * Get WhatsApp webhook verify token from config.

@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { Agent, Message, ConversationTurn, EvaluationScenario } from "../llm/types.js";
-import { createInvokeLLM } from "../llm/createInvokeLLM.js";
+import { createInvokeLLM, type InvokeLLMOptions } from "../llm/createInvokeLLM.js";
 import { allTools } from "../tools/index.js";
 import {
   createCheckLlmJudge,
@@ -43,8 +43,10 @@ export interface TurnResult {
 }
 
 export interface EvalRunOptions {
-  /** Answers the rubric checks (the `classifier` in mikro.json). */
+  /** Answers the rubric checks (`evals.classifier` in mikro.json). */
   decisions: DecisionProvider;
+  /** The agent's models for this run (an eval candidate); default `cx.model` / `cx.visionModel`. */
+  models?: InvokeLLMOptions["models"];
   checkLlm?: CheckLlmJudge;
   /** Accumulates decision/LLM call counts across a run. */
   stats?: CheckRunStats;
@@ -118,7 +120,7 @@ async function runTurn(
 
   // Create LLM invoker with mock executor
   // Model selection (text vs vision) happens automatically based on imageUrl
-  const invokeLLM = createInvokeLLM(agent, allTools, mockExecutor);
+  const invokeLLM = createInvokeLLM(agent, allTools, mockExecutor, { models: options.models });
 
   // Get user message and image (both optional)
   const userMessage = turn.human || "";

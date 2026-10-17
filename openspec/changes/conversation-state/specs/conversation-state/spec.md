@@ -2,11 +2,11 @@
 
 ### Requirement: Every inbound CX turn is classified with an intent
 
-When the `classifier` section is configured, the system SHALL classify every routed inbound CX turn before invoking the agent, with one decision request. That request SHALL take the message and the last 6 turns as input, and SHALL ask a choice question for the intent plus the yes/no predicates `settled`, `affirms` and `same_request`. The system SHALL store `intent`, `intent_confidence` and the predicate probabilities on the turn. An intent or predicate below the confidence threshold SHALL never trigger an action.
+When the `cx.classifier` section is configured, the system SHALL classify every routed inbound CX turn before invoking the agent, with one decision request. That request SHALL take the message and the last 6 turns as input, and SHALL ask a choice question for the intent plus the yes/no predicates `settled`, `affirms` and `same_request`. The system SHALL store `intent`, `intent_confidence` and the predicate probabilities on the turn. An intent or predicate below the confidence threshold SHALL never trigger an action.
 
 The intent SHALL be one of `answer`, `question`, `closing`, `opt_out`, `repeat`, `media`, `frustration`, `human_request`, `greeting` or `other`. Media messages without text SHALL be labeled `media` in code, without a model call.
 
-When the `classifier` section is not configured, classification SHALL be skipped and replies SHALL behave as before. A classifier error, a refusal, or a response slower than 3 seconds SHALL leave the turn unlabeled and SHALL NOT block the reply.
+When the `cx.classifier` section is not configured, classification SHALL be skipped and replies SHALL behave as before. A classifier error, a refusal, or a response slower than 3 seconds SHALL leave the turn unlabeled and SHALL NOT block the reply.
 
 #### Scenario: Thanks after the agent's goodbye
 
@@ -20,7 +20,7 @@ When the `classifier` section is not configured, classification SHALL be skipped
 
 #### Scenario: No classifier configured
 
-- **WHEN** `mikro.json` has no `classifier` section
+- **WHEN** `mikro.json` has no `cx.classifier` section
 - **THEN** no turn is labeled, and the agent replies exactly as before
 
 #### Scenario: Classifier times out
@@ -30,7 +30,7 @@ When the `classifier` section is not configured, classification SHALL be skipped
 
 ### Requirement: The classifier is a pluggable decision provider
 
-The `classifier` section SHALL be optional, and SHALL select a provider:
+The `cx.classifier` section SHALL be optional, and SHALL select a provider:
 
 - `openai-decisions`: the OpenAI Decisions API, model `gpt-6-luna`;
 - `chat`: any text model in the agents' model registry, asked the same questions through structured output at temperature 0.

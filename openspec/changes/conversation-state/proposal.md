@@ -12,7 +12,7 @@ Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the fou
 
 ## What Changes
 
-- **Every inbound turn is classified by a decision model, not a chat LLM.** It is configured in a new optional `classifier` section of `mikro.json`. The default candidate is OpenAI Decisions (`gpt-6-luna`, public beta, on the OpenAI key we already have); a small chat model answers the same questions as the fallback. One request per inbound turn, before the agent runs, asks typed questions over the last few turns:
+- **Every inbound turn is classified by a decision model, not a chat LLM.** It is configured in a new optional `cx.classifier` section of `mikro.json`. The default candidate is OpenAI Decisions (`gpt-6-luna`, public beta, on the OpenAI key we already have); a small chat model answers the same questions as the fallback. One request per inbound turn, before the agent runs, asks typed questions over the last few turns:
   - a choice question for the intent (`answer`, `question`, `closing`, `opt_out`, `repeat`, `frustration`, `human_request`, `greeting`, `other`; code labels `media`);
   - yes/no predicates: did the agent's last message settle the matter, does this message confirm what the agent asked, is this the same unusable input again.
 
@@ -29,7 +29,7 @@ Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the fou
 - **Visibility:** `mikro conversations:export` gains intent and state columns plus a count summary. The conversation audit adds `stuck_loop` and `unresolved` findings. The audit card stays verdict-only; the counts per resolution go in the detail panel.
 - **Backfill:** a new `mikro conversations:classify --since <date>` command labels stored turns that have no label. It is idempotent and writes labels and state only, never triggering an action. Its `--dry-run --providers …` mode powers a provider bake-off (OpenAI Decisions vs. a small chat model, optionally Jev) before one is chosen.
 - **Rollout, labels first:**
-  1. Release 1 ships the code with no actions; labels start once the founder adds the `classifier` config after the bake-off.
+  1. Release 1 ships the code with no actions; labels start once the founder adds the `cx.classifier` config after the bake-off.
   2. The founder spot-checks the labels.
   3. The founder sets `actionsEnabled: true`.
 
@@ -46,7 +46,7 @@ Keyword lists (`isDecline`, `isHumanRequest`) catch a few phrasings, but the fou
 ## Impact
 
 - **mods/common:**
-  - Config: an optional `classifier` section (discriminated `provider`: `openai-decisions` | `chat`) and an optional `conversationState` section (`actionsEnabled` defaults to false).
+  - Config: an optional `cx.classifier` section (discriminated `provider`: `openai-decisions` | `chat`) and an optional `conversationState` section (`actionsEnabled` defaults to false).
   - Intent, state and resolution enums, exported from both barrels.
   - `recordConversationTurn` schema fields.
 - **mods/agents:**

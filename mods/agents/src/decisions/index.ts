@@ -4,7 +4,11 @@
  * Decision-model layer (openspec conversation-state): one interface for the
  * CX classifier and the eval checks.
  */
-import { getClassifierConfig, type ClassifierConfig } from "@mikro/common";
+import {
+  getCxClassifierConfig,
+  getEvalsClassifierConfig,
+  type ClassifierConfig
+} from "@mikro/common";
 import { createOpenAIDecisionsProvider } from "./openaiDecisions.js";
 import { createChatDecisionProvider } from "./chatDecisions.js";
 import type { DecisionProvider } from "./types.js";
@@ -16,7 +20,7 @@ export * from "./verdict.js";
 export * from "./classifier.js";
 export { createCheckLlmJudge, type CheckLlmJudge } from "./llmCheck.js";
 
-/** A provider from a `classifier` config section. */
+/** A provider from a classifier config (`cx.classifier` or `evals.classifier`). */
 export function createDecisionProvider(config: ClassifierConfig): DecisionProvider {
   return config.provider === "openai-decisions"
     ? createOpenAIDecisionsProvider({ apiKey: config.apiKey, model: config.model })
@@ -27,8 +31,14 @@ export function createDecisionProvider(config: ClassifierConfig): DecisionProvid
       });
 }
 
-/** The configured provider, or null when `classifier` is absent (feature off). */
-export function getDecisionProvider(): DecisionProvider | null {
-  const config = getClassifierConfig();
+/** The provider that labels inbound CX turns, or null without `cx.classifier` (labels off). */
+export function getCxDecisionProvider(): DecisionProvider | null {
+  const config = getCxClassifierConfig();
+  return config ? createDecisionProvider(config) : null;
+}
+
+/** The provider that answers eval checks, or null without `evals.classifier`. */
+export function getEvalsDecisionProvider(): DecisionProvider | null {
+  const config = getEvalsClassifierConfig();
   return config ? createDecisionProvider(config) : null;
 }

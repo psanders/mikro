@@ -2,12 +2,12 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * The LLM side of decision-model judging: answers one yes/no question about a
- * text with a short reason. Used when the decision model is unsure, to explain
- * eval failures, and to confirm audit flags (openspec decision-judges).
+ * text with a short reason. Used when the decision model is unsure and to explain
+ * eval failures (openspec decision-judges).
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
+import { getEvalsModel } from "../config.js";
 import { createChatModel } from "../llm/providers.js";
 
 const llmAnswerSchema = z.object({
@@ -23,7 +23,7 @@ export type CheckLlmJudge = (
 
 export function createCheckLlmJudge(): CheckLlmJudge {
   return async (input, question) => {
-    const model = createChatModel(getLLMConfig("evals"), { temperature: 0.1 });
+    const model = createChatModel(getEvalsModel(), { temperature: 0.1 });
     const structured = model.withStructuredOutput(llmAnswerSchema);
     return structured.invoke([
       new SystemMessage(

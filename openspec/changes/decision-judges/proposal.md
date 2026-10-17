@@ -40,4 +40,4 @@ A decision model (OpenAI Decisions) answers closed yes/no questions with a proba
   - `audit/runAudit.ts`, `audit/judge.ts`, `audit/checks.ts`;
   - `decisions/llmCheck.ts`.
 - **`agents.yaml`:** eval `checks` and reworded policies. Prod reads its own copy, which must be updated by hand.
-- **No migration, no new config key.** The decision checks in evals use the `classifier` section from `conversation-state`; the audit changes need no config. `evals.similarityThreshold` is removed; a leftover value in mikro.json is ignored.
+- **No migration, no new config key.** The decision checks in evals use `evals.classifier` (separate from `cx.classifier`); the audit changes need no config. `evals.similarityThreshold` is removed; a leftover value in mikro.json is ignored.

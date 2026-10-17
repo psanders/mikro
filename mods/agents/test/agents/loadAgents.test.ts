@@ -16,14 +16,18 @@ const CONFIG_PATH = resolve(process.cwd(), "mikro-test-agents-load.json");
 const DUP_AGENTS = resolve(process.cwd(), "agents-test-dup.yaml");
 
 const BASE_CONFIG = {
-  llm: {
-    text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
-    vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
-    evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+  cx: {
+    model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+    visionModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" }
   },
+  copilot: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
+  reports: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
   whatsapp: { phoneNumberId: "test", accessToken: "test" },
   accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" },
-  applications: { coveredProvinces: ["PUERTO_PLATA"] }
+  applications: {
+    coveredProvinces: ["PUERTO_PLATA"],
+    summaryModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+  }
 };
 
 function useAgentsFile(agentsFile: string) {
