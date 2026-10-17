@@ -106,23 +106,27 @@ export {
   getPublicUrl,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
-  getLLMConfig,
+  getCxModel,
+  getCxVisionModel,
+  getCopilotModel,
+  getApplicationSummaryModel,
+  getReportsModel,
+  getFeedbackModel,
+  getAuditModel,
+  getEvalsModel,
   validateAllLLMConfigs,
   clearLLMConfigCache,
-  type LLMConfig,
-  type LLMPurpose
+  type LLMConfig
 } from "./config.js";
 
 // LLM providers
 export {
   createChatModel,
-  parseLLMConfig,
   validateModelForVendor,
   getModelsForVendor,
   getVisionModelsForVendor,
   isVisionModel,
   LLM_VENDORS,
-  LLM_PURPOSES,
   type LLMVendor
 } from "./llm/providers.js";
 

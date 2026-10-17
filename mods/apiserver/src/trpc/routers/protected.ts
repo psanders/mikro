@@ -230,8 +230,8 @@ import {
   getWhatsAppPromoTemplate,
   getDeepgramApiKey,
   createChatModel,
-  getLLMConfig,
-  getDecisionProvider
+  getFeedbackModel,
+  getCxDecisionProvider
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
@@ -553,11 +553,11 @@ export const protectedRouter = router({
   classifyConversationTurns: adminProcedure
     .input(classifyConversationTurnsSchema)
     .mutation(async ({ ctx, input }) => {
-      const provider = getDecisionProvider();
+      const provider = getCxDecisionProvider();
       if (!provider) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "No classifier configured: add the `classifier` section to mikro.json."
+          message: "No classifier configured: add `cx.classifier` to mikro.json."
         });
       }
       return createClassifyConversationTurns(ctx.db as unknown as PrismaClient, provider)(input);
@@ -1114,7 +1114,7 @@ export const protectedRouter = router({
 
       const fn = createSubmitFeedback({
         transcribe: createTranscribeVoiceNote(deepgramApiKey),
-        createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+        createModel: () => createChatModel(getFeedbackModel(), { temperature: 0.3 }),
         // Without an explicit API version, GitHub routes the request through
         // an implicit legacy version and returns a deprecation warning
         // ("scheduled to be removed" — seen for real on the issues.create

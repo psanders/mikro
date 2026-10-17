@@ -11,12 +11,6 @@ import { type LLMConfig, llmConfigSchema, LLM_VENDORS, type LLMVendor } from "@m
 export { llmConfigSchema, LLM_VENDORS, type LLMConfig, type LLMVendor };
 
 /**
- * LLM purposes in the application.
- */
-export const LLM_PURPOSES = ["text", "vision", "evals"] as const;
-export type LLMPurpose = (typeof LLM_PURPOSES)[number];
-
-/**
  * Model registry per vendor.
  * Lists all supported models and which ones support vision.
  */
@@ -90,34 +84,6 @@ export function validateModelForVendor(
         `Vision-capable models are: ${registry.visionModels.join(", ")}`
     );
   }
-}
-
-/**
- * Parse and validate LLM configuration from JSON string.
- * @param purpose - The LLM purpose (for error messages)
- * @param jsonString - JSON string to parse
- * @returns Validated LLM configuration
- * @throws Error if JSON is invalid or config doesn't pass validation
- */
-export function parseLLMConfig(purpose: LLMPurpose, jsonString: string): LLMConfig {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(jsonString);
-  } catch {
-    throw new Error(`Invalid JSON for MIKRO_LLM_${purpose.toUpperCase()}: ${jsonString}`);
-  }
-
-  const result = llmConfigSchema.safeParse(parsed);
-  if (!result.success) {
-    const errors = result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
-    throw new Error(`Invalid config for MIKRO_LLM_${purpose.toUpperCase()}: ${errors}`);
-  }
-
-  // Validate model is valid for vendor
-  validateModelForVendor(result.data);
-
-  return result.data;
 }
 
 /**

@@ -5,17 +5,16 @@
  * Used for report narrative generation and other one-shot LLM calls.
  */
 import { HumanMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
-import { createChatModel } from "./providers.js";
+import { createChatModel, type LLMConfig } from "./providers.js";
 
 /**
- * Invoke the text LLM with a single prompt and return the response content as string.
+ * Invoke a model with a single prompt and return the response content as string.
  *
+ * @param config - The model (the calling feature's, e.g. `reports.model`)
  * @param prompt - The user prompt
  * @returns The model's text response
  */
-export async function invokeTextPrompt(prompt: string): Promise<string> {
-  const config = getLLMConfig("text");
+export async function invokeTextPrompt(config: LLMConfig, prompt: string): Promise<string> {
   const model = createChatModel(config, { temperature: 0.4 });
   const response = await model.invoke([new HumanMessage(prompt)]);
   return typeof response.content === "string" ? response.content : "";

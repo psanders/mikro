@@ -80,14 +80,14 @@ So a low-confidence label never triggers an action. The bake-off (D2) re-picks t
 
 **Fallback without a classifier:**
 
-- When `classifier` is missing from `mikro.json`, classification is skipped. No crash, no labels.
+- When `cx.classifier` is missing from `mikro.json`, classification is skipped. No crash, no labels.
 - The existing `isDecline` / `isHumanRequest` matchers keep working as today.
 - They also act as the fallback when the call fails, refuses (a `refusal` answer) or exceeds its 3 s budget.
 - A failed classification never blocks or delays a reply beyond that budget.
 
 ### D2. A pluggable decision provider, picked by a bake-off
 
-**Config:** a new optional top-level `classifier` section, kept separate from `llm.*` (which is chat models). It is a discriminated union on `provider`:
+**Config:** a optional `cx.classifier` section (a decision model, separate from the chat models) and `evals.classifier` for the eval checks. It is a discriminated union on `provider`:
 
 - `openai-decisions`: `{ provider, apiKey, model }`, where `model` is `gpt-6-luna`, the only model the endpoint accepts today.
 - `chat`: `{ provider, vendor, apiKey, model }`. Any text model in `MODEL_REGISTRY` answers the same questions through structured output (choice → enum plus confidence, predicates → probabilities). This is the fallback and the baseline.
@@ -275,7 +275,7 @@ It goes through a new apiserver protected procedure, so the API key stays on the
 2. **After release 1 is live:**
    - Run the bake-off (`--dry-run --providers`) and the founder's hand-labeled sample.
    - Pick the model.
-   - Add the `classifier` section to prod `mikro.json` and restart. Labels start.
+   - Add the `cx.classifier` section to prod `mikro.json` and restart. Labels start.
 3. **Backfill:** run `mikro conversations:classify --since 2026-09-26`.
 4. **Spot-check:**
    - The founder reviews the labels (export summary and a sample) over a few days of live traffic.

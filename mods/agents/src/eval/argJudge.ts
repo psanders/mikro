@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
+import { getEvalsModel } from "../config.js";
 import { createChatModel } from "../llm/providers.js";
 
 /**
@@ -26,7 +26,7 @@ export async function compareArgs(
   expected: Record<string, unknown>,
   actual: Record<string, unknown>
 ): Promise<{ match: boolean; reason: string }> {
-  const config = getLLMConfig("evals");
+  const config = getEvalsModel();
   const model = createChatModel(config, { temperature: 0.1 });
 
   // Use structured output for type-safe responses

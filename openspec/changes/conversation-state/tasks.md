@@ -1,7 +1,7 @@
 ## 1. Config and shared types
 
 - [x] 1.1 `@mikro/common` config (classifier section done; `conversationState` section pending with actions):
-  - optional top-level `classifier` section, a discriminated union on `provider`: `openai-decisions` `{ apiKey, model }` | `chat` `{ vendor, apiKey, model }` (any text model in `MODEL_REGISTRY`);
+  - optional `cx.classifier` section, a discriminated union on `provider`: `openai-decisions` `{ apiKey, model }` | `chat` `{ vendor, apiKey, model }` (any text model in `MODEL_REGISTRY`);
   - optional `.strict()` `conversationState` section (`actionsEnabled` defaults to false);
   - `getConversationStateConfig()`;
   - never required at startup;
@@ -32,7 +32,7 @@
 
 ## 4. Handler integration, labels only
 
-- [ ] 4.1 Classify routed inbound turns before the agent when `classifier` is set; store the intent and state on the turn and the conversation row; keep `isDecline` / `isHumanRequest` as the fallback.
+- [ ] 4.1 Classify routed inbound turns before the agent when `cx.classifier` is set; store the intent and state on the turn and the conversation row; keep `isDecline` / `isHumanRequest` as the fallback.
 - [ ] 4.2 Apply agent-turn signals after the reply: finalize outcome, directives, evidence completion, hand-off.
 - [ ] 4.3 Tests: nothing changes in replies with actions off; no classifier means no labels and no errors; a timeout falls back.
 
@@ -66,7 +66,7 @@
 
 - [ ] 8.1 Suites: common, agents, apiserver, integration, ctl; dashboard typecheck; migration diff empty.
 - [ ] 8.2 Update CX_EXPLAINER.md (conversation states, closings, opt-out, stuck).
-- [ ] 8.3 Deploy release 1 (labels only). Only AFTER it is live (and after the bake-off), add the `classifier` section to the prod `mikro.json` and restart. A key added before the release crashes the boot, including on rollback (2026-09-18 outage).
+- [ ] 8.3 Deploy release 1 (labels only). Only AFTER it is live (and after the bake-off), add the `cx.classifier` section to the prod `mikro.json` and restart. A key added before the release crashes the boot, including on rollback (2026-09-18 outage).
 - [ ] 8.4 Backfill: run `mikro conversations:classify --since 2026-09-26`. The founder spot-checks the labels over a few days of live traffic.
 - [ ] 8.5 Founder go-ahead: add `"conversationState": { "actionsEnabled": true }` to the prod `mikro.json` and restart. Verify in production that a closing gets no reply and the Chatwoot conversation shows resolved.
 - [ ] 8.6 Upload the prod `agents.yaml` copy if prompts changed.

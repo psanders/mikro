@@ -59,9 +59,10 @@ import {
   createJudgeConversation,
   createWriteAuditStatus,
   createChatModel,
-  getLLMConfig,
+  getCopilotModel,
+  getApplicationSummaryModel,
   getWhatsAppPromoTemplate,
-  getDecisionProvider,
+  getCxDecisionProvider,
   type Message,
   type Profile,
   type ToolExecutorDependencies,
@@ -935,12 +936,13 @@ async function initializeMessageProcessor() {
           request: { headers: { "x-github-api-version": "2022-11-28" } }
         })
       : undefined;
-    // Same model the copilot uses, at a lower temperature: the application
-    // summary is a factual paragraph, not a conversation.
-    setApplicationSummaryModel(() => createChatModel(getLLMConfig("text"), { temperature: 0.2 }));
+    // A low temperature: the application summary is a factual paragraph, not a conversation.
+    setApplicationSummaryModel(() =>
+      createChatModel(getApplicationSummaryModel(), { temperature: 0.2 })
+    );
     setCopilotDeps({
       toolExecutor,
-      createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+      createModel: () => createChatModel(getCopilotModel(), { temperature: 0.3 }),
       fileFeedback: githubFeedbackOctokit
         ? (input) =>
             fileGithubIssue(
@@ -1088,7 +1090,7 @@ async function initializeMessageProcessor() {
       return response;
     };
 
-    const decisionProvider = getDecisionProvider();
+    const decisionProvider = getCxDecisionProvider();
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -1101,7 +1103,7 @@ async function initializeMessageProcessor() {
       // turn is written here, and the agents' memory is read back from it.
       recordConversationTurn: createRecordConversationTurn(prisma),
       getConversationHistory: createGetConversationHistory(prisma),
-      // Decision-model labels on inbound CX turns; off without a `classifier` config.
+      // Decision-model labels on inbound CX turns; off without `cx.classifier`.
       ...(decisionProvider && {
         labelInboundTurn: createLabelInboundTurn(prisma, decisionProvider)
       }),

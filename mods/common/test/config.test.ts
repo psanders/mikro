@@ -8,17 +8,17 @@
 import { expect } from "chai";
 import { mikroConfigSchema, getDisbursementAccountOptions } from "../src/config.js";
 
+const model = { vendor: "openai", apiKey: "k", model: "gpt-4o-mini" };
+
 const minimalRequiredFields = {
-  llm: {
-    text: { vendor: "openai", apiKey: "k", model: "gpt-4o-mini" },
-    vision: { vendor: "openai", apiKey: "k", model: "gpt-4o" },
-    evals: { vendor: "openai", apiKey: "k", model: "gpt-4o-mini" }
-  },
+  cx: { model, visionModel: { vendor: "openai", apiKey: "k", model: "gpt-4o" } },
+  copilot: { model },
+  reports: { model },
   whatsapp: {
     phoneNumberId: "123",
     accessToken: "token"
   },
-  applications: { coveredProvinces: ["PUERTO_PLATA"] }
+  applications: { coveredProvinces: ["PUERTO_PLATA"], summaryModel: model }
 };
 
 describe("mikroConfigSchema — accounting.disbursementAccountId", () => {
@@ -130,7 +130,7 @@ describe("mikroConfigSchema — applications.coveredProvinces", () => {
   it("accepts a list of province enum values", () => {
     const parsed = mikroConfigSchema.safeParse({
       ...base,
-      applications: { coveredProvinces: ["PUERTO_PLATA", "SANTIAGO"] }
+      applications: { coveredProvinces: ["PUERTO_PLATA", "SANTIAGO"], summaryModel: model }
     });
     expect(parsed.success).to.equal(true);
     if (parsed.success) {
@@ -241,38 +241,40 @@ describe("mikroConfigSchema — classifier (openspec conversation-state)", () =>
     accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
   };
 
+  const withClassifier = (classifier: unknown) => ({
+    ...base,
+    cx: { ...base.cx, classifier }
+  });
+
   it("is optional: a config without it parses and has no classifier", () => {
     const parsed = mikroConfigSchema.safeParse(base);
     expect(parsed.success).to.equal(true);
-    if (parsed.success) expect(parsed.data.classifier).to.equal(undefined);
+    if (parsed.success) expect(parsed.data.cx.classifier).to.equal(undefined);
   });
 
   it("accepts the OpenAI Decisions provider and defaults its model", () => {
-    const parsed = mikroConfigSchema.safeParse({
-      ...base,
-      classifier: { provider: "openai-decisions", apiKey: "k" }
-    });
+    const parsed = mikroConfigSchema.safeParse(
+      withClassifier({ provider: "openai-decisions", apiKey: "k" })
+    );
     expect(parsed.success).to.equal(true);
-    if (parsed.success) expect(parsed.data.classifier).to.deep.include({ model: "gpt-6-luna" });
+    if (parsed.success) expect(parsed.data.cx.classifier).to.deep.include({ model: "gpt-6-luna" });
   });
 
   it("accepts a chat model as the decision provider", () => {
-    const parsed = mikroConfigSchema.safeParse({
-      ...base,
-      classifier: { provider: "chat", vendor: "openai", apiKey: "k", model: "gpt-4o-mini" }
-    });
+    const parsed = mikroConfigSchema.safeParse(
+      withClassifier({ provider: "chat", vendor: "openai", apiKey: "k", model: "gpt-4o-mini" })
+    );
     expect(parsed.success).to.equal(true);
   });
 
   it("rejects unknown providers and unknown keys", () => {
     expect(
-      mikroConfigSchema.safeParse({ ...base, classifier: { provider: "jev", apiKey: "k" } }).success
+      mikroConfigSchema.safeParse(withClassifier({ provider: "jev", apiKey: "k" })).success
     ).to.equal(false);
     expect(
-      mikroConfigSchema.safeParse({
-        ...base,
-        classifier: { provider: "openai-decisions", apiKey: "k", threshold: 0.5 }
-      }).success
+      mikroConfigSchema.safeParse(
+        withClassifier({ provider: "openai-decisions", apiKey: "k", threshold: 0.5 })
+      ).success
     ).to.equal(false);
   });
 });
@@ -283,12 +285,82 @@ describe("mikroConfigSchema — evals", () => {
     accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
   };
 
-  it("still boots with the removed evals.similarityThreshold, dropping it", () => {
+  it("boots without evals: they are only needed to run agents:eval", () => {
+    const parsed = mikroConfigSchema.safeParse(base);
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) expect(parsed.data.evals).to.deep.equal({ candidates: {} });
+  });
+
+  it("accepts named candidates, visionModel optional", () => {
     const parsed = mikroConfigSchema.safeParse({
       ...base,
-      evals: { similarityThreshold: 0.7, vendors: {} }
+      evals: {
+        model,
+        classifier: { provider: "openai-decisions", apiKey: "k" },
+        candidates: { claude: { model: { ...model, vendor: "anthropic" } } }
+      }
     });
     expect(parsed.success).to.equal(true);
-    if (parsed.success) expect(parsed.data.evals).to.deep.equal({ vendors: {} });
+  });
+
+  it("rejects unknown keys (the old vendors map)", () => {
+    expect(mikroConfigSchema.safeParse({ ...base, evals: { vendors: {} } }).success).to.equal(
+      false
+    );
+  });
+});
+
+describe("mikroConfigSchema — models per feature", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "6f1c7d1e-4b6a-4c8e-9f3a-2b1d5e7a9c10" }
+  };
+
+  it("rejects the old top-level llm and classifier sections", () => {
+    expect(mikroConfigSchema.safeParse({ ...base, llm: { text: model } }).success).to.equal(false);
+    expect(
+      mikroConfigSchema.safeParse({
+        ...base,
+        classifier: { provider: "openai-decisions", apiKey: "k" }
+      }).success
+    ).to.equal(false);
+  });
+
+  for (const key of ["cx", "copilot", "reports"] as const) {
+    it(`requires ${key}`, () => {
+      const rest: Record<string, unknown> = { ...base };
+      delete rest[key];
+      expect(mikroConfigSchema.safeParse(rest).success).to.equal(false);
+    });
+  }
+
+  it("requires applications.summaryModel", () => {
+    const parsed = mikroConfigSchema.safeParse({
+      ...base,
+      applications: { coveredProvinces: ["PUERTO_PLATA"] }
+    });
+    expect(parsed.success).to.equal(false);
+  });
+
+  it("requires githubFeedback.model once its token is set", () => {
+    const feedback = { token: "t", repo: "o/r" };
+    expect(mikroConfigSchema.safeParse({ ...base, githubFeedback: feedback }).success).to.equal(
+      false
+    );
+    expect(
+      mikroConfigSchema.safeParse({ ...base, githubFeedback: { ...feedback, model } }).success
+    ).to.equal(true);
+  });
+
+  it("requires conversationAudit.model when the scheduled audit is enabled", () => {
+    expect(
+      mikroConfigSchema.safeParse({ ...base, conversationAudit: { enabled: true } }).success
+    ).to.equal(false);
+    expect(
+      mikroConfigSchema.safeParse({ ...base, conversationAudit: { enabled: true, model } }).success
+    ).to.equal(true);
+    expect(
+      mikroConfigSchema.safeParse({ ...base, conversationAudit: { enabled: false } }).success
+    ).to.equal(true);
   });
 });

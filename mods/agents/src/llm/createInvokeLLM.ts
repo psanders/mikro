@@ -9,7 +9,7 @@ import {
   type BaseMessage
 } from "@langchain/core/messages";
 import type { Runnable } from "@langchain/core/runnables";
-import { getLLMConfig } from "../config.js";
+import { getCxModel, getCxVisionModel, type LLMConfig } from "../config.js";
 import { createChatModel, isVisionModel } from "./providers.js";
 import { logger } from "../logger.js";
 import { textOf } from "../conversations/transcript.js";
@@ -55,6 +55,11 @@ export interface InvokeLLMOptions {
    * (e.g. "Claro que sí, un momento.") without involving the LLM.
    */
   sendQuickAck?: (context: Record<string, unknown>) => Promise<void>;
+  /**
+   * The models to answer with. Defaults to `cx.model` / `cx.visionModel`;
+   * `agents:eval --candidates` passes a candidate's models instead.
+   */
+  models?: { model: LLMConfig; visionModel: LLMConfig };
 }
 
 /**
@@ -343,18 +348,17 @@ export function createInvokeLLM(
       isNewSession
     });
 
-    // Determine if we need vision model
+    // Turns with photos use the vision model
     const hasImage = imageUrls.length > 0;
-    const purpose = hasImage ? "vision" : "text";
-
-    // Get LLM config and create model
-    const config = getLLMConfig(purpose);
+    const config = hasImage
+      ? (options?.models?.visionModel ?? getCxVisionModel())
+      : (options?.models?.model ?? getCxModel());
 
     // Validate vision capability if needed
     if (hasImage && !isVisionModel(config.vendor, config.model)) {
       throw new Error(
         `Model "${config.model}" for vendor "${config.vendor}" does not support vision. ` +
-          `Configure MIKRO_LLM_VISION with a vision-capable model.`
+          `Configure a vision-capable visionModel (cx.visionModel, or the eval candidate's).`
       );
     }
 
