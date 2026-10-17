@@ -24,6 +24,14 @@
   --color-ds-amber-bg: #fdf1e3;
   --color-ds-red: #dc2626;
   --color-ds-red-bg: #fcebeb;
+  /* Solid fills behind white text (buttons): strong in both themes. */
+  --color-ds-green-solid: #16a34a;
+  --color-ds-red-solid: #dc2626;
+  --color-ds-violet: #7c3aed;
+  --color-ds-violet-bg: #f1eafe;
+  --color-ds-violet-tint: #faf7ff;
+  /* Dark chips on light surfaces (tooltips, popups); stays dark in dark mode. */
+  --color-ds-inverse: #14254a;
 
   /* Radii (Pencil radius.*) */
   --radius-card: 20px;
@@ -31,14 +39,39 @@
   --radius-pill: 9999px;
 
   /* Type — the Pencil design uses Geist */
-  --font-sans:
-    Geist, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: Geist, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+
+/* Dark mode (add-dark-mode): the same tokens, redefined. <html class="dark"> is
+   set by the theme setting (Sistema / Claro / Oscuro) — see lib/theme.ts. */
+html.dark {
+  color-scheme: dark;
+  /* Neutral grays; blue stays an accent (links, primary, selection). */
+  --color-brand-ink: #ecedef;
+  --color-brand-mist: #252b36;
+  --color-brand-blue-primary: #3b7be0;
+  --color-brand-blue-deep: #2a4f94;
+  --color-ds-bg: #111214;
+  --color-ds-surface: #1a1b1e;
+  --color-ds-border: #2d2f34;
+  --color-ds-subtle: #232529;
+  --color-ds-muted: #9a9ea6;
+  --color-ds-green: #4ade80;
+  --color-ds-green-bg: #172a1f;
+  --color-ds-amber: #fbbf24;
+  --color-ds-amber-bg: #2c2415;
+  --color-ds-red: #f87171;
+  --color-ds-red-bg: #2e1b1c;
+  --color-ds-violet: #a78bfa;
+  --color-ds-violet-bg: #2a2538;
+  --color-ds-violet-tint: #1d1b22;
+  --color-ds-inverse: #3a3d44;
 }
 
 body {

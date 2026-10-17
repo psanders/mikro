@@ -53,7 +53,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 function GroupLabel({ children }: { children: string }) {
   return (
-    <div className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#697A93]">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.8px] text-ds-muted">
       {children}
     </div>
   );
@@ -99,9 +99,9 @@ export function BusquedaScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex shrink-0 flex-col gap-3 border-b border-[#E5EAF1] px-6 py-[18px]">
-        <div className="flex items-center gap-3 rounded-[12px] border-[1.5px] border-[#1F4AA8] bg-[#F4F7FB] px-4 py-[13px]">
-          <SearchIcon size={18} className="shrink-0 text-[#1F4AA8]" />
+      <div className="flex shrink-0 flex-col gap-3 border-b border-ds-border px-6 py-[18px]">
+        <div className="flex items-center gap-3 rounded-[12px] border-[1.5px] border-brand-blue-primary bg-ds-bg px-4 py-[13px]">
+          <SearchIcon size={18} className="shrink-0 text-brand-blue-primary" />
           <input
             autoFocus
             value={term}
@@ -110,18 +110,18 @@ export function BusquedaScreen() {
               if (e.key === "Escape") setTerm("");
             }}
             placeholder="Buscar clientes, préstamos y actividad…"
-            className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-[#14254A] placeholder:text-[#697A93] focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-brand-ink placeholder:text-ds-muted focus:outline-none"
           />
-          <span className="shrink-0 rounded-[5px] bg-[#EEF3F9] px-[7px] py-[2px] text-[11px] font-semibold text-[#697A93]">
+          <span className="shrink-0 rounded-[5px] bg-ds-subtle px-[7px] py-[2px] text-[11px] font-semibold text-ds-muted">
             esc
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[12px] font-medium text-[#697A93]">Prueba:</span>
+          <span className="text-[12px] font-medium text-ds-muted">Prueba:</span>
           {HINTS.map((h) => (
             <span
               key={h}
-              className="rounded-full bg-[#EEF3F9] px-3 py-[5px] text-[12px] font-medium text-[#697A93]"
+              className="rounded-full bg-ds-subtle px-3 py-[5px] text-[12px] font-medium text-ds-muted"
             >
               {h}
             </span>
@@ -129,15 +129,15 @@ export function BusquedaScreen() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-[#F4F7FB] px-6 py-[18px]">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-ds-bg px-6 py-[18px]">
         {!hasQuery && (
-          <p className="text-[13px] font-medium text-[#697A93]">
+          <p className="text-[13px] font-medium text-ds-muted">
             Escribe para buscar en clientes, préstamos y el feed.
           </p>
         )}
 
         {hasQuery && search.isPending && (
-          <p className="text-[13px] font-medium text-[#697A93]">Buscando…</p>
+          <p className="text-[13px] font-medium text-ds-muted">Buscando…</p>
         )}
 
         {hasQuery && search.isError && (
@@ -207,7 +207,7 @@ export function BusquedaScreen() {
             {events.length > 0 && (
               <div className="flex flex-col gap-[12px]">
                 <GroupLabel>{`EN EL FEED · ${events.length}`}</GroupLabel>
-                <div className="overflow-hidden rounded-[14px] border border-[#E5EAF1] bg-white">
+                <div className="overflow-hidden rounded-[14px] border border-ds-border bg-ds-surface">
                   {events.map((event, i) => (
                     <SearchResultRow
                       key={event.id}
@@ -224,13 +224,13 @@ export function BusquedaScreen() {
             <div
               title="Próximamente"
               aria-disabled="true"
-              className="flex cursor-not-allowed items-center gap-[10px] rounded-[12px] bg-[#E9F2FF] px-4 py-[13px]"
+              className="flex cursor-not-allowed items-center gap-[10px] rounded-[12px] bg-brand-mist px-4 py-[13px]"
             >
-              <Sparkles size={16} className="shrink-0 text-[#1F4AA8]" />
-              <span className="flex-1 text-[13px] font-semibold text-[#1F4AA8]">
+              <Sparkles size={16} className="shrink-0 text-brand-blue-primary" />
+              <span className="flex-1 text-[13px] font-semibold text-brand-blue-primary">
                 {`Preguntar al copiloto: «¿Cómo va ${debounced}?»`}
               </span>
-              <ArrowRight size={15} className="shrink-0 text-[#1F4AA8]" />
+              <ArrowRight size={15} className="shrink-0 text-brand-blue-primary" />
             </div>
           </div>
         )}

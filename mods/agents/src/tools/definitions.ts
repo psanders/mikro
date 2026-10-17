@@ -4,7 +4,8 @@
  * Tool definitions for OpenAI function calling.
  * These define what tools the LLM can call and their parameters.
  */
-import type { ToolFunction } from "../llm/types.js";
+import { MARITAL_STATUSES } from "@mikro/common";
+import type { ToolFunction, ToolParameterSchema } from "../llm/types.js";
 
 /**
  * Tool definition for creating a new customer.
@@ -731,19 +732,62 @@ export const getApplicationStateTool: ToolFunction = {
   }
 };
 
+const text = (description: string): ToolParameterSchema => ({ type: "string", description });
+const phone = (description: string): ToolParameterSchema => ({
+  type: "string",
+  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234).`
+});
+/** An optional contact's phone: a DR number, or "no tiene" when they don't have one. */
+const optionalPhone = (description: string): ToolParameterSchema => ({
+  type: "string",
+  description: `${description}. 10 dígitos, código 809, 829 u 849 (ej. 8095551234), o "no tiene".`
+});
+
 export const saveAnswerTool: ToolFunction = {
   type: "function",
   function: {
     name: "saveAnswer",
     description:
-      "Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo.",
+      'Guardar la respuesta del prospecto para uno o más campos de la solicitud. Llama esta herramienta después de cada respuesta válida antes de hacer la siguiente pregunta. No llames si la respuesta no es válida para el campo. Nunca inventes valores de relleno ("N/A", "0000000000"). Si el prospecto no tiene un dato opcional (businessPhone, referenceName, referencePhone, spouseName, spousePhone, addressReference), guárdalo con el valor "no tiene": queda anotado y no se vuelve a preguntar.',
     parameters: {
       type: "object",
       properties: {
         fields: {
           type: "object",
-          description:
-            "Objeto con pares campo:valor. Claves válidas: firstName, lastName, phone, idNumber, dateOfBirth, maritalStatus, businessType, businessName, requestedAmount, purpose, requestedTermWeeks, province, homeAddress, businessAge, monthlySales, locationType, formalization, employeeCount, businessPhone, spouseName, spousePhone, referenceName, referencePhone, housingType, residenceTime, addressReference"
+          description: "Pares campo:valor; solo los campos que el prospecto respondió.",
+          properties: {
+            firstName: text("Nombre"),
+            lastName: text("Apellido"),
+            phone: phone("Teléfono del prospecto"),
+            idNumber: text("Cédula"),
+            dateOfBirth: text("Fecha de nacimiento (AAAA-MM-DD)"),
+            maritalStatus: {
+              type: "string",
+              description:
+                "Estado civil: SOLTERO = soltero(a), CASADO = casado(a), UNION_LIBRE = unión libre, DIVORCIADO = divorciado(a), VIUDO = viudo(a). Solo CASADO y UNION_LIBRE tienen pareja.",
+              enum: [...MARITAL_STATUSES]
+            },
+            businessType: text("Tipo de negocio"),
+            businessName: text("Nombre del negocio"),
+            requestedAmount: text("Monto solicitado en pesos"),
+            purpose: text("Para qué es el préstamo"),
+            requestedTermWeeks: text("Plazo en semanas"),
+            province: text("Provincia del negocio"),
+            homeAddress: text("Dirección de la casa"),
+            businessAge: text("Tiempo operando el negocio"),
+            monthlySales: text("Ventas mensuales"),
+            locationType: text("Tipo de local"),
+            formalization: text("Formalización (RNC o informal)"),
+            employeeCount: text("Cantidad de empleados"),
+            businessPhone: optionalPhone("Teléfono del negocio"),
+            spouseName: text("Nombre de la pareja (solo CASADO o UNION_LIBRE)"),
+            spousePhone: optionalPhone("Teléfono de la pareja (solo CASADO o UNION_LIBRE)"),
+            referenceName: text("Nombre de la referencia personal"),
+            referencePhone: optionalPhone("Teléfono de la referencia personal"),
+            housingType: text("Tipo de vivienda"),
+            residenceTime: text("Tiempo residiendo"),
+            addressReference: text("Referencia de la dirección")
+          }
         }
       },
       required: ["fields"]
@@ -836,7 +880,7 @@ export const attachApplicationEvidenceTool: ToolFunction = {
   function: {
     name: "attachApplicationEvidence",
     description:
-      "Adjuntar a la solicitud la foto que la persona envió en ESTE mensaje. Úsala solo cuando el mensaje trae una foto. kind: ID_FRONT (cédula frente), ID_BACK (cédula reverso) o BUSINESS_PHOTO (foto del negocio). Devuelve lo que aún falta y, si faltan fotos del negocio, cuál pedir después (businessPhotos.next). Rechaza una foto que ya se había recibido.",
+      "Adjuntar a la solicitud una foto que la persona envió en ESTE mensaje. Úsala solo cuando el mensaje trae fotos. Si trae varias (Foto 1, Foto 2, …), llámala una vez por cada foto, con su número en `image`. kind: ID_FRONT (cédula frente), ID_BACK (cédula reverso) o BUSINESS_PHOTO (foto del negocio). Devuelve lo que aún falta y, si faltan fotos del negocio, cuál pedir después (businessPhotos.next). Rechaza una foto que ya se había recibido.",
     parameters: {
       type: "object",
       properties: {
@@ -844,6 +888,10 @@ export const attachApplicationEvidenceTool: ToolFunction = {
           type: "string",
           enum: ["ID_FRONT", "ID_BACK", "BUSINESS_PHOTO"],
           description: "Qué muestra la foto."
+        },
+        image: {
+          type: "integer",
+          description: "Número de la foto en este mensaje (Foto 1, Foto 2, …). Por defecto 1."
         }
       },
       required: ["kind"]

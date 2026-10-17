@@ -298,17 +298,76 @@ describe("createMessageRouter — rejected applicants' reapply cooldown", () => 
     expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE });
   });
 
-  it("gives an out-of-area rejection no reapply date, at any age", async () => {
-    for (const daysAgo of [2, 90]) {
+  it("gives an out-of-area rejection the same cooldown (issue #302)", async () => {
+    const decidedAt = new Date(Date.now() - 2 * DAY);
+    const router = createMessageRouter(
+      makeDeps({
+        findApplicationByPhone: sinon.stub().resolves({
+          ...rejected(decidedAt),
+          rejectionReason: "OUT_OF_COVERAGE_AREA"
+        })
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({
+      type: "guest",
+      phone: PHONE,
+      previouslyRejected: true,
+      reapplyFrom: new Date(decidedAt.getTime() + REAPPLY_COOLDOWN_DAYS * DAY),
+      outOfArea: true
+    });
+  });
+
+  it("treats an out-of-area rejection older than the cooldown as a regular guest", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        findApplicationByPhone: sinon.stub().resolves({
+          ...rejected(new Date(Date.now() - 90 * DAY)),
+          rejectionReason: "OUT_OF_COVERAGE_AREA"
+        })
+      })
+    );
+    expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE });
+  });
+
+  it("keeps the cooldown when the person started a newer draft (issue #302)", async () => {
+    const decidedAt = new Date(Date.now() - 3 * DAY);
+    for (const latest of [
+      { status: "DRAFT", submittedAt: null },
+      { status: "ABANDONED", submittedAt: null }
+    ]) {
       const router = createMessageRouter(
         makeDeps({
           findApplicationByPhone: sinon.stub().resolves({
-            ...rejected(new Date(Date.now() - daysAgo * DAY)),
-            rejectionReason: "OUT_OF_COVERAGE_AREA"
+            applicationId: "app-new",
+            sessionId: "sess-new",
+            decidedAt: null,
+            rejectionReason: null,
+            ...latest,
+            recentRejection: { decidedAt, rejectionReason: "OTHER" }
           })
         })
       );
-      expect(await router(PHONE)).to.deep.equal({ type: "guest", phone: PHONE, outOfArea: true });
+      expect(await router(PHONE), latest.status).to.deep.equal({
+        type: "guest",
+        phone: PHONE,
+        previouslyRejected: true,
+        reapplyFrom: new Date(decidedAt.getTime() + REAPPLY_COOLDOWN_DAYS * DAY)
+      });
     }
+  });
+
+  it("lets a newer draft through once the old rejection's cooldown is over", async () => {
+    const router = createMessageRouter(
+      makeDeps({
+        findApplicationByPhone: sinon.stub().resolves({
+          applicationId: "app-new",
+          sessionId: "sess-new",
+          status: "DRAFT",
+          submittedAt: null,
+          recentRejection: { decidedAt: new Date(Date.now() - 31 * DAY), rejectionReason: null }
+        })
+      })
+    );
+    expect((await router(PHONE)).type).to.equal("prospect");
   });
 });

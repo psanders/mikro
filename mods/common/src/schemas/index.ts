@@ -5,6 +5,7 @@ export { safeOptionalDate, safeRequiredDate, MIN_ACCEPTED_DATE_MS } from "./date
 
 export {
   applicationPayloadSchema,
+  maritalStatusEnum,
   normalizeApplication,
   extractTracking,
   extractAttribution,
@@ -93,6 +94,7 @@ export {
   REVIEW_ACTIONS,
   ACTION_SOURCE_STATUSES,
   rejectionReasonEnum,
+  REAPPLY_COOLDOWN_DAYS,
   REJECTION_REASON_LABELS,
   TRANSITION_BLOCK_LABELS,
   DEFAULT_MIN_BUSINESS_PHOTOS,
@@ -126,6 +128,16 @@ export {
   type ApplicationSectionDef,
   type FormProgress,
   ESTADO_CIVIL_OPTIONS,
+  DR_AREA_CODES,
+  drPhoneDigits,
+  isDrPhone,
+  PHONE_FIELDS,
+  MARITAL_STATUSES,
+  MARITAL_STATUS_LABELS,
+  isMaritalStatus,
+  hasPartner,
+  maritalStatusLabel,
+  type MaritalStatus,
   TIPO_NEGOCIO_OPTIONS,
   TIEMPO_OPERANDO_OPTIONS,
   VENTAS_MENSUALES_OPTIONS,
@@ -199,12 +211,14 @@ export {
   listConversationTurnsSchema,
   getApplicationConversationSchema,
   deleteConversationSchema,
+  classifyConversationTurnsSchema,
   type ConversationTurnRole,
   type ConversationToolCall,
   type RecordConversationTurnInput,
   type ListConversationTurnsInput,
   type GetApplicationConversationInput,
-  type DeleteConversationInput
+  type DeleteConversationInput,
+  type ClassifyConversationTurnsInput
 } from "./conversation.js";
 
 export {

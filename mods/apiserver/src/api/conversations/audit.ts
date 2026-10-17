@@ -88,6 +88,17 @@ export interface ConversationAuditRunResult {
 
 type TurnRow = Awaited<ReturnType<PrismaClient["conversationTurn"]["findMany"]>>[number];
 
+/** The `settled` probability stored with a turn's label, if any. */
+function settledOf(classification: string | null): number | null {
+  if (!classification) return null;
+  try {
+    const value = (JSON.parse(classification) as { settled?: unknown }).settled;
+    return typeof value === "number" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function toAuditTurn(row: TurnRow, context = false): AuditTurn {
   let toolNames: string[] = [];
   if (row.toolCalls) {
@@ -110,6 +121,9 @@ function toAuditTurn(row: TurnRow, context = false): AuditTurn {
     customerId: row.customerId,
     failed: row.failed,
     createdAt: row.createdAt,
+    intent: row.intent,
+    intentConfidence: row.intentConfidence,
+    settled: settledOf(row.classification),
     ...(context ? { context: true } : {})
   };
 }
@@ -261,7 +275,8 @@ export function createRunConversationAudit(db: AuditClient, deps: RunConversatio
             ...contextRows[i]!.reverse().map((r) => toAuditTurn(r, true)),
             ...byPhone.get(phone)!.map((r) => toAuditTurn(r))
           ],
-          handoffsOpenedAt: handoffRows.filter((h) => h.phone === phone).map((h) => h.openedAt)
+          handoffsOpenedAt: handoffRows.filter((h) => h.phone === phone).map((h) => h.openedAt),
+          asOf: now
         }));
 
         const previousVersions: Record<string, string | null> = {};

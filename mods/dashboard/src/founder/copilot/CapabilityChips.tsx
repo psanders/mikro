@@ -56,12 +56,12 @@ export function CapabilityChips({
 }: CapabilityChipsProps) {
   return (
     <div className={cn("flex w-full flex-col gap-[10px]", className)}>
-      <p className="w-full text-[13px] font-medium leading-[20px] text-[#14254A]">{INTRO_TEXT}</p>
+      <p className="w-full text-[13px] font-medium leading-[20px] text-brand-ink">{INTRO_TEXT}</p>
       {groups.map((group) => {
         const Icon = VERB_ICON[group.verb];
         return (
           <div key={group.verb} className="flex w-full flex-col gap-[6px]">
-            <div className="flex items-center gap-[6px] text-[#697A93]">
+            <div className="flex items-center gap-[6px] text-ds-muted">
               <Icon size={13} strokeWidth={2} className="shrink-0" />
               <span className="text-[10px] font-semibold tracking-[0.8px]">{group.verb}</span>
             </div>
@@ -71,7 +71,7 @@ export function CapabilityChips({
                   key={chip.label}
                   type="button"
                   onClick={() => onPick(chip.prompt ?? chip.label)}
-                  className="w-fit rounded-[9px] bg-[#EEF3F9] px-[11px] py-[7px] text-[11px] font-medium text-[#14254A] transition hover:bg-[#E1E9F3]"
+                  className="w-fit rounded-[9px] bg-ds-subtle px-[11px] py-[7px] text-[11px] font-medium text-brand-ink transition hover:bg-ds-border"
                 >
                   {chip.label}
                 </button>

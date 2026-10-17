@@ -19,6 +19,15 @@ enum Role {
   @@map("roles")
 }
 
+/// Applicant marital status (labels in @mikro/common MARITAL_STATUS_LABELS).
+enum MaritalStatus {
+  SOLTERO
+  CASADO
+  UNION_LIBRE
+  DIVORCIADO
+  VIUDO
+}
+
 enum LoanType {
   SAN // Fixed periodic payments until paid in full
 
@@ -168,6 +177,8 @@ enum ApplicationRejectionReason {
   OUT_OF_COVERAGE_AREA
   PAYMENT_CAPACITY
   DOCUMENTS
+  /// Hard NO from the credit policy (add-credit-decision-engine); no note needed.
+  CREDIT_POLICY
   OTHER
 
   @@map("application_rejection_reasons")
@@ -590,22 +601,22 @@ model LoanApplication {
   lastSection String?           @map("last_section")
 
   // Stable extracted fields (subset of the form; everything also lives in rawData)
-  firstName          String?   @map("first_name")
-  lastName           String?   @map("last_name")
+  firstName          String?        @map("first_name")
+  lastName           String?        @map("last_name")
   phone              String?
   /// WhatsApp BSUID + username of the applicant (internal; see Customer).
-  whatsappUserId     String?   @map("whatsapp_user_id")
-  whatsappUsername   String?   @map("whatsapp_username")
-  idNumber           String?   @map("id_number")
-  dateOfBirth        DateTime? @map("date_of_birth")
-  maritalStatus      String?   @map("marital_status")
-  businessType       String?   @map("business_type")
-  businessName       String?   @map("business_name")
-  requestedAmount    Decimal?  @map("requested_amount")
+  whatsappUserId     String?        @map("whatsapp_user_id")
+  whatsappUsername   String?        @map("whatsapp_username")
+  idNumber           String?        @map("id_number")
+  dateOfBirth        DateTime?      @map("date_of_birth")
+  maritalStatus      MaritalStatus? @map("marital_status")
+  businessType       String?        @map("business_type")
+  businessName       String?        @map("business_name")
+  requestedAmount    Decimal?       @map("requested_amount")
   purpose            String?
-  requestedTermWeeks Int?      @map("requested_term_weeks")
+  requestedTermWeeks Int?           @map("requested_term_weeks")
   province           String?
-  homeAddress        String?   @map("home_address")
+  homeAddress        String?        @map("home_address")
 
   // Full normalized payload (audit trail + buffer against form drift)
   rawData Json @map("raw_data")
@@ -698,8 +709,9 @@ model LoanApplication {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  followUpJobs FollowUpJob[]
-  documents    ApplicationDocument[]
+  followUpJobs    FollowUpJob[]
+  documents       ApplicationDocument[]
+  creditDecisions CreditDecision[]
 
   @@index([status])
   @@index([sessionId])
@@ -806,26 +818,34 @@ model ConversationHandoff {
 model ConversationTurn {
   // Autoincrement, not a uuid: turns are ordered by id, so two recorded in the
   // same millisecond still read back in the order they happened.
-  id            Int      @id @default(autoincrement())
-  phone         String
-  role          String
-  content       String
+  id               Int      @id @default(autoincrement())
+  phone            String
+  role             String
+  content          String
   // GUEST, PROSPECT, APPLICANT or CUSTOMER; null when the turn came before routing.
-  profile       String?
-  agentName     String?  @map("agent_name")
+  profile          String?
+  agentName        String?  @map("agent_name")
   // Short hash of the agent's prompt, model and tools: groups turns by agent
   // revision so drift shows up as a change in behavior between versions.
-  agentVersion  String?  @map("agent_version")
+  agentVersion     String?  @map("agent_version")
   // JSON array of {name, args} for the tools the agent ran this turn (no results).
-  toolCalls     String?  @map("tool_calls")
-  hasImage      Boolean  @default(false) @map("has_image")
-  applicationId String?  @map("application_id")
-  customerId    String?  @map("customer_id")
-  waMessageId   String?  @map("wa_message_id")
+  toolCalls        String?  @map("tool_calls")
+  hasImage         Boolean  @default(false) @map("has_image")
+  applicationId    String?  @map("application_id")
+  customerId       String?  @map("customer_id")
+  waMessageId      String?  @map("wa_message_id")
   // The send to WhatsApp failed: the reply was produced (kept for audits) but
   // the person never got it, so it is left out of the agents' memory.
-  failed        Boolean  @default(false)
-  createdAt     DateTime @default(now()) @map("created_at")
+  failed           Boolean  @default(false)
+  // Decision-model label of an INBOUND turn (openspec conversation-state):
+  // answer, question, closing, opt_out, repeat, frustration, human_request,
+  // greeting, other, or media (set by code). Null until classified.
+  intent           String?
+  intentConfidence Float?   @map("intent_confidence")
+  // JSON: predicate probabilities (settled, affirms, sameRequest) and the
+  // provider:model that answered, so labels from different models compare.
+  classification   String?
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@index([phone, createdAt])
   @@index([applicationId])
@@ -1039,4 +1059,69 @@ model TaskFiring {
   @@index([taskId, status])
   @@index([status])
   @@map("task_firings")
+}
+
+// =============================================================================
+// Credit decision engine (add-credit-decision-engine)
+// =============================================================================
+
+enum CreditReportSource {
+  EQUIFAX
+  PRESTAMOSCLOUD
+
+  @@map("credit_report_sources")
+}
+
+enum CreditOutcome {
+  REJECT
+  REVIEW
+  APPROVE
+
+  @@map("credit_outcomes")
+}
+
+/// Facts extracted from one bureau lookup, pushed by the Mikro Decisión
+/// extension. Keyed by cédula so they stay with the person across
+/// applications. Append-only; never holds the raw report (only its hash).
+model CreditReport {
+  id             String             @id @default(uuid())
+  cedula         String
+  source         CreditReportSource
+  facts          Json
+  schemaVersion  Int                @map("schema_version")
+  rawSha256      String             @map("raw_sha256")
+  adapterVersion String             @map("adapter_version")
+  portalOrigin   String             @map("portal_origin")
+  capturedAt     DateTime           @map("captured_at")
+  capturedById   String             @map("captured_by_id")
+  /// The application the push was attached to, if any (informational).
+  applicationId  String?            @map("application_id")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  @@index([cedula, source, capturedAt])
+  @@map("credit_reports")
+}
+
+/// One evaluation of the credit policy for an application. Append-only; the
+/// newest row is the application's current decision. `inputs` is the full
+/// facts snapshot so any decision can be replayed.
+model CreditDecision {
+  id            String          @id @default(uuid())
+  application   LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String          @map("application_id")
+  policyId      String          @map("policy_id")
+  policyVersion String          @map("policy_version")
+  policyHash    String          @map("policy_hash")
+  outcome       CreditOutcome
+  mikroScore    Int?            @map("mikro_score")
+  reasons       Json
+  unchecked     Json
+  components    Json
+  nextSteps     Json            @map("next_steps")
+  inputs        Json
+  trace         Json
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  @@index([applicationId, createdAt])
+  @@map("credit_decisions")
 }

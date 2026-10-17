@@ -97,7 +97,7 @@ export function contextSentence(firing: TaskFiringInfo): string | null {
 }
 
 const INPUT_CLASS =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] placeholder:text-[#697A93] focus:border-[#1F4AA8] focus:outline-none";
+  "w-full rounded-[8px] border border-ds-border bg-ds-surface px-[14px] py-[10px] text-[14px] font-medium text-brand-ink placeholder:text-ds-muted focus:border-brand-blue-primary focus:outline-none";
 
 export function TaskActionCard({
   firing,
@@ -132,7 +132,7 @@ export function TaskActionCard({
         <button
           type="button"
           onClick={onDownloadAttachment}
-          className="inline-flex w-fit items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]"
+          className="inline-flex w-fit items-center gap-[7px] rounded-[9px] bg-brand-blue-primary px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]"
         >
           <Download size={16} />
           Descargar estado de cuenta
@@ -151,7 +151,7 @@ export function TaskActionCard({
   return (
     <div className={cn("flex flex-col gap-[12px]", className)}>
       {needsInput && (
-        <p className="text-[12px] font-semibold leading-tight text-[#D97706]">
+        <p className="text-[12px] font-semibold leading-tight text-ds-amber">
           {firing.reason
             ? firing.reason
             : firing.missingSlots.length > 0
@@ -161,14 +161,14 @@ export function TaskActionCard({
       )}
 
       {sentence && (
-        <p className="text-[13px] font-medium leading-[1.4] text-[#14254A]">{sentence}</p>
+        <p className="text-[13px] font-medium leading-[1.4] text-brand-ink">{sentence}</p>
       )}
 
       {firing.askSlots.length > 0 && (
         <div className="flex flex-wrap items-end gap-[10px]">
           {firing.askSlots.map((slot) => (
             <label key={slot.name} className="flex flex-col gap-[7px]">
-              <span className="text-[13px] font-medium text-[#14254A]">{slot.label}</span>
+              <span className="text-[13px] font-medium text-brand-ink">{slot.label}</span>
               <input
                 type={slot.kind === "amount" ? "number" : "text"}
                 inputMode={slot.kind === "amount" ? "decimal" : undefined}
@@ -184,7 +184,7 @@ export function TaskActionCard({
         </div>
       )}
 
-      {error && <p className="text-[12px] font-semibold leading-tight text-[#DC2626]">{error}</p>}
+      {error && <p className="text-[12px] font-semibold leading-tight text-ds-red">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-[10px]">
         <button
@@ -192,8 +192,8 @@ export function TaskActionCard({
           disabled={submitting}
           onClick={() => onConfirm?.(values)}
           className={cn(
-            "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
-            submitting && "cursor-not-allowed opacity-60 hover:bg-[#1F4AA8]"
+            "inline-flex items-center gap-[7px] rounded-[9px] bg-brand-blue-primary px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
+            submitting && "cursor-not-allowed opacity-60 hover:bg-brand-blue-primary"
           )}
         >
           <Check size={16} />
@@ -204,8 +204,8 @@ export function TaskActionCard({
           disabled={submitting}
           onClick={() => onSkip?.()}
           className={cn(
-            "inline-flex items-center rounded-[9px] border border-[#E5EAF1] bg-white px-[16px] py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]",
-            submitting && "cursor-not-allowed opacity-60 hover:bg-white"
+            "inline-flex items-center rounded-[9px] border border-ds-border bg-ds-surface px-[16px] py-[9px] text-[14px] font-medium text-brand-ink transition hover:bg-ds-bg",
+            submitting && "cursor-not-allowed opacity-60 hover:bg-ds-surface"
           )}
         >
           Omitir

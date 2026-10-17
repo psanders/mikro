@@ -13,56 +13,38 @@
   "agentsFile": "../../../agents.yaml",
   "messageMaxAgeSeconds": 60,
   "sessionTimeoutSeconds": 1800,
-  "llm": {
-    "text": {
-      "vendor": "openai",
-      "apiKey": "e2e-no-key",
-      "model": "gpt-4o-mini"
-    },
-    "vision": {
-      "vendor": "openai",
-      "apiKey": "e2e-no-key",
-      "model": "gpt-4o"
-    },
-    "evals": {
-      "vendor": "openai",
-      "apiKey": "e2e-no-key",
-      "model": "gpt-4o-mini"
-    }
+  "cx": {
+    "model": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" },
+    "visionModel": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o" }
   },
+  "copilot": { "model": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" } },
   "whatsapp": {
     "phoneNumberId": "e2e",
     "accessToken": "e2e",
     "verifyToken": "e2e",
     "languageCode": "es_DO",
-    "templates": {
-      "paymentConfirmation": "payment_receipt"
-    }
+    "templates": { "paymentConfirmation": "payment_receipt" }
   },
-  "voiceNotes": {
-    "enabled": false,
-    "deepgramApiKey": ""
-  },
-  "evals": {
-    "similarityThreshold": 0.7,
-    "vendors": {}
-  },
+  "voiceNotes": { "enabled": false, "deepgramApiKey": "" },
   "accounting": {
     "attachmentsPath": "./.run/attachments",
     "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
     "disbursementAccounts": [
-      {
-        "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
-        "name": "Caja General"
-      },
-      {
-        "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
-        "name": "Cuenta de Recaudación"
-      }
+      { "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", "name": "Caja General" },
+      { "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2", "name": "Cuenta de Recaudación" }
     ]
   },
   "applications": {
     "coveredProvinces": ["PUERTO_PLATA"],
-    "minBusinessPhotos": 3
+    "minBusinessPhotos": 3,
+    "summaryModel": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" }
+  },
+  "reports": { "model": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" } },
+  "conversationAudit": {
+    "model": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" }
+  },
+  "evals": {
+    "model": { "vendor": "openai", "apiKey": "e2e-no-key", "model": "gpt-4o-mini" },
+    "candidates": {}
   }
 }

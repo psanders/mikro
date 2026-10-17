@@ -69,6 +69,30 @@ export interface MessageContentItem {
 }
 
 /**
+ * The photos of one turn, as base64 data URLs: one, several (a burst of photos
+ * answered together), or none.
+ */
+export type TurnImages = string | readonly string[] | null | undefined;
+
+/** A turn's photos as a list, empty when it has none. */
+export function imageList(images: TurnImages): string[] {
+  if (!images) return [];
+  return typeof images === "string" ? [images] : images.filter(Boolean);
+}
+
+/**
+ * Where tools read a turn's photos from: all of them as `imageDataUrls`, and
+ * the first as `imageDataUrl` too (the single-photo key tools always read).
+ */
+export function photoContext(images: TurnImages): {
+  imageDataUrl?: string;
+  imageDataUrls?: string[];
+} {
+  const list = imageList(images);
+  return list.length > 0 ? { imageDataUrl: list[0], imageDataUrls: list } : {};
+}
+
+/**
  * Message in conversation history.
  * Content can be a string or array for multimodal messages.
  */
@@ -108,6 +132,15 @@ export interface ToolCall {
 /**
  * OpenAI function tool definition.
  */
+/** A JSON Schema for one tool parameter (the subset the providers accept). */
+export interface ToolParameterSchema {
+  type: string;
+  description: string;
+  enum?: string[];
+  pattern?: string;
+  properties?: Record<string, ToolParameterSchema>;
+}
+
 export interface ToolFunction {
   type: "function";
   function: {
@@ -115,14 +148,7 @@ export interface ToolFunction {
     description: string;
     parameters: {
       type: "object";
-      properties: Record<
-        string,
-        {
-          type: string;
-          description: string;
-          enum?: string[];
-        }
-      >;
+      properties: Record<string, ToolParameterSchema>;
       required: string[];
     };
   };
@@ -183,12 +209,14 @@ export interface ConversationTurn {
   human?: string;
   /** Optional image as URL or base64 data URL (e.g., "data:image/jpeg;base64,...") */
   image?: string;
-  /** Expected AI response */
-  expectedAI: string;
   /** Optional tool calls expected in this turn */
   tools?: ExpectedToolCall[];
-  /** Skip response similarity check for this turn (tools check still runs). Use when pre-tool text is non-deterministic. */
-  skipResponseCheck?: boolean;
+  /**
+   * Rubric checks: Spanish yes/no questions about the reply with the expected
+   * answer, judged by the decision model (openspec decision-judges). They
+   * decide the reply part of the turn; every turn needs at least one.
+   */
+  checks: Array<{ id: string; question: string; expect: boolean }>;
 }
 
 /**

@@ -60,7 +60,7 @@ export function GroupedFeedRow({
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="flex w-full items-center gap-[10px] border-b border-[#E5EAF1] bg-[#F4F7FB] px-6 py-[10px] text-left text-[12px] font-semibold text-[#697A93] hover:bg-[#EEF3F9]"
+          className="flex w-full items-center gap-[10px] border-b border-ds-border bg-ds-bg px-6 py-[10px] text-left text-[12px] font-semibold text-ds-muted hover:bg-ds-subtle"
         >
           <ChevronUp size={14} />
           Contraer {groupLabel(head.type, events.length).toLowerCase()}
@@ -92,20 +92,20 @@ export function GroupedFeedRow({
       }}
       aria-expanded={false}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-[14px] border-b border-[#E5EAF1] px-6 py-3",
+        "flex w-full cursor-pointer items-center gap-[14px] border-b border-ds-border px-6 py-3",
         className
       )}
     >
       <FeedTypeIcon event={head} />
       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <p className="truncate text-[14px] leading-tight text-[#14254A]">
+        <p className="truncate text-[14px] leading-tight text-brand-ink">
           <span className="font-semibold">{groupLabel(head.type, events.length)}</span>
         </p>
-        <p className="truncate text-[12px] leading-tight font-medium text-[#697A93]">
+        <p className="truncate text-[12px] leading-tight font-medium text-ds-muted">
           {head.actorName} · {formatRelativeTime(head.occurredAt)}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-[10px] text-[#697A93]">
+      <div className="flex shrink-0 items-center gap-[10px] text-ds-muted">
         <ChevronDown size={15} />
       </div>
     </div>

@@ -40,14 +40,18 @@ const TEST_CONFIG_PATH = resolve(process.cwd(), "mikro-test-prospect.json");
 
 const TEST_CONFIG = {
   sessionTimeoutSeconds: 3600,
-  llm: {
-    text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
-    vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
-    evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+  cx: {
+    model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+    visionModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" }
   },
+  copilot: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
+  reports: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
   whatsapp: { phoneNumberId: "test", accessToken: "test" },
   accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" },
-  applications: { coveredProvinces: ["PUERTO_PLATA"] }
+  applications: {
+    coveredProvinces: ["PUERTO_PLATA"],
+    summaryModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+  }
 };
 
 describe("handleProspectMessage submit-by turn", () => {
@@ -285,7 +289,8 @@ describe("handleProspectMessage after submission (enrichment)", () => {
 
   it("passes the turn's image so José can take the applicant's documents", async () => {
     const call = await run("mi cédula", exchange(true), { imageUrl: "data:image/png;base64,AAA" });
-    expect(call.args[3]).to.equal("data:image/png;base64,AAA");
+    expect(call.args[3]).to.deep.equal(["data:image/png;base64,AAA"]);
     expect(call.args[4]).to.include({ imageDataUrl: "data:image/png;base64,AAA" });
+    expect(call.args[4].imageDataUrls).to.deep.equal(["data:image/png;base64,AAA"]);
   });
 });

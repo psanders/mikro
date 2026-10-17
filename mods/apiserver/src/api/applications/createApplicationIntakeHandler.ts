@@ -5,7 +5,9 @@ import { applicationPayloadSchema, normalizeApplication, extractTracking } from 
 import type { LoanApplication, NormalizedApplication } from "@mikro/common";
 import type { LeadConversion } from "../marketing/createSendLeadConversion.js";
 import { logger } from "../../logger.js";
+import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { OUT_OF_COVERAGE_AREA } from "./createUpsertApplication.js";
+import type { FindPriorApplication } from "./createFindPriorApplication.js";
 
 /** The slice of an Express request the intake reads. */
 export interface IntakeRequest {
@@ -25,6 +27,13 @@ interface Deps {
   upsertApplication: (input: NormalizedApplication) => Promise<LoanApplication>;
   /** Server-side Meta Lead (CAPI). */
   sendLeadConversion: (lead: LeadConversion) => Promise<boolean>;
+  /** The same person's other applications (issue #302); checked on final submit only. */
+  findPriorApplication?: FindPriorApplication;
+  /**
+   * Removes this session's own DRAFT after its answers went into the person's
+   * older DRAFT, so they keep one application. Only ever deletes a DRAFT.
+   */
+  discardDraft?: (sessionId: string) => Promise<void>;
 }
 
 /**
@@ -38,6 +47,12 @@ interface Deps {
  * `outcome: "out_of_area"` — the site shows the "not in your city yet" screen
  * on it — and is NOT reported to Meta as a Lead: optimizing ads toward people
  * we cannot lend to would buy more of them.
+ *
+ * A final submit from someone who already has an application (issue #302,
+ * matched by phone or cédula) creates no second one: `outcome: "in_process"`
+ * when theirs is being handled, `outcome: "cooldown"` plus `reapplyFrom` when
+ * they were rejected less than 30 days ago, and an older unsubmitted DRAFT
+ * takes the new answers instead of a new row. Autosaves are never checked.
  */
 export function createApplicationIntakeHandler(deps: Deps) {
   return async (req: IntakeRequest, res: IntakeResponse): Promise<void> => {
@@ -70,8 +85,57 @@ export function createApplicationIntakeHandler(deps: Deps) {
     }
 
     try {
+      // A stale tab posting the old label: stored as null, never a lost submission.
+      droppedMaritalStatus(parsed.data, "intake", { sessionId: parsed.data.sessionId });
       const normalized = normalizeApplication(parsed.data);
+      const prior =
+        !normalized.partial && deps.findPriorApplication
+          ? await deps.findPriorApplication({
+              phone: normalized.phone,
+              idNumber: normalized.idNumber,
+              sessionId: normalized.sessionId
+            })
+          : null;
+      if (prior?.kind === "in_process") {
+        logger.info("application intake: person already has an application in process", {
+          sessionId: normalized.sessionId,
+          applicationId: prior.applicationId,
+          status: prior.status
+        });
+        res.json({ result: "ok", outcome: "in_process" });
+        return;
+      }
+      if (prior?.kind === "cooldown") {
+        logger.info("application intake: rejected recently, no new application", {
+          sessionId: normalized.sessionId,
+          applicationId: prior.applicationId,
+          reapplyFrom: prior.reapplyFrom.toISOString()
+        });
+        res.json({
+          result: "ok",
+          outcome: "cooldown",
+          reapplyFrom: prior.reapplyFrom.toISOString(),
+          ...(prior.rejectionReason === OUT_OF_COVERAGE_AREA ? { outOfArea: true } : {})
+        });
+        return;
+      }
+      const ownSession = normalized.sessionId;
+      if (prior?.kind === "draft") {
+        logger.info("application intake: answers go into the person's earlier draft", {
+          sessionId: ownSession,
+          into: prior.sessionId
+        });
+        normalized.sessionId = prior.sessionId;
+      }
       const application = await deps.upsertApplication(normalized);
+      if (prior?.kind === "draft" && deps.discardDraft) {
+        deps.discardDraft(ownSession).catch((err: Error) => {
+          logger.error("application intake: failed to discard the duplicate draft", {
+            sessionId: ownSession,
+            error: err.message
+          });
+        });
+      }
       const outOfArea =
         !normalized.partial &&
         application.status === "REJECTED" &&

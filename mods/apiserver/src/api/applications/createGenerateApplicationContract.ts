@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import {
+  maritalStatusLabel,
   BUSINESS_TYPE_LABELS,
   PROVINCE_LABELS,
   type DbClient,
@@ -64,7 +65,8 @@ export function createGenerateApplicationContract(client: DbClient) {
       debtor: {
         name,
         cedula: app.idNumber,
-        maritalStatus: input.maritalStatus ?? app.maritalStatus?.toLowerCase() ?? undefined,
+        maritalStatus:
+          input.maritalStatus ?? maritalStatusLabel(app.maritalStatus)?.toLowerCase() ?? undefined,
         occupation:
           input.occupation ??
           (app.businessType

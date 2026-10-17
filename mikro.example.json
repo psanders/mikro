@@ -16,22 +16,17 @@
   "messageMaxAgeSeconds": 60,
   "sessionTimeoutSeconds": 1800,
   "agentsFile": "agents.yaml",
-  "llm": {
-    "text": {
-      "vendor": "openai",
+  "cx": {
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o-mini" },
+    "visionModel": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o" },
+    "classifier": {
+      "provider": "openai-decisions",
       "apiKey": "your-openai-api-key",
-      "model": "gpt-4o-mini"
-    },
-    "vision": {
-      "vendor": "openai",
-      "apiKey": "your-openai-api-key",
-      "model": "gpt-4o"
-    },
-    "evals": {
-      "vendor": "openai",
-      "apiKey": "your-openai-api-key",
-      "model": "gpt-4o-mini"
+      "model": "gpt-6-luna"
     }
+  },
+  "copilot": {
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o-mini" }
   },
   "whatsapp": {
     "phoneNumberId": "your-phone-number-id",
@@ -45,10 +40,7 @@
       "loanApplicationFollowUp": "loan_request_followup"
     }
   },
-  "voiceNotes": {
-    "enabled": false,
-    "deepgramApiKey": ""
-  },
+  "voiceNotes": { "enabled": false, "deepgramApiKey": "" },
   "accounting": {
     "attachmentsPath": "./data/attachments/accounting",
     "disbursementAccountId": "00000000-0000-4000-8000-000000000000",
@@ -59,14 +51,33 @@
   },
   "applications": {
     "coveredProvinces": ["PUERTO_PLATA"],
-    "minBusinessPhotos": 3
+    "minBusinessPhotos": 3,
+    "summaryModel": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o-mini" }
+  },
+  "reports": {
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o-mini" }
+  },
+  "conversationAudit": {
+    "enabled": false,
+    "schedule": "0 7 * * *",
+    "maxConversations": 200,
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o" }
   },
   "evals": {
-    "similarityThreshold": 0.7,
-    "vendors": {
-      "openai": { "text": null, "vision": null },
-      "anthropic": { "text": null, "vision": null },
-      "google": { "text": null, "vision": null }
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o" },
+    "classifier": {
+      "provider": "openai-decisions",
+      "apiKey": "your-openai-api-key",
+      "model": "gpt-6-luna"
+    },
+    "candidates": {
+      "claude": {
+        "model": {
+          "vendor": "anthropic",
+          "apiKey": "your-anthropic-api-key",
+          "model": "claude-sonnet-4-5-20250929"
+        }
+      }
     }
   },
   "loans": {
@@ -105,11 +116,7 @@
       "municipality": "Your City"
     }
   },
-  "updates": {
-    "enabled": true,
-    "path": "./data/updates",
-    "manifestFilename": "latest.json"
-  },
+  "updates": { "enabled": true, "path": "./data/updates", "manifestFilename": "latest.json" },
   "qcobro": {
     "apiKey": "qc_PLACEHOLDER",
     "apiSecret": "qcs_PLACEHOLDER",
@@ -128,30 +135,12 @@
       }
     ]
   },
-  "conversationAudit": {
-    "enabled": false,
-    "schedule": "0 7 * * *",
-    "maxConversations": 200
-  },
   "githubFeedback": {
     "token": "",
-    "repo": ""
+    "repo": "",
+    "model": { "vendor": "openai", "apiKey": "your-openai-api-key", "model": "gpt-4o-mini" }
   },
-  "metaConversions": {
-    "pixelId": "",
-    "accessToken": "",
-    "testEventCode": ""
-  },
-  "chatwoot": {
-    "url": "",
-    "accountId": 0,
-    "inboxId": 0,
-    "apiToken": ""
-  },
-  "twilio": {
-    "accountSid": "",
-    "authToken": "",
-    "from": "",
-    "rejectionMessage": ""
-  }
+  "metaConversions": { "pixelId": "", "accessToken": "", "testEventCode": "" },
+  "chatwoot": { "url": "", "accountId": 0, "inboxId": 0, "apiToken": "" },
+  "twilio": { "accountSid": "", "authToken": "", "from": "", "rejectionMessage": "" }
 }

@@ -9,11 +9,19 @@ import {
   type BaseMessage
 } from "@langchain/core/messages";
 import type { Runnable } from "@langchain/core/runnables";
-import { getLLMConfig } from "../config.js";
+import { getCxModel, getCxVisionModel, type LLMConfig } from "../config.js";
 import { createChatModel, isVisionModel } from "./providers.js";
 import { logger } from "../logger.js";
 import { textOf } from "../conversations/transcript.js";
-import type { Agent, Message, MessageContentItem, ToolFunction, ToolExecutor } from "./types.js";
+import {
+  imageList,
+  type Agent,
+  type Message,
+  type MessageContentItem,
+  type ToolFunction,
+  type ToolExecutor,
+  type TurnImages
+} from "./types.js";
 
 /**
  * Content block types for multimodal messages.
@@ -47,6 +55,11 @@ export interface InvokeLLMOptions {
    * (e.g. "Claro que sí, un momento.") without involving the LLM.
    */
   sendQuickAck?: (context: Record<string, unknown>) => Promise<void>;
+  /**
+   * The models to answer with. Defaults to `cx.model` / `cx.visionModel`;
+   * `agents:eval --candidates` passes a candidate's models instead.
+   */
+  models?: { model: LLMConfig; visionModel: LLMConfig };
 }
 
 /**
@@ -177,6 +190,49 @@ export function convertAllToLangChainMessages(messages: Message[]): BaseMessage[
 }
 
 /**
+ * The message being answered: its text (after any tool note) and its photos.
+ * Several photos (a burst answered together) are numbered, so the agent can
+ * say which one each tool call is about.
+ */
+export function currentUserMessage(
+  toolPrefix: string,
+  userMessage: string,
+  imageUrls: string[]
+): HumanMessage {
+  const userContent: MessageContentItem[] = [];
+
+  if (userMessage) {
+    userContent.push({ type: "text", text: toolPrefix + userMessage });
+  } else if (toolPrefix && imageUrls.length > 0) {
+    // A photo-only turn still carries what the agent ran last turn.
+    userContent.push({ type: "text", text: toolPrefix.trimEnd() });
+  }
+
+  imageUrls.forEach((url, i) => {
+    if (imageUrls.length > 1) userContent.push({ type: "text", text: `Foto ${i + 1}:` });
+    userContent.push({ type: "image_url", image_url: { url } });
+  });
+
+  if (userContent.length === 0) {
+    userContent.push({ type: "text", text: toolPrefix + "Hello" });
+  }
+
+  if (userContent.length === 1 && userContent[0].type === "text") {
+    return new HumanMessage(userContent[0].text || "Hello");
+  }
+  const content: MessageContent[] = userContent.map((item) => {
+    if (item.type === "text") {
+      return { type: "text", text: item.text || "" };
+    }
+    return {
+      type: "image_url",
+      image_url: { url: item.image_url?.url || "" }
+    };
+  });
+  return new HumanMessage({ content });
+}
+
+/**
  * Truncate large data in tool results to prevent token limit errors.
  */
 function truncateToolResult(result: { success: boolean; message: string; data?: unknown }): {
@@ -271,7 +327,7 @@ export function createInvokeLLM(
    *
    * @param messages - Existing chat history (without system prompt)
    * @param userMessage - The current user message text
-   * @param imageUrl - Optional base64 data URL for image (for vision)
+   * @param images - Optional base64 data URL(s) of the turn's photo(s) (for vision)
    * @param context - Optional context to pass to tool executor (e.g., phone number)
    * @param isNewSession - Optional. If true (default), inject directive for full greeting when user greets. If false, inject directive to continue without re-introducing.
    * @returns The assistant's text response and list of tools executed this turn
@@ -279,29 +335,30 @@ export function createInvokeLLM(
   return async function invokeLLM(
     messages: Message[],
     userMessage: string,
-    imageUrl?: string | null,
+    images?: TurnImages,
     context?: Record<string, unknown>,
     isNewSession: boolean = true
   ): Promise<InvokeLLMResult> {
+    // Placeholder URLs (evals) are not real photos.
+    const imageUrls = imageList(images).filter((url) => !url.startsWith("https://example.com/"));
     logger.verbose("invoking llm", {
       agent: agent.name,
       historyLength: messages.length,
-      hasImage: !!imageUrl,
+      imageCount: imageUrls.length,
       isNewSession
     });
 
-    // Determine if we need vision model
-    const hasImage = imageUrl && !imageUrl.startsWith("https://example.com/");
-    const purpose = hasImage ? "vision" : "text";
-
-    // Get LLM config and create model
-    const config = getLLMConfig(purpose);
+    // Turns with photos use the vision model
+    const hasImage = imageUrls.length > 0;
+    const config = hasImage
+      ? (options?.models?.visionModel ?? getCxVisionModel())
+      : (options?.models?.model ?? getCxModel());
 
     // Validate vision capability if needed
     if (hasImage && !isVisionModel(config.vendor, config.model)) {
       throw new Error(
         `Model "${config.model}" for vendor "${config.vendor}" does not support vision. ` +
-          `Configure MIKRO_LLM_VISION with a vision-capable model.`
+          `Configure a vision-capable visionModel (cx.visionModel, or the eval candidate's).`
       );
     }
 
@@ -338,39 +395,7 @@ export function createInvokeLLM(
         ? `[SISTEMA: Herramientas ejecutadas en respuesta anterior: ${formatToolList(lastMsg.tools_executed)}]\n`
         : "";
 
-    // Build current user message content
-    const userContent: MessageContentItem[] = [];
-
-    if (userMessage) {
-      userContent.push({ type: "text", text: toolPrefix + userMessage });
-    }
-
-    if (hasImage) {
-      userContent.push({
-        type: "image_url",
-        image_url: { url: imageUrl }
-      });
-    }
-
-    if (userContent.length === 0) {
-      userContent.push({ type: "text", text: toolPrefix + "Hello" });
-    }
-
-    // Add current user message
-    if (userContent.length === 1 && userContent[0].type === "text") {
-      langchainMessages.push(new HumanMessage(userContent[0].text || "Hello"));
-    } else {
-      const content: MessageContent[] = userContent.map((item) => {
-        if (item.type === "text") {
-          return { type: "text", text: item.text || "" };
-        }
-        return {
-          type: "image_url",
-          image_url: { url: item.image_url?.url || "" }
-        };
-      });
-      langchainMessages.push(new HumanMessage({ content }));
-    }
+    langchainMessages.push(currentUserMessage(toolPrefix, userMessage, imageUrls));
 
     const toolsExecuted: Array<{ name: string; args: Record<string, unknown> }> = [];
 

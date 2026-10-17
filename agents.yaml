@@ -61,6 +61,10 @@
     1. Llama `finalizeApplication` con outcome "complete". Esto ENVÍA la solicitud.
        Usa el `data.missingFields` que devuelve `finalizeApplication` (no uno anterior).
        Si devuelve `outcome: "out_of_zone"`, tu respuesta es solo el texto de rechazo.
+       Si devuelve `outcome: "cooldown"`, la solicitud NO se envió: dile con amabilidad
+       que puede volver a solicitar a partir de `data.reapplyDate` y no hagas más preguntas.
+       Si devuelve `outcome: "in_process"`, NO se creó otra: dile que ya tiene una
+       solicitud en proceso y que el equipo le escribirá por aquí; no hagas más preguntas.
     2. Si ese `data.missingFields` está vacío, tu respuesta es el MENSAJE DE CIERRE (abajo).
     3. Si todavía faltan campos, tu respuesta es UN mensaje que:
        - confirma que la solicitud quedó recibida y que un asesor la revisará, y
@@ -87,6 +91,8 @@
        tal cual (`data.stage`). Luego, si quiere, sigue con las preguntas.
     4. Si manda una foto de su cédula o de su negocio: llama `attachApplicationEvidence`
        con el `kind` que corresponde (ID_FRONT, ID_BACK o BUSINESS_PHOTO) y confirma.
+       Si trae varias fotos (Foto 1, Foto 2, …), llámala una vez por cada una, con
+       su número en `image`, y confírmalas todas en una sola respuesta.
     5. Si no quiere seguir respondiendo (o ves el aviso del SISTEMA): agradece, dile
        que el equipo está revisando su solicitud, llama `finalizeApplication` (solo
        cierra tus preguntas) y no preguntes nada más.
@@ -188,8 +194,10 @@
     - referenceName → "¿Tienes una persona de referencia? ¿Cuál es su nombre?"
     - referencePhone → "¿Cuál es el teléfono de esa persona? (10 dígitos)"
     - businessPhone → "¿Tienes un teléfono del negocio? (10 dígitos)"
-    - spouseName → "¿Cuál es el nombre de tu pareja?" (solo si casado/unión libre)
-    - spousePhone → "¿Cuál es su teléfono? (10 dígitos)" (solo si casado/unión libre)
+    - spouseName → "¿Cuál es el nombre de tu pareja?"
+    - spousePhone → "¿Cuál es su teléfono? (10 dígitos)"
+
+    Los datos de pareja solo aparecen en `missingFields` para CASADO o UNION_LIBRE.
 
     ## GUARDRAILS
 
@@ -199,6 +207,7 @@
     - NUNCA preguntes un campo que NO esté en `missingFields`.
     - NUNCA repitas una pregunta que la persona ya respondió.
     - NUNCA inventes datos.
+    - Si la persona dice que no tiene un dato opcional (teléfono del negocio, referencia, pareja, referencia de dirección), guárdalo con saveAnswer con el valor "no tiene": queda anotado y sale de `missingFields`. Nunca inventes un valor ("N/A", "0000000000"). Si dice que no tiene pareja y falta el estado civil, pregúntalo.
     - NUNCA digas que la información está completa si `missingFields` no está vacío.
     - Sin markdown, sin asteriscos. Español amigable.
   allowedTools:
@@ -250,9 +259,7 @@
         description: Batched questions in priority order; ISC reaches the 50 target in 3 José turns and he finalizes with a single closing message
         turns:
           - human: Hola, me interesa
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
             # José may batch 2 OR 3 questions; assert tool + flow, not exact wording.
-            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -280,10 +287,15 @@
                     simulatedIsc: 8
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
+              - id: no_promete
+                question: ¿Promete aprobación, montos, tasas o tiempos de desembolso?
+                expect: false
           - human: Puerto Plata, tengo un colmado
-            expectedAI: "Perfecto. ¿Cuánto vende tu negocio al mes aproximadamente? ¿Cuánto necesitas en préstamo? ¿En cuántas semanas planeas pagarlo?"
             # Batch size (2-3 questions) varies; assert the saveAnswer call, not wording.
-            skipResponseCheck: true
             tools:
               - name: saveAnswer
                 mockResponse:
@@ -306,9 +318,14 @@
                       - homeAddress
                       - referenceName
                       - referencePhone
+            checks:
+              - id: pide_ventas_o_monto
+                question: ¿Pregunta cuánto vende el negocio, cuánto necesita o en cuántas semanas pagaría?
+                expect: true
+              - id: repite_pregunta
+                question: ¿Vuelve a preguntar la provincia o el tipo de negocio, que la persona ya respondió?
+                expect: false
           - human: Vendo como 80 mil al mes, necesito 25 mil y lo pago en 12 semanas
-            expectedAI: "¡Listo, Juan! Ya recibimos tu solicitud y un asesor la va a revisar. Si quieres, con unas preguntas más la dejamos completa: ¿Cuánto tiempo llevas con tu negocio? ¿Tu negocio está formalizado?"
-            skipResponseCheck: true
             tools:
               - name: saveAnswer
                 mockResponse:
@@ -334,13 +351,18 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para que el equipo la revise?
+                expect: true
+              - id: dice_aprobado
+                question: ¿Dice o da a entender que el préstamo ya está aprobado?
+                expect: false
       - id: phone-validation-reask
         description: Prospect gives an invalid reference phone; saveAnswer flags it via invalidReasons and José re-asks before continuing
         turns:
           - human: Hola
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. ¿Tienes una persona de referencia? ¿Cuál es su nombre? ¿Cuál es el teléfono de esa persona? (10 dígitos)"
             # Batch size varies; assert getApplicationState, not exact wording.
-            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -361,8 +383,11 @@
                     simulatedIsc: 44
                     isOutOfZone: false
                     isCriticalBusiness: false
+            checks:
+              - id: pide_referencia
+                question: ¿Pide datos de una persona de referencia (nombre o teléfono)?
+                expect: true
           - human: Antonio Miguel, su número es 892222222
-            expectedAI: "Anotado. Ese número parece incompleto, ¿me das el número completo de 10 dígitos?"
             tools:
               - name: saveAnswer
                 mockResponse:
@@ -378,9 +403,14 @@
                     isCriticalBusiness: false
                     missingFields:
                       - referencePhone
+            checks:
+              - id: pide_numero_completo
+                question: ¿Dice que el número parece incompleto o pide el número completo de 10 dígitos?
+                expect: true
+              - id: acepta_numero_malo
+                question: ¿Da por bueno el número 892222222 sin pedir que lo corrija?
+                expect: false
           - human: Ah perdón, es 809-234-5678
-            expectedAI: "¡Listo, Ana! Ya tenemos toda tu información. El equipo va a revisar tu solicitud y te avisa por aquí. ¡Gracias por tu interés!"
-            skipResponseCheck: true
             tools:
               - name: saveAnswer
                 mockResponse:
@@ -400,11 +430,17 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: cierra_enviada
+                question: ¿Cierra diciendo que la solicitud quedó enviada o que el equipo la va a revisar?
+                expect: true
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
       - id: out-of-zone
         description: Province is not Puerto Plata; José declines gracefully and finalizes
         turns:
           - human: Buenas, quiero terminar mi solicitud
-            expectedAI: Gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Si en el futuro expandimos nuestra cobertura, te avisamos.
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -428,11 +464,17 @@
                   data:
                     finalized: true
                     outcome: out_of_zone
+            checks:
+              - id: solo_puerto_plata
+                question: ¿Dice que por ahora solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: invita_seguir
+                question: ¿Invita a la persona a seguir con la solicitud o a llenar el formulario?
+                expect: false
       - id: greeting-only-submit-not-complete
         description: A bare greeting on a draft that can be sent; José sends it but never says the information is complete while fields are missing
         turns:
           - human: Saludos
-            expectedAI: "¡Hola, Luis! Ya recibimos tu solicitud y el equipo la va a revisar. Si quieres, con unas preguntas más la dejamos completa: ¿En qué provincia está tu negocio? ¿Cuánto tiempo llevas con tu negocio?"
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -459,11 +501,17 @@
                     missingFields:
                       - province
                       - businessAge
+            checks:
+              - id: dice_info_completa
+                question: ¿Dice que la información está completa o que ya tienen todo lo necesario?
+                expect: false
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para revisión?
+                expect: true
       - id: critical-business
         description: Business type is critical; José declines gracefully and finalizes
         turns:
           - human: Hola
-            expectedAI: Gracias por tu interés. En este momento no podemos procesar solicitudes para ese tipo de negocio.
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -485,13 +533,18 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: no_puede_procesar
+                question: ¿Dice que no pueden procesar solicitudes para ese tipo de negocio?
+                expect: true
+              - id: no_promete
+                question: ¿Promete aprobación, montos, tasas o tiempos de desembolso?
+                expect: false
       - id: turn-cap-finalize
         description: On the final allowed turn the handler injects the turn-cap directive; José saves the last answer, finalizes, and sends one closing message — no more questions
         turns:
           - human: Hola
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
             # Batch size varies; assert getApplicationState, not exact wording.
-            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -512,9 +565,11 @@
                     simulatedIsc: 18
                     isOutOfZone: false
                     isCriticalBusiness: false
-          - human: "[SISTEMA: Es momento de enviar la solicitud. Primero guarda con saveAnswer cualquier dato útil de este mensaje y llama finalizeApplication con outcome \"complete\". En tu respuesta confirma que la solicitud quedó recibida y ofrece, como algo opcional, seguir con unas preguntas más para completarla: pregunta los siguientes 2 o 3 campos de missingFields.] Puerto Plata y tengo un colmado"
-            expectedAI: "¡Listo, Luis! Ya recibimos tu solicitud y un asesor la va a revisar. Si quieres, con unas preguntas más la dejamos completa: ¿Cuánto vende tu negocio al mes aproximadamente? ¿Cuánto tiempo llevas con tu negocio?"
-            skipResponseCheck: true
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
+          - human: '[SISTEMA: Es momento de enviar la solicitud. Primero guarda con saveAnswer cualquier dato útil de este mensaje y llama finalizeApplication con outcome "complete". En tu respuesta confirma que la solicitud quedó recibida y ofrece, como algo opcional, seguir con unas preguntas más para completarla: pregunta los siguientes 2 o 3 campos de missingFields.] Puerto Plata y tengo un colmado'
             tools:
               - name: saveAnswer
                 mockResponse:
@@ -537,11 +592,17 @@
                   message: Solicitud finalizada
                   data:
                     finalized: true
+            checks:
+              - id: exige_mas
+                question: ¿Le dice a la persona que tiene que responder más preguntas para que su solicitud se envíe?
+                expect: false
+              - id: dice_recibida
+                question: ¿Dice que la solicitud fue recibida o enviada para revisión?
+                expect: true
       - id: after-submit-person-stops
         description: FASE 2 — the application is already submitted; the person declines more questions. José thanks them, closes his questions with finalizeApplication (never abandoned) and asks nothing else
         turns:
           - human: "[SISTEMA: FASE 2. La persona no quiere responder más preguntas. Su solicitud YA está enviada y NO se cancela. Agradece, dile que el equipo la está revisando, llama finalizeApplication para cerrar tus preguntas y no preguntes nada más.] no gracias, ya con eso"
-            expectedAI: "Perfecto, gracias. Tu solicitud ya está enviada y el equipo la está revisando."
             tools:
               - name: finalizeApplication
                 mockResponse:
@@ -550,13 +611,18 @@
                   data:
                     finalized: true
                     outcome: intake_closed
+            checks:
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
+              - id: insiste
+                question: ¿Insiste en que responda más preguntas?
+                expect: false
       - id: not-interested-abandon
         description: Prospect declines; the handler injects the not-interested directive and José finalizes with outcome abandoned and a respectful goodbye — no more questions, no "info complete" closing
         turns:
           - human: Hola
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. ¿En qué provincia está tu negocio? ¿Qué tipo de negocio tienes?"
             # Batch size varies; assert getApplicationState, not exact wording.
-            skipResponseCheck: true
             tools:
               - name: getApplicationState
                 mockResponse:
@@ -573,9 +639,11 @@
                     simulatedIsc: 8
                     isOutOfZone: false
                     isCriticalBusiness: false
-          - human: "[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta anterior, y llama finalizeApplication con outcome \"abandoned\".] La verdad ya no me interesa, gracias"
-            expectedAI: "Entendido, no hay problema. Si más adelante quieres retomar tu solicitud, escríbenos cuando gustes. ¡Que estés bien!"
-            skipResponseCheck: true
+            checks:
+              - id: pide_provincia
+                question: ¿Pregunta en qué provincia está el negocio?
+                expect: true
+          - human: '[SISTEMA: El prospecto indicó que NO está interesado o no quiere continuar. Despídete de forma breve y respetuosa, NO hagas más preguntas, NO repitas la pregunta anterior, y llama finalizeApplication con outcome "abandoned".] La verdad ya no me interesa, gracias'
             tools:
               - name: finalizeApplication
                 expectedArgs:
@@ -586,6 +654,13 @@
                   message: Solicitud marcada como abandonada
                   data:
                     finalized: true
+            checks:
+              - id: pregunta_mas
+                question: ¿Hace alguna pregunta nueva a la persona?
+                expect: false
+              - id: dice_completa
+                question: ¿Dice que la información está completa o que la solicitud quedó enviada?
+                expect: false
 
 # ── WhatsApp CX agents (openspec cx-role-based-agents) ──────────────────────
 # Enabled in production since 2026-09-25 (all at once). Production reads its own
@@ -643,6 +718,18 @@
     y no lo supongas. Responde que esos detalles se definen en la evaluación de
     su solicitud y siempre se muestran antes de firmar.
 
+    ## SI PREGUNTA POR SU SOLICITUD
+
+    No puedes ver solicitudes. NUNCA digas ni supongas en qué estado está una
+    solicitud ("está en revisión", "te van a contactar", "ya la recibimos").
+    Salvo que una nota [SISTEMA] te diga otra cosa, si dice que ya llenó una
+    solicitud o que espera respuesta: dile que con este número de WhatsApp no
+    aparece ninguna solicitud y pregúntale si la llenó con otro número.
+    Si te da otro número o insiste en que ya la llenó: llama
+    `requestHumanHandoff` (no puedes buscar otros números ni dar datos de nadie)
+    y responde exactamente: "Gracias. Alguien del equipo te responderá por aquí."
+    Nada más: ni una palabra sobre su solicitud.
+
     ## PASE A UNA PERSONA
 
     Si la persona pide hablar con alguien, se frustra, o pregunta algo que no está
@@ -675,6 +762,10 @@
       severity: warning
       rule: >-
         No inventa información: no da datos, requisitos, montos ni políticas que no estén en sus instrucciones o en lo que devolvieron sus herramientas.
+    - id: no_supone_estado
+      severity: critical
+      rule: >-
+        No dice ni supone el estado de una solicitud (en revisión, recibida, que la van a revisar, que la van a contactar); si la persona pregunta por su solicitud, le pregunta si la llenó con otro número o la pasa a una persona. Excepción: decir que su solicitud anterior no fue aprobada, la fecha para volver a solicitar, o que su negocio está fuera de la zona sí está permitido (esos datos los da el sistema y no aparecen en la conversación).
   evaluations:
     context:
       phone: "+18091230001"
@@ -684,38 +775,100 @@
         description: Answers the requirements FAQ briefly and always invites to the solicitud link
         turns:
           - human: Hola, qué necesito para un préstamo?
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. Necesitas tu cédula vigente, evidencia de ingresos de tu negocio (recibos, depósitos o ventas, en cualquier formato) y autorizar la consulta de tu buró de crédito. Te invito a llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
+            checks:
+              - id: da_enlace
+                question: ¿Incluye el enlace https://mikro.do/solicitud?
+                expect: true
+              - id: pide_datos
+                question: ¿Pide datos de la solicitud por el chat (nombre, cédula, monto)?
+                expect: false
       - id: guest-out-of-zone
         description: States the coverage area without promising anything
         turns:
           - human: Tengo un colmado en Santiago, me pueden prestar?
-            expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata, así que lamentablemente no podemos prestarte para tu colmado en Santiago. ¡Gracias por escribirnos!"
+            checks:
+              - id: solo_puerto_plata
+                question: ¿Dice que por ahora solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: invita_formulario
+                question: ¿Invita a llenar la solicitud?
+                expect: false
       - id: guest-recently-rejected
         description: A recently rejected applicant (the handler adds the SISTEMA note) is told when they may apply again; no form link before that date, no reasons, no hand-off
         turns:
           - human: "[SISTEMA: Esta persona tuvo una solicitud que NO fue aprobada. Puede volver a solicitar a partir del 26 de octubre de 2026. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que su solicitud anterior no fue aprobada y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. NO expliques motivos de la decisión. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
-            expectedAI: "Hola, gracias por escribirnos. Tu solicitud anterior no fue aprobada, pero puedes volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud."
+            checks:
+              - id: da_fecha_reaplicar
+                question: ¿Dice a partir de qué fecha puede volver a solicitar?
+                expect: true
+              - id: da_motivos
+                question: ¿Explica los motivos por los que no fue aprobada?
+                expect: false
+              - id: pasa_a_persona
+                question: ¿Dice que ya pasó la conversación a una persona del equipo?
+                expect: false
       - id: guest-asks-for-person
         description: A request for a person hands off instead of answering
         turns:
           - human: prefiero que me llame un asesor, no me gusta escribir
-            expectedAI: "Claro, ya le avisé al equipo. Una persona te va a responder por aquí."
-            skipResponseCheck: true
             tools:
               - name: requestHumanHandoff
                 mockResponse:
                   success: true
                   message: Conversación pasada a una persona del equipo.
+            checks:
+              - id: pasa_a_persona
+                question: ¿Dice que una persona del equipo le va a responder o atender?
+                expect: true
       - id: guest-out-of-area-rejected
-        description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area, never "no fue aprobada" or a reapply date
+        description: An applicant rejected for being outside the coverage area (the handler adds the SISTEMA note) hears about the area and the same 30-day reapply date, never "no fue aprobada"
         turns:
-          - human: "[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que \"no fue aprobada\" ni le des una fecha para volver a solicitar. Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata. Si te dice que su negocio sí está en Puerto Plata (se mudó o puso otra provincia por error), puede llenar la solicitud de nuevo en https://mikro.do/solicitud. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?"
-            expectedAI: "Hola, gracias por escribirnos. Por el momento solo atendemos negocios en Puerto Plata. Si tu negocio sí está en Puerto Plata, puedes llenar la solicitud de nuevo en https://mikro.do/solicitud."
+          - human: '[SISTEMA: Esta persona tuvo una solicitud que se cerró porque su negocio está fuera de nuestra zona de cobertura. NO digas que "no fue aprobada". Si pregunta por su solicitud o por volver a aplicar, dile con amabilidad que por el momento solo atendemos negocios en Puerto Plata y que puede volver a solicitar a partir del 26 de octubre de 2026 en https://mikro.do/solicitud. NO la invites a solicitar antes de esa fecha. Si pide hablar con una persona, usa requestHumanHandoff.] Hola, ¿puedo volver a aplicar?'
+            checks:
+              - id: dice_no_aprobada
+                question: ¿Dice que la solicitud 'no fue aprobada'?
+                expect: false
+              - id: explica_zona
+                question: ¿Explica que solo atienden negocios en Puerto Plata?
+                expect: true
+              - id: da_fecha_reaplicar
+                question: ¿Dice a partir de qué fecha puede volver a solicitar?
+                expect: true
       - id: guest-asks-payment-frequency
         description: Payment frequency comes from the FAQ (weekly, biweekly or monthly), never invented
         turns:
           - human: Solo son semanales??
-            expectedAI: "No, tenemos pagos semanales, quincenales o mensuales; la frecuencia se define en la evaluación y siempre la verás antes de firmar. Puedes llenar la solicitud en https://mikro.do/solicitud, toma solo unos minutos desde tu celular."
+            checks:
+              - id: inventa_frecuencia
+                question: ¿Menciona alguna frecuencia de pago distinta de semanal, quincenal o mensual (por ejemplo, diaria)?
+                expect: false
+              - id: da_frecuencias
+                question: ¿Dice que hay pagos semanales, quincenales o mensuales?
+                expect: true
+      - id: guest-asks-application-status
+        description: A guest waiting on "su solicitud" is never told it is being reviewed; asked whether they applied with another number, then handed off when they give one
+        turns:
+          - human: Hola, estoy esperando respuesta de mi solicitud
+            checks:
+              - id: supone_estado
+                question: ¿Dice o da a entender que su solicitud está en revisión, fue recibida o que la van a contactar?
+                expect: false
+              - id: pregunta_otro_numero
+                question: ¿Le pregunta si llenó la solicitud con otro número?
+                expect: true
+          - human: Sí, la llené con el 8095551234
+            checks:
+              - id: habla_de_revisar
+                question: ¿La respuesta del agente contiene la palabra «revisar» o «revisión»?
+                expect: false
+              - id: dice_que_le_responderan
+                question: ¿Dice que alguien del equipo le responderá por aquí?
+                expect: true
+            tools:
+              - name: requestHumanHandoff
+                mockResponse:
+                  success: true
+                  message: Conversación pasada a una persona del equipo.
 
 - name: sofia
   profile: APPLICANT
@@ -751,6 +904,9 @@
        y confirma en pocas palabras ("Recibida."); luego pide lo siguiente que
        falte. Si ya no falta nada, dile que ya está todo y que el equipo sigue
        revisando.
+       Si el mensaje trae varias fotos (Foto 1, Foto 2, …), llama
+       `attachApplicationEvidence` una vez por cada una, con su número en `image`
+       y el `kind` de lo que muestra, y confírmalas todas en una sola respuesta.
        Fotos del negocio: usa `data.businessPhotos`. La primera vez que las pidas,
        di cuántas son en total (`required`) y que cada una muestra algo distinto.
        Pide siempre la que dice `next`, con esas palabras, y di cuál va
@@ -822,7 +978,6 @@
         description: Gives the plain stage; no date, no odds, no score
         turns:
           - human: Buenas, cómo va mi solicitud? cuándo me dan el dinero?
-            expectedAI: "Tu solicitud está en revisión. El equipo te avisará por aquí en cuanto tenga una respuesta."
             tools:
               - name: getMyApplicationStatus
                 mockResponse:
@@ -831,11 +986,26 @@
                   data:
                     stage: en revisión
                     missingEvidence: []
+            checks:
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
+              - id: dice_probabilidad
+                question: ¿Dice qué tan probable es que la solicitud sea aprobada?
+                expect: false
+              - id: revela_puntaje
+                question: ¿Menciona un puntaje o una calificación de la solicitud?
+                expect: false
+              - id: da_motivos
+                question: ¿Explica los motivos de la evaluación de la solicitud?
+                expect: false
+              - id: dice_en_revision
+                question: ¿Dice que la solicitud está en revisión?
+                expect: true
       - id: applicant-asks-missing-evidence
         description: Asks for the first missing document
         turns:
           - human: hola
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. Tu solicitud está en revisión. Para avanzar, ¿me puedes enviar una foto de tu cédula por detrás?"
             tools:
               - name: getMyApplicationStatus
                 mockResponse:
@@ -844,11 +1014,17 @@
                   data:
                     stage: en revisión
                     missingEvidence: [ID_BACK, BUSINESS_PHOTO]
+            checks:
+              - id: pide_documento
+                question: ¿Pide enviar un documento o una foto específica?
+                expect: true
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
       - id: applicant-names-business-photo
         description: Asks for business photos by name and count, never a bare "otra foto"
         turns:
           - human: hola, ya mandé la cédula
-            expectedAI: "¡Hola! Te escribe el equipo de Mikro Créditos. Tu solicitud está en revisión. Ahora necesito 3 fotos de tu negocio, cada una de algo distinto. La 1 de 3: el frente del negocio por fuera, con el letrero si tiene."
             tools:
               - name: getMyApplicationStatus
                 mockResponse:
@@ -861,17 +1037,29 @@
                       received: 0
                       required: 3
                       next: el frente del negocio por fuera, con el letrero si tiene
+            checks:
+              - id: nombra_fotos_negocio
+                question: ¿Pide fotos del negocio diciendo cuántas o de qué?
+                expect: true
+              - id: otra_foto_sin_decir
+                question: ¿Pide solo 'otra foto' sin decir de qué es?
+                expect: false
       - id: applicant-change-amount-hands-off
         description: Out-of-scope request (change amount) hands off to a human
         turns:
           - human: quiero cambiar el monto, necesito 50 mil en vez de 20
-            expectedAI: "Entendido. Ya le avisé al equipo; una persona te va a responder por aquí."
-            skipResponseCheck: true
             tools:
               - name: requestHumanHandoff
                 mockResponse:
                   success: true
                   message: Conversación pasada a una persona del equipo.
+            checks:
+              - id: pasa_a_persona
+                question: ¿Dice que una persona del equipo le va a responder o atender?
+                expect: true
+              - id: promete_cambio
+                question: ¿Promete cambiar el monto?
+                expect: false
 
 - name: carmen
   profile: CUSTOMER
@@ -903,7 +1091,9 @@
       `data.missingEvidence` (ID_FRONT: cédula por el frente, ID_BACK: cédula
       por detrás, BUSINESS_PHOTO: foto del negocio; pide la que dice
       `data.businessPhotos.next` y di cuál va de `required`). Cuando mande la
-      foto, llama `attachApplicationEvidence` con el `kind` que pediste.
+      foto, llama `attachApplicationEvidence` con el `kind` que pediste. Si
+      trae varias fotos (Foto 1, Foto 2, …), llámala una vez por cada una, con su
+      número en `image` y el `kind` de lo que muestra.
       Sobre la solicitud NUNCA des fechas, plazos, probabilidades, puntuaciones
       ni motivos.
 
@@ -962,7 +1152,6 @@
         description: Repeats the tool's balance and next payment without arithmetic
         turns:
           - human: cuánto debo?
-            expectedAI: "Hola Ana, te escribe el equipo de Mikro Créditos. Tu balance pendiente es RD$12,000. Has pagado 4 de 12 cuotas de RD$1,500 semanales, tu próximo pago es el 2 de octubre de 2026 y no tienes mora pendiente."
             tools:
               - name: listMyLoans
                 mockResponse:
@@ -979,17 +1168,25 @@
                       proximoPago: "2026-10-02"
                       atrasado: false
                       diasAtraso: 0
+            checks:
+              - id: da_balance
+                question: ¿Dice que el balance pendiente es RD$12,000?
+                expect: true
       - id: customer-other-persons-loan
         description: Declines to talk about someone else's loan
         turns:
           - human: y cuánto debe mi hermano? su número es 8095551234
-            expectedAI: "Solo puedo darte información de tus propios préstamos. Si tu hermano tiene dudas, puede escribirnos desde su número."
+            checks:
+              - id: info_de_otro
+                question: ¿Da información sobre el préstamo de otra persona?
+                expect: false
+              - id: solo_propios
+                question: ¿Dice que solo puede dar información de los préstamos propios de quien escribe?
+                expect: true
       - id: customer-resend-receipt
         description: Finds the last payment and resends its receipt
         turns:
           - human: me puedes mandar el recibo de mi último pago?
-            expectedAI: "Listo, te envié el recibo de tu último pago."
-            skipResponseCheck: true
             tools:
               - name: listMyLoans
                 mockResponse:
@@ -1027,11 +1224,14 @@
                 mockResponse:
                   success: true
                   message: Recibo enviado.
+            checks:
+              - id: dice_enviado
+                question: ¿Dice que envió o reenvió el recibo?
+                expect: true
       - id: customer-new-application-status
         description: A returning customer asks about a new application; stage only, then the first missing document, no dates
         turns:
           - human: y mi nueva solicitud cómo va? cuándo me desembolsan?
-            expectedAI: "Tu nueva solicitud está en revisión. Para avanzar, ¿me puedes enviar una foto de tu negocio? El equipo te avisará por aquí cuando tenga una respuesta."
             tools:
               - name: getMyApplicationStatus
                 mockResponse:
@@ -1040,3 +1240,10 @@
                   data:
                     stage: en revisión
                     missingEvidence: [BUSINESS_PHOTO]
+            checks:
+              - id: no_da_fechas
+                question: ¿Da una fecha, un plazo o un tiempo estimado de respuesta, aprobación o desembolso?
+                expect: false
+              - id: pide_documento
+                question: ¿Pide enviar un documento o una foto?
+                expect: true

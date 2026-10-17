@@ -32,6 +32,8 @@ import type {
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import type { PrismaClient } from "../../generated/prisma/client.js";
+import { latestDecision } from "../credit/decide.js";
 import { createCancelApplicationJobs } from "../../follow-up/index.js";
 
 export interface ApplicationRef {
@@ -273,6 +275,15 @@ export function createApproveApplication(client: DbClient) {
       approvedAmount: input.approvedAmount,
       approvedTermWeeks: input.approvedTermWeeks
     });
+    // Credit policy: only a hard NO that was actually checked blocks approval.
+    // Lookups that weren't done never block (each one costs money). No override.
+    const decision = await latestDecision(client as unknown as PrismaClient, app.id);
+    if (decision?.outcome === "REJECT") {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: `No se puede aprobar: ${decision.reasons.map((r) => r.message).join("; ")} [CREDIT_POLICY_BLOCKED]`
+      });
+    }
     return commitTransition(client, app, {
       status: to,
       approvedAmount: input.approvedAmount,
@@ -297,12 +308,27 @@ export function createRejectApplication(client: DbClient, deps: RejectApplicatio
   ): Promise<LoanApplication> => {
     const app = await loadApplication(client, input);
     const to = authorize(app, "reject", actor, { reason: input.reason, note: input.note });
+    let note = input.note || null;
+    if (input.reason === "CREDIT_POLICY") {
+      // Same who/when rules as every reason; valid only on a policy hard NO,
+      // whose reason codes are stored with the rejection (no note needed).
+      const decision = await latestDecision(client as unknown as PrismaClient, app.id);
+      if (decision?.outcome !== "REJECT" || decision.reasons.length === 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "La política de crédito no rechaza esta solicitud; elige otro motivo [CREDIT_POLICY_NOT_REJECTED]"
+        });
+      }
+      const codes = decision.reasons.map((r) => r.code).join(", ");
+      note = note ? `${note} (${codes})` : codes;
+    }
     const updated = await commitTransition(client, app, {
       status: to,
       rejectionReason: input.reason,
       decidedById: actor.id,
       decidedAt: new Date(),
-      decisionNote: input.note || null
+      decisionNote: note
     });
     deps.onRejected?.(updated).catch((err: Error) => {
       logger.error("post-rejection hook failed", { applicationId: app.id, error: err.message });

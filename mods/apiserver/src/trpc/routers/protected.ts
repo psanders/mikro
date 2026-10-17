@@ -2,8 +2,10 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import type { Role, TransitionActor } from "@mikro/common";
 import {
+  drPhoneDigits,
   // Customer schemas
   createCustomerSchema,
   updateCustomerSchema,
@@ -21,6 +23,7 @@ import {
   getApplicationConversationSchema,
   listConversationTurnsSchema,
   deleteConversationSchema,
+  classifyConversationTurnsSchema,
   listConversationAuditFindingsSchema,
   // Loan schemas
   createLoanSchema,
@@ -126,7 +129,8 @@ import {
   createGetApplicationChatwootUrl,
   createListConversationTurns,
   createDeleteConversation,
-  createListConversationAuditFindings
+  createListConversationAuditFindings,
+  createClassifyConversationTurns
 } from "../../api/conversations/index.js";
 import { createChatwootClient } from "../../api/chatwoot/index.js";
 // Dashboard API functions
@@ -180,6 +184,9 @@ import {
   trackEvidenceCompletion
 } from "../../api/applications/evidence.js";
 import { loadApplication } from "../../api/applications/reviewApplication.js";
+import { creditReportPushSchema } from "@mikro/score";
+import { getCreditPanel, ingestCreditReport, listCreditReports } from "../../api/credit/panel.js";
+import { latestDecision } from "../../api/credit/decide.js";
 import { refreshApplicationSummary } from "../../api/applications/applicationSummary.js";
 import { listDisbursementAccounts } from "../../api/applications/disbursementAccounts.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
@@ -231,7 +238,8 @@ import {
   getWhatsAppPromoTemplate,
   getDeepgramApiKey,
   createChatModel,
-  getLLMConfig
+  getFeedbackModel,
+  getCxDecisionProvider
 } from "@mikro/agents";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 // Accounting schemas
@@ -545,6 +553,24 @@ export const protectedRouter = router({
       return createDeleteConversation(ctx.db as unknown as PrismaClient)(input);
     }),
 
+  /**
+   * Label stored INBOUND turns with the decision-model classifier (openspec
+   * conversation-state): the backfill behind `mikro conversations:classify`.
+   * Labels only. `dryRun` reports without writing. ADMIN.
+   */
+  classifyConversationTurns: adminProcedure
+    .input(classifyConversationTurnsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const provider = getCxDecisionProvider();
+      if (!provider) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "No classifier configured: add `cx.classifier` to mikro.json."
+        });
+      }
+      return createClassifyConversationTurns(ctx.db as unknown as PrismaClient, provider)(input);
+    }),
+
   // ==================== Loan procedures ====================
 
   /**
@@ -784,6 +810,44 @@ export const protectedRouter = router({
       const onRejected = createNotifyRejection(getConfig().twilio);
       return createRejectApplication(ctx.db, { onRejected })(input, actorOf(ctx));
     }),
+
+  // ==================== Credit decision engine (Mikro Decisión) ====================
+
+  /**
+   * What the Mikro Decisión panel shows for a cédula: its open application,
+   * the current credit decision, and the review actions the caller may take
+   * (today's rules). Reviewers (ADMIN/REVIEWER) only.
+   */
+  getCreditPanel: reviewerProcedure
+    .input(z.object({ cedula: z.string().min(11).max(20) }))
+    .query(async ({ ctx, input }) =>
+      getCreditPanel(ctx.db as unknown as PrismaClient, input.cedula, actorOf(ctx), {
+        minBusinessPhotos: getMinBusinessPhotos()
+      })
+    ),
+
+  /** Store facts pushed by the extension (never the raw report) and re-decide. */
+  ingestCreditReport: reviewerProcedure
+    .input(creditReportPushSchema)
+    .mutation(async ({ ctx, input }) =>
+      ingestCreditReport(ctx.db as unknown as PrismaClient, input, actorOf(ctx), {
+        minBusinessPhotos: getMinBusinessPhotos()
+      })
+    ),
+
+  /** Bureau lookups recorded for a cédula (when, which source, who). */
+  listCreditReports: reviewerProcedure
+    .input(z.object({ cedula: z.string().min(11).max(20) }))
+    .query(async ({ ctx, input }) =>
+      listCreditReports(ctx.db as unknown as PrismaClient, input.cedula)
+    ),
+
+  /** The current credit decision of an application (null before the first one). */
+  getCreditDecision: reviewerProcedure
+    .input(z.object({ applicationId: z.string().min(1) }))
+    .query(async ({ ctx, input }) =>
+      latestDecision(ctx.db as unknown as PrismaClient, input.applicationId)
+    ),
 
   /** The customer backed out after approval (APPROVED -> ABANDONED). */
   withdrawApplication: reviewerProcedure
@@ -1073,14 +1137,9 @@ export const protectedRouter = router({
       imageUrl,
       recordOutbound: createRecordOutboundMessage(ctx.db as unknown as PrismaClient)
     });
-    // Normalize to E.164 — same logic as normalizeApplication's parsePhone.
-    const digits = input.phone.replace(/\D/g, "");
-    const e164 =
-      digits.length === 10
-        ? `+1${digits}`
-        : digits.length === 11 && digits.startsWith("1")
-          ? `+${digits}`
-          : null;
+    // Normalize to E.164 — same rule as normalizeApplication's parsePhone.
+    const digits = drPhoneDigits(input.phone);
+    const e164 = digits ? `+1${digits}` : null;
     return sendFn({ phone: e164, flowToken: randomUUID() });
   }),
 
@@ -1120,7 +1179,7 @@ export const protectedRouter = router({
 
       const fn = createSubmitFeedback({
         transcribe: createTranscribeVoiceNote(deepgramApiKey),
-        createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+        createModel: () => createChatModel(getFeedbackModel(), { temperature: 0.3 }),
         // Without an explicit API version, GitHub routes the request through
         // an implicit legacy version and returns a deprecation warning
         // ("scheduled to be removed" — seen for real on the issues.create

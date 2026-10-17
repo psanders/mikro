@@ -67,12 +67,12 @@ function askCopilotQuestion(event: FeedEvent): string | null {
 // Full-card tint per Pencil: deletions on a faint red wash, policy exceptions
 // on a faint amber wash. No left rule — the tinted icon chip carries the accent.
 const CARD_TINT: Record<"amber" | "red", string> = {
-  amber: "bg-[#FDF9F0]",
-  red: "bg-[#FEF6F6]"
+  amber: "bg-ds-amber-bg",
+  red: "bg-ds-red-bg"
 };
 
 const ACT_BUTTON =
-  "inline-flex items-center gap-[7px] rounded-[9px] border border-[#E5EAF1] bg-white px-4 py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]";
+  "inline-flex items-center gap-[7px] rounded-[9px] border border-ds-border bg-ds-surface px-4 py-[9px] text-[14px] font-medium text-brand-ink transition hover:bg-ds-bg";
 
 const LINK_BUTTON = "inline-flex items-center gap-[5px] text-[11px] font-semibold";
 
@@ -128,13 +128,13 @@ export function FeedCard({
   const metaText = deletion && !canRestore ? "Ventana de restauración vencida" : meta.text;
   const metaClass =
     meta.tone === "red" && !(deletion && !canRestore)
-      ? "text-[#DC2626] font-semibold"
+      ? "text-ds-red font-semibold"
       : meta.tone === "amber"
         ? "text-ds-amber font-semibold"
-        : "text-[#697A93] font-medium";
+        : "text-ds-muted font-medium";
 
   return (
-    <div className={cn("w-full border-b border-[#E5EAF1]", tint && CARD_TINT[tint], className)}>
+    <div className={cn("w-full border-b border-ds-border", tint && CARD_TINT[tint], className)}>
       <div className={cn("flex flex-col gap-3 px-6", isExpanded ? "pt-3 pb-4" : "py-3")}>
         <div
           role="button"
@@ -151,7 +151,7 @@ export function FeedCard({
         >
           <FeedTypeIcon event={event} />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <p className="truncate text-[14px] leading-tight text-[#14254A]">
+            <p className="truncate text-[14px] leading-tight text-brand-ink">
               {lead && <span className="font-semibold">{lead} </span>}
               <span className="font-medium">{rest}</span>
             </p>
@@ -160,7 +160,7 @@ export function FeedCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-[10px]">
-            <span className="text-[12px] font-medium text-[#697A93]">
+            <span className="text-[12px] font-medium text-ds-muted">
               {formatClockTime(event.occurredAt)}
             </span>
             <button
@@ -171,7 +171,7 @@ export function FeedCard({
               }}
               aria-expanded={isExpanded}
               aria-label={isExpanded ? "Contraer" : "Expandir"}
-              className="flex items-center justify-center text-[#697A93]"
+              className="flex items-center justify-center text-ds-muted"
             >
               <ChevronIcon size={15} />
             </button>
@@ -181,7 +181,7 @@ export function FeedCard({
         {isExpanded && (
           <div className="flex flex-col gap-[10px] pl-[50px]">
             {narrative && (
-              <p className="text-[13px] font-medium leading-[1.4] text-[#14254A]">{narrative}</p>
+              <p className="text-[13px] font-medium leading-[1.4] text-brand-ink">{narrative}</p>
             )}
 
             {detailSlot}
@@ -191,7 +191,7 @@ export function FeedCard({
                 <button
                   type="button"
                   onClick={() => setMetadataOpen((v) => !v)}
-                  className={cn(LINK_BUTTON, "text-[#697A93] hover:text-[#14254A]")}
+                  className={cn(LINK_BUTTON, "text-ds-muted hover:text-brand-ink")}
                 >
                   <Braces size={11} />
                   Metadata
@@ -200,7 +200,7 @@ export function FeedCard({
                   <button
                     type="button"
                     onClick={() => onAskCopilot(insightsQuestion)}
-                    className={cn(LINK_BUTTON, "text-[#1F4AA8] hover:text-[#14356e]")}
+                    className={cn(LINK_BUTTON, "text-brand-blue-primary hover:text-[#14356e]")}
                   >
                     <Sparkles size={11} />
                     IA insights
@@ -232,7 +232,7 @@ export function FeedCard({
                           <button
                             type="button"
                             onClick={() => onAskCopilot(askQuestion)}
-                            className="inline-flex items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+                            className="inline-flex items-center gap-[7px] rounded-full bg-brand-mist px-[14px] py-2 text-[12px] font-semibold text-brand-blue-primary transition hover:bg-ds-subtle"
                           >
                             <Sparkles size={13} />
                             {askQuestion}
@@ -241,7 +241,7 @@ export function FeedCard({
                           <span
                             title="Próximamente"
                             aria-disabled="true"
-                            className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-[#E9F2FF] px-[14px] py-2 text-[12px] font-semibold text-[#1F4AA8] opacity-80"
+                            className="inline-flex cursor-not-allowed items-center gap-[7px] rounded-full bg-brand-mist px-[14px] py-2 text-[12px] font-semibold text-brand-blue-primary opacity-80"
                           >
                             <Sparkles size={13} />
                             {askQuestion}
@@ -249,7 +249,7 @@ export function FeedCard({
                         ))}
                     </>
                   ) : (
-                    <span className="text-[13px] font-medium text-[#697A93]">
+                    <span className="text-[13px] font-medium text-ds-muted">
                       Ventana de restauración vencida
                     </span>
                   )

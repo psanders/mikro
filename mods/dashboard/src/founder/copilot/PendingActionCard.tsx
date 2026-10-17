@@ -66,7 +66,7 @@ export function PendingActionCard(props: PendingActionCardProps) {
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-[12px] rounded-[14px] border border-[#E5EAF1] bg-white p-[16px]",
+        "flex w-full flex-col gap-[12px] rounded-[14px] border border-ds-border bg-ds-surface p-[16px]",
         muted && "opacity-70",
         className
       )}
@@ -75,13 +75,13 @@ export function PendingActionCard(props: PendingActionCardProps) {
         <div
           className={cn(
             "flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[11px]",
-            confirmed ? "bg-[#E8F7EE]" : "bg-[#E9F2FF]"
+            confirmed ? "bg-ds-green-bg" : "bg-brand-mist"
           )}
         >
           {confirmed ? (
-            <CircleCheck size={17} strokeWidth={2} className="text-[#16A34A]" />
+            <CircleCheck size={17} strokeWidth={2} className="text-ds-green" />
           ) : (
-            <Sparkles size={17} strokeWidth={2} className="text-[#1F4AA8]" />
+            <Sparkles size={17} strokeWidth={2} className="text-brand-blue-primary" />
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
@@ -92,10 +92,10 @@ export function PendingActionCard(props: PendingActionCardProps) {
           <p
             className={cn(
               "text-[12px] font-semibold leading-tight",
-              confirmed && "text-[#16A34A]",
-              expired && "text-[#DC2626]",
-              muted && "text-[#697A93]",
-              state === "pending" && "text-[#1F4AA8]"
+              confirmed && "text-ds-green",
+              expired && "text-ds-red",
+              muted && "text-ds-muted",
+              state === "pending" && "text-brand-blue-primary"
             )}
           >
             {state === "pending" && "Requiere tu confirmación"}
@@ -107,7 +107,7 @@ export function PendingActionCard(props: PendingActionCardProps) {
       </div>
 
       {argEntries.length > 0 && (
-        <p className="break-words rounded-[10px] border border-[#E5EAF1] bg-[#F4F7FB] px-[12px] py-[10px] text-[12px] leading-[18px] text-[#697A93]">
+        <p className="break-words rounded-[10px] border border-ds-border bg-ds-bg px-[12px] py-[10px] text-[12px] leading-[18px] text-ds-muted">
           {argsNarrative(action.args)}
         </p>
       )}
@@ -119,8 +119,8 @@ export function PendingActionCard(props: PendingActionCardProps) {
             disabled={expired}
             onClick={() => onConfirm?.(action)}
             className={cn(
-              "inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
-              expired && "cursor-not-allowed opacity-50 hover:bg-[#1F4AA8]"
+              "inline-flex items-center gap-[7px] rounded-[9px] bg-brand-blue-primary px-[16px] py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]",
+              expired && "cursor-not-allowed opacity-50 hover:bg-brand-blue-primary"
             )}
           >
             Confirmar
@@ -130,8 +130,8 @@ export function PendingActionCard(props: PendingActionCardProps) {
             disabled={expired}
             onClick={() => onReject?.(action)}
             className={cn(
-              "inline-flex items-center gap-[7px] rounded-[9px] border border-[#E5EAF1] bg-white px-[16px] py-[9px] text-[14px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]",
-              expired && "cursor-not-allowed opacity-50 hover:bg-white"
+              "inline-flex items-center gap-[7px] rounded-[9px] border border-ds-border bg-ds-surface px-[16px] py-[9px] text-[14px] font-medium text-brand-ink transition hover:bg-ds-bg",
+              expired && "cursor-not-allowed opacity-50 hover:bg-ds-surface"
             )}
           >
             Cancelar

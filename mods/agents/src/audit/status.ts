@@ -8,7 +8,7 @@
  */
 import { z } from "zod";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getLLMConfig } from "../config.js";
+import { getAuditModel } from "../config.js";
 import { createChatModel } from "../llm/providers.js";
 import type { AuditSeverity } from "./types.js";
 
@@ -106,7 +106,7 @@ Escribe UN párrafo corto (1 a 3 oraciones, máximo 300 caracteres), en español
 /** The LLM-backed writer (evals model). Throws on failure; the caller falls back. */
 export function createWriteAuditStatus(): WriteAuditStatus {
   return async (input) => {
-    const model = createChatModel(getLLMConfig("evals"), { temperature: 0.2 });
+    const model = createChatModel(getAuditModel(), { temperature: 0.2 });
     const structured = model.withStructuredOutput(statusSchema);
     const counting = auditCountingPhrase(input.conversations, input.flaggedConversations);
     const findings = input.findings

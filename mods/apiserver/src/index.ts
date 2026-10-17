@@ -59,11 +59,14 @@ import {
   createJudgeConversation,
   createWriteAuditStatus,
   createChatModel,
-  getLLMConfig,
+  getCopilotModel,
+  getApplicationSummaryModel,
   getWhatsAppPromoTemplate,
+  getCxDecisionProvider,
   type Message,
   type Profile,
-  type ToolExecutorDependencies
+  type ToolExecutorDependencies,
+  type TurnImages
 } from "@mikro/agents";
 import { setCopilotDeps } from "./api/copilot/index.js";
 import { createTaskWorker } from "./tasks/index.js";
@@ -75,7 +78,8 @@ import { createEchoToChatwoot, createNotifyChatwootHandoff } from "./api/chatwoo
 import {
   createRecordConversationTurn,
   createGetConversationHistory,
-  createRunConversationAudit
+  createRunConversationAudit,
+  createLabelInboundTurn
 } from "./api/conversations/index.js";
 import { createConversationAuditWorker } from "./audit/createConversationAuditWorker.js";
 
@@ -132,6 +136,7 @@ import {
   createUpsertApplication,
   createApplicationIntakeHandler,
   createFindLatestApplicationByPhone,
+  createFindPriorApplication,
   createGetApplicationByPhone,
   createGetApplicationByWhatsAppUserId,
   createSubmitApplicationFromFlow,
@@ -171,6 +176,8 @@ import {
 } from "./api/jose/index.js";
 import { loadAgents } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
+import { loadCreditPolicy } from "./api/credit/policy.js";
+import { backfillOpenDecisions } from "./api/credit/decide.js";
 
 // Re-export AppRouter type for clients
 export type { AppRouter } from "./trpc/index.js";
@@ -178,6 +185,11 @@ export type { AppRouter } from "./trpc/index.js";
 const app = express();
 const cfg = getConfig();
 const PORT = cfg.port;
+// Fail at boot (not on the first decision) when credit-policy.json is invalid.
+loadCreditPolicy();
+void backfillOpenDecisions(prisma).catch((error: unknown) =>
+  logger.error("credit decision backfill failed", { error: (error as Error).message })
+);
 
 // CORS for browser-based clients: the ops dashboard web build and the Tauri
 // webview send a cross-origin `Origin`; native clients (mobile/CLI) do not and
@@ -434,9 +446,16 @@ const upsertWebApplication = createUpsertApplication(dbClient, {
   recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app),
   recordProspectActivity
 });
+// One application per person (issue #302): checked on every intake path that
+// submits — the website, the WhatsApp Flow and José.
+const findPriorApplication = createFindPriorApplication(prisma);
 const handleApplicationIntake = createApplicationIntakeHandler({
   upsertApplication: upsertWebApplication,
-  sendLeadConversion
+  sendLeadConversion,
+  findPriorApplication,
+  discardDraft: async (sessionId: string) => {
+    await prisma.loanApplication.deleteMany({ where: { sessionId, status: "DRAFT" } });
+  }
 });
 
 // Simple in-memory IP rate limiter: max N posts per window. Resets on restart;
@@ -897,7 +916,8 @@ async function initializeMessageProcessor() {
         upsertApplication,
         {
           coveredProvinces: cfg.applications.coveredProvinces,
-          recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app)
+          recordOutOfArea: (app: LoanApplication) => recordOutOfAreaRejection(prisma, app),
+          findPriorApplication
         }
       ),
       // WhatsApp CX self-service: identity comes from the message context.
@@ -923,12 +943,13 @@ async function initializeMessageProcessor() {
           request: { headers: { "x-github-api-version": "2022-11-28" } }
         })
       : undefined;
-    // Same model the copilot uses, at a lower temperature: the application
-    // summary is a factual paragraph, not a conversation.
-    setApplicationSummaryModel(() => createChatModel(getLLMConfig("text"), { temperature: 0.2 }));
+    // A low temperature: the application summary is a factual paragraph, not a conversation.
+    setApplicationSummaryModel(() =>
+      createChatModel(getApplicationSummaryModel(), { temperature: 0.2 })
+    );
     setCopilotDeps({
       toolExecutor,
-      createModel: () => createChatModel(getLLMConfig("text"), { temperature: 0.3 }),
+      createModel: () => createChatModel(getCopilotModel(), { temperature: 0.3 }),
       fileFeedback: githubFeedbackOctokit
         ? (input) =>
             fileGithubIssue(
@@ -958,7 +979,7 @@ async function initializeMessageProcessor() {
       agent: Parameters<typeof createInvokeLLM>[0],
       messages: Message[],
       userMessage: string,
-      imageUrl?: string | null,
+      images?: TurnImages,
       context?: Record<string, unknown>,
       isNewSession?: boolean
     ) => {
@@ -970,7 +991,7 @@ async function initializeMessageProcessor() {
           }
         }
       });
-      return invokeFn(messages, userMessage, imageUrl, context, isNewSession ?? true);
+      return invokeFn(messages, userMessage, images, context, isNewSession ?? true);
     };
 
     // Helper to get chat history for a user (convert DB messages to LLM Message format)
@@ -1043,6 +1064,7 @@ async function initializeMessageProcessor() {
     const submitApplicationFromFlow = createSubmitApplicationFromFlow({
       upsertApplication,
       findLatestApplicationByPhone,
+      findPriorApplication,
       findLatestApplicationByWhatsAppUserId: async (bsuid: string) => {
         const app = await prisma.loanApplication.findFirst({
           where: { whatsappUserId: bsuid },
@@ -1075,6 +1097,7 @@ async function initializeMessageProcessor() {
       return response;
     };
 
+    const decisionProvider = getCxDecisionProvider();
     const processorConfig = {
       routeMessage,
       invokeLLM,
@@ -1087,6 +1110,10 @@ async function initializeMessageProcessor() {
       // turn is written here, and the agents' memory is read back from it.
       recordConversationTurn: createRecordConversationTurn(prisma),
       getConversationHistory: createGetConversationHistory(prisma),
+      // Decision-model labels on inbound CX turns; off without `cx.classifier`.
+      ...(decisionProvider && {
+        labelInboundTurn: createLabelInboundTurn(prisma, decisionProvider)
+      }),
       getAgentForProfile,
       submitApplicationFromFlow,
       // Apply async delivery receipts (sent/delivered/read/failed) to the tracked

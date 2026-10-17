@@ -93,27 +93,27 @@ function Bubble({ turn, personName }: { turn: ThreadTurn; personName: string }) 
     >
       <div
         className={`flex w-[360px] max-w-[85%] flex-col gap-[3px] rounded-[10px] px-[11px] py-[8px] ${
-          outbound ? "bg-[#DCF3E4]" : "bg-white"
+          outbound ? "bg-ds-green-bg" : "bg-ds-surface"
         }`}
       >
         <span
           className={`whitespace-nowrap text-[10.5px] font-semibold ${
-            turn.role === "AGENT" ? "text-[#7C3AED]" : "text-[#697A93]"
+            turn.role === "AGENT" ? "text-ds-violet" : "text-ds-muted"
           }`}
         >
           {who}
         </span>
         {turn.hasImage && (
-          <span className="flex items-center gap-1 text-[11.5px] font-medium text-[#697A93]">
+          <span className="flex items-center gap-1 text-[11.5px] font-medium text-ds-muted">
             <ImageIcon size={12} /> Foto
           </span>
         )}
         {turn.content && !(turn.hasImage && turn.content === "[Imagen]") && (
-          <span className="whitespace-pre-wrap break-words text-[12.5px] font-medium leading-[18px] text-[#14254A]">
+          <span className="whitespace-pre-wrap break-words text-[12.5px] font-medium leading-[18px] text-brand-ink">
             {turn.content}
           </span>
         )}
-        <span className="whitespace-nowrap text-[10px] font-medium text-[#697A93]">
+        <span className="whitespace-nowrap text-[10px] font-medium text-ds-muted">
           {formatTurnTime(turn.createdAt)}
           {turn.failed && (
             <span className="font-semibold text-[#C2410C]" data-testid="conversation-turn-failed">
@@ -130,15 +130,15 @@ function Bubble({ turn, personName }: { turn: ThreadTurn; personName: string }) 
 function HandoffMarker({ handoff }: { handoff: ThreadHandoff }) {
   return (
     <div
-      className="flex w-full items-center gap-2 py-1 text-[10.5px] font-semibold text-[#697A93]"
+      className="flex w-full items-center gap-2 py-1 text-[10.5px] font-semibold text-ds-muted"
       data-testid="conversation-handoff"
     >
-      <span className="h-px flex-1 bg-[#E5EAF1]" />
+      <span className="h-px flex-1 bg-ds-border" />
       <UserRound size={12} />
       <span className="text-center">
         Pasó a una persona · {handoff.reason} · {formatTurnTime(handoff.openedAt)}
       </span>
-      <span className="h-px flex-1 bg-[#E5EAF1]" />
+      <span className="h-px flex-1 bg-ds-border" />
     </div>
   );
 }
@@ -161,7 +161,7 @@ export function ConversationThread({
               href={chatwootUrl}
               target="_blank"
               rel="noreferrer"
-              className="whitespace-nowrap text-[11px] font-semibold text-[#1F4AA8] hover:underline"
+              className="whitespace-nowrap text-[11px] font-semibold text-brand-blue-primary hover:underline"
             >
               Abrir en Chatwoot →
             </a>
@@ -170,11 +170,11 @@ export function ConversationThread({
       >
         Conversación · WhatsApp
       </SectionLabel>
-      <div className="flex w-full flex-col gap-2 rounded-[12px] bg-[#F4F7FB] p-[14px]">
-        {loading && <p className="text-[12px] text-[#697A93]">Cargando…</p>}
-        {error && <p className="text-[12px] text-[#697A93]">No se pudo cargar la conversación.</p>}
+      <div className="flex w-full flex-col gap-2 rounded-[12px] bg-ds-bg p-[14px]">
+        {loading && <p className="text-[12px] text-ds-muted">Cargando…</p>}
+        {error && <p className="text-[12px] text-ds-muted">No se pudo cargar la conversación.</p>}
         {!loading && !error && items.length === 0 && (
-          <p className="text-[12.5px] font-medium text-[#697A93]">
+          <p className="text-[12.5px] font-medium text-ds-muted">
             Todavía no hay mensajes de WhatsApp con este número.
           </p>
         )}

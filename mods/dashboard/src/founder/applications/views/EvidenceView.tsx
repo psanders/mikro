@@ -117,7 +117,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
       <span
         className={cn(
           "flex flex-1 items-center gap-[6px] text-[12px] font-semibold",
-          missing.length ? "text-[#D97706]" : "text-[#16A34A]"
+          missing.length ? "text-ds-amber" : "text-ds-green"
         )}
         data-testid="evidence-pending"
       >
@@ -161,7 +161,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
     <SidePanel open {...panel} footer={footer}>
       <div className="flex flex-col gap-6" data-testid="evidence-view">
         {!writable && (
-          <p className="rounded-[8px] bg-[#EEF3F9] p-3 text-[12px] font-medium text-[#697A93]">
+          <p className="rounded-[8px] bg-ds-subtle p-3 text-[12px] font-medium text-ds-muted">
             La evidencia solo la sube el evaluador asignado mientras la solicitud está en
             evaluación.
           </p>
@@ -229,7 +229,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
                 disabled={busy}
                 onClick={() => photosInput.current?.click()}
                 data-testid="evidence-add-photos"
-                className="flex h-16 flex-col items-center justify-center gap-1 rounded-[8px] border-[1.5px] border-dashed border-[#E5EAF1] bg-[#F4F7FB] text-[11px] font-semibold text-[#697A93] hover:border-[#7C3AED] hover:text-[#7C3AED]"
+                className="flex h-16 flex-col items-center justify-center gap-1 rounded-[8px] border-[1.5px] border-dashed border-ds-border bg-ds-bg text-[11px] font-semibold text-ds-muted hover:border-ds-violet hover:text-ds-violet"
               >
                 <Plus size={16} />
                 Agregar
@@ -250,7 +250,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
           />
           {writable && (
             <div className="flex flex-wrap items-center gap-[6px]">
-              <span className="text-[11.5px] font-medium text-[#697A93]">Etiqueta:</span>
+              <span className="text-[11.5px] font-medium text-ds-muted">Etiqueta:</span>
               {SUGGESTED_LABELS.map((s) => (
                 <button
                   key={s}
@@ -259,8 +259,8 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
                   className={cn(
                     "rounded-full border px-[9px] py-[3px] text-[11.5px] font-medium",
                     label === s
-                      ? "border-[#7C3AED] bg-[#FAF7FF] text-[#7C3AED]"
-                      : "border-[#E5EAF1] text-[#14254A]"
+                      ? "border-ds-violet bg-ds-violet-tint text-ds-violet"
+                      : "border-ds-border text-brand-ink"
                   )}
                 >
                   {s}
@@ -272,17 +272,17 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
 
         <section className="flex flex-col gap-3">
           <SectionLabel
-            extra={<span className="text-[11px] font-semibold text-[#697A93]">opcional</span>}
+            extra={<span className="text-[11px] font-semibold text-ds-muted">opcional</span>}
           >
             Otros documentos
           </SectionLabel>
           {others.map((d) => (
             <div
               key={d.id}
-              className="flex items-center gap-2 rounded-[8px] border border-[#E5EAF1] px-3 py-2"
+              className="flex items-center gap-2 rounded-[8px] border border-ds-border px-3 py-2"
             >
-              <Paperclip size={14} className="text-[#697A93]" />
-              <span className="flex-1 truncate text-[12.5px] font-medium text-[#14254A]">
+              <Paperclip size={14} className="text-ds-muted" />
+              <span className="flex-1 truncate text-[12.5px] font-medium text-brand-ink">
                 {d.originalName}
               </span>
               {writable && (
@@ -292,7 +292,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
                   onClick={() =>
                     run(() => deleteDoc.mutateAsync({ documentId: d.id }), "Documento quitado.")
                   }
-                  className="text-[#697A93] hover:text-[#DC2626]"
+                  className="text-ds-muted hover:text-ds-red"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -304,7 +304,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
               type="button"
               disabled={busy}
               onClick={() => otherInput.current?.click()}
-              className={cn(INPUT_CLASS, "flex items-center gap-2 text-left text-[#697A93]")}
+              className={cn(INPUT_CLASS, "flex items-center gap-2 text-left text-ds-muted")}
             >
               <Paperclip size={15} />
               Agregar documento — recibo de luz, contrato de alquiler, RNC…
@@ -323,7 +323,7 @@ export function EvidenceView({ app, evidence, viewer, onView, panel }: ViewProps
           />
         </section>
 
-        <div className="flex gap-2 rounded-[8px] bg-[#EEF3F9] p-3 text-[12px] font-medium leading-[1.4] text-[#697A93]">
+        <div className="flex gap-2 rounded-[8px] bg-ds-subtle p-3 text-[12px] font-medium leading-[1.4] text-ds-muted">
           <Info size={14} className="mt-[1px] shrink-0" />
           Cada archivo se guarda al subirlo. Puedes volver y agregar más mientras la solicitud esté
           en evaluación; al enviarla a decisión la evidencia queda fija.
@@ -370,10 +370,10 @@ function LocationSection({
         Ubicación del negocio
       </SectionLabel>
       {mapUrl && !editing && (
-        <div className="flex items-center gap-2 rounded-[10px] border border-[#E5EAF1] px-3 py-[10px]">
-          <MapPin size={15} className="shrink-0 text-[#16A34A]" />
+        <div className="flex items-center gap-2 rounded-[10px] border border-ds-border px-3 py-[10px]">
+          <MapPin size={15} className="shrink-0 text-ds-green" />
           <span
-            className="flex-1 truncate text-[12.5px] font-medium text-[#14254A]"
+            className="flex-1 truncate text-[12.5px] font-medium text-brand-ink"
             data-testid="evidence-location-url"
           >
             {mapUrl}
@@ -382,7 +382,7 @@ function LocationSection({
             href={mapUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 text-[12px] font-semibold text-[#1F4AA8]"
+            className="flex items-center gap-1 text-[12px] font-semibold text-brand-blue-primary"
           >
             <ExternalLink size={13} />
             Abrir en Maps
@@ -392,7 +392,7 @@ function LocationSection({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="text-[12px] font-semibold text-[#1F4AA8]"
+                className="text-[12px] font-semibold text-brand-blue-primary"
               >
                 Reemplazar
               </button>
@@ -401,7 +401,7 @@ function LocationSection({
                 aria-label="Quitar ubicación"
                 disabled={busy}
                 onClick={() => void onSave(null)}
-                className="text-[#697A93] hover:text-[#DC2626]"
+                className="text-ds-muted hover:text-ds-red"
               >
                 <Trash2 size={14} />
               </button>
@@ -414,16 +414,16 @@ function LocationSection({
           <div
             className={cn(
               "flex items-center gap-[10px] rounded-[10px] border px-[14px] py-[8px]",
-              invalid ? "border-[#DC2626]" : "border-[#F5C98F]"
+              invalid ? "border-ds-red" : "border-[#F5C98F]"
             )}
           >
-            <MapPin size={15} className="shrink-0 text-[#697A93]" />
+            <MapPin size={15} className="shrink-0 text-ds-muted" />
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void save()}
               placeholder="Pega el enlace de Google Maps del negocio"
-              className="flex-1 bg-transparent text-[12.5px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93]"
+              className="flex-1 bg-transparent text-[12.5px] font-medium text-brand-ink outline-none placeholder:text-ds-muted"
               data-testid="evidence-location-input"
             />
             <Btn
@@ -442,7 +442,7 @@ function LocationSection({
                   setDraft("");
                   setEditing(false);
                 }}
-                className="text-[12px] font-semibold text-[#697A93]"
+                className="text-[12px] font-semibold text-ds-muted"
               >
                 Cancelar
               </button>
@@ -451,7 +451,7 @@ function LocationSection({
           <p
             className={cn(
               "text-[12px] font-medium leading-[1.4]",
-              invalid ? "text-[#DC2626]" : "text-[#697A93]"
+              invalid ? "text-ds-red" : "text-ds-muted"
             )}
           >
             {invalid
@@ -461,7 +461,7 @@ function LocationSection({
         </>
       )}
       {!mapUrl && !writable && (
-        <p className="text-[12px] font-medium text-[#D97706]">Sin ubicación todavía.</p>
+        <p className="text-[12px] font-medium text-ds-amber">Sin ubicación todavía.</p>
       )}
     </section>
   );
@@ -470,15 +470,15 @@ function LocationSection({
 function SlotHeader({ label, done }: { label: string; done: boolean }) {
   return (
     <div className="flex items-center gap-[6px]">
-      <span className="text-[12px] font-semibold text-[#697A93]">{label}</span>
-      {done && <span className="text-[11px] font-semibold text-[#16A34A]">✓</span>}
+      <span className="text-[12px] font-semibold text-ds-muted">{label}</span>
+      {done && <span className="text-[11px] font-semibold text-ds-green">✓</span>}
     </div>
   );
 }
 
 function Counter({ ok, children }: { ok: boolean; children: string }) {
   return (
-    <span className={cn("text-[11px] font-semibold", ok ? "text-[#16A34A]" : "text-[#D97706]")}>
+    <span className={cn("text-[11px] font-semibold", ok ? "text-ds-green" : "text-ds-amber")}>
       {children}
     </span>
   );
@@ -508,7 +508,7 @@ function DropZone({
           if (!disabled) onPick(e.dataTransfer.files);
         }}
         data-testid={testId}
-        className="flex h-[130px] flex-col items-center justify-center gap-[6px] rounded-[10px] border-[1.5px] border-[#7C3AED] bg-[#FAF7FF] text-[11.5px] font-semibold text-[#7C3AED] disabled:border-[#E5EAF1] disabled:bg-[#F4F7FB] disabled:text-[#697A93]"
+        className="flex h-[130px] flex-col items-center justify-center gap-[6px] rounded-[10px] border-[1.5px] border-ds-violet bg-ds-violet-tint text-[11.5px] font-semibold text-ds-violet disabled:border-ds-border disabled:bg-ds-bg disabled:text-ds-muted"
       >
         <ImageUp size={20} />
         Arrastra o haz clic
@@ -546,7 +546,7 @@ function FilePick({
         type="button"
         disabled={disabled}
         onClick={() => ref.current?.click()}
-        className="self-start text-[11px] font-semibold text-[#1F4AA8]"
+        className="self-start text-[11px] font-semibold text-brand-blue-primary"
       >
         {children}
       </button>
@@ -570,7 +570,7 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
       type="button"
       aria-label="Quitar"
       onClick={onClick}
-      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#697A93] shadow hover:text-[#DC2626]"
+      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ds-surface/90 text-ds-muted shadow hover:text-ds-red"
     >
       <Trash2 size={12} />
     </button>

@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.16.0](https://github.com/psanders/mikro/compare/v3.15.0...v3.16.0) (2026-10-17)
+
+### Features
+
+- dark mode for Ops (Sistema/Claro/Oscuro) and the Mikro Decisión extension ([#352](https://github.com/psanders/mikro/issues/352)) ([f81fba3](https://github.com/psanders/mikro/commit/f81fba34aa4728082bde580fce3e8a9ad797b490))
+
+# [3.15.0](https://github.com/psanders/mikro/compare/v3.14.1...v3.15.0) (2026-10-17)
+
+### Bug Fixes
+
+- **cx:** Lucía's hand-off reply is fixed text, never mentions reviewing ([#349](https://github.com/psanders/mikro/issues/349)) ([6322945](https://github.com/psanders/mikro/commit/6322945648150ce3550d5c4191336f7629f8964e))
+
+### Features
+
+- credit decision engine, Mikro Score from every source, Mikro Decisión extension ([#351](https://github.com/psanders/mikro/issues/351)) ([f91ca6f](https://github.com/psanders/mikro/commit/f91ca6f26bf18d88c4c8be0277bccb651711877e))
+
+## [3.14.1](https://github.com/psanders/mikro/compare/v3.14.0...v3.14.1) (2026-10-17)
+
+**Note:** Version bump only for package mikro
+
+# [3.14.0](https://github.com/psanders/mikro/compare/v3.13.5...v3.14.0) (2026-10-16)
+
+### Features
+
+- **cx:** decision-model eval checks, live intent labels, per-agent audit judging + code checks ([#341](https://github.com/psanders/mikro/issues/341)) ([0843e5b](https://github.com/psanders/mikro/commit/0843e5b9a940a8b967a56d1d5ca942b946a6dd05))
+
+## [3.13.5](https://github.com/psanders/mikro/compare/v3.13.4...v3.13.5) (2026-10-16)
+
+### Bug Fixes
+
+- **applications:** one application per person, enforce the reapply cooldown ([#302](https://github.com/psanders/mikro/issues/302)) ([#339](https://github.com/psanders/mikro/issues/339)) ([b5d640f](https://github.com/psanders/mikro/commit/b5d640f9633cf8ba086921690aa910987ea4688c))
+
+## [3.13.4](https://github.com/psanders/mikro/compare/v3.13.3...v3.13.4) (2026-10-16)
+
+### Bug Fixes
+
+- **jose:** marital status enum; no spouse questions for singles, no filler answers ([#335](https://github.com/psanders/mikro/issues/335)) ([40f9526](https://github.com/psanders/mikro/commit/40f9526249f57765c798c391e9fc81fdda732d31))
+
+## [3.13.3](https://github.com/psanders/mikro/compare/v3.13.2...v3.13.3) (2026-10-16)
+
+### Bug Fixes
+
+- **cx:** answer a burst of photos once, attaching every photo ([#336](https://github.com/psanders/mikro/issues/336)) ([517024a](https://github.com/psanders/mikro/commit/517024a71a78906280c17d2bfd0cf2445ee94c3e))
+
+## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
+
+### Bug Fixes
+
+- **applications:** reject impossible phone numbers instead of storing +11… ([#301](https://github.com/psanders/mikro/issues/301)) ([#338](https://github.com/psanders/mikro/issues/338)) ([8a04c41](https://github.com/psanders/mikro/commit/8a04c41ab0f1c0d1acdc0f168ba75f28e412f7a6))
+- **cx:** Lucía never guesses an application's status ([#337](https://github.com/psanders/mikro/issues/337)) ([a33c697](https://github.com/psanders/mikro/commit/a33c697357b3db0bf04682d5c880a3d5d913d6b9))
+
 ## [3.13.1](https://github.com/psanders/mikro/compare/v3.13.0...v3.13.1) (2026-10-13)
 
 ### Bug Fixes

@@ -63,8 +63,8 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
   const inputCls = (field: keyof LoanCalculatorForm) =>
     cn(
       INPUT_CLASS,
-      "focus:border-[#1F4AA8]",
-      error?.field === field && "!border-[#DC2626] !bg-[#FDECEC]"
+      "focus:border-brand-blue-primary",
+      error?.field === field && "!border-ds-red !bg-ds-red-bg"
     );
 
   const fieldError = (field: keyof LoanCalculatorForm) =>
@@ -72,7 +72,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
       <span
         role="alert"
         data-testid="calc-error"
-        className="flex items-center gap-[5px] text-[12px] font-medium text-[#DC2626]"
+        className="flex items-center gap-[5px] text-[12px] font-medium text-ds-red"
       >
         <CircleAlert size={13} />
         {error.message}
@@ -86,7 +86,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
       title="Calculadora de préstamo"
       subtitle="Simulación · no crea ningún préstamo"
       icon={Calculator}
-      iconClassName="bg-[#E9F2FF] text-[#1F4AA8]"
+      iconClassName="bg-brand-mist text-brand-blue-primary"
       testId="calculator-panel"
     >
       <div className="flex flex-col gap-[22px]">
@@ -144,11 +144,11 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
           <SectionLabel>Opciones</SectionLabel>
           {outcome.ok ? (
             <table
-              className="w-full border-separate border-spacing-0 overflow-hidden rounded-[10px] border border-[#E5EAF1] text-[13px] font-medium"
+              className="w-full border-separate border-spacing-0 overflow-hidden rounded-[10px] border border-ds-border text-[13px] font-medium"
               data-testid="calc-options"
             >
               <thead>
-                <tr className="bg-[#F4F7FB] text-[11px] font-semibold text-[#697A93]">
+                <tr className="bg-ds-bg text-[11px] font-semibold text-ds-muted">
                   <th className="px-4 py-[9px] text-left">Plazo</th>
                   <th className="px-2 py-[9px] text-left">Tasa</th>
                   <th className="px-2 py-[9px] text-right">Interés</th>
@@ -162,15 +162,15 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
                     key={o.duration}
                     data-testid={o.isBase ? "calc-option-base" : "calc-option"}
                     className={cn(
-                      "[&>td]:border-t [&>td]:border-[#E5EAF1]",
-                      o.isBase ? "bg-[#E9F2FF] text-[#1F4AA8]" : "text-[#14254A]"
+                      "[&>td]:border-t [&>td]:border-ds-border",
+                      o.isBase ? "bg-brand-mist text-brand-blue-primary" : "text-brand-ink"
                     )}
                   >
                     <td className="px-4 py-[11px]">
                       <span className="inline-flex items-center gap-[6px]">
                         {o.duration} {unit}
                         {o.isBase && (
-                          <span className="rounded-full bg-[#1F4AA8] px-[6px] py-px text-[10px] font-semibold text-white">
+                          <span className="rounded-full bg-brand-blue-primary px-[6px] py-px text-[10px] font-semibold text-white">
                             base
                           </span>
                         )}
@@ -188,7 +188,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
             </table>
           ) : (
             <div
-              className="flex h-[220px] flex-col items-center justify-center gap-2 rounded-[10px] border border-[#E5EAF1] bg-[#F4F7FB] text-[13px] font-medium text-[#697A93]"
+              className="flex h-[220px] flex-col items-center justify-center gap-2 rounded-[10px] border border-ds-border bg-ds-bg text-[13px] font-medium text-ds-muted"
               data-testid="calc-empty"
             >
               <Calculator size={20} className="text-[#A9B6C8]" />
@@ -198,7 +198,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
         </div>
 
         {outcome.ok && (
-          <p className="text-[12px] font-medium leading-[1.45] text-[#697A93]">
+          <p className="text-[12px] font-medium leading-[1.45] text-ds-muted">
             La tasa sube o baja {formatRate(outcome.result.adjustmentPerPeriod)} por cada período de
             diferencia con el plazo base, entre {formatRate(outcome.result.minRate)} y{" "}
             {formatRate(outcome.result.maxRate)}. La cuota se redondea hacia arriba a{" "}

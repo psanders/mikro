@@ -66,6 +66,33 @@ export type Province = (typeof PROVINCES)[number]["value"];
 /** Province enum values, as a non-empty tuple (usable directly with `z.enum`). */
 export const PROVINCE_VALUES = PROVINCES.map((p) => p.value) as [Province, ...Province[]];
 
+/** Dominican Republic area codes (NANP). Every DR number starts with one. */
+export const DR_AREA_CODES = ["809", "829", "849"] as const;
+
+/**
+ * The 10 local digits of a Dominican phone number, or null when it can't be
+ * one. Accepts what people type: "809-234-5678", "(829) 871-7987",
+ * "1 809 234 5678", "+18092345678". A leading country code "1" is dropped
+ * (no DR area code starts with 1); what remains must be exactly 10 digits
+ * starting with 809/829/849. So "+11809392630" (a "1" typed before an
+ * 11-digit number) and "892222222" are rejected, not stored (issue #301).
+ */
+export function drPhoneDigits(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let digits = value.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
+  if (digits.length !== 10) return null;
+  return (DR_AREA_CODES as readonly string[]).includes(digits.slice(0, 3)) ? digits : null;
+}
+
+/** Whether a value is a valid Dominican phone number (see `drPhoneDigits`). */
+export function isDrPhone(value: unknown): boolean {
+  return drPhoneDigits(value) !== null;
+}
+
+/** Form fields holding a phone number; each must pass `isDrPhone` when filled. */
+export const PHONE_FIELDS = ["phone", "businessPhone", "spousePhone", "referencePhone"] as const;
+
 /**
  * Normalize a province to a comparable key: uppercase, strip diacritics, and
  * collapse any run of non-alphanumerics to a single `_`. "Puerto Plata",
@@ -241,13 +268,49 @@ export function buildAutosavePayload(
 
 export type SelectOption = string | { value: string; label: string };
 
-export const ESTADO_CIVIL_OPTIONS = [
-  "Soltero(a)",
-  "Casado(a)",
-  "Unión libre",
-  "Divorciado(a)",
-  "Viudo(a)"
-];
+/**
+ * Marital status: what the form posts, the column stores and José's tool
+ * accepts. The Spanish label is display-only. Spouse fields only apply to the
+ * statuses `hasPartner` accepts.
+ */
+export const MARITAL_STATUSES = [
+  "SOLTERO",
+  "CASADO",
+  "UNION_LIBRE",
+  "DIVORCIADO",
+  "VIUDO"
+] as const;
+
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number];
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  SOLTERO: "Soltero(a)",
+  CASADO: "Casado(a)",
+  UNION_LIBRE: "Unión libre",
+  DIVORCIADO: "Divorciado(a)",
+  VIUDO: "Viudo(a)"
+};
+
+export const ESTADO_CIVIL_OPTIONS: SelectOption[] = MARITAL_STATUSES.map((value) => ({
+  value,
+  label: MARITAL_STATUS_LABELS[value]
+}));
+
+/** A marital status code (labels are display text, never input). */
+export function isMaritalStatus(value: unknown): value is MaritalStatus {
+  return typeof value === "string" && (MARITAL_STATUSES as readonly string[]).includes(value);
+}
+
+/** Married or in a common-law union: the only statuses where spouse fields apply. */
+export function hasPartner(value: unknown): boolean {
+  return value === "CASADO" || value === "UNION_LIBRE";
+}
+
+/** Display label for a status code; anything else is shown as-is. */
+export function maritalStatusLabel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return isMaritalStatus(value) ? MARITAL_STATUS_LABELS[value] : value;
+}
 
 // Business type — enum value + display label. Risk is scored downstream, not here.
 export const TIPO_NEGOCIO_OPTIONS: SelectOption[] = [

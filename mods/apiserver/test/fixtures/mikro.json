@@ -11,22 +11,19 @@
   "assetsPath": "/app/mods/apiserver/assets",
   "messageMaxAgeSeconds": 60,
   "sessionTimeoutSeconds": 1800,
-  "llm": {
-    "text": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" },
-    "vision": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o" },
-    "evals": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" }
+  "cx": {
+    "model": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" },
+    "visionModel": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o" }
   },
+  "copilot": { "model": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" } },
   "whatsapp": {
     "phoneNumberId": "test",
     "accessToken": "test",
     "verifyToken": "mikro_webhook_token",
     "languageCode": "es_DO",
-    "templates": {
-      "paymentConfirmation": "payment_receipt"
-    }
+    "templates": { "paymentConfirmation": "payment_receipt" }
   },
   "voiceNotes": { "enabled": false, "deepgramApiKey": "" },
-  "evals": { "similarityThreshold": 0.7, "vendors": {} },
   "accounting": {
     "attachmentsPath": "/tmp/mikro-test-attachments",
     "disbursementAccountId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
@@ -36,6 +33,15 @@
     ]
   },
   "applications": {
-    "coveredProvinces": ["PUERTO_PLATA"]
+    "coveredProvinces": ["PUERTO_PLATA"],
+    "summaryModel": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" }
+  },
+  "reports": { "model": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" } },
+  "conversationAudit": {
+    "model": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" }
+  },
+  "evals": {
+    "model": { "vendor": "openai", "apiKey": "test-key", "model": "gpt-4o-mini" },
+    "candidates": {}
   }
 }

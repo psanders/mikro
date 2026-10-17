@@ -5,7 +5,12 @@ import { z } from "zod/v4";
 import { paymentFrequencyEnum } from "./loan.js";
 import { safeOptionalDate } from "./dates.js";
 import { MAX_ATTACHMENT_SIZE_BYTES } from "./accounting.js";
-import { PROVINCES } from "./applicationForm.js";
+import {
+  PROVINCES,
+  MARITAL_STATUSES,
+  drPhoneDigits,
+  type MaritalStatus
+} from "./applicationForm.js";
 import { rejectionReasonEnum } from "./applicationReview.js";
 import { isMapUrl } from "./mapUrl.js";
 
@@ -146,7 +151,7 @@ export interface NormalizedApplicationFields {
   phone: string | null;
   idNumber: string | null;
   dateOfBirth: Date | null;
-  maritalStatus: string | null;
+  maritalStatus: MaritalStatus | null;
   businessType: string | null;
   businessName: string | null;
   requestedAmount: number | null;
@@ -155,6 +160,9 @@ export interface NormalizedApplicationFields {
   province: string | null;
   homeAddress: string | null;
 }
+
+/** A marital status code, as stored on the application. */
+export const maritalStatusEnum = z.enum(MARITAL_STATUSES);
 
 /** Result of normalizing a payload: stable fields + the full content as rawData. */
 export interface NormalizedApplication extends NormalizedApplicationFields {
@@ -199,17 +207,26 @@ function parseTermWeeks(v: unknown): number | null {
 }
 
 /**
- * "(829) 871-7987" -> "+18298717987". Lenient, non-throwing: a 10-digit NANP
- * number gets a "1" country code; an 11-digit number starting with 1 is used
- * as-is; anything else returns null.
+ * "(829) 871-7987" -> "+18298717987". Non-throwing. A typed number must be
+ * Dominican (see `drPhoneDigits`), so an impossible "+11…" phone is never
+ * stored (issue #301).
+ *
+ * A number already in international form ("+17852264391") is kept when it is
+ * a possible one: the WhatsApp sender's own number, which the Flow and José
+ * pass in, or a phone stored earlier and re-normalized on every save. Dropping
+ * those would detach the application from the person writing. NANP numbers
+ * still need an area code starting 2–9, so "+11809392630" stays rejected.
  */
 function parsePhone(v: unknown): string | null {
   const s = trimToNull(v);
   if (!s) return null;
-  const digits = s.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+  const dr = drPhoneDigits(s);
+  if (dr) return `+1${dr}`;
+  const compact = s.replace(/[\s().-]/g, "");
+  if (!/^\+\d{8,15}$/.test(compact)) return null;
+  const digits = compact.slice(1);
+  if (digits.startsWith("1")) return /^1[2-9]\d{9}$/.test(digits) ? `+${digits}` : null;
+  return `+${digits}`;
 }
 
 /** ISO date string ("2004-06-18") -> Date; empty/invalid -> null. */
@@ -256,7 +273,8 @@ export function normalizeApplication(payload: ApplicationPayload): NormalizedApp
     phone: parsePhone(raw.phone),
     idNumber: trimToNull(raw.idNumber),
     dateOfBirth: parseDate(raw.dateOfBirth),
-    maritalStatus: trimToNull(raw.maritalStatus),
+    // Codes only; anything else (a stale form posting a label) is dropped.
+    maritalStatus: maritalStatusEnum.safeParse(raw.maritalStatus).data ?? null,
     businessType: trimToNull(raw.businessType),
     businessName: trimToNull(raw.businessName),
     requestedAmount: parseCurrency(raw.requestedAmount),
@@ -422,6 +440,8 @@ const applicationRef = {
   sessionId: z.string().optional()
 };
 const requireRef = (v: { id?: string; sessionId?: string }) => Boolean(v.id || v.sessionId);
+/** Where a review action came from; "extension" = the Mikro Decisión panel. */
+const via = { via: z.literal("extension").optional() };
 const refMessage = { message: "Provide either id or sessionId" };
 
 /**
@@ -430,16 +450,18 @@ const refMessage = { message: "Provide either id or sessionId" };
  * application that is already in review. See `evaluateTransition` ("assign").
  */
 export const assignApplicationSchema = z
-  .object({ ...applicationRef, assigneeId: z.uuid().optional() })
+  .object({ ...applicationRef, ...via, assigneeId: z.uuid().optional() })
   .refine(requireRef, refMessage);
 
 /** The assigned reviewer's recommendation to the admin (editable while IN_REVIEW). */
 export const setRecommendationSchema = z
-  .object({ ...applicationRef, reviewerRecommendation: z.string().trim().max(2000) })
+  .object({ ...applicationRef, ...via, reviewerRecommendation: z.string().trim().max(2000) })
   .refine(requireRef, refMessage);
 
 /** Assigned reviewer hands a complete application to the admin. */
-export const sendToDecisionSchema = z.object(applicationRef).refine(requireRef, refMessage);
+export const sendToDecisionSchema = z
+  .object({ ...applicationRef, ...via })
+  .refine(requireRef, refMessage);
 
 /** Admin sends a pending application back to its reviewer; the note says why. */
 export const returnToReviewerSchema = z
@@ -463,6 +485,7 @@ export const approveApplicationSchema = z
 export const rejectApplicationSchema = z
   .object({
     ...applicationRef,
+    ...via,
     reason: rejectionReasonEnum,
     note: z.string().trim().max(2000).optional()
   })

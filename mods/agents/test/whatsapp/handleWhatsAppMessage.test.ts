@@ -646,14 +646,18 @@ describe("handleWhatsAppMessage", () => {
     const silentPhone = "+18095550003";
 
     const DISABLED_CONFIG = {
-      llm: {
-        text: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
-        vision: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" },
-        evals: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+      cx: {
+        model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" },
+        visionModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o" }
       },
+      copilot: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
+      reports: { model: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" } },
       whatsapp: { phoneNumberId: "test", accessToken: "test", agentRepliesEnabled: false },
       accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" },
-      applications: { coveredProvinces: ["PUERTO_PLATA"] }
+      applications: {
+        coveredProvinces: ["PUERTO_PLATA"],
+        summaryModel: { vendor: "openai", apiKey: "test-key", model: "gpt-4o-mini" }
+      }
     };
 
     const textWebhook = (id: string, from = silentPhone) => ({

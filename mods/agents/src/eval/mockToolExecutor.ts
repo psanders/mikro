@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import type { ToolExecutor, ExpectedToolCall, ArgMatchMode } from "../llm/types.js";
-import { compareArgs } from "./similarityJudge.js";
+import { compareArgs } from "./argJudge.js";
 import { logger } from "../logger.js";
 
 /**

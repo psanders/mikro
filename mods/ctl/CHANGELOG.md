@@ -3,6 +3,44 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.16.0](https://github.com/psanders/mikro/compare/v3.15.0...v3.16.0) (2026-10-17)
+
+**Note:** Version bump only for package @mikro/ctl
+
+# [3.15.0](https://github.com/psanders/mikro/compare/v3.14.1...v3.15.0) (2026-10-17)
+
+### Features
+
+- credit decision engine, Mikro Score from every source, Mikro Decisión extension ([#351](https://github.com/psanders/mikro/issues/351)) ([f91ca6f](https://github.com/psanders/mikro/commit/f91ca6f26bf18d88c4c8be0277bccb651711877e))
+
+## [3.14.1](https://github.com/psanders/mikro/compare/v3.14.0...v3.14.1) (2026-10-17)
+
+**Note:** Version bump only for package @mikro/ctl
+
+# [3.14.0](https://github.com/psanders/mikro/compare/v3.13.5...v3.14.0) (2026-10-16)
+
+### Features
+
+- **cx:** decision-model eval checks, live intent labels, per-agent audit judging + code checks ([#341](https://github.com/psanders/mikro/issues/341)) ([0843e5b](https://github.com/psanders/mikro/commit/0843e5b9a940a8b967a56d1d5ca942b946a6dd05))
+
+## [3.13.5](https://github.com/psanders/mikro/compare/v3.13.4...v3.13.5) (2026-10-16)
+
+**Note:** Version bump only for package @mikro/ctl
+
+## [3.13.4](https://github.com/psanders/mikro/compare/v3.13.3...v3.13.4) (2026-10-16)
+
+### Bug Fixes
+
+- **jose:** marital status enum; no spouse questions for singles, no filler answers ([#335](https://github.com/psanders/mikro/issues/335)) ([40f9526](https://github.com/psanders/mikro/commit/40f9526249f57765c798c391e9fc81fdda732d31))
+
+## [3.13.3](https://github.com/psanders/mikro/compare/v3.13.2...v3.13.3) (2026-10-16)
+
+**Note:** Version bump only for package @mikro/ctl
+
+## [3.13.2](https://github.com/psanders/mikro/compare/v3.13.1...v3.13.2) (2026-10-16)
+
+**Note:** Version bump only for package @mikro/ctl
+
 ## [3.12.4](https://github.com/psanders/mikro/compare/v3.12.3...v3.12.4) (2026-10-02)
 
 **Note:** Version bump only for package @mikro/ctl

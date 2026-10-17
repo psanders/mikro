@@ -13,7 +13,7 @@ import type {
   SenderIdentity
 } from "./types.js";
 import { logger } from "../logger.js";
-import { validatePhone } from "@mikro/common";
+import { REAPPLY_COOLDOWN_DAYS, validatePhone } from "@mikro/common";
 
 /** Applications in the review pipeline: the APPLICANT agent answers. */
 const IN_PIPELINE: ReadonlySet<ApplicationStatus> = new Set([
@@ -23,20 +23,35 @@ const IN_PIPELINE: ReadonlySet<ApplicationStatus> = new Set([
   "APPROVED"
 ]);
 
-/**
- * How long after a rejection someone may apply again (founder decision
- * 2026-09-26). Before that the guest agent tells them the date; after it they
- * are a regular guest.
- */
-export const REAPPLY_COOLDOWN_DAYS = 30;
+// How long after a rejection someone may apply again (shared with the intake
+// paths that enforce it). Before that the guest agent tells them the date;
+// after it they are a regular guest.
+export { REAPPLY_COOLDOWN_DAYS };
 
 /**
- * Rejected for the business's province, not its credit: no reapply date
- * applies (they would be rejected again), so the guest agent explains the
- * coverage area instead.
+ * Rejected for the business's province, not its credit. The same cooldown
+ * applies (founder decision 2026-10-16, issue #302); the guest agent explains
+ * the coverage area along with the date.
  */
 const OUT_OF_COVERAGE_AREA = "OUT_OF_COVERAGE_AREA";
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The reapply cooldown still running for this person: from their latest
+ * application when it is the rejection, otherwise from an older rejection.
+ */
+function cooldownOf(
+  app: ApplicationLookupResult
+): { reapplyFrom: Date; outOfArea: boolean } | null {
+  const rejection =
+    app.status === "REJECTED"
+      ? { decidedAt: app.decidedAt ?? app.submittedAt, rejectionReason: app.rejectionReason }
+      : app.recentRejection;
+  if (!rejection?.decidedAt) return null;
+  const reapplyFrom = new Date(rejection.decidedAt.getTime() + REAPPLY_COOLDOWN_DAYS * DAY_MS);
+  if (reapplyFrom.getTime() <= Date.now()) return null;
+  return { reapplyFrom, outOfArea: rejection.rejectionReason === OUT_OF_COVERAGE_AREA };
+}
 
 /** A user with several roles routes as the most privileged one. */
 const ROLE_PRECEDENCE: readonly Role[] = ["ADMIN", "REVIEWER", "COLLECTOR"];
@@ -59,9 +74,14 @@ const ROLE_PRECEDENCE: readonly Role[] = ["ADMIN", "REVIEWER", "COLLECTOR"];
  *
  * 6. Anyone else → guest (GUEST): no application, REJECTED (within
  *    REAPPLY_COOLDOWN_DAYS of the decision it carries `reapplyFrom`, so the
- *    guest agent tells them when they may apply again; a rejection for being
- *    outside the coverage area carries `outOfArea` instead), CONVERTED without a
- *    customer match, or withdrawn after submission.
+ *    guest agent tells them when they may apply again, plus `outOfArea` when
+ *    it was for the coverage area), CONVERTED without a customer match, or
+ *    withdrawn after submission.
+ *
+ * A rejection inside the cooldown wins over a newer DRAFT or never-submitted
+ * ABANDONED application (issue #302): they may not apply again yet, so they
+ * are told the date instead of José collecting an application that can't be
+ * submitted.
  *
  * Which agent serves each profile is config (agents.yaml); a profile with no
  * agent gets no reply. That decision belongs to the handler, not here.
@@ -96,24 +116,26 @@ export function createMessageRouter(deps: RouterDependencies) {
         applicationId: app.applicationId,
         status: app.status
       });
+      const cooldown = cooldownOf(app);
+      const startingOver =
+        app.status === "DRAFT" ||
+        app.status === "REJECTED" ||
+        (app.status === "ABANDONED" && !app.submittedAt);
+      if (cooldown && startingOver) {
+        return {
+          type: "guest",
+          phone: address,
+          previouslyRejected: true,
+          reapplyFrom: cooldown.reapplyFrom,
+          ...(cooldown.outOfArea ? { outOfArea: true as const } : {})
+        };
+      }
       if (app.status === "DRAFT") return { type: "prospect", phase: "intake", ...ref };
       if (app.status === "RECEIVED" && app.intakeOpen) {
         return { type: "prospect", phase: "enrichment", ...ref };
       }
       if (app.status === "ABANDONED" && !app.submittedAt) return { type: "reopen", ...ref };
       if (IN_PIPELINE.has(app.status)) return { type: "applicant", ...ref };
-      if (app.status === "REJECTED" && app.rejectionReason === OUT_OF_COVERAGE_AREA) {
-        return { type: "guest", phone: address, outOfArea: true };
-      }
-      if (app.status === "REJECTED") {
-        const rejectedAt = app.decidedAt ?? app.submittedAt;
-        const reapplyFrom = rejectedAt
-          ? new Date(rejectedAt.getTime() + REAPPLY_COOLDOWN_DAYS * DAY_MS)
-          : null;
-        if (reapplyFrom && reapplyFrom.getTime() > Date.now()) {
-          return { type: "guest", phone: address, previouslyRejected: true, reapplyFrom };
-        }
-      }
     }
 
     logger.verbose("routing as guest", { address });

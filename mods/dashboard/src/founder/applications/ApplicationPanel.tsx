@@ -74,7 +74,7 @@ export function ApplicationPanel({ applicationId, view, onView, onClose }: Appli
   if (!app || !viewer || !evidenceQ.data) {
     return (
       <SidePanel open {...common}>
-        <p className="text-sm font-medium text-[#697A93]">
+        <p className="text-sm font-medium text-ds-muted">
           {appQ.isError
             ? friendlyError(appQ.error, "No se pudo cargar la solicitud.")
             : "Cargando…"}

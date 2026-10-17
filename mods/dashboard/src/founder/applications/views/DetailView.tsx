@@ -150,7 +150,7 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
           )}
         </div>
 
-        <nav className="flex gap-[22px] border-b border-[#E5EAF1]">
+        <nav className="flex gap-[22px] border-b border-ds-border">
           {ANCHORS.map((a) => (
             <button
               key={a.id}
@@ -158,8 +158,8 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
               onClick={() => jump(a.id)}
               className={
                 anchor === a.id
-                  ? "-mb-px border-b-2 border-[#7C3AED] pb-[10px] text-[13px] font-semibold text-[#7C3AED]"
-                  : "pb-[10px] text-[13px] font-medium text-[#697A93] hover:text-[#14254A]"
+                  ? "-mb-px border-b-2 border-ds-violet pb-[10px] text-[13px] font-semibold text-ds-violet"
+                  : "pb-[10px] text-[13px] font-medium text-ds-muted hover:text-brand-ink"
               }
             >
               {a.label}
@@ -171,9 +171,9 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
         </nav>
 
         {app.aiSummary && (
-          <div className="flex gap-2 rounded-[10px] bg-[#FAF7FF] p-3">
-            <Sparkles size={14} className="mt-[2px] shrink-0 text-[#7C3AED]" />
-            <p className="text-[13px] font-medium leading-[1.45] text-[#14254A]">{app.aiSummary}</p>
+          <div className="flex gap-2 rounded-[10px] bg-ds-violet-tint p-3">
+            <Sparkles size={14} className="mt-[2px] shrink-0 text-ds-violet" />
+            <p className="text-[13px] font-medium leading-[1.45] text-brand-ink">{app.aiSummary}</p>
           </div>
         )}
 
@@ -184,8 +184,8 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
               <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                 {section.fields.map((f) => (
                   <div key={f.key} className="flex min-w-0 flex-col gap-[3px]">
-                    <span className="text-[11px] font-medium text-[#697A93]">{f.label}</span>
-                    <span className="break-words text-[13px] font-medium text-[#14254A]">
+                    <span className="text-[11px] font-medium text-ds-muted">{f.label}</span>
+                    <span className="break-words text-[13px] font-medium text-brand-ink">
                       {fieldDisplay(record, f) || "—"}
                     </span>
                   </div>
@@ -232,17 +232,17 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
 
         <section id="app-actividad" className="flex flex-col gap-3">
           <SectionLabel>Actividad</SectionLabel>
-          {activity.isPending && <p className="text-[12px] text-[#697A93]">Cargando…</p>}
+          {activity.isPending && <p className="text-[12px] text-ds-muted">Cargando…</p>}
           <ol className="flex flex-col">
             {[...(activity.data?.items ?? [])].reverse().map((e, i, all) => (
               <li key={e.id} className="flex gap-3">
                 <div className="flex w-6 flex-col items-center">
-                  <span className="mt-1 h-[10px] w-[10px] rounded-full bg-[#F1EAFE] ring-2 ring-[#7C3AED]" />
-                  {i < all.length - 1 && <span className="w-px flex-1 bg-[#E5EAF1]" />}
+                  <span className="mt-1 h-[10px] w-[10px] rounded-full bg-ds-violet-bg ring-2 ring-ds-violet" />
+                  {i < all.length - 1 && <span className="w-px flex-1 bg-ds-border" />}
                 </div>
                 <div className="flex flex-1 flex-col gap-[2px] pb-4">
-                  <span className="text-[13px] font-semibold text-[#14254A]">{e.summary}</span>
-                  <span className="text-[11.5px] font-medium text-[#697A93]">
+                  <span className="text-[13px] font-semibold text-brand-ink">{e.summary}</span>
+                  <span className="text-[11.5px] font-medium text-ds-muted">
                     {e.actorName} · {formatDate(e.occurredAt)}
                   </span>
                 </div>

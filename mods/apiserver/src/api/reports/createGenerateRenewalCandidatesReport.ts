@@ -17,7 +17,7 @@ import {
   type LoanPaymentDataWithTerm,
   type RenderReportDeps
 } from "@mikro/common";
-import { invokeTextPrompt } from "@mikro/agents";
+import { getReportsModel, invokeTextPrompt } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { loanToData } from "../../utils/loanToData.js";
@@ -103,7 +103,7 @@ export async function computeRenewalReportRows(
       paymentsMade,
       missedPayments
     });
-    const raw = await invokeTextPrompt(prompt);
+    const raw = await invokeTextPrompt(getReportsModel(), prompt);
     return parseRenewalCandidateNoteResponse(raw);
   });
 

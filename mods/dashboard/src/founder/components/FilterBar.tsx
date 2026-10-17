@@ -101,19 +101,19 @@ export function FilterBar({ value, actors, onApply }: FilterBarProps) {
   const active = isFeedFilterActive(value);
 
   return (
-    <div className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-3">
+    <div className="flex shrink-0 items-center justify-between border-b border-ds-border px-6 py-3">
       <div className="flex flex-wrap items-center gap-[8px]">
         {chips.map((chip) => (
           <span
             key={chip.key}
-            className="flex items-center gap-[6px] rounded-full bg-[#EEF3F9] py-[6px] pl-[14px] pr-[10px] text-[12px] font-semibold text-[#14254A]"
+            className="flex items-center gap-[6px] rounded-full bg-ds-subtle py-[6px] pl-[14px] pr-[10px] text-[12px] font-semibold text-brand-ink"
           >
             {chip.label}
             <button
               type="button"
               onClick={() => removeChip(chip.key)}
               aria-label={`Quitar filtro ${chip.label}`}
-              className="flex items-center justify-center text-[#697A93] hover:text-[#14254A]"
+              className="flex items-center justify-center text-ds-muted hover:text-brand-ink"
             >
               <X size={12} />
             </button>

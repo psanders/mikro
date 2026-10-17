@@ -27,8 +27,8 @@ export interface RecordingPillProps {
 
 export function RecordingPill({ elapsedSeconds, onStop, onDiscard }: RecordingPillProps) {
   return (
-    <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#14254A] py-2.5 pl-5 pr-2.5 shadow-lg">
-      <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
+    <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ds-inverse py-2.5 pl-5 pr-2.5 shadow-lg">
+      <span className="h-2 w-2 rounded-full bg-ds-red" />
       <span className="text-[14px] font-medium text-white">
         Grabando reporte · {formatElapsed(elapsedSeconds)}
       </span>
@@ -37,7 +37,7 @@ export function RecordingPill({ elapsedSeconds, onStop, onDiscard }: RecordingPi
         onClick={onDiscard}
         aria-label="Descartar grabación"
         title="Descartar grabación"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-ds-surface/10 text-white transition hover:bg-ds-surface/20"
       >
         <Trash2 size={14} />
       </button>
@@ -46,7 +46,7 @@ export function RecordingPill({ elapsedSeconds, onStop, onDiscard }: RecordingPi
         onClick={onStop}
         aria-label="Detener y enviar"
         title="Detener y enviar"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DC2626] text-white transition hover:bg-[#B91C1C]"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-ds-red-solid text-white transition hover:bg-ds-red"
       >
         <Square size={14} fill="currentColor" />
       </button>

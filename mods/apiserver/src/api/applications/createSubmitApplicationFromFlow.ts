@@ -4,6 +4,8 @@
 import { applicationPayloadSchema, normalizeApplication } from "@mikro/common";
 import type { ApplicationSource, LoanApplication, NormalizedApplication } from "@mikro/common";
 import { logger } from "../../logger.js";
+import type { FindPriorApplication } from "./createFindPriorApplication.js";
+import { OUT_OF_COVERAGE_AREA } from "./createUpsertApplication.js";
 
 interface Deps {
   /** Upsert a normalized application by its `sessionId` (shared with the website path). */
@@ -20,7 +22,19 @@ interface Deps {
   findLatestApplicationByWhatsAppUserId?: (
     bsuid: string
   ) => Promise<{ sessionId: string; phone: string | null } | null>;
+  /** The same person's other applications (issue #302). */
+  findPriorApplication?: FindPriorApplication;
 }
+
+/**
+ * What became of a Flow submission, so the WhatsApp reply can say it:
+ * `received`, `cooldown` (rejected less than 30 days ago; `reapplyFrom` is
+ * when they may apply again) or `in_process` (they already have one being
+ * handled). `invalid` when the payload didn't parse.
+ */
+export type FlowSubmitResult =
+  | { outcome: "received" | "in_process" | "invalid" }
+  | { outcome: "cooldown"; reapplyFrom: Date; outOfArea?: boolean };
 
 /** Who submitted the Flow, beyond the phone: set for a WhatsApp username sender. */
 export interface FlowSubmitter {
@@ -41,14 +55,14 @@ export function createSubmitApplicationFromFlow(deps: Deps) {
   return async (
     payload: Record<string, string | boolean>,
     submitter: FlowSubmitter = {}
-  ): Promise<void> => {
+  ): Promise<FlowSubmitResult> => {
     const parsed = applicationPayloadSchema.safeParse(payload);
     if (!parsed.success) {
       logger.warn("intake flow: invalid payload", {
         sessionId: typeof payload.sessionId === "string" ? payload.sessionId : undefined,
         issues: parsed.error.issues.length
       });
-      return;
+      return { outcome: "invalid" };
     }
     const normalized = normalizeApplication(parsed.data);
     if (normalized.phone) {
@@ -63,6 +77,34 @@ export function createSubmitApplicationFromFlow(deps: Deps) {
         normalized.phone = existing.phone;
       }
     }
+    // The Flow already folded into the latest application for this phone; any
+    // OTHER application of the same person (phone or cédula) still decides.
+    const prior = deps.findPriorApplication
+      ? await deps.findPriorApplication({
+          phone: normalized.phone,
+          idNumber: normalized.idNumber,
+          sessionId: normalized.sessionId
+        })
+      : null;
+    if (prior?.kind === "cooldown") {
+      logger.info("intake flow: rejected recently, no new application", {
+        sessionId: normalized.sessionId,
+        reapplyFrom: prior.reapplyFrom.toISOString()
+      });
+      return {
+        outcome: "cooldown",
+        reapplyFrom: prior.reapplyFrom,
+        ...(prior.rejectionReason === OUT_OF_COVERAGE_AREA ? { outOfArea: true } : {})
+      };
+    }
+    if (prior?.kind === "in_process") {
+      logger.info("intake flow: person already has an application in process", {
+        sessionId: normalized.sessionId,
+        applicationId: prior.applicationId
+      });
+      return { outcome: "in_process" };
+    }
+    if (prior?.kind === "draft") normalized.sessionId = prior.sessionId;
     await deps.upsertApplication({
       ...normalized,
       source: "WHATSAPP",
@@ -73,5 +115,6 @@ export function createSubmitApplicationFromFlow(deps: Deps) {
           }
         : {})
     });
+    return { outcome: "received" };
   };
 }

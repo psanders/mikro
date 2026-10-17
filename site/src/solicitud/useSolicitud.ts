@@ -29,8 +29,17 @@ const APPLICATIONS_URL = import.meta.env.VITE_APPLICATIONS_URL as string | undef
 /**
  * Where the applicant ended up. `out_of_area`: the apiserver saved the
  * application but rejected it because we don't lend in their province yet.
+ * `cooldown`: no new application, they were rejected less than 30 days ago
+ * (`reapplyFrom` says when they may apply again). `in_process`: no new
+ * application, they already have one being handled (issue #302).
  */
-export type SolicitudOutcome = "pending" | "success" | "out_of_area";
+export type SolicitudOutcome = "pending" | "success" | "out_of_area" | "cooldown" | "in_process";
+
+/** When a person in the reapply cooldown may apply again, and whether it was for coverage. */
+export interface ReapplyInfo {
+  reapplyFrom: Date;
+  outOfArea: boolean;
+}
 
 /**
  * @param currentSection - The section the applicant has open right now (the
@@ -43,6 +52,7 @@ export function useSolicitud(currentSection: string) {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<SolicitudOutcome>("pending");
+  const [reapply, setReapply] = useState<ReapplyInfo | null>(null);
   const [error, setError] = useState("");
   // Sections we've already reported complete, so revisiting a finished
   // section doesn't fire SolicitudProgress twice.
@@ -192,6 +202,16 @@ export function useSolicitud(currentSection: string) {
         setOutcome("out_of_area");
         return;
       }
+      // One application per person: nothing new was created, so no Lead.
+      if (data?.outcome === "in_process") {
+        setOutcome("in_process");
+        return;
+      }
+      if (data?.outcome === "cooldown" && typeof data.reapplyFrom === "string") {
+        setReapply({ reapplyFrom: new Date(data.reapplyFrom), outOfArea: data.outOfArea === true });
+        setOutcome("cooldown");
+        return;
+      }
 
       trackLead(eventId);
       setOutcome("success");
@@ -214,6 +234,7 @@ export function useSolicitud(currentSection: string) {
     setAgreed,
     submitting,
     outcome,
+    reapply,
     error,
     setError,
     leaveSection,

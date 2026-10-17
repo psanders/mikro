@@ -71,4 +71,129 @@ describe("createSaveAnswer", () => {
     // low-weight support fields come after high-weight capacity fields
     expect(missing.indexOf("monthlySales")).to.be.lessThan(missing.indexOf("referencePhone"));
   });
+
+  it("records a declined optional contact instead of saving filler", async () => {
+    for (const filler of ["N/A", "n/a", "No tengo", "no tiene", "ninguno", "-", "0000000000"]) {
+      const { tool, upsert } = makeTool(null);
+      const result = await tool({ fields: { businessPhone: filler } }, CTX);
+
+      expect(result.success, filler).to.be.true;
+      expect(result.data!.saved, filler).to.not.include("businessPhone");
+      expect(result.data!.declined, filler).to.deep.equal(["businessPhone"]);
+      expect(result.data!.missingFields, filler).to.not.include("businessPhone");
+      const raw = upsert.firstCall.args[0].rawData as Record<string, unknown>;
+      expect(raw.businessPhone, filler).to.equal(undefined);
+      expect(raw.declinedFields, filler).to.deep.equal(["businessPhone"]);
+    }
+  });
+
+  it("keeps earlier declines and drops one the person later answers", async () => {
+    const { tool, upsert } = makeTool({
+      sessionId: CTX.sessionId,
+      status: "DRAFT",
+      rawData: { declinedFields: ["businessPhone", "referenceName"] }
+    });
+
+    const result = await tool({ fields: { referenceName: "Rocío Cabrera" } }, CTX);
+
+    expect(result.data!.saved).to.include("referenceName");
+    const raw = upsert.firstCall.args[0].rawData as Record<string, unknown>;
+    expect(raw.declinedFields).to.deep.equal(["businessPhone"]);
+    expect(result.data!.missingFields).to.not.include("businessPhone");
+  });
+
+  it("refuses filler for identity fields every applicant has", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { firstName: "N/A" } }, CTX);
+    expect(result.success).to.be.false;
+    expect(result.data!.invalid).to.include("firstName");
+    expect(upsert.called).to.be.false;
+  });
+
+  it("keeps a real answer that only looks like filler on other fields", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { employeeCount: "ninguno" } }, CTX);
+    expect(result.data!.saved).to.include("employeeCount");
+    expect((upsert.firstCall.args[0].rawData as Record<string, unknown>).employeeCount).to.equal(
+      "ninguno"
+    );
+  });
+
+  it("stores a marital status code", async () => {
+    const { tool, upsert } = makeTool(null);
+    const result = await tool({ fields: { maritalStatus: "UNION_LIBRE" } }, CTX);
+    expect(result.success).to.be.true;
+    expect(upsert.firstCall.args[0].maritalStatus).to.equal("UNION_LIBRE");
+  });
+
+  it("rejects anything but a code (labels too), naming the valid codes", async () => {
+    for (const value of ["complicado", "Soltero(a)", "soltera"]) {
+      const { tool, upsert } = makeTool(null);
+
+      const result = await tool({ fields: { maritalStatus: value } }, CTX);
+
+      expect(result.success, value).to.be.false;
+      expect((result.data!.invalidReasons as Record<string, string>).maritalStatus).to.include(
+        "SOLTERO, CASADO, UNION_LIBRE, DIVORCIADO, VIUDO"
+      );
+      expect(upsert.called, value).to.be.false;
+    }
+  });
+
+  it("never asks a single applicant about a spouse", async () => {
+    const { tool } = makeTool(null);
+
+    const single = await tool({ fields: { maritalStatus: "SOLTERO" } }, CTX);
+    expect(single.data!.missingFields).to.not.include.members(["spouseName"]);
+    expect(single.data!.missingFields).to.not.include("spousePhone");
+
+    const married = await tool({ fields: { maritalStatus: "CASADO" } }, CTX);
+    expect(married.data!.missingFields).to.include("spouseName");
+    expect(married.data!.missingFields).to.include("spousePhone");
+  });
+
+  it("closes intake for a submitted single applicant once only spouse fields would remain", async () => {
+    const update = sinon.stub().resolves(undefined);
+    const rawData: Record<string, unknown> = {
+      businessAge: "1 a 3 años",
+      monthlySales: "RD$25,000 – RD$50,000",
+      locationType: "Propio",
+      formalization: "Informal (sin RNC)",
+      employeeCount: "Solo yo",
+      businessPhone: "8095551234",
+      referenceName: "Rocío Cabrera",
+      referencePhone: "8295245888",
+      housingType: "Propia",
+      residenceTime: "5 a 10 años",
+      addressReference: "Frente a la escuela"
+    };
+    const existing = {
+      id: "app-1",
+      status: "RECEIVED",
+      intakeClosedAt: null,
+      firstName: "Ada",
+      lastName: "Padilla",
+      phone: "+18492452419",
+      idNumber: "037-0105842-6",
+      dateOfBirth: new Date("1987-03-15"),
+      maritalStatus: null,
+      businessType: "OTRO",
+      businessName: "Cafetería",
+      requestedAmount: 20000,
+      purpose: "Inventario",
+      requestedTermWeeks: 12,
+      province: "PUERTO_PLATA",
+      homeAddress: "San Marcos",
+      rawData
+    };
+    const findFirst = sinon.stub().resolves(existing);
+    const upsert = sinon.stub().resolves(undefined);
+    const tool = createSaveAnswer({ loanApplication: { findFirst, update } } as any, upsert);
+
+    const result = await tool({ fields: { maritalStatus: "SOLTERO" } }, CTX);
+
+    expect(result.data!.missingFields).to.deep.equal([]);
+    expect(result.data!.intakeComplete).to.be.true;
+    expect(update.calledOnce).to.be.true;
+  });
 });

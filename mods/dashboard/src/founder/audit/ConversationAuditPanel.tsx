@@ -61,8 +61,8 @@ function FindingCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-[12px] border border-[#E5EAF1] p-[14px]",
-        critical ? "bg-[#FFF7F7]" : "bg-white"
+        "flex flex-col gap-2 rounded-[12px] border border-ds-border p-[14px]",
+        critical ? "bg-ds-red-bg" : "bg-ds-surface"
       )}
       data-testid="audit-finding"
       data-severity={f.severity}
@@ -76,27 +76,27 @@ function FindingCard({
         >
           {critical ? "CRÍTICO" : "ADVERTENCIA"}
         </span>
-        <span className="min-w-0 flex-1 text-[13px] font-semibold text-[#14254A]">{f.rule}</span>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-[6px] bg-[#F4F7FB] px-[7px] py-[2px] text-[10px] font-semibold text-[#697A93]">
+        <span className="min-w-0 flex-1 text-[13px] font-semibold text-brand-ink">{f.rule}</span>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-[6px] bg-ds-bg px-[7px] py-[2px] text-[10px] font-semibold text-ds-muted">
           {f.source === "JUDGE" ? <Sparkles size={11} /> : <ListChecks size={11} />}
           {f.source === "JUDGE" ? "Juez IA" : "Chequeo fijo"}
         </span>
       </div>
-      <p className="text-[12px] font-medium text-[#697A93]">{who}</p>
+      <p className="text-[12px] font-medium text-ds-muted">{who}</p>
       {f.evidence && (
-        <div className="flex flex-col gap-[3px] rounded-[8px] bg-[#F4F7FB] px-3 py-2">
+        <div className="flex flex-col gap-[3px] rounded-[8px] bg-ds-bg px-3 py-2">
           {turnMeta && (
-            <span className="text-[10px] font-semibold uppercase text-[#697A93]">{turnMeta}</span>
+            <span className="text-[10px] font-semibold uppercase text-ds-muted">{turnMeta}</span>
           )}
-          <p className="text-[12px] italic leading-[1.4] text-[#14254A]">“{f.evidence}”</p>
+          <p className="text-[12px] italic leading-[1.4] text-brand-ink">“{f.evidence}”</p>
         </div>
       )}
-      <p className="text-[12px] font-medium leading-[1.4] text-[#14254A]">{f.reason}</p>
+      <p className="text-[12px] font-medium leading-[1.4] text-brand-ink">{f.reason}</p>
       {f.applicationId && onOpenConversation && (
         <button
           type="button"
           onClick={() => onOpenConversation(f.applicationId!)}
-          className="inline-flex w-fit items-center gap-1 text-[12px] font-semibold text-[#1F4AA8] hover:text-[#14356e]"
+          className="inline-flex w-fit items-center gap-1 text-[12px] font-semibold text-brand-blue-primary hover:text-[#14356e]"
           data-testid="audit-finding-open-conversation"
         >
           Ver conversación
@@ -135,7 +135,7 @@ export function AuditFindingsView({ detail, onOpenConversation }: AuditFindingsV
             {run.warningCount} advertencia{run.warningCount === 1 ? "" : "s"}
           </span>
         )}
-        <span className="text-[12px] font-medium text-[#697A93]">
+        <span className="text-[12px] font-medium text-ds-muted">
           {run.conversations} conversaci{run.conversations === 1 ? "ón" : "ones"} · {run.handoffs}{" "}
           {run.handoffs === 1 ? "pasó" : "pasaron"} a persona · {run.failedSends} no entregado
           {run.failedSends === 1 ? "" : "s"}
@@ -159,7 +159,7 @@ export function AuditFindingsView({ detail, onOpenConversation }: AuditFindingsV
         </section>
       )}
 
-      <p className="flex items-center gap-2 text-[12px] font-medium text-[#697A93]">
+      <p className="flex items-center gap-2 text-[12px] font-medium text-ds-muted">
         <Check size={14} className="text-ds-green" />
         {clean} conversaci{clean === 1 ? "ón" : "ones"} sin problemas · {run.judged} revisadas por
         el juez IA · {run.judgeErrors} errores del juez
@@ -206,14 +206,14 @@ export function ConversationAuditPanel({
       }
       testId="audit-panel"
     >
-      {query.isPending && <p className="text-sm font-medium text-[#697A93]">Cargando…</p>}
+      {query.isPending && <p className="text-sm font-medium text-ds-muted">Cargando…</p>}
       {query.isError && (
         <p className="text-sm font-medium text-ds-red" data-testid="audit-panel-error">
           No se pudo cargar el detalle de la auditoría. {query.error.message}
         </p>
       )}
       {query.isSuccess && !detail && (
-        <p className="text-sm font-medium text-[#697A93]">Esta auditoría ya no existe.</p>
+        <p className="text-sm font-medium text-ds-muted">Esta auditoría ya no existe.</p>
       )}
       {detail && <AuditFindingsView detail={detail} onOpenConversation={onOpenConversation} />}
     </SidePanel>

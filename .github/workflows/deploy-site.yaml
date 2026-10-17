@@ -7,6 +7,8 @@ on:
       - "site/**"
       - "mods/common/src/utils/calculateLoan.ts"
       - "mods/common/src/utils/loanCalculatorConstants.ts"
+      # The form's option lists and sections (bundled through @mikro/application-form).
+      - "mods/common/src/schemas/applicationForm.ts"
   workflow_dispatch:
 
 env:

@@ -8,35 +8,72 @@
 import type { DbClient, NormalizedApplication } from "@mikro/common";
 import {
   APPLICATION_CONTENT_KEYS,
+  MARITAL_STATUSES,
+  PHONE_FIELDS,
   applicationPayloadSchema,
-  normalizeApplication,
-  sortByFieldPriority
+  isDrPhone,
+  maritalStatusEnum,
+  normalizeApplication
 } from "@mikro/common";
 import type { ToolResult } from "@mikro/agents";
 import { logger } from "../../logger.js";
 import { computeSimulatedIsc } from "./computeScore.js";
+import { DECLINED_FIELDS_KEY, missingFieldsOf } from "./missingFields.js";
 
 const VALID_KEYS = new Set<string>(APPLICATION_CONTENT_KEYS);
 
 // Fields that must be valid phone numbers when provided. José re-asks on failure
 // instead of persisting a malformed number that an asesor cannot dial.
-const PHONE_KEYS = new Set<string>(["phone", "businessPhone", "referencePhone", "spousePhone"]);
-
-// Dominican Republic area codes (NANP). A valid local number is 10 digits with
-// one of these area codes, optionally prefixed by the country code 1.
-const DR_AREA_CODES = /^(809|829|849)/;
+const PHONE_KEYS = new Set<string>(PHONE_FIELDS);
 
 /**
- * Accepts Dominican phone numbers in the formats prospects actually type:
- * "809-234-5678", "8092345678", "1 809 234 5678", "+18092345678". Rejects
- * short/garbage numbers like "892222222".
+ * Placeholder answers ("N/A", "no tengo", "ninguno", "0000000000"). Saved as a
+ * value, one would mark the field answered with nothing in it.
  */
-function isValidPhone(value: string): boolean {
-  let digits = value.replace(/\D/g, "");
-  if (digits.length === 11 && digits.startsWith("1")) {
-    digits = digits.slice(1);
-  }
-  return digits.length === 10 && DR_AREA_CODES.test(digits);
+const FILLER =
+  /^(n\/?a|no aplica|no tiene|no tengo( (pareja|referencia|telefono|numero|ninguno|nada))?|no hay|ningun[oa]?|nada|none|null|sin (pareja|referencia|telefono|numero|dato)|-+|\.+|x+|0+)$/;
+
+function isFiller(value: string): boolean {
+  const key = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s.]+$/, "")
+    .trim();
+  return key === "" || FILLER.test(key);
+}
+
+/**
+ * Optional contacts a person may simply not have (no business phone, no
+ * reference, no partner). A filler answer for one of these records that the
+ * person declined it, so it leaves `missingFields` and José never asks again.
+ * Other fields keep their answer as given ("ninguno" is a valid employee count).
+ */
+const DECLINABLE_KEYS = new Set<string>([
+  "businessPhone",
+  "referenceName",
+  "referencePhone",
+  "spouseName",
+  "spousePhone",
+  "addressReference"
+]);
+
+/** Identity and address answers every applicant has: filler is never accepted. */
+const REQUIRED_TEXT_KEYS = new Set<string>([
+  "firstName",
+  "lastName",
+  "idNumber",
+  "homeAddress",
+  "businessName"
+]);
+
+const DECLINED_REASON =
+  "Anotado que no tiene este dato; no lo vuelvas a preguntar y sigue con el siguiente campo.";
+
+/** Fields the person said they don't have, as stored in rawData. */
+function declinedOf(raw: Record<string, unknown>): string[] {
+  const value = raw[DECLINED_FIELDS_KEY];
+  return Array.isArray(value) ? value.filter((k): k is string => typeof k === "string") : [];
 }
 
 export function createSaveAnswer(
@@ -60,6 +97,7 @@ export function createSaveAnswer(
     const invalid: string[] = [];
     const invalidReasons: Record<string, string> = {};
     const patch: Record<string, string> = {};
+    const declined: string[] = [];
 
     for (const [key, val] of Object.entries(fields)) {
       if (!VALID_KEYS.has(key)) {
@@ -70,8 +108,30 @@ export function createSaveAnswer(
         invalid.push(key);
         continue;
       }
-      const strVal = String(val);
-      if (PHONE_KEYS.has(key) && !isValidPhone(strVal)) {
+      const strVal = String(val).trim();
+      if (key === "maritalStatus") {
+        const status = maritalStatusEnum.safeParse(strVal).data;
+        if (!status) {
+          invalid.push(key);
+          invalidReasons[key] =
+            `Estado civil inválido; usa uno de: ${MARITAL_STATUSES.join(", ")}.`;
+          continue;
+        }
+        patch[key] = status;
+        saved.push(key);
+        continue;
+      }
+      if (DECLINABLE_KEYS.has(key) && isFiller(strVal)) {
+        declined.push(key);
+        invalidReasons[key] = DECLINED_REASON;
+        continue;
+      }
+      if (REQUIRED_TEXT_KEYS.has(key) && isFiller(strVal)) {
+        invalid.push(key);
+        invalidReasons[key] = "Respuesta sin dato; pide el dato real, no guardes un relleno.";
+        continue;
+      }
+      if (PHONE_KEYS.has(key) && !isDrPhone(strVal)) {
         invalid.push(key);
         invalidReasons[key] = "Número de teléfono inválido; pide el número completo (10 dígitos).";
         continue;
@@ -80,7 +140,7 @@ export function createSaveAnswer(
       saved.push(key);
     }
 
-    if (saved.length === 0) {
+    if (saved.length === 0 && declined.length === 0) {
       return {
         success: false,
         message: "No valid fields to save",
@@ -94,7 +154,14 @@ export function createSaveAnswer(
         where: { sessionId }
       });
 
-      const existingRaw = (existing?.rawData as Record<string, unknown>) ?? {};
+      const storedRaw = (existing?.rawData as Record<string, unknown>) ?? {};
+      // A field answered now is no longer declined; a newly declined one is added.
+      const declinedFields = [
+        ...new Set([...declinedOf(storedRaw).filter((k) => !(k in patch)), ...declined])
+      ];
+      const existingRaw: Record<string, unknown> = { ...storedRaw };
+      if (declinedFields.length > 0) existingRaw[DECLINED_FIELDS_KEY] = declinedFields;
+      else delete existingRaw[DECLINED_FIELDS_KEY];
       const mergedPayload = {
         sessionId,
         partial: true,
@@ -166,15 +233,12 @@ export function createSaveAnswer(
       const allMerged: Record<string, unknown> = {
         ...mergedApp,
         ...mergedRaw,
+        dateOfBirth: patch["dateOfBirth"] ?? existing?.dateOfBirth ?? mergedRaw["dateOfBirth"],
+        maritalStatus: mergedApp.maritalStatus,
         requestedAmount: mergedApp.requestedAmount,
         requestedTermWeeks: mergedApp.requestedTermWeeks
       };
-      const missingFields = sortByFieldPriority(
-        APPLICATION_CONTENT_KEYS.filter((key) => {
-          const val = allMerged[key];
-          return val === null || val === undefined || val === "";
-        })
-      );
+      const missingFields = missingFieldsOf(allMerged);
 
       // A submitted application whose form is now complete: José is done asking
       // (openspec jose-keep-gathering), so the applicant agent answers next.
@@ -189,9 +253,13 @@ export function createSaveAnswer(
       logger.verbose("jose saveAnswer: fields saved", { sessionId, saved, simulatedIsc });
       return {
         success: true,
-        message: `Campos guardados: ${saved.join(", ")}`,
+        message:
+          saved.length > 0
+            ? `Campos guardados: ${saved.join(", ")}`
+            : `Sin dato (no preguntar más): ${declined.join(", ")}`,
         data: {
           saved,
+          declined,
           invalid,
           invalidReasons,
           simulatedIsc,

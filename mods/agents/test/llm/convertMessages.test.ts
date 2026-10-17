@@ -7,7 +7,10 @@
  */
 import { expect } from "chai";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { convertAllToLangChainMessages } from "../../src/llm/createInvokeLLM.js";
+import {
+  convertAllToLangChainMessages,
+  currentUserMessage
+} from "../../src/llm/createInvokeLLM.js";
 
 describe("convertAllToLangChainMessages", () => {
   it("skips an assistant turn with no text, keeping its tools as a note on the next user turn", () => {
@@ -35,5 +38,31 @@ describe("convertAllToLangChainMessages", () => {
 
     expect(out[1]).to.be.instanceOf(AIMessage);
     expect(out[1].content).to.equal("¡Hola!");
+  });
+});
+
+describe("currentUserMessage", () => {
+  it("numbers the photos of a burst so tools can name each one", () => {
+    const msg = currentUserMessage("", "aquí están", ["data:a", "data:b"]);
+    expect(msg.content).to.deep.equal([
+      { type: "text", text: "aquí están" },
+      { type: "text", text: "Foto 1:" },
+      { type: "image_url", image_url: { url: "data:a" } },
+      { type: "text", text: "Foto 2:" },
+      { type: "image_url", image_url: { url: "data:b" } }
+    ]);
+  });
+
+  it("keeps the note of last turn's tools on a photo-only turn", () => {
+    const msg = currentUserMessage("[SISTEMA: x]\n", "", ["data:a"]);
+    expect(msg.content).to.deep.equal([
+      { type: "text", text: "[SISTEMA: x]" },
+      { type: "image_url", image_url: { url: "data:a" } }
+    ]);
+  });
+
+  it("sends a single photo without a number", () => {
+    const msg = currentUserMessage("", "", ["data:a"]);
+    expect(msg.content).to.deep.equal([{ type: "image_url", image_url: { url: "data:a" } }]);
   });
 });

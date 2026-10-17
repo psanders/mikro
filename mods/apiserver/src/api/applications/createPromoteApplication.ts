@@ -10,8 +10,10 @@ import type {
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
+import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { authorize } from "./reviewApplication.js";
 import { recordApplicationReceived, type EventClient } from "../events/index.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 async function loadByRef(
   client: DbClient,
@@ -40,6 +42,7 @@ export function createPromoteApplication(client: DbClient) {
 
     const existing = (app.rawData as Record<string, unknown> | null) ?? {};
     const payload = applicationPayloadSchema.parse({ sessionId: app.sessionId, ...existing });
+    droppedMaritalStatus(existing, "promoteApplication", { id: app.id });
     const normalized = normalizeApplication(payload);
     const result = scoreApplication(normalized);
 
@@ -78,6 +81,7 @@ export function createPromoteApplication(client: DbClient) {
       (err: Error) =>
         logger.error("failed to record application.received", { id: app.id, error: err.message })
     );
+    scheduleDecision(client, updated);
     return updated;
   };
 }

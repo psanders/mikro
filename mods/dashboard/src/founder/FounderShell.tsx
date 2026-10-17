@@ -12,7 +12,18 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Clock3, FileText, House, LogOut, ShipWheel, Search, TriangleAlert } from "lucide-react";
+import {
+  Clock3,
+  FileText,
+  House,
+  LogOut,
+  Monitor,
+  Moon,
+  Search,
+  ShipWheel,
+  Sun,
+  TriangleAlert
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/cn";
 import { trpc } from "../lib/trpc";
@@ -24,6 +35,7 @@ import { useOsAlertNotifications } from "./alerts/osAlertNotifications";
 import { CopilotProvider } from "./copilot/CopilotContext";
 import { CopilotDockContainer } from "./copilot/CopilotDockContainer";
 import { ApplicationPanelProvider } from "./applications/ApplicationPanelContext";
+import { useThemeSetting, type ThemeSetting } from "../lib/theme";
 
 interface RailItemProps {
   icon: LucideIcon;
@@ -46,13 +58,13 @@ function RailItem({ icon: Icon, label, active, onClick, inert, badge }: RailItem
         aria-label={label}
         className={cn(
           "relative flex h-10 w-10 items-center justify-center rounded-[11px] transition",
-          active ? "bg-[#EAF1FB] text-[#1F4AA8]" : "text-[#697A93]",
-          inert ? "cursor-not-allowed" : "hover:bg-[#EEF3F9]"
+          active ? "bg-ds-subtle text-brand-blue-primary" : "text-ds-muted",
+          inert ? "cursor-not-allowed" : "hover:bg-ds-subtle"
         )}
       >
         <Icon size={19} strokeWidth={2} />
         {badge && (
-          <span className="absolute right-[6px] top-[5px] h-[9px] w-[9px] rounded-full border-2 border-white bg-[#DC2626]" />
+          <span className="absolute right-[6px] top-[5px] h-[9px] w-[9px] rounded-full border-2 border-white bg-ds-red" />
         )}
       </button>
     </Tooltip>
@@ -91,7 +103,44 @@ interface ProfileMenuProps {
   name: string;
 }
 
-/** Rail-bottom avatar — click opens a small menu (name + Cerrar sesión), closes on outside click. */
+const THEME_OPTIONS: { value: ThemeSetting; label: string; icon: typeof Sun }[] = [
+  { value: "system", label: "Sistema", icon: Monitor },
+  { value: "light", label: "Claro", icon: Sun },
+  { value: "dark", label: "Oscuro", icon: Moon }
+];
+
+/** Sistema / Claro / Oscuro — remembered on this device (lib/theme.ts). */
+function ThemeSwitch() {
+  const [setting, setSetting] = useThemeSetting();
+  return (
+    <div className="flex flex-col gap-[6px] px-[10px] py-[8px]">
+      <span className="text-[11px] font-semibold tracking-[0.4px] text-ds-muted">TEMA</span>
+      <div className="flex rounded-[8px] bg-ds-subtle p-[2px]" role="radiogroup" aria-label="Tema">
+        {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={setting === value}
+            title={label}
+            onClick={() => setSetting(value)}
+            data-testid={`theme-${value}`}
+            className={`flex flex-1 items-center justify-center gap-[4px] rounded-[6px] py-[5px] text-[11px] font-medium transition ${
+              setting === value
+                ? "bg-ds-surface text-brand-ink shadow-[0_1px_2px_rgba(20,37,74,0.12)]"
+                : "text-ds-muted hover:text-brand-ink"
+            }`}
+          >
+            <Icon size={12} />
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Rail-bottom avatar — click opens a small menu (name, Tema, Cerrar sesión), closes on outside click. */
 function ProfileMenu({ initials, name }: ProfileMenuProps) {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -113,23 +162,25 @@ function ProfileMenu({ initials, name }: ProfileMenuProps) {
         onClick={() => setOpen((v) => !v)}
         aria-label="Perfil"
         aria-expanded={open}
-        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-bold text-[#1F4AA8] transition hover:bg-[#DBE8FB]"
+        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-brand-mist text-[12px] font-bold text-brand-blue-primary transition hover:bg-ds-subtle"
       >
         {initials}
       </button>
       {open && (
-        <div className="absolute bottom-0 left-[46px] z-20 flex w-[200px] flex-col gap-[2px] rounded-[12px] border border-[#E5EAF1] bg-white p-[6px] shadow-[0_8px_24px_rgba(20,37,74,0.14)]">
-          <p className="truncate px-[10px] py-[8px] text-[13px] font-semibold text-[#14254A]">
+        <div className="absolute bottom-0 left-[46px] z-20 flex w-[232px] flex-col gap-[2px] rounded-[12px] border border-ds-border bg-ds-surface p-[6px] shadow-[0_8px_24px_rgba(20,37,74,0.14)]">
+          <p className="truncate px-[10px] py-[8px] text-[13px] font-semibold text-brand-ink">
             {name}
           </p>
-          <div className="h-px bg-[#E5EAF1]" />
+          <div className="h-px bg-ds-border" />
+          <ThemeSwitch />
+          <div className="h-px bg-ds-border" />
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               void logout();
             }}
-            className="flex items-center gap-[8px] rounded-[8px] px-[10px] py-[8px] text-left text-[13px] font-medium text-[#14254A] transition hover:bg-[#F4F7FB]"
+            className="flex items-center gap-[8px] rounded-[8px] px-[10px] py-[8px] text-left text-[13px] font-medium text-brand-ink transition hover:bg-ds-bg"
           >
             <LogOut size={15} />
             Cerrar sesión
@@ -156,9 +207,9 @@ export function FounderShell() {
     <AlertsProvider>
       <CopilotProvider>
         <ApplicationPanelProvider>
-          <div className="flex h-dvh w-full bg-white text-[#14254A]">
-            <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-[#E5EAF1] bg-white py-[18px]">
-              <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-[#1F4AA8]">
+          <div className="flex h-dvh w-full bg-ds-surface text-brand-ink">
+            <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-[14px] border-r border-t border-ds-border bg-ds-surface py-[18px]">
+              <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center text-brand-blue-primary">
                 <ShipWheel size={24} strokeWidth={2} />
               </div>
               <div className="h-[10px]" />
@@ -196,7 +247,7 @@ export function FounderShell() {
               <ProfileMenu initials={initials} name={whoami.data?.name ?? "Ops"} />
             </nav>
 
-            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-[#E5EAF1] bg-white">
+            <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden border-t border-ds-border bg-ds-surface">
               <Outlet />
             </div>
 

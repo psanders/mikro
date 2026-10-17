@@ -31,7 +31,8 @@ export {
   type ToolExecuted,
   type ToolFunction,
   type ToolResult,
-  type ToolExecutor
+  type ToolExecutor,
+  type TurnImages
 } from "./llm/index.js";
 
 // Tools
@@ -105,23 +106,27 @@ export {
   getPublicUrl,
   getVoiceNotesEnabled,
   getDeepgramApiKey,
-  getLLMConfig,
+  getCxModel,
+  getCxVisionModel,
+  getCopilotModel,
+  getApplicationSummaryModel,
+  getReportsModel,
+  getFeedbackModel,
+  getAuditModel,
+  getEvalsModel,
   validateAllLLMConfigs,
   clearLLMConfigCache,
-  type LLMConfig,
-  type LLMPurpose
+  type LLMConfig
 } from "./config.js";
 
 // LLM providers
 export {
   createChatModel,
-  parseLLMConfig,
   validateModelForVendor,
   getModelsForVendor,
   getVisionModelsForVendor,
   isVisionModel,
   LLM_VENDORS,
-  LLM_PURPOSES,
   type LLMVendor
 } from "./llm/providers.js";
 
@@ -144,3 +149,6 @@ export {
   agentConfigSchema,
   type AgentConfigInput
 } from "./agents/index.js";
+
+// Decision models (openspec conversation-state): CX classifier and eval checks
+export * from "./decisions/index.js";

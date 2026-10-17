@@ -5,7 +5,9 @@ import { randomUUID } from "crypto";
 import { applicationPayloadSchema, normalizeApplication, scoreApplication } from "@mikro/common";
 import type { CreateApplicationInput, DbClient, LoanApplication } from "@mikro/common";
 import { logger } from "../../logger.js";
+import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { recordApplicationReceived, type EventClient } from "../events/index.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 /**
  * Reviewer-initiated create: build a fresh LoanApplication in DRAFT status from
@@ -16,6 +18,7 @@ export function createCreateApplication(client: DbClient) {
   return async (input: CreateApplicationInput, actorId?: string): Promise<LoanApplication> => {
     const sessionId = randomUUID();
     const payload = applicationPayloadSchema.parse({ sessionId, ...input.patch });
+    droppedMaritalStatus(input.patch, "createApplication", { sessionId });
     const normalized = normalizeApplication(payload);
     const result = scoreApplication(normalized);
 
@@ -59,6 +62,7 @@ export function createCreateApplication(client: DbClient) {
       (err: Error) =>
         logger.error("failed to record application.received", { id: app.id, error: err.message })
     );
+    scheduleDecision(client, app);
     return app;
   };
 }

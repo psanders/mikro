@@ -39,9 +39,9 @@ const FREQUENCIES: Array<{ value: ContractFrequency; label: string }> = [
 
 const parseNumeric = (value: string): number => Number(value.replace(/[\s,]/g, ""));
 
-const LABEL = "text-[12px] font-semibold text-[#14254A]";
+const LABEL = "text-[12px] font-semibold text-brand-ink";
 const INPUT =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93] focus:border-[#1F4AA8]";
+  "w-full rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px] text-[14px] font-medium text-brand-ink outline-none placeholder:text-ds-muted focus:border-brand-blue-primary";
 
 export interface LoanFormCardProps {
   /** Customer search results for the picker (from the container's listCustomers). */
@@ -124,17 +124,17 @@ export function LoanFormCard({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-[12px] border border-[#E5EAF1] bg-white",
+        "w-full overflow-hidden rounded-[12px] border border-ds-border bg-ds-surface",
         className
       )}
     >
-      <div className="flex items-center gap-[10px] border-b border-[#E5EAF1] bg-[#EEF3F9] px-[14px] py-[11px]">
-        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
+      <div className="flex items-center gap-[10px] border-b border-ds-border bg-ds-subtle px-[14px] py-[11px]">
+        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-brand-blue-primary">
           <HandCoins size={14} strokeWidth={2} className="text-white" />
         </span>
         <div className="flex min-w-0 flex-col gap-[1px]">
-          <span className="text-[14px] font-semibold text-[#14254A]">Nuevo préstamo</span>
-          <span className="text-[11px] font-medium text-[#697A93]">
+          <span className="text-[14px] font-semibold text-brand-ink">Nuevo préstamo</span>
+          <span className="text-[11px] font-medium text-ds-muted">
             Cliente existente · términos nuevos
           </span>
         </div>
@@ -145,46 +145,46 @@ export function LoanFormCard({
         <div className="flex flex-col gap-[7px]">
           <span className={LABEL}>Cliente</span>
           {selected ? (
-            <div className="flex items-center gap-[10px] rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px]">
-              <UserRound size={16} strokeWidth={2} className="shrink-0 text-[#697A93]" />
+            <div className="flex items-center gap-[10px] rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px]">
+              <UserRound size={16} strokeWidth={2} className="shrink-0 text-ds-muted" />
               <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
-                <span className="truncate text-[14px] font-medium text-[#14254A]">
+                <span className="truncate text-[14px] font-medium text-brand-ink">
                   {selected.name}
                 </span>
-                <span className="text-[11px] font-medium text-[#697A93]">
+                <span className="text-[11px] font-medium text-ds-muted">
                   Cédula {selected.idNumber}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => handleSearch("")}
-                className="text-[12px] font-medium text-[#1F4AA8]"
+                className="text-[12px] font-medium text-brand-blue-primary"
               >
                 Cambiar
               </button>
             </div>
           ) : (
             <div className="relative">
-              <div className="flex items-center gap-[10px] rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px]">
-                <Search size={16} strokeWidth={2} className="shrink-0 text-[#697A93]" />
+              <div className="flex items-center gap-[10px] rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px]">
+                <Search size={16} strokeWidth={2} className="shrink-0 text-ds-muted" />
                 <input
                   value={query}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Buscar por nombre o teléfono…"
-                  className="w-full bg-transparent text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93]"
+                  className="w-full bg-transparent text-[14px] font-medium text-brand-ink outline-none placeholder:text-ds-muted"
                 />
               </div>
               {showResults && (
-                <div className="absolute z-10 mt-[4px] flex w-full flex-col overflow-hidden rounded-[8px] border border-[#E5EAF1] bg-white shadow-lg">
+                <div className="absolute z-10 mt-[4px] flex w-full flex-col overflow-hidden rounded-[8px] border border-ds-border bg-ds-surface shadow-lg">
                   {customers.map((c) => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => setSelected(c)}
-                      className="flex flex-col gap-[1px] px-[14px] py-[9px] text-left hover:bg-[#F4F7FB]"
+                      className="flex flex-col gap-[1px] px-[14px] py-[9px] text-left hover:bg-ds-bg"
                     >
-                      <span className="text-[13px] font-medium text-[#14254A]">{c.name}</span>
-                      <span className="text-[11px] font-medium text-[#697A93]">
+                      <span className="text-[13px] font-medium text-brand-ink">{c.name}</span>
+                      <span className="text-[11px] font-medium text-ds-muted">
                         Cédula {c.idNumber} · {c.phone}
                       </span>
                     </button>
@@ -195,8 +195,8 @@ export function LoanFormCard({
           )}
           {selected?.homeAddress && (
             <div className="flex items-center gap-[6px]">
-              <MapPin size={11} strokeWidth={2} className="shrink-0 text-[#697A93]" />
-              <span className="text-[11px] font-medium text-[#697A93]">
+              <MapPin size={11} strokeWidth={2} className="shrink-0 text-ds-muted" />
+              <span className="text-[11px] font-medium text-ds-muted">
                 Reside en: {selected.homeAddress}
               </span>
             </div>
@@ -246,7 +246,7 @@ export function LoanFormCard({
               <ChevronDown
                 size={16}
                 strokeWidth={2}
-                className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+                className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
               />
             </div>
           </div>
@@ -269,7 +269,7 @@ export function LoanFormCard({
             <Calendar
               size={16}
               strokeWidth={2}
-              className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-[#697A93]"
+              className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-ds-muted"
             />
             <input
               type="date"
@@ -289,12 +289,12 @@ export function LoanFormCard({
           <span
             className={cn(
               "flex h-[18px] w-[18px] items-center justify-center rounded-[5px]",
-              generateContract ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
+              generateContract ? "bg-brand-blue-primary" : "border border-ds-border bg-ds-surface"
             )}
           >
             {generateContract && <Check size={12} strokeWidth={2} className="text-white" />}
           </span>
-          <span className="text-[13px] font-medium text-[#14254A]">
+          <span className="text-[13px] font-medium text-brand-ink">
             Generar contrato con estos términos
           </span>
         </button>
@@ -326,7 +326,7 @@ export function LoanFormCard({
           <button
             type="button"
             onClick={() => setShowOptional(true)}
-            className="flex items-center gap-[6px] text-[12px] font-medium text-[#697A93]"
+            className="flex items-center gap-[6px] text-[12px] font-medium text-ds-muted"
           >
             <Plus size={13} strokeWidth={2} />
             Apodo y tasa de mora (opcional)
@@ -334,7 +334,7 @@ export function LoanFormCard({
         )}
 
         {status === "error" && error && (
-          <p className="text-[12px] font-medium text-[#B42121]">{error}</p>
+          <p className="text-[12px] font-medium text-ds-red">{error}</p>
         )}
 
         <button
@@ -344,7 +344,7 @@ export function LoanFormCard({
           className={cn(
             "flex w-full items-center justify-center gap-[7px] rounded-[9px] px-[18px] py-[11px] text-[14px] font-medium text-white transition",
             valid && !creating
-              ? "bg-[#1F4AA8] hover:bg-[#103A8A]"
+              ? "bg-brand-blue-primary hover:bg-brand-blue-deep"
               : "cursor-not-allowed bg-[#9DB0D4]"
           )}
         >

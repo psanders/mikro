@@ -20,6 +20,8 @@ import {
   formatDop,
   toJsonSafeSnapshot
 } from "./helpers.js";
+import type { PrismaClient } from "../../generated/prisma/client.js";
+import { latestDecision } from "../credit/decide.js";
 
 export interface EventMapperArgs {
   /** Raw procedure input (unparsed). Mappers cast the fields they need. */
@@ -36,6 +38,26 @@ export type EventMapper = (args: EventMapperArgs) => Promise<RecordBusinessEvent
 /** The Prisma-capable client behind the hand-written DbClient abstraction. */
 function db(ctx: Context): EventClient {
   return ctx.db as unknown as EventClient;
+}
+
+/** `{ via: "extension" }` when the review action came from the Mikro Decisión panel. */
+function viaOf(input: unknown): { via?: "extension" } {
+  return (input as { via?: string } | undefined)?.via === "extension" ? { via: "extension" } : {};
+}
+
+/** The credit decision in force for an application, for approved/rejected payloads. */
+async function creditOf(ctx: Context, applicationId: string) {
+  const d = await latestDecision(ctx.db as unknown as PrismaClient, applicationId);
+  return d
+    ? {
+        credit: {
+          decisionId: d.id,
+          outcome: d.outcome,
+          mikroScore: d.mikroScore,
+          policyVersion: d.policyVersion
+        }
+      }
+    : {};
 }
 
 /** Spanish labels for the loan statuses updateLoanStatus can set. */
@@ -161,6 +183,7 @@ const applicationAssigned: EventMapper = async ({ input, result, ctx }) => {
       : `${actorName} asignó la solicitud de ${name} a ${assigneeName}`,
     payload: {
       ...applicationBase(app),
+      ...viaOf(input),
       assigneeId,
       assigneeName,
       ...(reassigned ? { reassigned } : {})
@@ -168,7 +191,7 @@ const applicationAssigned: EventMapper = async ({ input, result, ctx }) => {
   };
 };
 
-const applicationSentToDecision: EventMapper = async ({ result, ctx }) => {
+const applicationSentToDecision: EventMapper = async ({ input, result, ctx }) => {
   const app = result as ApplicationRow;
   const actorName = await resolveActorName(db(ctx), ctx.userId);
   const name = applicationDisplayName(app);
@@ -182,6 +205,7 @@ const applicationSentToDecision: EventMapper = async ({ result, ctx }) => {
     summary: `${actorName} envió a decisión la solicitud de ${name}`,
     payload: {
       ...applicationBase(app),
+      ...viaOf(input),
       ...(app.reviewerRecommendation ? { recommendation: app.reviewerRecommendation } : {})
     }
   };
@@ -225,12 +249,13 @@ const applicationApproved: EventMapper = async ({ result, ctx }) => {
       policyException: false,
       ...(approvedAmount != null ? { approvedAmount } : {}),
       ...(app.approvedTermWeeks != null ? { approvedTermWeeks: app.approvedTermWeeks } : {}),
-      ...(app.decisionNote ? { note: app.decisionNote } : {})
+      ...(app.decisionNote ? { note: app.decisionNote } : {}),
+      ...(await creditOf(ctx, app.id))
     }
   };
 };
 
-const applicationRejected: EventMapper = async ({ result, ctx }) => {
+const applicationRejected: EventMapper = async ({ input, result, ctx }) => {
   const app = result as ApplicationRow;
   const actorName = await resolveActorName(db(ctx), ctx.userId);
   const name = applicationDisplayName(app);
@@ -241,11 +266,13 @@ const applicationRejected: EventMapper = async ({ result, ctx }) => {
     actorName,
     customerName: name,
     applicationId: app.id,
-    summary: `Solicitud de ${name} rechazada`,
+    summary: `Solicitud de ${name} rechazada${viaOf(input).via ? " desde la extensión" : ""}`,
     payload: {
       ...applicationBase(app),
+      ...viaOf(input),
       ...(app.rejectionReason ? { reason: app.rejectionReason } : {}),
-      ...(app.decisionNote ? { note: app.decisionNote } : {})
+      ...(app.decisionNote ? { note: app.decisionNote } : {}),
+      ...(await creditOf(ctx, app.id))
     }
   };
 };
