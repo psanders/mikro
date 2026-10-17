@@ -55,11 +55,11 @@ export const FEED_ICON_TONE: Record<FeedAccent, string> = {
 // Accent-tinted icon-chip background, per the Pencil feed (green pill for
 // payments, blue for the rest, red/amber for destructive/exception).
 export const FEED_CHIP_BG: Record<FeedAccent, string> = {
-  green: "bg-[#E8F7EE]",
-  amber: "bg-[#FDF1E3]",
-  red: "bg-[#FCEBEB]",
-  blue: "bg-[#E9F2FF]",
-  neutral: "bg-[#EEF3F9]"
+  green: "bg-ds-green-bg",
+  amber: "bg-ds-amber-bg",
+  red: "bg-ds-red-bg",
+  blue: "bg-brand-mist",
+  neutral: "bg-ds-subtle"
 };
 
 /** Base icon + accent per event type (before per-instance overrides). */

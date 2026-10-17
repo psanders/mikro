@@ -110,7 +110,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
       <div className="flex flex-col gap-6" data-testid="contract-view">
         <section className="flex flex-col gap-3">
           <SectionLabel>1 · Términos del contrato</SectionLabel>
-          <div className="rounded-[10px] bg-[#EEF3F9] px-4 py-3 text-[13px] font-medium text-[#14254A]">
+          <div className="rounded-[10px] bg-ds-subtle px-4 py-3 text-[13px] font-medium text-brand-ink">
             Monto aprobado <b>{formatDop(approved)}</b> · plazo aprobado{" "}
             {app.approvedTermWeeks ?? "—"} semanas
           </div>
@@ -163,7 +163,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
             </PanelField>
           </div>
           {termsValid && (
-            <p className="text-[12px] font-medium text-[#697A93]">
+            <p className="text-[12px] font-medium text-ds-muted">
               Total a pagar {formatDop(total)} en {installments} cuotas{" "}
               {INSTALLMENT_PLURAL[frequency]}.
             </p>
@@ -178,7 +178,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
               {stored ? "Regenerar y descargar" : "Generar y descargar"}
             </Btn>
             {stored && (
-              <span className="text-[12px] font-medium text-[#16A34A]">
+              <span className="text-[12px] font-medium text-ds-green">
                 Términos guardados · primera cuota {formatDate(stored.startDate)}
               </span>
             )}
@@ -188,14 +188,14 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
         <section className="flex flex-col gap-3">
           <SectionLabel>2 · Contrato firmado</SectionLabel>
           {app.contractFilename ? (
-            <div className="flex items-center gap-2 rounded-[10px] bg-[#E8F7EE] px-3 py-[10px] text-[13px] font-semibold text-[#16A34A]">
+            <div className="flex items-center gap-2 rounded-[10px] bg-ds-green-bg px-3 py-[10px] text-[13px] font-semibold text-ds-green">
               <CheckCircle2 size={15} />
               <span className="flex-1">Contrato firmado subido</span>
               {writable && (
                 <>
                   <button
                     type="button"
-                    className="text-[12px] text-[#1F4AA8]"
+                    className="text-[12px] text-brand-blue-primary"
                     onClick={() => fileInput.current?.click()}
                   >
                     Reemplazar
@@ -203,7 +203,7 @@ export function ContractView({ app, viewer, onView, panel }: ViewProps) {
                   <button
                     type="button"
                     aria-label="Quitar contrato"
-                    className="text-[#697A93] hover:text-[#DC2626]"
+                    className="text-ds-muted hover:text-ds-red"
                     onClick={async () => {
                       try {
                         await remove.mutateAsync({ id: app.id });

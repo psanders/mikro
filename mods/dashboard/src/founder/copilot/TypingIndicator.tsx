@@ -14,7 +14,7 @@ export function TypingIndicator({ className }: TypingIndicatorProps) {
   return (
     <div
       className={cn(
-        "flex w-fit items-center gap-[5px] rounded-[12px] bg-[#F4F7FB] px-[14px] py-[11px]",
+        "flex w-fit items-center gap-[5px] rounded-[12px] bg-ds-bg px-[14px] py-[11px]",
         className
       )}
       role="status"

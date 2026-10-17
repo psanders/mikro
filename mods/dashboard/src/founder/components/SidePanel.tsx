@@ -38,7 +38,7 @@ export function SidePanel({
   title,
   subtitle,
   icon: Icon,
-  iconClassName = "bg-[#F1EAFE] text-[#7C3AED]",
+  iconClassName = "bg-ds-violet-bg text-ds-violet",
   onBack,
   backLabel,
   headerExtra,
@@ -84,17 +84,17 @@ export function SidePanel({
         tabIndex={-1}
         data-testid={testId}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-[600px] max-w-full flex-col overflow-hidden rounded-l-[16px] bg-white shadow-[-12px_0_40px_#14254A40] outline-none",
+          "absolute inset-y-0 right-0 flex w-[600px] max-w-full flex-col overflow-hidden rounded-l-[16px] bg-ds-surface shadow-[-12px_0_40px_#14254A40] outline-none",
           className
         )}
       >
-        <div className="shrink-0 border-b border-[#E5EAF1] px-6 pb-4 pt-5">
+        <div className="shrink-0 border-b border-ds-border px-6 pb-4 pt-5">
           {onBack && (
             <button
               type="button"
               onClick={onBack}
               data-testid={`${testId}-back`}
-              className="mb-3 inline-flex items-center gap-2 text-[12.5px] font-semibold text-[#1F4AA8] hover:text-[#14356e]"
+              className="mb-3 inline-flex items-center gap-2 text-[12.5px] font-semibold text-brand-blue-primary hover:text-[#14356e]"
             >
               <ArrowLeft size={16} />
               {backLabel ?? "Volver"}
@@ -112,11 +112,11 @@ export function SidePanel({
               </span>
             )}
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-[17px] font-semibold tracking-[-0.2px] text-[#14254A]">
+              <h2 className="truncate text-[17px] font-semibold tracking-[-0.2px] text-brand-ink">
                 {title}
               </h2>
               {subtitle && (
-                <p className="truncate text-[12px] font-medium text-[#697A93]">{subtitle}</p>
+                <p className="truncate text-[12px] font-medium text-ds-muted">{subtitle}</p>
               )}
             </div>
             {headerExtra}
@@ -125,7 +125,7 @@ export function SidePanel({
               onClick={onClose}
               aria-label="Cerrar"
               data-testid={`${testId}-close`}
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#697A93] hover:bg-[#F4F7FB]"
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-ds-muted hover:bg-ds-bg"
             >
               <X size={18} />
             </button>
@@ -133,7 +133,7 @@ export function SidePanel({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">{children}</div>
         {footer && (
-          <div className="flex shrink-0 items-center gap-[10px] border-t border-[#E5EAF1] px-6 pb-5 pt-4">
+          <div className="flex shrink-0 items-center gap-[10px] border-t border-ds-border px-6 pb-5 pt-4">
             {footer}
           </div>
         )}

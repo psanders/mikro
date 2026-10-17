@@ -149,7 +149,7 @@ export function ApplicationFeedCard({
 
   return (
     <div
-      className={cn("w-full border-b border-[#E5EAF1]", actionable && "bg-[#FAF7FF]")}
+      className={cn("w-full border-b border-ds-border", actionable && "bg-ds-violet-tint")}
       data-testid="application-card"
       data-application-id={id}
       data-status={state.status}
@@ -161,29 +161,29 @@ export function ApplicationFeedCard({
           aria-expanded={expanded}
           className="flex w-full items-center gap-[14px] text-left"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-ds-violet-bg text-ds-violet">
             <Icon size={17} />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <span className="truncate text-[14px] leading-tight text-[#14254A]">
+            <span className="truncate text-[14px] leading-tight text-brand-ink">
               <span className="font-semibold">{name}</span>
               {state.businessName && event.customerName && (
                 <span className="font-medium"> · {state.businessName}</span>
               )}
             </span>
-            <span className="truncate text-[12px] font-medium leading-tight text-[#697A93]">
+            <span className="truncate text-[12px] font-medium leading-tight text-ds-muted">
               {meta}
             </span>
           </span>
           <ScoreChip score={state.score} />
           <StatusPill status={state.status} />
-          <span className="text-[12px] font-medium text-[#697A93]">
+          <span className="text-[12px] font-medium text-ds-muted">
             {showDay ? formatDayLabel(event.occurredAt) : formatClockTime(event.occurredAt)}
           </span>
           {expanded ? (
-            <ChevronUp size={15} className="text-[#697A93]" />
+            <ChevronUp size={15} className="text-ds-muted" />
           ) : (
-            <ChevronDown size={15} className="text-[#697A93]" />
+            <ChevronDown size={15} className="text-ds-muted" />
           )}
         </button>
         {expanded && (
@@ -237,7 +237,7 @@ function CardBody({
     onError: (e) => toast.error(friendlyError(e, "No se pudo marcar como desistida."))
   });
 
-  if (!app) return <p className="pl-[50px] text-[12px] text-[#697A93]">Cargando…</p>;
+  if (!app) return <p className="pl-[50px] text-[12px] text-ds-muted">Cargando…</p>;
   const rules = forTransition(app);
   const open = (view?: Parameters<typeof panel.open>[1]) => panel.open(applicationId, view);
   const summary = app.aiSummary ?? state.aiSummary;
@@ -247,7 +247,7 @@ function CardBody({
     <button
       type="button"
       onClick={() => open("detail")}
-      className="inline-flex items-center gap-[5px] text-[12px] font-semibold text-[#1F4AA8]"
+      className="inline-flex items-center gap-[5px] text-[12px] font-semibold text-brand-blue-primary"
       data-testid="action-view-full"
     >
       <PanelRightOpen size={13} />
@@ -257,8 +257,8 @@ function CardBody({
 
   const summaryLine = summary && (
     <div className="flex gap-2">
-      <Sparkles size={13} className="mt-[2px] shrink-0 text-[#7C3AED]" />
-      <p className="text-[13px] font-medium leading-[1.45] text-[#14254A]">{summary}</p>
+      <Sparkles size={13} className="mt-[2px] shrink-0 text-ds-violet" />
+      <p className="text-[13px] font-medium leading-[1.45] text-brand-ink">{summary}</p>
     </div>
   );
 
@@ -297,7 +297,7 @@ function CardBody({
         <div className="flex flex-col gap-3 pl-[50px]">
           {summaryLine}
           <div className="flex flex-wrap items-center gap-[10px]">
-            <span className="text-[12.5px] font-medium text-[#697A93]">
+            <span className="text-[12.5px] font-medium text-ds-muted">
               En evaluación con {assigneeName ?? "otro evaluador"}.
             </span>
             {viewer.isAdmin && (
@@ -315,8 +315,8 @@ function CardBody({
     return (
       <div className="flex flex-col gap-[14px] pl-[50px]">
         {summaryLine}
-        <div className="flex flex-col gap-1 rounded-[12px] border border-[#E5EAF1] bg-white p-3">
-          <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.6px] text-[#697A93]">
+        <div className="flex flex-col gap-1 rounded-[12px] border border-ds-border bg-ds-surface p-3">
+          <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.6px] text-ds-muted">
             Para enviar a decisión ·{" "}
             {Number(evidenceDone) + Number(Boolean(app.reviewerRecommendation)) + 1} de 3
           </span>
@@ -328,18 +328,18 @@ function CardBody({
           <div
             className={cn(
               "flex flex-col gap-3 rounded-[8px] px-3 pb-[14px] pt-[10px]",
-              evidenceDone ? "" : "bg-[#FDF1E3]"
+              evidenceDone ? "" : "bg-ds-amber-bg"
             )}
             data-testid="evidence-block"
           >
             <div className="flex items-center gap-[10px]">
               {evidenceDone ? (
-                <CheckCircle2 size={16} className="text-[#16A34A]" />
+                <CheckCircle2 size={16} className="text-ds-green" />
               ) : (
-                <CircleDashed size={16} className="text-[#D97706]" />
+                <CircleDashed size={16} className="text-ds-amber" />
               )}
-              <span className="text-[13px] font-semibold text-[#14254A]">Evidencia</span>
-              <span className="text-[12px] font-medium text-[#697A93]">
+              <span className="text-[13px] font-semibold text-brand-ink">Evidencia</span>
+              <span className="text-[12px] font-medium text-ds-muted">
                 {evidence?.location ? "ubicación ✓" : "ubicación pendiente"} · cédula{" "}
                 {Number(evidence?.idFront) + Number(evidence?.idBack)} de 2 · fotos del negocio{" "}
                 {evidence?.businessPhotos.have ?? 0} (mín. {evidence?.businessPhotos.need ?? 3})
@@ -375,7 +375,7 @@ function CardBody({
               Enviar a decisión
             </Btn>
             {!sendCheck.enabled && (
-              <span className="text-[12px] font-medium text-[#697A93]">{sendCheck.reason}</span>
+              <span className="text-[12px] font-medium text-ds-muted">{sendCheck.reason}</span>
             )}
             <span className="w-6" />
             <Btn icon={X} onClick={() => setRejecting(true)} data-testid="action-reject">
@@ -394,7 +394,7 @@ function CardBody({
       return (
         <div className="flex flex-col gap-3 pl-[50px]">
           {summaryLine}
-          <div className="flex items-center gap-[10px] text-[12.5px] font-medium text-[#697A93]">
+          <div className="flex items-center gap-[10px] text-[12.5px] font-medium text-ds-muted">
             <Lock size={13} />
             Esperando la decisión del admin · la evidencia está fija.
             {viewFull}
@@ -419,13 +419,13 @@ function CardBody({
     const hasTerms = Boolean(app.contractTerms) || Boolean(app.contractFilename);
     return (
       <div className="flex flex-col gap-[14px] pl-[50px]">
-        <div className="flex gap-2 rounded-[8px] bg-[#E8F7EE] px-3 py-[10px] text-[12.5px] font-medium text-[#16A34A]">
+        <div className="flex gap-2 rounded-[8px] bg-ds-green-bg px-3 py-[10px] text-[12.5px] font-medium text-ds-green">
           <Scale size={15} className="mt-[1px] shrink-0" />
           Aprobada por {formatDop(app.approvedAmount)} a {app.approvedTermWeeks} semanas
           {app.decisionNote ? ` · “${app.decisionNote}”` : ""}
         </div>
-        <div className="flex flex-col gap-1 rounded-[12px] border border-[#E5EAF1] bg-white p-3">
-          <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.6px] text-[#697A93]">
+        <div className="flex flex-col gap-1 rounded-[12px] border border-ds-border bg-ds-surface p-3">
+          <span className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.6px] text-ds-muted">
             Para convertir en cliente · {Number(hasTerms) + Number(Boolean(app.contractFilename))}{" "}
             de 3
           </span>
@@ -480,14 +480,14 @@ function CardBody({
         </div>
         <div className="flex items-center gap-4">
           {withdrawing ? (
-            <span className="flex items-center gap-2 text-[12.5px] font-medium text-[#14254A]">
+            <span className="flex items-center gap-2 text-[12.5px] font-medium text-brand-ink">
               ¿El cliente desistió del préstamo?
               <Btn className="px-3 py-[6px]" onClick={() => withdraw.mutate({ id: applicationId })}>
                 Sí, desistió
               </Btn>
               <button
                 type="button"
-                className="text-[12px] text-[#697A93]"
+                className="text-[12px] text-ds-muted"
                 onClick={() => setWithdrawing(false)}
               >
                 No
@@ -498,7 +498,7 @@ function CardBody({
               <button
                 type="button"
                 onClick={() => setWithdrawing(true)}
-                className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-[#697A93] underline"
+                className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-ds-muted underline"
                 data-testid="action-withdraw"
               >
                 <UserX size={13} />
@@ -515,7 +515,7 @@ function CardBody({
   return (
     <div className="flex flex-col gap-3 pl-[50px]">
       {summaryLine}
-      <span className="text-[12px] text-[#697A93]">{riskBandLabel(app.riskBand)}</span>
+      <span className="text-[12px] text-ds-muted">{riskBandLabel(app.riskBand)}</span>
       {viewFull}
     </div>
   );
@@ -541,20 +541,20 @@ function CheckRow({
     <div
       className={cn(
         "flex items-center gap-[10px] rounded-[8px] px-3 py-[9px]",
-        todo && !done && "bg-[#FDF1E3]",
-        locked && "bg-[#EEF3F9]"
+        todo && !done && "bg-ds-amber-bg",
+        locked && "bg-ds-subtle"
       )}
     >
       <Icon
         size={16}
-        className={done ? "text-[#16A34A]" : locked ? "text-[#697A93]" : "text-[#D97706]"}
+        className={done ? "text-ds-green" : locked ? "text-ds-muted" : "text-ds-amber"}
       />
       <span
-        className={cn("text-[13px] font-semibold", locked ? "text-[#697A93]" : "text-[#14254A]")}
+        className={cn("text-[13px] font-semibold", locked ? "text-ds-muted" : "text-brand-ink")}
       >
         {label}
       </span>
-      <span className="truncate text-[12px] font-medium text-[#697A93]">{detail}</span>
+      <span className="truncate text-[12px] font-medium text-ds-muted">{detail}</span>
       <span className="flex-1" />
       {children}
     </div>
@@ -581,17 +581,17 @@ function RecommendationRow({
   });
   return (
     <div
-      className={cn("flex flex-col gap-2 rounded-[8px] px-3 py-[9px]", !value && "bg-[#FDF1E3]")}
+      className={cn("flex flex-col gap-2 rounded-[8px] px-3 py-[9px]", !value && "bg-ds-amber-bg")}
     >
       <div className="flex items-center gap-[10px]">
         {value ? (
-          <CheckCircle2 size={16} className="text-[#16A34A]" />
+          <CheckCircle2 size={16} className="text-ds-green" />
         ) : (
-          <CircleDashed size={16} className="text-[#D97706]" />
+          <CircleDashed size={16} className="text-ds-amber" />
         )}
-        <span className="text-[13px] font-semibold text-[#14254A]">Recomendación</span>
+        <span className="text-[13px] font-semibold text-brand-ink">Recomendación</span>
         {!editing && (
-          <span className="truncate text-[12px] font-medium text-[#697A93]">“{value}”</span>
+          <span className="truncate text-[12px] font-medium text-ds-muted">“{value}”</span>
         )}
         <span className="flex-1" />
         {!editing && (
@@ -607,7 +607,7 @@ function RecommendationRow({
             onChange={(e) => setText(e.target.value)}
             rows={2}
             placeholder="Ej.: Aprobar RD$10,000 a 10 semanas; negocio estable, clientela fija."
-            className="flex-1 resize-none rounded-[8px] border border-[#E5EAF1] bg-white px-3 py-2 text-[13px] font-medium text-[#14254A] outline-none focus:border-[#7C3AED]"
+            className="flex-1 resize-none rounded-[8px] border border-ds-border bg-ds-surface px-3 py-2 text-[13px] font-medium text-brand-ink outline-none focus:border-ds-violet"
             data-testid="recommendation-input"
           />
           <Btn

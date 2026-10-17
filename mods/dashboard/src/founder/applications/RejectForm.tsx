@@ -49,10 +49,10 @@ export function RejectForm({
 
   return (
     <div
-      className="flex flex-col gap-3 rounded-[12px] border border-[#FCEBEB] bg-white p-3"
+      className="flex flex-col gap-3 rounded-[12px] border border-ds-red-bg bg-ds-surface p-3"
       data-testid="reject-form"
     >
-      <span className="text-[13px] font-semibold text-[#14254A]">Rechazar solicitud</span>
+      <span className="text-[13px] font-semibold text-brand-ink">Rechazar solicitud</span>
       <div className="flex flex-wrap gap-2">
         {reasons.map((r) => (
           <button
@@ -62,8 +62,8 @@ export function RejectForm({
             data-testid={`reject-reason-${r}`}
             className={
               reason === r
-                ? "rounded-full border border-[#DC2626] bg-[#FCEBEB] px-3 py-1 text-[12px] font-semibold text-[#DC2626]"
-                : "rounded-full border border-[#E5EAF1] px-3 py-1 text-[12px] font-medium text-[#14254A]"
+                ? "rounded-full border border-ds-red bg-ds-red-bg px-3 py-1 text-[12px] font-semibold text-ds-red"
+                : "rounded-full border border-ds-border px-3 py-1 text-[12px] font-medium text-brand-ink"
             }
           >
             {REJECTION_REASON_LABELS[r]}
@@ -79,7 +79,7 @@ export function RejectForm({
       />
       <div className="flex items-center gap-2">
         <Btn
-          className="border-[#DC2626] text-[#DC2626]"
+          className="border-ds-red text-ds-red"
           disabled={!ready || reject.isPending}
           onClick={() =>
             reject.mutate({

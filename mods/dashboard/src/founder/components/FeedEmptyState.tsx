@@ -20,16 +20,16 @@ export function FeedEmptyState({
   return (
     <div
       className={cn(
-        "flex w-full flex-col items-center justify-center gap-3 rounded-[14px] border border-[#E5EAF1] bg-white px-6 py-16 text-center",
+        "flex w-full flex-col items-center justify-center gap-3 rounded-[14px] border border-ds-border bg-ds-surface px-6 py-16 text-center",
         className
       )}
     >
-      <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[13px] bg-[#EEF3F9] text-[#697A93]">
+      <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[13px] bg-ds-subtle text-ds-muted">
         <Inbox size={24} />
       </div>
       <div className="flex flex-col gap-1">
-        <p className="text-[15px] font-semibold text-[#14254A]">{title}</p>
-        <p className="text-[13px] font-medium text-[#697A93]">{description}</p>
+        <p className="text-[15px] font-semibold text-brand-ink">{title}</p>
+        <p className="text-[13px] font-medium text-ds-muted">{description}</p>
       </div>
     </div>
   );

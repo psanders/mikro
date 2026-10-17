@@ -32,21 +32,21 @@ export function DocumentCard({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-[12px] border border-[#E5EAF1] bg-white",
+        "w-full overflow-hidden rounded-[12px] border border-ds-border bg-ds-surface",
         className
       )}
     >
-      <div className="flex items-center gap-[10px] bg-[#E9F2FF] px-[14px] py-[11px]">
-        <FileText size={16} strokeWidth={2} className="shrink-0 text-[#1F4AA8]" />
+      <div className="flex items-center gap-[10px] bg-brand-mist px-[14px] py-[11px]">
+        <FileText size={16} strokeWidth={2} className="shrink-0 text-brand-blue-primary" />
         <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
-          <span className="text-[13px] font-semibold text-[#1F4AA8]">Documento listo</span>
-          <span className="truncate text-[11px] font-medium text-[#14254A]">{filename}</span>
+          <span className="text-[13px] font-semibold text-brand-blue-primary">Documento listo</span>
+          <span className="truncate text-[11px] font-medium text-brand-ink">{filename}</span>
         </div>
       </div>
 
       <div className="flex flex-col gap-[10px] px-[14px] py-[12px]">
         {status === "error" && error && (
-          <p className="w-full text-[12px] font-medium leading-[18px] text-[#B42121]">{error}</p>
+          <p className="w-full text-[12px] font-medium leading-[18px] text-ds-red">{error}</p>
         )}
         <div className="flex flex-wrap items-center gap-[8px]">
           <button
@@ -54,8 +54,8 @@ export function DocumentCard({
             onClick={onDownload}
             disabled={busy}
             className={cn(
-              "inline-flex w-fit items-center gap-[7px] rounded-[9px] border border-[#E5EAF1] bg-white px-[14px] py-[8px] text-[14px] font-medium text-[#14254A] transition",
-              busy ? "cursor-not-allowed opacity-60" : "hover:bg-[#F4F7FB]"
+              "inline-flex w-fit items-center gap-[7px] rounded-[9px] border border-ds-border bg-ds-surface px-[14px] py-[8px] text-[14px] font-medium text-brand-ink transition",
+              busy ? "cursor-not-allowed opacity-60" : "hover:bg-ds-bg"
             )}
           >
             <Download size={16} />

@@ -44,15 +44,15 @@ interface AutomationVisual {
 }
 
 const AUTOMATION_VISUALS: Record<string, AutomationVisual> = {
-  payment: { icon: HandCoins, chipBg: "bg-[#FDF1E3]", chipFg: "text-[#D97706]" },
-  "record-expense": { icon: Fuel, chipBg: "bg-[#FDF1E3]", chipFg: "text-[#D97706]" },
-  "daily-close": { icon: BookCheck, chipBg: "bg-[#E8F7EE]", chipFg: "text-[#16A34A]" }
+  payment: { icon: HandCoins, chipBg: "bg-ds-amber-bg", chipFg: "text-ds-amber" },
+  "record-expense": { icon: Fuel, chipBg: "bg-ds-amber-bg", chipFg: "text-ds-amber" },
+  "daily-close": { icon: BookCheck, chipBg: "bg-ds-green-bg", chipFg: "text-ds-green" }
 };
 
 const DEFAULT_VISUAL: AutomationVisual = {
   icon: HandCoins,
-  chipBg: "bg-[#EEF3F9]",
-  chipFg: "text-[#697A93]"
+  chipBg: "bg-ds-subtle",
+  chipFg: "text-ds-muted"
 };
 
 /** Spanish schedule descriptor: "semanal, viernes 8:00" etc. */
@@ -92,7 +92,7 @@ export function TaskListRow({ task, onToggle, onEdit, onDelete, className }: Tas
   return (
     <div
       className={cn(
-        "flex w-full items-center gap-[14px] border-b border-[#E5EAF1] px-6 py-4",
+        "flex w-full items-center gap-[14px] border-b border-ds-border px-6 py-4",
         className
       )}
     >
@@ -110,16 +110,16 @@ export function TaskListRow({ task, onToggle, onEdit, onDelete, className }: Tas
         onClick={() => onEdit?.(task)}
         className="flex min-w-0 flex-1 flex-col gap-[3px] text-left"
       >
-        <p className="truncate text-[14px] font-semibold leading-tight text-[#14254A]">
+        <p className="truncate text-[14px] font-semibold leading-tight text-brand-ink">
           {task.name}
         </p>
-        <p className="truncate text-[12px] font-medium leading-tight text-[#697A93]">
+        <p className="truncate text-[12px] font-medium leading-tight text-ds-muted">
           {task.automationTitle} · {scheduleLabel(task)}
           {askNote}
         </p>
       </button>
 
-      <span className="shrink-0 text-[12px] font-medium text-[#697A93]">
+      <span className="shrink-0 text-[12px] font-medium text-ds-muted">
         {nextFiringLabel(task)}
       </span>
 
@@ -131,12 +131,12 @@ export function TaskListRow({ task, onToggle, onEdit, onDelete, className }: Tas
         onClick={() => onToggle?.(task, !task.enabled)}
         className={cn(
           "relative h-[20px] w-[36px] shrink-0 rounded-full transition",
-          task.enabled ? "bg-[#1F4AA8]" : "bg-[#E5EAF1]"
+          task.enabled ? "bg-brand-blue-primary" : "bg-ds-border"
         )}
       >
         <span
           className={cn(
-            "absolute top-[2px] h-[16px] w-[16px] rounded-full bg-white transition-all",
+            "absolute top-[2px] h-[16px] w-[16px] rounded-full bg-ds-surface transition-all",
             task.enabled ? "left-[18px]" : "left-[2px]"
           )}
         />
@@ -146,7 +146,7 @@ export function TaskListRow({ task, onToggle, onEdit, onDelete, className }: Tas
         type="button"
         aria-label="Eliminar tarea"
         onClick={() => onDelete?.(task)}
-        className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[9px] text-[#697A93] transition hover:bg-[#FCEBEB] hover:text-[#DC2626]"
+        className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[9px] text-ds-muted transition hover:bg-ds-red-bg hover:text-ds-red"
       >
         <Trash2 size={15} />
       </button>

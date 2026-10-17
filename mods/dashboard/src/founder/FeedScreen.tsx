@@ -313,8 +313,8 @@ export function FeedScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
-        <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Feed</h1>
+      <header className="flex shrink-0 items-center justify-between border-b border-ds-border px-6 py-[15px]">
+        <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-brand-ink">Feed</h1>
         <div className="flex items-center gap-[10px]">
           {viewer?.isReviewer && (
             <button
@@ -323,7 +323,7 @@ export function FeedScreen() {
               title="Calculadora"
               aria-label="Calculadora"
               data-testid="calculator-button"
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-brand-mist text-brand-blue-primary transition hover:bg-ds-subtle"
             >
               <Calculator size={17} />
             </button>
@@ -334,7 +334,7 @@ export function FeedScreen() {
               onClick={() => copilot.openWith()}
               title="Copiloto"
               aria-label="Copiloto"
-              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-brand-mist text-brand-blue-primary transition hover:bg-ds-subtle"
             >
               <Sparkles size={17} />
             </button>
@@ -345,7 +345,7 @@ export function FeedScreen() {
       <FilterBar value={filterValue} actors={actors} onApply={applyFilter} />
 
       {staleOpenFirings.length > 0 && (
-        <div className="shrink-0 border-b border-[#E5EAF1] bg-[#FFF9EE] px-6 py-3">
+        <div className="shrink-0 border-b border-ds-border bg-ds-amber-bg px-6 py-3">
           <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[#8A6D1D]">
             Pendientes ({staleOpenFirings.length})
           </p>
@@ -362,7 +362,7 @@ export function FeedScreen() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {feed.isPending && (
-          <div className="px-6 py-4 text-sm font-medium text-[#697A93]">Cargando…</div>
+          <div className="px-6 py-4 text-sm font-medium text-ds-muted">Cargando…</div>
         )}
 
         {feed.isError && (
@@ -452,7 +452,7 @@ export function FeedScreen() {
               type="button"
               disabled={feed.isFetchingNextPage}
               onClick={() => void feed.fetchNextPage()}
-              className="rounded-full bg-[#E9F2FF] px-[18px] py-[8px] text-[12px] font-semibold text-[#1F4AA8] transition hover:bg-[#dbe8fb] disabled:opacity-60"
+              className="rounded-full bg-brand-mist px-[18px] py-[8px] text-[12px] font-semibold text-brand-blue-primary transition hover:bg-ds-subtle disabled:opacity-60"
             >
               {feed.isFetchingNextPage ? "Cargando…" : "Cargar más"}
             </button>

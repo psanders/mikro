@@ -130,11 +130,11 @@ export function TareasScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
+      <header className="flex shrink-0 items-center justify-between border-b border-ds-border px-6 py-[15px]">
         <div className="flex items-center gap-3">
-          <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Tareas</h1>
+          <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-brand-ink">Tareas</h1>
           {tasksQuery.isSuccess && (
-            <span className="text-[13px] font-medium text-[#697A93]">
+            <span className="text-[13px] font-medium text-ds-muted">
               {activeCount} activa{activeCount === 1 ? "" : "s"}
             </span>
           )}
@@ -146,7 +146,7 @@ export function TareasScreen() {
               setFormError(null);
               setModal({ mode: "create" });
             }}
-            className="inline-flex items-center gap-[7px] rounded-[9px] bg-[#1F4AA8] px-4 py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]"
+            className="inline-flex items-center gap-[7px] rounded-[9px] bg-brand-blue-primary px-4 py-[9px] text-[14px] font-medium text-white transition hover:bg-[#1A3F8F]"
           >
             <Plus size={16} />
             Nueva tarea
@@ -156,7 +156,7 @@ export function TareasScreen() {
             onClick={() => copilot.openWith()}
             title="Copiloto"
             aria-label="Copiloto"
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#E9F2FF] text-[#1F4AA8] transition hover:bg-[#dbe8fb]"
+            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-brand-mist text-brand-blue-primary transition hover:bg-ds-subtle"
           >
             <Sparkles size={17} />
           </button>
@@ -165,19 +165,19 @@ export function TareasScreen() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {tasksQuery.isPending && (
-          <div className="px-6 py-4 text-sm font-medium text-[#697A93]">Cargando…</div>
+          <div className="px-6 py-4 text-sm font-medium text-ds-muted">Cargando…</div>
         )}
 
         {tasksQuery.isError && (
-          <div className="px-6 py-4 text-sm font-medium text-[#DC2626]">
+          <div className="px-6 py-4 text-sm font-medium text-ds-red">
             No se pudieron cargar las tareas.
           </div>
         )}
 
         {tasksQuery.isSuccess && items.length === 0 && (
           <div className="flex flex-col items-start gap-2 px-6 py-8">
-            <p className="text-[14px] font-semibold text-[#14254A]">Sin tareas programadas</p>
-            <p className="text-[13px] font-medium text-[#697A93]">
+            <p className="text-[14px] font-semibold text-brand-ink">Sin tareas programadas</p>
+            <p className="text-[13px] font-medium text-ds-muted">
               Crea una con “Nueva tarea” o pídesela al copiloto: “recuérdame cada viernes pagar al
               cobrador”.
             </p>

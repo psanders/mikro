@@ -24,7 +24,7 @@ export function ProvenanceLine({ provenance, className }: ProvenanceLineProps) {
   parts.push(formatElapsed(provenance.elapsedMs));
 
   return (
-    <div className={cn("flex items-center gap-[6px] text-[#697A93]", className)}>
+    <div className={cn("flex items-center gap-[6px] text-ds-muted", className)}>
       <Wrench size={11} strokeWidth={2} className="shrink-0" />
       <span className="text-[10px] font-medium">{parts.join(" · ")}</span>
     </div>

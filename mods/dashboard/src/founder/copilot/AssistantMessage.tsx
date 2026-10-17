@@ -26,7 +26,7 @@ export interface AssistantMessageProps {
 // Shared with PendingActionCard so a card's "Copiloto said X" line always
 // matches markdown body text exactly — these drifted 1px apart before
 // (14px vs 13px) simply because nothing forced them to stay in sync.
-export const ASSISTANT_TEXT_CLASS = "text-[13px] font-medium leading-[20px] text-[#14254A]";
+export const ASSISTANT_TEXT_CLASS = "text-[13px] font-medium leading-[20px] text-brand-ink";
 const TEXT_CLASS = ASSISTANT_TEXT_CLASS;
 
 // break-words on every text-bearing override: assistant replies can embed
@@ -71,7 +71,7 @@ const MARKDOWN_OPTIONS = {
     },
     code: {
       props: {
-        className: "break-words rounded-[4px] bg-[#EEF3F9] px-[4px] py-[1px] font-mono text-[12px]"
+        className: "break-words rounded-[4px] bg-ds-subtle px-[4px] py-[1px] font-mono text-[12px]"
       }
     }
   }

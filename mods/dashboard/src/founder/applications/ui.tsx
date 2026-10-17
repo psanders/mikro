@@ -12,10 +12,10 @@ import { scoreTone, statusMeta, type StatusTone } from "../../lib/applications";
 export const VIOLET = "#7C3AED";
 
 const STATUS_CLASSES: Record<StatusTone, string> = {
-  violet: "bg-[#F1EAFE] text-[#7C3AED]",
-  green: "bg-[#E8F7EE] text-[#16A34A]",
-  red: "bg-[#FCEBEB] text-[#DC2626]",
-  muted: "bg-[#EEF3F9] text-[#697A93]"
+  violet: "bg-ds-violet-bg text-ds-violet",
+  green: "bg-ds-green-bg text-ds-green",
+  red: "bg-ds-red-bg text-ds-red",
+  muted: "bg-ds-subtle text-ds-muted"
 };
 
 /** The single current-status label (never the full path). */
@@ -37,10 +37,10 @@ export function StatusPill({ status }: { status: string }) {
 }
 
 const SCORE_CLASSES = {
-  green: "bg-[#E8F7EE] text-[#16A34A]",
-  amber: "bg-[#FDF1E3] text-[#D97706]",
-  red: "bg-[#FCEBEB] text-[#DC2626]",
-  muted: "bg-[#EEF3F9] text-[#697A93]"
+  green: "bg-ds-green-bg text-ds-green",
+  amber: "bg-ds-amber-bg text-ds-amber",
+  red: "bg-ds-red-bg text-ds-red",
+  muted: "bg-ds-subtle text-ds-muted"
 } as const;
 
 export function ScoreChip({ score }: { score: number | null | undefined }) {
@@ -65,9 +65,9 @@ type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BTN_TONES = {
-  primary: "bg-[#1F4AA8] text-white hover:bg-[#1a3f90] disabled:bg-[#1F4AA8]",
-  secondary: "border border-[#E5EAF1] bg-white text-[#14254A] hover:bg-[#F4F7FB]",
-  success: "bg-[#16A34A] text-white hover:bg-[#12883d] disabled:bg-[#16A34A]"
+  primary: "bg-brand-blue-primary text-white hover:bg-[#1a3f90] disabled:bg-brand-blue-primary",
+  secondary: "border border-ds-border bg-ds-surface text-brand-ink hover:bg-ds-bg",
+  success: "bg-ds-green-solid text-white hover:bg-[#12883d] disabled:bg-ds-green-solid"
 } as const;
 
 export function Btn({ icon: Icon, tone = "secondary", className, children, ...rest }: BtnProps) {
@@ -90,10 +90,10 @@ export function Btn({ icon: Icon, tone = "secondary", className, children, ...re
 export function SectionLabel({ children, extra }: { children: ReactNode; extra?: ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.6px] text-[#697A93]">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.6px] text-ds-muted">
         {children}
       </span>
-      <span className="h-px flex-1 bg-[#E5EAF1]" />
+      <span className="h-px flex-1 bg-ds-border" />
       {extra}
     </div>
   );
@@ -103,14 +103,14 @@ export function SectionLabel({ children, extra }: { children: ReactNode; extra?:
 export function PanelField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-1 flex-col gap-[6px]">
-      <span className="text-[12px] font-medium text-[#697A93]">{label}</span>
+      <span className="text-[12px] font-medium text-ds-muted">{label}</span>
       {children}
     </label>
   );
 }
 
 export const INPUT_CLASS =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-white px-3 py-[9px] text-[13px] font-medium text-[#14254A] outline-none focus:border-[#7C3AED]";
+  "w-full rounded-[8px] border border-ds-border bg-ds-surface px-3 py-[9px] text-[13px] font-medium text-brand-ink outline-none focus:border-ds-violet";
 
 /**
  * INPUT_CLASS select with its own chevron. The native WebKit select ignores
@@ -124,7 +124,7 @@ export function PanelSelect({ className, ...rest }: SelectHTMLAttributes<HTMLSel
       <ChevronDown
         size={16}
         strokeWidth={2}
-        className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93] peer-disabled:opacity-50"
+        className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted peer-disabled:opacity-50"
       />
     </div>
   );

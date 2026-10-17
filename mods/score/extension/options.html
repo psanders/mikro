@@ -152,6 +152,39 @@
           display: none;
         }
       }
+      /* Follows the OS (the extension has no theme switch). */
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #e9f2ff;
+          background: #0b1324;
+        }
+        .brand {
+          background: linear-gradient(135deg, #0b2a66, #103a8a);
+        }
+        .sub,
+        details {
+          color: #9fb0cc;
+        }
+        input {
+          background: #111c33;
+          border-color: #24365c;
+          color: #e9f2ff;
+        }
+        button {
+          background: #3b7be0;
+        }
+        button.ghost {
+          background: #111c33;
+          color: #e9f2ff;
+          border-color: #24365c;
+        }
+        .err {
+          color: #f87171;
+        }
+        .ok {
+          color: #4ade80;
+        }
+      }
     </style>
   </head>
   <body>

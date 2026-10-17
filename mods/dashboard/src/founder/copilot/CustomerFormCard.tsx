@@ -24,9 +24,9 @@ const DAY_OPTIONS: Array<{ value: DayOfWeek; label: string }> = [
 
 const parseNumeric = (value: string): number => Number(value.replace(/[\s,]/g, ""));
 
-const LABEL = "text-[12px] font-semibold text-[#14254A]";
+const LABEL = "text-[12px] font-semibold text-brand-ink";
 const INPUT =
-  "w-full rounded-[8px] border border-[#E5EAF1] bg-[#F4F7FB] px-[14px] py-[10px] text-[14px] font-medium text-[#14254A] outline-none placeholder:text-[#697A93] focus:border-[#1F4AA8]";
+  "w-full rounded-[8px] border border-ds-border bg-ds-bg px-[14px] py-[10px] text-[14px] font-medium text-brand-ink outline-none placeholder:text-ds-muted focus:border-brand-blue-primary";
 
 export interface CustomerFormCardProps {
   /** Collectors for the assigned-collector select (from the container's listUsers). */
@@ -94,17 +94,17 @@ export function CustomerFormCard({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-[12px] border border-[#E5EAF1] bg-white",
+        "w-full overflow-hidden rounded-[12px] border border-ds-border bg-ds-surface",
         className
       )}
     >
-      <div className="flex items-center gap-[10px] border-b border-[#E5EAF1] bg-[#EEF3F9] px-[14px] py-[11px]">
-        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-[#1F4AA8]">
+      <div className="flex items-center gap-[10px] border-b border-ds-border bg-ds-subtle px-[14px] py-[11px]">
+        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[8px] bg-brand-blue-primary">
           <UserPlus size={14} strokeWidth={2} className="text-white" />
         </span>
         <div className="flex min-w-0 flex-col gap-[1px]">
-          <span className="text-[14px] font-semibold text-[#14254A]">Nuevo cliente</span>
-          <span className="text-[11px] font-medium text-[#697A93]">
+          <span className="text-[14px] font-semibold text-brand-ink">Nuevo cliente</span>
+          <span className="text-[11px] font-medium text-ds-muted">
             Cliente nuevo · datos básicos
           </span>
         </div>
@@ -170,7 +170,7 @@ export function CustomerFormCard({
             <ChevronDown
               size={16}
               strokeWidth={2}
-              className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+              className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
             />
           </div>
         </div>
@@ -226,7 +226,7 @@ export function CustomerFormCard({
                   <ChevronDown
                     size={16}
                     strokeWidth={2}
-                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+                    className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
                   />
                 </div>
               </div>
@@ -257,12 +257,14 @@ export function CustomerFormCard({
               <span
                 className={cn(
                   "flex h-[18px] w-[18px] items-center justify-center rounded-[5px]",
-                  isBusinessOwner ? "bg-[#1F4AA8]" : "border border-[#E5EAF1] bg-white"
+                  isBusinessOwner
+                    ? "bg-brand-blue-primary"
+                    : "border border-ds-border bg-ds-surface"
                 )}
               >
                 {isBusinessOwner && <Check size={12} strokeWidth={2} className="text-white" />}
               </span>
-              <span className="text-[13px] font-medium text-[#14254A]">
+              <span className="text-[13px] font-medium text-brand-ink">
                 Es propietario de un negocio
               </span>
             </button>
@@ -271,7 +273,7 @@ export function CustomerFormCard({
           <button
             type="button"
             onClick={() => setShowOptional(true)}
-            className="flex items-center gap-[6px] text-[12px] font-medium text-[#697A93]"
+            className="flex items-center gap-[6px] text-[12px] font-medium text-ds-muted"
           >
             <Plus size={13} strokeWidth={2} />
             Apodo, ocupación e ingreso (opcional)
@@ -279,7 +281,7 @@ export function CustomerFormCard({
         )}
 
         {status === "error" && error && (
-          <p className="text-[12px] font-medium text-[#B42121]">{error}</p>
+          <p className="text-[12px] font-medium text-ds-red">{error}</p>
         )}
 
         <button
@@ -289,7 +291,7 @@ export function CustomerFormCard({
           className={cn(
             "flex w-full items-center justify-center gap-[7px] rounded-[9px] px-[18px] py-[11px] text-[14px] font-medium text-white transition",
             valid && !creating
-              ? "bg-[#1F4AA8] hover:bg-[#103A8A]"
+              ? "bg-brand-blue-primary hover:bg-brand-blue-deep"
               : "cursor-not-allowed bg-[#9DB0D4]"
           )}
         >

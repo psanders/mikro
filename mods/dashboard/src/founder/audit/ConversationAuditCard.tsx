@@ -35,7 +35,7 @@ export function ConversationAuditFeedCard(props: ConversationAuditFeedCardProps)
               type="button"
               onClick={() => setPanelOpen(true)}
               data-testid="audit-open-detail"
-              className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-[#1F4AA8] hover:text-[#14356e]"
+              className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-brand-blue-primary hover:text-[#14356e]"
             >
               Ver detalle
               <ArrowRight size={14} />

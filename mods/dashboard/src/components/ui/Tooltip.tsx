@@ -35,7 +35,7 @@ export function Tooltip({ label, children, className }: TooltipProps) {
         aria-hidden
         className={cn(
           "pointer-events-none absolute left-full top-1/2 z-50 ml-[10px] -translate-y-1/2 -translate-x-1",
-          "whitespace-nowrap rounded-[7px] bg-[#14254A] px-2.5 py-[7px] text-[12px] font-medium leading-none text-white",
+          "whitespace-nowrap rounded-[7px] bg-ds-inverse px-2.5 py-[7px] text-[12px] font-medium leading-none text-white",
           "opacity-0 shadow-[0_6px_20px_-4px_rgba(20,37,74,0.5)] ring-1 ring-white/10",
           "transition-[opacity,transform] duration-150 ease-out",
           "group-hover:translate-x-0 group-hover:opacity-100 group-hover:delay-[700ms]",

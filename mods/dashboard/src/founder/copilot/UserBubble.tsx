@@ -14,7 +14,7 @@ export interface UserBubbleProps {
 export function UserBubble({ text, className }: UserBubbleProps) {
   return (
     <div className={cn("flex w-full justify-end", className)}>
-      <div className="w-fit max-w-[85%] rounded-[14px_14px_4px_14px] bg-[#1F4AA8] px-[14px] py-[10px] text-[13px] font-medium leading-snug text-white">
+      <div className="w-fit max-w-[85%] rounded-[14px_14px_4px_14px] bg-brand-blue-primary px-[14px] py-[10px] text-[13px] font-medium leading-snug text-white">
         {text}
       </div>
     </div>
