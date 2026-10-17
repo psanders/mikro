@@ -7,21 +7,17 @@
  */
 import type { ApiRequest, ApiResponse } from "./protocol.js";
 
-export async function settings(): Promise<{ apiUrl?: string; token?: string; name?: string }> {
-  return (await chrome.storage.local.get(["apiUrl", "token", "name"])) as {
-    apiUrl?: string;
-    token?: string;
-    name?: string;
-  };
-}
-
 export async function callApi(
   apiUrl: string,
   token: string | undefined,
   req: Omit<ApiRequest, "type">
 ): Promise<ApiResponse> {
   const base = `${apiUrl.replace(/\/+$/, "")}/trpc/${req.path}`;
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  // ngrok's free tier interposes a warning page unless this header is sent.
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "ngrok-skip-browser-warning": "1"
+  };
   if (token) headers.authorization = `Bearer ${token}`;
   let res: Response;
   try {

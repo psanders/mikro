@@ -39,6 +39,9 @@ jobs:
         run: npm test -w @mikro/score
 
       - name: Package extension
+        # Same Mikro server as the dashboard build (build-dashboard.yaml).
+        env:
+          MIKRO_API_URL: ${{ vars.VITE_API_URL || 'https://mikro.ngrok-free.dev' }}
         run: npm run package -w @mikro/score
 
       - name: Upload zip

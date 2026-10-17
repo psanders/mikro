@@ -1,50 +1,68 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Options page: the Mikro server URL and the evaluator's login. Saving asks
- * Chrome for permission to reach that server (only that origin).
+ * Options page: the same login as the Ops dashboard (and the panel). The
+ * Mikro server is built in; "Avanzado" lets a developer point at another one.
  */
-import { callApi, settings } from "./api.js";
+import { BUILT_IN_API_URL, formatPhone, getSession, login, logout } from "./session.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-function show(text: string, ok: boolean) {
-  const s = $("status");
-  s.textContent = text;
-  s.className = ok ? "ok" : "err";
+async function refresh() {
+  const s = await getSession();
+  $("signed-out").hidden = !!s.token;
+  $("signed-in").hidden = !s.token;
+  $("who").textContent = s.name ? `Como ${s.name} · ${new URL(s.apiUrl).host}` : "";
+  $("builtin").textContent = BUILT_IN_API_URL;
+  const { apiUrl } = (await chrome.storage.local.get(["apiUrl"])) as { apiUrl?: string };
+  $<HTMLInputElement>("apiUrl").value = apiUrl ?? "";
 }
 
-async function refresh() {
-  const { apiUrl, token, name } = await settings();
-  if (apiUrl) $<HTMLInputElement>("apiUrl").value = apiUrl;
-  $("logout").hidden = !token;
-  if (token) show(`Sesión iniciada${name ? ` como ${name}` : ""}.`, true);
-}
+$<HTMLInputElement>("phone").addEventListener("input", (e) => {
+  const el = e.target as HTMLInputElement;
+  el.value = formatPhone(el.value);
+});
 
 $("login").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const apiUrl = $<HTMLInputElement>("apiUrl").value.trim().replace(/\/+$/, "");
-  const origin = new URL(apiUrl).origin;
-  const granted = await chrome.permissions.request({ origins: [`${origin}/*`] });
-  if (!granted) return show("Chrome necesita permiso para conectarse al servidor de Mikro.", false);
-  const res = await callApi(apiUrl, undefined, {
-    kind: "mutation",
-    path: "login",
-    input: {
-      phone: $<HTMLInputElement>("phone").value,
-      password: $<HTMLInputElement>("password").value
-    }
-  });
-  if (!res.ok) return show(res.message, false);
-  const { token, name } = res.data as { token: string; name: string };
-  await chrome.storage.local.set({ apiUrl, token, name });
+  const submit = $<HTMLButtonElement>("submit");
+  const error = $("error");
+  submit.disabled = true;
+  submit.textContent = "Entrando…";
+  error.hidden = true;
+  const r = await login($<HTMLInputElement>("phone").value, $<HTMLInputElement>("password").value);
+  submit.disabled = false;
+  submit.textContent = "Iniciar sesión";
+  if (!r.ok) {
+    error.textContent = r.message;
+    error.hidden = false;
+    return;
+  }
   $<HTMLInputElement>("password").value = "";
   await refresh();
 });
 
 $("logout").addEventListener("click", async () => {
+  await logout();
+  await refresh();
+});
+
+$("saveUrl").addEventListener("click", async () => {
+  const raw = $<HTMLInputElement>("apiUrl").value.trim().replace(/\/+$/, "");
+  const status = $("urlStatus");
+  if (!raw) {
+    await chrome.storage.local.remove(["apiUrl", "token", "name"]);
+    status.textContent = "Usando el servidor de Mikro. Inicia sesión de nuevo.";
+    return refresh();
+  }
+  const origin = new URL(raw).origin;
+  if (!(await chrome.permissions.request({ origins: [`${origin}/*`] }))) {
+    status.textContent = "Chrome necesita permiso para conectarse a ese servidor.";
+    return;
+  }
+  await chrome.storage.local.set({ apiUrl: raw });
   await chrome.storage.local.remove(["token", "name"]);
-  show("Sesión cerrada.", true);
+  status.textContent = "Servidor guardado. Inicia sesión de nuevo.";
   await refresh();
 });
 

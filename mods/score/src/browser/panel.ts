@@ -6,6 +6,7 @@
  * content.ts owns the state and the actions.
  */
 import type { PanelData } from "./protocol.js";
+import { formatPhone } from "./session.js";
 
 export type Phase =
   | { kind: "idle" }
@@ -20,20 +21,23 @@ export type Phase =
       error?: string;
     }
   | { kind: "closed"; title: string; sub: string; ok: boolean }
-  | { kind: "no-session" }
+  | { kind: "no-session"; expired?: boolean; busy?: boolean; error?: string }
   | { kind: "error"; message: string };
 
 export interface View {
   portal: "EQUIFAX" | "PRESTAMOSCLOUD" | null;
   cedula: string | null;
   phase: Phase;
+  /** Who is logged in (null when nobody is). */
+  user?: string | null;
   /** What the lookup showed, as label/value rows (from the pushed facts). */
   seen?: { label: string; value: string; bad?: boolean }[];
 }
 
 export interface Handlers {
   close(): void;
-  login(): void;
+  login(phone: string, password: string): void;
+  logout(): void;
   retry(): void;
   take(): void;
   rejectHardNo(): void;
@@ -92,6 +96,9 @@ const CSS = `
 .hint { font-size: 11px; color: ${C.muted}; margin-top: 6px; }
 .err { color: ${C.red}; font-size: 12px; margin-top: 8px; }
 label { display: block; font-size: 11px; color: ${C.muted}; margin: 8px 0 4px; }
+.lt { font-size: 18px; font-weight: 700; letter-spacing: -.3px; margin-bottom: 2px; }
+input[type=tel], input[type=password] { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 9px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; }
+.ft a { color: ${C.blue}; cursor: pointer; font-weight: 600; text-decoration: none; }
 select, textarea { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 8px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; }
 textarea { min-height: 64px; resize: vertical; }
 .bar { height: 8px; background: ${C.subtle}; border-radius: 99px; margin-top: 6px; overflow: hidden; } .bar i { display: block; height: 100%; background: ${C.blue}; }
@@ -392,6 +399,53 @@ function ready(v: View, p: Extract<Phase, { kind: "ready" }>, on: Handlers): Chi
   return out;
 }
 
+/** Same login as the Ops dashboard (LoginPage.tsx): Teléfono 809-555-0100 + Contraseña. */
+function loginForm(p: Extract<Phase, { kind: "no-session" }>, on: Handlers): Child[] {
+  const phone = h("input", {
+    type: "tel",
+    autocomplete: "username",
+    placeholder: "809-555-0100",
+    oninput: (e: Event) => {
+      const el = e.target as HTMLInputElement;
+      el.value = formatPhone(el.value);
+    }
+  }) as HTMLInputElement;
+  const password = h("input", {
+    type: "password",
+    autocomplete: "current-password",
+    placeholder: "••••••••••"
+  }) as HTMLInputElement;
+  const submit = (e: Event) => {
+    e.preventDefault();
+    on.login(phone.value, password.value);
+  };
+  return [
+    h("div", { className: "lt" }, "Inicia sesión"),
+    h(
+      "div",
+      { className: "meta", style: "margin-bottom:6px" },
+      p.expired
+        ? "Tu sesión venció. Inicia sesión de nuevo para guardar esta consulta."
+        : "Con tu cuenta de Mikro, la misma de la app de Ops."
+    ),
+    h(
+      "form",
+      { onsubmit: submit },
+      h("label", {}, "Teléfono"),
+      phone,
+      h("label", {}, "Contraseña"),
+      password,
+      p.error ? h("div", { className: "err", role: "alert" }, p.error) : null,
+      h(
+        "button",
+        { className: "btn primary", type: "submit", disabled: p.busy },
+        p.busy ? "Entrando…" : "Iniciar sesión"
+      )
+    ),
+    h("div", { className: "hint" }, "No se envía nada sin sesión.")
+  ];
+}
+
 function body(v: View, on: Handlers): Child[] {
   const p = v.phase;
   switch (p.kind) {
@@ -416,16 +470,7 @@ function body(v: View, on: Handlers): Child[] {
     case "saving":
       return [h("div", { className: "meta" }, "Guardando en Mikro…")];
     case "no-session":
-      return [
-        h(
-          "div",
-          {},
-          "Inicia sesión con tu cuenta de Mikro para guardar esta consulta y ver el Mikro Score."
-        ),
-        h("button", { className: "btn primary", onclick: on.login }, "Iniciar sesión en Mikro"),
-        h("button", { className: "btn ghost", onclick: on.retry }, "Ya inicié sesión: reintentar"),
-        h("div", { className: "hint" }, "No se envía nada sin sesión.")
-      ];
+      return loginForm(p, on);
     case "error":
       return [
         h("div", { className: "err" }, p.message),
@@ -472,7 +517,9 @@ export function render(root: ShadowRoot, v: View, on: Handlers): void {
       h(
         "div",
         { className: "ft" },
-        "Mismas reglas de hoy: el evaluador rechaza o recomienda; el admin aprueba en Ops."
+        v.user
+          ? h("span", {}, `Sesión: ${v.user} · `, h("a", { onclick: on.logout }, "Cerrar sesión"))
+          : "Mismas reglas de hoy: el evaluador rechaza o recomienda; el admin aprueba en Ops."
       )
     )
   );

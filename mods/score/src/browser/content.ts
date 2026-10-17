@@ -38,9 +38,18 @@ function set(next: Partial<View>) {
 }
 
 function failed(res: Extract<ApiResponse, { ok: false }>) {
-  if (res.code === "NO_SESSION" || res.code === "UNAUTHORIZED")
-    set({ phase: { kind: "no-session" } });
-  else set({ phase: { kind: "error", message: res.message } });
+  if (res.code === "NO_SESSION" || res.code === "UNAUTHORIZED") {
+    set({ user: null, phase: { kind: "no-session", expired: res.code === "UNAUTHORIZED" } });
+  } else set({ phase: { kind: "error", message: res.message } });
+}
+
+async function whoami() {
+  try {
+    const r = (await chrome.runtime.sendMessage({ type: "whoami" })) as { name: string | null };
+    view = { ...view, user: r.name };
+  } catch {
+    /* extension reloaded: the next API call says so */
+  }
 }
 
 /** "Lo que vio …": a few facts from the lookup itself, as the evaluator saw them. */
@@ -125,7 +134,31 @@ async function act(
 
 const handlers: Handlers = {
   close: () => host.remove(),
-  login: () => void chrome.runtime.sendMessage({ type: "open-options" }),
+  login: (phone, password) => {
+    const p = view.phase;
+    if (p.kind !== "no-session") return;
+    set({ phase: { ...p, busy: true, error: undefined } });
+    void (async () => {
+      const r = (await chrome.runtime.sendMessage({ type: "login", phone, password })) as
+        | { ok: true; name: string }
+        | { ok: false; message: string };
+      if (!r.ok) return set({ phase: { ...p, busy: false, error: r.message } });
+      set({ user: r.name });
+      if (pending) await save(pending);
+      else
+        set({
+          phase: {
+            kind: "error",
+            message: "Sesión iniciada. Vuelve a hacer la consulta en el portal."
+          }
+        });
+    })();
+  },
+  logout: () => {
+    void chrome.runtime
+      .sendMessage({ type: "logout" })
+      .then(() => set({ user: null, phase: { kind: "no-session" } }));
+  },
   retry: () => {
     if (pending) void save(pending);
     else set({ phase: { kind: "error", message: "Vuelve a hacer la consulta en el portal." } });
@@ -193,9 +226,10 @@ const handlers: Handlers = {
 window.addEventListener("message", (event) => {
   if (event.source !== window || !isPageMessage(event.data)) return;
   const m = event.data;
-  if (m.type === "lookup-started")
+  if (m.type === "lookup-started") {
     set({ portal: m.portal, cedula: m.cedula, seen: undefined, phase: { kind: "loading" } });
-  else if (m.type === "progress")
+    void whoami().then(() => set({}));
+  } else if (m.type === "progress")
     set({ phase: { kind: "progress", loaded: m.loaded, total: m.total } });
   else if (m.type === "error") set({ phase: { kind: "error", message: m.message } });
   else if (m.type === "facts") void save(m.push);

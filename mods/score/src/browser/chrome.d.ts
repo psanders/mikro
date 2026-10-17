@@ -13,7 +13,11 @@ declare namespace chrome {
     function openOptionsPage(): Promise<void>;
     const onMessage: {
       addListener(
-        cb: (message: any, sender: MessageSender, sendResponse: (r: unknown) => void) => boolean | void
+        cb: (
+          message: any,
+          sender: MessageSender,
+          sendResponse: (r: unknown) => void
+        ) => boolean | void
       ): void;
     };
   }
