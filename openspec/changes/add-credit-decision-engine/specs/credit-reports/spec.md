@@ -2,14 +2,14 @@
 
 ### Requirement: One shared schema validates pushed credit facts
 
-`@mikro/common` SHALL export `creditReportPushSchema`, a discriminated union on `source` (`EQUIFAX`, `PRESTAMOSCLOUD`) used by both the extension and the apiserver. Every push SHALL carry `cedula` (format `###-#######-#`), `capturedAt`, `portalOrigin`, `adapterVersion`, `rawSha256`, optional `applicationId`, and source-specific `facts`.
+`@mikro/score` SHALL export `creditReportPushSchema`, a discriminated union on `source` (`EQUIFAX`, `PRESTAMOSCLOUD`) used by both the extension and the apiserver. Every push SHALL carry `cedula` (format `###-#######-#`), `capturedAt`, `portalOrigin`, `adapterVersion`, `rawSha256`, optional `applicationId`, and source-specific `facts`.
 
 - **Equifax facts** SHALL include:
   - `identity` (full name, birth date);
   - `bureauScore` (value and label, or null);
   - `inquiries`;
   - `summary`;
-  - `accounts` (the shape of `BureauReport` in `mods/creditscore`).
+  - `accounts` (the shape of `BureauReport` in `mods/score`).
 - **PrestamosCloud facts** SHALL include:
   - `identity` (full name, birth date, gender; never the photo);
   - `kpis`:

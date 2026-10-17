@@ -10,13 +10,14 @@ So a decision cannot be explained or reproduced afterwards. Applicants who shoul
 
 ## What Changes
 
-- **One Mikro browser extension for the evaluator, on both portals.** The existing `mods/creditscore` panel (Riesgo de buró, now deprecated) becomes "Mikro · Decisión" and also runs on `portal.prestamoscloud.com`. After a lookup it:
+- **One Mikro browser extension for the evaluator, on both portals.** The existing `mods/creditscore` panel (Riesgo de buró, now deprecated and removed) becomes; the package is renamed `mods/score` (`@mikro/score`), "Mikro · Decisión" and also runs on `portal.prestamoscloud.com`. After a lookup it:
   1. extracts the hard facts (never the raw report) and validates them against a shared schema;
   2. **saves them to Mikro automatically**, against the cédula's application in process (only one per person);
   3. shows the updated Mikro Score, before and after, with each source's component, and the policy outcome;
   4. lets the evaluator **reject or recommend approval right there, under today's rules**: the assigned evaluator, while the application is En revisión, with the same reasons and evidence requirements. A hard NO comes with the reason preselected, so no comment is needed. Approving stays with the admin in Ops.
 
   The extension adds data and the decision engine. It does not change who decides.
+
 - **Credit reports belong to the person.** A new `CreditReport` record is keyed by cédula, with source, extracted facts, capture time, the evaluator who captured it, the adapter version and the SHA-256 of the raw response. A later application or customer with the same cédula sees it.
 - **A JSON credit policy decides.** This is a versioned and very flexible policy file with:
   - derived facts (aggregates over arrays, arithmetic, coalesce);
@@ -26,6 +27,7 @@ So a decision cannot be explained or reproduced afterwards. Applicants who shoul
   - outcome bands.
 
   The engine returns `REJECT`, `REVIEW` or `APPROVE` **with the information in hand**. Sources that weren't consulted leave the score (the rest are reweighted) and their rules are listed as not checked; nothing waits for a lookup. Each result comes with reasons, the Mikro Score, the sources it used, and optional next steps (which lookups could change the result, with their cost).
+
 - **Decisions are stored and replayable.** Every evaluation writes a `CreditDecision` with the input snapshot, the policy id, version and hash, the trace and the result. It reruns whenever an application changes or a report is pushed.
 - **Approval is gated. BREAKING for Ops:** an admin cannot approve an application whose latest decision is `REJECT` (a hard NO). **There is no override in this version.** `REVIEW` and `APPROVE` are advisory; the admin still sets the terms.
 - **Policy v1:**
@@ -52,22 +54,19 @@ So a decision cannot be explained or reproduced afterwards. Applicants who shoul
 
 ## Impact
 
-- **`mods/common`:**
-  - `schemas/creditReport.ts` (the facts schema);
-  - `credit/` (policy schema, evaluator, default policy `credit-policy.v1.json`).
+- **`mods/score` (`@mikro/score`, renamed from `mods/creditscore`):**
+  - `facts/` (the facts schema, Equifax and PrestamosCloud readers, identity matching);
+  - `policy/` (policy schema, evaluator, bundled v1 policy);
+  - `browser/` (the Mikro Decisión extension; the deprecated Riesgo de buró panel is removed);
+  - CI workflow `build-score.yaml` (was `build-creditscore.yaml`).
+- **`mods/common`:** `CREDIT_POLICY` rejection reason; optional `via: "extension"` on review inputs and events; credit decision on approved/rejected events.
 - **`mods/apiserver`:**
   - Prisma models `CreditReport` and `CreditDecision`, with a migration;
   - tRPC `creditReports.ingest`, `creditReports.listByCedula`, `creditDecisions.latest`;
   - the decision reruns in the application upsert paths;
   - the approve guard in `reviewApplication.ts`.
   - The integration test `SCHEMA_SQL` must be updated by hand.
-- **`mods/creditscore`:**
-  - a PrestamosCloud adapter;
-  - the Equifax adapter also reads the identity block (`bloque_identi`) and the score block (`bloque_dashb`);
-  - a push panel;
-  - extension login;
-  - the manifest also matches `portal.prestamoscloud.com`.
-- **Pencil:** the board `Extension / Mikro · Decisión` holds the 8 panel states, the Ops feed card variants and the decided rules.  It replaces the deprecated `Riesgo de buró` panel.
+- **Pencil:** the board `Extension / Mikro · Decisión` holds the 8 panel states, the Ops feed card variants and the decided rules. It replaces the deprecated `Riesgo de buró` panel.
 - **`mods/dashboard` (Ops):** the DecisionBlock shows the outcome, reasons, the Mikro Score with the sources it used, and optional next steps; Approve is disabled when the decision is `REJECT`.
 - **No new key in `mikro.json`.** The policy loads from `credit-policy.json` next to `mikro.json` when that file is present, otherwise from the bundled default. A missing or invalid file fails boot with a clear message.
 - **Legal (Ley 172-13):** the application form needs a bureau-consent clause before this goes live (task 7.1). Only extracted facts and a hash are stored, never the raw reports. The PrestamosCloud photo is never captured.

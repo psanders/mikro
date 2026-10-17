@@ -2,7 +2,7 @@
 
 ### Requirement: One extension covers Equifax and PrestamosCloud
 
-The Mikro browser extension (`mods/creditscore`) SHALL run on `interactivereports.equifax.com` and `portal.prestamoscloud.com`. It SHALL detect a completed lookup by hooking the portal's own responses, extract the facts with that source's adapter, and validate them with `creditReportPushSchema`. It SHALL NOT call portal endpoints itself.
+The Mikro browser extension (`mods/score`) SHALL run on `interactivereports.equifax.com` and `portal.prestamoscloud.com`. It SHALL detect a completed lookup by hooking the portal's own responses, extract the facts with that source's adapter, and validate them with `creditReportPushSchema`. It SHALL NOT call portal endpoints itself.
 
 #### Scenario: Equifax report detected
 

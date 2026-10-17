@@ -4,7 +4,7 @@ This design comes from research on 2026-10-17: the code inventory, a live Presta
 
 - **The Equifax extension already exists.** `mods/creditscore` hooks the Equifax Interactive Reports XHR and turns the accounts into a 150–950 scorecard. It skips the identity block (`bloque_identi`) and Equifax's own score block (`bloque_dashb`), and sends nothing to Mikro.
 - **Equifax and DataCrédito are one source.** Equifax bought DataCrédito in 2022. There is no TransUnion.
-- **Only one PrestamosCloud tab is a lookup.** PrestamosCloud → Utilidades → Datapréstamo (`#clientes/dataprestamos`) looks up a cédula in the pooled informal-lender database. The other tabs ("Datacrédito Equifax", "KALIFIKA") export *our* portfolio as Excel and are out of scope.
+- **Only one PrestamosCloud tab is a lookup.** PrestamosCloud → Utilidades → Datapréstamo (`#clientes/dataprestamos`) looks up a cédula in the pooled informal-lender database. The other tabs ("Datacrédito Equifax", "KALIFIKA") export _our_ portfolio as Excel and are out of scope.
 - **The ISC is computed from the form only, with hard-coded weights.** The coverage zone is defined twice: `zona_cobertura` in code and `coveredProvinces` in mikro.json.
 - **No score or version is recorded at decision time.** `application.approved.policyException` is always `false`.
 
@@ -12,20 +12,20 @@ This design comes from research on 2026-10-17: the code inventory, a live Presta
 
 ### D1. Facts, not reports
 
-The extension extracts typed facts in the browser, validates them with the shared Zod schema (`@mikro/common` `creditReportPushSchema`), and sends them along with the SHA-256 of the raw responses. Mikro never stores raw reports or the PrestamosCloud photo. This keeps the stored data small and focused on one purpose (Ley 172-13), and the hash proves what was seen. `adapterVersion` makes it possible to explain later parsing changes.
+The extension extracts typed facts in the browser, validates them with the shared Zod schema (`@mikro/score` `creditReportPushSchema`), and sends them along with the SHA-256 of the raw responses. Mikro never stores raw reports or the PrestamosCloud photo. This keeps the stored data small and focused on one purpose (Ley 172-13), and the hash proves what was seen. `adapterVersion` makes it possible to explain later parsing changes.
 
 ### D2. PrestamosCloud lookup: endpoints and facts
 
 One lookup on `portal.prestamoscloud.com` fires these POST endpoints. The first three come from one search; the last loads one lender's loans when that lender is expanded:
 
-| Endpoint | Facts taken |
-|---|---|
-| `clientes/get_client_data` (GET) | `fullName`, `birthdate`, `gender` (the photo is ignored) |
-| `clientes/getDataPrestamoData` | KPIs: score (300–850) and label, % paid on time (n of N loans), % completed, risk factors (n/4) and label, delinquent (moroso) Y/N, active and closed loans, number of lenders, amount lent, amount owed, co-signer total |
-| `clientes/getLoanGroupsByDocumentID` | One row per lender: name, loan count, total lent, total owed |
-| `clientes/getLoansOfClientByDocumentID` | One request per lender, **only when expanded**. Each loan: amount, status (`ATRASADOS`, `VENCIDOS`, `TERMINADOS`, …), uncollectible marker (`INCOBRABLE`), final condition (`A TIEMPO`, `ATRASADOS`, `VENCIDOS`, `PENDIENTES`, none), days late, start date, rating, principal owed |
-| `clientes/getAIHistory`, `reports/get_dataprestamo_history` | Inquiries: type (Consulta / Análisis IA), date, lender |
-| `clientes/getDpComentarios` | Lender comments: recommends Y/N, date, text |
+| Endpoint                                                    | Facts taken                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clientes/get_client_data` (GET)                            | `fullName`, `birthdate`, `gender` (the photo is ignored)                                                                                                                                                                                                                            |
+| `clientes/getDataPrestamoData`                              | KPIs: score (300–850) and label, % paid on time (n of N loans), % completed, risk factors (n/4) and label, delinquent (moroso) Y/N, active and closed loans, number of lenders, amount lent, amount owed, co-signer total                                                           |
+| `clientes/getLoanGroupsByDocumentID`                        | One row per lender: name, loan count, total lent, total owed                                                                                                                                                                                                                        |
+| `clientes/getLoansOfClientByDocumentID`                     | One request per lender, **only when expanded**. Each loan: amount, status (`ATRASADOS`, `VENCIDOS`, `TERMINADOS`, …), uncollectible marker (`INCOBRABLE`), final condition (`A TIEMPO`, `ATRASADOS`, `VENCIDOS`, `PENDIENTES`, none), days late, start date, rating, principal owed |
+| `clientes/getAIHistory`, `reports/get_dataprestamo_history` | Inquiries: type (Consulta / Análisis IA), date, lender                                                                                                                                                                                                                              |
+| `clientes/getDpComentarios`                                 | Lender comments: recommends Y/N, date, text                                                                                                                                                                                                                                         |
 
 Other endpoints are out of scope:
 
@@ -37,7 +37,7 @@ Two side effects matter:
 - **Our lookup is visible.** Other lenders see "Consulta \<date\> Mikro" in this cédula's history.
 - **Lenders start collapsed.** The panel offers **"Cargar todos los préstamos"**. It clicks each lender header so that the portal makes its own `getLoansOfClientByDocumentID` calls. The extension never calls PrestamosCloud endpoints itself. `Enviar` stays disabled until every lender's loans are loaded, because incomplete loan lists would hide uncollectible loans.
 
-The adapter reads from the hooked responses (MAIN world, like `hook.ts`). The rendered DOM is only a fallback. The field names listed above were checked against one populated lookup (2026-10-17); the enum values seen there are listed in the schema. An unknown enum value is kept verbatim under `statusRaw`, and the push still validates.
+The response shapes of these endpoints aren't documented and differ per lender, so the adapter reads the **rendered page** (label-anchored text plus the loan tables) once the hooked responses show the lookup finished; the hooked responses are hashed (`rawSha256`) and used to detect the lookup and its cédula (`get_client_data?document_id=…`). The field names listed above were checked against one populated lookup (2026-10-17); the enum values seen there are listed in the schema. An unknown enum value is kept verbatim under `statusRaw`, and the push still validates.
 
 ### D3. Storage
 
@@ -77,27 +77,27 @@ The engine builds one facts object for each evaluation:
 
 #### Expressions (`Expr`)
 
-| Form | Meaning |
-|---|---|
-| `5`, `"PUERTO_PLATA"`, `true`, `[…]` | literal |
-| `{ "fact": "pcloud.kpis.score" }` | path lookup; missing → *unknown* |
-| `{ "op": "add" \| "sub" \| "mul" \| "div" \| "min" \| "max" \| "abs" \| "round", "args": [Expr…] }` | arithmetic |
-| `{ "coalesce": [Expr…] }` | first value that is not unknown |
-| `{ "if": Cond, "then": Expr, "else": Expr }` | conditional |
-| `{ "agg": "count" \| "sum" \| "min" \| "max" \| "avg", "of": "<array path>", "field"?: "<item path>", "where"?: Cond }` | aggregate; inside `where` and `field`, paths are relative to the item (`$.status`) |
-| `{ "daysSince": Expr }`, `{ "yearsSince": Expr }` | date arithmetic against the evaluation time |
-| `{ "normalize": Expr }` | uppercases, strips accents, and replaces spaces and punctuation with `_` (the same normalization `OUT_OF_ZONE` uses today) |
+| Form                                                                                                                    | Meaning                                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `5`, `"PUERTO_PLATA"`, `true`, `[…]`                                                                                    | literal                                                                                                                    |
+| `{ "fact": "pcloud.kpis.score" }`                                                                                       | path lookup; missing → _unknown_                                                                                           |
+| `{ "op": "add" \| "sub" \| "mul" \| "div" \| "min" \| "max" \| "abs" \| "round", "args": [Expr…] }`                     | arithmetic                                                                                                                 |
+| `{ "coalesce": [Expr…] }`                                                                                               | first value that is not unknown                                                                                            |
+| `{ "if": Cond, "then": Expr, "else": Expr }`                                                                            | conditional                                                                                                                |
+| `{ "agg": "count" \| "sum" \| "min" \| "max" \| "avg", "of": "<array path>", "field"?: "<item path>", "where"?: Cond }` | aggregate; inside `where` and `field`, paths are relative to the item (`$.status`)                                         |
+| `{ "daysSince": Expr }`, `{ "yearsSince": Expr }`                                                                       | date arithmetic against the evaluation time                                                                                |
+| `{ "normalize": Expr }`                                                                                                 | uppercases, strips accents, and replaces spaces and punctuation with `_` (the same normalization `OUT_OF_ZONE` uses today) |
 
 #### Conditions (`Cond`)
 
-| Form | Meaning |
-|---|---|
-| `{ "all": [Cond…] }`, `{ "any": [Cond…] }`, `{ "not": Cond }` | boolean logic |
-| `{ "left": Expr, "op": "eq\|ne\|gt\|gte\|lt\|lte\|in\|notIn\|contains\|between\|matches", "right": Expr }` | comparison |
-| `{ "exists": "<path>" }`, `{ "missing": "<path>" }` | presence |
-| `{ "any_item": "<array path>", "where": Cond }` | at least one item matches |
+| Form                                                                                                       | Meaning                   |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `{ "all": [Cond…] }`, `{ "any": [Cond…] }`, `{ "not": Cond }`                                              | boolean logic             |
+| `{ "left": Expr, "op": "eq\|ne\|gt\|gte\|lt\|lte\|in\|notIn\|contains\|between\|matches", "right": Expr }` | comparison                |
+| `{ "exists": "<path>" }`, `{ "missing": "<path>" }`                                                        | presence                  |
+| `{ "any_item": "<array path>", "where": Cond }`                                                            | at least one item matches |
 
-**Unknowns use three-valued logic.** A comparison that touches an unknown value is *unknown*. `all` and `any` follow Kleene logic: `any` is true if any branch is true, and `all` is false if any branch is false. This rule is what lets the engine say "we can't tell yet; get this evidence".
+**Unknowns use three-valued logic.** A comparison that touches an unknown value is _unknown_. `all` and `any` follow Kleene logic: `any` is true if any branch is true, and `all` is false if any branch is false. This rule is what lets the engine say "we can't tell yet; get this evidence".
 
 #### Derive
 
@@ -106,17 +106,19 @@ The engine builds one facts object for each evaluation:
 #### Rules
 
 ```jsonc
-{ "id": "KO_PCLOUD_INCOBRABLE",
+{
+  "id": "KO_PCLOUD_INCOBRABLE",
   "when": { "left": { "fact": "derived.pcloudUncollectible" }, "op": "gt", "right": 0 },
-  "outcome": "REJECT",               // REJECT | REVIEW
-  "reason": "PCLOUD_UNCOLLECTIBLE",  // stable code, stored
-  "message": "Tiene préstamos incobrables en PrestamosCloud" }
+  "outcome": "REJECT", // REJECT | REVIEW
+  "reason": "PCLOUD_UNCOLLECTIBLE", // stable code, stored
+  "message": "Tiene préstamos incobrables en PrestamosCloud"
+}
 ```
 
 Every rule is evaluated; there is no short-circuit, so the trace is complete.
 
 - **True:** the rule fires with its outcome.
-- **Unknown:** the rule is *pending*, and its missing facts feed the next steps.
+- **Unknown:** the rule is _pending_, and its missing facts feed the next steps.
 
 #### Score
 
@@ -125,8 +127,8 @@ Every rule is evaluated; there is no short-circuit, so the trace is complete.
   "scale": [0, 100],
   "components": [
     { "id": "equifax", "label": "Equifax", "weight": 30,
-      "value": { "coalesce": [ { "fact": "equifax.bureauScore.value" }, { "fact": "equifax.mikroScore" } ] },
-      "map": { "from": [300, 850] } },                 // linear clamp to 0–100
+      "value": { "fact": "equifax.mikroScore" },       // v1: our scorecard; Equifax's own score
+      "map": { "from": [150, 950] } },                 // is stored but its range isn't confirmed yet
     { "id": "pcloud", "label": "PrestamosCloud", "weight": 30,
       "value": { "fact": "pcloud.kpis.score" }, "map": { "from": [300, 850] } },
     { "id": "isc", "label": "Solicitud (ISC)", "weight": 30,
@@ -171,7 +173,7 @@ In v1 **every** component uses `"whenMissing": "skip"`: a source that wasn't con
 2. If any `REJECT` rule is **true**, the outcome is `REJECT`. Reasons: every true `REJECT` rule.
 3. Otherwise, if any `REVIEW` rule is true, the outcome is `REVIEW` with that rule's reason.
 4. Otherwise, compute the score from the components present and take its band's outcome. A `REJECT` band adds its reason.
-5. Rules that are *unknown* (their source wasn't consulted) do **not** change the outcome. They are returned as `unchecked[]` ("no verificado: PrestamosCloud") so the evaluator and the admin can see what the decision didn't look at.
+5. Rules that are _unknown_ (their source wasn't consulted) do **not** change the outcome. They are returned as `unchecked[]` ("no verificado: PrestamosCloud") so the evaluator and the admin can see what the decision didn't look at.
 6. Build next steps: the evidence that provides facts used by an unchecked rule or a skipped component. Every step is optional and carries its `cost`. A step is marked `couldChange` when an unchecked `REJECT` rule depends on it, or when its component's full range would cross a band cutoff. Sort with `couldChange` first, then by `cost`.
 
 Each result carries: `outcome`, `reasons[]` (code and message), `mikroScore`, `components[]` (raw value, mapped value, weight, or skipped), `sourcesUsed[]`, `unchecked[]`, `nextSteps[]` (optional, with cost), and `trace` (every rule with true/false/unknown, every derived value).
@@ -179,8 +181,8 @@ Each result carries: `outcome`, `reasons[]` (code and message), `mikroScore`, `c
 ### D6. Running, loading and gating
 
 - **When it runs.** The decision is computed and stored after every application upsert. For a pushed report, it runs for every open application whose `idNumber` matches the cédula (statuses `RECEIVED`, `IN_REVIEW`, `PENDING_DECISION`).
-- **Pure function.** The evaluator lives in `@mikro/common`, so the Ops UI can preview it.
-- **Loading the policy.** Boot loads `credit-policy.json` from the directory of mikro.json if the file exists, otherwise the bundled `mods/common/src/credit/credit-policy.v1.json`. `policyHash` is the SHA-256 of the canonical JSON. A file that fails validation fails boot (fail loud, like mikro.json), but there is no new key in mikro.json. This avoids repeating the rollback outage of 2026-09-18.
+- **Pure function.** The evaluator lives in `@mikro/score`, so the Ops UI or the extension could preview it.
+- **Loading the policy.** Boot loads `credit-policy.json` from the directory of mikro.json if the file exists, otherwise the bundled `POLICY_V1` (`mods/score/src/policy/v1.ts`). `policyHash` is the SHA-256 of the canonical JSON. A file that fails validation fails boot (fail loud, like mikro.json), but there is no new key in mikro.json. This avoids repeating the rollback outage of 2026-09-18.
 - **Gating approval.** `approve` fails with `CREDIT_POLICY_BLOCKED` only when the application's latest decision is `REJECT` (a hard NO that was actually checked). Missing lookups never block, because each query costs money and the admin may approve with the information in hand. There is no override.
 - **Recording the decision.** The approved and rejected events carry `creditDecisionId`, `outcome` and `policyVersion`. The `policyException` field stays `false`.
 
@@ -199,6 +201,7 @@ Each result carries: `outcome`, `reasons[]` (code and message), `mikroScore`, `c
   - `sendToDecision` with `reviewerRecommendation`, which still needs complete evidence.
 
   A hard NO preselects the new reason `CREDIT_POLICY` (no note; the decision's reason codes are stored). There is no approve in the extension. Events carry `via: "extension"` so the feed can say "desde la extensión". The engine adds no gate to evaluator actions; its only gate is admin approval in Ops (D6).
+
 - **Pencil.** Board `Extension / Mikro · Decisión` holds:
   - states 1–3 for PrestamosCloud: loading lenders, hard NO, closed;
   - states 4–6 for Equifax: recommend approval, reject with a reason, missing information (send blocked by today's evidence rule);

@@ -115,3 +115,27 @@ export async function findOpenApplicationByCedula(db: PrismaClient, cedula: stri
     orderBy: { createdAt: "desc" }
   });
 }
+
+/**
+ * One-time catch-up at boot: decide every open application that has no
+ * decision yet (applications from before the engine). Later writes keep them
+ * current.
+ */
+export async function backfillOpenDecisions(db: PrismaClient): Promise<number> {
+  const open = await db.loanApplication.findMany({
+    where: { status: { in: [...DECIDABLE_STATUSES] }, creditDecisions: { none: {} } },
+    select: { id: true }
+  });
+  for (const { id } of open) {
+    try {
+      await decideApplication(db, id);
+    } catch (error) {
+      logger.error("credit decision backfill failed", {
+        applicationId: id,
+        error: (error as Error).message
+      });
+    }
+  }
+  if (open.length) logger.info("credit decisions backfilled", { count: open.length });
+  return open.length;
+}
