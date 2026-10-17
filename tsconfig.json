@@ -30,7 +30,7 @@
       "path": "./mods/ctl"
     },
     {
-      "path": "./mods/creditscore"
+      "path": "./mods/score"
     }
   ],
   "files": [],

@@ -42,7 +42,7 @@ writeFileSync(join(out, "console.js"), bundle("browser/console.js"));
 console.log(`built chrome-extension (v${version})`);
 
 if (process.argv.includes("--zip")) {
-  const zip = join(pkgDir, `mikro-creditscore-v${version}.zip`);
+  const zip = join(pkgDir, `mikro-score-v${version}.zip`);
   rmSync(zip, { force: true });
   execFileSync("zip", ["-qr", zip, "."], { cwd: out });
   console.log(`wrote ${zip}`);

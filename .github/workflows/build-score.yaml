@@ -1,7 +1,7 @@
-name: Build Credit Score Extension
+name: Build Mikro Decisión Extension
 
-# Packages the "Mikro · Riesgo de buró" Chrome extension (mods/creditscore) and,
-# on release commits, attaches mikro-creditscore-vX.Y.Z.zip to the consolidated
+# Packages the "Mikro · Decisión" Chrome extension (mods/score) and,
+# on release commits, attaches mikro-score-vX.Y.Z.zip to the consolidated
 # GitHub Release — same pattern as build-android.yaml.
 
 on:
@@ -9,7 +9,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "mods/creditscore/**"
+      - "mods/score/**"
       - "package.json"
       - "package-lock.json"
 
@@ -21,7 +21,7 @@ env:
   COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
 
 jobs:
-  build-creditscore:
+  build-score:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,16 +36,16 @@ jobs:
         run: npm ci
 
       - name: Test
-        run: npm test -w @mikro/creditscore
+        run: npm test -w @mikro/score
 
       - name: Package extension
-        run: npm run package -w @mikro/creditscore
+        run: npm run package -w @mikro/score
 
       - name: Upload zip
         uses: actions/upload-artifact@v7
         with:
-          name: mikro-creditscore-${{ github.run_number }}-${{ github.sha }}
-          path: mods/creditscore/mikro-creditscore-v*.zip
+          name: mikro-score-${{ github.run_number }}-${{ github.sha }}
+          path: mods/score/mikro-score-v*.zip
           retention-days: 30
 
       # Release commits (pushed by release.yaml) carry a vX.Y.Z tag on HEAD.
@@ -61,7 +61,7 @@ jobs:
             echo "HEAD is not a release commit; keeping the workflow artifact only"
             exit 0
           fi
-          zip="$(ls mods/creditscore/mikro-creditscore-v*.zip)"
+          zip="$(ls mods/score/mikro-score-v*.zip)"
           for attempt in 1 2 3 4 5; do
             if gh release upload "$tag" "$zip" --clobber; then
               exit 0
