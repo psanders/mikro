@@ -21,7 +21,7 @@ function RailButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) 
     <button
       type="button"
       aria-label={label}
-      className="flex h-10 w-10 items-center justify-center rounded-[11px] text-[#697A93] transition hover:bg-[#EEF3F9]"
+      className="flex h-10 w-10 items-center justify-center rounded-[11px] text-ds-muted transition hover:bg-ds-subtle"
     >
       <Icon size={19} strokeWidth={2} />
     </button>
@@ -39,7 +39,7 @@ export const Feedback: Story = {
 export const Rail: Story = {
   args: { label: "Enviar feedback", children: null },
   render: () => (
-    <div className="flex flex-col items-center gap-[14px] rounded-[14px] border border-[#E5EAF1] bg-white p-[18px]">
+    <div className="flex flex-col items-center gap-[14px] rounded-[14px] border border-ds-border bg-ds-surface p-[18px]">
       <Tooltip label="Feed">
         <RailButton icon={House} label="Feed" />
       </Tooltip>

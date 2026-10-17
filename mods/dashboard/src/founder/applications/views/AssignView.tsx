@@ -76,7 +76,7 @@ export function AssignView({ app, viewer, onView, panel }: ViewProps) {
   return (
     <SidePanel open {...panel} footer={footer}>
       <div className="flex flex-col gap-[14px]" data-testid="assign-view">
-        <span className="text-[12px] font-semibold text-[#697A93]">¿Quién la evalúa?</span>
+        <span className="text-[12px] font-semibold text-ds-muted">¿Quién la evalúa?</span>
         {reviewers.map((r) => {
           const selected = picked === r.id;
           const current = r.id === app.assignedReviewerId;
@@ -90,25 +90,25 @@ export function AssignView({ app, viewer, onView, panel }: ViewProps) {
               className={cn(
                 "flex items-center gap-3 rounded-[10px] px-[14px] py-3 text-left",
                 selected
-                  ? "border-[1.5px] border-[#7C3AED] bg-[#FAF7FF]"
-                  : "border border-[#E5EAF1] bg-white"
+                  ? "border-[1.5px] border-ds-violet bg-ds-violet-tint"
+                  : "border border-ds-border bg-ds-surface"
               )}
             >
               <span
                 className={cn(
                   "h-4 w-4 shrink-0 rounded-full",
-                  selected ? "border-[5px] border-[#7C3AED]" : "border-[1.5px] border-[#E5EAF1]"
+                  selected ? "border-[5px] border-ds-violet" : "border-[1.5px] border-ds-border"
                 )}
               />
-              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#E9F2FF] text-[12px] font-semibold text-[#1F4AA8]">
+              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-brand-mist text-[12px] font-semibold text-brand-blue-primary">
                 {initials(r.name)}
               </span>
               <span className="flex flex-1 flex-col">
-                <span className="text-[13px] font-semibold text-[#14254A]">
+                <span className="text-[13px] font-semibold text-brand-ink">
                   {r.name}
                   {r.id === viewer.id ? " (tú)" : ""}
                 </span>
-                <span className="text-[11.5px] font-medium text-[#697A93]">
+                <span className="text-[11.5px] font-medium text-ds-muted">
                   {isAdmin ? "Admin" : "Evaluador"} · {load.get(r.id) ?? 0} en evaluación
                   {current ? " · asignada ahora" : ""}
                 </span>
@@ -116,7 +116,7 @@ export function AssignView({ app, viewer, onView, panel }: ViewProps) {
             </button>
           );
         })}
-        <div className="flex gap-2 rounded-[8px] bg-[#EEF3F9] p-3 text-[12px] font-medium leading-[1.4] text-[#697A93]">
+        <div className="flex gap-2 rounded-[8px] bg-ds-subtle p-3 text-[12px] font-medium leading-[1.4] text-ds-muted">
           <Info size={14} className="mt-[1px] shrink-0" />
           La solicitud pasa a En evaluación en el feed de la persona elegida. Si ya estaba en
           evaluación, cambia de manos y la evidencia subida se conserva.

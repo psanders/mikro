@@ -42,7 +42,7 @@ function GroupShell({
   const [open, setOpen] = useState(Boolean(defaultOpen));
   return (
     <div
-      className={cn("w-full border-b border-[#E5EAF1]", tone === "violet" && "bg-[#FAF7FF]")}
+      className={cn("w-full border-b border-ds-border", tone === "violet" && "bg-ds-violet-tint")}
       data-testid={testId}
     >
       <button
@@ -54,7 +54,7 @@ function GroupShell({
         <span
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px]",
-            tone === "violet" ? "bg-[#F1EAFE] text-[#7C3AED]" : "bg-[#EEF3F9] text-[#697A93]"
+            tone === "violet" ? "bg-ds-violet-bg text-ds-violet" : "bg-ds-subtle text-ds-muted"
           )}
         >
           <Icon size={17} />
@@ -63,18 +63,18 @@ function GroupShell({
           <span
             className={cn(
               "truncate text-[14px] font-semibold",
-              tone === "violet" ? "text-[#14254A]" : "text-[#697A93]"
+              tone === "violet" ? "text-brand-ink" : "text-ds-muted"
             )}
           >
             {title}
           </span>
-          <span className="truncate text-[12px] font-medium text-[#697A93]">{meta}</span>
+          <span className="truncate text-[12px] font-medium text-ds-muted">{meta}</span>
         </span>
-        <span className="text-[12px] font-medium text-[#697A93]">{time}</span>
+        <span className="text-[12px] font-medium text-ds-muted">{time}</span>
         {open ? (
-          <ChevronUp size={15} className="text-[#697A93]" />
+          <ChevronUp size={15} className="text-ds-muted" />
         ) : (
-          <ChevronDown size={15} className="text-[#697A93]" />
+          <ChevronDown size={15} className="text-ds-muted" />
         )}
       </button>
       {open && <div className="pb-2">{children}</div>}
@@ -153,23 +153,23 @@ export function ClosedGroupRow({ events, dayLabel }: { events: AppEvent[]; dayLa
         {events.map((e) => (
           <div
             key={e.id}
-            className="flex items-center gap-3 border-t border-[#E5EAF1] py-[9px]"
+            className="flex items-center gap-3 border-t border-ds-border py-[9px]"
             data-testid="closed-item"
             data-application-id={e.applicationId}
           >
-            <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-[#697A93]">
+            <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ds-muted">
               <span className="font-semibold">{e.customerName ?? "Solicitud"}</span>
               {e.application.businessName ? ` · ${e.application.businessName}` : ""} · {e.summary}
             </span>
             <StatusPill status={e.application.status} />
-            <span className="text-[12px] font-medium text-[#697A93]">
+            <span className="text-[12px] font-medium text-ds-muted">
               {formatClockTime(e.occurredAt)}
             </span>
             <button
               type="button"
               aria-label="Ver solicitud"
               onClick={() => panel.open(e.applicationId!)}
-              className="text-[#697A93] hover:text-[#14254A]"
+              className="text-ds-muted hover:text-brand-ink"
             >
               <PanelRightOpen size={14} />
             </button>

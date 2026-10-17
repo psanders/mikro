@@ -227,7 +227,7 @@ type Story = StoryObj<typeof meta>;
 
 /** The live card's "Ver detalle" link (the live one opens the findings panel). */
 const detailLink = (
-  <span className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-[#1F4AA8]">
+  <span className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-brand-blue-primary">
     Ver detalle
     <ArrowRight size={14} />
   </span>

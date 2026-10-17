@@ -164,8 +164,8 @@ const CATALOG: ReportEntry[] = [
   {
     id: "clientes",
     icon: Users,
-    chipBg: "bg-[#E9F2FF]",
-    iconColor: "text-[#1F4AA8]",
+    chipBg: "bg-brand-mist",
+    iconColor: "text-brand-blue-primary",
     title: "Clientes",
     description: "Cartera de clientes por estado de salud",
     formats: ["PDF", "JSON"]
@@ -173,8 +173,8 @@ const CATALOG: ReportEntry[] = [
   {
     id: "prestamos-en-riesgo",
     icon: TriangleAlert,
-    chipBg: "bg-[#FDF1E3]",
-    iconColor: "text-[#D97706]",
+    chipBg: "bg-ds-amber-bg",
+    iconColor: "text-ds-amber",
     title: "Préstamos en riesgo",
     description: "Atrasados y en incumplimiento · mora y notas",
     formats: ["PDF", "JSON"]
@@ -182,8 +182,8 @@ const CATALOG: ReportEntry[] = [
   {
     id: "renovacion",
     icon: Repeat,
-    chipBg: "bg-[#E8F7EE]",
-    iconColor: "text-[#16A34A]",
+    chipBg: "bg-ds-green-bg",
+    iconColor: "text-ds-green",
     title: "Renovación",
     description: "Clientes elegibles para un nuevo ciclo",
     formats: ["PDF", "JSON"]
@@ -191,8 +191,8 @@ const CATALOG: ReportEntry[] = [
   {
     id: "desempeno-tiempo",
     icon: LineChart,
-    chipBg: "bg-[#E9F2FF]",
-    iconColor: "text-[#1F4AA8]",
+    chipBg: "bg-brand-mist",
+    iconColor: "text-brand-blue-primary",
     title: "Desempeño en el tiempo",
     description: "Momentum del negocio y punto de ganancia",
     formats: ["PDF", "JSON"]
@@ -200,8 +200,8 @@ const CATALOG: ReportEntry[] = [
   {
     id: "contable",
     icon: Wallet,
-    chipBg: "bg-[#E8F7EE]",
-    iconColor: "text-[#16A34A]",
+    chipBg: "bg-ds-green-bg",
+    iconColor: "text-ds-green",
     title: "Contable",
     description: "Ingresos, gastos y balances del período",
     formats: ["PDF", "JSON"]
@@ -213,8 +213,8 @@ const CATALOG: ReportEntry[] = [
 const AUDIT_LOG_ENTRY: ReportEntry = {
   id: "audit-log",
   icon: ScrollText,
-  chipBg: "bg-[#FDF1E3]",
-  iconColor: "text-[#D97706]",
+  chipBg: "bg-ds-amber-bg",
+  iconColor: "text-ds-amber",
   title: "Registro de auditoría",
   description: "Exportación completa de los eventos del mes · directo del event log",
   formats: ["CSV"]
@@ -222,7 +222,7 @@ const AUDIT_LOG_ENTRY: ReportEntry = {
 
 function GroupLabel({ children }: { children: string }) {
   return (
-    <div className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#697A93]">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.8px] text-ds-muted">
       {children}
     </div>
   );
@@ -349,7 +349,7 @@ export function ReportesScreen() {
 
   function renderList(entries: ReportEntry[]) {
     return (
-      <div className="rounded-[14px] border border-[#E5EAF1] bg-white">
+      <div className="rounded-[14px] border border-ds-border bg-ds-surface">
         {/* No overflow-hidden here: rows have no distinct background to
             clip against the rounded corners, and the format-switch menu
             (absolutely positioned within a row) needs to escape this box. */}
@@ -361,7 +361,7 @@ export function ReportesScreen() {
               key={entry.id}
               className={cn(
                 "flex items-center gap-[14px] px-[18px] py-[13px]",
-                i > 0 && "border-t border-[#E5EAF1]"
+                i > 0 && "border-t border-ds-border"
               )}
             >
               <div
@@ -374,10 +374,10 @@ export function ReportesScreen() {
                 <Icon size={18} />
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-                <span className="truncate text-[14px] font-semibold text-[#14254A]">
+                <span className="truncate text-[14px] font-semibold text-brand-ink">
                   {entry.title}
                 </span>
-                <span className="truncate text-[12px] font-medium text-[#697A93]">
+                <span className="truncate text-[12px] font-medium text-ds-muted">
                   {entry.description}
                 </span>
               </div>
@@ -393,7 +393,7 @@ export function ReportesScreen() {
                   return (
                     <div
                       className={cn(
-                        "inline-flex items-stretch overflow-hidden rounded-[9px] bg-[#1F4AA8] text-white",
+                        "inline-flex items-stretch overflow-hidden rounded-[9px] bg-brand-blue-primary text-white",
                         !idle && "opacity-60"
                       )}
                     >
@@ -435,7 +435,7 @@ export function ReportesScreen() {
                 {entry.formats.length > 1 && openMenuId === entry.id && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                    <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[120px] overflow-hidden rounded-[10px] border border-[#E5EAF1] bg-white p-1 shadow-lg">
+                    <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[120px] overflow-hidden rounded-[10px] border border-ds-border bg-ds-surface p-1 shadow-lg">
                       {entry.formats.map((f) => {
                         const active = formatFor(entry.id) === f;
                         return (
@@ -452,12 +452,12 @@ export function ReportesScreen() {
                             className={cn(
                               "flex w-full items-center justify-between rounded-[6px] px-[10px] py-[7px] text-[13px] font-medium transition",
                               active
-                                ? "bg-[#E9F2FF] text-[#1F4AA8]"
-                                : "text-[#14254A] hover:bg-[#F4F7FB]"
+                                ? "bg-brand-mist text-brand-blue-primary"
+                                : "text-brand-ink hover:bg-ds-bg"
                             )}
                           >
                             {f}
-                            {active && <Check size={14} className="text-[#1F4AA8]" />}
+                            {active && <Check size={14} className="text-brand-blue-primary" />}
                           </button>
                         );
                       })}
@@ -474,19 +474,19 @@ export function ReportesScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex shrink-0 items-center justify-between border-b border-[#E5EAF1] px-6 py-[15px]">
+      <header className="flex shrink-0 items-center justify-between border-b border-ds-border px-6 py-[15px]">
         <div className="flex flex-col gap-[2px]">
-          <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-[#14254A]">Reportes</h1>
-          <p className="text-[12px] font-medium text-[#697A93]">
+          <h1 className="text-[19px] font-semibold tracking-[-0.3px] text-brand-ink">Reportes</h1>
+          <p className="text-[12px] font-medium text-ds-muted">
             Se generan solos. Descarga y listo.
           </p>
         </div>
-        <div className="relative flex items-center gap-2 rounded-[9px] border border-[#E5EAF1] bg-white px-[14px] py-[8px]">
-          <CalendarCheck size={14} className="shrink-0 text-[#697A93]" />
+        <div className="relative flex items-center gap-2 rounded-[9px] border border-ds-border bg-ds-surface px-[14px] py-[8px]">
+          <CalendarCheck size={14} className="shrink-0 text-ds-muted" />
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            className="cursor-pointer appearance-none bg-transparent pr-4 text-[13px] font-semibold text-[#14254A] focus:outline-none"
+            className="cursor-pointer appearance-none bg-transparent pr-4 text-[13px] font-semibold text-brand-ink focus:outline-none"
           >
             {monthOptions.map((o) => (
               <option key={monthValue(o)} value={monthValue(o)}>
@@ -496,12 +496,12 @@ export function ReportesScreen() {
           </select>
           <ChevronDown
             size={14}
-            className="pointer-events-none absolute right-[12px] text-[#697A93]"
+            className="pointer-events-none absolute right-[12px] text-ds-muted"
           />
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-[#F4F7FB] px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-ds-bg px-6 py-5">
         <div className="flex flex-col gap-4">
           <GroupLabel>REPORTES</GroupLabel>
           {renderList(CATALOG)}
@@ -509,9 +509,9 @@ export function ReportesScreen() {
           <GroupLabel>AUDITORÍA</GroupLabel>
           {renderList([AUDIT_LOG_ENTRY])}
 
-          <div className="flex items-center gap-[10px] rounded-[12px] bg-[#E9F2FF] px-4 py-[13px]">
-            <Sparkles size={16} className="shrink-0 text-[#1F4AA8]" />
-            <span className="flex-1 text-[13px] font-semibold text-[#1F4AA8]">
+          <div className="flex items-center gap-[10px] rounded-[12px] bg-brand-mist px-4 py-[13px]">
+            <Sparkles size={16} className="shrink-0 text-brand-blue-primary" />
+            <span className="flex-1 text-[13px] font-semibold text-brand-blue-primary">
               ¿Necesitas otro corte? Pídeselo al copiloto — «dame la cobranza de Miguel en junio, en
               PDF» — y el archivo aparece en esta lista.
             </span>

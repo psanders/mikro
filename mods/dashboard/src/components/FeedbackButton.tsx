@@ -344,7 +344,7 @@ export function FeedbackButton() {
           type="button"
           onClick={() => stage === "idle" && setStage("consent")}
           aria-label="Enviar feedback"
-          className="relative flex h-10 w-10 items-center justify-center rounded-[11px] text-[#697A93] transition hover:bg-[#EEF3F9]"
+          className="relative flex h-10 w-10 items-center justify-center rounded-[11px] text-ds-muted transition hover:bg-ds-subtle"
         >
           <MessageSquare size={19} strokeWidth={2} />
         </button>
@@ -362,11 +362,11 @@ export function FeedbackButton() {
 
       {stage !== "idle" && stage !== "recording" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-[14px] bg-ds-surface p-6 shadow-xl">
             {stage === "consent" && (
               <>
-                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviar feedback</h2>
-                <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
+                <h2 className="text-[16px] font-semibold text-brand-ink">Enviar feedback</h2>
+                <p className="mt-2 text-[13px] leading-5 text-ds-muted">
                   Esto va a grabar tu pantalla mientras muestras lo que quieres compartir — un
                   problema, algo confuso o una idea. La grabación se usa solo para crear el reporte
                   y no se guarda de forma permanente. Evita mostrar datos sensibles de clientes si
@@ -385,8 +385,8 @@ export function FeedbackButton() {
 
             {stage === "processing" && (
               <>
-                <h2 className="text-[16px] font-semibold text-[#14254A]">Enviando feedback…</h2>
-                <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
+                <h2 className="text-[16px] font-semibold text-brand-ink">Enviando feedback…</h2>
+                <p className="mt-2 text-[13px] leading-5 text-ds-muted">
                   Enviando tu feedback al equipo. Esto puede tardar un momento.
                 </p>
               </>
@@ -394,11 +394,11 @@ export function FeedbackButton() {
 
             {stage === "result" && (
               <>
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D6F3E5]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ds-green-bg">
                   <Check size={26} className="text-[#0E7C5F]" strokeWidth={2.5} />
                 </div>
-                <h2 className="mt-3 text-[16px] font-semibold text-[#14254A]">Feedback enviado</h2>
-                <p className="mt-2 text-[13px] leading-5 text-[#697A93]">
+                <h2 className="mt-3 text-[16px] font-semibold text-brand-ink">Feedback enviado</h2>
+                <p className="mt-2 text-[13px] leading-5 text-ds-muted">
                   Gracias por tu feedback. Nuestro equipo lo va a revisar y priorizar.
                 </p>
                 <div className="mt-5 flex justify-end">
@@ -411,8 +411,8 @@ export function FeedbackButton() {
 
             {stage === "error" && (
               <>
-                <h2 className="text-[16px] font-semibold text-[#14254A]">No se pudo enviar</h2>
-                <p className="mt-2 text-[13px] leading-5 text-[#DC2626]">{errorMessage}</p>
+                <h2 className="text-[16px] font-semibold text-brand-ink">No se pudo enviar</h2>
+                <p className="mt-2 text-[13px] leading-5 text-ds-red">{errorMessage}</p>
                 <div className="mt-5 flex justify-end gap-2">
                   <Button variant="secondary" onClick={reset}>
                     Cerrar

@@ -46,29 +46,50 @@ export interface Handlers {
   submitRecommend(text: string): void;
 }
 
+// Colors are CSS variables so the panel follows the OS light/dark setting
+// (extension: system only). Values match the dashboard's ds.* tokens.
 const C = {
-  blue: "#1F4AA8",
-  deep: "#103A8A",
-  ink: "#14254A",
-  muted: "#697A93",
-  border: "#E5EAF1",
-  subtle: "#EEF3F9",
-  green: "#16A34A",
-  greenBg: "#E8F7EE",
-  amber: "#D97706",
-  amberBg: "#FDF1E3",
-  red: "#DC2626",
-  redBg: "#FCEBEB",
-  violet: "#7C3AED",
-  violetBg: "#F1EAFE"
+  blue: "var(--m-blue)",
+  deep: "var(--m-deep)",
+  ink: "var(--m-ink)",
+  muted: "var(--m-muted)",
+  border: "var(--m-border)",
+  subtle: "var(--m-subtle)",
+  green: "var(--m-green)",
+  greenBg: "var(--m-green-bg)",
+  amber: "var(--m-amber)",
+  amberBg: "var(--m-amber-bg)",
+  red: "var(--m-red)",
+  redBg: "var(--m-red-bg)",
+  violet: "var(--m-violet)",
+  violetBg: "var(--m-violet-bg)"
 };
+
+const THEME = `
+:host {
+  --m-blue: #1F4AA8; --m-deep: #103A8A; --m-header: #1F4AA8; --m-ink: #14254A; --m-muted: #697A93;
+  --m-border: #E5EAF1; --m-subtle: #EEF3F9; --m-surface: #FFFFFF; --m-disabled: #9AA8BC;
+  --m-green: #16A34A; --m-green-bg: #E8F7EE; --m-amber: #D97706; --m-amber-bg: #FDF1E3;
+  --m-red: #DC2626; --m-red-bg: #FCEBEB; --m-danger: #DC2626; --m-red-line: #F5C2C2; --m-violet: #7C3AED; --m-violet-bg: #F1EAFE;
+  --m-shadow: #103A8A2E;
+}
+@media (prefers-color-scheme: dark) {
+  :host {
+    --m-blue: #3B7BE0; --m-deep: #103A8A; --m-header: #103A8A; --m-ink: #E9F2FF; --m-muted: #9FB0CC;
+    --m-border: #24365C; --m-subtle: #17264A; --m-surface: #111C33; --m-disabled: #5F7090;
+    --m-green: #4ADE80; --m-green-bg: #12301F; --m-amber: #FBBF24; --m-amber-bg: #33270E;
+    --m-red: #F87171; --m-red-bg: #3A1A1C; --m-danger: #DC2626; --m-red-line: #5C2629; --m-violet: #A78BFA; --m-violet-bg: #2A2150;
+    --m-shadow: #00000080;
+  }
+}
+`;
 
 const CSS = `
 :host { all: initial; }
 .panel { position: fixed; top: 16px; right: 16px; z-index: 2147483647; width: 320px; max-height: calc(100vh - 32px);
-  overflow: auto; background: #fff; border: 1px solid ${C.border}; border-radius: 20px; font: 13px/1.4 Geist, Inter, system-ui, sans-serif;
-  color: ${C.ink}; box-shadow: 0 12px 32px #103A8A2E; }
-.hd { display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: ${C.blue}; color: #fff; position: sticky; top: 0; }
+  overflow: auto; background: var(--m-surface); border: 1px solid ${C.border}; border-radius: 20px; font: 13px/1.4 Geist, Inter, system-ui, sans-serif;
+  color: ${C.ink}; box-shadow: 0 12px 32px var(--m-shadow); }
+.hd { display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: var(--m-header); color: #fff; position: sticky; top: 0; }
 .logo { width: 26px; height: 26px; border-radius: 8px; background: ${C.deep}; border: 1px solid #FFFFFF40; display: grid; place-items: center; font-weight: 700; font-size: 16px; }
 .ttl { flex: 1; } .ttl b { display: block; font-size: 14px; font-weight: 600; } .ttl span { font-size: 11px; opacity: .8; }
 .x { width: 26px; height: 26px; border-radius: 999px; border: 0; background: #FFFFFF26; color: #fff; cursor: pointer; font-size: 14px; }
@@ -84,22 +105,22 @@ const CSS = `
 .h { padding: 14px 0 6px; font-size: 11px; font-weight: 600; color: ${C.muted}; letter-spacing: .5px; text-transform: uppercase; }
 .row { display: flex; justify-content: space-between; background: ${C.subtle}; border-radius: 10px; padding: 6px 10px; margin-bottom: 4px; }
 .row b { font-weight: 600; }
-.ko { background: ${C.redBg}; border: 1px solid #F5C2C2; border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+.ko { background: ${C.redBg}; border: 1px solid var(--m-red-line); border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
 .ko .k { color: ${C.red}; font-size: 11px; font-weight: 700; letter-spacing: .4px; }
 .li { display: flex; gap: 8px; align-items: baseline; margin-top: 4px; }
 .li:before { content: ""; width: 5px; height: 5px; border-radius: 9px; background: currentColor; flex: none; transform: translateY(-2px); }
 .sync { color: ${C.green}; font-size: 12px; font-weight: 500; padding-top: 12px; }
 .btn { display: block; width: 100%; box-sizing: border-box; border-radius: 10px; padding: 11px 12px; font: 600 14px inherit; font-family: inherit;
   border: 1px solid transparent; cursor: pointer; margin-top: 8px; }
-.btn:disabled { background: ${C.subtle} !important; color: #9AA8BC !important; border-color: ${C.subtle} !important; cursor: not-allowed; }
-.primary { background: ${C.blue}; color: #fff; } .danger { background: ${C.red}; color: #fff; } .ghost { background: #fff; color: ${C.ink}; border-color: ${C.border}; }
+.btn:disabled { background: ${C.subtle} !important; color: var(--m-disabled) !important; border-color: ${C.subtle} !important; cursor: not-allowed; }
+.primary { background: ${C.blue}; color: #fff; } .danger { background: var(--m-danger); color: #fff; } .ghost { background: var(--m-surface); color: ${C.ink}; border-color: ${C.border}; }
 .hint { font-size: 11px; color: ${C.muted}; margin-top: 6px; }
 .err { color: ${C.red}; font-size: 12px; margin-top: 8px; }
 label { display: block; font-size: 11px; color: ${C.muted}; margin: 8px 0 4px; }
 .lt { font-size: 18px; font-weight: 700; letter-spacing: -.3px; margin-bottom: 2px; }
-input[type=tel], input[type=password] { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 9px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; }
+input[type=tel], input[type=password] { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 9px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; background: var(--m-surface); }
 .ft a { color: ${C.blue}; cursor: pointer; font-weight: 600; text-decoration: none; }
-select, textarea { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 8px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; }
+select, textarea { width: 100%; box-sizing: border-box; border: 1px solid ${C.border}; border-radius: 8px; padding: 8px 10px; font: 13px inherit; font-family: inherit; color: ${C.ink}; background: var(--m-surface); }
 textarea { min-height: 64px; resize: vertical; }
 .bar { height: 8px; background: ${C.subtle}; border-radius: 99px; margin-top: 6px; overflow: hidden; } .bar i { display: block; height: 100%; background: ${C.blue}; }
 .center { text-align: center; padding: 10px 0; } .center b { display: block; font-size: 16px; margin-bottom: 4px; }
@@ -493,7 +514,7 @@ function body(v: View, on: Handlers): Child[] {
 
 export function render(root: ShadowRoot, v: View, on: Handlers): void {
   root.replaceChildren(
-    h("style", {}, CSS),
+    h("style", {}, THEME + CSS),
     h(
       "div",
       { className: "panel" },

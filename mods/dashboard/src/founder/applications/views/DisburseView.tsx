@@ -127,7 +127,7 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
             disabled={!writable}
           />
         ) : terms ? (
-          <div className="grid grid-cols-4 rounded-[10px] bg-[#EEF3F9] px-4 py-3">
+          <div className="grid grid-cols-4 rounded-[10px] bg-ds-subtle px-4 py-3">
             {[
               ["Monto", formatDop(principal)],
               [
@@ -138,13 +138,13 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
               ["Primera cuota", formatDate(terms.startDate)]
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col gap-[3px]">
-                <span className="text-[11px] font-medium text-[#697A93]">{k}</span>
-                <span className="text-[14px] font-semibold text-[#14254A]">{v}</span>
+                <span className="text-[11px] font-medium text-ds-muted">{k}</span>
+                <span className="text-[14px] font-semibold text-brand-ink">{v}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-between rounded-[10px] bg-[#FDF1E3] px-4 py-3 text-[12.5px] font-medium text-[#D97706]">
+          <div className="flex items-center justify-between rounded-[10px] bg-ds-amber-bg px-4 py-3 text-[12.5px] font-medium text-ds-amber">
             Genera el contrato primero: sus términos son los que se prestan.
             <Btn onClick={() => onView("contract")}>Ir al contrato</Btn>
           </div>
@@ -154,7 +154,7 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
           <div className="relative">
             <UserRound
               size={15}
-              className="pointer-events-none absolute left-3 top-[11px] text-[#697A93]"
+              className="pointer-events-none absolute left-3 top-[11px] text-ds-muted"
             />
             <PanelSelect
               className="pl-9"
@@ -174,7 +174,7 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
         </PanelField>
 
         <div className="flex flex-col gap-2">
-          <span className="text-[12px] font-semibold text-[#697A93]">Cuenta de origen</span>
+          <span className="text-[12px] font-semibold text-ds-muted">Cuenta de origen</span>
           {(accounts.data ?? []).map((a) => {
             const selected = chosenAccount === a.id;
             return (
@@ -187,25 +187,25 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
                 className={cn(
                   "flex items-center gap-3 rounded-[10px] px-[14px] py-3 text-left",
                   selected
-                    ? "border-[1.5px] border-[#7C3AED] bg-[#FAF7FF]"
-                    : "border border-[#E5EAF1] bg-white",
+                    ? "border-[1.5px] border-ds-violet bg-ds-violet-tint"
+                    : "border border-ds-border bg-ds-surface",
                   !a.available && "opacity-50"
                 )}
               >
                 <span
                   className={cn(
                     "h-4 w-4 shrink-0 rounded-full",
-                    selected ? "border-[5px] border-[#7C3AED]" : "border-[1.5px] border-[#E5EAF1]"
+                    selected ? "border-[5px] border-ds-violet" : "border-[1.5px] border-ds-border"
                   )}
                 />
                 {a.isDefault ? (
-                  <Wallet size={16} className="text-[#697A93]" />
+                  <Wallet size={16} className="text-ds-muted" />
                 ) : (
-                  <Landmark size={16} className="text-[#697A93]" />
+                  <Landmark size={16} className="text-ds-muted" />
                 )}
                 <span className="flex flex-1 flex-col">
-                  <span className="text-[13px] font-semibold text-[#14254A]">{a.name}</span>
-                  <span className="text-[11px] font-medium text-[#697A93]">
+                  <span className="text-[13px] font-semibold text-brand-ink">{a.name}</span>
+                  <span className="text-[11px] font-medium text-ds-muted">
                     {!a.available
                       ? "No disponible en contabilidad"
                       : a.isDefault
@@ -213,7 +213,7 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
                         : "Configurada para desembolsos"}
                   </span>
                 </span>
-                <span className="text-[13px] font-semibold text-[#697A93]">
+                <span className="text-[13px] font-semibold text-ds-muted">
                   {a.balance == null ? "—" : formatDop(a.balance)}
                 </span>
               </button>
@@ -221,14 +221,14 @@ export function DisburseView({ app, viewer, onView, onClose, panel }: ViewProps)
           })}
         </div>
 
-        <div className="flex gap-[10px] rounded-[10px] bg-[#E8F7EE] px-[14px] py-3 text-[12.5px] font-medium leading-[1.45] text-[#16A34A]">
+        <div className="flex gap-[10px] rounded-[10px] bg-ds-green-bg px-[14px] py-3 text-[12.5px] font-medium leading-[1.45] text-ds-green">
           <UserPlus size={16} className="mt-[1px] shrink-0" />
           Al confirmar se crea el cliente y el préstamo, se registra el retiro de{" "}
           {formatDop(principal)} en {accountName} y la solicitud pasa a Convertida.
         </div>
 
         <SectionLabel>Nota</SectionLabel>
-        <p className="-mt-3 text-[12px] font-medium text-[#697A93]">
+        <p className="-mt-3 text-[12px] font-medium text-ds-muted">
           El comprobante del desembolso se adjunta desde Contabilidad a la transacción creada.
         </p>
       </div>
@@ -260,7 +260,7 @@ function LegacyTerms({
   const digits = (v: string) => v.replace(/[^\d.]/g, "");
   return (
     <div className="flex flex-col gap-3" data-testid="disburse-legacy-terms">
-      <div className="rounded-[10px] bg-[#FDF1E3] px-4 py-3 text-[12.5px] font-medium text-[#D97706]">
+      <div className="rounded-[10px] bg-ds-amber-bg px-4 py-3 text-[12.5px] font-medium text-ds-amber">
         Contrato firmado antes del nuevo flujo: copia los términos tal como aparecen en el contrato
         firmado.
       </div>

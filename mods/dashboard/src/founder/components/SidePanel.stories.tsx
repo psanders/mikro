@@ -17,12 +17,12 @@ type Story = StoryObj<typeof meta>;
 
 const footer = (
   <>
-    <span className="flex-1 text-[12px] font-semibold text-[#D97706]">
+    <span className="flex-1 text-[12px] font-semibold text-ds-amber">
       Falta: cédula (reverso) · 1 foto del negocio
     </span>
     <button
       type="button"
-      className="rounded-[9px] bg-[#1F4AA8] px-4 py-[9px] text-[14px] text-white"
+      className="rounded-[9px] bg-brand-blue-primary px-4 py-[9px] text-[14px] text-white"
     >
       Listo
     </button>
@@ -35,7 +35,7 @@ export const Detail: Story = {
     title: "Yokasta Díaz",
     subtitle: "Salón Yoka",
     icon: Images,
-    children: <p className="text-sm text-[#697A93]">Contenido de la solicitud…</p>
+    children: <p className="text-sm text-ds-muted">Contenido de la solicitud…</p>
   }
 };
 
@@ -48,7 +48,7 @@ export const NestedWithFooter: Story = {
     onBack: () => {},
     backLabel: "Solicitud de Yokasta Díaz",
     footer,
-    children: <p className="text-sm text-[#697A93]">Cédula, fotos del negocio, otros documentos…</p>
+    children: <p className="text-sm text-ds-muted">Cédula, fotos del negocio, otros documentos…</p>
   }
 };
 
@@ -59,6 +59,6 @@ export const Disbursement: Story = {
     icon: Landmark,
     onBack: () => {},
     backLabel: "Solicitud de Rafael Peña",
-    children: <p className="text-sm text-[#697A93]">Términos, cobrador, cuenta de origen…</p>
+    children: <p className="text-sm text-ds-muted">Términos, cobrador, cuenta de origen…</p>
   }
 };

@@ -53,14 +53,14 @@ export function FilterPopup({
   }
 
   return (
-    <div className="flex w-[320px] flex-col rounded-[14px] border border-[#E5EAF1] bg-white shadow-[0_16px_40px_rgba(20,37,74,0.2)]">
-      <div className="flex items-center justify-between border-b border-[#E5EAF1] px-4 py-[14px]">
-        <span className="text-[15px] font-semibold text-[#14254A]">Filtrar</span>
+    <div className="flex w-[320px] flex-col rounded-[14px] border border-ds-border bg-ds-surface shadow-[0_16px_40px_rgba(20,37,74,0.2)]">
+      <div className="flex items-center justify-between border-b border-ds-border px-4 py-[14px]">
+        <span className="text-[15px] font-semibold text-brand-ink">Filtrar</span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="flex h-5 w-5 items-center justify-center text-[#697A93] hover:text-[#14254A]"
+          className="flex h-5 w-5 items-center justify-center text-ds-muted hover:text-brand-ink"
         >
           <X size={16} />
         </button>
@@ -79,7 +79,7 @@ export function FilterPopup({
                       "flex h-4 w-4 items-center justify-center rounded-[4px] border",
                       checked
                         ? "border-brand-blue-primary bg-brand-blue-primary"
-                        : "border-[#E5EAF1] bg-white"
+                        : "border-ds-border bg-ds-surface"
                     )}
                   >
                     {checked && <Check size={11} className="text-white" />}
@@ -90,7 +90,7 @@ export function FilterPopup({
                     checked={checked}
                     onChange={() => toggleType(group.id)}
                   />
-                  <span className="text-[13px] font-medium text-[#14254A]">{group.label}</span>
+                  <span className="text-[13px] font-medium text-brand-ink">{group.label}</span>
                 </label>
               );
             })}
@@ -103,7 +103,7 @@ export function FilterPopup({
             <select
               value={value.actorId ?? ""}
               onChange={(e) => onChange({ ...value, actorId: e.target.value || undefined })}
-              className="w-full appearance-none rounded-[8px] border border-[#E5EAF1] bg-white px-[12px] py-[10px] text-[13px] font-medium text-[#14254A]"
+              className="w-full appearance-none rounded-[8px] border border-ds-border bg-ds-surface px-[12px] py-[10px] text-[13px] font-medium text-brand-ink"
             >
               <option value="">Todos</option>
               {actors.map((actor) => (
@@ -114,7 +114,7 @@ export function FilterPopup({
             </select>
             <ChevronDown
               size={14}
-              className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[#697A93]"
+              className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-ds-muted"
             />
           </div>
           {selectedActor && (
@@ -130,13 +130,13 @@ export function FilterPopup({
                 type="date"
                 value={value.from}
                 onChange={(e) => onChange({ ...value, from: e.target.value })}
-                className="w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[10px] py-[9px] text-[13px] font-medium text-[#14254A]"
+                className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[10px] py-[9px] text-[13px] font-medium text-brand-ink"
               />
               <input
                 type="date"
                 value={value.to}
                 onChange={(e) => onChange({ ...value, to: e.target.value })}
-                className="w-full rounded-[8px] border border-[#E5EAF1] bg-white px-[10px] py-[9px] text-[13px] font-medium text-[#14254A]"
+                className="w-full rounded-[8px] border border-ds-border bg-ds-surface px-[10px] py-[9px] text-[13px] font-medium text-brand-ink"
               />
             </div>
           )}
@@ -150,7 +150,7 @@ export function FilterPopup({
                   onClick={() => setPreset(preset)}
                   className={cn(
                     "rounded-full px-3 py-[6px] text-[11px] font-semibold",
-                    active ? "bg-[#14254A] text-white" : "bg-[#EEF3F9] text-[#697A93]"
+                    active ? "bg-ds-inverse text-white" : "bg-ds-subtle text-ds-muted"
                   )}
                 >
                   {DATE_PRESET_LABELS[preset]}
@@ -161,11 +161,11 @@ export function FilterPopup({
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-[10px] border-t border-[#E5EAF1] px-4 py-[14px]">
+      <div className="flex items-center justify-end gap-[10px] border-t border-ds-border px-4 py-[14px]">
         <button
           type="button"
           onClick={onClear}
-          className="rounded-[9px] border border-[#E5EAF1] bg-white px-4 py-[9px] text-[13px] font-medium text-[#14254A] hover:bg-[#F4F7FB]"
+          className="rounded-[9px] border border-ds-border bg-ds-surface px-4 py-[9px] text-[13px] font-medium text-brand-ink hover:bg-ds-bg"
         >
           Limpiar
         </button>

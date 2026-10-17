@@ -127,7 +127,7 @@ export const ClearHistoryBlocked: Story = {
   render: () => (
     <DockFrame onClearHistory={() => {}}>
       <UserBubble text="Registra 650 en el préstamo 10000"></UserBubble>
-      <div className="w-full break-words rounded-[12px] border border-[#F3D2D2] bg-[#FEF6F6] px-[14px] py-[11px] text-[13px] font-medium leading-[20px] text-[#B42121]">
+      <div className="w-full break-words rounded-[12px] border border-ds-red-bg bg-ds-red-bg px-[14px] py-[11px] text-[13px] font-medium leading-[20px] text-ds-red">
         Resuelve la acción pendiente antes de borrar el historial.
       </div>
     </DockFrame>

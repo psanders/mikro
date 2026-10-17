@@ -55,8 +55,8 @@ export function DocThumb(props: DocThumbProps) {
         }}
         className={
           props.present
-            ? "flex h-16 items-center justify-center overflow-hidden rounded-[8px] bg-[#E3E9F2]"
-            : "flex h-16 items-center justify-center rounded-[8px] border border-dashed border-[#E5EAF1] bg-white"
+            ? "flex h-16 items-center justify-center overflow-hidden rounded-[8px] bg-ds-border"
+            : "flex h-16 items-center justify-center rounded-[8px] border border-dashed border-ds-border bg-ds-surface"
         }
       >
         {props.present && isImage && href ? (
@@ -64,10 +64,10 @@ export function DocThumb(props: DocThumbProps) {
         ) : props.present ? (
           <FileText size={18} className="text-[#8A9AB3]" />
         ) : (
-          <ImageOff size={18} className="text-[#697A93]" />
+          <ImageOff size={18} className="text-ds-muted" />
         )}
       </a>
-      <span className="truncate text-[10.5px] font-medium text-[#697A93]">{props.label}</span>
+      <span className="truncate text-[10.5px] font-medium text-ds-muted">{props.label}</span>
     </div>
   );
 }
