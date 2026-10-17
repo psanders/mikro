@@ -52,25 +52,26 @@ body,
    set by the theme setting (Sistema / Claro / Oscuro) — see lib/theme.ts. */
 html.dark {
   color-scheme: dark;
-  --color-brand-ink: #e9f2ff;
-  --color-brand-mist: #1a2b52;
+  /* Neutral grays; blue stays an accent (links, primary, selection). */
+  --color-brand-ink: #ecedef;
+  --color-brand-mist: #252b36;
   --color-brand-blue-primary: #3b7be0;
-  --color-brand-blue-deep: #1e4a9e;
-  --color-ds-bg: #0b1324;
-  --color-ds-surface: #111c33;
-  --color-ds-border: #24365c;
-  --color-ds-subtle: #17264a;
-  --color-ds-muted: #9fb0cc;
+  --color-brand-blue-deep: #2a4f94;
+  --color-ds-bg: #111214;
+  --color-ds-surface: #1a1b1e;
+  --color-ds-border: #2d2f34;
+  --color-ds-subtle: #232529;
+  --color-ds-muted: #9a9ea6;
   --color-ds-green: #4ade80;
-  --color-ds-green-bg: #12301f;
+  --color-ds-green-bg: #172a1f;
   --color-ds-amber: #fbbf24;
-  --color-ds-amber-bg: #33270e;
+  --color-ds-amber-bg: #2c2415;
   --color-ds-red: #f87171;
-  --color-ds-red-bg: #3a1a1c;
+  --color-ds-red-bg: #2e1b1c;
   --color-ds-violet: #a78bfa;
-  --color-ds-violet-bg: #2a2150;
-  --color-ds-violet-tint: #16132b;
-  --color-ds-inverse: #2a3d66;
+  --color-ds-violet-bg: #2a2538;
+  --color-ds-violet-tint: #1d1b22;
+  --color-ds-inverse: #3a3d44;
 }
 
 body {

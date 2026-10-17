@@ -5,7 +5,7 @@ The Ops app and the Mikro Decisión extension are light only. Evaluators and the
 ## What Changes
 
 - **Ops dashboard:**
-  - A dark theme built from the same design tokens (`ds.*`, `brand.*`), redefined under `html.dark`.
+  - A dark theme built from the same design tokens (`ds.*`, `brand.*`), redefined under `html.dark`. It uses **neutral grays**; blue stays only as the accent (primary button, links, selection). The extension keeps the navy brand look.
   - **Sistema** (follow the OS, live) is the default. A **Sistema / Claro / Oscuro** switch lives in the avatar menu, next to Cerrar sesión. It's a secondary control, not a primary action.
   - The choice is remembered per device.
   - About 780 hard-coded color classes become tokens.
