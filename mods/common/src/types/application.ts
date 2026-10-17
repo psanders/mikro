@@ -16,6 +16,7 @@ export type ApplicationRejectionReason =
   | "OUT_OF_COVERAGE_AREA"
   | "PAYMENT_CAPACITY"
   | "DOCUMENTS"
+  | "CREDIT_POLICY"
   | "OTHER";
 
 export type ApplicationDocumentKind = "BUSINESS_PHOTO" | "OTHER";

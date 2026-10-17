@@ -7,6 +7,7 @@ import type { CreateApplicationInput, DbClient, LoanApplication } from "@mikro/c
 import { logger } from "../../logger.js";
 import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { recordApplicationReceived, type EventClient } from "../events/index.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 /**
  * Reviewer-initiated create: build a fresh LoanApplication in DRAFT status from
@@ -61,6 +62,7 @@ export function createCreateApplication(client: DbClient) {
       (err: Error) =>
         logger.error("failed to record application.received", { id: app.id, error: err.message })
     );
+    scheduleDecision(client, app);
     return app;
   };
 }

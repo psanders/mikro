@@ -10,6 +10,7 @@ import type {
   NormalizedApplication
 } from "@mikro/common";
 import { logger } from "../../logger.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 interface Deps {
   /** Called after a RECEIVED upsert from an external source (FORM or WHATSAPP). */
@@ -229,6 +230,7 @@ export function createUpsertApplication(client: DbClient, deps: Deps = {}) {
       });
     }
 
+    scheduleDecision(client, application);
     return application;
   };
 }

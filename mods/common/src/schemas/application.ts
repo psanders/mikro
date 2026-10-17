@@ -440,6 +440,8 @@ const applicationRef = {
   sessionId: z.string().optional()
 };
 const requireRef = (v: { id?: string; sessionId?: string }) => Boolean(v.id || v.sessionId);
+/** Where a review action came from; "extension" = the Mikro Decisión panel. */
+const via = { via: z.literal("extension").optional() };
 const refMessage = { message: "Provide either id or sessionId" };
 
 /**
@@ -448,16 +450,18 @@ const refMessage = { message: "Provide either id or sessionId" };
  * application that is already in review. See `evaluateTransition` ("assign").
  */
 export const assignApplicationSchema = z
-  .object({ ...applicationRef, assigneeId: z.uuid().optional() })
+  .object({ ...applicationRef, ...via, assigneeId: z.uuid().optional() })
   .refine(requireRef, refMessage);
 
 /** The assigned reviewer's recommendation to the admin (editable while IN_REVIEW). */
 export const setRecommendationSchema = z
-  .object({ ...applicationRef, reviewerRecommendation: z.string().trim().max(2000) })
+  .object({ ...applicationRef, ...via, reviewerRecommendation: z.string().trim().max(2000) })
   .refine(requireRef, refMessage);
 
 /** Assigned reviewer hands a complete application to the admin. */
-export const sendToDecisionSchema = z.object(applicationRef).refine(requireRef, refMessage);
+export const sendToDecisionSchema = z
+  .object({ ...applicationRef, ...via })
+  .refine(requireRef, refMessage);
 
 /** Admin sends a pending application back to its reviewer; the note says why. */
 export const returnToReviewerSchema = z
@@ -481,6 +485,7 @@ export const approveApplicationSchema = z
 export const rejectApplicationSchema = z
   .object({
     ...applicationRef,
+    ...via,
     reason: rejectionReasonEnum,
     note: z.string().trim().max(2000).optional()
   })

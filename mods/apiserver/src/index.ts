@@ -176,6 +176,7 @@ import {
 } from "./api/jose/index.js";
 import { loadAgents } from "./agents/index.js";
 import { createTranscribeVoiceNote } from "./voice/createTranscribeVoiceNote.js";
+import { loadCreditPolicy } from "./api/credit/policy.js";
 
 // Re-export AppRouter type for clients
 export type { AppRouter } from "./trpc/index.js";
@@ -183,6 +184,8 @@ export type { AppRouter } from "./trpc/index.js";
 const app = express();
 const cfg = getConfig();
 const PORT = cfg.port;
+// Fail at boot (not on the first decision) when credit-policy.json is invalid.
+loadCreditPolicy();
 
 // CORS for browser-based clients: the ops dashboard web build and the Tauri
 // webview send a cross-origin `Origin`; native clients (mobile/CLI) do not and
