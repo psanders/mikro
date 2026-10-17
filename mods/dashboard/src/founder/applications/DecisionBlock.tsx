@@ -7,7 +7,7 @@
  * "Rechazar…" needs a reason. No popup, no navigation.
  */
 import { useState, type ReactNode } from "react";
-import { CheckCircle2, ClipboardCheck, Sparkles, Undo2, X } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, OctagonX, Sparkles, Undo2, X } from "lucide-react";
 import type { EvidenceStatus } from "@mikro/common/schemas";
 import { trpc } from "../../lib/trpc";
 import { useToast } from "../../components/ui/ToastProvider";
@@ -51,22 +51,74 @@ export function DecisionBlock({
     onError: (e) => toast.error(friendlyError(e, "No se pudo devolver."))
   });
   const termsOk = Number(amount) > 0 && Number.isInteger(Number(weeks)) && Number(weeks) > 0;
+  // Credit policy (add-credit-decision-engine): the Mikro Score from every
+  // source consulted. Only a checked hard NO blocks approval; lookups that
+  // weren't done never do.
+  const { data: credit } = trpc.getCreditDecision.useQuery({ applicationId: app.id });
+  const hardNo =
+    credit?.outcome === "REJECT" ? credit.reasons.map((r) => r.message).join("; ") : null;
+  const tone = { APPROVE: "#16A34A", REVIEW: "#D97706", REJECT: "#DC2626" }[
+    credit?.outcome ?? "REVIEW"
+  ];
+  const outcomeLabel = {
+    APPROVE: "Aprobable",
+    REVIEW: "Revisar",
+    REJECT: "Rechazo · NO definitivo"
+  };
+  const unchecked = credit?.unchecked.filter((u) => u.outcome === "REJECT") ?? [];
 
   return (
     <div className="flex flex-col gap-[14px] pl-[50px]" data-testid="decision-block">
       <div className="flex gap-5 rounded-[12px] border border-[#E5EAF1] bg-white p-4">
-        <div className="flex w-[140px] shrink-0 flex-col gap-[6px]">
-          <span className="text-[10px] font-semibold tracking-[0.6px] text-[#697A93]">
-            MIKRO SCORE
-          </span>
-          <span className="text-[34px] font-bold leading-none tracking-[-1px] text-[#14254A]">
-            {app.score ?? "—"}
-            <span className="ml-1 text-[13px] font-medium text-[#697A93]">/ 100</span>
-          </span>
-          <span className="text-[12px] font-medium text-[#697A93]">
-            {riskBandLabel(app.riskBand)}
-          </span>
-        </div>
+        {credit ? (
+          <div className="flex w-[200px] shrink-0 flex-col gap-[6px]" data-testid="credit-score">
+            <span className="text-[10px] font-semibold tracking-[0.6px] text-[#697A93]">
+              MIKRO SCORE · TODAS LAS FUENTES
+            </span>
+            <span
+              className="text-[34px] font-bold leading-none tracking-[-1px]"
+              style={{ color: tone }}
+            >
+              {credit.mikroScore ?? "—"}
+              <span className="ml-1 text-[13px] font-medium text-[#697A93]">/ 100</span>
+            </span>
+            <span className="text-[12px] font-semibold" style={{ color: tone }}>
+              {outcomeLabel[credit.outcome]} · política {credit.policyVersion}
+            </span>
+            <div className="flex flex-col gap-[2px] pt-1">
+              {credit.components.map((c) => (
+                <span key={c.id} className="flex justify-between text-[11px] text-[#697A93]">
+                  {c.label}
+                  <b className={c.used ? "font-semibold text-[#14254A]" : "font-normal"}>
+                    {c.used ? Math.round(c.mapped ?? 0) : "no consultado"}
+                  </b>
+                </span>
+              ))}
+            </div>
+            {unchecked.length > 0 && (
+              <span
+                className="text-[11px] text-[#697A93]"
+                title={unchecked.map((u) => u.message).join("\n")}
+              >
+                {unchecked.length} regla{unchecked.length === 1 ? "" : "s"} no verificada
+                {unchecked.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex w-[140px] shrink-0 flex-col gap-[6px]">
+            <span className="text-[10px] font-semibold tracking-[0.6px] text-[#697A93]">
+              MIKRO SCORE
+            </span>
+            <span className="text-[34px] font-bold leading-none tracking-[-1px] text-[#14254A]">
+              {app.score ?? "—"}
+              <span className="ml-1 text-[13px] font-medium text-[#697A93]">/ 100</span>
+            </span>
+            <span className="text-[12px] font-medium text-[#697A93]">
+              {riskBandLabel(app.riskBand)}
+            </span>
+          </div>
+        )}
         <div className="w-px bg-[#E5EAF1]" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="flex items-center gap-[6px] text-[10px] font-semibold tracking-[0.6px] text-[#7C3AED]">
@@ -143,7 +195,8 @@ export function DecisionBlock({
           <div className="flex flex-wrap items-center gap-[10px]">
             <Btn
               tone="success"
-              disabled={!termsOk || approve.isPending}
+              disabled={!termsOk || approve.isPending || Boolean(hardNo)}
+              title={hardNo ? `NO definitivo: ${hardNo}` : undefined}
               onClick={() =>
                 approve.mutate({
                   id: app.id,
@@ -156,6 +209,14 @@ export function DecisionBlock({
             >
               Aprobar con estos términos
             </Btn>
+            {hardNo && (
+              <span
+                className="inline-flex items-center gap-[6px] rounded-[8px] bg-[#FCEBEB] px-[10px] py-[6px] text-[12px] font-medium text-[#DC2626]"
+                data-testid="decision-hard-no"
+              >
+                <OctagonX size={13} /> NO definitivo: {hardNo}
+              </span>
+            )}
             <Btn
               icon={Undo2}
               disabled={!note.trim() || giveBack.isPending}
