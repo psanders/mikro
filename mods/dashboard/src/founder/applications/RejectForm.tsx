@@ -33,6 +33,10 @@ export function RejectForm({
   const invalidate = useApplicationInvalidation();
   const [reason, setReason] = useState<RejectionReason | "">("");
   const [note, setNote] = useState("");
+  // "Política de crédito" is only valid when the credit policy says NO.
+  const { data: credit } = trpc.getCreditDecision.useQuery({ applicationId });
+  const reasons: RejectionReason[] =
+    credit?.outcome === "REJECT" ? ["CREDIT_POLICY", ...REASONS] : REASONS;
   const reject = trpc.rejectApplication.useMutation({
     onSuccess: async () => {
       toast.success("Solicitud rechazada · pasó a Cerradas.");
@@ -50,7 +54,7 @@ export function RejectForm({
     >
       <span className="text-[13px] font-semibold text-[#14254A]">Rechazar solicitud</span>
       <div className="flex flex-wrap gap-2">
-        {REASONS.map((r) => (
+        {reasons.map((r) => (
           <button
             key={r}
             type="button"

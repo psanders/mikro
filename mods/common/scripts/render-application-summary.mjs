@@ -69,6 +69,48 @@ const pdf = await renderSummaryPdf({
   addressReference: "Frente al parque, casa verde",
   score: 72,
   riskBand: "MODERATE_RISK",
+  // Credit decision (add-credit-decision-engine): a hard NO from PrestamosCloud.
+  credit: {
+    outcome: "REJECT",
+    mikroScore: 34,
+    policyVersion: "1.0.0",
+    decidedAt: new Date("2026-10-17T14:42:00Z"),
+    reasons: [
+      { message: "Cliente moroso en PrestamosCloud" },
+      { message: "Préstamos incobrables en PrestamosCloud" }
+    ],
+    components: [
+      { label: "Equifax", value: 76 },
+      { label: "PrestamosCloud", value: 18 },
+      { label: "Solicitud (ISC)", value: 61 },
+      { label: "Historial Mikro", value: null }
+    ],
+    unchecked: [],
+    nextSteps: [],
+    lookups: [
+      {
+        source: "Equifax",
+        capturedAt: new Date("2026-10-17T14:30:00Z"),
+        rows: [
+          { label: "Cuentas", value: "4" },
+          { label: "En mora", value: "1", bad: true },
+          { label: "Consultas recientes", value: "3" }
+        ]
+      },
+      {
+        source: "PrestamosCloud",
+        capturedAt: new Date("2026-10-17T14:41:00Z"),
+        rows: [
+          { label: "Score Datapréstamos", value: "399 · Muy bajo", bad: true },
+          { label: "Pagos a tiempo", value: "23%", bad: true },
+          { label: "Cliente moroso", value: "Sí", bad: true },
+          { label: "Préstamos incobrables", value: "3", bad: true },
+          { label: "Empresas con el cliente", value: "14" },
+          { label: "Capital adeudado", value: "RD$86,673" }
+        ]
+      }
+    ]
+  },
   recommendation: "APPROVE_WITH_CONDITIONS",
   confidence: "MEDIUM",
   scoreCategories: [

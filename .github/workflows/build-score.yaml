@@ -1,0 +1,75 @@
+name: Build Mikro Decisión Extension
+
+# Packages the "Mikro · Decisión" Chrome extension (mods/score) and,
+# on release commits, attaches mikro-score-vX.Y.Z.zip to the consolidated
+# GitHub Release — same pattern as build-android.yaml.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "mods/score/**"
+      - "package.json"
+      - "package-lock.json"
+
+# contents: write lets the job attach the zip to the GitHub Release.
+permissions:
+  contents: write
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  build-score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test -w @mikro/score
+
+      - name: Package extension
+        # Same Mikro server as the dashboard build (build-dashboard.yaml).
+        env:
+          MIKRO_API_URL: ${{ vars.VITE_API_URL || 'https://mikro.ngrok-free.dev' }}
+        run: npm run package -w @mikro/score
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v7
+        with:
+          name: mikro-score-${{ github.run_number }}-${{ github.sha }}
+          path: mods/score/mikro-score-v*.zip
+          retention-days: 30
+
+      # Release commits (pushed by release.yaml) carry a vX.Y.Z tag on HEAD.
+      # release.yaml creates the Release seconds after pushing the tag; the
+      # retry loop covers any gap. Non-release pushes keep the artifact only.
+      - name: Attach zip to GitHub Release (release commits only)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --tags --quiet
+          tag="$(git tag --points-at HEAD | grep '^v' | head -1 || true)"
+          if [ -z "$tag" ]; then
+            echo "HEAD is not a release commit; keeping the workflow artifact only"
+            exit 0
+          fi
+          zip="$(ls mods/score/mikro-score-v*.zip)"
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$tag" "$zip" --clobber; then
+              exit 0
+            fi
+            echo "Release $tag not ready yet (attempt $attempt); retrying in 60s"
+            sleep 60
+          done
+          echo "::warning::Could not attach extension zip to release $tag"

@@ -7,7 +7,7 @@
     "mods/apiserver",
     "mods/ctl",
     "mods/mobile",
-    "mods/creditscore"
+    "mods/score"
   ],
   "command": {
     "version": {

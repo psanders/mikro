@@ -7,5 +7,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../common" }, { "path": "../agents" }]
+  "references": [{ "path": "../common" }, { "path": "../agents" }, { "path": "../score" }]
 }

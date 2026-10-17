@@ -176,6 +176,8 @@ enum ApplicationRejectionReason {
   OUT_OF_COVERAGE_AREA
   PAYMENT_CAPACITY
   DOCUMENTS
+  /// Hard NO from the credit policy (add-credit-decision-engine); no note needed.
+  CREDIT_POLICY
   OTHER
 
   @@map("application_rejection_reasons")
@@ -191,15 +193,15 @@ enum ApplicationDocumentKind {
 
 // Origin channel of a loan application. Set once at creation; never changed.
 enum ApplicationSource {
-  FORM     // Public website form (POST /v1/applications)
+  FORM // Public website form (POST /v1/applications)
   WHATSAPP // WhatsApp intake Flow submission
-  MANUAL   // Created by a reviewer from the ops dashboard
+  MANUAL // Created by a reviewer from the ops dashboard
 
   @@map("application_sources")
 }
 
 enum FollowUpJobType {
-  NUDGE   // Stage 1 — remind prospect to complete; fires 10 min after RECEIVED
+  NUDGE // Stage 1 — remind prospect to complete; fires 10 min after RECEIVED
   ABANDON // Stage 2 — mark application ABANDONED; fires 8 h after nudge
 
   @@map("follow_up_job_types")
@@ -237,11 +239,11 @@ model User {
 
   // Relations
   roles               UserRole[]
-  createdCustomers    Customer[] @relation("CreatedBy")
-  assignedCustomers   Customer[] @relation("AssignedCollector")
+  createdCustomers    Customer[]              @relation("CreatedBy")
+  assignedCustomers   Customer[]              @relation("AssignedCollector")
   messages            Message[]
-  collectedPayments   Payment[]  @relation("CollectedPayments")
-  createdLoanNotes    LoanNote[] @relation("CreatedLoanNotes")
+  collectedPayments   Payment[]               @relation("CollectedPayments")
+  createdLoanNotes    LoanNote[]              @relation("CreatedLoanNotes")
   createdTransactions AccountingTransaction[] @relation("CreatedTransactions")
   uploadedDocuments   CustomerDocument[]
 
@@ -260,44 +262,45 @@ model UserRole {
 }
 
 model Customer {
-  id                  String   @id @default(uuid())
-  name                String
-  nickname            String?
-  phone               String
+  id                   String     @id @default(uuid())
+  name                 String
+  nickname             String?
+  phone                String
   /// WhatsApp business-scoped user id (BSUID) and username, learned from
   /// inbound messages. Internal only: lets a username-only sender (Meta hides
   /// their phone) be matched to this customer.
-  whatsappUserId      String?  @map("whatsapp_user_id")
-  whatsappUsername    String?  @map("whatsapp_username")
-  idNumber            String   @map("id_number")
-  collectionPoint     String?   @map("collection_point")
+  whatsappUserId       String?    @map("whatsapp_user_id")
+  whatsappUsername     String?    @map("whatsapp_username")
+  idNumber             String     @map("id_number")
+  collectionPoint      String?    @map("collection_point")
   /// Business location as a Google Maps link, copied from the application on conversion.
-  mapUrl              String?   @map("map_url")
-  homeAddress         String   @map("home_address")
-  jobPosition         String?  @map("job_position")
-  income              Decimal?
-  isBusinessOwner     Boolean  @default(false) @map("is_business_owner")
-  isActive            Boolean  @default(false) @map("is_active")
-  idCardOnRecord      Boolean  @default(false) @map("id_card_on_record")
-  notes               String?  @map("notes")
-  preferredPaymentDay DayOfWeek? @map("preferred_payment_day")
+  mapUrl               String?    @map("map_url")
+  homeAddress          String     @map("home_address")
+  jobPosition          String?    @map("job_position")
+  income               Decimal?
+  isBusinessOwner      Boolean    @default(false) @map("is_business_owner")
+  isActive             Boolean    @default(false) @map("is_active")
+  idCardOnRecord       Boolean    @default(false) @map("id_card_on_record")
+  notes                String?    @map("notes")
+  preferredPaymentDay  DayOfWeek? @map("preferred_payment_day")
   // QCobro portfolio ids this customer was assigned to as of the last successful
   // sync (JSON string array). Diffed against the freshly-evaluated target set so
   // the sync only pushes membership deltas. Null/empty = never synced.
-  lastSyncedPortfolios String? @map("last_synced_portfolios")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  lastSyncedPortfolios String?    @map("last_synced_portfolios")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  createdBy           User?    @relation("CreatedBy", fields: [createdById], references: [id])
-  createdById         String?  @map("created_by_id")
-  assignedCollector   User     @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
-  assignedCollectorId String   @map("assigned_collector_id")
+  createdBy           User?   @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById         String? @map("created_by_id")
+  assignedCollector   User    @relation("AssignedCollector", fields: [assignedCollectorId], references: [id])
+  assignedCollectorId String  @map("assigned_collector_id")
 
-  loans               Loan[]
-  messages            Message[]
-  tags                CustomerTag[]
-  documents           CustomerDocument[]
+  loans     Loan[]
+  messages  Message[]
+  tags      CustomerTag[]
+  documents CustomerDocument[]
+
   @@index([createdById])
   @@index([assignedCollectorId])
   @@index([phone])
@@ -355,29 +358,31 @@ model CustomerDocument {
 }
 
 model Loan {
-  id               String           @id @default(uuid())
-  loanId           Int              @unique @map("loan_id") // Generated in app code, starts at 10000
-  type             LoanType         @default(SAN)
-  status           LoanStatus       @default(ACTIVE)
+  id     String     @id @default(uuid())
+  loanId Int        @unique @map("loan_id") // Generated in app code, starts at 10000
+  type   LoanType   @default(SAN)
+  status LoanStatus @default(ACTIVE)
 
   // Flexible loan configuration
-  principal        Decimal          // Amount borrowed (e.g., 5000 or 10000)
+  principal        Decimal // Amount borrowed (e.g., 5000 or 10000)
   termLength       Int              @map("term_length") // Number of periods (e.g., 10)
   paymentAmount    Decimal          @map("payment_amount") // Expected per period (e.g., 650)
   paymentFrequency PaymentFrequency @map("payment_frequency")
-  /** When set, overrides global default mora rate (e.g., 0.10 for 10%). */
+  /**
+   * When set, overrides global default mora rate (e.g., 0.10 for 10%).
+   */
   moraRate         Decimal?         @map("mora_rate")
   startingDate     DateTime?        @map("starting_date")
   nickname         String?
 
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  customer            Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId          String    @map("customer_id")
-  payments            Payment[]
-  notes               LoanNote[]
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String     @map("customer_id")
+  payments   Payment[]
+  notes      LoanNote[]
 
   @@index([customerId])
   @@index([status])
@@ -428,13 +433,13 @@ model Attachment {
 }
 
 model Payment {
-  id        String        @id @default(uuid())
-  amount    Decimal       // Amount paid
-  paidAt    DateTime      @default(now()) @map("paid_at")
-  method    PaymentMethod @default(CASH)
-  status    PaymentStatus @default(COMPLETED)
-  kind      PaymentKind   @default(INSTALLMENT)
-  notes     String?
+  id     String        @id @default(uuid())
+  amount Decimal // Amount paid
+  paidAt DateTime      @default(now()) @map("paid_at")
+  method PaymentMethod @default(CASH)
+  status PaymentStatus @default(COMPLETED)
+  kind   PaymentKind   @default(INSTALLMENT)
+  notes  String?
 
   /**
    * When kind=LATE_FEE, the accrual start this mora was computed from. Frozen at
@@ -444,16 +449,18 @@ model Payment {
    */
   moraAccrualFrom DateTime? @map("mora_accrual_from")
 
-  /** When kind=INSTALLMENT and created with a paired LATE_FEE row, points to that LATE_FEE payment. */
-  linkedPaymentId String? @unique @map("linked_payment_id")
-  linkedLateFee     Payment? @relation("InstallmentLateFee", fields: [linkedPaymentId], references: [id], onDelete: SetNull)
+  /**
+   * When kind=INSTALLMENT and created with a paired LATE_FEE row, points to that LATE_FEE payment.
+   */
+  linkedPaymentId       String?  @unique @map("linked_payment_id")
+  linkedLateFee         Payment? @relation("InstallmentLateFee", fields: [linkedPaymentId], references: [id], onDelete: SetNull)
   installmentForLateFee Payment? @relation("InstallmentLateFee")
 
   // Relations
-  loan          Loan    @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  loanId        String  @map("loan_id")
-  collectedBy   User    @relation("CollectedPayments", fields: [collectedById], references: [id])
-  collectedById String  @map("collected_by_id")
+  loan          Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId        String @map("loan_id")
+  collectedBy   User   @relation("CollectedPayments", fields: [collectedById], references: [id])
+  collectedById String @map("collected_by_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -466,14 +473,14 @@ model Payment {
 }
 
 model LoanNote {
-  id          String   @id @default(uuid())
-  content     String
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
 
-  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  loanId      String   @map("loan_id")
-  createdBy   User     @relation("CreatedLoanNotes", fields: [createdById], references: [id])
-  createdById String   @map("created_by_id")
+  loan        Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId      String @map("loan_id")
+  createdBy   User   @relation("CreatedLoanNotes", fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
 
   @@index([loanId])
   @@index([createdAt])
@@ -494,10 +501,10 @@ model AccountingAccount {
   isActive       Boolean     @default(true) @map("is_active")
   notes          String?
   createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt      @map("updated_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  transactions      AccountingTransaction[] @relation("AccountTransactions")
-  transfersToThis   AccountingTransaction[] @relation("TransferToAccount")
+  transactions    AccountingTransaction[] @relation("AccountTransactions")
+  transfersToThis AccountingTransaction[] @relation("TransferToAccount")
 
   @@map("accounting_accounts")
 }
@@ -524,22 +531,22 @@ model AccountingTransaction {
   reference    String?
   reversalOfId String?           @unique @map("reversal_of_id")
 
-  account     AccountingAccount  @relation("AccountTransactions", fields: [accountId], references: [id])
-  accountId   String             @map("account_id")
-  toAccount   AccountingAccount? @relation("TransferToAccount", fields: [toAccountId], references: [id])
-  toAccountId String?            @map("to_account_id")
+  account     AccountingAccount   @relation("AccountTransactions", fields: [accountId], references: [id])
+  accountId   String              @map("account_id")
+  toAccount   AccountingAccount?  @relation("TransferToAccount", fields: [toAccountId], references: [id])
+  toAccountId String?             @map("to_account_id")
   category    AccountingCategory? @relation(fields: [categoryId], references: [id])
-  categoryId  String?            @map("category_id")
-  createdBy   User               @relation("CreatedTransactions", fields: [createdById], references: [id])
-  createdById String             @map("created_by_id")
+  categoryId  String?             @map("category_id")
+  createdBy   User                @relation("CreatedTransactions", fields: [createdById], references: [id])
+  createdById String              @map("created_by_id")
 
-  reversalOf AccountingTransaction?  @relation("ReversalLink", fields: [reversalOfId], references: [id])
+  reversalOf AccountingTransaction? @relation("ReversalLink", fields: [reversalOfId], references: [id])
   reversedBy AccountingTransaction? @relation("ReversalLink")
 
   attachments AccountingTransactionAttachment[]
 
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt      @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([accountId, occurredAt])
   @@index([categoryId])
@@ -572,27 +579,27 @@ model AccountingTransactionAttachment {
 model LoanApplication {
   id          String            @id @default(uuid())
   sessionId   String            @unique @map("session_id")
-  status      ApplicationStatus  @default(DRAFT)
-  source      ApplicationSource  @default(FORM)
-  lastSection String?            @map("last_section")
+  status      ApplicationStatus @default(DRAFT)
+  source      ApplicationSource @default(FORM)
+  lastSection String?           @map("last_section")
 
   // Stable extracted fields (subset of the form; everything also lives in rawData)
-  firstName         String?   @map("first_name")
-  lastName          String?   @map("last_name")
-  phone             String?
+  firstName          String?        @map("first_name")
+  lastName           String?        @map("last_name")
+  phone              String?
   /// WhatsApp BSUID + username of the applicant (internal; see Customer).
-  whatsappUserId    String?   @map("whatsapp_user_id")
-  whatsappUsername  String?   @map("whatsapp_username")
-  idNumber          String?   @map("id_number")
-  dateOfBirth       DateTime? @map("date_of_birth")
-  maritalStatus     MaritalStatus? @map("marital_status")
-  businessType      String?   @map("business_type")
-  businessName      String?   @map("business_name")
-  requestedAmount   Decimal?  @map("requested_amount")
-  purpose           String?
-  requestedTermWeeks Int?     @map("requested_term_weeks")
-  province          String?
-  homeAddress       String?   @map("home_address")
+  whatsappUserId     String?        @map("whatsapp_user_id")
+  whatsappUsername   String?        @map("whatsapp_username")
+  idNumber           String?        @map("id_number")
+  dateOfBirth        DateTime?      @map("date_of_birth")
+  maritalStatus      MaritalStatus? @map("marital_status")
+  businessType       String?        @map("business_type")
+  businessName       String?        @map("business_name")
+  requestedAmount    Decimal?       @map("requested_amount")
+  purpose            String?
+  requestedTermWeeks Int?           @map("requested_term_weeks")
+  province           String?
+  homeAddress        String?        @map("home_address")
 
   // Full normalized payload (audit trail + buffer against form drift)
   rawData Json @map("raw_data")
@@ -608,20 +615,20 @@ model LoanApplication {
 
   // Review workflow (see evaluateTransition in @mikro/common). Assignment and
   // decision are separate: the reviewer gathers evidence, an admin decides.
-  assignedReviewerId     String?   @map("assigned_reviewer_id")
-  assignedAt             DateTime? @map("assigned_at")
-  reviewerRecommendation String?   @map("reviewer_recommendation")
-  sentToDecisionAt       DateTime? @map("sent_to_decision_at")
-  decidedById            String?   @map("decided_by_id")
-  decidedAt              DateTime? @map("decided_at")
-  decisionNote           String?   @map("decision_note")
+  assignedReviewerId     String?                     @map("assigned_reviewer_id")
+  assignedAt             DateTime?                   @map("assigned_at")
+  reviewerRecommendation String?                     @map("reviewer_recommendation")
+  sentToDecisionAt       DateTime?                   @map("sent_to_decision_at")
+  decidedById            String?                     @map("decided_by_id")
+  decidedAt              DateTime?                   @map("decided_at")
+  decisionNote           String?                     @map("decision_note")
   rejectionReason        ApplicationRejectionReason? @map("rejection_reason")
   // The terms the admin approved; conversion lends exactly approvedAmount.
-  approvedAmount         Decimal?  @map("approved_amount")
-  approvedTermWeeks      Int?      @map("approved_term_weeks")
+  approvedAmount         Decimal?                    @map("approved_amount")
+  approvedTermWeeks      Int?                        @map("approved_term_weeks")
   // Loan terms printed on the generated contract ({installments,
   // installmentAmount, frequency, startDate}); conversion must lend exactly these.
-  contractTerms          Json?     @map("contract_terms")
+  contractTerms          Json?                       @map("contract_terms")
 
   // One-paragraph LLM summary for the feed card, refreshed on receipt and on edit.
   aiSummary   String?   @map("ai_summary")
@@ -673,20 +680,21 @@ model LoanApplication {
   customerId String? @map("customer_id")
   loanId     Int?    @map("loan_id")
 
-  submittedAt DateTime? @map("submitted_at")
+  submittedAt    DateTime? @map("submitted_at")
   // When an abandoned draft last came back to DRAFT because the prospect wrote
   // again. José's intake memory starts here, so the old intake's turn counters
   // don't carry into the reopened one.
-  reopenedAt  DateTime? @map("reopened_at")
+  reopenedAt     DateTime? @map("reopened_at")
   // When José stopped asking the remaining form fields after submission (form
   // complete, the person declined, or nothing more to save). Null while he may
   // still ask; see intakeWindow.ts for the rest of the "intake open" rule.
   intakeClosedAt DateTime? @map("intake_closed_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  followUpJobs FollowUpJob[]
-  documents    ApplicationDocument[]
+  followUpJobs    FollowUpJob[]
+  documents       ApplicationDocument[]
+  creditDecisions CreditDecision[]
 
   @@index([status])
   @@index([sessionId])
@@ -761,18 +769,18 @@ model FollowUpJob {
 // closes on its own after a quiet window. No foreign keys, like
 // business_events: the refs are context for the feed card, not ownership.
 model ConversationHandoff {
-  id            String    @id @default(uuid())
+  id             String    @id @default(uuid())
   /// Where replies go: the phone, or the BSUID for a username-only sender.
-  phone         String
+  phone          String
   /// The sender's BSUID when known, so the hand-off holds whichever way they write.
-  whatsappUserId String?  @map("whatsapp_user_id")
-  profile       String
-  reason        String
-  applicationId String?   @map("application_id")
-  customerId    String?   @map("customer_id")
-  openedAt      DateTime  @default(now()) @map("opened_at")
-  expiresAt     DateTime  @map("expires_at")
-  closedAt      DateTime? @map("closed_at")
+  whatsappUserId String?   @map("whatsapp_user_id")
+  profile        String
+  reason         String
+  applicationId  String?   @map("application_id")
+  customerId     String?   @map("customer_id")
+  openedAt       DateTime  @default(now()) @map("opened_at")
+  expiresAt      DateTime  @map("expires_at")
+  closedAt       DateTime? @map("closed_at")
 
   @@index([phone, closedAt])
   @@index([whatsappUserId, closedAt])
@@ -793,34 +801,34 @@ model ConversationHandoff {
 model ConversationTurn {
   // Autoincrement, not a uuid: turns are ordered by id, so two recorded in the
   // same millisecond still read back in the order they happened.
-  id            Int      @id @default(autoincrement())
-  phone         String
-  role          String
-  content       String
+  id               Int      @id @default(autoincrement())
+  phone            String
+  role             String
+  content          String
   // GUEST, PROSPECT, APPLICANT or CUSTOMER; null when the turn came before routing.
-  profile       String?
-  agentName     String?  @map("agent_name")
+  profile          String?
+  agentName        String?  @map("agent_name")
   // Short hash of the agent's prompt, model and tools: groups turns by agent
   // revision so drift shows up as a change in behavior between versions.
-  agentVersion  String?  @map("agent_version")
+  agentVersion     String?  @map("agent_version")
   // JSON array of {name, args} for the tools the agent ran this turn (no results).
-  toolCalls     String?  @map("tool_calls")
-  hasImage      Boolean  @default(false) @map("has_image")
-  applicationId String?  @map("application_id")
-  customerId    String?  @map("customer_id")
-  waMessageId   String?  @map("wa_message_id")
+  toolCalls        String?  @map("tool_calls")
+  hasImage         Boolean  @default(false) @map("has_image")
+  applicationId    String?  @map("application_id")
+  customerId       String?  @map("customer_id")
+  waMessageId      String?  @map("wa_message_id")
   // The send to WhatsApp failed: the reply was produced (kept for audits) but
   // the person never got it, so it is left out of the agents' memory.
-  failed        Boolean  @default(false)
+  failed           Boolean  @default(false)
   // Decision-model label of an INBOUND turn (openspec conversation-state):
   // answer, question, closing, opt_out, repeat, frustration, human_request,
   // greeting, other, or media (set by code). Null until classified.
   intent           String?
-  intentConfidence Float?  @map("intent_confidence")
+  intentConfidence Float?   @map("intent_confidence")
   // JSON: predicate probabilities (settled, affirms, sameRequest) and the
   // provider:model that answered, so labels from different models compare.
   classification   String?
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@index([phone, createdAt])
   @@index([applicationId])
@@ -1034,4 +1042,69 @@ model TaskFiring {
   @@index([taskId, status])
   @@index([status])
   @@map("task_firings")
+}
+
+// =============================================================================
+// Credit decision engine (add-credit-decision-engine)
+// =============================================================================
+
+enum CreditReportSource {
+  EQUIFAX
+  PRESTAMOSCLOUD
+
+  @@map("credit_report_sources")
+}
+
+enum CreditOutcome {
+  REJECT
+  REVIEW
+  APPROVE
+
+  @@map("credit_outcomes")
+}
+
+/// Facts extracted from one bureau lookup, pushed by the Mikro Decisión
+/// extension. Keyed by cédula so they stay with the person across
+/// applications. Append-only; never holds the raw report (only its hash).
+model CreditReport {
+  id             String             @id @default(uuid())
+  cedula         String
+  source         CreditReportSource
+  facts          Json
+  schemaVersion  Int                @map("schema_version")
+  rawSha256      String             @map("raw_sha256")
+  adapterVersion String             @map("adapter_version")
+  portalOrigin   String             @map("portal_origin")
+  capturedAt     DateTime           @map("captured_at")
+  capturedById   String             @map("captured_by_id")
+  /// The application the push was attached to, if any (informational).
+  applicationId  String?            @map("application_id")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  @@index([cedula, source, capturedAt])
+  @@map("credit_reports")
+}
+
+/// One evaluation of the credit policy for an application. Append-only; the
+/// newest row is the application's current decision. `inputs` is the full
+/// facts snapshot so any decision can be replayed.
+model CreditDecision {
+  id            String          @id @default(uuid())
+  application   LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String          @map("application_id")
+  policyId      String          @map("policy_id")
+  policyVersion String          @map("policy_version")
+  policyHash    String          @map("policy_hash")
+  outcome       CreditOutcome
+  mikroScore    Int?            @map("mikro_score")
+  reasons       Json
+  unchecked     Json
+  components    Json
+  nextSteps     Json            @map("next_steps")
+  inputs        Json
+  trace         Json
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  @@index([applicationId, createdAt])
+  @@map("credit_decisions")
 }

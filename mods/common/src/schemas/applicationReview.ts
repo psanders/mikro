@@ -44,6 +44,7 @@ export const rejectionReasonEnum = z.enum([
   "OUT_OF_COVERAGE_AREA",
   "PAYMENT_CAPACITY",
   "DOCUMENTS",
+  "CREDIT_POLICY",
   "OTHER"
 ]);
 export type RejectionReason = z.infer<typeof rejectionReasonEnum>;
@@ -52,6 +53,7 @@ export const REJECTION_REASON_LABELS: Record<RejectionReason, string> = {
   OUT_OF_COVERAGE_AREA: "Fuera de zona",
   PAYMENT_CAPACITY: "Capacidad de pago",
   DOCUMENTS: "Documentos",
+  CREDIT_POLICY: "Política de crédito",
   OTHER: "Otro"
 };
 

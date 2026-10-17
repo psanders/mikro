@@ -12,6 +12,7 @@ import { TRPCError } from "@trpc/server";
 import { logger } from "../../logger.js";
 import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { assertReviewDataWritable } from "./reviewApplication.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 async function loadByRef(
   client: DbClient,
@@ -75,6 +76,7 @@ export function createUpdateApplication(client: DbClient) {
       }
     });
     logger.verbose("loan application edited", { id: app.id, score: Math.round(result.isc) });
+    scheduleDecision(client, updated);
     return updated;
   };
 }

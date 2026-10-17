@@ -100,6 +100,24 @@ export interface SummaryHandoff {
   openedAt: Date;
 }
 
+/** The credit decision (add-credit-decision-engine): the Mikro Score from every source. */
+export interface SummaryCredit {
+  outcome: "REJECT" | "REVIEW" | "APPROVE";
+  mikroScore: number | null;
+  policyVersion: string;
+  decidedAt: Date;
+  reasons: { message: string }[];
+  components: { label: string; value: number | null }[];
+  unchecked: { message: string }[];
+  nextSteps: { label: string; cost: number }[];
+  /** What each bureau lookup showed (latest per source). */
+  lookups: {
+    source: "Equifax" | "PrestamosCloud";
+    capturedAt: Date;
+    rows: { label: string; value: string; bad?: boolean }[];
+  }[];
+}
+
 export interface SolicitudSummaryData {
   id: string;
   createdAt: Date;
@@ -140,6 +158,8 @@ export interface SolicitudSummaryData {
   riskBand: string | null;
   recommendation: string | null;
   confidence: string | null;
+  // Credit decision (Mikro Score from every source), when one exists
+  credit?: SummaryCredit | null;
   // Score (detail) — category breakdown, indicators, follow-up questions, flags
   scoreCategories?: SummaryScoreCategory[] | null;
   scoreIndicators?: SummaryScoreIndicators | null;
@@ -431,6 +451,9 @@ function renderScorePage(doc: PDFKit.PDFDocument, F: Fonts, data: SolicitudSumma
     );
   }
 
+  // ── Credit decision (every source) ───────────────────────────────────────
+  if (data.credit) renderCreditSection(doc, F, data.credit);
+
   // ── Flags ─────────────────────────────────────────────────────────────────
   if (data.flags && data.flags.length > 0) {
     subHead(doc, F, "Alertas");
@@ -443,6 +466,141 @@ function renderScorePage(doc: PDFKit.PDFDocument, F: Fonts, data: SolicitudSumma
         .text(`•  ${f.message}`, MARGIN, doc.y, { width: CONTENT_W });
       doc.moveDown(0.25);
     }
+  }
+}
+
+const CREDIT_OUTCOME: Record<SummaryCredit["outcome"], [string, string]> = {
+  APPROVE: ["Aprobable", GREEN],
+  REVIEW: ["Revisar", AMBER],
+  REJECT: ["Rechazo · NO definitivo", RED]
+};
+
+/** A label/value line with an optional colored value (credit section). */
+function creditRow(
+  doc: PDFKit.PDFDocument,
+  F: Fonts,
+  label: string,
+  value: string,
+  color = BRAND_INK
+) {
+  needsPage(doc, 16);
+  const y = doc.y;
+  doc
+    .fillColor(TEXT)
+    .font(F.reg)
+    .fontSize(9.5)
+    .text(label, MARGIN, y, { width: CONTENT_W - 180 });
+  doc
+    .fillColor(color)
+    .font(F.semi)
+    .fontSize(9.5)
+    .text(value, MARGIN + CONTENT_W - 180, y, {
+      width: 180,
+      align: "right"
+    });
+  doc.y = Math.max(doc.y, y + 13);
+  doc.moveDown(0.15);
+}
+
+/**
+ * "Decisión de crédito": the Mikro Score from every bureau consulted, the
+ * policy outcome, any hard NO, what wasn't verified, optional next steps, and
+ * what each lookup showed — the same summary the Mikro Decisión panel shows.
+ */
+function renderCreditSection(doc: PDFKit.PDFDocument, F: Fonts, c: SummaryCredit) {
+  subHead(doc, F, "Decisión de crédito · todas las fuentes");
+  needsPage(doc, 70);
+  const [label, color] = CREDIT_OUTCOME[c.outcome];
+  const y = doc.y;
+  doc.font(F.bold).fontSize(30);
+  const n = c.mikroScore === null ? "—" : String(c.mikroScore);
+  const w = doc.widthOfString(n);
+  doc.fillColor(color).text(n, MARGIN, y);
+  doc
+    .fillColor(MUTED)
+    .font(F.med)
+    .fontSize(12)
+    .text("/ 100", MARGIN + w + 6, y + 14);
+  doc
+    .fillColor(color)
+    .font(F.semi)
+    .fontSize(11)
+    .text(label, MARGIN + CONTENT_W / 2, y + 4, { width: CONTENT_W / 2, align: "right" });
+  doc
+    .fillColor(LIGHT)
+    .font(F.reg)
+    .fontSize(8)
+    .text(
+      `Política v${c.policyVersion} · ${formatDateTime(c.decidedAt)}`,
+      MARGIN + CONTENT_W / 2,
+      y + 20,
+      { width: CONTENT_W / 2, align: "right" }
+    );
+  doc.y = y + 42;
+
+  if (c.outcome === "REJECT" && c.reasons.length > 0) {
+    needsPage(doc, 18 + 14 * c.reasons.length);
+    doc
+      .fillColor(RED)
+      .font(F.semi)
+      .fontSize(8)
+      .text("NO DEFINITIVO · POLÍTICA DE CRÉDITO", MARGIN, doc.y, {
+        characterSpacing: 0.5
+      });
+    for (const r of c.reasons) {
+      doc
+        .fillColor(BRAND_INK)
+        .font(F.reg)
+        .fontSize(9.5)
+        .text(`•  ${r.message}`, MARGIN, doc.y + 2);
+    }
+    doc.moveDown(0.6);
+  } else if (c.reasons.length > 0) {
+    doc
+      .fillColor(MUTED)
+      .font(F.reg)
+      .fontSize(9)
+      .text(c.reasons.map((r) => r.message).join(" · "), MARGIN, doc.y);
+    doc.moveDown(0.5);
+  }
+
+  for (const comp of c.components) {
+    if (comp.value === null) creditRow(doc, F, comp.label, "no consultado", LIGHT);
+    else scoreBar(doc, F, comp.label, Math.round(comp.value));
+  }
+
+  if (c.unchecked.length > 0) {
+    doc.moveDown(0.3);
+    needsPage(doc, 16);
+    doc
+      .fillColor(MUTED)
+      .font(F.semi)
+      .fontSize(8)
+      .text("NO VERIFICADO", MARGIN, doc.y, { characterSpacing: 0.5 });
+    for (const u of c.unchecked) {
+      doc
+        .fillColor(MUTED)
+        .font(F.reg)
+        .fontSize(9)
+        .text(`•  ${u.message}`, MARGIN, doc.y + 1);
+    }
+  }
+  if (c.nextSteps.length > 0) {
+    doc.moveDown(0.4);
+    needsPage(doc, 16);
+    doc
+      .fillColor(MUTED)
+      .font(F.semi)
+      .fontSize(8)
+      .text("PRÓXIMOS PASOS (OPCIONALES)", MARGIN, doc.y, { characterSpacing: 0.5 });
+    for (const s of c.nextSteps) {
+      creditRow(doc, F, s.label, s.cost > 0 ? `cuesta ${s.cost} consulta` : "gratis", MUTED);
+    }
+  }
+
+  for (const l of c.lookups) {
+    subHead(doc, F, `Lo que vio ${l.source} · ${formatDateTime(l.capturedAt)}`);
+    for (const r of l.rows) creditRow(doc, F, r.label, r.value, r.bad ? RED : BRAND_INK);
   }
 }
 

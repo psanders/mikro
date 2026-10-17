@@ -13,6 +13,7 @@ import { logger } from "../../logger.js";
 import { droppedMaritalStatus } from "./maritalStatusInput.js";
 import { authorize } from "./reviewApplication.js";
 import { recordApplicationReceived, type EventClient } from "../events/index.js";
+import { scheduleDecision } from "../credit/decide.js";
 
 async function loadByRef(
   client: DbClient,
@@ -80,6 +81,7 @@ export function createPromoteApplication(client: DbClient) {
       (err: Error) =>
         logger.error("failed to record application.received", { id: app.id, error: err.message })
     );
+    scheduleDecision(client, updated);
     return updated;
   };
 }

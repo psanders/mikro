@@ -194,3 +194,8 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   runtime. If a database already received the change via `db push`, mark
   the reconciling migration as applied there with
   `prisma migrate resolve --applied <migration>` instead of running it.
+- **A workspace package the apiserver imports needs two entries.** Add it to
+  `mods/apiserver/tsconfig.json` `references` (so `tsc -b` builds it first —
+  CI's "Build apiserver types" and the e2e job build only the apiserver) and
+  `COPY` its `package.json` + `dist` in `mods/apiserver/Dockerfile` (the image
+  only contains what's copied). Current set: `common`, `agents`, `score`.

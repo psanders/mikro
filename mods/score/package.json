@@ -1,0 +1,35 @@
+{
+  "name": "@mikro/score",
+  "version": "3.13.1",
+  "description": "Mikro Score: bureau facts, credit policy engine, and the Mikro Decisión Chrome extension for evaluators",
+  "type": "module",
+  "private": true,
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --force && node .scripts/build-extension.mjs",
+    "package": "tsc -b --force && node .scripts/build-extension.mjs --zip",
+    "typecheck": "tsc --noEmit",
+    "test": "mocha",
+    "clean": "rm -rf dist chrome-extension *.zip"
+  },
+  "dependencies": {
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "chai": "^6.2.2",
+    "esbuild": "^0.28.1",
+    "mocha": "^11.7.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

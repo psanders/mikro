@@ -70,8 +70,20 @@ const paymentReversedPayloadSchema = z.object({
 const applicationEventBase = z.object({
   applicationId: z.uuid(),
   businessName: z.string().optional(),
-  score: z.number().int().optional()
+  score: z.number().int().optional(),
+  /** Set when the action came from the Mikro Decisión extension. */
+  via: z.literal("extension").optional()
 });
+
+/** The credit decision in force when an application was approved or rejected. */
+const creditDecisionRef = z
+  .object({
+    decisionId: z.uuid(),
+    outcome: z.enum(["REJECT", "REVIEW", "APPROVE"]),
+    mikroScore: z.number().int().nullable(),
+    policyVersion: z.string()
+  })
+  .optional();
 
 const applicationReceivedPayloadSchema = applicationEventBase.extend({
   source: z.string().optional(),
@@ -101,13 +113,15 @@ const applicationApprovedPayloadSchema = applicationEventBase.extend({
   // True when the approval overrode a policy rule; feed renders these
   // with the exception (amber) treatment.
   policyException: z.boolean(),
-  note: z.string().optional()
+  note: z.string().optional(),
+  credit: creditDecisionRef
 });
 
 const applicationRejectedPayloadSchema = applicationEventBase.extend({
   // RejectionReason; optional because older events only carried a free-text note.
   reason: z.string().optional(),
-  note: z.string().optional()
+  note: z.string().optional(),
+  credit: creditDecisionRef
 });
 
 const applicationSignedPayloadSchema = z.object({

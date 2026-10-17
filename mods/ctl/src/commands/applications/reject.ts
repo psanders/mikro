@@ -22,7 +22,7 @@ export default class Reject extends MutationCommand<typeof Reject> {
   static override readonly flags = {
     reason: Flags.string({
       description: "Rejection reason",
-      options: ["OUT_OF_COVERAGE_AREA", "PAYMENT_CAPACITY", "DOCUMENTS", "OTHER"],
+      options: ["OUT_OF_COVERAGE_AREA", "PAYMENT_CAPACITY", "DOCUMENTS", "CREDIT_POLICY", "OTHER"],
       required: true
     }),
     note: Flags.string({ description: "Note (required when reason is OTHER)", required: false })
@@ -42,6 +42,7 @@ export default class Reject extends MutationCommand<typeof Reject> {
       | "OUT_OF_COVERAGE_AREA"
       | "PAYMENT_CAPACITY"
       | "DOCUMENTS"
+      | "CREDIT_POLICY"
       | "OTHER";
     const note =
       reason === "OTHER" ? await promptTextIfMissing(flags.note, "Note", "note") : flags.note;

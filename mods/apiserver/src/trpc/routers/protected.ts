@@ -2,6 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import type { Role, TransitionActor } from "@mikro/common";
 import {
   drPhoneDigits,
@@ -179,6 +180,9 @@ import {
   trackEvidenceCompletion
 } from "../../api/applications/evidence.js";
 import { loadApplication } from "../../api/applications/reviewApplication.js";
+import { creditReportPushSchema } from "@mikro/score";
+import { getCreditPanel, ingestCreditReport, listCreditReports } from "../../api/credit/panel.js";
+import { latestDecision } from "../../api/credit/decide.js";
 import { refreshApplicationSummary } from "../../api/applications/applicationSummary.js";
 import { listDisbursementAccounts } from "../../api/applications/disbursementAccounts.js";
 import { createUploadSignedContract } from "../../api/applications/createUploadSignedContract.js";
@@ -783,6 +787,44 @@ export const protectedRouter = router({
       const onRejected = createNotifyRejection(getConfig().twilio);
       return createRejectApplication(ctx.db, { onRejected })(input, actorOf(ctx));
     }),
+
+  // ==================== Credit decision engine (Mikro Decisión) ====================
+
+  /**
+   * What the Mikro Decisión panel shows for a cédula: its open application,
+   * the current credit decision, and the review actions the caller may take
+   * (today's rules). Reviewers (ADMIN/REVIEWER) only.
+   */
+  getCreditPanel: reviewerProcedure
+    .input(z.object({ cedula: z.string().min(11).max(20) }))
+    .query(async ({ ctx, input }) =>
+      getCreditPanel(ctx.db as unknown as PrismaClient, input.cedula, actorOf(ctx), {
+        minBusinessPhotos: getMinBusinessPhotos()
+      })
+    ),
+
+  /** Store facts pushed by the extension (never the raw report) and re-decide. */
+  ingestCreditReport: reviewerProcedure
+    .input(creditReportPushSchema)
+    .mutation(async ({ ctx, input }) =>
+      ingestCreditReport(ctx.db as unknown as PrismaClient, input, actorOf(ctx), {
+        minBusinessPhotos: getMinBusinessPhotos()
+      })
+    ),
+
+  /** Bureau lookups recorded for a cédula (when, which source, who). */
+  listCreditReports: reviewerProcedure
+    .input(z.object({ cedula: z.string().min(11).max(20) }))
+    .query(async ({ ctx, input }) =>
+      listCreditReports(ctx.db as unknown as PrismaClient, input.cedula)
+    ),
+
+  /** The current credit decision of an application (null before the first one). */
+  getCreditDecision: reviewerProcedure
+    .input(z.object({ applicationId: z.string().min(1) }))
+    .query(async ({ ctx, input }) =>
+      latestDecision(ctx.db as unknown as PrismaClient, input.applicationId)
+    ),
 
   /** The customer backed out after approval (APPROVED -> ABANDONED). */
   withdrawApplication: reviewerProcedure

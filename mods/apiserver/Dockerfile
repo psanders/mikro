@@ -23,6 +23,8 @@ COPY mods/common/package.json ./mods/common/
 COPY mods/common/dist ./mods/common/dist
 COPY mods/agents/package.json ./mods/agents/
 COPY mods/agents/dist ./mods/agents/dist
+COPY mods/score/package.json ./mods/score/
+COPY mods/score/dist ./mods/score/dist
 COPY mods/apiserver/package.json ./mods/apiserver/
 COPY mods/apiserver/dist ./mods/apiserver/dist
 COPY mods/apiserver/prisma ./mods/apiserver/prisma
