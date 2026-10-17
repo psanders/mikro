@@ -3,7 +3,6 @@
 -- the append-only credit policy decisions per application. The new
 -- ApplicationRejectionReason value CREDIT_POLICY needs no SQL (SQLite TEXT).
 
-[dotenv@17.2.3] injecting env (0) from ../../.env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
 -- CreateTable
 CREATE TABLE "credit_reports" (
     "id" TEXT NOT NULL PRIMARY KEY,
