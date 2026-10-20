@@ -1,6 +1,6 @@
 ## Why
 
-Ops can't tell where a loan application came from. The data is already stored — `source` (FORM / WHATSAPP / MANUAL) and the Meta ad ids the site forwards (`adId`, live since 2026-09-18 02:52 UTC) — but no surface shows it per application.
+Ops can't tell where a loan application came from. The data is already stored — `source` (FORM / WHATSAPP / MANUAL) and the Meta ad ids the site forwards (`adId`, live since 2026-09-18 02:52 UTC) — but no surface shows it per application. `applications:list` also prints raw status codes (`IN_REVIEW`) instead of readable text.
 
 ## What Changes
 
@@ -11,7 +11,8 @@ Ops can't tell where a loan application came from. The data is already stored �
   - `WHATSAPP` → **WhatsApp**; `MANUAL` → **Manual**
 - **CLI:**
   - `applications:list` gains an `ORIGIN` column (`Form (ad)`, `Form (organic)`, `Form (unknown)`, `WhatsApp`, `Manual`) and an `--origin ad|organic|unknown|whatsapp|manual` filter.
-  - `applications:get` adds an `ORIGIN:` line.
+  - `STATUS` prints a readable English label (`APPLICATION_STATUS_LABELS_EN`, e.g. "In review").
+  - `applications:get` adds an `ORIGIN:` line and prints the readable status.
 - **Ops:** the application panel shows an `Origen` row at the top of the data (`Formulario (anuncio)`, `Formulario (orgánico)`, `Formulario (desconocido)`, `WhatsApp`, `Manual`). The feed card does not show it, to keep the feed light.
 - **Application PDF:** the header shows the origin next to date and status.
 - **Customer:** `customers:get` prints the origin of the application that became the customer (`—` if none).

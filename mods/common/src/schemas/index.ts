@@ -15,6 +15,7 @@ export {
   type ApplicationAttribution,
   applicationStatusEnum,
   APPLICATION_STATUS_LABELS,
+  APPLICATION_STATUS_LABELS_EN,
   AD_ATTRIBUTION_START,
   applicationOriginEnum,
   applicationOrigin,

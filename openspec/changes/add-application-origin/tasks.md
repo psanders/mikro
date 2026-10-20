@@ -7,7 +7,7 @@
 
 - [x] 2.1 common: `applicationOrigin()` + `APPLICATION_ORIGIN_LABELS` (CLI) / `APPLICATION_ORIGIN_LABELS_ES` (Ops), cutoff constant, `origin` on `listApplicationsSchema`; export through both barrels
 - [x] 2.2 apiserver: `listApplications` translates `origin` to a `where` on `source`/`adId`/`createdAt`
-- [x] 2.3 ctl: `applications:list` ORIGIN column + `--origin` flag; `applications:get` ORIGIN line
+- [x] 2.3 ctl: `applications:list` ORIGIN column + `--origin` flag + readable English STATUS; `applications:get` ORIGIN line + readable STATUS
 - [x] 2.4 dashboard: `Origen` row in the panel
 - [x] 2.5 Remove the feed card chip (`OriginChip`, its story) and the feed API's `origin` field
 - [x] 2.6 Application PDF: origin in the header

@@ -51,6 +51,15 @@ The origin SHALL NOT expose which ad, ad set or campaign produced the applicatio
 - **WHEN** the API receives an origin filter value outside `ad|organic|unknown|whatsapp|manual`
 - **THEN** it rejects the request with a validation error and returns no applications
 
+### Requirement: The CLI shows readable application statuses
+
+`applications:list` and `applications:get` SHALL print an application's status as a readable English label from `APPLICATION_STATUS_LABELS_EN` (e.g. "In review" for `IN_REVIEW`). The `--status` filter SHALL keep accepting the status code.
+
+#### Scenario: Status label in the listing
+
+- **WHEN** an application's status is `IN_REVIEW`
+- **THEN** `applications:list` shows "In review" in the `STATUS` column
+
 ### Requirement: The application PDF shows the origin
 
 The application summary PDF SHALL print the application's origin, in Spanish, in its header next to the date and status.

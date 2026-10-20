@@ -414,6 +414,18 @@ export const APPLICATION_STATUS_LABELS: Record<z.infer<typeof applicationStatusE
   ABANDONED: "Desistida"
 };
 
+/** CLI (English) label per status; Ops and the PDF use APPLICATION_STATUS_LABELS. */
+export const APPLICATION_STATUS_LABELS_EN: Record<z.infer<typeof applicationStatusEnum>, string> = {
+  DRAFT: "Draft",
+  RECEIVED: "Received",
+  IN_REVIEW: "In review",
+  PENDING_DECISION: "Pending decision",
+  APPROVED: "Approved",
+  CONVERTED: "Converted",
+  REJECTED: "Rejected",
+  ABANDONED: "Abandoned"
+};
+
 /**
  * When the site started forwarding Meta ad ids with the form (ad attribution
  * went live). A form application without an adId from before this can't be

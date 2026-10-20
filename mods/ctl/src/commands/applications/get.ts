@@ -10,7 +10,8 @@ import {
   PROVINCE_LABELS,
   maritalStatusLabel,
   applicationOrigin,
-  APPLICATION_ORIGIN_LABELS
+  APPLICATION_ORIGIN_LABELS,
+  APPLICATION_STATUS_LABELS_EN
 } from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -60,7 +61,7 @@ export default class Get extends BaseCommand<typeof Get> {
           "--------------\n" +
           `ID: \t${app.id}\n` +
           `SESSION ID: \t${app.sessionId}\n` +
-          `STATUS: \t${app.status}\n` +
+          `STATUS: \t${APPLICATION_STATUS_LABELS_EN[app.status] ?? app.status}\n` +
           `ORIGIN: \t${APPLICATION_ORIGIN_LABELS[applicationOrigin(app)]}\n` +
           `\n` +
           `NAME: \t${[app.firstName, app.lastName].filter(Boolean).join(" ") || "N/A"}\n` +
