@@ -81,6 +81,14 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "loan.created": { icon: HandCoins, accent: "blue" },
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
   "loan.renewed": { icon: RefreshCw, accent: "blue" },
+  // The renewal process. Its card (phase 4) renders from live state; these keep
+  // the exhaustive map total and give any historical row a sensible icon.
+  "loan.renewal.started": { icon: RefreshCw, accent: "blue" },
+  "loan.renewal.terms_updated": { icon: RefreshCw, accent: "blue" },
+  "loan.renewal.contract_generated": { icon: FileText, accent: "blue" },
+  "loan.renewal.document_uploaded": { icon: FileCheck, accent: "blue" },
+  "loan.renewal.cancelled": { icon: FileX, accent: "neutral" },
+  "loan.renewal.completed": { icon: BadgeCheck, accent: "green" },
   "customer.created": { icon: UserPlus, accent: "blue" },
   "contract.generated": { icon: FileText, accent: "blue" },
   "copilot.action": { icon: Sparkles, accent: "blue" },
@@ -507,6 +515,14 @@ export function resolveNarrative(event: FeedEvent): string | null {
     // wording, which read as duplicated text when expanded.
     case "loan.created":
     case "contract.generated":
+      return null;
+    // The renewal card (phase 4) tells this story from the renewal's live state.
+    case "loan.renewal.started":
+    case "loan.renewal.terms_updated":
+    case "loan.renewal.contract_generated":
+    case "loan.renewal.document_uploaded":
+    case "loan.renewal.cancelled":
+    case "loan.renewal.completed":
       return null;
     case "loan.renewed": {
       const principal = typeof payload.principal === "number" ? payload.principal : null;
