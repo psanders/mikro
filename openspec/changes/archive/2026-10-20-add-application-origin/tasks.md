@@ -1,7 +1,7 @@
 ## 1. Design
 
 - [x] 1.1 Pencil: `Origen` row in the panel (board `EzobQ` sec-08)
-- [ ] 1.2 Pencil: drop the feed card chip and the variants strip (feed stays light)
+- [x] 1.2 Pencil: drop the feed card chip and the variants strip (feed stays light) — #357
 
 ## 2. Build
 

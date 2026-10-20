@@ -3,9 +3,7 @@
 ## Purpose
 
 TBD - created by archiving change add-application-review-flow. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: Reviewers can use the Ops app with a scoped shell
 
 The Ops app (served at `/ops`; formerly the founder app) SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: the feed only — no search, Tareas, Reportes or copilot, since those expose non-application data). Other users SHALL see the access screen. A user with both roles gets the full shell.
@@ -141,3 +139,18 @@ The calculator SHALL take Monto (RD$), Tasa total (%, default 30), Frecuencia (D
 
 - **WHEN** the calculator is open and the user presses Escape
 - **THEN** the panel closes and the feed is usable again
+
+### Requirement: The full application shows its origin
+
+The application panel SHALL show the application's origin (see `application-origin`) as an `Origen` row at the top of the application data, in Spanish: `Formulario (anuncio)`, `Formulario (orgánico)`, `Formulario (desconocido)`, `WhatsApp` or `Manual`. The feed card SHALL NOT show the origin, so the feed stays light. Neither SHALL show which ad or campaign produced the application.
+
+#### Scenario: Origin in the panel
+
+- **WHEN** a reviewer opens an application whose origin is `ad` in the side panel
+- **THEN** the panel's data starts with `Origen: Formulario (anuncio)`
+
+#### Scenario: The feed card stays light
+
+- **WHEN** an application appears in the feed
+- **THEN** its card shows no origin
+
