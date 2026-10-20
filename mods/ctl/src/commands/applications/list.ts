@@ -7,8 +7,7 @@ import {
   applicationStatusEnum,
   applicationOriginEnum,
   applicationOrigin,
-  APPLICATION_ORIGIN_LABELS,
-  APPLICATION_STATUS_LABELS
+  APPLICATION_ORIGIN_LABELS
 } from "@mikro/common";
 import { ListCommand } from "../../ListCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -55,7 +54,7 @@ export default class List extends ListCommand<typeof List> {
           a.id,
           [a.firstName, a.lastName].filter(Boolean).join(" ") || "",
           a.phone ?? "",
-          APPLICATION_STATUS_LABELS[a.status] ?? a.status,
+          a.status,
           APPLICATION_ORIGIN_LABELS[applicationOrigin(a)],
           a.score == null ? "" : String(a.score),
           new Date(a.createdAt).toISOString().slice(0, 10)
