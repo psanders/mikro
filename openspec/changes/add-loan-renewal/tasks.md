@@ -1,41 +1,47 @@
-## 1. Schema
+## 0. Design gate
 
-- [x] 1.1 `LoanStatus.RENEWED`; `Loan.renewedFromLoanId String? @unique` (self-relation), `Loan.closedAt DateTime?`; `CustomerDocument.loanId String?` (relation to Loan, SetNull)
-- [x] 1.2 Prisma migration — hand-written ADD COLUMNs (Prisma's diff wanted a full `loans` table rebuild); verified zero drift vs schema
-- [x] 1.3 Mirror in `test/integration/setup.ts` SCHEMA_SQL
+- [ ] 0.1 Pencil: customer profile panel, renewal feed card (all statuses), renewal panel views (terms, contract, documents, finalize + NET_CHANGED re-confirm, cancel), Búsqueda solicitud row; update `renewalCards`, `cp/renewal-form-card`, "Préstamo renovado", loan search card
+- [ ] 0.2 Design sign-off from the user
 
-## 2. Common
+## 1. Schema + common
 
-- [x] 2.1 `loanStatusEnum` + `Loan` type gain RENEWED (keep `updateLoanStatusStatusEnum` unchanged)
-- [x] 2.2 `getRenewalQuoteSchema`, `renewLoanSchema` (+ refine payoff < principal); export through both barrels
-- [x] 2.3 `loan.renewed` event type + payload schema + registry
-- [x] 2.4 `renewalForm` on copilot reply schema
-- [x] 2.5 Mora freeze for RENEWED at `closedAt` (lateFee + snapshot input plumbing + callers)
+- [ ] 1.1 Prisma: `LoanRenewal`, `CustomerDocument.renewalId`; keep RENEWED/`renewedFromLoanId`/`closedAt`/`CustomerDocument.loanId`; hand-written migration with partial unique index (one open renewal per loan)
+- [ ] 1.2 Mirror in `test/integration/setup.ts` SCHEMA_SQL
+- [ ] 1.3 `common/schemas/loanRenewal.ts`: statuses, actions, `evaluateRenewalTransition`, block codes, ES/EN labels; both barrels
+- [ ] 1.4 Zod schemas: start, update terms, quote, generate contract, upload document, cancel, finalize(`confirmedNet`), list open; retire `renewLoanSchema`
+- [ ] 1.5 `updateCustomerSchema` widened; customer-document upload/get schemas; `BUSINESS_PHOTO` in the Zod type enum
+- [ ] 1.6 `loan.renewal.*` events + payload schemas; keep `loan.renewed`
+- [ ] 1.7 `SEARCHABLE_APPLICATION_STATUSES`; `searchAllSchema` applications group
 
-## 3. Apiserver
+## 2. Apiserver
 
-- [x] 3.1 Extract shared contract render helper from `createGenerateCustomerContract`
-- [x] 3.2 `createGetRenewalQuote`
-- [x] 3.3 `createRenewLoan` (single tx: guard+close, create, WITHDRAWAL, document, event)
-- [x] 3.4 tRPC `getRenewalQuote` (query) + `renewLoan` (admin)
-- [x] 3.5 Copilot `openRenewalForm` DIRECT tool, dispatch, TOOL_NOTES, system prompt
-- [x] 3.6 Audit RENEWED through reports/tags/qcobro/listings — ACTIVE-only filters already exclude it; tags engine now skips RENEWED (else leftover balance → dpd tags); status labels added; `closed-loan-reconciled` rationale + generated collections spec updated
+- [ ] 2.1 start / update terms / quote / generate contract / upload document / cancel
+- [ ] 2.2 finalize (one tx, recompute, `NET_CHANGED`, ledger net, re-point documents)
+- [ ] 2.3 Roles: renewal, contract, documents, `searchAll` → reviewerProcedure; delete document admin-only; remove `renewLoan`
+- [ ] 2.4 Customer-document upload/get/delete; `updateCustomer` widened
+- [ ] 2.5 `searchAll` applications (token name, phone digits, cédula, excludes DRAFT/ABANDONED)
+- [ ] 2.6 Feed: generalize `application.` prefix, join renewal state, reviewer scoping, `listOpenRenewalEvents`
 
-## 4. ctl
+## 3. Copilot + ctl
 
-- [x] 4.1 `loans:renew` command
+- [ ] 3.1 `openRenewalForm` starts/returns a renewal; dock opens the panel; remove `RenewalFormCard`
+- [ ] 3.2 `loans:renew` starts a renewal; cancel/finalize subcommands
 
-## 5. Dashboard
+## 4. Dashboard
 
-- [x] 5.1 `RenewalFormCard` + stories + fixtures
-- [x] 5.2 Types + dock wiring (`handleRenewLoan`, saveFile, toast)
-- [x] 5.3 "Renovar" action on prestamo search row
-- [x] 5.4 Feed visuals/compact meta/narrative/subject link for `loan.renewed` (no filter change: the filter popup has no loan group today)
+- [ ] 4.1 Búsqueda for reviewers; "Ver perfil"/"Renovar" open panels
+- [ ] 4.2 Panel context: customer + renewal kinds
+- [ ] 4.3 `CustomerPanel` (edit, documents, loans, applications) + shared file drop zone
+- [ ] 4.4 `LoanRenewalFeedCard` + `RenewalPanel` views; typeConfig, filters, FeedScreen wiring
+- [ ] 4.5 Application search rows open the application panel (read-only where no action)
+- [ ] 4.6 Stories
 
-## 6. Tests
+## 5. Tests
 
-- [x] 6.1 Unit: `createRenewLoan` (golden, validation failure w/ no side effects, not ACTIVE, net ≤ 0, no contract)
-- [x] 6.2 Unit: `createGetRenewalQuote`; lateFee RENEWED freeze; copilot tool binding
-- [x] 6.3 Integration: real tx, account balance, double-renew refused, rollback when ledger post fails (contract path covered by unit only — no integration test renders PDFs today)
-- [x] 6.4 E2E `e2e/renew.spec.ts`: seed loan (8/10 paid); search → Renovar → (copilotChat stubbed, no LLM in e2e) → real quote → renew → contract download → feed row. Full suite 11/11
-- [x] 6.5 lint + typecheck + test green across workspaces (dashboard: `npm run typecheck` = `tsc -b`; bare `tsc --noEmit` checks nothing there)
+- [ ] 5.1 Unit: transition matrix; lifecycle functions; net 7,500 example; NET_CHANGED; contract excludes owed; search helpers
+- [ ] 5.2 Integration: happy path, rollback, cancel, concurrency, partial index, role matrix, search statuses
+- [ ] 5.3 E2E as reviewer: search → profile → renew → contract → signed → finalize; cancel; application search; admin smoke
+
+## 6. Housekeeping
+
+- [ ] 6.1 Sync specs to shipped behavior; Pencil in sync; ship checkpoint; ctl docs

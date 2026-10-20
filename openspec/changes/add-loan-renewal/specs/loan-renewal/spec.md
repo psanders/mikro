@@ -1,50 +1,109 @@
 ## ADDED Requirements
 
+### Requirement: Renewal process
+
+The system SHALL model a loan renewal as a `LoanRenewal` with status `DRAFT`, `CONTRACT_READY`, `SIGNED`, `COMPLETED` or `CANCELLED`. A renewal SHALL be started from an ACTIVE loan, SHALL hold the proposed terms of the new loan (principal, term length, payment amount, frequency, optional start date, nickname, mora rate), and SHALL NOT change any loan or ledger row until it is finalized. Only one non-terminal renewal MAY exist per old loan. Transitions SHALL be decided by a single pure function shared by the server and the dashboard.
+
+#### Scenario: Start a renewal
+
+- **WHEN** an admin or reviewer starts a renewal on an ACTIVE loan
+- **THEN** a `DRAFT` renewal exists with default terms, no loan changed, no ledger row posted, and a `loan.renewal.started` event is recorded
+
+#### Scenario: Second open renewal rejected
+
+- **WHEN** a renewal is started for a loan that already has a non-terminal renewal
+- **THEN** the request fails with a conflict error and no second renewal is created
+
+#### Scenario: Start on a closed loan rejected
+
+- **WHEN** the loan is COMPLETED, DEFAULTED, CANCELLED or RENEWED
+- **THEN** the request fails with a precondition error
+
 ### Requirement: Renewal quote
 
-The system SHALL expose a `getRenewalQuote` query that, given an ACTIVE loan's `loanId`, returns the loan's current terms, its customer, the canonical snapshot `remainingBalance`, the net accrued mora, and `suggestedPayoff = remainingBalance + moraAccrued`. The query SHALL reject loans that are not ACTIVE.
+The system SHALL expose a quote for a renewal returning the old loan's snapshot `remainingBalance`, net accrued mora, `owed = remainingBalance + moraAccrued`, the renewal's principal and `net = principal − owed`. Start and edit-terms SHALL reject terms whose `net` is zero or negative.
 
 #### Scenario: Quote for a partly paid loan
 
-- **WHEN** a quote is requested for an ACTIVE loan with 10 cuotas of 1,300 and 10,400 paid and 200 mora owed
-- **THEN** the quote returns remainingBalance 2,600, moraAccrued 200 and suggestedPayoff 2,800
+- **WHEN** a quote is requested for a renewal whose old loan has 2,300 remaining and 200 mora, with a 10,000 principal
+- **THEN** it returns owed 2,500 and net 7,500
 
-#### Scenario: Quote for a closed loan is rejected
+#### Scenario: Non-positive net rejected
 
-- **WHEN** a quote is requested for a loan that is COMPLETED, DEFAULTED, CANCELLED or RENEWED
-- **THEN** the request fails with a precondition error and nothing is returned
+- **WHEN** the proposed principal is less than or equal to what is owed
+- **THEN** start or edit-terms fails with a validation error naming the amount owed
 
-### Requirement: Atomic renewal
+### Requirement: Editing terms
 
-The system SHALL expose an admin-only `renewLoan` mutation taking the old `loanId`, a `payoffAmount`, the new loan's terms (principal, term length, payment amount, frequency, optional start date, nickname, mora rate), an optional disbursement account, and a `generateContract` flag. In a single database transaction it SHALL:
+Terms SHALL be editable while the renewal is `DRAFT`, `CONTRACT_READY` or `SIGNED`. Any terms change SHALL clear the generated contract and any signed contract and return the renewal to `DRAFT`.
 
-1. set the old loan's status to `RENEWED` and its `closedAt` to now, only if it is still ACTIVE;
-2. create the new loan for the same customer with the full principal and `renewedFromLoanId` pointing to the old loan;
-3. post one WITHDRAWAL of `principal − payoffAmount` to the resolved disbursement account;
-4. when `generateContract` is set, store the contract as a `CustomerDocument` (CONTRACT, DIRECT) with `loanId` set to the new loan;
-5. record a `loan.renewed` business event.
+#### Scenario: Terms change invalidates the contract
 
-If any step fails, none of the writes SHALL persist.
+- **WHEN** terms are edited on a `CONTRACT_READY` renewal
+- **THEN** the renewal returns to `DRAFT` and the stored contract is cleared
 
-#### Scenario: Golden path
+### Requirement: Contract and documents
 
-- **WHEN** an admin renews loan 10034 (payoff 2,800) into a 10,000 principal loan with the contract box checked
-- **THEN** loan 10034 is RENEWED with closedAt set, a new ACTIVE loan exists with renewedFromLoanId = 10034's id, the disbursement account balance drops by 7,200, a CONTRACT document tied to the new loan exists, a `loan.renewed` event is recorded, and the response includes the contract PDF
+The system SHALL generate the new loan's contract from the renewal's stored terms (never from the amount owed) and move the renewal to `CONTRACT_READY`. It SHALL accept an uploaded signed contract (PDF only), which moves the renewal to `SIGNED`, and additional documents (images or PDF) of any status before completion. Documents SHALL be linked to the renewal until finalize.
 
-#### Scenario: Payoff not less than principal
+#### Scenario: Generate contract
 
-- **WHEN** `payoffAmount` is greater than or equal to the new principal
-- **THEN** the mutation fails with a validation error and nothing is written
+- **WHEN** a `DRAFT` renewal's contract is generated
+- **THEN** a PDF is returned and stored, the renewal is `CONTRACT_READY`, and the PDF shows the new loan's terms without the amount owed on the old loan
+
+#### Scenario: Signed contract must be a PDF
+
+- **WHEN** a non-PDF file is uploaded as the signed contract
+- **THEN** the upload is rejected
+
+### Requirement: Cancel
+
+A renewal SHALL be cancellable by an admin or reviewer at any status before `COMPLETED`. Cancelling SHALL NOT alter the old loan, create a loan, or touch the ledger, and SHALL free the old loan for a new renewal.
+
+#### Scenario: Cancel mid-process
+
+- **WHEN** a `SIGNED` renewal is cancelled
+- **THEN** it is `CANCELLED`, the old loan is still ACTIVE, no ledger row exists for it, and a `loan.renewal.cancelled` event is recorded
+
+#### Scenario: Cannot cancel a completed renewal
+
+- **WHEN** a `COMPLETED` renewal is cancelled
+- **THEN** the request fails with a precondition error
+
+### Requirement: Finalize
+
+Finalizing SHALL require a `SIGNED` renewal (a signed contract or additional documents uploaded) and the caller's `confirmedNet`. In a single database transaction it SHALL:
+
+1. move the renewal to `COMPLETED` only if it is still in the expected status;
+2. recompute what is owed from the old loan's live snapshot and `net = round2(principal − owed)`;
+3. fail with `NET_CHANGED` (writing nothing) when `net` differs from `confirmedNet`;
+4. set the old loan `RENEWED` with `closedAt`, only if it is still ACTIVE;
+5. create the new loan from the renewal's stored terms, `renewedFromLoanId` pointing to the old loan;
+6. post one WITHDRAWAL of `net` to the resolved disbursement account;
+7. attach the renewal's documents and contract to the new loan;
+8. record `loan.renewal.completed` and `loan.renewed`.
+
+If any step fails, none of the writes SHALL persist. The ledger SHALL record only `net`; the amount owed SHALL NOT alter the new loan's terms.
+
+#### Scenario: Golden path with a balance owed
+
+- **WHEN** a reviewer finalizes a renewal of 10,000 on a loan that still owes 2,500
+- **THEN** the old loan is RENEWED with closedAt, a new ACTIVE loan exists with renewedFromLoanId set, one WITHDRAWAL of 7,500 is posted, the documents are attached to the new loan, and the feed shows the completion
+
+#### Scenario: Owed amount moved since the card showed it
+
+- **WHEN** a day of mora accrues between the last quote and finalize, so `net` differs from `confirmedNet`
+- **THEN** finalize fails with `NET_CHANGED` carrying the new quote, nothing is written, and finalizing again with the new `confirmedNet` succeeds
 
 #### Scenario: Old loan no longer ACTIVE
 
-- **WHEN** the old loan was closed between quote and submit
-- **THEN** the mutation fails with a conflict error and nothing is written
+- **WHEN** the old loan was closed between start and finalize
+- **THEN** finalize fails with a conflict error and nothing is written
 
-#### Scenario: Contract box unchecked
+#### Scenario: Concurrent finalize
 
-- **WHEN** `generateContract` is false
-- **THEN** the renewal completes without a contract document and the response has no contract
+- **WHEN** two finalize calls race on the same renewal
+- **THEN** exactly one succeeds and the other fails with a conflict error
 
 ### Requirement: RENEWED status semantics
 
@@ -55,20 +114,39 @@ If any step fails, none of the writes SHALL persist.
 - **WHEN** someone calls `updateLoanStatus` with status RENEWED
 - **THEN** the request fails validation
 
-### Requirement: Renewal feed event
+### Requirement: Renewal feed card
 
-A `loan.renewed` event SHALL carry the old and new loan ids, customer name, new principal, payoff, net disbursed amount, account name and, when generated, the contract filename. The founder feed SHALL render it with a narrative naming both loans and the net amount.
+Each renewal SHALL appear as one card in the founder feed at its newest event, showing its live status, customer, old loan, new terms and the last quoted net. The card SHALL offer actions according to status and the viewer's role (open the renewal, cancel), and SHALL be visible to admins and reviewers. Renewal events SHALL carry the renewal, loan and customer ids. Completion SHALL also record a `loan.renewed` event carrying old and new loan ids, new principal, owed, net disbursed and account name.
 
-#### Scenario: Feed shows the renewal
+#### Scenario: Reviewer sees the card
 
-- **WHEN** a renewal is completed
-- **THEN** the feed shows one row like "X renovó el préstamo #10034 → #10051 · desembolso RD$7,200"
+- **WHEN** a reviewer starts a renewal
+- **THEN** a renewal card appears in their feed with the DRAFT status and an open action
+
+#### Scenario: Card follows the live status
+
+- **WHEN** the renewal is cancelled
+- **THEN** the same card shows CANCELLED with no further actions, not a second card
+
+### Requirement: Roles
+
+Admins and reviewers SHALL both be able to start, edit, generate the contract for, upload documents to, cancel and finalize a renewal. Other users SHALL be rejected.
+
+#### Scenario: Reviewer finalizes
+
+- **WHEN** a reviewer finalizes a signed renewal
+- **THEN** it succeeds, including the ledger posting
+
+#### Scenario: Collector rejected
+
+- **WHEN** a collector calls any renewal procedure
+- **THEN** the request fails with a forbidden error
 
 ### Requirement: Renewal via ctl
 
-The `ctl` SHALL provide a `loans:renew` command that prompts for the old loan, shows the quote, collects payoff and new terms, calls `renewLoan`, and writes the contract PDF locally when generated.
+The `ctl` SHALL provide `loans:renew` to start a renewal for a loan (showing the quote and printing the renewal id), and subcommands to cancel and finalize it.
 
-#### Scenario: ctl renewal
+#### Scenario: ctl starts a renewal
 
-- **WHEN** an operator runs `loans:renew` and confirms
-- **THEN** the same atomic renewal runs and the PDF is written to the output path
+- **WHEN** an operator runs `loans:renew` for an ACTIVE loan
+- **THEN** a DRAFT renewal is created and its id and quote are printed

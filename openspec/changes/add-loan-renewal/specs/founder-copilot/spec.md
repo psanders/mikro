@@ -1,25 +1,20 @@
 ## ADDED Requirements
 
-### Requirement: Renewal form card
+### Requirement: Renewal entry from the copilot
 
-The copilot tool policy SHALL bind an `openRenewalForm` direct tool, optionally seeded with a loan hint, that the model calls when the founder asks to renew a loan (e.g. "renueva el préstamo 10034"). Executing the tool SHALL NOT write anything; it returns a `renewalForm` payload. The dock SHALL render a renewal form card that loads the renewal quote, shows remaining balance, mora and an editable payoff, collects the new loan terms, shows the net amount to disburse (principal − payoff), lets the founder pick the disbursement account, and has a "generar contrato con estos términos" checkbox checked by default. Submitting SHALL call `renewLoan` directly, off the LLM loop, and on success save the contract PDF when one was returned. The prestamo row in search results SHALL offer a "Renovar" action, only for ACTIVE loans, that opens the copilot with a renewal request for that loan prefilled (the same prefill-then-send pattern as "Ver préstamo").
+The copilot tool policy SHALL keep an `openRenewalForm` direct tool, optionally seeded with a loan hint, that the model calls when the founder asks to renew a loan (e.g. "renueva el préstamo 10034"). Executing the tool SHALL start a renewal for that loan (or return the existing open one) and return its id. The dock SHALL open the renewal panel for that renewal. The copilot SHALL NOT finalize or cancel a renewal; those actions are taken in the renewal panel. The copilot remains available to admins only.
 
-#### Scenario: Asking to renew opens the card
+#### Scenario: Asking to renew opens the renewal
 
-- **WHEN** an admin asks the copilot to renew a loan
-- **THEN** the dock renders the renewal form card and nothing is written yet
+- **WHEN** an admin asks the copilot to renew an ACTIVE loan
+- **THEN** a DRAFT renewal exists and the renewal panel opens on it
 
-#### Scenario: Net amount guards submit
+#### Scenario: Existing open renewal is reused
 
-- **WHEN** the payoff is greater than or equal to the new principal
-- **THEN** the card shows the net as invalid and the submit control is disabled
+- **WHEN** the loan already has an open renewal
+- **THEN** the panel opens that renewal and no second renewal is created
 
-#### Scenario: Renovar from search
+#### Scenario: Closed loan
 
-- **WHEN** the founder clicks "Renovar" on an ACTIVE loan search result and sends the prefilled request
-- **THEN** the copilot opens the renewal form card seeded with that loan, and its quote loads
-
-#### Scenario: No Renovar on closed loans
-
-- **WHEN** a loan search result is not ACTIVE
-- **THEN** the row offers no "Renovar" action
+- **WHEN** the founder asks to renew a loan that is not ACTIVE
+- **THEN** the copilot explains it cannot be renewed and no renewal is created

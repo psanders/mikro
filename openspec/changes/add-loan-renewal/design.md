@@ -17,3 +17,21 @@ Renewal = close loan A with a balance, open loan B for customer of A, hand over 
 
 - `loanId` allocation (`findFirst desc + 1`) is not concurrency-safe; same as today's `createLoan`, unique constraint makes a collision fail loudly. Not addressed here.
 - Old loans renewed by hand before this ships stay COMPLETED with a balance; unchanged.
+
+## Renewal as a process (amendment)
+
+9. **`LoanRenewal` is its own entity**, not a `LoanApplication` kind. An application is applicant-shaped (session, score, WhatsApp intake, ad attribution) and its graph is review → decision → contract → convert. A renewal is anchored on an existing customer and loan, has no review step, and must be cancellable at any point. It reuses the *pattern*: a pure `evaluateRenewalTransition` shared by server and dashboard, optimistic `updateMany` transitions, read-time state joined onto feed events.
+10. **Nothing touches loans or the ledger before finalize.** Start/edit/contract/upload/cancel only write the renewal (and its documents). Cancel therefore needs no reversal. Finalize is the old `renewLoan` transaction, driven by the stored terms.
+11. **Owed amount is recomputed inside the finalize transaction** with `buildLoanSnapshotFromDb`. `net = round2(principal − (remainingBalance + moraAccrued))`. The caller sends the `confirmedNet` it saw; on mismatch the transaction rolls back with `NET_CHANGED` carrying the fresh quote. The owed amount never feeds contract text or loan terms — it only sets the WITHDRAWAL. The earlier "operator may edit the payoff" idea is dropped: the ledger records what is actually owed.
+12. **Net must be positive.** If `principal ≤ owed`, start/edit-terms are rejected with a clear message (and finalize re-checks). One open renewal per old loan: partial unique index in the migration + a check in start; `renewedFromLoanId @unique` stays the loan-side guard.
+13. **Terms edits invalidate the contract**: after any terms change the renewal returns to `DRAFT` and the stored contract is cleared; the signed copy must match the final terms.
+14. **Documents attach by `renewalId`** (the new loan does not exist yet) and are re-pointed to the new loan at finalize. A cancelled renewal's documents stay on the customer, linked to the cancelled renewal.
+15. **Feed**: renewal events (`loan.renewal.*`) get their live state joined at read time like `application.*`; the hard-coded `application.` prefix in the feed code is generalized, and reviewer scoping is extended so reviewers see renewal cards. `loan.renewed` is still emitted on completion for history.
+16. **Search is one procedure for both roles.** Application matches use token-AND on first/last name and business name, digits-normalized phone, and cédula with or without dashes; only statuses with value are searchable (`SEARCHABLE_APPLICATION_STATUSES`: not DRAFT, not ABANDONED).
+17. **Privilege widening is deliberate**: reviewers can see every customer, loan and document and edit customer data. Deleting a document stays admin-only. The copilot dock stays admin-only.
+
+## Risks (amendment)
+
+- Mora accrues daily, so `NET_CHANGED` will happen across a day boundary; the UI must make re-confirmation cheap.
+- Accent-insensitive search is limited by SQLite `LIKE` (ASCII-only case folding); revisit with a normalized column if misses are reported.
+- Application phones are free-form while customer phones are E.164; normalization must be centralised (`drPhoneDigits`).

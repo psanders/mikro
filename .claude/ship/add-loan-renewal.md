@@ -2,7 +2,7 @@
 
 Started: 2026-10-14
 Issue: #334 · Branch: `feat/loan-renewal`
-Current stage: 1 Design — drawn in pencil.pen, awaiting "we're happy"; build + tests done
+Current stage: 0/1 Design — scope CHANGED 2026-10-20 (renewal is now a multi-step process + customer profile + unified search); OpenSpec amended, Pencil designs for the new screens next; the atomic build is superseded
 
 **Scope:** Atomic "Renovar": old loan → RENEWED (closedAt, mora frozen), new loan with full principal + renewedFromLoanId, net WITHDRAWAL (principal − payoff), contract as CustomerDocument with loanId, `loan.renewed` feed event. Copilot RenewalFormCard + search-row action; ctl `loans:renew`.
 
@@ -32,3 +32,4 @@ Current stage: 1 Design — drawn in pencil.pen, awaiting "we're happy"; build +
 - 2026-10-14 — Opened mikro/pencil.pen via `open -a Pen` (MCP only targets active canvas). Designs mirror code exactly; no spec change expected.
 - 2026-10-17 — Merged origin/main (v3.16.0, 18 commits) into the branch. schema.prisma conflict was main's whole-file `prisma format`; re-applied renewal fields on main's file. Migration renamed 20261014120000 → 20261017130000_loan_renewal so it sorts after main's; zero drift verified. RenewalFormCard moved to dark-mode tokens (#352). pencil.pen: took main's, redrew renewal designs; pre-merge copy at .claude/ship/pencil.pen.pre-merge-20261017 (held the user's older uncommitted edits).
 - 2026-10-17 — Post-merge: build + typecheck (all pkgs) green; unit 54/343/352/675 passing; integration 963 passing; Playwright 12/12. Agents unit tests need MIKRO_CONFIG_FILE=apiserver test fixture locally — the untracked mods/agents/test/fixtures/mikro.json is pre-#350 config.
+- 2026-10-20 — Scope change (user): renewal becomes a process (`LoanRenewal`: DRAFT→CONTRACT_READY→SIGNED→COMPLETED, cancel anytime), own feed card, admins+reviewers, customer profile panel, search incl. past applications (no DRAFT/ABANDONED). Payoff recomputed at finalize, affects only the ledger net. Plan: ~/.claude/plans/i-see-a-few-gleaming-flame.md. Work moved to branch `feat/renewal-process` (worktree .claude/worktrees/renewal-process, off feat/loan-renewal). OpenSpec change rewritten (proposal, design 9-17, specs loan-renewal/founder-copilot/contract-generation + new customer-profile, unified-search, tasks reset). `openspec` CLI not installed locally — specs not machine-validated.
