@@ -42,9 +42,11 @@ export async function expand(cardLocator: Locator) {
 
 /**
  * Open the group rows that fold application cards: the day's queue (2+ new
- * applications) and the pinned "Otras N solicitudes abiertas" row.
+ * applications) and the pinned "Otras N solicitudes abiertas" row. The open row
+ * comes from its own query, so wait for the feed to settle before looking.
  */
 export async function openQueue(page: Page) {
+  await page.waitForLoadState("networkidle");
   for (const id of ["open-group", "queue-group"]) {
     const group = page.getByTestId(id);
     if (await group.count()) {
