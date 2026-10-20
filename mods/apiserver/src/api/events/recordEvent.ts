@@ -51,6 +51,7 @@ export async function recordEvent(
       customerName: data.customerName ?? null,
       loanId: data.loanId ?? null,
       applicationId: data.applicationId ?? null,
+      renewalId: data.renewalId ?? null,
       amount: data.amount ?? null,
       summary: data.summary,
       payload: JSON.stringify(payload.data)

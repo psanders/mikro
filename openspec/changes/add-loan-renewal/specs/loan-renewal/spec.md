@@ -81,7 +81,7 @@ Finalizing SHALL require a `SIGNED` renewal (a signed contract or additional doc
 5. create the new loan from the renewal's stored terms, `renewedFromLoanId` pointing to the old loan;
 6. post one WITHDRAWAL of `net` to the resolved disbursement account;
 7. attach the renewal's documents and contract to the new loan;
-8. record `loan.renewal.completed` and `loan.renewed`.
+8. record `loan.renewal.completed` (and no separate `loan.renewed`, which would show as a second card for the same renewal; `loan.renewed` remains only on rows from the earlier one-step flow).
 
 If any step fails, none of the writes SHALL persist. The ledger SHALL record only `net`; the amount owed SHALL NOT alter the new loan's terms.
 
@@ -116,7 +116,7 @@ If any step fails, none of the writes SHALL persist. The ledger SHALL record onl
 
 ### Requirement: Renewal feed card
 
-Each renewal SHALL appear as one card in the founder feed at its newest event, showing its live status, customer, old loan, new terms and the last quoted net. The card SHALL offer actions according to status and the viewer's role (open the renewal, cancel), and SHALL be visible to admins and reviewers. Renewal events SHALL carry the renewal, loan and customer ids. Completion SHALL also record a `loan.renewed` event carrying old and new loan ids, new principal, owed, net disbursed and account name.
+Each renewal SHALL appear as one card in the founder feed at its newest event, showing its live status, customer, old loan, new terms and the last quoted net. The card SHALL offer actions according to status and the viewer's role (open the renewal, cancel), and SHALL be visible to admins and reviewers. Renewal events SHALL carry the renewal, loan and customer ids. Completion SHALL record a `loan.renewal.completed` event carrying old and new loan ids, new principal, owed, net disbursed and account name.
 
 #### Scenario: Reviewer sees the card
 

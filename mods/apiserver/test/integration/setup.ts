@@ -491,6 +491,7 @@ CREATE TABLE "business_events" (
     "customer_name" TEXT,
     "loan_id" TEXT,
     "application_id" TEXT,
+    "renewal_id" TEXT,
     "amount" DECIMAL,
     "summary" TEXT NOT NULL,
     "payload" TEXT NOT NULL
@@ -498,6 +499,7 @@ CREATE TABLE "business_events" (
 CREATE INDEX "business_events_occurred_at_id_idx" ON "business_events"("occurred_at", "id");
 CREATE INDEX "business_events_type_idx" ON "business_events"("type");
 CREATE INDEX "business_events_customer_id_idx" ON "business_events"("customer_id");
+CREATE INDEX "business_events_renewal_id_idx" ON "business_events"("renewal_id");
 
 -- Outbound WhatsApp message delivery tracking
 CREATE TABLE "outbound_messages" (

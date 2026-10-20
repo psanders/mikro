@@ -381,6 +381,8 @@ export const recordBusinessEventSchema = z.object({
   customerName: z.string().optional(),
   loanId: z.uuid().optional(),
   applicationId: z.uuid().optional(),
+  /** Set on loan.renewal.* events: the feed's join key to the live renewal. */
+  renewalId: z.uuid().optional(),
   amount: z.number().optional(),
   summary: z.string().min(1),
   payload: z.record(z.string(), z.unknown())

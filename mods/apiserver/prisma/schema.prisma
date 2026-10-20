@@ -1022,6 +1022,8 @@ model BusinessEvent {
   customerName  String?  @map("customer_name")
   loanId        String?  @map("loan_id")
   applicationId String?  @map("application_id")
+  /// Join key for loan.renewal.* events (the feed joins the live renewal state).
+  renewalId     String?  @map("renewal_id")
   amount        Decimal?
   summary       String
   payload       String
@@ -1029,6 +1031,7 @@ model BusinessEvent {
   @@index([occurredAt, id])
   @@index([type])
   @@index([customerId])
+  @@index([renewalId])
   @@map("business_events")
 }
 

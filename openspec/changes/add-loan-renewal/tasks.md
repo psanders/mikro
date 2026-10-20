@@ -10,13 +10,13 @@
 - [x] 1.3 `common/schemas/loanRenewal.ts`: statuses, actions, `evaluateRenewalTransition`, block codes, ES/EN labels; both barrels (open-renewal uniqueness via a unique nullable `open_key` instead of a partial index, so Prisma sees no drift)
 - [x] 1.4 Zod schemas: start, update terms, quote, generate contract, upload document, cancel, finalize(`confirmedNet`), list open; retire `renewLoanSchema`
 - [x] 1.5 `updateCustomerSchema` widened; customer-document upload/get schemas; `BUSINESS_PHOTO` in the Zod type enum
-- [x] 1.6 `loan.renewal.*` events + payload schemas; keep `loan.renewed`
+- [x] 1.6 `loan.renewal.*` events + payload schemas (+ `business_events.renewal_id` join key); `loan.renewed` kept for old rows only
 - [x] 1.7 `SEARCHABLE_APPLICATION_STATUSES`; `searchAllSchema` applications group
 
 ## 2. Apiserver
 
-- [ ] 2.1 start / update terms / quote / generate contract / upload document / cancel
-- [ ] 2.2 finalize (one tx, recompute, `NET_CHANGED`, ledger net, re-point documents)
+- [x] 2.1 start / update terms / quote / generate contract / upload document / cancel
+- [x] 2.2 finalize (one tx, recompute, `NET_CHANGED`, ledger net, re-point documents)
 - [ ] 2.3 Roles: renewal, contract, documents, `searchAll` → reviewerProcedure; delete document admin-only; remove `renewLoan`
 - [ ] 2.4 Customer-document upload/get/delete; `updateCustomer` widened
 - [ ] 2.5 `searchAll` applications (token name, phone digits, cédula, excludes DRAFT/ABANDONED)
