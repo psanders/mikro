@@ -5,7 +5,9 @@ import { z } from "zod/v4";
 import {
   withErrorHandlingAndValidation,
   listFeedEventsSchema,
-  amountToNumber
+  amountToNumber,
+  applicationOrigin,
+  type ApplicationOrigin
 } from "@mikro/common";
 import type { EventClient } from "./recordEvent.js";
 import { encodeCursor, decodeCursor } from "./helpers.js";
@@ -49,6 +51,8 @@ export interface FeedApplicationState {
   score: number | null;
   businessName: string | null;
   aiSummary: string | null;
+  /** Channel + ad vs organic (openspec add-application-origin). */
+  origin: ApplicationOrigin;
 }
 
 /** Who is reading the feed; drives the role scoping of application events. */
@@ -213,7 +217,10 @@ async function enrichApplicationState(client: EventClient, items: FeedEventItem[
       decidedById: true,
       score: true,
       businessName: true,
-      aiSummary: true
+      aiSummary: true,
+      source: true,
+      adId: true,
+      createdAt: true
     }
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
@@ -226,7 +233,8 @@ async function enrichApplicationState(client: EventClient, items: FeedEventItem[
       decidedById: row.decidedById,
       score: row.score,
       businessName: row.businessName,
-      aiSummary: row.aiSummary
+      aiSummary: row.aiSummary,
+      origin: applicationOrigin(row)
     };
   }
 }

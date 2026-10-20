@@ -15,7 +15,8 @@
  *   luis   +18292000003  Luis Evaluador   REVIEWER
  *   miguel +18292000004  Miguel Cobrador  COLLECTOR
  * Applications (by business name): Colmado Cola (RECEIVED ×2 with Frutería Cola),
- * Salón Pendiente + Taller Pendiente (PENDING_DECISION), Ferretería Aprobada
+ * Salón Pendiente + Taller Pendiente (PENDING_DECISION; web form, from an ad and
+ * organic respectively), Ferretería Aprobada
  * (APPROVED, contract generated + signed, assigned to Ana), Tienda de Luis
  * (IN_REVIEW, assigned to Luis), Colmado Viejo (RECEIVED three days ago —
  * outside the feed's default "Hoy" range).
@@ -233,6 +234,13 @@ for (const [first, last, biz] of [
   await ana.assignApplication({ id: app.id });
   await withEvidence(ana, app.id);
   await ana.sendApplicationToDecision({ id: app.id });
+  // Origin (add-application-origin): Salón came in through the web form from a
+  // Meta ad, Taller through the form with no ad. The rest stay MANUAL.
+  await prisma.loanApplication.update({
+    where: { id: app.id },
+    data:
+      biz === "Salón Pendiente" ? { source: "FORM", adId: "120200000000001" } : { source: "FORM" }
+  });
 }
 
 // Approved, contract generated and signed: ready to disburse (Ana).

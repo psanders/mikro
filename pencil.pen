@@ -105317,7 +105317,7 @@
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "irJbJ",
+                                  "id": "aWxjw",
                                   "name": "head",
                                   "width": "fill_container",
                                   "gap": 14,
@@ -105325,7 +105325,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "g4QYFo",
+                                      "id": "R8FkAX",
                                       "name": "chip",
                                       "width": 36,
                                       "height": 36,
@@ -105336,7 +105336,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "UaPKV",
+                                          "id": "aLiAH",
                                           "name": "i",
                                           "width": 17,
                                           "height": 17,
@@ -105348,7 +105348,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "LxoZu",
+                                      "id": "CV5HR",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -105356,14 +105356,14 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "z4Bg6J",
+                                          "id": "Q49ceF",
                                           "name": "l1",
                                           "gap": 5,
                                           "alignItems": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "t2KGc3",
+                                              "id": "eQSuY",
                                               "name": "a",
                                               "fill": "$brand.ink",
                                               "content": "Yokasta Díaz",
@@ -105373,7 +105373,7 @@
                                             },
                                             {
                                               "type": "text",
-                                              "id": "Q5dhe",
+                                              "id": "ELyWR",
                                               "name": "b",
                                               "fill": "$brand.ink",
                                               "content": "· Salón de belleza",
@@ -105385,7 +105385,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "cpuwx",
+                                          "id": "ZSgcH",
                                           "name": "m",
                                           "fill": "$ds.muted",
                                           "content": "Evaluada por Ana R. · pidió RD$15,000 a 12 semanas · Puerto Plata",
@@ -105397,7 +105397,42 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "WoGJB",
+                                      "id": "dImuZ",
+                                      "name": "origin-ad",
+                                      "fill": "$brand.mist",
+                                      "cornerRadius": 9999,
+                                      "gap": 5,
+                                      "padding": [
+                                        3,
+                                        9
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "w3NgU",
+                                          "name": "i",
+                                          "width": 12,
+                                          "height": 12,
+                                          "icon": "megaphone",
+                                          "library": "lucide",
+                                          "fill": "$brand.blue.primary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "PxbBs",
+                                          "name": "t",
+                                          "fill": "$brand.blue.primary",
+                                          "content": "Formulario (anuncio)",
+                                          "fontFamily": "Geist",
+                                          "fontSize": 11,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "UPrXS",
                                       "name": "pill",
                                       "fill": "$ds.violet.bg",
                                       "cornerRadius": 9999,
@@ -105410,7 +105445,7 @@
                                       "children": [
                                         {
                                           "type": "ellipse",
-                                          "id": "Y9NQqw",
+                                          "id": "YmVIj",
                                           "name": "dot",
                                           "fill": "$ds.violet",
                                           "width": 6,
@@ -105418,7 +105453,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "lwYNt",
+                                          "id": "Y3mNy0",
                                           "name": "t",
                                           "fill": "$ds.violet",
                                           "content": "Esperando decisión",
@@ -105430,7 +105465,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "lI1Y7",
+                                      "id": "wZm1r",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "ayer 17:20",
@@ -105440,7 +105475,7 @@
                                     },
                                     {
                                       "type": "icon",
-                                      "id": "b0JN3",
+                                      "id": "x3Ehhz",
                                       "name": "ch",
                                       "width": 15,
                                       "height": 15,
@@ -111807,7 +111842,7 @@
                     },
                     {
                       "type": "frame",
-                      "id": "bBley",
+                      "id": "RFOWD",
                       "name": "content",
                       "width": "fill_container",
                       "layout": "vertical",
@@ -111816,7 +111851,55 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "juNsW",
+                          "id": "G0JK9s",
+                          "name": "origen",
+                          "width": "fill_container",
+                          "gap": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "piaCJ",
+                              "name": "kv",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 3,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "m1c9jC",
+                                  "name": "k",
+                                  "fill": "$ds.muted",
+                                  "content": "Origen",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 11,
+                                  "fontWeight": "500"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Xw74K",
+                                  "name": "v",
+                                  "fill": "$brand.ink",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Formulario (anuncio)",
+                                  "fontFamily": "Geist",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "URNAf",
+                              "name": "spacer",
+                              "width": "fill_container",
+                              "height": 1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pVwJq",
                           "name": "sec-SOLICITANTE",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -111824,7 +111907,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "c0SdvD",
+                              "id": "OhWCA",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -111832,7 +111915,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "lECCX",
+                                  "id": "IoGeE",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "SOLICITANTE",
@@ -111843,7 +111926,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "t4YDN",
+                                  "id": "DqzvY",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -111853,14 +111936,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "XtiD6",
+                              "id": "O9LZc",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "TUHIA",
+                                  "id": "VldHK",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -111868,7 +111951,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "zHRQT",
+                                      "id": "SRwTj",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Nombre",
@@ -111878,7 +111961,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "o9XvML",
+                                      "id": "fLgcf",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -111892,7 +111975,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "ULE6A",
+                                  "id": "DcimJ",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -111900,7 +111983,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "d9cpk",
+                                      "id": "xQMMs",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Cédula",
@@ -111910,7 +111993,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "dZjET",
+                                      "id": "W4iGrl",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -111926,14 +112009,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "tERSq",
+                              "id": "sz1DC",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "x13cf",
+                                  "id": "TwmI3",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -111941,7 +112024,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "veClB",
+                                      "id": "r8Dtz",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Fecha de nacimiento",
@@ -111951,7 +112034,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "l8C8e",
+                                      "id": "t7ktht",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -111965,7 +112048,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "tY3mH",
+                                  "id": "QOV7w",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -111973,7 +112056,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "Gq7KH",
+                                      "id": "hLFsp",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Estado civil",
@@ -111983,7 +112066,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "BIuNC",
+                                      "id": "yG1fH",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -111999,14 +112082,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "adXXr",
+                              "id": "bscbr",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "zJ1n2",
+                                  "id": "FG0B0",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112014,7 +112097,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "v9Dg6",
+                                      "id": "Kcrp0",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Teléfono",
@@ -112024,7 +112107,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "t4gEy",
+                                      "id": "QWFMO",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112038,7 +112121,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "y8JPr",
+                                  "id": "ogpDY",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112046,7 +112129,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "bYdC5",
+                                      "id": "gTI3h",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Correo",
@@ -112056,7 +112139,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "SREuG",
+                                      "id": "hXJTQ",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112074,7 +112157,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "M56VQ",
+                          "id": "Z2JiQs",
                           "name": "sec-NEGOCIO",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -112082,7 +112165,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "AdhGc",
+                              "id": "jzGs8",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -112090,7 +112173,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "S7mrNY",
+                                  "id": "DBtzx",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "NEGOCIO",
@@ -112101,7 +112184,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "lk8WN",
+                                  "id": "GTe6a",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -112111,14 +112194,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "Q8G3LG",
+                              "id": "T1OAB",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "wF2X0",
+                                  "id": "v9Ydnj",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112126,7 +112209,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "E1ZquT",
+                                      "id": "f2ytEl",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Nombre",
@@ -112136,7 +112219,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "brbxE",
+                                      "id": "WwBwy",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112150,7 +112233,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "qRpTd",
+                                  "id": "IG5sw",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112158,7 +112241,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "q2fHF",
+                                      "id": "tU6vw",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Tipo",
@@ -112168,7 +112251,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "ST0qO",
+                                      "id": "KeJjv",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112184,14 +112267,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "hic3U",
+                              "id": "n36JB",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "YXNap",
+                                  "id": "V20vo",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112199,7 +112282,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "i0oUQ",
+                                      "id": "w2Xq9",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Tiempo operando",
@@ -112209,7 +112292,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "RESBh",
+                                      "id": "m6OhA",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112223,7 +112306,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "rpw3S",
+                                  "id": "rzgTz",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112231,7 +112314,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "Omqsu",
+                                      "id": "uvOZg",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Formalización",
@@ -112241,7 +112324,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "ZQVPL",
+                                      "id": "dT7WP",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112257,14 +112340,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "uUoQp",
+                              "id": "wmsTm",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "jtJNQ",
+                                  "id": "TjQMy",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112272,7 +112355,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "etA9Z",
+                                      "id": "Az584",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Local",
@@ -112282,7 +112365,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "rJx2x",
+                                      "id": "iryjX",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112296,7 +112379,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "OforO",
+                                  "id": "OStG6",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112304,7 +112387,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "GiV3G",
+                                      "id": "AnH4I",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Empleados",
@@ -112314,7 +112397,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "VpfRG",
+                                      "id": "sBIht",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112330,14 +112413,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "KVhBA",
+                              "id": "w17iRa",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "z1vbe",
+                                  "id": "yVQAS",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112345,7 +112428,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "X6VLD",
+                                      "id": "G67lxm",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Ventas mensuales",
@@ -112355,7 +112438,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "CZw3w",
+                                      "id": "U70yi",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112369,7 +112452,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "fjD40",
+                                  "id": "apwi3",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112377,7 +112460,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "JF69D",
+                                      "id": "f8IIBx",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Provincia",
@@ -112387,7 +112470,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "t2dkI",
+                                      "id": "AtM0S",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112405,7 +112488,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "GNIkg",
+                          "id": "Q1kTZz",
                           "name": "sec-CRÉDITO",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -112413,7 +112496,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "uA7kQ",
+                              "id": "vRbVH",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -112421,7 +112504,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "DX9Ky",
+                                  "id": "NKBqc",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "CRÉDITO",
@@ -112432,7 +112515,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "TPmxv",
+                                  "id": "uzFi4",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -112442,14 +112525,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "znnrV",
+                              "id": "vngA3",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "n9Wrv",
+                                  "id": "eT1PT",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112457,7 +112540,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "iIaFa",
+                                      "id": "JuIDz",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Monto pedido",
@@ -112467,7 +112550,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "LR7vi",
+                                      "id": "oXj8C",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112481,7 +112564,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "oZLnA",
+                                  "id": "vAXmN",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112489,7 +112572,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "Yj26S",
+                                      "id": "aTgsE",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Plazo pedido",
@@ -112499,7 +112582,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "jzi44",
+                                      "id": "w3nMJW",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112515,14 +112598,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "ssAA4",
+                              "id": "S2hkI",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "rZggn",
+                                  "id": "t3fhty",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112530,7 +112613,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "p2PHCi",
+                                      "id": "pdmkj",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Propósito",
@@ -112540,7 +112623,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "N7uKwh",
+                                      "id": "X8du0X",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112554,7 +112637,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "I8BhBV",
+                                  "id": "BOoQ8",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112562,7 +112645,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "veFIb",
+                                      "id": "jyyW2",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Cuota estimada",
@@ -112572,7 +112655,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "e6naP",
+                                      "id": "P2guX",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112590,7 +112673,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "D7zir",
+                          "id": "SfPVJ",
                           "name": "sec-VIVIENDA",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -112598,7 +112681,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "U8ThJ",
+                              "id": "Q2Djuu",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -112606,7 +112689,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "aRXf8",
+                                  "id": "U5k9iY",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "VIVIENDA",
@@ -112617,7 +112700,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "G0hKw",
+                                  "id": "MoPMm",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -112627,14 +112710,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "TvGoZ",
+                              "id": "d3pOX9",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "tskhD",
+                                  "id": "AN5VE",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112642,7 +112725,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "tWpL8",
+                                      "id": "cQM9q",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Dirección",
@@ -112652,7 +112735,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "qHjkv",
+                                      "id": "hZGRn",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112666,7 +112749,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "Nl7jI",
+                                  "id": "hq9px",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112674,7 +112757,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "Xy9iU",
+                                      "id": "UNnqA",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Referencia",
@@ -112684,7 +112767,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "YL0tZ",
+                                      "id": "aQpYR",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112700,14 +112783,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "V07XI",
+                              "id": "OKuyd",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "cIpRw",
+                                  "id": "iMuCK",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112715,7 +112798,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "fjyte",
+                                      "id": "p8QGHc",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Tipo",
@@ -112725,7 +112808,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "sIFlN",
+                                      "id": "DNxoW",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112739,7 +112822,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "bBpMx",
+                                  "id": "AjwIQ",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112747,7 +112830,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "phcqS",
+                                      "id": "N2YLH",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Tiempo ahí",
@@ -112757,7 +112840,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "NSu2u",
+                                      "id": "JAzP0",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112775,7 +112858,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "LnDcU",
+                          "id": "f2Ntfs",
                           "name": "sec-REFERENCIAS",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -112783,7 +112866,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "b3Lga8",
+                              "id": "GY751",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -112791,7 +112874,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "GHjd9",
+                                  "id": "CVrMI",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "REFERENCIAS",
@@ -112802,7 +112885,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "x5ruM3",
+                                  "id": "LE19R",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -112812,14 +112895,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "P57AM",
+                              "id": "nPaM4",
                               "name": "row",
                               "width": "fill_container",
                               "gap": 16,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "DhLwB",
+                                  "id": "X4ISY",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112827,7 +112910,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "V2r8I",
+                                      "id": "c2RFX",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Nombre",
@@ -112837,7 +112920,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "OXMdP",
+                                      "id": "CP68G",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112851,7 +112934,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "oq9bD",
+                                  "id": "i4kdZQ",
                                   "name": "kv",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112859,7 +112942,7 @@
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "hZtfR",
+                                      "id": "x72nA",
                                       "name": "k",
                                       "fill": "$ds.muted",
                                       "content": "Teléfono",
@@ -112869,7 +112952,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "FXdKp",
+                                      "id": "EWISo",
                                       "name": "v",
                                       "fill": "$brand.ink",
                                       "textGrowth": "fixed-width",
@@ -112887,7 +112970,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "N2ihBn",
+                          "id": "H1GTw",
                           "name": "sec-DOCUMENTOS",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -112895,7 +112978,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "oEn6c",
+                              "id": "KwZH0",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -112903,7 +112986,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "uezY0",
+                                  "id": "UeEW4",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "DOCUMENTOS · 5",
@@ -112914,7 +112997,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "iDXwD",
+                                  "id": "mg3G0",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -112924,14 +113007,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "FnNJP",
+                              "id": "kXs3r",
                               "name": "thumbs",
                               "width": "fill_container",
                               "gap": 10,
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "IuvJw",
+                                  "id": "zkXt1",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112939,7 +113022,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "s28sg",
+                                      "id": "cgqQf",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -112951,7 +113034,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "ZDrpp",
+                                          "id": "B8rqqJ",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -112963,7 +113046,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "M16VVI",
+                                      "id": "PMPNm",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Cédula frente",
@@ -112975,7 +113058,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "xqi8p",
+                                  "id": "ARlXc",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -112983,7 +113066,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "w4yuQ",
+                                      "id": "UrMI3",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -112995,7 +113078,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "qhczV",
+                                          "id": "CzsDb",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -113007,7 +113090,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "JMq90",
+                                      "id": "abxXp",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Cédula reverso",
@@ -113019,7 +113102,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "EHg4k",
+                                  "id": "e9HuY",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -113027,7 +113110,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "bOiTx",
+                                      "id": "L7qPUo",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -113039,7 +113122,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "GBJwl",
+                                          "id": "p3vOqS",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -113051,7 +113134,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "c5beAe",
+                                      "id": "gvKWI",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Visita 1",
@@ -113063,7 +113146,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "Vj2u9",
+                                  "id": "HLnco",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -113071,7 +113154,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "c2l1Iu",
+                                      "id": "XNiL7",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -113083,7 +113166,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "MPREj",
+                                          "id": "QGJ2J",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -113095,7 +113178,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "Mk56p",
+                                      "id": "ObJdX",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Visita 2",
@@ -113107,7 +113190,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "vgB8k",
+                                  "id": "wwbtz",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -113115,7 +113198,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "s8q3K",
+                                      "id": "e2RSo",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -113127,7 +113210,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "iVOiD",
+                                          "id": "N1gwR2",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -113139,7 +113222,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "OewCb",
+                                      "id": "R1jhD",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Visita 3",
@@ -113151,7 +113234,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "l6KwKn",
+                                  "id": "A8vfwI",
                                   "name": "doc",
                                   "width": "fill_container",
                                   "layout": "vertical",
@@ -113159,7 +113242,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "hXq0c",
+                                      "id": "EMv2G",
                                       "name": "img",
                                       "width": "fill_container",
                                       "height": 64,
@@ -113172,7 +113255,7 @@
                                       "children": [
                                         {
                                           "type": "icon",
-                                          "id": "qeErG",
+                                          "id": "JAekv",
                                           "name": "i",
                                           "width": 18,
                                           "height": 18,
@@ -113184,7 +113267,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "q9DSb",
+                                      "id": "a48XuL",
                                       "name": "l",
                                       "fill": "$ds.muted",
                                       "content": "Contrato",
@@ -113198,7 +113281,7 @@
                             },
                             {
                               "type": "text",
-                              "id": "lVqof",
+                              "id": "VH41e",
                               "name": "note",
                               "fill": "$ds.muted",
                               "content": "El contrato se genera al aprobar, con los términos aprobados.",
@@ -113210,7 +113293,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "aRkjA",
+                          "id": "wAZCm",
                           "name": "sec-ACTIVIDAD",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -113218,7 +113301,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "x7oIa",
+                              "id": "Y3MGry",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -113226,7 +113309,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "lWl0D",
+                                  "id": "b5prK2",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "ACTIVIDAD",
@@ -113237,7 +113320,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "F0WYMf",
+                                  "id": "GMIrt",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -113247,14 +113330,14 @@
                             },
                             {
                               "type": "frame",
-                              "id": "GDzSR",
+                              "id": "l4mxfc",
                               "name": "timeline",
                               "width": "fill_container",
                               "layout": "vertical",
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "gJqQ1",
+                                  "id": "fZPmw",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 56,
@@ -113262,7 +113345,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "aI7w0",
+                                      "id": "MLXaw",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113271,7 +113354,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "sDTnG",
+                                          "id": "kF7Md",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113282,7 +113365,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "AlR6i",
+                                              "id": "EjJRn",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113294,7 +113377,7 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "m2JY9Y",
+                                          "id": "NHfBh",
                                           "name": "line",
                                           "width": 1,
                                           "height": "fill_container",
@@ -113304,7 +113387,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "cUfH9",
+                                      "id": "I9f3I",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113318,7 +113401,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "rKLAO",
+                                          "id": "hsF6P",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Borrador iniciado en el sitio web",
@@ -113328,7 +113411,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "Wdoa9",
+                                          "id": "Lp1N5",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "anuncio Salon-01 · Meta",
@@ -113340,7 +113423,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "Xhe3M",
+                                      "id": "xtawu",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "20 sep 14:02",
@@ -113352,7 +113435,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "ulECH",
+                                  "id": "BO6xd",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 56,
@@ -113360,7 +113443,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "FujdV",
+                                      "id": "iQj2s",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113369,7 +113452,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "N8JfUx",
+                                          "id": "Rb6GO",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113380,7 +113463,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "JKuWa",
+                                              "id": "n2fs0E",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113392,7 +113475,7 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "cQ7JU",
+                                          "id": "o73MXy",
                                           "name": "line",
                                           "width": 1,
                                           "height": "fill_container",
@@ -113402,7 +113485,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "E6J8p",
+                                      "id": "Rf1DG",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113416,7 +113499,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "Qp2aV",
+                                          "id": "SUd16",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Enviada → Recibida",
@@ -113426,7 +113509,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "Urusv",
+                                          "id": "SBNIn",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "formulario 86% · Mikro Score 58",
@@ -113438,7 +113521,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "wL8vR",
+                                      "id": "SgRu9",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "20 sep 14:19",
@@ -113450,7 +113533,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "q1FdKS",
+                                  "id": "lOkRa",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 56,
@@ -113458,7 +113541,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "nHa8U",
+                                      "id": "yiteH",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113467,7 +113550,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "b92nwH",
+                                          "id": "k7LyiK",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113478,7 +113561,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "Qkyeh",
+                                              "id": "w6IwY",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113490,7 +113573,7 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "g857Xd",
+                                          "id": "BMndG",
                                           "name": "line",
                                           "width": 1,
                                           "height": "fill_container",
@@ -113500,7 +113583,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "Askpx",
+                                      "id": "CbF3t",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113514,7 +113597,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "z5wHgU",
+                                          "id": "w4dNx",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Ana R. la tomó",
@@ -113524,7 +113607,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "YzaQA",
+                                          "id": "qhe8F",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "En evaluación",
@@ -113536,7 +113619,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "jAMMm",
+                                      "id": "KOz4Z",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "21 sep 9:10",
@@ -113548,7 +113631,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "QhrNa",
+                                  "id": "SUsQS",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 56,
@@ -113556,7 +113639,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "E1M8u",
+                                      "id": "ykOAA",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113565,7 +113648,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "VV2fY",
+                                          "id": "NU2Zm",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113576,7 +113659,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "N15eBv",
+                                              "id": "FrIKA",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113588,7 +113671,7 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "R8MUU",
+                                          "id": "YQoz9",
                                           "name": "line",
                                           "width": 1,
                                           "height": "fill_container",
@@ -113598,7 +113681,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "HU1Pl",
+                                      "id": "lsL8c",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113612,7 +113695,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "RCcRV",
+                                          "id": "Us9O2",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Cédula completada",
@@ -113622,7 +113705,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "SCbFj",
+                                          "id": "i32uRj",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "reverso subido por Ana R.",
@@ -113634,7 +113717,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "UB9lH",
+                                      "id": "ob9hK",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "21 sep 11:32",
@@ -113646,7 +113729,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "EPCGI",
+                                  "id": "wZnXT",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 56,
@@ -113654,7 +113737,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "kzM0R",
+                                      "id": "FPn4g",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113663,7 +113746,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "SB3Ww",
+                                          "id": "ae6Ij",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113674,7 +113757,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "JA6sa",
+                                              "id": "pBsi6",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113686,7 +113769,7 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "sAc5s",
+                                          "id": "QHN5e",
                                           "name": "line",
                                           "width": 1,
                                           "height": "fill_container",
@@ -113696,7 +113779,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "gNjpB",
+                                      "id": "e94Ax",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113710,7 +113793,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "N5mS2",
+                                          "id": "k73Aay",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Visita al negocio registrada",
@@ -113720,7 +113803,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "ql1dX",
+                                          "id": "dPvYD",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "3 fotos · Score 58 → 61",
@@ -113732,7 +113815,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "Af1d4",
+                                      "id": "IFI1C",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "21 sep 16:40",
@@ -113744,7 +113827,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "K02bDb",
+                                  "id": "E1KJKI",
                                   "name": "ev",
                                   "width": "fill_container",
                                   "height": 48,
@@ -113752,7 +113835,7 @@
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "y6BTid",
+                                      "id": "uyERq",
                                       "name": "rail",
                                       "width": 24,
                                       "height": "fill_container",
@@ -113761,7 +113844,7 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "FY5dp",
+                                          "id": "DsDxY",
                                           "name": "dot",
                                           "width": 24,
                                           "height": 24,
@@ -113772,7 +113855,7 @@
                                           "children": [
                                             {
                                               "type": "icon",
-                                              "id": "j2mtm",
+                                              "id": "rXQRG",
                                               "name": "i",
                                               "width": 12,
                                               "height": 12,
@@ -113786,7 +113869,7 @@
                                     },
                                     {
                                       "type": "frame",
-                                      "id": "VjFiy",
+                                      "id": "flcX5",
                                       "name": "t",
                                       "width": "fill_container",
                                       "layout": "vertical",
@@ -113800,7 +113883,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "NYGox",
+                                          "id": "yOVVT",
                                           "name": "h",
                                           "fill": "$brand.ink",
                                           "content": "Enviada a decisión",
@@ -113810,7 +113893,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "z1O1E",
+                                          "id": "SWGCL",
                                           "name": "s",
                                           "fill": "$ds.muted",
                                           "content": "recomienda RD$10,000 a 10 semanas",
@@ -113822,7 +113905,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "id": "M8Ynsu",
+                                      "id": "YkyGQ",
                                       "name": "time",
                                       "fill": "$ds.muted",
                                       "content": "22 sep 17:20",
@@ -113838,7 +113921,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "Rwd5g",
+                          "id": "DLbPK",
                           "name": "sec-CONVERSACION",
                           "width": "fill_container",
                           "layout": "vertical",
@@ -113846,7 +113929,7 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "JZLWJ",
+                              "id": "l3uu9",
                               "name": "sh",
                               "width": "fill_container",
                               "gap": 8,
@@ -113854,7 +113937,7 @@
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "FJvXC",
+                                  "id": "x0aaE3",
                                   "name": "t",
                                   "fill": "$ds.muted",
                                   "content": "CONVERSACIÓN · WHATSAPP",
@@ -113865,7 +113948,7 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "U1hjk",
+                                  "id": "i5ObUN",
                                   "name": "line",
                                   "width": "fill_container",
                                   "height": 1,
@@ -113873,7 +113956,7 @@
                                 },
                                 {
                                   "type": "text",
-                                  "id": "dT0ta",
+                                  "id": "iBkCI",
                                   "name": "x",
                                   "fill": "$brand.blue.primary",
                                   "content": "Abrir en Chatwoot →",
@@ -113885,7 +113968,7 @@
                             },
                             {
                               "type": "frame",
-                              "id": "iuGt5",
+                              "id": "Q0rWmj",
                               "name": "chat",
                               "width": "fill_container",
                               "fill": "$ds.bg",
@@ -113896,14 +113979,14 @@
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "PU1Yf",
+                                  "id": "C0LDN",
                                   "name": "msg",
                                   "width": "fill_container",
                                   "justifyContent": "end",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "kCfGb",
+                                      "id": "BAIJi",
                                       "name": "bubble",
                                       "width": 360,
                                       "fill": "#DCF3E4",
@@ -113917,7 +114000,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "WDJrY",
+                                          "id": "KGvWF",
                                           "name": "who",
                                           "fill": "$ds.violet",
                                           "content": "José (agente)",
@@ -113927,7 +114010,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "S4RB8U",
+                                          "id": "KtPeo",
                                           "name": "t",
                                           "fill": "$brand.ink",
                                           "textGrowth": "fixed-width",
@@ -113940,7 +114023,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "o52Dx",
+                                          "id": "MhD0Q",
                                           "name": "time",
                                           "fill": "$ds.muted",
                                           "content": "20 sep 14:05",
@@ -113954,13 +114037,13 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "acvR9",
+                                  "id": "ImOXv",
                                   "name": "msg",
                                   "width": "fill_container",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "EXAfc",
+                                      "id": "HQ4Q3",
                                       "name": "bubble",
                                       "width": 360,
                                       "fill": "$ds.surface",
@@ -113974,7 +114057,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "kUo7F",
+                                          "id": "m3dEOk",
                                           "name": "who",
                                           "fill": "$ds.muted",
                                           "content": "Yokasta",
@@ -113984,7 +114067,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "EYe4x",
+                                          "id": "R2Ooa",
                                           "name": "t",
                                           "fill": "$brand.ink",
                                           "textGrowth": "fixed-width",
@@ -113997,7 +114080,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "OE4RC",
+                                          "id": "q4uXr8",
                                           "name": "time",
                                           "fill": "$ds.muted",
                                           "content": "20 sep 14:11",
@@ -114011,14 +114094,14 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "wrGbb",
+                                  "id": "RgVPn",
                                   "name": "msg",
                                   "width": "fill_container",
                                   "justifyContent": "end",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "lyZ7B",
+                                      "id": "e6Jsp",
                                       "name": "bubble",
                                       "width": 360,
                                       "fill": "#DCF3E4",
@@ -114032,7 +114115,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "B35L1",
+                                          "id": "c6R6tt",
                                           "name": "who",
                                           "fill": "$ds.muted",
                                           "content": "Ana R.",
@@ -114042,7 +114125,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "QWLVy",
+                                          "id": "jGEWX",
                                           "name": "t",
                                           "fill": "$brand.ink",
                                           "textGrowth": "fixed-width",
@@ -114055,7 +114138,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "j4MJm1",
+                                          "id": "I46uDM",
                                           "name": "time",
                                           "fill": "$ds.muted",
                                           "content": "21 sep 10:02",
@@ -114069,13 +114152,13 @@
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "BH5GH",
+                                  "id": "XLH1a",
                                   "name": "msg",
                                   "width": "fill_container",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "vk8Li",
+                                      "id": "tPvpU",
                                       "name": "bubble",
                                       "width": 360,
                                       "fill": "$ds.surface",
@@ -114089,7 +114172,7 @@
                                       "children": [
                                         {
                                           "type": "text",
-                                          "id": "y9YYM4",
+                                          "id": "ECGcU",
                                           "name": "who",
                                           "fill": "$ds.muted",
                                           "content": "Yokasta",
@@ -114099,7 +114182,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "LH5r5",
+                                          "id": "ypAD5",
                                           "name": "t",
                                           "fill": "$brand.ink",
                                           "textGrowth": "fixed-width",
@@ -114112,7 +114195,7 @@
                                         },
                                         {
                                           "type": "text",
-                                          "id": "b061V",
+                                          "id": "YCFxQ",
                                           "name": "time",
                                           "fill": "$ds.muted",
                                           "content": "21 sep 11:30",
@@ -117278,6 +117361,226 @@
                       ]
                     }
                   ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "PKRXW",
+              "name": "Origen — variantes del chip",
+              "fill": "$ds.surface",
+              "cornerRadius": 16,
+              "stroke": "$ds.border",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "nUm28",
+                  "name": "cap",
+                  "fill": "$ds.muted",
+                  "textGrowth": "fixed-width",
+                  "width": 640,
+                  "content": "Origen de la solicitud — chip en la tarjeta del feed y fila «Origen» en el panel. Solo canal + anuncio/orgánico; no muestra qué anuncio.",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "XH7bx",
+                  "name": "chips",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "LikA0",
+                      "name": "origin-ad",
+                      "fill": "$brand.mist",
+                      "cornerRadius": 9999,
+                      "gap": 5,
+                      "padding": [
+                        3,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "x5mjlw",
+                          "name": "i",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "megaphone",
+                          "library": "lucide",
+                          "fill": "$brand.blue.primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "of3cd",
+                          "name": "t",
+                          "fill": "$brand.blue.primary",
+                          "content": "Formulario (anuncio)",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "a9445",
+                      "name": "origin-organic",
+                      "fill": "$ds.subtle",
+                      "cornerRadius": 9999,
+                      "gap": 5,
+                      "padding": [
+                        3,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "LWxdr",
+                          "name": "i",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "globe",
+                          "library": "lucide",
+                          "fill": "$ds.muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "d96oK",
+                          "name": "t",
+                          "fill": "$ds.muted",
+                          "content": "Formulario (orgánico)",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f8349",
+                      "name": "origin-unknown",
+                      "fill": "$ds.subtle",
+                      "cornerRadius": 9999,
+                      "gap": 5,
+                      "padding": [
+                        3,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "YJPzp",
+                          "name": "i",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "circle-help",
+                          "library": "lucide",
+                          "fill": "$ds.muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "djUek",
+                          "name": "t",
+                          "fill": "$ds.muted",
+                          "content": "Formulario (desconocido)",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VqDLc",
+                      "name": "origin-whatsapp",
+                      "fill": "$ds.subtle",
+                      "cornerRadius": 9999,
+                      "gap": 5,
+                      "padding": [
+                        3,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "U4ZdBr",
+                          "name": "i",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "message-circle",
+                          "library": "lucide",
+                          "fill": "$ds.muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "edznE",
+                          "name": "t",
+                          "fill": "$ds.muted",
+                          "content": "WhatsApp",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mYYvM",
+                      "name": "origin-manual",
+                      "fill": "$ds.subtle",
+                      "cornerRadius": 9999,
+                      "gap": 5,
+                      "padding": [
+                        3,
+                        9
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "CZzwN",
+                          "name": "i",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "user-pen",
+                          "library": "lucide",
+                          "fill": "$ds.muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "dfd4w",
+                          "name": "t",
+                          "fill": "$ds.muted",
+                          "content": "Manual",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "tQhbW",
+                  "name": "note",
+                  "fill": "$ds.muted",
+                  "content": "«desconocido» = formulario sin anuncio antes del 18 sep 2026 (antes del rastreo de anuncios).",
+                  "fontFamily": "Geist",
+                  "fontSize": 12,
+                  "fontWeight": "500"
                 }
               ]
             }

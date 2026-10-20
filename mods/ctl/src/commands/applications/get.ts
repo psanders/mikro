@@ -8,7 +8,10 @@ import {
   formatMoney,
   BUSINESS_TYPE_LABELS,
   PROVINCE_LABELS,
-  maritalStatusLabel
+  maritalStatusLabel,
+  applicationOrigin,
+  APPLICATION_ORIGIN_LABELS,
+  APPLICATION_STATUS_LABELS
 } from "@mikro/common";
 import { BaseCommand } from "../../BaseCommand.js";
 import errorHandler from "../../errorHandler.js";
@@ -58,8 +61,8 @@ export default class Get extends BaseCommand<typeof Get> {
           "--------------\n" +
           `ID: \t${app.id}\n` +
           `SESSION ID: \t${app.sessionId}\n` +
-          `STATUS: \t${app.status}\n` +
-          `SOURCE: \t${app.source}\n` +
+          `STATUS: \t${APPLICATION_STATUS_LABELS[app.status] ?? app.status}\n` +
+          `ORIGIN: \t${APPLICATION_ORIGIN_LABELS[applicationOrigin(app)]}\n` +
           `\n` +
           `NAME: \t${[app.firstName, app.lastName].filter(Boolean).join(" ") || "N/A"}\n` +
           `PHONE: \t${app.phone ?? "N/A"}\n` +

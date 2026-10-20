@@ -45,8 +45,9 @@ import { useApplicationPanel } from "./ApplicationPanelContext";
 import { useApplicationInvalidation } from "./helpers";
 import { RejectForm } from "./RejectForm";
 import { DecisionBlock } from "./DecisionBlock";
-import { Btn, ScoreChip, StatusPill } from "./ui";
+import { Btn, OriginChip, ScoreChip, StatusPill } from "./ui";
 import type { Viewer } from "./useViewer";
+import type { ApplicationOrigin } from "@mikro/common/schemas";
 
 export interface FeedApplicationState {
   status: string;
@@ -55,6 +56,8 @@ export interface FeedApplicationState {
   score: number | null;
   businessName: string | null;
   aiSummary: string | null;
+  /** Absent from servers older than add-application-origin; the chip hides. */
+  origin?: ApplicationOrigin;
 }
 
 export interface ApplicationFeedCardProps {
@@ -176,6 +179,7 @@ export function ApplicationFeedCard({
             </span>
           </span>
           <ScoreChip score={state.score} />
+          <OriginChip origin={state.origin} />
           <StatusPill status={state.status} />
           <span className="text-[12px] font-medium text-ds-muted">
             {showDay ? formatDayLabel(event.occurredAt) : formatClockTime(event.occurredAt)}
