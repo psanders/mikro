@@ -47,7 +47,10 @@ export default class List extends ListCommand<typeof List> {
       });
 
       const headers = ["ID", "NAME", "PHONE", "STATUS", "ORIGIN", "SCORE", "CREATED"];
-      const rows = apps.map((a) => {
+      // The server filters by origin; re-check here so a server that predates
+      // the filter (and ignores it) can't print unfiltered rows as filtered.
+      const shown = flags.origin ? apps.filter((a) => applicationOrigin(a) === flags.origin) : apps;
+      const rows = shown.map((a) => {
         return [
           a.id,
           [a.firstName, a.lastName].filter(Boolean).join(" ") || "",
