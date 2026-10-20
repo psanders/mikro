@@ -17,8 +17,8 @@
 
 - [x] 2.1 start / update terms / quote / generate contract / upload document / cancel
 - [x] 2.2 finalize (one tx, recompute, `NET_CHANGED`, ledger net, re-point documents)
-- [ ] 2.3 Roles: renewal, contract, documents, `searchAll` → reviewerProcedure; delete document admin-only; remove `renewLoan`
-- [ ] 2.4 Customer-document upload/get/delete; `updateCustomer` widened
+- [x] 2.3 Roles: renewal, contract, documents → reviewerProcedure; delete document admin-only (`searchAll` follows with search; old `renewLoan` removed in phase 3)
+- [x] 2.4 Customer-document upload/get/delete; `updateCustomer` widened
 - [ ] 2.5 `searchAll` applications (token name, phone digits, cédula, excludes DRAFT/ABANDONED)
 - [ ] 2.6 Feed: generalize `application.` prefix, join renewal state, reviewer scoping, `listOpenRenewalEvents`
 

@@ -11,3 +11,8 @@ export { createListCustomersByCollector } from "./createListCustomersByCollector
 export { createExportCollectorCustomers } from "./createExportCollectorCustomers.js";
 export { createExportAllCustomers } from "./createExportAllCustomers.js";
 export { createGenerateCustomerContract } from "./createGenerateCustomerContract.js";
+export {
+  createUploadCustomerDocument,
+  createGetCustomerDocument,
+  createDeleteCustomerDocument
+} from "./customerDocuments.js";
