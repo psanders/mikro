@@ -1034,9 +1034,18 @@ async function main() {
   const day = 86_400_000;
   for (const a of applicationSpecs) {
     const createdAt = new Date(now - a.daysAgo * day);
-    const reviewed = ["IN_REVIEW", "APPROVED", "SIGNED", "REJECTED", "CONVERTED"].includes(
-      a.status
-    );
+    // Signing is no longer a status: a signed application is APPROVED with its
+    // contract stored (application review flow, #291).
+    const status = a.status === "SIGNED" ? "APPROVED" : a.status;
+    const reviewed = [
+      "IN_REVIEW",
+      "PENDING_DECISION",
+      "APPROVED",
+      "REJECTED",
+      "CONVERTED"
+    ].includes(status);
+    const decided = ["APPROVED", "REJECTED", "CONVERTED"].includes(status);
+    const note = "reviewNote" in a && a.reviewNote ? a.reviewNote : null;
     const sd = a.score
       ? buildScore(
           `${a.firstName} ${a.lastName}`,
@@ -1050,7 +1059,7 @@ async function main() {
       : null;
     const create = {
       sessionId: a.sessionId,
-      status: a.status as never,
+      status: status as never,
       firstName: a.firstName,
       lastName: a.lastName,
       phone: a.phone,
@@ -1071,8 +1080,20 @@ async function main() {
       scoredAt: a.score ? createdAt : null,
       submittedAt: a.status === "DRAFT" ? null : createdAt,
       createdAt,
-      ...(reviewed ? { reviewedById: admin.id, reviewedAt: createdAt } : {}),
-      ...("reviewNote" in a && a.reviewNote ? { reviewNote: a.reviewNote } : {}),
+      ...(reviewed ? { assignedReviewerId: admin.id } : {}),
+      ...(decided
+        ? { sentToDecisionAt: createdAt, decidedById: admin.id, decidedAt: createdAt }
+        : {}),
+      ...(status === "APPROVED" || status === "CONVERTED"
+        ? {
+            reviewerRecommendation: note,
+            approvedAmount: a.requestedAmount,
+            approvedTermWeeks: a.requestedTermWeeks
+          }
+        : {}),
+      ...(status === "REJECTED"
+        ? { rejectionReason: "PAYMENT_CAPACITY" as never, decisionNote: note }
+        : {}),
       ...("contract" in a && a.contract
         ? {
             contractFilename: `${a.sessionId}.pdf`,
@@ -1087,7 +1108,7 @@ async function main() {
     };
     await prisma.loanApplication.upsert({
       where: { sessionId: a.sessionId },
-      update: { status: a.status as never },
+      update: { status: status as never },
       create
     });
   }

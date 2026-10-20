@@ -41,6 +41,7 @@ const pdf = await renderSummaryPdf({
   id: "3f2a9c1e-5b7d-4e21-9a0c-1d2e3f4a5b6c",
   createdAt: at("2026-09-22T14:05:00Z"),
   status: "IN_REVIEW",
+  origin: "ad",
   firstName: "Ana",
   lastName: "Ejemplo Pérez",
   phone: "+18095550101",

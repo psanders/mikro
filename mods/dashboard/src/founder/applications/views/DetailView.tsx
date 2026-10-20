@@ -17,6 +17,7 @@ import {
   UserCheck,
   UserPlus
 } from "lucide-react";
+import { APPLICATION_ORIGIN_LABELS_ES, applicationOrigin } from "@mikro/common/schemas";
 import { trpc } from "../../../lib/trpc";
 import { useToast } from "../../../components/ui/ToastProvider";
 import { base64ToBytes, saveFile, savedMessage } from "../../../lib/saveFile";
@@ -178,6 +179,14 @@ export function DetailView({ app, evidence, viewer, onView, onClose, panel }: Vi
         )}
 
         <section id="app-datos" className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-x-4">
+            <div data-testid="app-origin" className="flex min-w-0 flex-col gap-[3px]">
+              <span className="text-[11px] font-medium text-ds-muted">Origen</span>
+              <span className="text-[13px] font-medium text-brand-ink">
+                {APPLICATION_ORIGIN_LABELS_ES[applicationOrigin(app)]}
+              </span>
+            </div>
+          </div>
           {APPLICATION_FIELD_SECTIONS.map((section) => (
             <div key={section.id} className="flex flex-col gap-3">
               <SectionLabel>{section.title}</SectionLabel>

@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { formatMoney } from "@mikro/common";
+import { APPLICATION_ORIGIN_LABELS, formatMoney } from "@mikro/common";
 import { Args } from "@oclif/core";
 import cliui from "cliui";
 import moment from "moment";
@@ -41,6 +41,13 @@ export default class Get extends BaseCommand<typeof Get> {
         return;
       }
 
+      // N/A when the server predates getCustomerOrigin; — when no converted
+      // application links to this customer.
+      const origin = await client.getCustomerOrigin
+        .query({ id: customerId })
+        .then((r) => (r.origin ? APPLICATION_ORIGIN_LABELS[r.origin] : "—"))
+        .catch(() => "N/A");
+
       const ui = cliui({ width: 200 });
 
       ui.div(
@@ -58,6 +65,7 @@ export default class Get extends BaseCommand<typeof Get> {
           `BUSINESS OWNER: \t${customer.isBusinessOwner ? "Yes" : "No"}\n` +
           `NOTES: \t${customer.notes || ""}\n` +
           `ACTIVE: \t${customer.isActive ? "Yes" : "No"}\n` +
+          `ORIGIN: \t${origin}\n` +
           `CREATED: \t${moment(customer.createdAt).format("YYYY-MM-DD HH:mm:ss")}\n` +
           `UPDATED: \t${moment(customer.updatedAt).format("YYYY-MM-DD HH:mm:ss")}`
       );

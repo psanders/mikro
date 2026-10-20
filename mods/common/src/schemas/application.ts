@@ -431,8 +431,62 @@ export const APPLICATION_STATUS_LABELS: Record<z.infer<typeof applicationStatusE
   ABANDONED: "Desistida"
 };
 
+/** CLI (English) label per status; Ops and the PDF use APPLICATION_STATUS_LABELS. */
+export const APPLICATION_STATUS_LABELS_EN: Record<z.infer<typeof applicationStatusEnum>, string> = {
+  DRAFT: "Draft",
+  RECEIVED: "Received",
+  IN_REVIEW: "In review",
+  PENDING_DECISION: "Pending decision",
+  APPROVED: "Approved",
+  CONVERTED: "Converted",
+  REJECTED: "Rejected",
+  ABANDONED: "Abandoned"
+};
+
+/**
+ * When the site started forwarding Meta ad ids with the form (ad attribution
+ * went live). A form application without an adId from before this can't be
+ * told apart from an ad click, so its origin is "unknown", not "organic".
+ */
+export const AD_ATTRIBUTION_START = new Date("2026-09-18T02:52:00.000Z");
+
+/** Where an application came from: the channel, and ad vs organic for the web form. */
+export const applicationOriginEnum = z.enum(["ad", "organic", "unknown", "whatsapp", "manual"]);
+export type ApplicationOrigin = z.infer<typeof applicationOriginEnum>;
+
+/** Derives an application's origin from its source, adId and createdAt. */
+export function applicationOrigin(app: {
+  source: string;
+  adId?: string | null;
+  createdAt: Date | string;
+}): ApplicationOrigin {
+  if (app.source === "WHATSAPP") return "whatsapp";
+  if (app.source === "MANUAL") return "manual";
+  if (app.adId) return "ad";
+  return new Date(app.createdAt) < AD_ATTRIBUTION_START ? "unknown" : "organic";
+}
+
+/** CLI label per origin. */
+export const APPLICATION_ORIGIN_LABELS: Record<ApplicationOrigin, string> = {
+  ad: "Form (ad)",
+  organic: "Form (organic)",
+  unknown: "Form (unknown)",
+  whatsapp: "WhatsApp",
+  manual: "Manual"
+};
+
+/** Ops (Spanish) label per origin. */
+export const APPLICATION_ORIGIN_LABELS_ES: Record<ApplicationOrigin, string> = {
+  ad: "Formulario (anuncio)",
+  organic: "Formulario (orgánico)",
+  unknown: "Formulario (desconocido)",
+  whatsapp: "WhatsApp",
+  manual: "Manual"
+};
+
 export const listApplicationsSchema = z.object({
   status: applicationStatusEnum.optional(),
+  origin: applicationOriginEnum.optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });

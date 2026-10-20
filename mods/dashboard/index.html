@@ -8,7 +8,17 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <meta name="color-scheme" content="light dark" />
     <title>Mikro</title>
+    <script>
+      // Apply the saved theme before first paint (no white flash in dark
+      // mode). Mirrors applyTheme in src/lib/theme.ts.
+      try {
+        var t = localStorage.getItem("mikro_theme");
+        if (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches))
+          document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

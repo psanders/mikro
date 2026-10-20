@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.17.0](https://github.com/psanders/mikro/compare/v3.16.2...v3.17.0) (2026-10-20)
+
+### Features
+
+- **applications:** show where each application came from ([#356](https://github.com/psanders/mikro/issues/356)) ([a5b1936](https://github.com/psanders/mikro/commit/a5b1936d2b13f932fa9b8708d23c80f9805c149e))
+
+## [3.16.2](https://github.com/psanders/mikro/compare/v3.16.1...v3.16.2) (2026-10-18)
+
+### Bug Fixes
+
+- **dashboard:** desktop title bar follows the dark theme ([#354](https://github.com/psanders/mikro/issues/354)) ([e4c31e9](https://github.com/psanders/mikro/commit/e4c31e901fabbd8bcefe0031804099e6a1a2fc34))
+
+## [3.16.1](https://github.com/psanders/mikro/compare/v3.16.0...v3.16.1) (2026-10-17)
+
+### Bug Fixes
+
+- **apiserver:** seed applications with the current review fields ([#353](https://github.com/psanders/mikro/issues/353)) ([03b76e0](https://github.com/psanders/mikro/commit/03b76e03d763d4034856f96325f0e64983f36c35)), closes [#291](https://github.com/psanders/mikro/issues/291)
+
 # [3.16.0](https://github.com/psanders/mikro/compare/v3.15.0...v3.16.0) (2026-10-17)
 
 ### Features
