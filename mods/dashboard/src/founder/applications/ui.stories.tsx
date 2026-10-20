@@ -7,9 +7,7 @@
  */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Send, UserCheck, X } from "lucide-react";
-import { Btn, OriginChip, ScoreChip, StatusPill } from "./ui";
-
-const ORIGINS = ["ad", "organic", "unknown", "whatsapp", "manual"] as const;
+import { Btn, ScoreChip, StatusPill } from "./ui";
 
 const STATUSES = [
   "RECEIVED",
@@ -28,11 +26,6 @@ function Gallery() {
       <div className="flex flex-wrap gap-2">
         {STATUSES.map((s) => (
           <StatusPill key={s} status={s} />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {ORIGINS.map((o) => (
-          <OriginChip key={o} origin={o} />
         ))}
       </div>
       <div className="flex gap-2">

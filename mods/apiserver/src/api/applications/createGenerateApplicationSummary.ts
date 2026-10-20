@@ -1,7 +1,12 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import type { ApplicationScore, DbClient, GenerateApplicationSummaryInput } from "@mikro/common";
+import {
+  applicationOrigin,
+  type ApplicationScore,
+  type DbClient,
+  type GenerateApplicationSummaryInput
+} from "@mikro/common";
 import {
   renderSummaryPdf,
   type SolicitudSummaryData,
@@ -187,6 +192,7 @@ export function createGenerateApplicationSummary(client: DbClient) {
       id: app.id,
       createdAt: app.createdAt,
       status: app.status,
+      origin: applicationOrigin(app),
       firstName: app.firstName,
       lastName: app.lastName,
       phone: app.phone,

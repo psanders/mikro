@@ -13,9 +13,9 @@ Ops can't tell where a loan application came from. The data is already stored �
   - `applications:list` gains an `ORIGIN` column (`Form (ad)`, `Form (organic)`, `Form (unknown)`, `WhatsApp`, `Manual`) and an `--origin ad|organic|unknown|whatsapp|manual` filter.
   - `STATUS` prints the readable label (`APPLICATION_STATUS_LABELS`, e.g. "En evaluación").
   - `applications:get` adds an `ORIGIN:` line and prints the readable status.
-- **Ops:**
-  - The application feed card shows an origin chip (`Formulario (anuncio)`, `Formulario (orgánico)`, `Formulario (desconocido)`, `WhatsApp`, `Manual`).
-  - The application panel shows an `Origen` row at the top of the data.
+- **Ops:** the application panel shows an `Origen` row at the top of the data (`Formulario (anuncio)`, `Formulario (orgánico)`, `Formulario (desconocido)`, `WhatsApp`, `Manual`). The feed card does not show it, to keep the feed light.
+- **Application PDF:** the header shows the origin next to date and status.
+- **Customer:** `customers:get` prints the origin of the application that became the customer (`—` if none).
 - Origin is about the channel and ad vs. organic only. **Which ad or campaign is out of scope.**
 
 ## Capabilities
@@ -26,13 +26,13 @@ Ops can't tell where a loan application came from. The data is already stored �
 
 ### Modified Capabilities
 
-- `ops-application-flow`: the feed card and the application panel show the origin.
+- `ops-application-flow`: the application panel shows the origin (the feed card does not).
 
 ## Impact
 
 - **common:** `applicationOrigin()` + label maps (CLI English, Ops Spanish), `origin` filter on `listApplicationsSchema`.
-- **apiserver:** `listApplications` filters by origin (translated to a `where` on `source`/`adId`/`createdAt`).
-- **ctl:** `applications:list` / `applications:get` output.
-- **dashboard:** origin chip on `ApplicationFeedCard`, `Origen` row in the panel; Storybook + Playwright.
-- **Pencil:** card chip and panel row on board `EzobQ` sec-08.
+- **apiserver:** `listApplications` filters by origin; `getCustomer` returns the customer's origin; the PDF builder passes the origin.
+- **ctl:** `applications:list` / `applications:get` / `customers:get` output.
+- **dashboard:** `Origen` row in the panel; Playwright.
+- **Pencil:** panel row on board `EzobQ` sec-08.
 - **No schema, migration, or `mikro.json` change.**

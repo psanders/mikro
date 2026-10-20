@@ -5,16 +5,7 @@
  * to Pencil EzobQ §08 tokens (ds.violet #7C3AED / bg #F1EAFE / tint #FAF7FF).
  */
 import type { ButtonHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
-import {
-  ChevronDown,
-  CircleHelp,
-  Globe,
-  Megaphone,
-  MessageCircle,
-  UserPen,
-  type LucideIcon
-} from "lucide-react";
-import { APPLICATION_ORIGIN_LABELS_ES, type ApplicationOrigin } from "@mikro/common/schemas";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { scoreTone, statusMeta, type StatusTone } from "../../lib/applications";
 
@@ -41,33 +32,6 @@ export function StatusPill({ status }: { status: string }) {
     >
       <span className="h-[6px] w-[6px] rounded-full bg-current" />
       {meta.label}
-    </span>
-  );
-}
-
-const ORIGIN_ICON: Record<ApplicationOrigin, LucideIcon> = {
-  ad: Megaphone,
-  organic: Globe,
-  unknown: CircleHelp,
-  whatsapp: MessageCircle,
-  manual: UserPen
-};
-
-/** Where the application came from; ads in blue so they stand out in the feed. */
-export function OriginChip({ origin }: { origin: ApplicationOrigin | null | undefined }) {
-  if (!origin) return null;
-  const Icon = ORIGIN_ICON[origin];
-  return (
-    <span
-      data-testid="origin-chip"
-      data-origin={origin}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-[5px] rounded-full px-[9px] py-[3px] text-[11px] font-semibold",
-        origin === "ad" ? "bg-brand-mist text-brand-blue-primary" : "bg-ds-subtle text-ds-muted"
-      )}
-    >
-      <Icon size={12} />
-      {APPLICATION_ORIGIN_LABELS_ES[origin]}
     </span>
   );
 }

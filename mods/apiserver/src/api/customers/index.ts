@@ -4,6 +4,7 @@
 export { createCreateCustomer } from "./createCreateCustomer.js";
 export { createUpdateCustomer } from "./createUpdateCustomer.js";
 export { createGetCustomer } from "./createGetCustomer.js";
+export { createGetCustomerOrigin } from "./createGetCustomerOrigin.js";
 export { createGetCustomerByPhone } from "./createGetCustomerByPhone.js";
 export { createListCustomers } from "./createListCustomers.js";
 export { createListCustomersByCollector } from "./createListCustomersByCollector.js";

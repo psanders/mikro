@@ -17,9 +17,11 @@ import sharp from "sharp";
 import { agentDisplayName } from "../utils/agentNames.js";
 import { maritalStatusLabel } from "../schemas/applicationForm.js";
 import {
+  APPLICATION_ORIGIN_LABELS_ES,
   APPLICATION_STATUS_LABELS,
   BUSINESS_TYPE_LABELS,
-  PROVINCE_LABELS
+  PROVINCE_LABELS,
+  type ApplicationOrigin
 } from "../schemas/application.js";
 import {
   PAGE_H,
@@ -118,10 +120,26 @@ export interface SummaryCredit {
   }[];
 }
 
+/** The muted line under the title: id · date · status · origin (when known). */
+export function summaryHeaderLine(
+  data: Pick<SolicitudSummaryData, "id" | "createdAt" | "status" | "origin">
+): string {
+  const status =
+    APPLICATION_STATUS_LABELS[data.status as keyof typeof APPLICATION_STATUS_LABELS] ?? data.status;
+  return [
+    `#${data.id.slice(0, 8).toUpperCase()}`,
+    formatDate(data.createdAt),
+    status,
+    ...(data.origin ? [APPLICATION_ORIGIN_LABELS_ES[data.origin]] : [])
+  ].join("    ·    ");
+}
+
 export interface SolicitudSummaryData {
   id: string;
   createdAt: Date;
   status: string;
+  /** Where the application came from (add-application-origin); shown in the header. */
+  origin?: ApplicationOrigin;
   // Solicitante
   firstName: string | null;
   lastName: string | null;
@@ -889,8 +907,6 @@ export async function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buff
   const F = resolveFonts(doc, data.fonts);
 
   const name = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || "—";
-  const statusLabel =
-    APPLICATION_STATUS_LABELS[data.status as keyof typeof APPLICATION_STATUS_LABELS] ?? data.status;
   const businessTypeLabel = data.businessType
     ? (BUSINESS_TYPE_LABELS[data.businessType] ?? data.businessType)
     : "—";
@@ -908,12 +924,7 @@ export async function renderSummaryPdf(data: SolicitudSummaryData): Promise<Buff
     .fillColor(MUTED)
     .font(F.reg)
     .fontSize(9.5)
-    .text(
-      `#${data.id.slice(0, 8).toUpperCase()}    ·    ${formatDate(data.createdAt)}    ·    ${statusLabel}`,
-      MARGIN,
-      doc.y + 3,
-      { width: CONTENT_W }
-    );
+    .text(summaryHeaderLine(data), MARGIN, doc.y + 3, { width: CONTENT_W });
 
   doc.moveDown(0.5);
   doc

@@ -24,6 +24,8 @@ Status values: `pending` · `in-progress` · `done` · `skipped` (with reason).
 
 Newest first. One line per meaningful decision or stage transition.
 
+- 2026-10-20 — Scope revised by user: no feed chip (keep the feed light); origin only in the full application. Added: application PDF header, `customers:get` ORIGIN (new `getCustomerOrigin` query; `getCustomer` untouched). Spec/tasks updated, validate --strict green. Tests: common 354, apiserver unit 676, integration 961, Playwright 11/12 with `reviewer.spec` flaky (also flaky with main's seed and without origin.spec, so pre-existing).
+- 2026-10-20 — Pencil: chip + variants strip deleted in the Mikro tab but NOT saved. My ⌘S hit another session's file (fonoster-metering Billing design, saved 12:51:49) because that session switched Pen's active canvas. Reported to user; waiting on a free Pen window before saving.
 - 2026-10-20 — Local build vs prod: desktop release bundle (VITE_API_URL=prod, updater off) at mods/dashboard/src-tauri/target/release/bundle/macos/Mikro.app (main checkout's shared target dir); CLI from this worktree verified read-only against prod. Old prod server ignores --origin, so ctl re-checks rows client-side (bd98d09). Waiting on user test, then PR + sync gate.
 - 2026-10-20 — Tests green. Gotcha: dashboard must import common runtime values from `@mikro/common/schemas`; the root barrel blanks the page (server-only deps) and typecheck doesn't catch it. One integration timeout (copilot statement PDF) was load from parallel runs; passes alone.
 - 2026-10-20 — Feed card chip needs the new server (feed state gains `origin`); card hides the chip against older servers. Panel row works against prod today.

@@ -110,6 +110,7 @@ import {
 import { createCreateCustomer } from "../../api/customers/createCreateCustomer.js";
 import { createUpdateCustomer } from "../../api/customers/createUpdateCustomer.js";
 import { createGetCustomer } from "../../api/customers/createGetCustomer.js";
+import { createGetCustomerOrigin } from "../../api/customers/createGetCustomerOrigin.js";
 import { createListCustomers } from "../../api/customers/createListCustomers.js";
 import { createListCustomersByCollector } from "../../api/customers/createListCustomersByCollector.js";
 import { createExportCollectorCustomers } from "../../api/customers/createExportCollectorCustomers.js";
@@ -376,6 +377,14 @@ export const protectedRouter = router({
    */
   getCustomer: protectedProcedure.input(getCustomerSchema).query(async ({ ctx, input }) => {
     const fn = createGetCustomer(ctx.db);
+    return fn(input);
+  }),
+
+  /**
+   * Where a customer came from: the origin of their converted application.
+   */
+  getCustomerOrigin: protectedProcedure.input(getCustomerSchema).query(async ({ ctx, input }) => {
+    const fn = createGetCustomerOrigin(ctx.db as unknown as PrismaClient);
     return fn(input);
   }),
 

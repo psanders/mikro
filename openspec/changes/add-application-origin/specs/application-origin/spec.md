@@ -59,3 +59,26 @@ The origin SHALL NOT expose which ad, ad set or campaign produced the applicatio
 
 - **WHEN** an application's status is `IN_REVIEW`
 - **THEN** `applications:list` shows "En evaluación" in the `STATUS` column
+
+### Requirement: The application PDF shows the origin
+
+The application summary PDF SHALL print the application's origin, in Spanish, in its header next to the date and status.
+
+#### Scenario: Origin in the PDF header
+
+- **WHEN** the PDF is generated for an application whose origin is `organic`
+- **THEN** its header reads `<date> · <status> · Formulario (orgánico)`
+
+### Requirement: The CLI shows a customer's origin
+
+`customers:get` SHALL print an `ORIGIN:` line with the origin of the application that was converted into this customer (the most recent one if there are several). When no converted application links to the customer, it SHALL print `—`.
+
+#### Scenario: Customer converted from an ad application
+
+- **WHEN** an operator runs `customers:get` for a customer whose converted application's origin is `ad`
+- **THEN** it prints `ORIGIN: Form (ad)`
+
+#### Scenario: Customer without an application
+
+- **WHEN** an operator runs `customers:get` for a customer created directly, with no converted application
+- **THEN** it prints `ORIGIN: —`

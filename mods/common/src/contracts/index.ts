@@ -7,7 +7,7 @@
 export { renderContractPdf } from "./generator.js";
 export { buildContractDataFromCustomer } from "./customerContract.js";
 export type { CustomerContractIdentity, CustomerContractTerms } from "./customerContract.js";
-export { renderSummaryPdf } from "./summaryGenerator.js";
+export { renderSummaryPdf, summaryHeaderLine } from "./summaryGenerator.js";
 export type { ContractData, ContractFrequency } from "./types.js";
 export type {
   SolicitudSummaryData,
