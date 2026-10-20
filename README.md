@@ -140,6 +140,20 @@ is sent unless all four fields are set:
 
 `from` is a Twilio number or a Messaging Service SID (`MG…`). The message is sent as-is.
 
+## Install the CLI (`mikro`)
+
+To use `mikro` from anywhere on your machine, build and link `@mikro/ctl`:
+
+```bash
+npm install
+npm run build -w @mikro/ctl
+npm link -w @mikro/ctl
+mikro --help
+```
+
+The link is a symlink to this repo, so just rebuild after code changes. If `mikro` isn't found,
+add `$(npm prefix -g)/bin` to your `PATH`. Undo with `npm unlink -g @mikro/ctl`.
+
 ## Authentication
 
 The API only accepts per-user Bearer JWTs. There is no shared credential.
