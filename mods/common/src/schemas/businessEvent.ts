@@ -32,6 +32,13 @@ export const businessEventTypeEnum = z.enum([
   // A loan was renewed mid-term: old loan → RENEWED, new loan opened, net
   // disbursement posted (openspec add-loan-renewal, issue #334).
   "loan.renewed",
+  // A renewal as a process (openspec add-loan-renewal): one card per renewal.
+  "loan.renewal.started",
+  "loan.renewal.terms_updated",
+  "loan.renewal.contract_generated",
+  "loan.renewal.document_uploaded",
+  "loan.renewal.cancelled",
+  "loan.renewal.completed",
   "customer.created",
   // RETIRED: a contract is created as part of a loan, so `loan.created` covers
   // it and a standalone contract event was redundant noise. No longer produced;
@@ -191,6 +198,53 @@ const loanRenewedPayloadSchema = z.object({
   contractFilename: z.string().optional()
 });
 
+/**
+ * Display data every renewal event carries, so a feed card renders without
+ * joining the renewal. The three ids are the explicit join keys (the feed does
+ * not derive them from the event type).
+ */
+const loanRenewalEventBase = z.object({
+  renewalId: z.uuid(),
+  /** The loan being renewed (uuid) and its human-facing number. */
+  loanId: z.uuid(),
+  oldLoanNumber: z.number().int(),
+  customerId: z.uuid(),
+  /** The proposed new loan. */
+  principal: z.number(),
+  installments: z.number().int(),
+  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  installmentAmount: z.number()
+});
+
+const loanRenewalStartedPayloadSchema = loanRenewalEventBase.extend({
+  owed: z.number(),
+  net: z.number()
+});
+
+const loanRenewalContractGeneratedPayloadSchema = loanRenewalEventBase.extend({
+  contractFilename: z.string()
+});
+
+const loanRenewalDocumentUploadedPayloadSchema = loanRenewalEventBase.extend({
+  kind: z.enum(["SIGNED_CONTRACT", "DOCUMENT"]),
+  filename: z.string()
+});
+
+const loanRenewalCancelledPayloadSchema = loanRenewalEventBase.extend({
+  reason: z.string().optional()
+});
+
+const loanRenewalCompletedPayloadSchema = loanRenewalEventBase.extend({
+  newLoanId: z.uuid(),
+  newLoanNumber: z.number().int(),
+  /** What the customer still owed on the old loan at finalize. */
+  owed: z.number(),
+  /** The ledger amount: principal − owed. */
+  netDisbursed: z.number(),
+  transactionId: z.uuid(),
+  accountName: z.string()
+});
+
 const customerCreatedPayloadSchema = z.object({
   customerId: z.uuid()
 });
@@ -296,6 +350,12 @@ export const businessEventPayloadSchemas: Record<BusinessEventType, z.ZodType> =
   "loan.created": loanCreatedPayloadSchema,
   "loan.status_changed": loanStatusChangedPayloadSchema,
   "loan.renewed": loanRenewedPayloadSchema,
+  "loan.renewal.started": loanRenewalStartedPayloadSchema,
+  "loan.renewal.terms_updated": loanRenewalEventBase,
+  "loan.renewal.contract_generated": loanRenewalContractGeneratedPayloadSchema,
+  "loan.renewal.document_uploaded": loanRenewalDocumentUploadedPayloadSchema,
+  "loan.renewal.cancelled": loanRenewalCancelledPayloadSchema,
+  "loan.renewal.completed": loanRenewalCompletedPayloadSchema,
   "customer.created": customerCreatedPayloadSchema,
   "contract.generated": contractGeneratedPayloadSchema,
   "copilot.action": copilotActionPayloadSchema,

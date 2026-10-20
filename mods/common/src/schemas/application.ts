@@ -402,6 +402,23 @@ export const applicationStatusEnum = z.enum([
   "ABANDONED"
 ]);
 
+/**
+ * Statuses worth finding by search. DRAFT (never submitted) and ABANDONED (given
+ * up) have no value to someone looking up a past request, so they are left out.
+ */
+export const SEARCHABLE_APPLICATION_STATUSES = [
+  "RECEIVED",
+  "IN_REVIEW",
+  "PENDING_DECISION",
+  "APPROVED",
+  "CONVERTED",
+  "REJECTED"
+] as const satisfies readonly z.infer<typeof applicationStatusEnum>[];
+
+export function isSearchableApplicationStatus(status: string): boolean {
+  return (SEARCHABLE_APPLICATION_STATUSES as readonly string[]).includes(status);
+}
+
 /** Spanish label per status — the one list the Ops app and the solicitud PDF share. */
 export const APPLICATION_STATUS_LABELS: Record<z.infer<typeof applicationStatusEnum>, string> = {
   DRAFT: "Borrador",

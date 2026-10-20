@@ -44,8 +44,8 @@ export const createCustomerSchema = z.object({
 });
 
 /**
- * Schema for updating an existing customer.
- * Only name, nickname, phone, notes, isActive, and preferredPaymentDay can be updated.
+ * Schema for updating an existing customer. Phone and cédula are validated and
+ * normalized exactly as on creation. Nullable fields can be cleared with null.
  */
 export const updateCustomerSchema = z.object({
   id: z.uuid({ error: "Invalid customer ID" }),
@@ -59,6 +59,17 @@ export const updateCustomerSchema = z.object({
       return validatePhone(val);
     })
     .optional(),
+  idNumber: z
+    .string()
+    .min(1, "ID number is required")
+    .regex(/^\d{3}-\d{7}-\d{1}$/, "ID number must be in format 000-0000000-0")
+    .optional(),
+  collectionPoint: z.string().url("Collection point must be a valid URL").nullable().optional(),
+  homeAddress: z.string().min(1, "Home address is required").optional(),
+  jobPosition: z.string().nullable().optional(),
+  income: z.number().nullable().optional(),
+  isBusinessOwner: z.boolean().optional(),
+  assignedCollectorId: z.uuid({ error: "Invalid collector ID" }).optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
   preferredPaymentDay: dayOfWeekEnum.optional().nullable()

@@ -44,6 +44,18 @@ enum LoanStatus {
   @@map("loan_statuses")
 }
 
+// Lifecycle of a renewal process (openspec add-loan-renewal). Nothing touches
+// the loans or the ledger until COMPLETED.
+enum LoanRenewalStatus {
+  DRAFT // terms editable
+  CONTRACT_READY // contract generated from the stored terms
+  SIGNED // signed contract (or extra documents) uploaded; ready to finalize
+  COMPLETED // finalized: old loan RENEWED, new loan created, net posted
+  CANCELLED // abandoned before finalize; nothing was written elsewhere
+
+  @@map("loan_renewal_statuses")
+}
+
 enum PaymentFrequency {
   DAILY
   WEEKLY
@@ -247,6 +259,7 @@ model User {
   createdLoanNotes    LoanNote[]              @relation("CreatedLoanNotes")
   createdTransactions AccountingTransaction[] @relation("CreatedTransactions")
   uploadedDocuments   CustomerDocument[]
+  createdRenewals     LoanRenewal[]           @relation("RenewalCreatedBy")
 
   @@map("users")
 }
@@ -301,6 +314,7 @@ model Customer {
   messages  Message[]
   tags      CustomerTag[]
   documents CustomerDocument[]
+  renewals  LoanRenewal[]
 
   @@index([createdById])
   @@index([assignedCollectorId])
@@ -357,10 +371,16 @@ model CustomerDocument {
   loan   Loan?   @relation(fields: [loanId], references: [id], onDelete: SetNull)
   loanId String? @map("loan_id")
 
+  // Set while the document belongs to an open renewal (the new loan does not
+  // exist yet); finalize re-points it to the new loan via `loanId`.
+  renewal   LoanRenewal? @relation(fields: [renewalId], references: [id], onDelete: SetNull)
+  renewalId String?      @map("renewal_id")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([customerId])
   @@index([loanId])
+  @@index([renewalId])
   @@map("customer_documents")
 }
 
@@ -401,9 +421,74 @@ model Loan {
   notes      LoanNote[]
   documents  CustomerDocument[]
 
+  // Renewal processes started on this loan, and the one (if any) that created it.
+  renewals      LoanRenewal[] @relation("RenewalOfLoan")
+  renewalResult LoanRenewal?  @relation("RenewalNewLoan")
+
   @@index([customerId])
   @@index([status])
   @@map("loans")
+}
+
+/// A loan renewal as a process: proposed terms for the new loan, a contract,
+/// the signed copy, then finalize. Only finalize writes loans and the ledger.
+model LoanRenewal {
+  id     String            @id @default(uuid())
+  status LoanRenewalStatus @default(DRAFT)
+
+  // The loan being renewed (stays ACTIVE until finalize) and its customer.
+  loan       Loan     @relation("RenewalOfLoan", fields: [loanId], references: [id], onDelete: Cascade)
+  loanId     String   @map("loan_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+
+  // Proposed terms of the NEW loan. The contract and the created loan both
+  // come from these, never from what the old loan owes.
+  principal        Decimal
+  termLength       Int              @map("term_length")
+  paymentAmount    Decimal          @map("payment_amount")
+  paymentFrequency PaymentFrequency @map("payment_frequency")
+  startingDate     DateTime?        @map("starting_date")
+  nickname         String?
+  moraRate         Decimal?         @map("mora_rate")
+
+  // What the user last saw (old loan's remaining balance + mora, and the net
+  // to disburse). Finalize recomputes and compares against `quotedNet`.
+  quotedOwed Decimal?  @map("quoted_owed")
+  quotedNet  Decimal?  @map("quoted_net")
+  quotedAt   DateTime? @map("quoted_at")
+
+  // Contract generated from the terms, and the signed copy once uploaded.
+  contractFilename       String?   @map("contract_filename")
+  contractGeneratedAt    DateTime? @map("contract_generated_at")
+  signedContractFilename String?   @map("signed_contract_filename")
+
+  // Set on finalize.
+  newLoan             Loan?     @relation("RenewalNewLoan", fields: [newLoanId], references: [id], onDelete: SetNull)
+  newLoanId           String?   @unique @map("new_loan_id")
+  ledgerTransactionId String?   @map("ledger_transaction_id")
+  completedAt         DateTime? @map("completed_at")
+
+  cancelledAt  DateTime? @map("cancelled_at")
+  cancelReason String?   @map("cancel_reason")
+
+  /// Equals `loanId` while the renewal is open (DRAFT/CONTRACT_READY/SIGNED)
+  /// and NULL once it ends, so the unique constraint allows one open renewal
+  /// per loan (SQLite allows many NULLs) and cancelling frees the loan.
+  openKey String? @unique @map("open_key")
+
+  createdBy   User   @relation("RenewalCreatedBy", fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
+
+  documents CustomerDocument[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([loanId])
+  @@index([customerId])
+  @@index([status])
+  @@map("loan_renewals")
 }
 
 model Message {

@@ -1,17 +1,17 @@
 ## 0. Design gate
 
-- [ ] 0.1 Pencil: customer profile panel, renewal feed card (all statuses), renewal panel views (terms, contract, documents, finalize + NET_CHANGED re-confirm, cancel), Búsqueda solicitud row; update `renewalCards`, `cp/renewal-form-card`, "Préstamo renovado", loan search card
-- [ ] 0.2 Design sign-off from the user
+- [x] 0.1 Pencil: customer profile panel, renewal feed card (all statuses), renewal panel views (terms, contract, documents, finalize + NET_CHANGED re-confirm, cancel), Búsqueda solicitud row; update `renewalCards`, `cp/renewal-form-card`, "Préstamo renovado", loan search card
+- [x] 0.2 Design sign-off from the user
 
 ## 1. Schema + common
 
-- [ ] 1.1 Prisma: `LoanRenewal`, `CustomerDocument.renewalId`; keep RENEWED/`renewedFromLoanId`/`closedAt`/`CustomerDocument.loanId`; hand-written migration with partial unique index (one open renewal per loan)
-- [ ] 1.2 Mirror in `test/integration/setup.ts` SCHEMA_SQL
-- [ ] 1.3 `common/schemas/loanRenewal.ts`: statuses, actions, `evaluateRenewalTransition`, block codes, ES/EN labels; both barrels
-- [ ] 1.4 Zod schemas: start, update terms, quote, generate contract, upload document, cancel, finalize(`confirmedNet`), list open; retire `renewLoanSchema`
-- [ ] 1.5 `updateCustomerSchema` widened; customer-document upload/get schemas; `BUSINESS_PHOTO` in the Zod type enum
-- [ ] 1.6 `loan.renewal.*` events + payload schemas; keep `loan.renewed`
-- [ ] 1.7 `SEARCHABLE_APPLICATION_STATUSES`; `searchAllSchema` applications group
+- [x] 1.1 Prisma: `LoanRenewal`, `CustomerDocument.renewalId`; keep RENEWED/`renewedFromLoanId`/`closedAt`/`CustomerDocument.loanId`; hand-written migration with partial unique index (one open renewal per loan)
+- [x] 1.2 Mirror in `test/integration/setup.ts` SCHEMA_SQL
+- [x] 1.3 `common/schemas/loanRenewal.ts`: statuses, actions, `evaluateRenewalTransition`, block codes, ES/EN labels; both barrels (open-renewal uniqueness via a unique nullable `open_key` instead of a partial index, so Prisma sees no drift)
+- [x] 1.4 Zod schemas: start, update terms, quote, generate contract, upload document, cancel, finalize(`confirmedNet`), list open; retire `renewLoanSchema`
+- [x] 1.5 `updateCustomerSchema` widened; customer-document upload/get schemas; `BUSINESS_PHOTO` in the Zod type enum
+- [x] 1.6 `loan.renewal.*` events + payload schemas; keep `loan.renewed`
+- [x] 1.7 `SEARCHABLE_APPLICATION_STATUSES`; `searchAllSchema` applications group
 
 ## 2. Apiserver
 

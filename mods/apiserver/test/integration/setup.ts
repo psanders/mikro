@@ -197,16 +197,58 @@ CREATE TABLE "customer_documents" (
     "customer_id" TEXT NOT NULL,
     "uploaded_by_id" TEXT,
     "loan_id" TEXT,
+    "renewal_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "customer_documents_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "customer_documents_uploaded_by_id_fkey" FOREIGN KEY ("uploaded_by_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "customer_documents_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "customer_documents_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "customer_documents_renewal_id_fkey" FOREIGN KEY ("renewal_id") REFERENCES "loan_renewals" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- Loan renewals table (renewal as a process)
+CREATE TABLE "loan_renewals" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "loan_id" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
+    "principal" DECIMAL NOT NULL,
+    "term_length" INTEGER NOT NULL,
+    "payment_amount" DECIMAL NOT NULL,
+    "payment_frequency" TEXT NOT NULL,
+    "starting_date" DATETIME,
+    "nickname" TEXT,
+    "mora_rate" DECIMAL,
+    "quoted_owed" DECIMAL,
+    "quoted_net" DECIMAL,
+    "quoted_at" DATETIME,
+    "contract_filename" TEXT,
+    "contract_generated_at" DATETIME,
+    "signed_contract_filename" TEXT,
+    "new_loan_id" TEXT,
+    "ledger_transaction_id" TEXT,
+    "completed_at" DATETIME,
+    "cancelled_at" DATETIME,
+    "cancel_reason" TEXT,
+    "open_key" TEXT,
+    "created_by_id" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL,
+    CONSTRAINT "loan_renewals_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "loans" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "loan_renewals_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "loan_renewals_new_loan_id_fkey" FOREIGN KEY ("new_loan_id") REFERENCES "loans" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "loan_renewals_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- Indexes
 CREATE UNIQUE INDEX "customer_tags_customer_id_tag_key" ON "customer_tags"("customer_id", "tag");
 CREATE INDEX "customer_tags_tag_idx" ON "customer_tags"("tag");
 CREATE INDEX "customer_documents_customer_id_idx" ON "customer_documents"("customer_id");
+CREATE INDEX "customer_documents_renewal_id_idx" ON "customer_documents"("renewal_id");
+CREATE UNIQUE INDEX "loan_renewals_new_loan_id_key" ON "loan_renewals"("new_loan_id");
+CREATE UNIQUE INDEX "loan_renewals_open_key_key" ON "loan_renewals"("open_key");
+CREATE INDEX "loan_renewals_loan_id_idx" ON "loan_renewals"("loan_id");
+CREATE INDEX "loan_renewals_customer_id_idx" ON "loan_renewals"("customer_id");
+CREATE INDEX "loan_renewals_status_idx" ON "loan_renewals"("status");
 CREATE INDEX "loan_notes_loan_id_idx" ON "loan_notes"("loan_id");
 CREATE INDEX "loan_notes_created_at_idx" ON "loan_notes"("created_at");
 CREATE INDEX "user_roles_user_id_idx" ON "user_roles"("user_id");
