@@ -54,6 +54,10 @@ updates:
       - dependency-name: "react-native-*"
       - dependency-name: "@react-native/*"
       - dependency-name: "@react-native-*/*"
+      # The Tauri JS packages must stay in step with the Rust crates in
+      # src-tauri (their version updates are off — see the cargo block), and PR
+      # checks never build the desktop shell.
+      - dependency-name: "@tauri-apps/*"
       # Pinned on purpose (root `overrides`).
       - dependency-name: "react"
       - dependency-name: "react-dom"
