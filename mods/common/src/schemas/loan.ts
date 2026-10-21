@@ -85,7 +85,7 @@ export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCE
 
 /**
  * Terminal statuses only (for updateLoanStatus). ACTIVE cannot be set via this endpoint,
- * and neither can RENEWED — only `renewLoan` produces it, atomically with the new loan.
+ * and neither can RENEWED — only finalizing a renewal produces it, atomically with the new loan.
  */
 export const updateLoanStatusStatusEnum = z.enum(["COMPLETED", "DEFAULTED", "CANCELLED"]);
 
@@ -133,41 +133,6 @@ export const listLoansByCustomerSchema = z.object({
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional()
 });
-
-/**
- * Schema for quoting a renewal: what the customer still owes on an ACTIVE loan.
- */
-export const getRenewalQuoteSchema = z.object({
-  loanId: z.number().int().positive("Loan ID must be a positive integer")
-});
-
-/**
- * Schema for renewing a loan mid-term: closes `loanId` as RENEWED and opens a new
- * loan for the same customer. The new loan carries the full `principal`; only
- * `principal − payoffAmount` is disbursed (and posted as a WITHDRAWAL).
- */
-export const renewLoanSchema = z
-  .object({
-    loanId: z.number().int().positive("Loan ID must be a positive integer"),
-    payoffAmount: z.number().min(0, "Payoff cannot be negative"),
-    principal: z.number().positive("Principal must be positive"),
-    termLength: z.number().int().positive("Term length must be a positive integer"),
-    paymentAmount: z.number().positive("Payment amount must be positive"),
-    paymentFrequency: paymentFrequencyEnum,
-    startingDate: safeOptionalDate,
-    nickname: z.string().max(100).optional(),
-    moraRate: z.number().min(0).max(1, "moraRate must be between 0 and 1").optional(),
-    /** Account the net disbursement leaves from. Defaults to `accounting.disbursementAccountId`. */
-    disbursementAccountId: z.uuid({ error: "Invalid account ID" }).optional(),
-    /** Render and store the new loan's contract in the same operation. */
-    generateContract: z.boolean().default(true),
-    maritalStatus: z.string().trim().max(40).optional(),
-    occupation: z.string().trim().max(80).optional()
-  })
-  .refine((v) => v.payoffAmount < v.principal, {
-    message: "The payoff must be less than the new principal",
-    path: ["payoffAmount"]
-  });
 
 /**
  * Input type for creating a loan.
@@ -219,12 +184,6 @@ export type UpdateLoanStatusInput = z.infer<typeof updateLoanStatusSchema>;
  * Input type for updating a loan's nickname.
  */
 export type UpdateLoanNicknameInput = z.infer<typeof updateLoanNicknameSchema>;
-
-/** Input type for the renewal quote. */
-export type GetRenewalQuoteInput = z.infer<typeof getRenewalQuoteSchema>;
-
-/** Input type for renewing a loan. */
-export type RenewLoanInput = z.input<typeof renewLoanSchema>;
 
 /**
  * Loan type enum type.

@@ -620,14 +620,14 @@ export function createCopilotChat(deps: CopilotChatDeps) {
             message: "Formulario de préstamo abierto. El fundador completará los datos."
           };
         } else if (tc.name === "openRenewalForm") {
-          // Writes nothing: just opens the renewal card. The card loads the
-          // quote and calls renewLoan directly.
+          // Writes nothing: just shows the renewal card. The card starts the
+          // renewal (or opens the one in progress) from the dock.
           const raw = Number(tc.args?.loanId);
           renewalForm = Number.isInteger(raw) && raw > 0 ? { loanId: raw } : {};
           result = {
             success: true,
             message:
-              "Formulario de renovación abierto. El fundador revisará el saldo y los términos."
+              "Tarjeta de renovación abierta. El fundador iniciará o continuará la renovación desde el panel."
           };
         } else {
           // Existing business read tool → shared executor.
@@ -661,7 +661,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
         : loanForm
           ? "Listo. Completá los datos del préstamo y lo creo."
           : renewalForm
-            ? "Listo. Revisá el saldo pendiente y los términos nuevos para renovar."
+            ? "Listo. Abrí la renovación desde la tarjeta para revisar los términos."
             : document
               ? `Aquí tienes el estado de cuenta: ${document.filename}.`
               : "");

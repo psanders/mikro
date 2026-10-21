@@ -434,7 +434,7 @@ describe("Founder Feed Integration", () => {
         "cx.handoff_requested",
         // Written by the conversation audit run (cron or copilot tool).
         "conversation.audited",
-        // Written inside renewLoan's own transaction (createRenewLoan).
+        // Retired one-step renewal; kept in the catalog for rows it already wrote.
         "loan.renewed",
         // Renewal process events are written inside each renewal function's own
         // transaction, so the feed never shows a step that rolled back.

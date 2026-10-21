@@ -352,6 +352,11 @@ export const finalizeLoanRenewalSchema = z.object({
   accountId: z.uuid({ error: "Invalid account ID" }).optional()
 });
 
+/** The open renewal of a loan (by its human loan number), if any. */
+export const getOpenLoanRenewalSchema = z.object({
+  loanId: z.number().int().positive("Loan ID must be a positive integer")
+});
+
 export const listOpenLoanRenewalsSchema = z.object({
   limit: z.number().int().positive().max(100).optional()
 });
@@ -369,5 +374,6 @@ export type UploadRenewalSignedContractInput = z.infer<typeof uploadRenewalSigne
 export type UploadRenewalDocumentInput = z.infer<typeof uploadRenewalDocumentSchema>;
 export type CancelLoanRenewalInput = z.infer<typeof cancelLoanRenewalSchema>;
 export type FinalizeLoanRenewalInput = z.infer<typeof finalizeLoanRenewalSchema>;
+export type GetOpenLoanRenewalInput = z.infer<typeof getOpenLoanRenewalSchema>;
 export type ListOpenLoanRenewalsInput = z.infer<typeof listOpenLoanRenewalsSchema>;
 export type ListLoanRenewalsByCustomerInput = z.infer<typeof listLoanRenewalsByCustomerSchema>;

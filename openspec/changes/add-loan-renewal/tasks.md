@@ -24,8 +24,8 @@
 
 ## 3. Copilot + ctl
 
-- [ ] 3.1 `openRenewalForm` starts/returns a renewal; dock opens the panel; remove `RenewalFormCard`
-- [ ] 3.2 `loans:renew` starts a renewal; cancel/finalize subcommands
+- [x] 3.1 `openRenewalForm` shows a card that starts (or finds the open) renewal and opens the panel; `RenewalFormCard`, `renewLoan`, `getRenewalQuote` removed
+- [x] 3.2 `loans:renew` starts a renewal; `renewContract`, `renewSign`, `renewFinalize`, `renewCancel`
 
 ## 4. Dashboard
 

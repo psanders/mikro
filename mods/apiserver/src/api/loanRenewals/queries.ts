@@ -9,11 +9,13 @@ import {
   ValidationError,
   getLoanRenewalQuoteSchema,
   getLoanRenewalSchema,
+  getOpenLoanRenewalSchema,
   isOpenRenewalStatus,
   listLoanRenewalsByCustomerSchema,
   listOpenLoanRenewalsSchema,
   roundMoney,
   type GetLoanRenewalInput,
+  type GetOpenLoanRenewalInput,
   type GetLoanRenewalQuoteInput,
   type ListLoanRenewalsByCustomerInput,
   type ListOpenLoanRenewalsInput,
@@ -32,6 +34,21 @@ export function createGetLoanRenewal(client: PrismaClient) {
   return async (raw: GetLoanRenewalInput): Promise<LoanRenewalView> => {
     const { id } = parse(getLoanRenewalSchema, raw);
     return viewOf(await loadRenewal(client, id));
+  };
+}
+
+/**
+ * The renewal still in progress on a loan (by its human number), or null. Lets
+ * "Renovar" open the existing renewal instead of trying to start a second one.
+ */
+export function createGetOpenLoanRenewal(client: PrismaClient) {
+  return async (raw: GetOpenLoanRenewalInput): Promise<LoanRenewalView | null> => {
+    const { loanId } = parse(getOpenLoanRenewalSchema, raw);
+    const r = await client.loanRenewal.findFirst({
+      where: { openKey: { not: null }, loan: { loanId } },
+      include: { loan: true, customer: true }
+    });
+    return r ? viewOf(r) : null;
   };
 }
 

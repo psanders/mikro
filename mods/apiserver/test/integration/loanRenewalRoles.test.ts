@@ -146,6 +146,23 @@ describe("renewals and customer documents by role", () => {
     expect(await code(as(["ADMIN"]).startLoanRenewal({ loanId: loan.loanId }))).to.equal("OK");
   });
 
+  it("finds the renewal in progress on a loan, and none once it is cancelled", async () => {
+    const { loan } = await seed();
+    const reviewer = as(["REVIEWER"]);
+    expect(await reviewer.getOpenLoanRenewal({ loanId: loan.loanId })).to.equal(null);
+
+    const started = await reviewer.startLoanRenewal({ loanId: loan.loanId });
+    const open = await reviewer.getOpenLoanRenewal({ loanId: loan.loanId });
+    expect(open?.id).to.equal(started.id);
+    expect(open?.status).to.equal("DRAFT");
+
+    await reviewer.cancelLoanRenewal({ id: started.id });
+    expect(await reviewer.getOpenLoanRenewal({ loanId: loan.loanId })).to.equal(null);
+    expect(await code(as(["COLLECTOR"]).getOpenLoanRenewal({ loanId: loan.loanId }))).to.equal(
+      "FORBIDDEN"
+    );
+  });
+
   it("collectors are rejected on every renewal and customer-document procedure", async () => {
     const { customer, loan } = await seed();
     const started = await as(["ADMIN"]).startLoanRenewal({ loanId: loan.loanId });

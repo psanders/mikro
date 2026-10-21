@@ -144,9 +144,14 @@ Admins and reviewers SHALL both be able to start, edit, generate the contract fo
 
 ### Requirement: Renewal via ctl
 
-The `ctl` SHALL provide `loans:renew` to start a renewal for a loan (showing the quote and printing the renewal id), and subcommands to cancel and finalize it.
+The `ctl` SHALL provide commands to run the whole process: `loans:renew` starts a renewal for a loan (printing the renewal id, the terms, what is owed and the net), `loans:renewContract` generates and saves the contract, `loans:renewSign` attaches the signed PDF, `loans:renewFinalize` shows the live net and, after confirmation, finalizes with that net, and `loans:renewCancel` cancels. The one-step `renewLoan` mutation SHALL NOT exist.
 
 #### Scenario: ctl starts a renewal
 
 - **WHEN** an operator runs `loans:renew` for an ACTIVE loan
-- **THEN** a DRAFT renewal is created and its id and quote are printed
+- **THEN** a DRAFT renewal is created, its id and quote are printed, and nothing is closed, created or posted
+
+#### Scenario: ctl finalizes with the confirmed net
+
+- **WHEN** an operator runs `loans:renewFinalize` on a signed renewal and confirms
+- **THEN** the net shown is sent as `confirmedNet`, and a mismatch with the recomputed net fails with nothing written

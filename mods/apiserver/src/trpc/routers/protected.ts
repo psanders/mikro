@@ -78,8 +78,6 @@ import {
   getApplicationContractSchema,
   generateApplicationContractSchema,
   generateCustomerContractSchema,
-  getRenewalQuoteSchema,
-  renewLoanSchema,
   listCustomerDocumentsSchema,
   convertApplicationSchema,
   updateApplicationSchema,
@@ -101,6 +99,7 @@ import {
   startLoanRenewalSchema,
   updateRenewalTermsSchema,
   getLoanRenewalSchema,
+  getOpenLoanRenewalSchema,
   getLoanRenewalQuoteSchema,
   generateRenewalContractSchema,
   uploadRenewalSignedContractSchema,
@@ -142,6 +141,7 @@ import {
   createStartLoanRenewal,
   createUpdateRenewalTerms,
   createGetLoanRenewal,
+  createGetOpenLoanRenewal,
   createGetLoanRenewalQuote,
   createGenerateRenewalContract,
   createGetRenewalContract,
@@ -185,8 +185,6 @@ import { createListLoansByCustomer } from "../../api/loans/createListLoansByCust
 import { createCalculateLoan } from "../../api/loans/createCalculateLoan.js";
 import { createGetLoanByLoanId } from "../../api/loans/createGetLoanByLoanId.js";
 import { createGetLoanEvaluationSnapshot } from "../../api/loans/createGetLoanEvaluationSnapshot.js";
-import { createGetRenewalQuote } from "../../api/loans/createGetRenewalQuote.js";
-import { createRenewLoan } from "../../api/loans/createRenewLoan.js";
 import {
   createGetLoanHealth,
   type GetLoanHealthOptions
@@ -683,25 +681,6 @@ export const protectedRouter = router({
       return fn(input);
     }),
 
-  /**
-   * What the customer still owes on an ACTIVE loan, for renewing it mid-term:
-   * snapshot remaining balance + net mora = suggested payoff.
-   */
-  getRenewalQuote: adminProcedure.input(getRenewalQuoteSchema).query(async ({ ctx, input }) => {
-    return createGetRenewalQuote(ctx.db)(input);
-  }),
-
-  /**
-   * Renew a loan mid-term, atomically: old loan → RENEWED, new loan for the
-   * full principal, net WITHDRAWAL (principal − payoff), optional contract tied
-   * to the new loan. The `loan.renewed` event is written inside the same
-   * transaction (no `.meta({event})`), so the feed never shows a rolled-back
-   * renewal.
-   */
-  renewLoan: adminProcedure.input(renewLoanSchema).mutation(async ({ ctx, input }) => {
-    return createRenewLoan(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
-  }),
-
   // ==================== Loan renewal process ====================
   // Admins AND reviewers run renewals (openspec add-loan-renewal). Every step
   // only writes the renewal until `finalizeLoanRenewal`, which closes the old
@@ -726,6 +705,13 @@ export const protectedRouter = router({
   getLoanRenewal: reviewerProcedure.input(getLoanRenewalSchema).query(async ({ ctx, input }) => {
     return createGetLoanRenewal(ctx.db as unknown as PrismaClient)(input);
   }),
+
+  /** The renewal in progress on a loan (by its number), or null. */
+  getOpenLoanRenewal: reviewerProcedure
+    .input(getOpenLoanRenewalSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetOpenLoanRenewal(ctx.db as unknown as PrismaClient)(input);
+    }),
 
   /** What is owed on the old loan now and the resulting net, vs what was last shown. */
   getLoanRenewalQuote: reviewerProcedure

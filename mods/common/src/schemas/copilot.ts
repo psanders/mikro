@@ -81,10 +81,10 @@ export const copilotLoanFormSchema = z.object({
 export type CopilotLoanForm = z.infer<typeof copilotLoanFormSchema>;
 
 /**
- * The interactive renewal form the copilot opens when the founder asks to
- * renew a loan. Carries only an optional loan number to pre-seed the card —
- * nothing is written here; the card loads `getRenewalQuote` and calls
- * `renewLoan` directly.
+ * The renewal card the copilot shows when the founder asks to renew a loan.
+ * Carries only an optional loan number to pre-seed it — nothing is written
+ * here; the card starts the renewal (`startLoanRenewal`) or opens the one in
+ * progress, and the renewal panel takes over.
  */
 export const copilotRenewalFormSchema = z.object({
   /** Loan number (e.g. 10034) the founder named, if any. */

@@ -31,7 +31,7 @@ export interface StoredContract extends GeneratedContract {
 
 /**
  * Render a customer's contract PDF and write it to contract storage. Shared by
- * `generateCustomerContract` and `renewLoan`; the caller records the
+ * `generateCustomerContract` and the renewal contract; the caller records the
  * `CustomerDocument` row (inside its own transaction when it has one). The file
  * is stored by sha256, so a rolled-back caller leaves at most an unreferenced
  * file, never a dangling row.

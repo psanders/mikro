@@ -5,6 +5,7 @@ export { createStartLoanRenewal } from "./createStartLoanRenewal.js";
 export { createUpdateRenewalTerms } from "./createUpdateRenewalTerms.js";
 export {
   createGetLoanRenewal,
+  createGetOpenLoanRenewal,
   createGetLoanRenewalQuote,
   createListOpenLoanRenewals,
   createListLoanRenewalsByCustomer,

@@ -388,16 +388,17 @@ export const openLoanFormTool: ToolFunction = {
 };
 
 /**
- * Open the interactive loan renewal card (openspec add-loan-renewal). A DIRECT
- * tool: it writes nothing — the card loads the payoff quote, the founder sets
- * the new terms, and the card calls renewLoan directly.
+ * Open a loan renewal (openspec add-loan-renewal). A DIRECT tool that writes
+ * nothing itself: it hands the dock a card that starts the renewal (or opens the
+ * one already in progress) and opens the renewal panel, where the terms, the
+ * contract, the signed copy and the final confirmation happen.
  */
 export const openRenewalFormTool: ToolFunction = {
   type: "function",
   function: {
     name: "openRenewalForm",
     description:
-      "Abrir el formulario para renovar un préstamo activo a mitad de término (el cliente aún debe parte y el préstamo nuevo cubre ese saldo). Úsalo cuando el fundador pida renovar un préstamo (ej: 'renueva el préstamo 10034', 'Ana quiere renovar'). NO calcules el saldo ni recopiles los términos tú mismo, y NO uses updateLoanStatus ni createLoan para renovar: esta herramienta solo abre una tarjeta donde se ve el saldo pendiente, se ingresan los términos nuevos y se ejecuta la renovación (cierre del préstamo anterior, préstamo nuevo, desembolso neto y contrato) en un solo paso. Si el fundador nombró el número de préstamo, pásalo en loanId.",
+      "Iniciar u abrir la renovación de un préstamo activo a mitad de término (el cliente aún debe parte y el préstamo nuevo cubre ese saldo). Úsalo cuando el fundador pida renovar un préstamo (ej: 'renueva el préstamo 10034', 'Ana quiere renovar'). NO calcules el saldo ni recopiles los términos tú mismo, y NO uses updateLoanStatus ni createLoan para renovar: esta herramienta solo muestra una tarjeta que abre el panel de renovación, donde se revisan los términos, se genera el contrato, se sube el firmado y se finaliza (o se cancela). Si el fundador nombró el número de préstamo, pásalo en loanId.",
     parameters: {
       type: "object",
       properties: {

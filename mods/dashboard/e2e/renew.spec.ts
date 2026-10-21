@@ -1,17 +1,17 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Loan renewal golden path (openspec add-loan-renewal): from a loan search
- * result, "Renovar" opens the copilot's renewal card, which loads the real
- * payoff quote and renews against the real server. There is no LLM in e2e, so
- * only the copilotChat round-trip is stubbed — to the exact reply the model
- * produces when it calls openRenewalForm. Seeded by seed-e2e.mjs ("Rosa
- * Renovación": 10 × RD$1,300 weekly, 8 paid).
+ * Starting a renewal from the copilot (openspec add-loan-renewal): from a loan
+ * search result, "Renovar" asks the copilot, whose renewal card starts the
+ * renewal against the real server and opens the renewal panel. There is no LLM
+ * in e2e, so only the copilotChat round-trip is stubbed — to the exact reply
+ * the model produces when it calls openRenewalForm. Seeded by seed-e2e.mjs
+ * ("Rosa Renovación": 10 × RD$1,300 weekly, 8 paid, so RD$2,600 still owed).
  */
 import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
-test("an admin renews a loan from search and sees it in the feed", async ({ page }) => {
+test("an admin starts a renewal from the copilot and the panel opens on it", async ({ page }) => {
   await login(page, "admin");
 
   await page.goto("/ops/buscar");
@@ -30,7 +30,7 @@ test("an admin renews a loan from search and sees it in the feed", async ({ page
         {
           result: {
             data: {
-              reply: "Listo. Revisá el saldo pendiente y los términos nuevos para renovar.",
+              reply: "Listo. Abrí la renovación desde la tarjeta para revisar los términos.",
               renewalForm: { loanId }
             }
           }
@@ -42,17 +42,19 @@ test("an admin renews a loan from search and sees it in the feed", async ({ page
   await renovar.click();
   await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
-  // The card loads the real quote: 2 cuotas × RD$1,300 still owed.
-  await expect(page.getByText("Saldo pendiente", { exact: true })).toBeVisible();
-  await expect(page.getByText("RD$2,600").first()).toBeVisible();
-  await expect(page.getByText("A desembolsar", { exact: true })).toBeVisible();
+  // The card starts the renewal: a DRAFT that has written nothing else.
+  await page.getByTestId("renewal-card-start").click();
+  const panel = page.getByTestId("renewal-panel");
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "DRAFT");
+  await expect(panel.getByTestId("renewal-owed")).toHaveText("RD$2,600");
+  await expect(panel.getByTestId("renewal-principal")).toHaveText("RD$10,000");
+  await expect(panel.getByTestId("renewal-net")).toHaveText("RD$7,400");
 
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Renovar préstamo" }).click();
-  await expect(page.getByRole("button", { name: "Préstamo renovado" })).toBeVisible();
-  expect((await download).suggestedFilename()).toMatch(/^contrato-.*\.pdf$/);
-
-  // The renewal lands in the feed, naming both loans.
-  await page.goto("/ops");
-  await expect(page.getByText(new RegExp(`renovó el préstamo #${loanId} → #\\d+`))).toBeVisible();
+  // Asking again picks up the same renewal instead of starting a second one.
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await page.getByTestId("renewal-card-open").click();
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "DRAFT");
 });

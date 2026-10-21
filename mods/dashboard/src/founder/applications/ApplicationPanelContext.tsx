@@ -3,22 +3,25 @@
  *
  * Opens the application side panel from anywhere in the founder app (feed
  * cards, closed group, search) on a given view. One panel at a time; nested
- * views go "← Solicitud de …" back to the detail view. The loan calculator
- * shares the slot, so opening one replaces the other.
+ * views go "← Solicitud de …" back to the detail view. The loan calculator and
+ * the renewal panel share the slot, so opening one replaces the other.
  */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { LoanCalculatorPanel } from "../calculator/LoanCalculatorPanel";
 import { ApplicationPanel } from "./ApplicationPanel";
+import { RenewalPanel } from "../renewals/RenewalPanel";
 
 export type ApplicationView = "detail" | "edit" | "evidence" | "contract" | "disburse" | "assign";
 
 type PanelState =
   | { kind: "application"; applicationId: string; view: ApplicationView }
-  | { kind: "calculator" };
+  | { kind: "calculator" }
+  | { kind: "renewal"; renewalId: string };
 
 interface ApplicationPanelApi {
   open: (applicationId: string, view?: ApplicationView) => void;
   openCalculator: () => void;
+  openRenewal: (renewalId: string) => void;
   close: () => void;
 }
 
@@ -32,13 +35,21 @@ export function ApplicationPanelProvider({ children }: { children: ReactNode }) 
     []
   );
   const openCalculator = useCallback(() => setState({ kind: "calculator" }), []);
+  const openRenewal = useCallback(
+    (renewalId: string) => setState({ kind: "renewal", renewalId }),
+    []
+  );
   const close = useCallback(() => setState(null), []);
-  const api = useMemo(() => ({ open, openCalculator, close }), [open, openCalculator, close]);
+  const api = useMemo(
+    () => ({ open, openCalculator, openRenewal, close }),
+    [open, openCalculator, openRenewal, close]
+  );
 
   return (
     <Ctx.Provider value={api}>
       {children}
       {state?.kind === "calculator" && <LoanCalculatorPanel onClose={close} />}
+      {state?.kind === "renewal" && <RenewalPanel renewalId={state.renewalId} onClose={close} />}
       {state?.kind === "application" && (
         <ApplicationPanel
           applicationId={state.applicationId}

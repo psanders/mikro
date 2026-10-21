@@ -310,10 +310,6 @@ export {
   listLoansSchema,
   listLoansByCollectorSchema,
   listLoansByCustomerSchema,
-  getRenewalQuoteSchema,
-  renewLoanSchema,
-  type GetRenewalQuoteInput,
-  type RenewLoanInput,
   type CreateLoanInput,
   type CalculateLoanInput,
   type GetLoanInput,
@@ -502,6 +498,7 @@ export {
   cancelLoanRenewalSchema,
   finalizeLoanRenewalSchema,
   listOpenLoanRenewalsSchema,
+  getOpenLoanRenewalSchema,
   listLoanRenewalsByCustomerSchema,
   type LoanRenewalStatus,
   type RenewalAction,
@@ -523,6 +520,7 @@ export {
   type CancelLoanRenewalInput,
   type FinalizeLoanRenewalInput,
   type ListOpenLoanRenewalsInput,
+  type GetOpenLoanRenewalInput,
   type ListLoanRenewalsByCustomerInput
 } from "./loanRenewal.js";
 

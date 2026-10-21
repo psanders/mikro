@@ -63,11 +63,11 @@ export interface LoanFormMessage {
   provenance?: CopilotProvenance;
 }
 
-/** The interactive loan renewal card; writes nothing until the founder submits. */
+/** The renewal card; writes nothing until the founder starts the renewal (then the panel takes over). */
 export interface RenewalFormMessage {
   kind: "renewalForm";
   id: string;
-  /** Loan number the founder named, to load its quote right away. */
+  /** Loan number the founder named, to pre-fill the card. */
   loanId?: number;
   provenance?: CopilotProvenance;
 }
@@ -156,49 +156,4 @@ export interface CapabilityChip {
 export interface CapabilityGroup {
   verb: CapabilityVerb;
   chips: CapabilityChip[];
-}
-
-/** What the customer still owes on the loan being renewed (`getRenewalQuote`). */
-export interface RenewalQuoteView {
-  loanId: number;
-  customer: { id: string; name: string };
-  currentTerms: {
-    principal: number;
-    termLength: number;
-    paymentAmount: number;
-    paymentFrequency: ContractFrequency;
-  };
-  cuotasCovered: number;
-  remainingBalance: number;
-  moraAccrued: number;
-  suggestedPayoff: number;
-}
-
-/** A ledger account a disbursement may come from (`listDisbursementAccounts`). */
-export interface DisbursementAccountOption {
-  id: string;
-  name: string;
-  isDefault: boolean;
-  available: boolean;
-}
-
-/** The values the renewal card submits to `renewLoan`. */
-export interface RenewalFormValues {
-  loanId: number;
-  payoffAmount: number;
-  principal: number;
-  termLength: number;
-  paymentAmount: number;
-  paymentFrequency: ContractFrequency;
-  startingDate?: string;
-  disbursementAccountId?: string;
-  generateContract: boolean;
-}
-
-/** Shown on the card once the renewal went through. */
-export interface RenewalOutcome {
-  oldLoanId: number;
-  newLoanId: number;
-  netDisbursed: number;
-  accountName: string;
 }
