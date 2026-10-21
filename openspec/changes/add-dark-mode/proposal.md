@@ -35,5 +35,5 @@ The Ops app and the Mikro Decisión extension are light only. Evaluators and the
   - token codemod across the components;
   - e2e `theme.spec.ts`.
 - `mods/score`: panel colors become CSS variables with a `prefers-color-scheme: dark` block; options page dark styles.
-- `pencil.pen`: themed variables + section 11.
+- `designs/mikro.lib.pen` (themed variables) + `designs/ops.pen` (section 11).
 - No API, data or config changes.
