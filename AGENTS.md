@@ -52,9 +52,9 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
 - **`npm update <pkg>` cannot force a transitive security fix** (arborist logs
   `placeDep … KEEP` when the locked version still satisfies the range, and
   `npm audit fix` fails with ERESOLVE on the peer-dep tree). Let Dependabot's
-  grouped PR do the lockfile edit; for something it cannot reach (a parent pins
-  an exact version), use a root `overrides` entry and note why here, and remove
-  it when the parent moves.
+  grouped PR do the lockfile edit; for something it cannot reach, use a root `overrides` entry (below) and
+  remove it when the parent moves. Closing a Dependabot security PR by hand can
+  make it skip that version for good, so supersede rather than close them.
 - **Never run `npm audit fix --force`.** It proposes cross-major jumps (it once
   suggested downgrading Expo to a different major). Expo/React Native packages
   follow the Expo SDK and `@tauri-apps/*` follows the Rust crates in `src-tauri`;
@@ -65,6 +65,35 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   before merging. Advisories with no patched version (braces, http-cache-semantics,
   node-forge, sprintf-js at the time of writing) stay open until upstream fixes
   them — do not dismiss them.
+
+### Security `overrides` (root `package.json`)
+
+Transitive advisories the grouped Dependabot PR cannot reach are pinned with
+`overrides` to the patched release of the SAME major line (verified with the
+full test suite — never cross-major). Delete an entry once its parent ships a
+version that resolves to the patched release on its own; `npm ls <pkg>` shows
+who still asks for the old one.
+
+| Override                                                          | Why                                                                                  |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `axios` 1.20.0, `smol-toml` ^1.9.0, `nx` ^22.7.12                 | `nx` (via lerna) pins `axios`/`smol-toml` to exact vulnerable versions               |
+| `handlebars` ^4.7.10, `shell-quote` ^1.11.0, `compression` ^1.8.2 | critical/high advisories in build-time and dev-server dependencies                   |
+| `ip-address` ^10.7.1, `tar` ^7.5.18, `undici` ^6.28.1             | transitive of lerna/npm tooling                                                      |
+| `follow-redirects` ^1.16.1, `postcss` ^8.5.23                     | transitive of axios / vite / tailwind                                                |
+| `postcss-selector-parser` ^7.1.6                                  | transitive of tailwind                                                               |
+| `js-yaml@^4` ^4.3.2, `@istanbuljs/load-nyc-config` → js-yaml ^3   | two majors in the tree; the 3.x copy is only reached through jest coverage           |
+| `brace-expansion@^1` / `@^2` / `@^5`                              | three majors in the tree (minimatch 3 / 5-9 / 10); each line pinned to its own patch |
+| `satori` → `fflate` 0.7.5                                         | satori's nested copy; other `fflate` consumers keep their own                        |
+
+Deliberately NOT overridden (re-check when a parent moves):
+
+- `decode-uri-component` — the fix (0.5.0) is ESM-only and its consumer
+  `query-string@7` (expo-router) is CommonJS; forcing it would break the mobile
+  router at load time.
+- `serialize-javascript` (needs mocha 12), `uuid` (7 → 11), `image-size`
+  (1 → 2) — the patched release is a new major of a dev/build tool.
+- No patched release exists yet: `braces`, `http-cache-semantics`, `node-forge`,
+  `sprintf-js`.
 
 ## Native / prebuilt-binary dependencies
 
