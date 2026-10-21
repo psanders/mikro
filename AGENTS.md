@@ -43,7 +43,8 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
 ## Dependabot (`.github/dependabot.yml`)
 
 - **Security updates arrive as ONE grouped PR per ecosystem**, version updates
-  as one weekly/monthly minor+patch PR. Before this config Dependabot raised a
+  as one weekly/monthly minor+patch PR (npm, GitHub Actions; Cargo gets security
+  updates only — the desktop shell is upgraded deliberately). Before this config Dependabot raised a
   PR per advisory, capped at 10 open and refilled the moment one merged — merging
   or closing them one by one just summoned the next batch. Do not remove the
   `groups:` blocks; if the PR list is noisy again, fix the grouping rather than
