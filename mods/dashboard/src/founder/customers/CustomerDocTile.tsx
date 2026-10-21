@@ -14,6 +14,8 @@ export interface CustomerDocTileProps {
   originalName?: string | null;
   mimeType?: string | null;
   createdAt: Date | string;
+  /** Overrides the document-type label (e.g. "Contrato firmado"). */
+  label?: string;
   onDelete?: () => void;
 }
 
@@ -26,6 +28,7 @@ export function CustomerDocTile({
   originalName,
   mimeType,
   createdAt,
+  label,
   onDelete
 }: CustomerDocTileProps) {
   const file = trpc.getCustomerDocument.useQuery({ id }, { staleTime: Infinity });
@@ -54,7 +57,7 @@ export function CustomerDocTile({
         className="truncate text-[11px] font-semibold text-brand-ink"
         title={originalName ?? ""}
       >
-        {documentTypeLabel(type)}
+        {label ?? documentTypeLabel(type)}
       </span>
       <span className="flex items-center justify-between gap-1 text-[10px] font-medium text-ds-muted">
         {date(createdAt)}

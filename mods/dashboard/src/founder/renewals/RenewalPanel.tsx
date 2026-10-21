@@ -75,6 +75,8 @@ export function RenewalPanel({ renewalId, tab, cancel, onClose }: RenewalPanelPr
       utils.listCustomerDocuments.invalidate(),
       utils.listLoanRenewalsByCustomer.invalidate(),
       utils.listLoansByCustomer.invalidate(),
+      utils.listApplicationsByCustomer.invalidate(),
+      utils.searchAll.invalidate(),
       utils.getOpenLoanRenewal.invalidate(),
       utils.listFeedEvents.invalidate(),
       utils.listOpenRenewalEvents.invalidate()

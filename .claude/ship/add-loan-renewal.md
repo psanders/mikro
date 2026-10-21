@@ -2,7 +2,7 @@
 
 Started: 2026-10-14
 Issue: #334 · Branch: `feat/loan-renewal`
-Current stage: 0/1 Design — scope CHANGED 2026-10-20 (renewal is now a multi-step process + customer profile + unified search); OpenSpec amended, Pencil designs for the new screens next; the atomic build is superseded
+Current stage: built + tested (phases 1-6); draft PR #359 awaiting the user's review; walkthrough video recorded
 
 **Scope:** Atomic "Renovar": old loan → RENEWED (closedAt, mora frozen), new loan with full principal + renewedFromLoanId, net WITHDRAWAL (principal − payoff), contract as CustomerDocument with loanId, `loan.renewed` feed event. Copilot RenewalFormCard + search-row action; ctl `loans:renew`.
 
@@ -34,3 +34,4 @@ Current stage: 0/1 Design — scope CHANGED 2026-10-20 (renewal is now a multi-s
 - 2026-10-17 — Post-merge: build + typecheck (all pkgs) green; unit 54/343/352/675 passing; integration 963 passing; Playwright 12/12. Agents unit tests need MIKRO_CONFIG_FILE=apiserver test fixture locally — the untracked mods/agents/test/fixtures/mikro.json is pre-#350 config.
 - 2026-10-20 — Scope change (user): renewal becomes a process (`LoanRenewal`: DRAFT→CONTRACT_READY→SIGNED→COMPLETED, cancel anytime), own feed card, admins+reviewers, customer profile panel, search incl. past applications (no DRAFT/ABANDONED). Payoff recomputed at finalize, affects only the ledger net. Plan: ~/.claude/plans/i-see-a-few-gleaming-flame.md. Work moved to branch `feat/renewal-process` (worktree .claude/worktrees/renewal-process, off feat/loan-renewal). OpenSpec change rewritten (proposal, design 9-17, specs loan-renewal/founder-copilot/contract-generation + new customer-profile, unified-search, tasks reset). `openspec` CLI not installed locally — specs not machine-validated.
 - 2026-10-20 — Pencil sec-12 "Renovación como proceso" drawn on board EzobQ (end of board): A feed cards per status (oddNV), B customer profile panel (Ed9ql), C renewal panel views + cancel confirm (CFqIT), D Búsqueda with applications (b9wff), E rules note (x6gM6). sec-03 marked superseded. Awaiting design sign-off; no code started.
+- 2026-10-20 — Built: phase 1 schema/common, 2 apiserver (lifecycle, roles, search, feed), 3 copilot+ctl (one-step renewLoan removed), 4 dashboard (customer panel, renewal panel, feed card, search for reviewers), 5 tests (common 383, apiserver unit 686 / integration 1011, dashboard e2e 18), walkthrough via `npm run demo:renewal`. Known gaps: Pencil sec-12 not re-synced to the final UI details (tab counts, WhatsApp link, doc labels); NET_CHANGED covered in integration + the demo, not in CI e2e.

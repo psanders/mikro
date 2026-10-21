@@ -97,6 +97,13 @@ export function DocumentsView({ renewal, viewer, refresh }: RenewalViewProps) {
                 originalName={d.originalName}
                 mimeType={d.mimeType}
                 createdAt={d.createdAt}
+                label={
+                  d.filename === renewal.signedContractFilename
+                    ? "Contrato firmado"
+                    : d.filename === renewal.contractFilename
+                      ? "Contrato (sin firmar)"
+                      : undefined
+                }
               />
             ))}
           </div>

@@ -38,10 +38,14 @@
 
 ## 5. Tests
 
-- [ ] 5.1 Unit: transition matrix; lifecycle functions; net 7,500 example; NET_CHANGED; contract excludes owed; search helpers
-- [ ] 5.2 Integration: happy path, rollback, cancel, concurrency, partial index, role matrix, search statuses
+- [x] 5.1 Unit: transition matrix; lifecycle functions; net 7,500 example; NET_CHANGED; contract excludes owed; search helpers
+- [x] 5.2 Integration: happy path, rollback, cancel, concurrency, partial index, role matrix, search statuses
 - [x] 5.3 E2E as reviewer: search → profile → renew → contract → signed → finalize; cancel; application search; customer edit + documents; admin smoke
 
 ## 6. Housekeeping
 
-- [ ] 6.1 Sync specs to shipped behavior; Pencil in sync; ship checkpoint; ctl docs
+- [x] 6.1 Sync specs to shipped behavior; Pencil in sync; ship checkpoint; ctl docs
+
+## 7. Demo
+
+- [x] 7.1 `npm run demo:renewal -w @mikro/dashboard`: recorded walkthrough of the whole process against the seeded stack (outside CI)
