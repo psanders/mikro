@@ -32,15 +32,15 @@
 - [x] 4.1 Búsqueda for reviewers; "Ver perfil"/"Renovar" open panels (no copilot)
 - [x] 4.2 Panel context: customer + renewal kinds
 - [x] 4.3 `CustomerPanel` (edit, documents, loans, applications) + shared file drop zone
-- [ ] 4.4 `LoanRenewalFeedCard` + `RenewalPanel` views; typeConfig, filters, FeedScreen wiring
+- [x] 4.4 `LoanRenewalFeedCard` + `RenewalPanel` views (terms, contract, documents, finalize, cancel); typeConfig, filters, FeedScreen wiring
 - [x] 4.5 Application search rows open the application panel
-- [ ] 4.6 Stories
+- [x] 4.6 Stories (renewal card, start card, search rows)
 
 ## 5. Tests
 
 - [ ] 5.1 Unit: transition matrix; lifecycle functions; net 7,500 example; NET_CHANGED; contract excludes owed; search helpers
 - [ ] 5.2 Integration: happy path, rollback, cancel, concurrency, partial index, role matrix, search statuses
-- [ ] 5.3 E2E as reviewer: search → profile → renew → contract → signed → finalize; cancel; application search; admin smoke
+- [x] 5.3 E2E as reviewer: search → profile → renew → contract → signed → finalize; cancel; application search; customer edit + documents; admin smoke
 
 ## 6. Housekeeping
 

@@ -10,6 +10,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { LoanCalculatorPanel } from "../calculator/LoanCalculatorPanel";
 import { ApplicationPanel } from "./ApplicationPanel";
 import { RenewalPanel } from "../renewals/RenewalPanel";
+import type { RenewalTab } from "../renewals/helpers";
 import { CustomerPanel, type CustomerTab } from "../customers/CustomerPanel";
 
 export type ApplicationView = "detail" | "edit" | "evidence" | "contract" | "disburse" | "assign";
@@ -17,13 +18,13 @@ export type ApplicationView = "detail" | "edit" | "evidence" | "contract" | "dis
 type PanelState =
   | { kind: "application"; applicationId: string; view: ApplicationView }
   | { kind: "calculator" }
-  | { kind: "renewal"; renewalId: string }
+  | { kind: "renewal"; renewalId: string; tab?: RenewalTab; cancel?: boolean }
   | { kind: "customer"; customerId: string; tab: CustomerTab };
 
 interface ApplicationPanelApi {
   open: (applicationId: string, view?: ApplicationView) => void;
   openCalculator: () => void;
-  openRenewal: (renewalId: string) => void;
+  openRenewal: (renewalId: string, opts?: { tab?: RenewalTab; cancel?: boolean }) => void;
   openCustomer: (customerId: string, tab?: CustomerTab) => void;
   close: () => void;
 }
@@ -39,7 +40,8 @@ export function ApplicationPanelProvider({ children }: { children: ReactNode }) 
   );
   const openCalculator = useCallback(() => setState({ kind: "calculator" }), []);
   const openRenewal = useCallback(
-    (renewalId: string) => setState({ kind: "renewal", renewalId }),
+    (renewalId: string, opts?: { tab?: RenewalTab; cancel?: boolean }) =>
+      setState({ kind: "renewal", renewalId, ...opts }),
     []
   );
   const openCustomer = useCallback(
@@ -57,7 +59,16 @@ export function ApplicationPanelProvider({ children }: { children: ReactNode }) 
     <Ctx.Provider value={api}>
       {children}
       {state?.kind === "calculator" && <LoanCalculatorPanel onClose={close} />}
-      {state?.kind === "renewal" && <RenewalPanel renewalId={state.renewalId} onClose={close} />}
+      {state?.kind === "renewal" && (
+        <RenewalPanel
+          // A different renewal (or a card's tab/cancel intent) starts the panel fresh.
+          key={`${state.renewalId}:${state.tab ?? ""}:${state.cancel ? "c" : ""}`}
+          renewalId={state.renewalId}
+          tab={state.tab}
+          cancel={state.cancel}
+          onClose={close}
+        />
+      )}
       {state?.kind === "customer" && (
         <CustomerPanel
           customerId={state.customerId}

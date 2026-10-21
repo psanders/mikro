@@ -308,13 +308,15 @@ for (const [first, last, biz] of [
   });
 }
 
-// An ACTIVE loan mid-term for the renewal spec (openspec add-loan-renewal):
+// ACTIVE loans mid-term for the renewal specs (openspec add-loan-renewal):
 // 10 weekly cuotas of RD$1,300, 8 already paid → RD$2,600 still owed.
-{
+// "Rosa" starts renewals from search and the copilot, "Pablo" runs one all the
+// way to finalize, "Lucía" is cancelled.
+async function seedRenewalCustomer(name, phone, idNumber) {
   const customer = await admin.createCustomer({
-    name: "Rosa Renovación",
-    phone: "+18292000050",
-    idNumber: "001-0000050-1",
+    name,
+    phone,
+    idNumber,
     homeAddress: "Calle Renovación 1",
     isBusinessOwner: true,
     assignedCollectorId: USERS.miguel.id,
@@ -339,6 +341,33 @@ for (const [first, last, biz] of [
       loanId: loan.id,
       collectedById: USERS.miguel.id
     }))
+  });
+  return customer;
+}
+
+await seedRenewalCustomer("Rosa Renovación", "+18292000050", "001-0000050-1");
+const pablo = await seedRenewalCustomer("Pablo Renovación", "+18292000051", "001-0000051-1");
+await seedRenewalCustomer("Lucía Renovación", "+18292000052", "001-0000052-1");
+
+// Past applications of Pablo (search + profile): the one that became him, and
+// two that must never be found — a DRAFT and an ABANDONED.
+for (const [i, [status, last]] of [
+  ["CONVERTED", "Renovación"],
+  ["DRAFT", "Borrador"],
+  ["ABANDONED", "Abandonado"]
+].entries()) {
+  await prisma.loanApplication.create({
+    data: {
+      sessionId: `e2e-pablo-${i}`,
+      status,
+      firstName: "Pablo",
+      lastName: last,
+      phone: "+18292000051",
+      idNumber: "001-0000051-1",
+      businessName: "Colmado Pablo",
+      customerId: status === "CONVERTED" ? pablo.id : null,
+      rawData: {}
+    }
   });
 }
 

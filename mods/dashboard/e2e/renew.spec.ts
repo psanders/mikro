@@ -29,7 +29,7 @@ test("an admin renews from search: the panel opens on a DRAFT and Renovar finds 
   await expect(panel).toBeVisible();
   await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "DRAFT");
   await expect(panel.getByTestId("renewal-owed")).toHaveText("RD$2,600");
-  await expect(panel.getByTestId("renewal-principal")).toHaveText("RD$10,000");
+  await expect(panel.getByTestId("renewal-principal")).toHaveValue("10000");
   await expect(panel.getByTestId("renewal-net")).toHaveText("RD$7,400");
 
   // Starting again picks up the same renewal instead of creating a second one.

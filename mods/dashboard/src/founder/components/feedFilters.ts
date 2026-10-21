@@ -33,6 +33,19 @@ export const FEED_TYPE_GROUPS: FeedTypeGroup[] = [
       "application.converted"
     ]
   },
+  {
+    id: "renovaciones",
+    label: "Renovaciones",
+    types: [
+      "loan.renewal.started",
+      "loan.renewal.terms_updated",
+      "loan.renewal.contract_generated",
+      "loan.renewal.document_uploaded",
+      "loan.renewal.cancelled",
+      "loan.renewal.completed",
+      "loan.renewed"
+    ]
+  },
   { id: "pagos", label: "Pagos", types: ["payment.collected", "payment.reversed"] },
   { id: "contratos", label: "Contratos", types: ["application.signed", "application.converted"] },
   {

@@ -25,7 +25,7 @@ import { Calculator, Sparkles } from "lucide-react";
 import { RESTORE_WINDOW_DAYS } from "@mikro/common/schemas";
 import { trpc } from "../lib/trpc";
 import { useToast } from "../components/ui/ToastProvider";
-import { isForbidden } from "../lib/applications";
+import { friendlyError, isForbidden } from "../lib/applications";
 import { useCopilot } from "./copilot/CopilotContext";
 import { useAlerts } from "./alerts/AlertsContext";
 import { FeedCard } from "./components/FeedCard";
@@ -49,6 +49,9 @@ import {
 } from "./components/feedFilters";
 import { toFeedEvent, type FeedEvent, type NavigateTarget } from "./components/types";
 import { ApplicationFeedCard } from "./applications/ApplicationFeedCard";
+import { LoanRenewalFeedCard } from "./renewals/LoanRenewalFeedCard";
+import { isRenewalEvent, latestPerRenewal } from "./renewals/renewalFeedLayout";
+import { useStartRenewal } from "./renewals/useStartRenewal";
 import { ClosedGroupRow, OpenGroupRow, QueueGroupRow } from "./applications/ApplicationGroupRow";
 import {
   isApplicationEvent,
@@ -235,8 +238,8 @@ export function FeedScreen() {
 
   const events = useMemo(() => {
     const raw = feed.data?.pages.flatMap((p) => p.items) ?? [];
-    // One card per application, at its newest event (see applicationFeedLayout).
-    return latestPerApplication(raw.map(toFeedEvent));
+    // One card per application and per renewal, at its newest event.
+    return latestPerRenewal(latestPerApplication(raw.map(toFeedEvent)));
   }, [feed.data]);
 
   const groups = useMemo(() => groupByDay(events), [events]);
@@ -257,6 +260,46 @@ export function FeedScreen() {
       .filter((e): e is AppEvent => isApplicationEvent(e) && !shown.has(e.applicationId));
   }, [openAppsQuery.data, events]);
 
+  // Open renewals stay visible whatever the date filter (a renewal waiting days
+  // for the signed copy would otherwise drop out of "Hoy"). Only those the
+  // loaded feed doesn't already render, so no card shows twice.
+  const openRenewalsQuery = trpc.listOpenRenewalEvents.useQuery(undefined, {
+    refetchInterval: FEED_POLL_INTERVAL_MS,
+    refetchOnWindowFocus: true
+  });
+  const hiddenOpenRenewals = useMemo(() => {
+    const shown = new Set(events.map((e) => e.renewalId).filter(Boolean));
+    return (openRenewalsQuery.data ?? [])
+      .map(toFeedEvent)
+      .filter((e) => isRenewalEvent(e) && !shown.has(e.renewalId));
+  }, [openRenewalsQuery.data, events]);
+
+  const { startOrFind } = useStartRenewal();
+  async function startAnother(loanNumber: number) {
+    try {
+      const renewal = await startOrFind(loanNumber);
+      applicationPanel.openRenewal(renewal.id);
+    } catch (e) {
+      toast.error(friendlyError(e, "No se pudo iniciar la renovación."));
+    }
+  }
+
+  function renderRenewal(event: FeedEvent, showDay = false) {
+    if (!isRenewalEvent(event)) return null;
+    return (
+      <LoanRenewalFeedCard
+        key={event.renewalId}
+        event={event}
+        showDay={showDay}
+        onOpen={(id, opts) => applicationPanel.openRenewal(id, opts)}
+        onViewLoans={(customerId) =>
+          customerId && applicationPanel.openCustomer(customerId, "prestamos")
+        }
+        onStartAnother={(n) => void startAnother(n)}
+      />
+    );
+  }
+
   function canRestore(event: FeedEvent): boolean {
     if (event.type !== "application.deleted") return false;
     return Date.now() - new Date(event.occurredAt).getTime() <= RESTORE_WINDOW_MS;
@@ -272,7 +315,7 @@ export function FeedScreen() {
   function renderRows(rows: FeedEvent[], key: string) {
     return groupFeedRuns(
       rows,
-      (e) => !isTaskEvent(e) && !isApplicationEvent(e) && !isAuditEvent(e)
+      (e) => !isTaskEvent(e) && !isApplicationEvent(e) && !isAuditEvent(e) && !isRenewalEvent(e)
     ).map((row) => {
       if (Array.isArray(row)) {
         return (
@@ -287,6 +330,7 @@ export function FeedScreen() {
         );
       }
       const event = row;
+      if (isRenewalEvent(event)) return renderRenewal(event);
       if (isAuditEvent(event)) {
         return (
           <ConversationAuditFeedCard
@@ -381,6 +425,15 @@ export function FeedScreen() {
         {feed.isSuccess && events.length === 0 && (
           <div className="p-6">
             <FeedEmptyState />
+          </div>
+        )}
+
+        {hiddenOpenRenewals.length > 0 && (
+          <div data-testid="open-renewals" className="border-b border-ds-border bg-brand-mist/40">
+            <p className="px-6 pt-3 text-[11px] font-semibold uppercase tracking-[0.8px] text-ds-muted">
+              {`Renovaciones en curso · ${hiddenOpenRenewals.length}`}
+            </p>
+            {hiddenOpenRenewals.map((e) => renderRenewal(e, true))}
           </div>
         )}
 
