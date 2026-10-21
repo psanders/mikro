@@ -40,9 +40,7 @@ export const SAVED_TOAST_MS = 12000;
  *    Not an error — callers should do nothing (no toast, no error message).
  */
 export type SaveResult =
-  | { status: "saved"; location: string | null }
-  | { status: "picked" }
-  | { status: "cancelled" };
+  { status: "saved"; location: string | null } | { status: "picked" } | { status: "cancelled" };
 
 interface PickSavePathPicked {
   status: "picked";

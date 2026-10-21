@@ -39,11 +39,7 @@ export default class Reject extends MutationCommand<typeof Reject> {
       "applicationId"
     );
     const reason = flags.reason as
-      | "OUT_OF_COVERAGE_AREA"
-      | "PAYMENT_CAPACITY"
-      | "DOCUMENTS"
-      | "CREDIT_POLICY"
-      | "OTHER";
+      "OUT_OF_COVERAGE_AREA" | "PAYMENT_CAPACITY" | "DOCUMENTS" | "CREDIT_POLICY" | "OTHER";
     const note =
       reason === "OTHER" ? await promptTextIfMissing(flags.note, "Note", "note") : flags.note;
 

@@ -96,13 +96,7 @@ export type CopilotMessage =
   | DocumentMessage;
 
 export type DayOfWeek =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
+  "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
 
 /** A collector as the assigned-collector picker lists it. */
 export interface CollectorOption {

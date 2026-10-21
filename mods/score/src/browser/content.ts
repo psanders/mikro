@@ -104,8 +104,7 @@ const handlers: Handlers = {
     set({ phase: { ...p, busy: true, error: undefined } });
     void (async () => {
       const r = (await chrome.runtime.sendMessage({ type: "login", phone, password })) as
-        | { ok: true; name: string }
-        | { ok: false; message: string };
+        { ok: true; name: string } | { ok: false; message: string };
       if (!r.ok) return set({ phase: { ...p, busy: false, error: r.message } });
       set({ user: r.name });
       if (pending) await save(pending);
