@@ -65,7 +65,8 @@ const LOAN_STATUS_LABELS: Record<string, string> = {
   ACTIVE: "activo",
   COMPLETED: "completado",
   DEFAULTED: "en mora",
-  CANCELLED: "cancelado"
+  CANCELLED: "cancelado",
+  RENEWED: "renovado"
 };
 
 interface PaymentRow {

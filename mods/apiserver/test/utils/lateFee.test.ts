@@ -172,6 +172,23 @@ describe("computeAccruedMora", () => {
     expect(r.daysLate).to.be.lessThan(rUncapped.daysLate);
   });
 
+  it("freezes accrual at loanClosedAt for a RENEWED loan, regardless of policy", () => {
+    const closedAt = new Date("2026-02-01T12:00:00Z");
+    const atClose = computeAccruedMora(makeInput({ loanStatus: "ACTIVE", asOfDate: closedAt }));
+    const later = computeAccruedMora(
+      makeInput({
+        loanStatus: "RENEWED",
+        loanClosedAt: closedAt,
+        asOfDate: new Date("2026-03-03T12:00:00Z"),
+        policy: { ...policy, moraStopOnDefault: false }
+      })
+    );
+
+    expect(atClose.moraAmount).to.be.greaterThan(0);
+    expect(later.moraAmount).to.equal(atClose.moraAmount);
+    expect(later.daysLate).to.equal(atClose.daysLate);
+  });
+
   it("shifts accrual start when moraEffectiveFrom is after oldest due date", () => {
     const rNoEffective = computeAccruedMora(
       makeInput({

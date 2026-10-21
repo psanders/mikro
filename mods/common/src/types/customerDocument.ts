@@ -20,5 +20,9 @@ export interface CustomerDocument {
   source: CustomerDocumentSource;
   customerId: string;
   uploadedById?: string | null;
+  /** The loan this document belongs to (e.g. a renewal's contract, once finalized). */
+  loanId?: string | null;
+  /** The open renewal this document is attached to, until finalize re-points it to the loan. */
+  renewalId?: string | null;
   createdAt: Date;
 }

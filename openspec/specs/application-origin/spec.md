@@ -1,8 +1,11 @@
 # application-origin Specification
 
 ## Purpose
+
 TBD - created by archiving change add-application-origin. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Every application has a derived origin
 
 The system SHALL derive one origin for each loan application from data already stored on it, with no new stored field:
@@ -85,4 +88,3 @@ The application summary PDF SHALL print the application's origin, in Spanish, in
 
 - **WHEN** an operator runs `customers:get` for a customer created directly, with no converted application
 - **THEN** it prints `ORIGIN: —`
-

@@ -496,6 +496,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
     const toolsUsed: string[] = [];
     let customerForm: Record<string, never> | undefined;
     let loanForm: { customerHint?: string } | undefined;
+    let renewalForm: { loanId?: number } | undefined;
     let document: CopilotDocument | undefined;
     // Tracks the most recent failed/limited tool call so a githubFeedback call
     // right after it can attach that context automatically (design Decision 4).
@@ -618,6 +619,16 @@ export function createCopilotChat(deps: CopilotChatDeps) {
             success: true,
             message: "Formulario de préstamo abierto. El fundador completará los datos."
           };
+        } else if (tc.name === "openRenewalForm") {
+          // Writes nothing: just shows the renewal card. The card starts the
+          // renewal (or opens the one in progress) from the dock.
+          const raw = Number(tc.args?.loanId);
+          renewalForm = Number.isInteger(raw) && raw > 0 ? { loanId: raw } : {};
+          result = {
+            success: true,
+            message:
+              "Tarjeta de renovación abierta. El fundador iniciará o continuará la renovación desde el panel."
+          };
         } else {
           // Existing business read tool → shared executor.
           result = await toolExecutor(tc.name, tc.args, context);
@@ -649,9 +660,11 @@ export function createCopilotChat(deps: CopilotChatDeps) {
         ? "Listo. Completá los datos del cliente y lo creo."
         : loanForm
           ? "Listo. Completá los datos del préstamo y lo creo."
-          : document
-            ? `Aquí tienes el estado de cuenta: ${document.filename}.`
-            : "");
+          : renewalForm
+            ? "Listo. Abrí la renovación desde la tarjeta para revisar los términos."
+            : document
+              ? `Aquí tienes el estado de cuenta: ${document.filename}.`
+              : "");
 
     // Mandatory disclosure (design Decision 4 / spec "no silent issue filing"):
     // appended deterministically, not left to the model's own phrasing, so a
@@ -670,6 +683,7 @@ export function createCopilotChat(deps: CopilotChatDeps) {
       ...(provenance() ? { provenance: provenance() } : {}),
       ...(customerForm ? { customerForm } : {}),
       ...(loanForm ? { loanForm } : {}),
+      ...(renewalForm ? { renewalForm } : {}),
       ...(document ? { document } : {})
     };
   };

@@ -16,7 +16,8 @@
     "tauri:build:local": "tauri build --config src-tauri/tauri.local.conf.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "demo:renewal": "playwright test -c playwright.demo.config.ts"
   },
   "dependencies": {
     "@mikro/apiserver": "*",

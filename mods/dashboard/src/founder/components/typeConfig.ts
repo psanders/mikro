@@ -80,6 +80,15 @@ const BASE_VISUALS: Record<BusinessEventType, TypeVisual> = {
   "application.restored": { icon: RotateCcw, accent: "green" },
   "loan.created": { icon: HandCoins, accent: "blue" },
   "loan.status_changed": { icon: Repeat, accent: "neutral" },
+  "loan.renewed": { icon: RefreshCw, accent: "blue" },
+  // The renewal process. Its card (phase 4) renders from live state; these keep
+  // the exhaustive map total and give any historical row a sensible icon.
+  "loan.renewal.started": { icon: RefreshCw, accent: "blue" },
+  "loan.renewal.terms_updated": { icon: RefreshCw, accent: "blue" },
+  "loan.renewal.contract_generated": { icon: FileText, accent: "blue" },
+  "loan.renewal.document_uploaded": { icon: FileCheck, accent: "blue" },
+  "loan.renewal.cancelled": { icon: FileX, accent: "neutral" },
+  "loan.renewal.completed": { icon: BadgeCheck, accent: "green" },
   "customer.created": { icon: UserPlus, accent: "blue" },
   "contract.generated": { icon: FileText, accent: "blue" },
   "copilot.action": { icon: Sparkles, accent: "blue" },
@@ -253,6 +262,16 @@ export function resolveCompactMeta(event: FeedEvent): CompactMeta {
     // customer.created) instead of repeating the cuota phrase.
     case "loan.created":
       return { text: "Nuevo préstamo", tone: "muted" };
+    // The summary names both loans and the net disbursed; the meta line adds
+    // the payoff the new loan absorbed.
+    case "loan.renewed": {
+      const payoff = typeof payload.payoff === "number" ? payload.payoff : null;
+      return {
+        text:
+          payoff !== null ? `Renovación · saldo cubierto ${formatAmount(payoff)}` : "Renovación",
+        tone: "muted"
+      };
+    }
     // Historical only (retired). Its summary names the amount but NOT the
     // cuotas, so the meta line adds them.
     case "contract.generated": {
@@ -497,6 +516,25 @@ export function resolveNarrative(event: FeedEvent): string | null {
     case "loan.created":
     case "contract.generated":
       return null;
+    // The renewal card (phase 4) tells this story from the renewal's live state.
+    case "loan.renewal.started":
+    case "loan.renewal.terms_updated":
+    case "loan.renewal.contract_generated":
+    case "loan.renewal.document_uploaded":
+    case "loan.renewal.cancelled":
+    case "loan.renewal.completed":
+      return null;
+    case "loan.renewed": {
+      const principal = typeof payload.principal === "number" ? payload.principal : null;
+      const installments = typeof payload.installments === "number" ? payload.installments : null;
+      const adverb =
+        typeof payload.frequency === "string" ? (FREQUENCY_ADVERBS[payload.frequency] ?? "") : "";
+      const account = typeof payload.accountName === "string" ? payload.accountName : "";
+      const contract =
+        typeof payload.contractFilename === "string" ? " Se generó el contrato nuevo." : "";
+      if (principal === null || installments === null) return null;
+      return `Nuevo préstamo de ${formatAmount(principal)} a ${installments} cuota${installments === 1 ? "" : "s"}${adverb ? ` ${adverb}` : ""}; el préstamo anterior quedó como renovado${account ? ` y el desembolso salió de ${account}` : ""}.${contract}`;
+    }
     case "copilot.action": {
       const resultSummary =
         typeof payload.resultSummary === "string" && payload.resultSummary
@@ -569,6 +607,9 @@ function resolveLoanNumber(event: FeedEvent): number | null {
   if (event.type === "application.converted" && typeof event.payload.loanNumber === "number") {
     return event.payload.loanNumber;
   }
+  if (event.type === "loan.renewed" && typeof event.payload.newLoanNumber === "number") {
+    return event.payload.newLoanNumber;
+  }
   return null;
 }
 
@@ -579,6 +620,7 @@ export function resolveSubjectLink(event: FeedEvent): SubjectLink | null {
     case "payment.reversed":
     case "loan.created":
     case "loan.status_changed":
+    case "loan.renewed":
     case "application.converted": {
       // A UUID prefill is worse than no link: the copilot's loan tools only
       // accept the numeric loanId, so without a resolved number there's

@@ -388,6 +388,31 @@ export const openLoanFormTool: ToolFunction = {
 };
 
 /**
+ * Open a loan renewal (openspec add-loan-renewal). A DIRECT tool that writes
+ * nothing itself: it hands the dock a card that starts the renewal (or opens the
+ * one already in progress) and opens the renewal panel, where the terms, the
+ * contract, the signed copy and the final confirmation happen.
+ */
+export const openRenewalFormTool: ToolFunction = {
+  type: "function",
+  function: {
+    name: "openRenewalForm",
+    description:
+      "Iniciar u abrir la renovación de un préstamo activo a mitad de término (el cliente aún debe parte y el préstamo nuevo cubre ese saldo). Úsalo cuando el fundador pida renovar un préstamo (ej: 'renueva el préstamo 10034', 'Ana quiere renovar'). NO calcules el saldo ni recopiles los términos tú mismo, y NO uses updateLoanStatus ni createLoan para renovar: esta herramienta solo muestra una tarjeta que abre el panel de renovación, donde se revisan los términos, se genera el contrato, se sube el firmado y se finaliza (o se cancela). Si el fundador nombró el número de préstamo, pásalo en loanId.",
+    parameters: {
+      type: "object",
+      properties: {
+        loanId: {
+          type: "number",
+          description: "Número del préstamo a renovar (ej: 10034), si se mencionó. Opcional."
+        }
+      },
+      required: []
+    }
+  }
+};
+
+/**
  * Tool definitions owned by the copilot module (not by the WhatsApp agents).
  * Handled inline by createCopilotChat rather than the shared tool executor.
  */
@@ -397,6 +422,7 @@ export const COPILOT_LOCAL_TOOLS: ToolFunction[] = [
   githubFeedbackTool,
   openCustomerFormTool,
   openLoanFormTool,
+  openRenewalFormTool,
   createTaskTool,
   listTasksTool,
   cancelTaskTool,
@@ -462,6 +488,7 @@ export const DIRECT_TOOLS: readonly string[] = [
   // confirm step.
   "openCustomerForm",
   "openLoanForm",
+  "openRenewalForm",
   // Read-only document generation — nothing to confirm, so it executes
   // inline like the form-opener tools above.
   "generateLoanStatement",
@@ -493,6 +520,8 @@ export const TOOL_NOTES: Record<string, string> = {
     "es la ÚNICA forma de crear un cliente: solo abre el formulario. No pidas ni inventes los datos (nombre, teléfono, cédula, dirección, cobrador) — el formulario los recoge y crea el cliente. No uses createCustomer directamente.",
   openLoanForm:
     "es la ÚNICA forma de crear un préstamo: solo abre el formulario. No pidas ni inventes los términos (monto, cuotas, frecuencia, fecha) — el formulario los recoge, crea el préstamo y puede generar el contrato en el mismo paso. No uses createLoan directamente.",
+  openRenewalForm:
+    "es la ÚNICA forma de renovar un préstamo: solo abre el formulario. No calcules el saldo ni inventes términos, y no encadenes updateLoanStatus + createLoan — la tarjeta hace todo atómicamente. Si el fundador da un nombre en vez de número, busca primero el préstamo activo del cliente y pasa su loanId.",
   generateLoanStatement:
     "úsala cuando el fundador quiera el documento/estado de cuenta/PDF en sí (ej: 'dame el estado de cuenta del préstamo 10034', 'descárgame el PDF'). Si en cambio pregunta por qué un saldo, mora o pago pendiente se ve de cierta forma, sin pedir el documento, usa getLoanHealth — no generes el documento para responder una pregunta de estado."
 };

@@ -95,7 +95,22 @@ import {
   // Customer tag schemas
   setCustomerTagSchema,
   clearCustomerTagSchema,
-  listCustomerTagsSchema
+  listCustomerTagsSchema,
+  startLoanRenewalSchema,
+  updateRenewalTermsSchema,
+  getLoanRenewalSchema,
+  getOpenLoanRenewalSchema,
+  getLoanRenewalQuoteSchema,
+  generateRenewalContractSchema,
+  uploadRenewalSignedContractSchema,
+  uploadRenewalDocumentSchema,
+  cancelLoanRenewalSchema,
+  finalizeLoanRenewalSchema,
+  listOpenLoanRenewalsSchema,
+  listLoanRenewalsByCustomerSchema,
+  uploadCustomerDocumentSchema,
+  getCustomerDocumentSchema,
+  deleteCustomerDocumentSchema
 } from "@mikro/common";
 import { TRPCError } from "@trpc/server";
 import {
@@ -117,6 +132,26 @@ import { createExportCollectorCustomers } from "../../api/customers/createExport
 import { createExportAllCustomers } from "../../api/customers/createExportAllCustomers.js";
 import { createGenerateCustomerContract } from "../../api/customers/createGenerateCustomerContract.js";
 import { createListCustomerDocuments } from "../../api/customers/createListCustomerDocuments.js";
+import {
+  createUploadCustomerDocument,
+  createGetCustomerDocument,
+  createDeleteCustomerDocument
+} from "../../api/customers/customerDocuments.js";
+import {
+  createStartLoanRenewal,
+  createUpdateRenewalTerms,
+  createGetLoanRenewal,
+  createGetOpenLoanRenewal,
+  createGetLoanRenewalQuote,
+  createGenerateRenewalContract,
+  createGetRenewalContract,
+  createUploadRenewalSignedContract,
+  createUploadRenewalDocument,
+  createCancelLoanRenewal,
+  createFinalizeLoanRenewal,
+  createListOpenLoanRenewals,
+  createListLoanRenewalsByCustomer
+} from "../../api/loanRenewals/index.js";
 // User API functions
 import { createCreateUser } from "../../api/users/createCreateUser.js";
 import { createUpdateUser } from "../../api/users/createUpdateUser.js";
@@ -260,14 +295,17 @@ import {
   listFeedEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
+  listApplicationsByCustomerSchema,
   exportAuditLogSchema
 } from "@mikro/common";
 // Founder feed / event-log API functions
 import {
   createListFeedEvents,
   createListOpenApplicationEvents,
+  createListOpenRenewalEvents,
   createRestoreApplication,
   createSearchAll,
+  createListApplicationsByCustomer,
   createExportAuditLog
 } from "../../api/events/index.js";
 // Founder copilot schemas
@@ -645,6 +683,105 @@ export const protectedRouter = router({
       return fn(input);
     }),
 
+  // ==================== Loan renewal process ====================
+  // Admins AND reviewers run renewals (openspec add-loan-renewal). Every step
+  // only writes the renewal until `finalizeLoanRenewal`, which closes the old
+  // loan, creates the new one and posts the net — all in one transaction. The
+  // renewal events are written inside those transactions (no `.meta({event})`),
+  // so the feed never shows a step that rolled back.
+
+  /** Start a renewal on an ACTIVE loan (terms default to the loan's own). */
+  startLoanRenewal: reviewerProcedure
+    .input(startLoanRenewalSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createStartLoanRenewal(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  /** Change the proposed terms; invalidates the contract (back to DRAFT). */
+  updateRenewalTerms: reviewerProcedure
+    .input(updateRenewalTermsSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createUpdateRenewalTerms(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  getLoanRenewal: reviewerProcedure.input(getLoanRenewalSchema).query(async ({ ctx, input }) => {
+    return createGetLoanRenewal(ctx.db as unknown as PrismaClient)(input);
+  }),
+
+  /** The renewal in progress on a loan (by its number), or null. */
+  getOpenLoanRenewal: reviewerProcedure
+    .input(getOpenLoanRenewalSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetOpenLoanRenewal(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** What is owed on the old loan now and the resulting net, vs what was last shown. */
+  getLoanRenewalQuote: reviewerProcedure
+    .input(getLoanRenewalQuoteSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetLoanRenewalQuote(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** Generate the new loan's contract from the renewal's stored terms. */
+  generateRenewalContract: reviewerProcedure
+    .input(generateRenewalContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createGenerateRenewalContract(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  /** The generated contract again, for download. */
+  getRenewalContract: reviewerProcedure
+    .input(getLoanRenewalSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetRenewalContract(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  uploadRenewalSignedContract: reviewerProcedure
+    .input(uploadRenewalSignedContractSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createUploadRenewalSignedContract(ctx.db as unknown as PrismaClient)(
+        input,
+        actorOf(ctx)
+      );
+    }),
+
+  uploadRenewalDocument: reviewerProcedure
+    .input(uploadRenewalDocumentSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createUploadRenewalDocument(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  /** Cancel at any point before completion; nothing else was written, so nothing to undo. */
+  cancelLoanRenewal: reviewerProcedure
+    .input(cancelLoanRenewalSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createCancelLoanRenewal(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  /**
+   * Finalize: recompute what is owed, require the caller's `confirmedNet` to
+   * match, then close the old loan, create the new one and post the net.
+   */
+  finalizeLoanRenewal: reviewerProcedure
+    .input(finalizeLoanRenewalSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createFinalizeLoanRenewal(ctx.db as unknown as PrismaClient)(input, actorOf(ctx));
+    }),
+
+  /** Renewals still in progress, newest first. */
+  listOpenLoanRenewals: reviewerProcedure
+    .input(listOpenLoanRenewalsSchema)
+    .query(async ({ ctx, input }) => {
+      return createListOpenLoanRenewals(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** Every renewal of a customer's loans. */
+  listLoanRenewalsByCustomer: reviewerProcedure
+    .input(listLoanRenewalsByCustomerSchema)
+    .query(async ({ ctx, input }) => {
+      return createListLoanRenewalsByCustomer(ctx.db as unknown as PrismaClient)(input);
+    }),
+
   /**
    * Single-loan health check: snapshot + deterministic spec checks, plus an LLM
    * narration when `explain` is set (numbers always come from the eval engine).
@@ -961,13 +1098,13 @@ export const protectedRouter = router({
 
   /**
    * Render an ad-hoc loan contract PDF for an existing customer (founder copilot
-   * loan form, or `ctl` backfill). ADMIN only. Persists the PDF as a
+   * loan form, or `ctl` backfill). ADMIN and REVIEWER. Persists the PDF as a
    * `CustomerDocument` but writes NO feed event: generating a contract is part
    * of creating a loan (the `loan.created` event already covers it) and a
    * standalone `contract.generated` event was redundant noise, so it was
    * retired. Historical `contract.generated` rows still render in the feed.
    */
-  generateCustomerContract: adminProcedure
+  generateCustomerContract: reviewerProcedure
     .input(generateCustomerContractSchema)
     .mutation(async ({ ctx, input }) => {
       const fn = createGenerateCustomerContract(ctx.db);
@@ -975,14 +1112,35 @@ export const protectedRouter = router({
     }),
 
   /**
-   * List a customer's documents (signed contracts, ID images), most-recent-
-   * first. ADMIN only — occasional/operator lookup via `ctl`, no dashboard UI.
+   * List a customer's documents (signed contracts, ID images, uploads),
+   * most-recent-first. ADMIN and REVIEWER (the customer profile panel).
    */
-  listCustomerDocuments: adminProcedure
+  listCustomerDocuments: reviewerProcedure
     .input(listCustomerDocumentsSchema)
     .query(async ({ ctx, input }) => {
       const fn = createListCustomerDocuments(ctx.db);
       return fn(input);
+    }),
+
+  /** Upload a document onto a customer (image or PDF). ADMIN and REVIEWER. */
+  uploadCustomerDocument: reviewerProcedure
+    .input(uploadCustomerDocumentSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createUploadCustomerDocument(ctx.db as unknown as PrismaClient)(input, ctx.userId);
+    }),
+
+  /** One document's bytes, for preview or download. ADMIN and REVIEWER. */
+  getCustomerDocument: reviewerProcedure
+    .input(getCustomerDocumentSchema)
+    .query(async ({ ctx, input }) => {
+      return createGetCustomerDocument(ctx.db as unknown as PrismaClient)(input);
+    }),
+
+  /** Remove a document record. ADMIN only. */
+  deleteCustomerDocument: adminProcedure
+    .input(deleteCustomerDocumentSchema)
+    .mutation(async ({ ctx, input }) => {
+      return createDeleteCustomerDocument(ctx.db as unknown as PrismaClient)(input);
     }),
 
   /**
@@ -1479,6 +1637,15 @@ export const protectedRouter = router({
   }),
 
   /**
+   * The newest event of every renewal still in progress, regardless of date —
+   * backs the feed's always-visible open renewals. ADMIN or REVIEWER.
+   */
+  listOpenRenewalEvents: reviewerProcedure.query(async ({ ctx }) => {
+    const fn = createListOpenRenewalEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
+    return fn();
+  }),
+
+  /**
    * Restore a hard-deleted application from its deletion-event snapshot within
    * the 30-day window; records an application.restored event. ADMIN only.
    */
@@ -1490,12 +1657,24 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Universal search across customers, loans, and feed events. ADMIN only.
+   * Universal search across customers, loans, past loan applications and feed
+   * events. ADMIN and REVIEWER (the same search for both).
    */
-  searchAll: adminProcedure.input(searchAllSchema).query(async ({ ctx, input }) => {
+  searchAll: reviewerProcedure.input(searchAllSchema).query(async ({ ctx, input }) => {
     const fn = createSearchAll(ctx.db as unknown as PrismaClient);
     return fn(input);
   }),
+
+  /**
+   * A customer's past applications (profile panel), newest first, never DRAFT
+   * or ABANDONED. ADMIN and REVIEWER.
+   */
+  listApplicationsByCustomer: reviewerProcedure
+    .input(listApplicationsByCustomerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListApplicationsByCustomer(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
 
   /**
    * Month-scoped CSV export of the event log (headers-only when empty). ADMIN only.

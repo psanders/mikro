@@ -3,8 +3,8 @@
  *
  * Reviewer journey (Ana): the shared queue → take → evidence (map link, fixed
  * cédula slots + 3 business photos) → recommendation → send to decision. Plus role
- * scoping: another reviewer's application is not in Ana's feed, and the admin
- * tools are not in her rail.
+ * scoping: another reviewer's application is not in Ana's feed, search is in
+ * her rail, and the admin tools (tareas, reportes, copilot) are not.
  */
 import { expect, test } from "@playwright/test";
 import { card, expand, login, openQueue, PNG } from "./helpers";
@@ -14,9 +14,10 @@ test("a reviewer takes a queued application, gathers the evidence and sends it t
 }) => {
   await login(page, "ana");
 
-  // Scoped shell: feed only.
-  await expect(page.getByRole("button", { name: "Búsqueda" })).toHaveCount(0);
+  // Scoped shell: feed and search, but not the admin tools.
+  await expect(page.getByRole("button", { name: "Búsqueda" })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Reportes" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Tareas" })).toHaveCount(0);
 
   // Luis's application is invisible to Ana; the shared queue is visible.
   await expect(page.getByText("Tienda de Luis")).toHaveCount(0);

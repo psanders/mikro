@@ -3,7 +3,9 @@
 ## Purpose
 
 TBD - created by archiving change add-application-review-flow. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Reviewers can use the Ops app with a scoped shell
 
 The Ops app (served at `/ops`; formerly the founder app) SHALL admit users with the ADMIN role (full shell) and users with the REVIEWER role but not ADMIN (a scoped shell: the feed only — no search, Tareas, Reportes or copilot, since those expose non-application data). Other users SHALL see the access screen. A user with both roles gets the full shell.
@@ -153,4 +155,3 @@ The application panel SHALL show the application's origin (see `application-orig
 
 - **WHEN** an application appears in the feed
 - **THEN** its card shows no origin
-

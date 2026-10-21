@@ -70,6 +70,7 @@ export function createPreviewLateFee(client: DbClient) {
       asOfDate: asOf,
       loanStatus: loan.status,
       loanUpdatedAt: new Date(loan.updatedAt),
+      loanClosedAt: loan.closedAt ?? null,
       policy: cfg.loans,
       collectedLateFeePayments: toCollectedLateFeePayments(loan)
     });

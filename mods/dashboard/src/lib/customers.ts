@@ -25,7 +25,8 @@ export const LOAN_STATUS_META: Record<string, { label: string; tone: BadgeTone }
   ACTIVE: { label: "Activo", tone: "neutral" },
   COMPLETED: { label: "Completado", tone: "neutral" },
   DEFAULTED: { label: "En mora", tone: "red" },
-  CANCELLED: { label: "Cancelado", tone: "neutral" }
+  CANCELLED: { label: "Cancelado", tone: "neutral" },
+  RENEWED: { label: "Renovado", tone: "neutral" }
 };
 
 export function loanStatusMeta(status: string): { label: string; tone: BadgeTone } {

@@ -35,6 +35,30 @@ export const Cliente: Story = {
   }
 };
 
+/** A past application: never a draft or abandoned one (search leaves those out). */
+export const Solicitud: Story = {
+  args: {
+    variant: "solicitud",
+    name: "Juana Peralta",
+    businessName: "Colmado La Esquina",
+    statusLabel: "Convertida",
+    statusTone: "green",
+    meta: "+1 809 555 0142 · Cédula 001-1234567-8 · 12 mar 2026",
+    onSelect: () => {}
+  }
+};
+
+export const SolicitudRechazada: Story = {
+  args: {
+    variant: "solicitud",
+    name: "Juana Peralta",
+    statusLabel: "Rechazada",
+    statusTone: "red",
+    meta: "Cédula 001-1234567-8 · 9 jun 2026",
+    onSelect: () => {}
+  }
+};
+
 export const ClienteSinMeta: Story = {
   name: "Cliente (sin teléfono ni cédula)",
   args: {

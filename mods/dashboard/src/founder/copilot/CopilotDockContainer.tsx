@@ -25,9 +25,12 @@ import { AssistantMessage } from "./AssistantMessage";
 import { CapabilityChips } from "./CapabilityChips";
 import { CopilotDock } from "./CopilotDock";
 import { useCopilot } from "./CopilotContext";
+import { useApplicationPanel } from "../applications/ApplicationPanelContext";
+import { useStartRenewal } from "../renewals/useStartRenewal";
 import { PendingActionCard } from "./PendingActionCard";
 import { CustomerFormCard } from "./CustomerFormCard";
 import { LoanFormCard } from "./LoanFormCard";
+import { RenewalStartCard, type RenewalStartStatus } from "./RenewalStartCard";
 import { DocumentCard, type DocumentDownloadStatus } from "./DocumentCard";
 import { UserBubble } from "./UserBubble";
 import type {
@@ -145,6 +148,8 @@ export function CopilotDockContainer() {
   const createCustomer = trpc.createCustomer.useMutation();
   const createLoan = trpc.createLoan.useMutation();
   const generateContract = trpc.generateCustomerContract.useMutation();
+  const { startOrFind } = useStartRenewal();
+  const panel = useApplicationPanel();
 
   // Loan form card's customer picker (the dock holds at most one open form at
   // a time), plus per-card create status keyed by message id.
@@ -176,6 +181,16 @@ export function CopilotDockContainer() {
   >({});
   const [loanFormStatus, setLoanFormStatus] = useState<
     Record<string, { status: CreateFormStatus; error?: string }>
+  >({});
+  const [renewalStatus, setRenewalStatus] = useState<
+    Record<
+      string,
+      {
+        status: RenewalStartStatus;
+        error?: string;
+        started?: { renewalId: string; status: string; loanNumber: number; customerName: string };
+      }
+    >
   >({});
   const [documentStatus, setDocumentStatus] = useState<
     Record<string, { status: DocumentDownloadStatus; error?: string }>
@@ -209,6 +224,15 @@ export function CopilotDockContainer() {
           kind: "loanForm",
           id: uid(),
           customerHint: res.loanForm.customerHint,
+          provenance: provUsed ? undefined : prov
+        });
+        provUsed = true;
+      }
+      if (res.renewalForm) {
+        next.push({
+          kind: "renewalForm",
+          id: uid(),
+          loanId: res.renewalForm.loanId,
           provenance: provUsed ? undefined : prov
         });
         provUsed = true;
@@ -381,6 +405,44 @@ export function CopilotDockContainer() {
     [createLoan, generateContract, utils, toast]
   );
 
+  /**
+   * Start the renewal (or pick up the one already in progress on that loan) and
+   * hand over to the renewal panel. Nothing is closed, created or posted by
+   * this: the renewal is only a DRAFT until it is finalized in the panel.
+   */
+  const handleStartRenewal = useCallback(
+    async (messageId: string, loanNumber: number) => {
+      setRenewalStatus((prev) => ({ ...prev, [messageId]: { status: "starting" } }));
+      try {
+        const renewal = await startOrFind(loanNumber);
+        setRenewalStatus((prev) => ({
+          ...prev,
+          [messageId]: {
+            status: "started",
+            started: {
+              renewalId: renewal.id,
+              status: renewal.status,
+              loanNumber: renewal.loan.loanId,
+              customerName: renewal.customer.name
+            }
+          }
+        }));
+        panel.openRenewal(renewal.id);
+      } catch (err) {
+        setRenewalStatus((prev) => ({
+          ...prev,
+          [messageId]: {
+            status: "error",
+            error:
+              (err as { message?: string }).message ||
+              "No se pudo iniciar la renovación. Inténtalo de nuevo."
+          }
+        }));
+      }
+    },
+    [startOrFind, panel]
+  );
+
   const handleDownloadDocument = useCallback(
     (messageId: string, document: { filename: string; mimeType: string; base64: string }) => {
       setDocumentStatus((prev) => ({ ...prev, [messageId]: { status: "saving" } }));
@@ -496,6 +558,19 @@ export function CopilotDockContainer() {
                   onCreate={(values) => handleCreateLoan(item.id, values)}
                   status={loanFormStatus[item.id]?.status ?? "idle"}
                   error={loanFormStatus[item.id]?.error}
+                />
+              </AssistantMessage>
+            );
+          case "renewalForm":
+            return (
+              <AssistantMessage key={item.id} provenance={item.provenance}>
+                <RenewalStartCard
+                  loanId={item.loanId}
+                  status={renewalStatus[item.id]?.status ?? "idle"}
+                  error={renewalStatus[item.id]?.error}
+                  started={renewalStatus[item.id]?.started}
+                  onStart={(loanNumber) => void handleStartRenewal(item.id, loanNumber)}
+                  onOpen={panel.openRenewal}
                 />
               </AssistantMessage>
             );

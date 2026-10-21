@@ -433,7 +433,17 @@ describe("Founder Feed Integration", () => {
         // Written by the WhatsApp hand-off (createOpenHandoff), not a tRPC boundary.
         "cx.handoff_requested",
         // Written by the conversation audit run (cron or copilot tool).
-        "conversation.audited"
+        "conversation.audited",
+        // Retired one-step renewal; kept in the catalog for rows it already wrote.
+        "loan.renewed",
+        // Renewal process events are written inside each renewal function's own
+        // transaction, so the feed never shows a step that rolled back.
+        "loan.renewal.started",
+        "loan.renewal.terms_updated",
+        "loan.renewal.contract_generated",
+        "loan.renewal.document_uploaded",
+        "loan.renewal.cancelled",
+        "loan.renewal.completed"
       ]);
       for (const type of businessEventTypeEnum.options) {
         if (noBoundaryMapper.has(type)) {

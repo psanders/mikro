@@ -74,6 +74,8 @@ export interface BuildSnapshotInput {
     createdAt: Date;
     startingDate: Date | null;
     updatedAt: Date;
+    /** Set when the loan was closed by a renewal; freezes mora for RENEWED. */
+    closedAt?: Date | null;
     nickname: string | null;
   };
   /** ALL payments, unfiltered. */
@@ -221,6 +223,7 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     asOfDate: asOf,
     loanStatus: loan.status,
     loanUpdatedAt: new Date(loan.updatedAt),
+    loanClosedAt: loan.closedAt ? new Date(loan.closedAt) : null,
     policy,
     collectedLateFeePayments
   });

@@ -37,6 +37,7 @@ type LoanRow = {
   createdAt: Date;
   startingDate: Date | null;
   updatedAt: Date;
+  closedAt: Date | null;
   nickname: string | null;
   customer: {
     id: string;
@@ -120,6 +121,7 @@ export async function fetchLoanSnapshotInput(
       createdAt: new Date(loan.createdAt),
       startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
       updatedAt: new Date(loan.updatedAt),
+      closedAt: loan.closedAt != null ? new Date(loan.closedAt) : null,
       nickname: loan.nickname
     },
     payments,

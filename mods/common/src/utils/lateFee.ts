@@ -32,9 +32,11 @@ export interface ComputeAccruedMoraInput {
   preferredPaymentDay: string | null;
   loanStart: Date;
   asOfDate: Date;
-  loanStatus: "ACTIVE" | "COMPLETED" | "DEFAULTED" | "CANCELLED";
+  loanStatus: "ACTIVE" | "COMPLETED" | "DEFAULTED" | "CANCELLED" | "RENEWED";
   /** When moraStopOnDefault and loan is DEFAULTED, cap as-of to this instant. */
   loanUpdatedAt?: Date;
+  /** When the loan is RENEWED, mora stops here regardless of policy. */
+  loanClosedAt?: Date | null;
   policy: Pick<
     LoansConfig,
     "moraGraceDays" | "moraCapInCuotas" | "moraMinDop" | "moraStopOnDefault" | "moraEffectiveFrom"
@@ -174,6 +176,7 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     asOfDate,
     loanStatus,
     loanUpdatedAt,
+    loanClosedAt,
     policy,
     collectedLateFeePayments
   } = input;
@@ -196,6 +199,11 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
   let asOf = new Date(asOfDate);
   if (policy.moraStopOnDefault && loanStatus === "DEFAULTED" && loanUpdatedAt) {
     asOf = new Date(Math.min(asOf.getTime(), loanUpdatedAt.getTime()));
+  }
+  // A renewed loan was paid off by the loan that replaced it; nothing accrues
+  // past the renewal.
+  if (loanStatus === "RENEWED" && loanClosedAt) {
+    asOf = new Date(Math.min(asOf.getTime(), new Date(loanClosedAt).getTime()));
   }
 
   const { paymentsMade, missedCycles } = getCycleMetrics(loanData, asOf);

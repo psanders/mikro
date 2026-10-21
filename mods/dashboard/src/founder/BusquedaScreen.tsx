@@ -1,46 +1,34 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
- * Universal admin search (`/ops/buscar`) — Pencil "Búsqueda". One input
- * queries `searchAll` (debounced ~300ms) and renders three grouped sections
- * (CLIENTES, PRÉSTAMOS, EN EL FEED). No entity-type picker. The "ask copilot"
- * row is inert (a later change owns the copilot).
+ * Universal search for admins and reviewers (`/ops/buscar`) — Pencil "Búsqueda".
+ * One input queries `searchAll` (debounced ~300ms) and renders grouped sections
+ * (CLIENTES, PRÉSTAMOS, SOLICITUDES ANTERIORES, EN EL FEED). No entity-type
+ * picker. "Ver perfil" opens the customer panel; "Renovar" starts (or opens) the
+ * renewal; an application opens its panel. The "ask copilot" row is inert and
+ * only shown to admins (the copilot is admin-only).
  */
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Search as SearchIcon, Sparkles } from "lucide-react";
-import { trpc, type RouterOutputs } from "../lib/trpc";
+import { trpc } from "../lib/trpc";
 import { loanStatusMeta } from "../lib/customers";
-import { isForbidden } from "../lib/applications";
+import { friendlyError, isForbidden, statusMeta } from "../lib/applications";
+import { useToast } from "../components/ui/ToastProvider";
 import { useCopilot } from "./copilot/CopilotContext";
+import { useApplicationPanel } from "./applications/ApplicationPanelContext";
+import { useViewer } from "./applications/useViewer";
+import { useStartRenewal } from "./renewals/useStartRenewal";
 import { SearchResultRow } from "./components/SearchResultRow";
 import { FeedEmptyState } from "./components/FeedEmptyState";
 import { FeedErrorState } from "./components/FeedErrorState";
 import { resolveSubjectLink, subjectQuestion } from "./components/typeConfig";
-import type { FeedEvent } from "./components/types";
-
-type SearchEventItem = RouterOutputs["searchAll"]["events"][number];
+import { toFeedEvent, type FeedEvent } from "./components/types";
 
 const HINTS = [
   "“pagos borrados esta semana”",
   "“préstamos en mora de Miguel”",
   "“contratos firmados en junio”"
 ];
-
-function toFeedEvent(item: SearchEventItem): FeedEvent {
-  return {
-    id: item.id,
-    type: item.type as FeedEvent["type"],
-    occurredAt: new Date(item.occurredAt).toISOString(),
-    actorName: item.actorName,
-    customerName: item.customerName ?? undefined,
-    loanId: item.loanId ?? undefined,
-    loanNumber: item.loanNumber ?? undefined,
-    applicationId: item.applicationId ?? undefined,
-    amount: item.amount ?? undefined,
-    summary: item.summary,
-    payload: (item.payload ?? {}) as Record<string, unknown>
-  };
-}
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -61,21 +49,40 @@ function GroupLabel({ children }: { children: string }) {
 
 export function BusquedaScreen() {
   const copilot = useCopilot();
+  const panel = useApplicationPanel();
+  const viewer = useViewer();
+  const toast = useToast();
+  const { startOrFind } = useStartRenewal();
+  const isAdmin = viewer?.isAdmin ?? false;
   const [term, setTerm] = useState("");
   const debounced = useDebouncedValue(term.trim(), 300);
   const hasQuery = debounced.length > 0;
 
   const search = trpc.searchAll.useQuery({ query: debounced }, { enabled: hasQuery });
 
-  const events = useMemo(() => {
-    const raw = search.data?.events ?? [];
-    return raw.map(toFeedEvent);
-  }, [search.data]);
+  const events = useMemo(() => (search.data?.events ?? []).map(toFeedEvent), [search.data]);
 
-  // Retired ops detail pages no longer exist: selecting an event opens the
-  // copilot dock prefilled with a question about its subject instead of
-  // navigating there.
+  async function renew(loanNumber: number) {
+    try {
+      const renewal = await startOrFind(loanNumber);
+      panel.openRenewal(renewal.id);
+    } catch (e) {
+      toast.error(friendlyError(e, "No se pudo iniciar la renovación."));
+    }
+  }
+
+  // A renewal or application opens its panel; anything else asks the copilot
+  // about its subject (admins only — reviewers have no copilot).
   function handleEventSelect(event: FeedEvent) {
+    if (event.renewalId) {
+      panel.openRenewal(event.renewalId);
+      return;
+    }
+    if (event.applicationId && event.type.startsWith("application.")) {
+      panel.open(event.applicationId, "detail");
+      return;
+    }
+    if (!isAdmin) return;
     const link = resolveSubjectLink(event);
     if (link) {
       copilot.openWith(subjectQuestion(link.target, event.customerName));
@@ -90,11 +97,13 @@ export function BusquedaScreen() {
 
   const customers = search.data?.customers ?? [];
   const loans = search.data?.loans ?? [];
+  const applications = search.data?.applications ?? [];
   const noResults =
     hasQuery &&
     search.isSuccess &&
     customers.length === 0 &&
     loans.length === 0 &&
+    applications.length === 0 &&
     events.length === 0;
 
   return (
@@ -155,7 +164,7 @@ export function BusquedaScreen() {
         {noResults && (
           <FeedEmptyState
             title="Sin resultados"
-            description="No encontramos clientes, préstamos ni eventos para esa búsqueda."
+            description="No encontramos clientes, préstamos, solicitudes ni eventos para esa búsqueda."
           />
         )}
 
@@ -171,7 +180,7 @@ export function BusquedaScreen() {
                     name={c.name}
                     phone={c.phone || undefined}
                     idNumber={c.idNumber || undefined}
-                    onSelect={() => copilot.openWith(`Muéstrame al cliente ${c.name}`)}
+                    onSelect={() => panel.openCustomer(c.id)}
                   />
                 ))}
               </div>
@@ -190,9 +199,41 @@ export function BusquedaScreen() {
                       customerName={l.customerName ?? ""}
                       statusLabel={meta.label}
                       statusTone={meta.tone}
-                      onSelect={() =>
-                        copilot.openWith(`Muéstrame los detalles del préstamo ${l.loanId}`)
+                      onSelect={() => panel.openCustomer(l.customerId, "prestamos")}
+                      onRenew={l.status === "ACTIVE" ? () => void renew(l.loanId) : undefined}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {applications.length > 0 && (
+              <div className="flex flex-col gap-[12px]">
+                <GroupLabel>{`SOLICITUDES ANTERIORES · ${applications.length}`}</GroupLabel>
+                {applications.map((a) => {
+                  const meta = statusMeta(a.status);
+                  return (
+                    <SearchResultRow
+                      key={a.id}
+                      variant="solicitud"
+                      name={[a.firstName, a.lastName].filter(Boolean).join(" ") || "Solicitud"}
+                      businessName={a.businessName ?? undefined}
+                      statusLabel={meta.label}
+                      statusTone={
+                        meta.tone === "green" ? "green" : meta.tone === "red" ? "red" : "neutral"
                       }
+                      meta={[
+                        a.phone,
+                        a.idNumber && `Cédula ${a.idNumber}`,
+                        new Date(a.createdAt).toLocaleDateString("es-DO", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric"
+                        })
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      onSelect={() => panel.open(a.id, "detail")}
                     />
                   );
                 })}
@@ -216,17 +257,19 @@ export function BusquedaScreen() {
               </div>
             )}
 
-            <div
-              title="Próximamente"
-              aria-disabled="true"
-              className="flex cursor-not-allowed items-center gap-[10px] rounded-[12px] bg-brand-mist px-4 py-[13px]"
-            >
-              <Sparkles size={16} className="shrink-0 text-brand-blue-primary" />
-              <span className="flex-1 text-[13px] font-semibold text-brand-blue-primary">
-                {`Preguntar al copiloto: «¿Cómo va ${debounced}?»`}
-              </span>
-              <ArrowRight size={15} className="shrink-0 text-brand-blue-primary" />
-            </div>
+            {isAdmin && (
+              <div
+                title="Próximamente"
+                aria-disabled="true"
+                className="flex cursor-not-allowed items-center gap-[10px] rounded-[12px] bg-brand-mist px-4 py-[13px]"
+              >
+                <Sparkles size={16} className="shrink-0 text-brand-blue-primary" />
+                <span className="flex-1 text-[13px] font-semibold text-brand-blue-primary">
+                  {`Preguntar al copiloto: «¿Cómo va ${debounced}?»`}
+                </span>
+                <ArrowRight size={15} className="shrink-0 text-brand-blue-primary" />
+              </div>
+            )}
           </div>
         )}
       </div>

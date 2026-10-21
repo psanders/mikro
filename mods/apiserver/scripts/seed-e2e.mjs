@@ -308,6 +308,69 @@ for (const [first, last, biz] of [
   });
 }
 
+// ACTIVE loans mid-term for the renewal specs (openspec add-loan-renewal):
+// 10 weekly cuotas of RD$1,300, 8 already paid → RD$2,600 still owed.
+// "Rosa" starts renewals from search and the copilot, "Pablo" runs one all the
+// way to finalize, "Lucía" is cancelled.
+async function seedRenewalCustomer(name, phone, idNumber) {
+  const customer = await admin.createCustomer({
+    name,
+    phone,
+    idNumber,
+    homeAddress: "Calle Renovación 1",
+    isBusinessOwner: true,
+    assignedCollectorId: USERS.miguel.id,
+    isActive: true,
+    preferredPaymentDay: null
+  });
+  const loan = await admin.createLoan({
+    customerId: customer.id,
+    principal: 10000,
+    termLength: 10,
+    paymentAmount: 1300,
+    paymentFrequency: "WEEKLY",
+    startingDate: new Date()
+  });
+  await prisma.payment.createMany({
+    data: Array.from({ length: 8 }, () => ({
+      amount: 1300,
+      paidAt: new Date(),
+      method: "CASH",
+      status: "COMPLETED",
+      kind: "INSTALLMENT",
+      loanId: loan.id,
+      collectedById: USERS.miguel.id
+    }))
+  });
+  return customer;
+}
+
+await seedRenewalCustomer("Rosa Renovación", "+18292000050", "001-0000050-1");
+const pablo = await seedRenewalCustomer("Pablo Renovación", "+18292000051", "001-0000051-1");
+await seedRenewalCustomer("Lucía Renovación", "+18292000052", "001-0000052-1");
+
+// Past applications of Pablo (search + profile): the one that became him, and
+// two that must never be found — a DRAFT and an ABANDONED.
+for (const [i, [status, last]] of [
+  ["CONVERTED", "Renovación"],
+  ["DRAFT", "Borrador"],
+  ["ABANDONED", "Abandonado"]
+].entries()) {
+  await prisma.loanApplication.create({
+    data: {
+      sessionId: `e2e-pablo-${i}`,
+      status,
+      firstName: "Pablo",
+      lastName: last,
+      phone: "+18292000051",
+      idNumber: "001-0000051-1",
+      businessName: "Colmado Pablo",
+      customerId: status === "CONVERTED" ? pablo.id : null,
+      rawData: {}
+    }
+  });
+}
+
 // A conversation audit over the seeded transcripts, through the real run (no
 // LLM in e2e: the judge finds nothing, so only the code checks report — José's
 // failed send to Yokasta).

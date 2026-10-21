@@ -81,10 +81,11 @@ export const portfolioHealthSchema = z.object({
 /**
  * Enum for loan status.
  */
-export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]);
+export const loanStatusEnum = z.enum(["ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED", "RENEWED"]);
 
 /**
- * Terminal statuses only (for updateLoanStatus). ACTIVE cannot be set via this endpoint.
+ * Terminal statuses only (for updateLoanStatus). ACTIVE cannot be set via this endpoint,
+ * and neither can RENEWED — only finalizing a renewal produces it, atomically with the new loan.
  */
 export const updateLoanStatusStatusEnum = z.enum(["COMPLETED", "DEFAULTED", "CANCELLED"]);
 

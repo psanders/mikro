@@ -63,6 +63,15 @@ export interface LoanFormMessage {
   provenance?: CopilotProvenance;
 }
 
+/** The renewal card; writes nothing until the founder starts the renewal (then the panel takes over). */
+export interface RenewalFormMessage {
+  kind: "renewalForm";
+  id: string;
+  /** Loan number the founder named, to pre-fill the card. */
+  loanId?: number;
+  provenance?: CopilotProvenance;
+}
+
 /** A generated document (e.g. a loan statement) delivered directly in the reply — read-only, nothing to confirm. */
 export interface CopilotDocumentResult {
   filename: string;
@@ -83,6 +92,7 @@ export type CopilotMessage =
   | PendingActionMessage
   | CustomerFormMessage
   | LoanFormMessage
+  | RenewalFormMessage
   | DocumentMessage;
 
 export type DayOfWeek =

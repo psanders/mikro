@@ -319,7 +319,7 @@ export const COLLECTIONS_CHECKS: Check[] = [
     id: "closed-loan-reconciled",
     title: "A loan marked COMPLETED is actually settled",
     rationale:
-      "COMPLETED means the loan was closed out as paid in full. Only DEFAULTED/CANCELLED loans are expected to carry an unpaid balance — those statuses mean the opposite of settled. A COMPLETED loan with money still owed either had an undocumented write-off/early-settlement or the status was set incorrectly; either way it's worth a founder's attention, not a silent pass.",
+      "COMPLETED means the loan was closed out as paid in full. Only DEFAULTED/CANCELLED/RENEWED loans are expected to carry an unpaid balance — DEFAULTED/CANCELLED mean the opposite of settled, and a RENEWED loan's balance was paid off by the loan that replaced it. A COMPLETED loan with money still owed either had an undocumented write-off/early-settlement or the status was set incorrectly; either way it's worth a founder's attention, not a silent pass.",
     severity: "warning",
     class: "invariant",
     run(s) {
