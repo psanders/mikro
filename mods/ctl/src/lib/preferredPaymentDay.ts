@@ -5,13 +5,7 @@
  */
 
 export type PreferredPaymentDay =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
+  "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
 
 export const PREFERRED_PAYMENT_DAY_CHOICES: Array<{ name: string; value: PreferredPaymentDay }> = [
   { name: "Monday", value: "MONDAY" },

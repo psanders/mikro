@@ -140,12 +140,7 @@ function monthBounds(
 }
 
 type ReportId =
-  | "clientes"
-  | "prestamos-en-riesgo"
-  | "renovacion"
-  | "desempeno-tiempo"
-  | "contable"
-  | "audit-log";
+  "clientes" | "prestamos-en-riesgo" | "renovacion" | "desempeno-tiempo" | "contable" | "audit-log";
 
 interface ReportEntry {
   id: ReportId;

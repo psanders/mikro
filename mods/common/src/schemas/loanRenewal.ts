@@ -150,8 +150,7 @@ export interface RenewalEvaluateOptions {
 }
 
 export type RenewalTransitionResult =
-  | { ok: true; to: LoanRenewalStatus }
-  | { ok: false; reason: RenewalTransitionBlock };
+  { ok: true; to: LoanRenewalStatus } | { ok: false; reason: RenewalTransitionBlock };
 
 const isReviewerOrAdmin = (a: RenewalActor) =>
   a.roles.includes("REVIEWER") || a.roles.includes("ADMIN");

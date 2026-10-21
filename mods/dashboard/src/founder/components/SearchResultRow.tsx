@@ -63,10 +63,7 @@ interface EventoRowProps {
 }
 
 export type SearchResultRowProps =
-  | ClienteRowProps
-  | PrestamoRowProps
-  | SolicitudRowProps
-  | EventoRowProps;
+  ClienteRowProps | PrestamoRowProps | SolicitudRowProps | EventoRowProps;
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

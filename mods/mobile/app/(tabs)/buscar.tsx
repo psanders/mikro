@@ -70,12 +70,10 @@ export default function BuscarScreen() {
 
   const filtered = useMemo(() => {
     if (!searchEnabled) return [];
-    return (localResult.data ?? []).map(
-      (c): CustomerSummary => ({
-        id: c.id,
-        name: c.nickname ?? c.name
-      })
-    );
+    return (localResult.data ?? []).map((c): CustomerSummary => ({
+      id: c.id,
+      name: c.nickname ?? c.name
+    }));
   }, [searchEnabled, localResult.data]);
 
   const handleSelect = (c: CustomerSummary) => {

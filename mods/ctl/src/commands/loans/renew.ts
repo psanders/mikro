@@ -60,10 +60,7 @@ export default class Renew extends MutationCommand<typeof Renew> {
         ...(flags["payment-amount"] !== undefined && { paymentAmount: flags["payment-amount"] }),
         ...(flags["payment-frequency"] && {
           paymentFrequency: flags["payment-frequency"] as
-            | "DAILY"
-            | "WEEKLY"
-            | "BIWEEKLY"
-            | "MONTHLY"
+            "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY"
         }),
         ...(flags["starting-date"] && { startingDate: parseDateOnly(flags["starting-date"]) })
       };
