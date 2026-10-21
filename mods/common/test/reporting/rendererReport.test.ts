@@ -10,6 +10,7 @@
 import { expect } from "chai";
 import { readFileSync } from "fs";
 import { createRequire } from "module";
+import sharp from "sharp";
 import { z } from "zod/v4";
 import {
   renderReportToPdf,
@@ -22,6 +23,8 @@ import {
   section,
   pageFooter,
   page,
+  PAGE_WIDTH,
+  PAGE_PADDING,
   paginateRows,
   ValidationError,
   type Font,
@@ -223,6 +226,29 @@ describe("reporting — renderReportToPngs", function () {
       // PNG signature: 89 50 4E 47 0D 0A 1A 0A
       expect(png.subarray(0, 8).toString("hex")).to.equal("89504e470d0a1a0a");
     }
+  });
+
+  it("keeps full-width content inside the page padding (not clipped at the right edge)", async () => {
+    const bar: ReportElement = {
+      type: "div",
+      props: {
+        style: { display: "flex", width: "100%", height: "20px", backgroundColor: "#ff0000" }
+      }
+    };
+    const [png] = await renderReportToPngs({ pages: [{ layout: page([bar]) }] }, testDeps);
+    const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+    const px = (x: number, y: number) => {
+      const i = (y * info.width + x) * info.channels;
+      return [data[i], data[i + 1], data[i + 2]];
+    };
+    const scale = info.width / PAGE_WIDTH;
+    const y = Math.round((PAGE_PADDING + 10) * scale);
+    // Inside the bar, just before the right padding...
+    expect(px(Math.round((PAGE_WIDTH - PAGE_PADDING - 2) * scale), y)).to.deep.equal([255, 0, 0]);
+    // ...and the right padding itself stays white.
+    expect(px(Math.round((PAGE_WIDTH - PAGE_PADDING + 6) * scale), y)).to.deep.equal([
+      255, 255, 255
+    ]);
   });
 
   it("rejects an empty document", async () => {

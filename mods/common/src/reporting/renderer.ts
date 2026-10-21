@@ -42,6 +42,28 @@ export interface RenderReportDeps {
 /** Supersampling factor for the raster pages (matches the receipts 2x). */
 const SCALE = 2;
 
+/**
+ * satori >= 0.60 lays out `content-box` by default; every block here was
+ * authored against the old `border-box` behaviour (`width: 100%` + padding),
+ * so padding would push rows and the page past their parent and clip the right
+ * edge. Default each element to `border-box` unless it sets its own.
+ */
+function withBorderBox(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(withBorderBox);
+  if (!node || typeof node !== "object") return node;
+  const el = node as { type?: unknown; props?: Record<string, unknown> };
+  if (typeof el.type !== "string" || !el.props) return node;
+  const style = (el.props.style ?? {}) as Record<string, unknown>;
+  return {
+    ...el,
+    props: {
+      ...el.props,
+      style: { boxSizing: "border-box", ...style },
+      ...(el.props.children !== undefined ? { children: withBorderBox(el.props.children) } : {})
+    }
+  };
+}
+
 /** Render a single page's element tree to a PNG Buffer via satori → Resvg → sharp. */
 async function renderPageToPng(
   page: ReportPage,
@@ -50,7 +72,7 @@ async function renderPageToPng(
   const width = page.width ?? PAGE_WIDTH;
   const height = page.height ?? PAGE_HEIGHT;
 
-  const svg = await satori(page.layout as Parameters<typeof satori>[0], {
+  const svg = await satori(withBorderBox(page.layout) as Parameters<typeof satori>[0], {
     width,
     height,
     fonts: fonts as Parameters<typeof satori>[1]["fonts"]
