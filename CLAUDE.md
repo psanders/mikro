@@ -40,7 +40,7 @@ don't recreate it.
 Conventions (Pencil is the source of truth for the Ops dashboard and apps):
 
 - One board per area, numbered sections (`01 · …`) with a one-line purpose.
-  `ops.pen` runs `00 Fundamentos` (live component index) → `14 Arquitectura`;
+  `ops.pen` runs `00 Fundamentos` (live component index) → `13 Tema oscuro`;
   `app.pen` is one board, `Collectors · User Flow` (mobile only; there is no
   evaluator app — evaluation lives in Ops).
 - Guidance for development, not documentation of every case: one canonical
