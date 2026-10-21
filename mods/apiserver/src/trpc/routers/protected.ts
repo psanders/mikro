@@ -1659,9 +1659,10 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Universal search across customers, loans, and feed events. ADMIN only.
+   * Universal search across customers, loans, past loan applications and feed
+   * events. ADMIN and REVIEWER (the same search for both).
    */
-  searchAll: adminProcedure.input(searchAllSchema).query(async ({ ctx, input }) => {
+  searchAll: reviewerProcedure.input(searchAllSchema).query(async ({ ctx, input }) => {
     const fn = createSearchAll(ctx.db as unknown as PrismaClient);
     return fn(input);
   }),

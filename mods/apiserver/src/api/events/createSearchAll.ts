@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { withErrorHandlingAndValidation, searchAllSchema, amountToNumber } from "@mikro/common";
 import type { EventClient } from "./recordEvent.js";
 import { enrichLoanNumbers, type FeedEventItem } from "./createListFeedEvents.js";
+import { searchApplications, type ApplicationSearchHit } from "./searchApplications.js";
 
 type SearchAllInput = z.infer<typeof searchAllSchema>;
 
@@ -25,13 +26,17 @@ export interface SearchAllResult {
     customerName: string | null;
   }>;
   events: FeedEventItem[];
+  /** Past loan applications worth finding (never DRAFT or ABANDONED). */
+  applications: ApplicationSearchHit[];
 }
 
 /**
- * Universal admin search across customers, loans, and feed events. One free-text
- * term matches customers by name/phone/id number, loans by human loan id or via
- * matching customers, and events by summary/customer/actor text. Each group is
- * independently capped (offset/limit convention).
+ * Universal search (admins and reviewers) across customers, loans, past loan
+ * applications, and feed events. One free-text term matches customers by
+ * name/phone/id number, loans by human loan id or via matching customers,
+ * applications by name/phone/cédula (see `searchApplications`), and events by
+ * summary/customer/actor text. Each group is independently capped
+ * (offset/limit convention).
  */
 export function createSearchAll(client: EventClient) {
   const fn = async (input: SearchAllInput): Promise<SearchAllResult> => {
@@ -98,8 +103,11 @@ export function createSearchAll(client: EventClient) {
     // Same read-time enrichment as createListFeedEvents — see enrichLoanNumbers.
     await enrichLoanNumbers(client, events);
 
+    const applications = await searchApplications(client, q, limit);
+
     return {
       customers: customerRows,
+      applications,
       loans: loanRows.map((l) => ({
         id: l.id,
         loanId: l.loanId,
