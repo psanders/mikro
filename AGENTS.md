@@ -57,7 +57,8 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   it when the parent moves.
 - **Never run `npm audit fix --force`.** It proposes cross-major jumps (it once
   suggested downgrading Expo to a different major). Expo/React Native packages
-  follow the Expo SDK and are excluded from version updates on purpose.
+  follow the Expo SDK and `@tauri-apps/*` follows the Rust crates in `src-tauri`;
+  both are excluded from version updates on purpose.
 - **A grouped PR is reviewed like any other lockfile change:** the "Lock file
   in sync" and platform-coverage checks must pass, and for server-side bumps
   (express, prisma, sharp, mysql2, …) run the apiserver unit + integration suites
