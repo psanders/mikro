@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.2](https://github.com/psanders/mikro/compare/v3.18.1...v3.18.2) (2026-10-21)
+
+**Note:** Version bump only for package @mikro/ctl
+
 ## [3.18.1](https://github.com/psanders/mikro/compare/v3.18.0...v3.18.1) (2026-10-21)
 
 **Note:** Version bump only for package @mikro/ctl

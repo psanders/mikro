@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.2](https://github.com/psanders/mikro/compare/v3.18.1...v3.18.2) (2026-10-21)
+
+### Bug Fixes
+
+- **deps:** patch transitive security advisories with same-major overrides ([#370](https://github.com/psanders/mikro/issues/370)) ([ba59a7e](https://github.com/psanders/mikro/commit/ba59a7e1e5e961bfdd702588e87e8e252f965052))
+- **deps:** rustls 0.23.45 and rustls-webpki 0.103.16 (TLS 1.3 handshake advisory) ([#372](https://github.com/psanders/mikro/issues/372)) ([6547b90](https://github.com/psanders/mikro/commit/6547b901f8813a5d45a4a3dbca796fbce7e9d357))
+
 ## [3.18.1](https://github.com/psanders/mikro/compare/v3.18.0...v3.18.1) (2026-10-21)
 
 **Note:** Version bump only for package mikro
