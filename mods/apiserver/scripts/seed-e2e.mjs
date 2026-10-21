@@ -311,8 +311,9 @@ for (const [first, last, biz] of [
 // ACTIVE loans mid-term for the renewal specs (openspec add-loan-renewal):
 // 10 weekly cuotas of RD$1,300, 8 already paid → RD$2,600 still owed.
 // "Rosa" starts renewals from search and the copilot, "Pablo" runs one all the
-// way to finalize, "Lucía" is cancelled.
-async function seedRenewalCustomer(name, phone, idNumber) {
+// way to finalize, "Lucía" is cancelled, "Nora" is paid a cuota behind the
+// reviewer's back right before finalize (NET_CHANGED).
+async function seedRenewalCustomer(name, phone, idNumber, { aged = false } = {}) {
   const customer = await admin.createCustomer({
     name,
     phone,
@@ -342,12 +343,21 @@ async function seedRenewalCustomer(name, phone, idNumber) {
       collectedById: USERS.miguel.id
     }))
   });
+  // Aged setup events keep this customer out of today's feed, so the specs that
+  // look for other cards there are unaffected by one more seeded customer.
+  if (aged) {
+    await prisma.businessEvent.updateMany({
+      where: { customerId: customer.id },
+      data: { occurredAt: new Date(Date.now() - 3 * 24 * 3600 * 1000) }
+    });
+  }
   return customer;
 }
 
 await seedRenewalCustomer("Rosa Renovación", "+18292000050", "001-0000050-1");
 const pablo = await seedRenewalCustomer("Pablo Renovación", "+18292000051", "001-0000051-1");
 await seedRenewalCustomer("Lucía Renovación", "+18292000052", "001-0000052-1");
+await seedRenewalCustomer("Nora Renovación", "+18292000053", "001-0000053-1", { aged: true });
 
 // Past applications of Pablo (search + profile): the one that became him, and
 // two that must never be found — a DRAFT and an ABANDONED.

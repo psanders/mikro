@@ -8,7 +8,7 @@
  * Lucía and Rosa Renovación each have an ACTIVE loan of 10 × RD$1,300 weekly
  * with 8 paid (RD$2,600 owed).
  */
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Page } from "@playwright/test";
 import { login, PNG } from "./helpers";
 
 const SEARCH = "Buscar clientes, préstamos y actividad…";
@@ -16,6 +16,42 @@ const SEARCH = "Buscar clientes, préstamos y actividad…";
 async function search(page: Page, query: string) {
   await page.goto("/ops/buscar");
   await page.getByPlaceholder(SEARCH).fill(query);
+}
+
+/**
+ * Register a RD$1,300 cuota on a loan as the admin, in a second browser context:
+ * the reviewer's page never sees it happen. createPayment is collector/admin only.
+ */
+async function payCuotaBehindTheirBack(browser: Browser, loanNumber: number) {
+  const context = await browser.newContext({ baseURL: "http://localhost:5199" });
+  try {
+    const admin = await context.newPage();
+    await login(admin, "admin");
+    const status = await admin.evaluate(async (loanId) => {
+      const call = async (path: string, init?: RequestInit) =>
+        fetch(`http://localhost:4199/trpc/${path}`, {
+          ...init,
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${localStorage.getItem("mikro_jwt")}`
+          }
+        });
+      const me = await (await call("whoami")).json();
+      const res = await call("createPayment", {
+        method: "POST",
+        body: JSON.stringify({
+          loanId,
+          amount: 1300,
+          method: "CASH",
+          collectedById: me.result.data.id
+        })
+      });
+      return res.status;
+    }, loanNumber);
+    expect(status).toBe(200);
+  } finally {
+    await context.close();
+  }
 }
 
 /** Search a customer, open the profile and start (or continue) the renewal of their loan. */
@@ -114,6 +150,57 @@ test("a reviewer renews a loan from the customer profile, start to finish", asyn
   await expect(card).toHaveAttribute("data-status", "COMPLETED");
   await expect(card.getByTestId("renewal-card-sentence")).toContainText("renovado");
   await expect(card.getByTestId("renewal-card-sentence")).toContainText("RD$9,400");
+});
+
+test("when a cuota is paid after the reviewer confirmed, finalize writes nothing and asks to confirm the new amount", async ({
+  page,
+  browser
+}) => {
+  await login(page, "ana");
+  const panel = await startRenewalFromProfile(page, "Nora Renovación");
+  await expect(panel.getByTestId("renewal-net")).toHaveText("RD$7,400");
+
+  await panel.getByTestId("renewal-tab-contrato").click();
+  await panel.getByTestId("renewal-generate-contract").click();
+  await expect(panel.getByTestId("renewal-contract-card")).toBeVisible();
+  await panel.getByTestId("renewal-signed-upload-input").setInputFiles({
+    name: "contrato-firmado.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 signed by the customer")
+  });
+  await expect(panel.getByTestId("renewal-signed-card")).toBeVisible();
+  await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "SIGNED");
+
+  // The reviewer looks at RD$7,400 and confirms it.
+  await panel.getByTestId("renewal-tab-finalizar").click();
+  await expect(panel.getByTestId("renewal-net")).toHaveText("RD$7,400");
+  await panel.getByTestId("renewal-confirm").check();
+  await expect(panel.getByTestId("renewal-finalize-button")).toBeEnabled();
+
+  // Meanwhile the customer pays a cuota: owed drops to RD$1,300, the net grows to RD$8,700.
+  const loanNumber = Number(
+    (await panel.getByTestId("renewal-finalize").textContent())?.match(/préstamo #(\d+) pasa/)?.[1]
+  );
+  expect(loanNumber).toBeGreaterThan(0);
+  await payCuotaBehindTheirBack(browser, loanNumber);
+
+  // The server refuses the stale amount; the panel withdraws the confirmation and says why.
+  await panel.getByTestId("renewal-finalize-button").click();
+  await expect(panel.getByTestId("renewal-net-changed")).toBeVisible();
+  await expect(panel.getByTestId("renewal-net-changed")).toContainText("RD$8,700");
+  await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "SIGNED");
+  await expect(panel.getByTestId("renewal-confirm")).not.toBeChecked();
+  await expect(panel.getByTestId("renewal-finalize-button")).toBeDisabled();
+  await expect(panel.getByTestId("renewal-net")).toHaveText("RD$8,700");
+
+  // Confirming the new amount lets it through, for exactly that amount.
+  await panel.getByTestId("renewal-confirm").check();
+  await expect(panel.getByText("Confirmo que desembolsaré RD$8,700")).toBeVisible();
+  await expect(panel.getByTestId("renewal-finalize-button")).toBeEnabled();
+  await panel.getByTestId("renewal-finalize-button").click();
+  await expect(panel.getByTestId("renewal-done")).toBeVisible();
+  await expect(panel.getByTestId("renewal-status")).toHaveAttribute("data-status", "COMPLETED");
+  await expect(panel.getByTestId("renewal-done")).toContainText("RD$8,700");
 });
 
 test("a reviewer cancels a renewal at any point; the loan stays active and can be renewed again", async ({
