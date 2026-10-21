@@ -21,15 +21,15 @@
     "clean": "rm -rf dist chrome-extension *.zip"
   },
   "dependencies": {
-    "zod": "^4.3.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
-    "chai": "^6.2.2",
-    "esbuild": "^0.28.1",
-    "mocha": "^11.7.5",
-    "tsx": "^4.21.0",
+    "chai": "^6.3.0",
+    "esbuild": "^0.28.2",
+    "mocha": "^11.8.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
