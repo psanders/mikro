@@ -59,12 +59,15 @@ updates:
       - dependency-name: "react-dom"
       - dependency-name: "react-test-renderer"
 
-  # The desktop app's Rust crates (Tauri).
+  # The desktop app's Rust crates (Tauri). Security updates only: version
+  # updates are off (limit 0) because PR checks do not compile or run the
+  # desktop shell, so a Tauri/tao bump would only be validated on a main push.
+  # Upgrade the shell deliberately; advisories still arrive, grouped.
   - package-ecosystem: "cargo"
     directory: "/mods/dashboard/src-tauri"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 0
     labels: ["dependencies"]
     commit-message:
       prefix: "build(deps)"
@@ -74,15 +77,10 @@ updates:
       cargo-security:
         applies-to: security-updates
         patterns: ["*"]
-      cargo-minor-and-patch:
-        applies-to: version-updates
-        update-types: ["minor", "patch"]
-        patterns: ["*"]
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
 
-  # Workflow actions.
+  # Workflow actions: minor/patch only. Publish, deploy and desktop-build
+  # workflows run on main pushes, not on PRs, so a major bump (checkout,
+  # upload-artifact, docker/*, tauri-action) cannot be validated in review.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -95,4 +93,8 @@ updates:
       default-days: 5
     groups:
       actions:
+        update-types: ["minor", "patch"]
         patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
