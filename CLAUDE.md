@@ -28,7 +28,7 @@ Pencil design files, one per area, all importing the shared library as `ui`
 - `app.pen` — Collectors flow, shared screens, Evidencias.
 - `website.pen` — site, FAQ, OpenGraph, offer table.
 - `solicitud.pen` — the loan application form.
-- `ads.pen` — legacy ad creatives. `ads-system/ads-system.pen` — Round-2 ad
+- `ads.pen` — legacy ad creatives. `ads-system/ads.pen` — Round-2 ad
   system (self-contained, own variables, `images/` next to it).
 - `deck.pen` — pre-seed pitch deck. `exports.pen` — export frames.
 
