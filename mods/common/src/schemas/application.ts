@@ -415,6 +415,12 @@ export const SEARCHABLE_APPLICATION_STATUSES = [
   "REJECTED"
 ] as const satisfies readonly z.infer<typeof applicationStatusEnum>[];
 
+/** A customer's past applications (profile panel): by link or by shared cédula. */
+export const listApplicationsByCustomerSchema = z.object({
+  customerId: z.uuid({ error: "Invalid customer ID" })
+});
+export type ListApplicationsByCustomerInput = z.infer<typeof listApplicationsByCustomerSchema>;
+
 export function isSearchableApplicationStatus(status: string): boolean {
   return (SEARCHABLE_APPLICATION_STATUSES as readonly string[]).includes(status);
 }

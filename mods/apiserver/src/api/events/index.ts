@@ -12,6 +12,7 @@ export {
 } from "./createListFeedEvents.js";
 export { createRestoreApplication } from "./createRestoreApplication.js";
 export { createSearchAll } from "./createSearchAll.js";
+export { createListApplicationsByCustomer } from "./listApplicationsByCustomer.js";
 export { createExportAuditLog } from "./createExportAuditLog.js";
 export {
   recordApplicationReceived,

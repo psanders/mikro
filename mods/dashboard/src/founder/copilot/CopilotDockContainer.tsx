@@ -26,6 +26,7 @@ import { CapabilityChips } from "./CapabilityChips";
 import { CopilotDock } from "./CopilotDock";
 import { useCopilot } from "./CopilotContext";
 import { useApplicationPanel } from "../applications/ApplicationPanelContext";
+import { useStartRenewal } from "../renewals/useStartRenewal";
 import { PendingActionCard } from "./PendingActionCard";
 import { CustomerFormCard } from "./CustomerFormCard";
 import { LoanFormCard } from "./LoanFormCard";
@@ -147,7 +148,7 @@ export function CopilotDockContainer() {
   const createCustomer = trpc.createCustomer.useMutation();
   const createLoan = trpc.createLoan.useMutation();
   const generateContract = trpc.generateCustomerContract.useMutation();
-  const startRenewal = trpc.startLoanRenewal.useMutation();
+  const { startOrFind } = useStartRenewal();
   const panel = useApplicationPanel();
 
   // Loan form card's customer picker (the dock holds at most one open form at
@@ -413,10 +414,7 @@ export function CopilotDockContainer() {
     async (messageId: string, loanNumber: number) => {
       setRenewalStatus((prev) => ({ ...prev, [messageId]: { status: "starting" } }));
       try {
-        const existing = await utils.getOpenLoanRenewal.fetch({ loanId: loanNumber });
-        const renewal = existing ?? (await startRenewal.mutateAsync({ loanId: loanNumber }));
-        void utils.listFeedEvents.invalidate();
-        void utils.listOpenRenewalEvents.invalidate();
+        const renewal = await startOrFind(loanNumber);
         setRenewalStatus((prev) => ({
           ...prev,
           [messageId]: {
@@ -442,7 +440,7 @@ export function CopilotDockContainer() {
         }));
       }
     },
-    [startRenewal, utils, panel]
+    [startOrFind, panel]
   );
 
   const handleDownloadDocument = useCallback(

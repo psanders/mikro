@@ -5,7 +5,7 @@
  * and `prestamo` render as standalone cards; `evento` renders as a compact row
  * meant to sit inside a shared bordered list container (see BusquedaScreen).
  */
-import { Banknote } from "lucide-react";
+import { Banknote, FileText } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { FeedTypeIcon } from "./FeedTypeIcon";
 import { formatRelativeTime } from "./format";
@@ -36,8 +36,20 @@ interface PrestamoRowProps {
   statusLabel?: string;
   statusTone?: BadgeTone;
   onSelect: () => void;
-  /** Offered only for ACTIVE loans: opens the copilot's renewal card. */
+  /** Offered only for ACTIVE loans: starts (or opens) the renewal. A quiet outline button. */
   onRenew?: () => void;
+  className?: string;
+}
+
+interface SolicitudRowProps {
+  variant: "solicitud";
+  name: string;
+  businessName?: string;
+  /** Spanish status label and tone (see StatusPill / applications). */
+  statusLabel: string;
+  statusTone?: BadgeTone;
+  meta?: string;
+  onSelect: () => void;
   className?: string;
 }
 
@@ -50,7 +62,11 @@ interface EventoRowProps {
   className?: string;
 }
 
-export type SearchResultRowProps = ClienteRowProps | PrestamoRowProps | EventoRowProps;
+export type SearchResultRowProps =
+  | ClienteRowProps
+  | PrestamoRowProps
+  | SolicitudRowProps
+  | EventoRowProps;
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -124,6 +140,44 @@ function PrestamoRow({
   );
 }
 
+function SolicitudRow({
+  name,
+  businessName,
+  statusLabel,
+  statusTone = "neutral",
+  meta,
+  onSelect,
+  className
+}: SolicitudRowProps) {
+  return (
+    <div className={cn(CARD, "p-[14px_18px]", className)} data-testid="search-application">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-ds-subtle text-ds-muted">
+        <FileText size={18} />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[14px] font-semibold text-brand-ink">
+            {name}
+            {businessName ? ` · ${businessName}` : ""}
+          </p>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-[10px] py-[3px] text-[11px] font-semibold",
+              STATUS_CHIP[statusTone]
+            )}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        {meta && <p className="truncate text-[12px] font-medium text-ds-muted">{meta}</p>}
+      </div>
+      <button type="button" onClick={onSelect} className={VER_BUTTON}>
+        Ver solicitud
+      </button>
+    </div>
+  );
+}
+
 function EventoRow({ event, divider, onSelect, className }: EventoRowProps) {
   return (
     <button
@@ -153,6 +207,8 @@ export function SearchResultRow(props: SearchResultRowProps) {
       return <ClienteRow {...props} />;
     case "prestamo":
       return <PrestamoRow {...props} />;
+    case "solicitud":
+      return <SolicitudRow {...props} />;
     case "evento":
       return <EventoRow {...props} />;
   }

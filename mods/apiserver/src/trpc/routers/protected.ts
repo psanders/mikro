@@ -295,6 +295,7 @@ import {
   listFeedEventsSchema,
   restoreApplicationSchema,
   searchAllSchema,
+  listApplicationsByCustomerSchema,
   exportAuditLogSchema
 } from "@mikro/common";
 // Founder feed / event-log API functions
@@ -304,6 +305,7 @@ import {
   createListOpenRenewalEvents,
   createRestoreApplication,
   createSearchAll,
+  createListApplicationsByCustomer,
   createExportAuditLog
 } from "../../api/events/index.js";
 // Founder copilot schemas
@@ -1662,6 +1664,17 @@ export const protectedRouter = router({
     const fn = createSearchAll(ctx.db as unknown as PrismaClient);
     return fn(input);
   }),
+
+  /**
+   * A customer's past applications (profile panel), newest first, never DRAFT
+   * or ABANDONED. ADMIN and REVIEWER.
+   */
+  listApplicationsByCustomer: reviewerProcedure
+    .input(listApplicationsByCustomerSchema)
+    .query(async ({ ctx, input }) => {
+      const fn = createListApplicationsByCustomer(ctx.db as unknown as PrismaClient);
+      return fn(input);
+    }),
 
   /**
    * Month-scoped CSV export of the event log (headers-only when empty). ADMIN only.

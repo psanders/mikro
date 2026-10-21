@@ -29,11 +29,11 @@
 
 ## 4. Dashboard
 
-- [ ] 4.1 Búsqueda for reviewers; "Ver perfil"/"Renovar" open panels
-- [ ] 4.2 Panel context: customer + renewal kinds
-- [ ] 4.3 `CustomerPanel` (edit, documents, loans, applications) + shared file drop zone
+- [x] 4.1 Búsqueda for reviewers; "Ver perfil"/"Renovar" open panels (no copilot)
+- [x] 4.2 Panel context: customer + renewal kinds
+- [x] 4.3 `CustomerPanel` (edit, documents, loans, applications) + shared file drop zone
 - [ ] 4.4 `LoanRenewalFeedCard` + `RenewalPanel` views; typeConfig, filters, FeedScreen wiring
-- [ ] 4.5 Application search rows open the application panel (read-only where no action)
+- [x] 4.5 Application search rows open the application panel
 - [ ] 4.6 Stories
 
 ## 5. Tests

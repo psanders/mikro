@@ -199,8 +199,9 @@ export function FounderShell() {
 
   const path = location.pathname;
   const initials = initialsOf(whoami.data?.name ?? "");
-  // Reviewers share the feed (their applications) but not the admin tools:
-  // search, tasks, exceptions, reports and the copilot expose non-application data.
+  // Reviewers share the feed and the search (customers, loans, applications,
+  // renewals) but not the admin tools: tasks, exceptions, reports and the
+  // copilot expose non-application data.
   const isAdmin = whoami.data?.roles?.includes("ADMIN") ?? false;
 
   return (
@@ -219,14 +220,14 @@ export function FounderShell() {
                 active={path === "/ops" && location.state?.filterId !== "alertas"}
                 onClick={() => navigate("/ops")}
               />
+              <RailItem
+                icon={Search}
+                label="Búsqueda"
+                active={path.startsWith("/ops/buscar")}
+                onClick={() => navigate("/ops/buscar")}
+              />
               {isAdmin && (
                 <>
-                  <RailItem
-                    icon={Search}
-                    label="Búsqueda"
-                    active={path.startsWith("/ops/buscar")}
-                    onClick={() => navigate("/ops/buscar")}
-                  />
                   <RailItem
                     icon={Clock3}
                     label="Tareas"

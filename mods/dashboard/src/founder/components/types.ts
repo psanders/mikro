@@ -16,11 +16,14 @@ export interface FeedEvent {
   occurredAt: string;
   actorId?: string;
   actorName: string;
+  customerId?: string;
   customerName?: string;
   loanId?: string;
   /** Human loan number (`Loan.loanId`) — see `enrichLoanNumbers` on the apiserver. */
   loanNumber?: number;
   applicationId?: string;
+  /** For loan.renewal.* events: the renewal the card is built from. */
+  renewalId?: string;
   amount?: number;
   /** Human, Spanish one-liner — rendered as-is as the card's main line. */
   summary: string;
@@ -36,6 +39,25 @@ export interface FeedEvent {
     score: number | null;
     businessName: string | null;
     aiSummary: string | null;
+  };
+  /**
+   * For loan.renewal.* events: the renewal's CURRENT state, joined by the
+   * server at read time. The renewal card renders from this, not the event.
+   */
+  renewal?: {
+    status: string;
+    oldLoanNumber: number;
+    newLoanNumber: number | null;
+    principal: number;
+    termLength: number;
+    paymentAmount: number;
+    paymentFrequency: string;
+    quotedOwed: number | null;
+    quotedNet: number | null;
+    hasContract: boolean;
+    hasSignedContract: boolean;
+    cancelReason: string | null;
+    createdById: string;
   };
 }
 
@@ -76,13 +98,16 @@ export function toFeedEvent(item: FeedItem): FeedEvent {
     occurredAt: new Date(item.occurredAt).toISOString(),
     actorId: item.actorId ?? undefined,
     actorName: item.actorName,
+    customerId: item.customerId ?? undefined,
     customerName: item.customerName ?? undefined,
     loanId: item.loanId ?? undefined,
     loanNumber: item.loanNumber ?? undefined,
     applicationId: item.applicationId ?? undefined,
+    renewalId: item.renewalId ?? undefined,
     amount: item.amount ?? undefined,
     summary: item.summary,
     payload: (item.payload ?? {}) as Record<string, unknown>,
-    application: item.application ?? undefined
+    application: item.application ?? undefined,
+    renewal: item.renewal ?? undefined
   };
 }

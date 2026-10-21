@@ -157,6 +157,8 @@ export {
   applicationStatusEnum,
   APPLICATION_STATUS_LABELS,
   SEARCHABLE_APPLICATION_STATUSES,
+  listApplicationsByCustomerSchema,
+  type ListApplicationsByCustomerInput,
   isSearchableApplicationStatus,
   APPLICATION_STATUS_LABELS_EN,
   AD_ATTRIBUTION_START,

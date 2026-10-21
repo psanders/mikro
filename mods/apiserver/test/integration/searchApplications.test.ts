@@ -108,6 +108,50 @@ describe("unified search: applications", () => {
     expect(r.applications).to.have.length(0);
   });
 
+  it("lists a customer's past applications by link or shared cédula, never DRAFT or ABANDONED", async () => {
+    const collector = await db.user.create({
+      data: { name: "Cobrador", phone: "+18095550002" }
+    });
+    const customer = await db.customer.create({
+      data: {
+        name: "Juan Pérez",
+        phone: "18095550142",
+        idNumber: "031-0567812-4",
+        homeAddress: "Calle 1",
+        assignedCollectorId: collector.id
+      }
+    });
+    await seedOnePerStatus();
+    await db.loanApplication.updateMany({
+      where: { sessionId: "session-5" },
+      data: { customerId: customer.id, idNumber: null }
+    });
+    await db.loanApplication.create({
+      data: {
+        sessionId: "other",
+        status: "RECEIVED",
+        firstName: "Otra",
+        idNumber: "001-0000001-9",
+        rawData: {}
+      }
+    });
+
+    const rows = await as(["REVIEWER"]).listApplicationsByCustomer({ customerId: customer.id });
+    // Linked (session-5, CONVERTED) + the five others sharing the cédula; no DRAFT/ABANDONED/other.
+    expect(rows.map((r) => r.status)).to.have.members([
+      "RECEIVED",
+      "IN_REVIEW",
+      "PENDING_DECISION",
+      "APPROVED",
+      "CONVERTED",
+      "REJECTED"
+    ]);
+    expect(rows.every((r) => r.firstName !== "Otra")).to.equal(true);
+    expect(rows[0].createdAt.getTime()).to.be.greaterThan(
+      rows[rows.length - 1].createdAt.getTime()
+    );
+  });
+
   it("still rejects collectors", async () => {
     try {
       await as(["COLLECTOR"]).searchAll({ query: "juan" });
