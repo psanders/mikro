@@ -4,8 +4,10 @@
 import { z } from "zod/v4";
 import {
   withErrorHandlingAndValidation,
+  businessEventTypeEnum,
   listFeedEventsSchema,
-  amountToNumber
+  amountToNumber,
+  type BusinessEventType
 } from "@mikro/common";
 import type { EventClient } from "./recordEvent.js";
 import { encodeCursor, decodeCursor } from "./helpers.js";
@@ -37,6 +39,13 @@ export interface FeedEventItem {
    * status. `null` for non-application events or a deleted application.
    */
   application: FeedApplicationState | null;
+  /** Set on loan.renewal.* events: the renewal the feed card is built from. */
+  renewalId: string | null;
+  /**
+   * The renewal's CURRENT state for loan.renewal.* events, joined at read time
+   * like `application`. `null` for other events or a deleted renewal.
+   */
+  renewal: FeedRenewalState | null;
   amount: number | null;
   summary: string;
   payload: unknown;
@@ -49,6 +58,24 @@ export interface FeedApplicationState {
   score: number | null;
   businessName: string | null;
   aiSummary: string | null;
+}
+
+export interface FeedRenewalState {
+  status: string;
+  /** Human number of the loan being renewed, and of the new one once created. */
+  oldLoanNumber: number;
+  newLoanNumber: number | null;
+  principal: number;
+  termLength: number;
+  paymentAmount: number;
+  paymentFrequency: string;
+  /** What the user last saw: owed on the old loan and the net to disburse. */
+  quotedOwed: number | null;
+  quotedNet: number | null;
+  hasContract: boolean;
+  hasSignedContract: boolean;
+  cancelReason: string | null;
+  createdById: string;
 }
 
 /** Who is reading the feed; drives the role scoping of application events. */
@@ -71,6 +98,10 @@ export const APPLICATION_REVIEW_EVENT_TYPES = [
   "application.converted"
 ] as const;
 
+/** Renewal-process event types (`loan.renewal.*`); one card per renewal. */
+export const RENEWAL_EVENT_TYPES: readonly BusinessEventType[] =
+  businessEventTypeEnum.options.filter((t) => t.startsWith("loan.renewal."));
+
 export interface ListFeedEventsResult {
   items: FeedEventItem[];
   nextCursor: string | null;
@@ -86,6 +117,7 @@ function mapRow(row: {
   customerName: string | null;
   loanId: string | null;
   applicationId: string | null;
+  renewalId: string | null;
   amount: unknown;
   summary: string;
   payload: string;
@@ -102,6 +134,8 @@ function mapRow(row: {
     loanNumber: null,
     applicationId: row.applicationId,
     application: null,
+    renewalId: row.renewalId,
+    renewal: null,
     amount: row.amount == null ? null : amountToNumber(row.amount),
     summary: row.summary,
     payload: JSON.parse(row.payload)
@@ -231,6 +265,94 @@ async function enrichApplicationState(client: EventClient, items: FeedEventItem[
   }
 }
 
+/** Join each renewal event's live renewal state (one batched query). */
+export async function enrichRenewalState(
+  client: EventClient,
+  items: FeedEventItem[]
+): Promise<void> {
+  const ids = [
+    ...new Set(
+      items
+        .filter((i) => i.type.startsWith("loan.renewal.") && i.renewalId)
+        .map((i) => i.renewalId!)
+    )
+  ];
+  if (ids.length === 0) return;
+  const rows = await client.loanRenewal.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      status: true,
+      principal: true,
+      termLength: true,
+      paymentAmount: true,
+      paymentFrequency: true,
+      quotedOwed: true,
+      quotedNet: true,
+      contractFilename: true,
+      signedContractFilename: true,
+      cancelReason: true,
+      createdById: true,
+      loan: { select: { loanId: true } },
+      newLoan: { select: { loanId: true } }
+    }
+  });
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const item of items) {
+    const row = item.renewalId ? byId.get(item.renewalId) : undefined;
+    if (!row || !item.type.startsWith("loan.renewal.")) continue;
+    item.renewal = {
+      status: row.status,
+      oldLoanNumber: row.loan.loanId,
+      newLoanNumber: row.newLoan?.loanId ?? null,
+      principal: amountToNumber(row.principal),
+      termLength: row.termLength,
+      paymentAmount: amountToNumber(row.paymentAmount),
+      paymentFrequency: row.paymentFrequency,
+      quotedOwed: row.quotedOwed == null ? null : amountToNumber(row.quotedOwed),
+      quotedNet: row.quotedNet == null ? null : amountToNumber(row.quotedNet),
+      hasContract: Boolean(row.contractFilename),
+      hasSignedContract: Boolean(row.signedContractFilename),
+      cancelReason: row.cancelReason,
+      createdById: row.createdById
+    };
+  }
+}
+
+/**
+ * The newest event of every renewal still in progress, newest first, with its
+ * live state joined. Date-independent on purpose (like the open applications):
+ * a renewal started days ago and still waiting for the signed contract must
+ * stay visible even though the feed defaults to "Hoy". Admins and reviewers see
+ * every open renewal — anyone with either role may act on any renewal.
+ */
+export function createListOpenRenewalEvents(client: EventClient, viewer: FeedViewer) {
+  return async (): Promise<FeedEventItem[]> => {
+    if (!viewer.roles.includes("ADMIN") && !viewer.roles.includes("REVIEWER")) return [];
+    const open = await client.loanRenewal.findMany({
+      where: { openKey: { not: null } },
+      select: { id: true }
+    });
+    if (open.length === 0) return [];
+
+    const rows = await client.businessEvent.findMany({
+      where: { renewalId: { in: open.map((r) => r.id) }, type: { in: [...RENEWAL_EVENT_TYPES] } },
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }]
+    });
+    const seen = new Set<string>();
+    const latest = rows.filter((r) => {
+      if (!r.renewalId || seen.has(r.renewalId)) return false;
+      seen.add(r.renewalId);
+      return true;
+    });
+
+    const items = latest.map(mapRow);
+    await enrichLoanNumbers(client, items);
+    await enrichRenewalState(client, items);
+    return items;
+  };
+}
+
 /** Terminal application statuses — never listed as open. */
 const CLOSED_APPLICATION_STATUSES = ["CONVERTED", "REJECTED", "ABANDONED"] as const;
 
@@ -289,8 +411,9 @@ export function createListFeedEvents(client: EventClient, viewer?: FeedViewer) {
           OR: [{ type: { notIn: [...APPLICATION_REVIEW_EVENT_TYPES] } }, visibleReviewEvents]
         });
       } else {
-        // A REVIEWER-only viewer sees review events only.
-        and.push(visibleReviewEvents);
+        // A REVIEWER-only viewer sees review events and every renewal event
+        // (anyone who may renew may act on any renewal), nothing else.
+        and.push({ OR: [visibleReviewEvents, { type: { in: [...RENEWAL_EVENT_TYPES] } }] });
       }
     }
     if (input.types && input.types.length > 0) {
@@ -331,6 +454,7 @@ export function createListFeedEvents(client: EventClient, viewer?: FeedViewer) {
     await overlayMessageStatus(client, items);
     await enrichLoanNumbers(client, items);
     await enrichApplicationState(client, items);
+    await enrichRenewalState(client, items);
 
     const last = items[items.length - 1];
     const nextCursor = hasMore && last ? encodeCursor(last.occurredAt, last.id) : null;

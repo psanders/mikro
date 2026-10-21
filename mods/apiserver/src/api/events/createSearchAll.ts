@@ -4,7 +4,11 @@
 import { z } from "zod/v4";
 import { withErrorHandlingAndValidation, searchAllSchema, amountToNumber } from "@mikro/common";
 import type { EventClient } from "./recordEvent.js";
-import { enrichLoanNumbers, type FeedEventItem } from "./createListFeedEvents.js";
+import {
+  enrichLoanNumbers,
+  enrichRenewalState,
+  type FeedEventItem
+} from "./createListFeedEvents.js";
 import { searchApplications, type ApplicationSearchHit } from "./searchApplications.js";
 
 type SearchAllInput = z.infer<typeof searchAllSchema>;
@@ -96,12 +100,15 @@ export function createSearchAll(client: EventClient) {
       loanNumber: null,
       applicationId: row.applicationId,
       application: null,
+      renewalId: row.renewalId,
+      renewal: null,
       amount: row.amount == null ? null : amountToNumber(row.amount),
       summary: row.summary,
       payload: JSON.parse(row.payload)
     }));
     // Same read-time enrichment as createListFeedEvents — see enrichLoanNumbers.
     await enrichLoanNumbers(client, events);
+    await enrichRenewalState(client, events);
 
     const applications = await searchApplications(client, q, limit);
 

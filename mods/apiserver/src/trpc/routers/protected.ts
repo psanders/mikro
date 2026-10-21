@@ -303,6 +303,7 @@ import {
 import {
   createListFeedEvents,
   createListOpenApplicationEvents,
+  createListOpenRenewalEvents,
   createRestoreApplication,
   createSearchAll,
   createExportAuditLog
@@ -1644,6 +1645,15 @@ export const protectedRouter = router({
    */
   listOpenApplicationEvents: reviewerProcedure.query(async ({ ctx }) => {
     const fn = createListOpenApplicationEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
+    return fn();
+  }),
+
+  /**
+   * The newest event of every renewal still in progress, regardless of date —
+   * backs the feed's always-visible open renewals. ADMIN or REVIEWER.
+   */
+  listOpenRenewalEvents: reviewerProcedure.query(async ({ ctx }) => {
+    const fn = createListOpenRenewalEvents(ctx.db as unknown as PrismaClient, actorOf(ctx));
     return fn();
   }),
 

@@ -20,7 +20,7 @@
 - [x] 2.3 Roles: renewal, contract, documents → reviewerProcedure; delete document admin-only (`searchAll` follows with search; old `renewLoan` removed in phase 3)
 - [x] 2.4 Customer-document upload/get/delete; `updateCustomer` widened
 - [x] 2.5 `searchAll` applications (token name, phone digits, cédula, excludes DRAFT/ABANDONED); open to reviewers
-- [ ] 2.6 Feed: generalize `application.` prefix, join renewal state, reviewer scoping, `listOpenRenewalEvents`
+- [x] 2.6 Feed: renewal events join live state (`renewalId` column), reviewer scoping, `listOpenRenewalEvents` (client-side one-card-per-renewal comes with the dashboard card)
 
 ## 3. Copilot + ctl
 

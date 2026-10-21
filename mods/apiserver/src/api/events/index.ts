@@ -7,6 +7,7 @@ export { eventMappers, type EventMapper, type EventMapperArgs } from "./mappers.
 export {
   createListFeedEvents,
   createListOpenApplicationEvents,
+  createListOpenRenewalEvents,
   type FeedEventItem
 } from "./createListFeedEvents.js";
 export { createRestoreApplication } from "./createRestoreApplication.js";
