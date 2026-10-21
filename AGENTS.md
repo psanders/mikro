@@ -231,6 +231,16 @@ Deliberately NOT overridden (re-check when a parent moves):
   Don't add another workflow that creates or rewrites the Release body, and
   keep new build outputs reporting into that Release.
 
+## Design files (`designs/*.pen`)
+
+- Edit `.pen` files only through the Pencil MCP, never by hand. Layout and
+  `ui:` conventions are in `CLAUDE.md`.
+- New reusable components and variables go in `designs/mikro.lib.pen`, not in
+  an area file; area files reference them as `ui:<id>` / `$ui:<name>`.
+- Closing Pen can write its stale in-memory copy over a file changed on disk
+  (merge, checkout). Close Pen before switching branches, and re-check
+  `git status` after closing.
+
 ## Deploy & smoke-test contracts
 
 - The apiserver container requires the receipt-signing keypair at boot
