@@ -40,6 +40,30 @@ npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
   to a new major across workspaces). After running it, `git diff` every
   package.json and revert anything unrelated to Expo SDK alignment.
 
+## Dependabot (`.github/dependabot.yml`)
+
+- **Security updates arrive as ONE grouped PR per ecosystem**, version updates
+  as one weekly/monthly minor+patch PR. Before this config Dependabot raised a
+  PR per advisory, capped at 10 open and refilled the moment one merged — merging
+  or closing them one by one just summoned the next batch. Do not remove the
+  `groups:` blocks; if the PR list is noisy again, fix the grouping rather than
+  mass-closing PRs.
+- **`npm update <pkg>` cannot force a transitive security fix** (arborist logs
+  `placeDep … KEEP` when the locked version still satisfies the range, and
+  `npm audit fix` fails with ERESOLVE on the peer-dep tree). Let Dependabot's
+  grouped PR do the lockfile edit; for something it cannot reach (a parent pins
+  an exact version), use a root `overrides` entry and note why here, and remove
+  it when the parent moves.
+- **Never run `npm audit fix --force`.** It proposes cross-major jumps (it once
+  suggested downgrading Expo to a different major). Expo/React Native packages
+  follow the Expo SDK and are excluded from version updates on purpose.
+- **A grouped PR is reviewed like any other lockfile change:** the "Lock file
+  in sync" and platform-coverage checks must pass, and for server-side bumps
+  (express, prisma, sharp, mysql2, …) run the apiserver unit + integration suites
+  before merging. Advisories with no patched version (braces, http-cache-semantics,
+  node-forge, sprintf-js at the time of writing) stay open until upstream fixes
+  them — do not dismiss them.
+
 ## Native / prebuilt-binary dependencies
 
 - Prefer pure-JS packages. Every native dep (sharp, better-sqlite3, …)
