@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
 
@@ -129,7 +129,7 @@ jobs:
 
       - name: Build Tauri app
         id: tauri
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_API_URL: ${{ env.VITE_API_URL }}
@@ -162,7 +162,7 @@ jobs:
       - name: Upload installers (manual dispatch)
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         id: upload-installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mikro-dashboard-${{ matrix.platform }}
           # Covers native (target/release/bundle) and the macOS universal

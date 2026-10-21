@@ -32,7 +32,7 @@ jobs:
       GRADLE_USER_HOME: /mnt/gradle
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # build-android was broken on every main push for a month. Two causes,
       # both handled here:
@@ -74,14 +74,14 @@ jobs:
 
       # No `cache: npm` — a cold `npm ci` here is only ~60s and the cache
       # save/restore just adds disk churn to a job that is tight on space.
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: "temurin"
           java-version: "17"
@@ -92,7 +92,7 @@ jobs:
       # the newest cache on every exact-key miss, so it grew without bound
       # until it was itself the thing filling the disk.
       - name: Cache Gradle dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             /mnt/gradle/caches/modules-2
