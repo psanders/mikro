@@ -1,0 +1,98 @@
+# Dependabot — configured so it never floods the PR list.
+#
+# Without this file Dependabot raised one PR per advisory (up to 10 at a time,
+# refilling as soon as one merged). Now:
+#   - SECURITY updates arrive as ONE grouped PR per ecosystem — advisories are
+#     urgent and must not wait, but they do not need a PR each.
+#   - VERSION updates are weekly/monthly, minor+patch only, one grouped PR, and
+#     a few days old before they are proposed (a cooldown against freshly
+#     published, possibly-compromised releases). Majors are never proposed: they
+#     are deliberate work, not a bot's.
+#   - Things that move in lockstep with something else are left to humans — see
+#     AGENTS.md: Expo/React Native packages follow the Expo SDK (`expo install`),
+#     react/react-dom are pinned by `overrides`, and the patched
+#     react-native-nitro-screen-recorder is pinned on purpose.
+#
+# Security updates ignore `ignore:` and `cooldown:` — an advisory is always
+# eligible. Check the grouped PR's CI before merging; the "Lock file in sync"
+# and platform-coverage checks (AGENTS.md) are what keep a lockfile bump safe.
+version: 2
+
+updates:
+  # All npm workspaces (mods/*, site) resolve through the root package-lock.json.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Santo_Domingo"
+    open-pull-requests-limit: 3
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "chore(deps-dev)"
+    cooldown:
+      default-days: 5
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Expo SDK alignment: bumped together with `npx expo install --fix`.
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "jest-expo"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native/*"
+      - dependency-name: "@react-native-*/*"
+      # Pinned on purpose (root `overrides`).
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "react-test-renderer"
+
+  # The desktop app's Rust crates (Tauri).
+  - package-ecosystem: "cargo"
+    directory: "/mods/dashboard/src-tauri"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "build(deps)"
+    cooldown:
+      default-days: 5
+    groups:
+      cargo-security:
+        applies-to: security-updates
+        patterns: ["*"]
+      cargo-minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Workflow actions.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore(ci)"
+    cooldown:
+      default-days: 5
+    groups:
+      actions:
+        patterns: ["*"]
