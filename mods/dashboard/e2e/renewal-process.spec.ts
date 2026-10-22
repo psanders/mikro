@@ -148,6 +148,7 @@ test("a reviewer renews a loan from the customer profile, start to finish", asyn
   const card = page.getByTestId("renewal-card").filter({ hasText: "Pablo Renovación" });
   await expect(card).toHaveCount(1);
   await expect(card).toHaveAttribute("data-status", "COMPLETED");
+  await card.getByTestId("renewal-card-toggle").click();
   await expect(card.getByTestId("renewal-card-sentence")).toContainText("renovado");
   await expect(card.getByTestId("renewal-card-sentence")).toContainText("RD$9,400");
 });
@@ -227,6 +228,7 @@ test("a reviewer cancels a renewal at any point; the loan stays active and can b
   const card = page.getByTestId("renewal-card").filter({ hasText: "Lucía Renovación" });
   await expect(card).toHaveCount(1);
   await expect(card).toHaveAttribute("data-status", "CANCELLED");
+  await card.getByTestId("renewal-card-toggle").click();
   await card.getByTestId("renewal-action-another").click();
   await expect(page.getByTestId("renewal-panel").getByTestId("renewal-status")).toHaveAttribute(
     "data-status",

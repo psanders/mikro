@@ -271,6 +271,7 @@ test("loan renewal, start to finish", async ({ page, request }) => {
   await page.goto("/ops");
   const done = page.getByTestId("renewal-card").filter({ hasText: "Pablo Renovación" });
   await expect(done).toHaveAttribute("data-status", "COMPLETED");
+  await done.getByTestId("renewal-card-toggle").click();
   await say(page, "And in the feed, a single card per renewal, always in its current state.", 3800);
 
   // ── 10. Cancel ──────────────────────────────────────────────────────────
@@ -303,6 +304,7 @@ test("loan renewal, start to finish", async ({ page, request }) => {
   await page.goto("/ops");
   const cancelled = page.getByTestId("renewal-card").filter({ hasText: "Lucía Renovación" });
   await expect(cancelled).toHaveAttribute("data-status", "CANCELLED");
+  await cancelled.getByTestId("renewal-card-toggle").click();
   await say(
     page,
     'The same card, now "Cancelada", with the option to start another renewal.',
