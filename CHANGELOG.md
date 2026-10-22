@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.3](https://github.com/psanders/mikro/compare/v3.18.2...v3.18.3) (2026-10-22)
+
+### Bug Fixes
+
+- **reporting:** stop clipping the right edge of every report PDF ([#380](https://github.com/psanders/mikro/issues/380)) ([6500485](https://github.com/psanders/mikro/commit/6500485b12fe3bb12b211267e81d53050a65dd33)), closes [#369](https://github.com/psanders/mikro/issues/369)
+
 ## [3.18.2](https://github.com/psanders/mikro/compare/v3.18.1...v3.18.2) (2026-10-21)
 
 ### Bug Fixes
