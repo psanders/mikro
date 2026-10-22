@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.4](https://github.com/psanders/mikro/compare/v3.18.3...v3.18.4) (2026-10-22)
+
+### Features
+
+- **dashboard:** collapse renewal feed cards like application cards ([#381](https://github.com/psanders/mikro/issues/381)) ([c4e8c26](https://github.com/psanders/mikro/commit/c4e8c261efc475be28e10f4a764c0ddf7c20f6f6))
+
 ## [3.18.3](https://github.com/psanders/mikro/compare/v3.18.2...v3.18.3) (2026-10-22)
 
 ### Bug Fixes
