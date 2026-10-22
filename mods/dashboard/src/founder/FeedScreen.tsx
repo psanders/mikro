@@ -212,8 +212,8 @@ export function FeedScreen() {
     [actorsQuery.data]
   );
   const userNames = useMemo(() => new Map(actors.map((a) => [a.id, a.name])), [actors]);
-  // Open application cards, by application id (not event id): a card whose
-  // application just changed re-renders from a newer event and must stay open.
+  // Open application/renewal cards, by application or renewal id (not event id):
+  // a card whose subject just changed re-renders from a newer event and must stay open.
   const [openApps, setOpenApps] = useState<Set<string>>(() => new Set());
   const appCardProps = (applicationId: string) => ({
     expanded: openApps.has(applicationId),
@@ -291,6 +291,7 @@ export function FeedScreen() {
         key={event.renewalId}
         event={event}
         showDay={showDay}
+        {...appCardProps(event.renewalId)}
         onOpen={(id, opts) => applicationPanel.openRenewal(id, opts)}
         onViewLoans={(customerId) =>
           customerId && applicationPanel.openCustomer(customerId, "prestamos")
