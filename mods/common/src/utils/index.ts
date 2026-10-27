@@ -18,6 +18,13 @@ export {
   type CycleMetrics
 } from "./calculatePaymentStatus.js";
 export {
+  snapFirstDueDate,
+  getInstallmentDueDate,
+  resolveFirstDueDate,
+  getLoanDueDate,
+  type LoanDueDateFields
+} from "./dueDates.js";
+export {
   getMissedPaymentsCount,
   getTimesLateInLookback,
   getTimesLateInLastWeeks,

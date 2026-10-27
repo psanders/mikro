@@ -3,6 +3,8 @@
  *
  * Cycle metrics and loan payment data for report helpers (rating, trend, etc.).
  */
+import type { PaymentFrequency } from "./calculateLoan.js";
+import { getLoanDueDate } from "./dueDates.js";
 
 /**
  * Loan data required for cycle metrics and report helpers.
@@ -26,13 +28,14 @@ export interface LoanPaymentData {
   payments: Array<{ paidAt: Date; status?: string; amount?: number }>;
   /** Cuota size. Required (along with per-payment `amount`) for money-based counting. */
   paymentAmount?: number;
-  /** Customer's preferred payment day (e.g. "FRIDAY"). When set for WEEKLY loans,
-   *  cycles are anchored to this day of the week so due dates fall on the
-   *  customer's preferred day rather than raw 7-day intervals from creation. */
+  /** Customer's preferred payment day (e.g. "FRIDAY"). Informational only:
+   *  it does not move installment due dates. */
   preferredPaymentDay?: string | null;
   /** Optional cycle anchor date. When set, all cycle calculations use this
    *  instead of createdAt. Defaults to createdAt when absent. */
   startingDate?: Date | null;
+  /** First cuota's due date. When absent, it is derived from the anchor (see `resolveFirstDueDate`). */
+  firstDueDate?: Date | null;
   /** When set, elapsed due cycles and missed counts are capped to the loan term (SAN). */
   termLength?: number;
 }
@@ -122,90 +125,28 @@ export function getLateDaysThreshold(freq: string): number {
   }
 }
 
-/** Number of days in a given month (1-indexed). */
-function daysInMonth(year: number, month: number): number {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate();
-}
-
 /**
- * Returns the due date for a specific cycle, centralizing all frequency logic.
+ * Returns the due date for a specific cycle (0-based) of a loan anchored at
+ * `startDate`. Thin wrapper over `getLoanDueDate`; callers that hold the loan
+ * should call `getLoanDueDate` directly.
  *
- * - DAILY:    startDate + (cycleIndex + 1) days
- * - WEEKLY:   preferred-day anchoring with 7-day intervals; falls back to
- *             raw 7-day intervals when no preferred day is set.
- * - BIWEEKLY: startDate + (cycleIndex + 1) * 14 days (no preferred-day anchoring)
- * - MONTHLY:  addMonths(startDate, cycleIndex + 1), day-of-month clamped to month length
+ * @param preferredPaymentDay - ignored; kept so existing call sites compile
  */
 export function getDueDateForCycle(
   startDate: Date,
   cycleIndex: number,
   paymentFrequency: string,
-  preferredPaymentDay?: string | null
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so existing call sites compile
+  _preferredPaymentDay?: string | null
 ): Date {
-  const start = new Date(startDate);
-  const periods = cycleIndex + 1;
-
-  switch (paymentFrequency) {
-    case "DAILY":
-      return new Date(start.getTime() + periods * MS_PER_DAY);
-
-    case "WEEKLY": {
-      if (preferredPaymentDay && dayOfWeekToNumber(preferredPaymentDay) >= 0) {
-        const gap = daysToFirstPreferredDay(start, preferredPaymentDay);
-        return new Date(start.getTime() + (gap + cycleIndex * 7) * MS_PER_DAY);
-      }
-      return new Date(start.getTime() + periods * 7 * MS_PER_DAY);
-    }
-
-    case "BIWEEKLY":
-      return new Date(start.getTime() + periods * 14 * MS_PER_DAY);
-
-    case "MONTHLY": {
-      const startYear = start.getUTCFullYear();
-      const startMonth = start.getUTCMonth();
-      const startDay = start.getUTCDate();
-
-      const targetMonth = startMonth + periods;
-      const targetYear = startYear + Math.floor(targetMonth / 12);
-      const targetMonthNorm = targetMonth % 12;
-
-      const maxDay = daysInMonth(targetYear, targetMonthNorm + 1);
-      const day = Math.min(startDay, maxDay);
-
-      return new Date(Date.UTC(targetYear, targetMonthNorm, day));
-    }
-
-    default:
-      return new Date(start.getTime() + periods * 7 * MS_PER_DAY);
-  }
-}
-
-/**
- * Count months elapsed from startDate to asOfDate for MONTHLY loans.
- * A cycle is counted once asOf reaches the start's day-of-month (clamped)
- * in a given month.
- */
-function monthlyElapsed(startDate: Date, asOfDate: Date): number {
-  const startYear = startDate.getUTCFullYear();
-  const startMonth = startDate.getUTCMonth();
-  const startDay = startDate.getUTCDate();
-
-  const asOfYear = asOfDate.getUTCFullYear();
-  const asOfMonth = asOfDate.getUTCMonth();
-  const asOfDay = asOfDate.getUTCDate();
-
-  let months = (asOfYear - startYear) * 12 + (asOfMonth - startMonth);
-
-  if (months <= 0) return 0;
-
-  const maxDayInAsOfMonth = daysInMonth(asOfYear, asOfMonth + 1);
-  const dueDayThisMonth = Math.min(startDay, maxDayInAsOfMonth);
-
-  if (asOfDay < dueDayThisMonth) {
-    months--;
-  }
-
-  return Math.max(0, months);
+  return getLoanDueDate(
+    {
+      startingDate: startDate,
+      createdAt: startDate,
+      paymentFrequency: paymentFrequency as PaymentFrequency
+    },
+    cycleIndex
+  );
 }
 
 /**
@@ -279,57 +220,35 @@ function countPaymentsMade(loan: LoanPaymentData, asOf: Date): number {
  * Compute cycle metrics for a loan as of a given date.
  * Payments with paidAt after asOfDate are not counted.
  *
- * Uses loan.startingDate (if set) as the cycle anchor, otherwise createdAt.
- *
- * For WEEKLY loans with a preferredPaymentDay the first due date is the
- * first occurrence of that day after the anchor date (a grace period so the
- * customer gets until their preferred day). All subsequent due dates follow
- * every 7 days from there, keeping cycles permanently synced.
- *
- * For BIWEEKLY loans, cycles are fixed 14-day intervals from the anchor.
- *
- * For MONTHLY loans, cycle counting uses calendar month arithmetic;
- * day-of-month is clamped for short months.
+ * `cyclesElapsed` is the number of cuotas whose due date (`getLoanDueDate`)
+ * is on or before asOf's UTC day, capped to the term when it is set.
  *
  * @param loan - Loan data
  * @param asOfDate - Defaults to now
  */
 export function getCycleMetrics(loan: LoanPaymentData, asOfDate: Date = new Date()): CycleMetrics {
   const intervalDays = getIntervalDays(loan.paymentFrequency);
-  const loanStart = new Date(loan.startingDate ?? loan.createdAt);
   const asOf = new Date(asOfDate);
-
-  const msSinceLoan = asOf.getTime() - loanStart.getTime();
-  const daysSinceLoan = Math.floor(msSinceLoan / MS_PER_DAY);
-
-  let cyclesElapsed: number;
-
-  if (loan.paymentFrequency === "MONTHLY") {
-    cyclesElapsed = monthlyElapsed(loanStart, asOf);
-  } else if (
-    loan.paymentFrequency === "WEEKLY" &&
-    loan.preferredPaymentDay &&
-    dayOfWeekToNumber(loan.preferredPaymentDay) >= 0
-  ) {
-    const gap = daysToFirstPreferredDay(loanStart, loan.preferredPaymentDay);
-    if (daysSinceLoan < gap) {
-      cyclesElapsed = 0;
-    } else {
-      cyclesElapsed = Math.floor((daysSinceLoan - gap) / 7) + 1;
-    }
-  } else {
-    cyclesElapsed = Math.max(0, Math.floor(daysSinceLoan / intervalDays));
-  }
+  const asOfDay = Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate());
 
   const term = loan.termLength;
+  const hasTerm = term !== undefined && term > 0;
+  const dueFields = { ...loan, paymentFrequency: loan.paymentFrequency as PaymentFrequency };
+
+  let cyclesElapsed = 0;
+  while (
+    (!hasTerm || cyclesElapsed < term) &&
+    getLoanDueDate(dueFields, cyclesElapsed).getTime() <= asOfDay
+  ) {
+    cyclesElapsed++;
+  }
+
   const paymentsMade = countPaymentsMade(loan, asOf);
-  const cappedCycles =
-    term !== undefined && term > 0 ? Math.min(cyclesElapsed, term) : cyclesElapsed;
-  const missedCycles = Math.max(0, cappedCycles - paymentsMade);
+  const missedCycles = Math.max(0, cyclesElapsed - paymentsMade);
 
   return {
     intervalDays,
-    cyclesElapsed: cappedCycles,
+    cyclesElapsed,
     paymentsMade,
     missedCycles
   };

@@ -260,8 +260,8 @@ describe("loan-statement report — frozen mora window (loan #10029)", () => {
   // Anonymized from a real bug report: BIWEEKLY, cuota 1,200, term 10,
   // disbursed 2026-03-15. The 5 ago charge (RD$76, 19 days from the
   // then-oldest missed due) is the one that froze its window — the same
-  // 1,200 payment closed cuota 8 and moved the oldest missed due to 19 jul,
-  // which would silently re-derive the charge as RD$68 without the anchor.
+  // 1,200 payment closed cuota 8 and moved the oldest missed due to 31 jul,
+  // which would silently re-derive the charge as RD$24 without the anchor.
   // This regenerates the statement through the REAL validated entrypoint
   // (`loanStatementReport.toJson`, the one path tRPC/CLI/copilot all use —
   // not `buildLoanStatementData` called directly) because the anchor's
@@ -317,7 +317,7 @@ describe("loan-statement report — frozen mora window (loan #10029)", () => {
         moraStopOnDefault: true,
         moraEffectiveFrom: null
       },
-      asOf: on(8, 5, 23)
+      asOf: new Date("2026-08-06T03:00:00.000Z")
     };
   }
 
@@ -332,14 +332,14 @@ describe("loan-statement report — frozen mora window (loan #10029)", () => {
     expect(moraCell?.subtext).to.equal("RD$76.00 generada − RD$76.00 pagada");
   });
 
-  it("without the anchor reaching the row, the statement reproduces the original bug (68 generada, 8.00 clamped away)", async () => {
+  it("without the anchor reaching the row, the statement reproduces the original bug (24 generada, 52.00 clamped away)", async () => {
     const data = await loanStatementReport.toJson(loan10029Input({ anchored: false }));
-    expect(data.kpis.grossMora).to.equal(68);
+    expect(data.kpis.grossMora).to.equal(24);
     expect(data.kpis.collectedMora).to.equal(76);
     expect(data.kpis.moraAccrued).to.equal(0);
 
     const moraCell = buildKpiCells(data).find((c) => c.label === "Mora acumulada");
-    expect(moraCell?.subtext).to.equal("RD$68.00 generada − RD$76.00 pagada");
+    expect(moraCell?.subtext).to.equal("RD$24.00 generada − RD$76.00 pagada");
   });
 
   it("the over-collected window fails the statement's verification banner, not a clean bill of health", async () => {

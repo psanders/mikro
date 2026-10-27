@@ -2,12 +2,13 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  *
  * Repayment-schedule builder. Produces one row per cuota from a canonical
- * LoanSnapshot: due date via `getDueDateForCycle`, coverage/amount via the FIFO
+ * LoanSnapshot: due date via `getLoanDueDate`, coverage/amount via the FIFO
  * waterfall-allocation helper. It reuses `buildLoanSnapshot`'s output (terms,
  * ledger, asOf) and does NOT recompute terms, due dates, or health — the loan
  * math lives only in the eval framework and the allocation helper.
  */
-import { getDueDateForCycle } from "../utils/calculatePaymentStatus.js";
+import { getLoanDueDate } from "../utils/dueDates.js";
+import type { PaymentFrequency } from "../utils/calculateLoan.js";
 import type { LoanSnapshot } from "../eval/snapshot.js";
 import { allocatePaymentsToCuotas } from "./allocation.js";
 
@@ -18,7 +19,7 @@ export type ScheduleRowStatus = "PAID" | "PARTIAL" | "OVERDUE" | "UPCOMING";
 export interface RepaymentScheduleRow {
   /** 1-based cuota number. */
   cuota: number;
-  /** Due date for this cuota (ISO), from `getDueDateForCycle`. */
+  /** Due date for this cuota (ISO), from `getLoanDueDate`. */
   dueDate: string;
   /** ISO date this cuota became fully covered, or null. */
   coverageDate: string | null;
@@ -31,13 +32,17 @@ export interface RepaymentScheduleRow {
 /**
  * Build the per-cuota repayment schedule for a loan snapshot. Returns exactly
  * `snapshot.terms.termLength` rows, cuota 1..T, each with a due date from
- * `getDueDateForCycle` and coverage/amount from the allocation helper.
+ * `getLoanDueDate` and coverage/amount from the allocation helper.
  *
  * @param snapshot - a canonical LoanSnapshot (from `buildLoanSnapshot`)
  */
 export function buildRepaymentSchedule(snapshot: LoanSnapshot): RepaymentScheduleRow[] {
-  const { terms, customer, ledger, asOf } = snapshot;
-  const loanStart = new Date(terms.startingDate ?? terms.createdAt);
+  const { terms, ledger, asOf } = snapshot;
+  const dueFields = {
+    startingDate: terms.startingDate != null ? new Date(terms.startingDate) : null,
+    createdAt: new Date(terms.createdAt),
+    paymentFrequency: terms.paymentFrequency as PaymentFrequency
+  };
   const asOfTime = new Date(asOf).getTime();
 
   const allocations = allocatePaymentsToCuotas({
@@ -53,12 +58,7 @@ export function buildRepaymentSchedule(snapshot: LoanSnapshot): RepaymentSchedul
 
   return allocations.map((a) => {
     // cycleIndex is 0-based: cuota N due date uses cycleIndex N-1.
-    const dueDate = getDueDateForCycle(
-      loanStart,
-      a.cuota - 1,
-      terms.paymentFrequency,
-      customer.preferredPaymentDay
-    );
+    const dueDate = getLoanDueDate(dueFields, a.cuota - 1);
 
     let status: ScheduleRowStatus;
     if (a.covered) {

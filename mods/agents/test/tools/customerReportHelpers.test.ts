@@ -95,8 +95,8 @@ describe("customerReportHelpers", () => {
     });
   });
 
-  describe("getMissedPaymentsCount with preferredPaymentDay", () => {
-    it("should give grace until the first preferred day", () => {
+  describe("getMissedPaymentsCount with preferredPaymentDay (informational, cuotas stay 7 days apart)", () => {
+    it("should not count a cycle before the first weekly due", () => {
       const loan = createLoan({
         createdAt: new Date("2026-01-05"),
         paymentFrequency: "WEEKLY",
@@ -106,17 +106,18 @@ describe("customerReportHelpers", () => {
       expect(getMissedPaymentsCount(loan, new Date("2026-01-07"))).to.equal(0);
     });
 
-    it("should count 1 cycle once the first preferred day passes", () => {
+    it("should count 1 cycle on the first weekly due, not the preferred day", () => {
       const loan = createLoan({
         createdAt: new Date("2026-01-05"),
         paymentFrequency: "WEEKLY",
         payments: [],
         preferredPaymentDay: "FRIDAY"
       });
-      expect(getMissedPaymentsCount(loan, new Date("2026-01-09"))).to.equal(1);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-09"))).to.equal(0);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-12"))).to.equal(1);
     });
 
-    it("should stay synced to the preferred day for subsequent cycles", () => {
+    it("should stay on time when paid ahead of each weekly due", () => {
       const loan = createLoan({
         createdAt: new Date("2026-01-05"),
         paymentFrequency: "WEEKLY",
@@ -131,18 +132,19 @@ describe("customerReportHelpers", () => {
       expect(getMissedPaymentsCount(loan, new Date("2026-01-23"))).to.equal(0);
     });
 
-    it("should detect behind only after the preferred day each week", () => {
+    it("should detect behind only on the next weekly due", () => {
       const loan = createLoan({
         createdAt: new Date("2026-01-05"),
         paymentFrequency: "WEEKLY",
         payments: [{ paidAt: new Date("2026-01-09") }],
         preferredPaymentDay: "FRIDAY"
       });
-      expect(getMissedPaymentsCount(loan, new Date("2026-01-15"))).to.equal(0);
-      expect(getMissedPaymentsCount(loan, new Date("2026-01-16"))).to.equal(1);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-16"))).to.equal(0);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-18"))).to.equal(0);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-19"))).to.equal(1);
     });
 
-    it("should treat creation on preferred day as first due next week", () => {
+    it("should treat creation on any day as first due 7 days later", () => {
       const loan = createLoan({
         createdAt: new Date("2026-01-09"),
         paymentFrequency: "WEEKLY",
@@ -164,7 +166,7 @@ describe("customerReportHelpers", () => {
       expect(getMissedPaymentsCount(loan)).to.equal(2);
     });
 
-    it("should fall back to old behavior when preferredPaymentDay is null", () => {
+    it("should count the same weekly dues when preferredPaymentDay is null", () => {
       clock = sinon.useFakeTimers(new Date("2026-01-22"));
       const loan = createLoan({
         createdAt: new Date("2026-01-01"),
@@ -434,8 +436,10 @@ describe("customerReportHelpers", () => {
         paymentFrequency: "BIWEEKLY",
         payments: []
       });
-      expect(getMissedPaymentsCount(loan, new Date("2026-01-23"))).to.equal(0);
-      expect(getMissedPaymentsCount(loan, new Date("2026-01-24"))).to.equal(1);
+      // First due Jan 24 (14 days) snaps forward to the month-end, Jan 31.
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-24"))).to.equal(0);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-30"))).to.equal(0);
+      expect(getMissedPaymentsCount(loan, new Date("2026-01-31"))).to.equal(1);
     });
   });
 

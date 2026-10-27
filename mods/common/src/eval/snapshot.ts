@@ -20,11 +20,9 @@
 // re-exports `renewalReportHelpers`, which pulls in `config.ts` and the
 // ESM-only `yaml` package — node/CLI-only dependencies with no place in a
 // bundle that must also run inside the mobile app offline.
-import {
-  getCycleMetrics,
-  getDueDateForCycle,
-  type LoanPaymentData
-} from "../utils/calculatePaymentStatus.js";
+import { getCycleMetrics, type LoanPaymentData } from "../utils/calculatePaymentStatus.js";
+import { getLoanDueDate } from "../utils/dueDates.js";
+import type { PaymentFrequency } from "../utils/calculateLoan.js";
 import { daysLateFromOldestDue, computeAccruedMora } from "../utils/lateFee.js";
 import type { PaymentKind, PaymentStatus } from "../schemas/payment.js";
 import type { LoanStatus } from "../schemas/loan.js";
@@ -228,11 +226,9 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     collectedLateFeePayments
   });
 
-  const nextDue = getDueDateForCycle(
-    loanStart,
-    metrics.paymentsMade,
-    loan.paymentFrequency,
-    customer.preferredPaymentDay
+  const nextDue = getLoanDueDate(
+    { ...loanData, paymentFrequency: loan.paymentFrequency as PaymentFrequency },
+    metrics.paymentsMade
   );
   const daysOverdue = daysLateFromOldestDue(
     loanStart,

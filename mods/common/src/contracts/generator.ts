@@ -12,6 +12,7 @@ import PDFDocument from "pdfkit";
 import { FREQUENCY_PLURAL } from "./constants.js";
 import { getContractConfig } from "../config.js";
 import { numberToWords, pesosInWords } from "./numberToWords.js";
+import { getInstallmentDueDate, snapFirstDueDate } from "../utils/dueDates.js";
 import type { ContractData } from "./types.js";
 
 const MONTHS = [
@@ -43,14 +44,40 @@ function keepBlock(doc: PDFKit.PDFDocument, height: number) {
 function fecha(d: Date): string {
   return `${d.getDate()} de ${MONTHS[d.getMonth()]} del año ${d.getFullYear()}`;
 }
-function endDate(start: Date, freq: ContractData["frequency"], n: number): Date {
-  const d = new Date(start);
-  const s = Math.max(0, n - 1);
-  if (freq === "DAILY") d.setDate(d.getDate() + s);
-  else if (freq === "WEEKLY") d.setDate(d.getDate() + s * 7);
-  else if (freq === "BIWEEKLY") d.setDate(d.getDate() + s * 14);
-  else d.setMonth(d.getMonth() + s);
-  return d;
+/** A due date (UTC calendar day) in words; doesn't shift with the process timezone. */
+function fechaUtc(d: Date): string {
+  return `${d.getUTCDate()} de ${MONTHS[d.getUTCMonth()]} del año ${d.getUTCFullYear()}`;
+}
+
+/** First and last cuota of the contract, from the shared due-date rules. */
+export function contractDueDates(data: ContractData): { first: Date; last: Date } {
+  const first = snapFirstDueDate(data.startDate, data.frequency);
+  const last = getInstallmentDueDate(first, Math.max(0, data.installments - 1), data.frequency);
+  return { first, last };
+}
+
+/** When the cuotas fall due, for the frequencies whose day is fixed by the calendar. */
+function paymentDayRule(frequency: ContractData["frequency"], first: Date): string {
+  if (frequency === "BIWEEKLY") return ", PAGADERAS LOS DÍAS QUINCE (15) Y ÚLTIMO DE CADA MES,";
+  if (frequency === "MONTHLY") {
+    const day = first.getUTCDate();
+    return (
+      `, PAGADERAS EL DÍA ${numberToWords(day).toUpperCase()} (${day}) DE CADA MES ` +
+      "(O EL ÚLTIMO DÍA DEL MES CUANDO ESTE NO LO TENGA),"
+    );
+  }
+  return ",";
+}
+
+/** Clause SEGUNDO: number of cuotas, their value, when they fall due, first and last date. */
+export function contractScheduleClause(data: ContractData): string {
+  const { first, last } = contractDueDates(data);
+  return (
+    `Por lo que EL DEUDOR, se compromete a pagar ${numberToWords(data.installments).toUpperCase()} ` +
+    `(${data.installments}) CUOTAS ${FREQUENCY_PLURAL[data.frequency]}${paymentDayRule(data.frequency, first)} ` +
+    `CON UN VALOR DE ${pesosInWords(data.installmentAmount)} a partir del día ${fechaUtc(first)} y ` +
+    `culminar el día ${fechaUtc(last)}.`
+  );
 }
 
 export function renderContractPdf(data: ContractData): Promise<Buffer> {
@@ -76,7 +103,6 @@ export function renderContractPdf(data: ContractData): Promise<Buffer> {
   doc.on("data", (c: Buffer) => chunks.push(c));
   const done = new Promise<Buffer>((res) => doc.on("end", () => res(Buffer.concat(chunks))));
 
-  const end = endDate(data.startDate, data.frequency, data.installments);
   const rep = K.creditor.representative;
   const deudorNombre = data.debtor.name.toUpperCase();
 
@@ -115,14 +141,7 @@ export function renderContractPdf(data: ContractData): Promise<Buffer> {
     `Por medio del presente contrato EL ACREEDOR, da en calidad de préstamo de dinero a EL DEUDOR, la suma de ` +
       `${pesosInWords(data.principal)}, monto que es entregado en efectivo a la firma del presente.`
   );
-  clause(
-    doc,
-    "SEGUNDO:",
-    `Por lo que EL DEUDOR, se compromete a pagar ${numberToWords(data.installments).toUpperCase()} ` +
-      `(${data.installments}) CUOTAS ${FREQUENCY_PLURAL[data.frequency]}, CON UN VALOR DE ` +
-      `${pesosInWords(data.installmentAmount)} a partir del día ${fecha(data.startDate)} y culminar el día ` +
-      `${fecha(end)}.`
-  );
+  clause(doc, "SEGUNDO:", contractScheduleClause(data));
   clause(
     doc,
     "TERCERO:",
