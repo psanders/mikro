@@ -64,7 +64,8 @@ export default class Create extends MutationCommand<typeof Create> {
       required: false
     }),
     "preferred-payment-day": Flags.string({
-      description: "Preferred payment day (MONDAY-SUNDAY or none)",
+      description:
+        "Preferred payment day (MONDAY-SUNDAY or none) (informational; does not change installment due dates)",
       required: false,
       options: [...PREFERRED_PAYMENT_DAY_OPTIONS, "none"]
     })

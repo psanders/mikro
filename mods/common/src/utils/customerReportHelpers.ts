@@ -4,12 +4,9 @@
  * Helpers for customer report: missed count, times late, trend, rating, row highlight.
  */
 import type { LoanPaymentData } from "./calculatePaymentStatus.js";
-import {
-  getCycleMetrics,
-  getDueDateForCycle,
-  getLateDaysThreshold,
-  MS_PER_DAY
-} from "./calculatePaymentStatus.js";
+import { getCycleMetrics, getLateDaysThreshold, MS_PER_DAY } from "./calculatePaymentStatus.js";
+import { getLoanDueDate } from "./dueDates.js";
+import type { PaymentFrequency } from "./calculateLoan.js";
 import {
   LOOKBACK_WEEKS_FOR_LATENESS,
   TREND_LOOKBACK_WEEKS,
@@ -71,7 +68,7 @@ export function getTimesLateInLookback(
 ): number {
   if (loan.paymentFrequency === "DAILY") return 0;
 
-  const startDate = new Date(loan.startingDate ?? loan.createdAt);
+  const dueFields = { ...loan, paymentFrequency: loan.paymentFrequency as PaymentFrequency };
   const asOf = new Date(asOfDate);
   const { cyclesElapsed } = getCycleMetrics(loan, asOf);
 
@@ -90,12 +87,7 @@ export function getTimesLateInLookback(
     cycleIndex++
   ) {
     const payment = sortedPayments[cycleIndex];
-    const dueDate = getDueDateForCycle(
-      startDate,
-      cycleIndex,
-      loan.paymentFrequency,
-      loan.preferredPaymentDay
-    );
+    const dueDate = getLoanDueDate(dueFields, cycleIndex);
     const paidAt = new Date(payment.paidAt);
     const daysAfterDue = Math.floor((paidAt.getTime() - dueDate.getTime()) / MS_PER_DAY);
     if (daysAfterDue > threshold) lateCount++;

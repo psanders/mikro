@@ -9,6 +9,8 @@ import {
   MS_PER_DAY,
   type LoanPaymentData
 } from "./calculatePaymentStatus.js";
+import { getLoanDueDate } from "./dueDates.js";
+import type { PaymentFrequency } from "./calculateLoan.js";
 import type { LoansConfig } from "../config.js";
 
 export interface CollectedLateFeePayment {
@@ -170,9 +172,6 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     loanData,
     moraRate,
     paymentAmount,
-    paymentFrequency,
-    preferredPaymentDay,
-    loanStart,
     asOfDate,
     loanStatus,
     loanUpdatedAt,
@@ -212,11 +211,9 @@ export function computeAccruedMora(input: ComputeAccruedMoraInput): ComputeAccru
     return zeroMora(missedCycles, 0, false);
   }
 
-  const oldestMissedDue = getDueDateForCycle(
-    loanStart,
-    paymentsMade,
-    paymentFrequency,
-    preferredPaymentDay
+  const oldestMissedDue = getLoanDueDate(
+    { ...loanData, paymentFrequency: loanData.paymentFrequency as PaymentFrequency },
+    paymentsMade
   );
   const effectiveFrom = parseEffectiveFrom(policy.moraEffectiveFrom ?? null);
 
