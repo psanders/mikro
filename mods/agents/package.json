@@ -15,11 +15,11 @@
     "report:example": "tsx scripts/generateExampleReport.ts"
   },
   "dependencies": {
-    "@fonoster/logger": "^0.27.0",
-    "@langchain/anthropic": "^1.5.12",
+    "@fonoster/logger": "^0.30.0",
+    "@langchain/anthropic": "^1.6.0",
     "@langchain/core": "^1.1.17",
-    "@langchain/google-genai": "^2.3.2",
-    "@langchain/openai": "^1.6.2",
+    "@langchain/google-genai": "^2.3.4",
+    "@langchain/openai": "^1.7.0",
     "@mikro/common": "^3.18.5",
     "ansis": "^3.17.0",
     "cli-table3": "^0.6.5",
