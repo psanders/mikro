@@ -22,8 +22,10 @@
  * has to go through real SQL for that.
  *
  * If any link in the chain drops the field, this test reproduces the
- * original bug report (loan #10029: 76.00 charged, re-read as 68.00 with the
- * 8.00 difference clamped away) instead of the fixed numbers.
+ * original bug report (loan #10029: 76.00 charged, re-read for less with the
+ * difference clamped away) instead of the fixed numbers. On the quincenal
+ * schedule (15th / month-end) the unanchored oldest missed due is 31 jul and
+ * the re-read gross is 24.00.
  */
 import Database from "better-sqlite3";
 import type { CollectorSyncResult } from "@mikro/apiserver/src/api/sync/createCollectorSync";
@@ -87,7 +89,8 @@ const FEES: Array<[Date, number]> = [
   [on(8, 5), 76]
 ];
 
-const AS_OF = on(8, 5, 23);
+// 5 ago 23:00 AST as a UTC instant, so the value is the same in any TZ.
+const AS_OF = new Date("2026-08-06T03:00:00.000Z");
 
 /** Builds a collectorSync payload shaped exactly like createCollectorSync.ts,
  * for loan #10029, optionally carrying the anchor on the disputed charge. */
@@ -195,7 +198,7 @@ describe("mora accrual anchor survives server -> SQLite -> snapshot -> engine", 
     expect(snap!.derived.moraAccrualFrom).toBe(CHARGE_ANCHOR.toISOString());
   });
 
-  it("regression check: without the anchor reaching the row, the same ledger reproduces the original bug (68 vs 76, 8.00 silently clamped away)", async () => {
+  it("regression check: without the anchor reaching the row, the same ledger reproduces the original bug (24 vs 76, 52.00 silently clamped away)", async () => {
     const adapter = createSqliteAdapter();
     runMigrations(adapter as never);
     (getDatabase as jest.Mock).mockReturnValue(adapter);
@@ -204,9 +207,9 @@ describe("mora accrual anchor survives server -> SQLite -> snapshot -> engine", 
 
     const snap = buildLoanSnapshotLocal(LOAN_NO, AS_OF);
     expect(snap).not.toBeNull();
-    expect(snap!.derived.daysLate).toBe(17);
-    expect(snap!.derived.grossMora).toBe(68);
+    expect(snap!.derived.daysLate).toBe(6);
+    expect(snap!.derived.grossMora).toBe(24);
     expect(snap!.derived.collectedMora).toBe(76);
-    expect(snap!.derived.moraAccrued).toBe(0); // the 8.00 shortfall is clamped, exactly the bug
+    expect(snap!.derived.moraAccrued).toBe(0); // the 52.00 shortfall is clamped, exactly the bug
   });
 });
