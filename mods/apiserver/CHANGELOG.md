@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.5](https://github.com/psanders/mikro/compare/v3.18.4...v3.18.5) (2026-10-27)
+
+### Bug Fixes
+
+- **common:** quincenal loans fall due on the 15th and the last day of the month ([#387](https://github.com/psanders/mikro/issues/387)) ([90d71e6](https://github.com/psanders/mikro/commit/90d71e6d7d469128d5a879ca330561e17795fc3e)), closes [#384](https://github.com/psanders/mikro/issues/384) [#10029](https://github.com/psanders/mikro/issues/10029) [#384](https://github.com/psanders/mikro/issues/384) [#10029](https://github.com/psanders/mikro/issues/10029) [#10029](https://github.com/psanders/mikro/issues/10029) [#384](https://github.com/psanders/mikro/issues/384)
+
 ## [3.18.4](https://github.com/psanders/mikro/compare/v3.18.3...v3.18.4) (2026-10-22)
 
 **Note:** Version bump only for package @mikro/apiserver
