@@ -45,12 +45,122 @@ export interface CalculateLoanResult {
   options: LoanOption[];
 }
 
+/**
+ * The price curve: total interest (share of principal, not annual) by loan
+ * length in weeks. See README "Loan pricing".
+ */
+export interface LoanPricing {
+  referenceRate: number;
+  referenceWeeks: number;
+  adjustmentPerWeek: number;
+  minRate: number;
+  maxRate: number;
+}
+
+/** 30% at 10 weeks, ±1.5% per week, clamped to 10%–60%. */
+export const DEFAULT_LOAN_PRICING: LoanPricing = {
+  referenceRate: 0.3,
+  referenceWeeks: 10,
+  adjustmentPerWeek: DEFAULT_ADJUSTMENT_PER_PERIOD,
+  minRate: DEFAULT_MIN_RATE,
+  maxRate: DEFAULT_MAX_RATE
+};
+
+/** Loan length in weeks of one payment period. Used only for pricing. */
+export const WEEKS_PER_PERIOD: Record<PaymentFrequency, number> = {
+  DAILY: 1 / 7,
+  WEEKLY: 1,
+  BIWEEKLY: 2,
+  MONTHLY: 52 / 12
+};
+
+export interface PriceLoanParams {
+  principal: number;
+  paymentFrequency: PaymentFrequency;
+  baseDuration: number;
+  optionsRange?: number;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
 function roundUpToIncrement(value: number, increment: number): number {
   return Math.ceil(value / increment) * increment;
+}
+
+function buildOption(
+  principal: number,
+  paymentFrequency: PaymentFrequency,
+  duration: number,
+  interestRate: number,
+  isBase: boolean
+): LoanOption {
+  const totalInterest = Number((principal * interestRate).toFixed(2));
+  const totalRepay = Number((principal + totalInterest).toFixed(2));
+  const paymentPerPeriod = roundUpToIncrement(
+    totalRepay / duration,
+    DEFAULT_PAYMENT_ROUNDING_INCREMENT
+  );
+
+  return {
+    duration,
+    paymentFrequency,
+    interestRate: Number(interestRate.toFixed(4)),
+    totalInterest,
+    totalRepay,
+    paymentPerPeriod,
+    isBase
+  };
+}
+
+/**
+ * Prices loan options on one curve by loan length in weeks. The base duration
+ * only centers the list of options; it never changes a price.
+ */
+export function priceLoanOptions(
+  params: PriceLoanParams,
+  pricing: LoanPricing
+): CalculateLoanResult & { pricing: LoanPricing } {
+  const optionsRange = params.optionsRange ?? DEFAULT_OPTIONS_RANGE;
+  const weeksPerPeriod = WEEKS_PER_PERIOD[params.paymentFrequency];
+
+  const options: LoanOption[] = [];
+  for (
+    let duration = params.baseDuration - optionsRange;
+    duration <= params.baseDuration + optionsRange;
+    duration++
+  ) {
+    if (duration < 1) {
+      continue;
+    }
+
+    const weeks = duration * weeksPerPeriod;
+    const rawRate =
+      pricing.referenceRate + (weeks - pricing.referenceWeeks) * pricing.adjustmentPerWeek;
+    const interestRate = clamp(rawRate, pricing.minRate, pricing.maxRate);
+    options.push(
+      buildOption(
+        params.principal,
+        params.paymentFrequency,
+        duration,
+        interestRate,
+        duration === params.baseDuration
+      )
+    );
+  }
+
+  return {
+    principal: params.principal,
+    paymentFrequency: params.paymentFrequency,
+    baseDuration: params.baseDuration,
+    baseInterestRate: options.find((o) => o.isBase)?.interestRate ?? pricing.referenceRate,
+    adjustmentPerPeriod: pricing.adjustmentPerWeek * weeksPerPeriod,
+    minRate: pricing.minRate,
+    maxRate: pricing.maxRate,
+    options,
+    pricing
+  };
 }
 
 /**
@@ -79,22 +189,15 @@ export function calculateLoanOptions(params: CalculateLoanParams): CalculateLoan
     const diff = duration - params.baseDuration;
     const rawRate = params.interestRate + diff * adjustmentPerPeriod;
     const interestRate = clamp(rawRate, minRate, maxRate);
-    const totalInterest = Number((params.principal * interestRate).toFixed(2));
-    const totalRepay = Number((params.principal + totalInterest).toFixed(2));
-    const paymentPerPeriod = roundUpToIncrement(
-      totalRepay / duration,
-      DEFAULT_PAYMENT_ROUNDING_INCREMENT
+    options.push(
+      buildOption(
+        params.principal,
+        params.paymentFrequency,
+        duration,
+        interestRate,
+        duration === params.baseDuration
+      )
     );
-
-    options.push({
-      duration,
-      paymentFrequency: params.paymentFrequency,
-      interestRate: Number(interestRate.toFixed(4)),
-      totalInterest,
-      totalRepay,
-      paymentPerPeriod,
-      isBase: duration === params.baseDuration
-    });
   }
 
   return {

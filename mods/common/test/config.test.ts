@@ -364,3 +364,68 @@ describe("mikroConfigSchema — models per feature", () => {
     ).to.equal(true);
   });
 });
+
+describe("mikroConfigSchema — loans.pricing", () => {
+  const base = {
+    ...minimalRequiredFields,
+    accounting: { disbursementAccountId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1" }
+  };
+
+  function issuesOf(loans: unknown): string[] {
+    const parsed = mikroConfigSchema.safeParse({ ...base, loans });
+    expect(parsed.success).to.equal(false);
+    return parsed.success
+      ? []
+      : parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+  }
+
+  it("defaults to 30% at 10 weeks, ±1.5% per week, 10%–60% when missing", () => {
+    const defaults = {
+      referenceRate: 0.3,
+      referenceWeeks: 10,
+      adjustmentPerWeek: 0.015,
+      minRate: 0.1,
+      maxRate: 0.6
+    };
+    for (const loans of [undefined, { defaultMoraRate: 0.1 }, { pricing: {} }]) {
+      const parsed = mikroConfigSchema.safeParse({ ...base, loans });
+      expect(parsed.success).to.equal(true);
+      if (parsed.success) expect(parsed.data.loans.pricing).to.deep.equal(defaults);
+    }
+  });
+
+  it("keeps the defaults for keys left out", () => {
+    const parsed = mikroConfigSchema.safeParse({ ...base, loans: { pricing: { maxRate: 0.5 } } });
+    expect(parsed.success).to.equal(true);
+    if (parsed.success) {
+      expect(parsed.data.loans.pricing.maxRate).to.equal(0.5);
+      expect(parsed.data.loans.pricing.referenceRate).to.equal(0.3);
+    }
+  });
+
+  it("rejects an unknown key inside pricing", () => {
+    const issues = issuesOf({ pricing: { interestRate: 0.3 } });
+    expect(issues.join("; ")).to.match(/^loans\.pricing: /);
+  });
+
+  it("rejects minRate > maxRate", () => {
+    expect(issuesOf({ pricing: { minRate: 0.6, maxRate: 0.4, referenceRate: 0.5 } })).to.deep.equal(
+      ["loans.pricing: minRate must be ≤ referenceRate ≤ maxRate (got 0.60, 0.50, 0.40)"]
+    );
+  });
+
+  it("rejects a referenceRate outside minRate–maxRate", () => {
+    expect(issuesOf({ pricing: { referenceRate: 0.7 } })).to.deep.equal([
+      "loans.pricing: minRate must be ≤ referenceRate ≤ maxRate (got 0.10, 0.70, 0.60)"
+    ]);
+  });
+
+  it("rejects a rate written as a percent and fractional weeks", () => {
+    expect(issuesOf({ pricing: { referenceRate: 30 } })).to.deep.equal([
+      "loans.pricing.referenceRate: must be a decimal between 0 and 1 (write 0.30 for 30%)"
+    ]);
+    expect(issuesOf({ pricing: { referenceWeeks: 10.5 } })).to.deep.equal([
+      "loans.pricing.referenceWeeks: must be a whole number of weeks greater than 0"
+    ]);
+  });
+});

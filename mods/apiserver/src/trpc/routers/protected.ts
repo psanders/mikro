@@ -628,12 +628,18 @@ export const protectedRouter = router({
     }),
 
   /**
-   * Calculate loan repayment options from principal, interest rate and duration.
+   * Calculate loan repayment options from principal and duration, priced on
+   * the `loans.pricing` curve. A rate sent by older clients is ignored.
    */
   calculateLoan: protectedProcedure.input(calculateLoanSchema).query(async ({ input }) => {
-    const fn = createCalculateLoan();
+    const fn = createCalculateLoan(getConfig().loans.pricing);
     return fn(input);
   }),
+
+  /**
+   * The `loans.pricing` curve quotes are priced on.
+   */
+  getLoanPricing: protectedProcedure.query(() => getConfig().loans.pricing),
 
   /**
    * List all loans with optional pagination.

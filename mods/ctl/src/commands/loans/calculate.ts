@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
-import { formatMoney } from "@mikro/common";
+import { formatMoney, type LoanPricing } from "@mikro/common";
 import { input, select } from "@inquirer/prompts";
 import cliui from "cliui";
 import { BaseCommand } from "../../BaseCommand.js";
@@ -27,21 +27,22 @@ function parsePositiveNumber(value: string, fieldName: string): number {
   return parsed;
 }
 
-function normalizeInterestRate(value: number): number {
-  if (value > 1) {
-    return value / 100;
-  }
-  return value;
+function formatPercent(rate: number): string {
+  return `${(rate * 100).toFixed(2)}%`;
+}
+
+function formatPricing(pricing: LoanPricing): string {
+  return `Pricing (server config): ${formatPercent(pricing.referenceRate)} at ${pricing.referenceWeeks} weeks, ±${formatPercent(pricing.adjustmentPerWeek)} per week, min ${formatPercent(pricing.minRate)}, max ${formatPercent(pricing.maxRate)}`;
 }
 
 export default class Calculate extends BaseCommand<typeof Calculate> {
-  static override readonly description = "calculate loan options interactively";
+  static override readonly description = "calculate loan options with the server's pricing";
   static override readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
   public async run(): Promise<void> {
     const client = this.createClient();
 
-    this.log("This utility will help you calculate loan options.");
+    this.log("This utility shows loan options priced from the server's loanPricing config.");
     this.log("Press ^C at any time to quit.");
 
     try {
@@ -50,15 +51,6 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
         required: true
       });
       const principal = parsePositiveNumber(principalInput, "Principal");
-
-      const interestInput = await input({
-        message: "Total interest rate (use 30 or 0.30 for 30%)",
-        required: true,
-        default: "0.30"
-      });
-      const interestRate = normalizeInterestRate(
-        parsePositiveNumber(interestInput, "Total interest rate")
-      );
 
       const paymentFrequency = await select<PaymentFrequency>({
         message: "Payment frequency",
@@ -79,7 +71,6 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
 
       const result = await client.calculateLoan.query({
         principal,
-        interestRate,
         paymentFrequency,
         baseDuration
       });
@@ -97,7 +88,7 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
         option.isBase ? ">>> " : "",
         String(option.duration),
         option.paymentFrequency,
-        `${(option.interestRate * 100).toFixed(2)}%`,
+        formatPercent(option.interestRate),
         `RD$ ${formatMoney(option.totalInterest)}`,
         `RD$ ${formatMoney(option.totalRepay)}`,
         `RD$ ${formatMoney(option.paymentPerPeriod)}`
@@ -110,6 +101,12 @@ export default class Calculate extends BaseCommand<typeof Calculate> {
       }
 
       this.log("");
+      // An older server returns no pricing; skip the line rather than guess it.
+      const pricing = (result as { pricing?: LoanPricing }).pricing;
+      if (pricing) {
+        this.log(formatPricing(pricing));
+        this.log("");
+      }
       this.log(ui.toString());
       this.log("");
       this.log(">>> marks the base duration option.");

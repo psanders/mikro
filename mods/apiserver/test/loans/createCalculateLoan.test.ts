@@ -2,16 +2,16 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { expect } from "chai";
-import { ValidationError } from "@mikro/common";
+import { DEFAULT_LOAN_PRICING, ValidationError, getConfig } from "@mikro/common";
 import { createCalculateLoan } from "../../src/api/loans/createCalculateLoan.js";
+import { appRouter } from "../../src/trpc/routers/index.js";
 
 describe("createCalculateLoan", () => {
-  const calculateLoan = createCalculateLoan();
+  const calculateLoan = createCalculateLoan(DEFAULT_LOAN_PRICING);
 
-  it("should calculate base option correctly for 5000 at 30% for 10 weekly periods", async () => {
+  it("should calculate base option correctly for 5000 for 10 weekly periods", async () => {
     const result = await calculateLoan({
       principal: 5000,
-      interestRate: 0.3,
       paymentFrequency: "WEEKLY",
       baseDuration: 10
     });
@@ -23,12 +23,12 @@ describe("createCalculateLoan", () => {
     expect(baseOption?.totalInterest).to.equal(1500);
     expect(baseOption?.totalRepay).to.equal(6500);
     expect(baseOption?.paymentPerPeriod).to.equal(650);
+    expect(result.pricing).to.deep.equal(DEFAULT_LOAN_PRICING);
   });
 
   it("should decrease interest for shorter durations and increase for longer durations", async () => {
     const result = await calculateLoan({
       principal: 5000,
-      interestRate: 0.3,
       paymentFrequency: "WEEKLY",
       baseDuration: 10
     });
@@ -47,25 +47,41 @@ describe("createCalculateLoan", () => {
     expect(longer?.paymentPerPeriod).to.equal(600);
   });
 
-  it("should use custom adjustmentPerPeriod when provided", async () => {
+  it("should accept a legacy call and ignore its rate fields", async () => {
     const result = await calculateLoan({
-      principal: 5000,
-      interestRate: 0.3,
-      paymentFrequency: "DAILY",
-      baseDuration: 10,
-      adjustmentPerPeriod: 0.01
+      principal: 10000,
+      interestRate: 0.5,
+      paymentFrequency: "WEEKLY",
+      baseDuration: 9,
+      adjustmentPerPeriod: 0.01,
+      minRate: 0.5,
+      maxRate: 0.4
     });
 
-    const elevenPeriods = result.options.find((option) => option.duration === 11);
-    expect(elevenPeriods).to.exist;
-    expect(elevenPeriods?.interestRate).to.equal(0.31);
+    const tenWeeks = result.options.find((option) => option.duration === 10);
+    expect(tenWeeks?.interestRate).to.equal(0.3);
+    expect(tenWeeks?.paymentPerPeriod).to.equal(1300);
+    expect(result.minRate).to.equal(0.1);
+    expect(result.maxRate).to.equal(0.6);
+    expect(result.pricing).to.deep.equal(DEFAULT_LOAN_PRICING);
+  });
+
+  it("should price from the injected pricing", async () => {
+    const pricing = { ...DEFAULT_LOAN_PRICING, referenceRate: 0.25 };
+    const result = await createCalculateLoan(pricing)({
+      principal: 10000,
+      paymentFrequency: "WEEKLY",
+      baseDuration: 10
+    });
+
+    expect(result.options.find((option) => option.isBase)?.interestRate).to.equal(0.25);
+    expect(result.pricing).to.deep.equal(pricing);
   });
 
   it("should throw ValidationError for invalid principal", async () => {
     try {
       await calculateLoan({
         principal: -1,
-        interestRate: 0.3,
         paymentFrequency: "WEEKLY",
         baseDuration: 10
       });
@@ -78,7 +94,6 @@ describe("createCalculateLoan", () => {
   it("should round payment per period to multiples of 50", async () => {
     const result = await calculateLoan({
       principal: 5000,
-      interestRate: 0.3,
       paymentFrequency: "WEEKLY",
       baseDuration: 9
     });
@@ -91,7 +106,6 @@ describe("createCalculateLoan", () => {
   it("should calculate for BIWEEKLY frequency", async () => {
     const result = await calculateLoan({
       principal: 5000,
-      interestRate: 0.3,
       paymentFrequency: "BIWEEKLY",
       baseDuration: 10
     });
@@ -105,7 +119,6 @@ describe("createCalculateLoan", () => {
   it("should calculate for MONTHLY frequency", async () => {
     const result = await calculateLoan({
       principal: 10000,
-      interestRate: 0.3,
       paymentFrequency: "MONTHLY",
       baseDuration: 6
     });
@@ -115,20 +128,21 @@ describe("createCalculateLoan", () => {
     expect(baseOption?.duration).to.equal(6);
     expect(baseOption?.paymentFrequency).to.equal("MONTHLY");
   });
+});
 
-  it("should throw when minRate is greater than maxRate", async () => {
-    try {
-      await calculateLoan({
-        principal: 5000,
-        interestRate: 0.3,
-        paymentFrequency: "WEEKLY",
-        baseDuration: 10,
-        minRate: 0.5,
-        maxRate: 0.4
-      });
-      expect.fail("Expected error to be thrown");
-    } catch (error) {
-      expect((error as Error).message).to.equal("minRate cannot be greater than maxRate");
+describe("getLoanPricing", () => {
+  const as = (roles: ("ADMIN" | "REVIEWER")[]) =>
+    appRouter.createCaller({
+      db: {} as never,
+      isAuthenticated: true,
+      userId: "00000000-0000-4000-8000-000000000001",
+      roles
+    });
+
+  it("returns the config's loans.pricing to a reviewer and to an admin", async () => {
+    for (const roles of [["REVIEWER"], ["ADMIN"]] as const) {
+      const pricing = await as([...roles]).getLoanPricing();
+      expect(pricing).to.deep.equal(getConfig().loans.pricing);
     }
   });
 });

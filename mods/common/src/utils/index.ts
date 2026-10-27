@@ -61,6 +61,11 @@ export {
 } from "./loanCalculatorConstants.js";
 export {
   calculateLoanOptions,
+  priceLoanOptions,
+  DEFAULT_LOAN_PRICING,
+  WEEKS_PER_PERIOD,
+  type LoanPricing,
+  type PriceLoanParams,
   type CalculateLoanParams,
   type CalculateLoanResult,
   type LoanOption,

@@ -242,18 +242,13 @@ export const calculateLoanTool: ToolFunction = {
   function: {
     name: "calculateLoan",
     description:
-      "Calcular opciones de préstamo con diferentes duraciones usando una tasa base y ajuste por periodo. Recibe monto, tasa de interés total, frecuencia (DAILY, WEEKLY, BIWEEKLY o MONTHLY) y duración base.",
+      "Calcular opciones de préstamo para varias duraciones con la tarifa de Mikro configurada en el servidor (la tasa total depende de la duración en semanas). Recibe monto, frecuencia (DAILY, WEEKLY, BIWEEKLY o MONTHLY) y duración base (el centro de las opciones; no cambia el precio). No acepta una tasa: si el usuario pide otra tasa, dile que la tarifa viene de la configuración y repite la tasa que devuelve la herramienta.",
     parameters: {
       type: "object",
       properties: {
         principal: {
           type: "string",
           description: "Monto del préstamo en pesos dominicanos (ej: 5000, 10000)"
-        },
-        interestRate: {
-          type: "string",
-          description:
-            "Tasa total de interés como decimal (ej: 0.30 para 30%). Si el usuario dice 30%, convierte a 0.30."
         },
         paymentFrequency: {
           type: "string",
@@ -262,15 +257,11 @@ export const calculateLoanTool: ToolFunction = {
         },
         baseDuration: {
           type: "string",
-          description: "Duración base en número de periodos de pago (ej: 10)"
-        },
-        adjustmentPerPeriod: {
-          type: "string",
           description:
-            "Ajuste opcional por periodo como decimal (ej: 0.015 para 1.5%). Si no se envía, se usa el valor por defecto del sistema."
+            "Duración central de las opciones, en periodos de pago (ej: 10). No cambia la tasa."
         }
       },
-      required: ["principal", "interestRate", "paymentFrequency", "baseDuration"]
+      required: ["principal", "paymentFrequency", "baseDuration"]
     }
   }
 };

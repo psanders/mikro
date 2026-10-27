@@ -592,7 +592,7 @@ async function initializeMessageProcessor() {
     });
     const deleteApplication = createDeleteApplication(dbClient);
     const createLoan = createCreateLoan(dbClient);
-    const calculateLoan = createCalculateLoan();
+    const calculateLoan = createCalculateLoan(cfg.loans.pricing);
     const updateLoanStatus = createUpdateLoanStatus(dbClient);
     const listUsers = createListUsers(dbClient);
     // Create WhatsApp client (needed for sendReceiptViaWhatsApp)
