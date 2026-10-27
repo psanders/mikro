@@ -1,266 +1,139 @@
-# Agent & Contributor Practices
+# AGENTS.md
 
-Hard-won rules for this monorepo. Each exists because its absence broke CI
-or a build. Keep entries short; link the enforcing check when one exists.
+## Overview
 
-## Lockfile discipline (npm workspaces)
+Mikro Créditos: microlending platform for the Dominican Republic (colmado/informal
+borrowers). npm-workspaces + Lerna monorepo: `apiserver` (Express + tRPC + Prisma/SQLite,
+WhatsApp webhooks, AI agents José/CX), `agents` (LLM agents + tools), `common` (shared Zod
+schemas, loan/mora math, PDFs), `ctl` (operator CLI), `dashboard` (founder/Ops back-office,
+Tauri desktop + web), `mobile` (Expo collectors app), `score` (bureau facts, policy engine,
+Mikro Decisión Chrome extension), `site` (mikro.do). Users: founder/ops staff, collectors,
+applicants via WhatsApp and the website.
 
-- **One lockfile.** All workspaces (`mods/*`, `site`) resolve through the
-  root `package-lock.json`. After editing ANY workspace `package.json`, run
-  `npm install` at the repo root and commit the lock change with it.
-  Enforced by the "Lock file in sync" PR check (`npm ci --ignore-scripts`)
-  and the `pre-push` hook (`npm ci --dry-run`).
-- **The sync gate is `npm ci`, never "regenerate + git diff".** `npm ci`
-  fails when a `package.json` dependency is not satisfied by the lock but
-  never rewrites the lock. Do NOT reintroduce a
-  `npm install --package-lock-only && git diff` gate: npm's arborist stamps
-  a cosmetic `"peer": true` flag on os/cpu-gated optional binaries (esbuild,
-  rolldown, @tailwindcss/oxide, …) **differently on macOS vs Linux**. The
-  committed lock is generated on a contributor's Mac (flag present); a Linux
-  CI runner regenerating it strips the flag, so a diff gate "fails" on pure
-  noise while the lock installs cleanly — this is the flapping that plagued
-  the old gate. The cosmetic churn is safe to leave in the committed lock.
-- **Platform narrowing is the recurring disease.** npm installs on one
-  platform can drop other platforms' prebuilt-binary entries from the lock
-  (npm/cli#4828). The lock then only carries `darwin-arm64` binaries for
-  packages like sharp, esbuild, rolldown, oxc, @tailwindcss/oxide,
-  @tauri-apps/cli — and Linux/EAS CI breaks at install or build time.
-  Enforced by the "Check lock file platform coverage" PR step
-  (`.scripts/check-lockfile-platforms.mjs`). To repair:
-  `rm -rf node_modules && npm install` (fresh resolution records all
-  platforms). Do NOT hand-delete lock entries and re-resolve with
-  `--package-lock-only` — npm trusts the remaining state and can drop
-  whole subtrees (this once removed rolldown/esbuild and broke the site
-  build on CI).
-- **Never regenerate the lockfile from scratch** (`rm package-lock.json &&
-npm install`) as a "fix". It rewrites resolution monorepo-wide and hides
-  the actual change in thousands of diff lines.
-- **Treat `npx expo install --fix` output as a diff to review, not a
-  result.** It rewrites shared devDependencies (it once swept `typescript`
-  to a new major across workspaces). After running it, `git diff` every
-  package.json and revert anything unrelated to Expo SDK alignment.
+## Commands
 
-## Dependabot (`.github/dependabot.yml`)
+- Install: `npm ci` at root (one lockfile for all workspaces; never `npm install` inside a workspace).
+- Build: `npm run build` · Typecheck: `npm run typecheck` · Lint: `npm run lint` · Format: `npm run format:check`
+- Tests: `npm test` (all) · one package: `npm test -w @mikro/<pkg>`
+- apiserver integration: `npm run test:integration`
+- Dashboard e2e (Playwright, builds apiserver first): `npm run test:e2e:dashboard`
+- Mobile e2e (Maestro, needs a simulator): `npm run test:e2e`
+- Default Verify per area:
+  - common / agents / score / apiserver: `npm run typecheck -w @mikro/<pkg> && npm test -w @mikro/<pkg>`
+    (apiserver also `npm run test:integration` when touching DB or routers)
+  - dashboard: `npm run typecheck -w @mikro/dashboard && npm run test:e2e:dashboard` (no unit tests exist)
+  - mobile: `npm run typecheck -w @mikro/mobile && npm test -w @mikro/mobile && npx expo prebuild --platform all --no-install`
+  - ctl: `npm run typecheck -w @mikro/ctl` (no tests)
+  - site: `npm run build:site`
+  - Any `package.json` change: `npm ci --ignore-scripts && node .scripts/check-lockfile-platforms.mjs`
 
-- **Security updates arrive as ONE grouped PR per ecosystem**, version updates
-  as one weekly/monthly minor+patch PR (npm, GitHub Actions; Cargo gets security
-  updates only — the desktop shell is upgraded deliberately). Before this config Dependabot raised a
-  PR per advisory, capped at 10 open and refilled the moment one merged — merging
-  or closing them one by one just summoned the next batch. Do not remove the
-  `groups:` blocks; if the PR list is noisy again, fix the grouping rather than
-  mass-closing PRs.
-- **`npm update <pkg>` cannot force a transitive security fix** (arborist logs
-  `placeDep … KEEP` when the locked version still satisfies the range, and
-  `npm audit fix` fails with ERESOLVE on the peer-dep tree). Let Dependabot's
-  grouped PR do the lockfile edit; for something it cannot reach, use a root `overrides` entry (below) and
-  remove it when the parent moves. Closing a Dependabot security PR by hand can
-  make it skip that version for good, so supersede rather than close them.
-- **Never run `npm audit fix --force`.** It proposes cross-major jumps (it once
-  suggested downgrading Expo to a different major). Expo/React Native packages
-  follow the Expo SDK and `@tauri-apps/*` follows the Rust crates in `src-tauri`;
-  both are excluded from version updates on purpose.
-- **A grouped PR is reviewed like any other lockfile change:** the "Lock file
-  in sync" and platform-coverage checks must pass, and for server-side bumps
-  (express, prisma, sharp, mysql2, …) run the apiserver unit + integration suites
-  before merging. Advisories with no patched version (braces, http-cache-semantics,
-  node-forge, sprintf-js at the time of writing) stay open until upstream fixes
-  them — do not dismiss them.
+## Conventions
 
-### Security `overrides` (root `package.json`)
+Profile: typescript
+Overrides:
 
-Transitive advisories the grouped Dependabot PR cannot reach are pinned with
-`overrides` to the patched release of the SAME major line (verified with the
-full test suite — never cross-major). Delete an entry once its parent ships a
-version that resolves to the patched release on its own; `npm ls <pkg>` shows
-who still asks for the old one.
+- Shared Zod schemas live in `mods/common/src/schemas/` and are exported twice
+  (`schemas/index.ts` and `common/src/index.ts`); add both or consumers miss it.
+- `mods/dashboard` (React/Vite/Tauri) and `mods/mobile` (Expo/React Native, jest) follow
+  their own React style, not the validated-function pattern; mobile tests use jest, not mocha.
+- Integration tests build the DB from a hand-maintained `SCHEMA_SQL`, separate from
+  `prisma/migrations`; a schema change updates both.
 
-| Override                                                          | Why                                                                                  |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `axios` 1.20.0, `smol-toml` ^1.9.0, `nx` ^22.7.12                 | `nx` (via lerna) pins `axios`/`smol-toml` to exact vulnerable versions               |
-| `handlebars` ^4.7.10, `shell-quote` ^1.11.0, `compression` ^1.8.2 | critical/high advisories in build-time and dev-server dependencies                   |
-| `ip-address` ^10.7.1, `tar` ^7.5.18, `undici` ^6.28.1             | transitive of lerna/npm tooling                                                      |
-| `follow-redirects` ^1.16.1, `postcss` ^8.5.23                     | transitive of axios / vite / tailwind                                                |
-| `postcss-selector-parser` ^7.1.6                                  | transitive of tailwind                                                               |
-| `js-yaml@^4` ^4.3.2, `@istanbuljs/load-nyc-config` → js-yaml ^3   | two majors in the tree; the 3.x copy is only reached through jest coverage           |
-| `brace-expansion@^1` / `@^2` / `@^5`                              | three majors in the tree (minimatch 3 / 5-9 / 10); each line pinned to its own patch |
-| `satori` → `fflate` 0.7.5                                         | satori's nested copy; other `fflate` consumers keep their own                        |
+## Areas
 
-Deliberately NOT overridden (re-check when a parent moves):
+| Area label      | Paths                                            | Experts                                                  |
+| :-------------- | :----------------------------------------------- | :------------------------------------------------------- |
+| area: apiserver | mods/apiserver                                   | software-architect, database-engineer, security-engineer |
+| area: agents    | mods/agents, agents.yaml, autopilot*.yaml        | security-engineer, qa-engineer                           |
+| area: common    | mods/common                                      | software-architect, qa-engineer                          |
+| area: dashboard | mods/dashboard                                   | ux-designer, visual-designer                             |
+| area: mobile    | mods/mobile, eas.json                            | ux-designer, release-engineer                            |
+| area: score     | mods/score                                       | security-engineer, qa-engineer                           |
+| area: ctl       | mods/ctl                                         | technical-writer                                         |
+| area: site      | site                                             | visual-designer, technical-writer                        |
+| area: designs   | designs                                          | visual-designer                                          |
+| area: ci        | .github, .scripts, lerna.json, package-lock.json | release-engineer, security-engineer                      |
 
-- `decode-uri-component` — the fix (0.5.0) is ESM-only and its consumer
-  `query-string@7` (expo-router) is CommonJS; forcing it would break the mobile
-  router at load time.
-- `serialize-javascript` (needs mocha 12), `uuid` (7 → 11), `image-size`
-  (1 → 2) — the patched release is a new major of a dev/build tool.
-- No patched release exists yet: `braces`, `http-cache-semantics`, `node-forge`,
-  `sprintf-js`.
+## Compatibility
 
-## Native / prebuilt-binary dependencies
+Breaking here means:
 
-- Prefer pure-JS packages. Every native dep (sharp, better-sqlite3, …)
-  multiplies CI surface: per-platform binaries in the lock, per-image
-  build toolchains, per-arch Docker manifests.
-- **sharp on EAS:** the EAS macOS image ships a global libvips, which makes
-  sharp compile from source and fail. All `eas.json` build profiles set
-  `SHARP_IGNORE_GLOBAL_LIBVIPS=1` to force the prebuilt binary. Keep that
-  env in any new profile.
-- The Docker image `ghcr.io/psanders/mikro` (private package, GitHub
-  Container Registry — migrated off Docker Hub, see #51) is published
-  linux/amd64 only. On Apple Silicon run it with `--platform linux/amd64`.
-  publish-apiserver.yaml authenticates with the job's own `GITHUB_TOKEN`
-  (`packages: write`); deploy-apiserver.yaml forwards a `packages: read`
-  `GITHUB_TOKEN` over SSH so the droplet can pull the private image without
-  a long-lived registry secret.
-- **build-dashboard pins `macos-26`, not `macos-latest`.** The `-latest`
-  label is a lottery during GitHub's macOS 15→26 migration (started
-  2026-06-15), and `screencapturekit` → `apple-metal` needs the macOS 26
-  SDK's Metal APIs — on a macOS 15 runner its Swift bridge fails to
-  compile (`MTLSamplerReductionMode` not in scope). Keep the pin until
-  the migration completes; any new macOS job that builds src-tauri needs
-  the same.
-- **build-dashboard's windows-latest `Install dependencies` step retries
-  3x.** The runner's outbound connection to the npm registry occasionally
-  resets mid-install (`ECONNRESET` / "network aborted"), unrelated to any
-  dependency change — seen first on 2026-07-07 (v1.26.0 run). npm's
-  built-in per-request retries don't cover a reset that kills the whole
-  process, so the step wraps `npm install` in a 3-attempt shell loop.
-  If it starts failing on all 3 attempts, suspect an actual dependency
-  problem instead of the network.
-- **`patch-package`** patches a dependency's shipped code post-install (root
-  `postinstall` script, diffs in `patches/`). First and, as of 2026-07-04,
-  only use: `react-native-nitro-screen-recorder`'s Expo config plugin
-  unconditionally sets up an iOS BroadcastExtension target this app never
-  needs (it only uses `startInAppRecording` on iOS), and building that
-  extension hit an unresolved upstream EAS managed-credentials bug
-  (expo/expo#40851 — provisioning profile never picks up the App Group, and
-  regenerating credentials didn't fix it for other reporters either). The
-  patch skips the extension entirely rather than fighting EAS to provision
-  something unused. Pin the exact version of any patched package (no `^`/`~`)
-  — patch-package fails loudly on a version mismatch, which is the point, but
-  only if the pin actually stops an unnoticed bump first.
+- `mikro.json` schema (`mods/common/src/config.ts`, `.strict()`): an unknown key crashes
+  boot, rollbacks included. A new key ships only after the release that reads it is live.
+- Prisma schema (`mods/apiserver/prisma`): every change ships a migration; container runs
+  `prisma migrate deploy` at boot.
+- tRPC routers (`mods/apiserver/src/trpc/routers`): consumed by installed desktop dashboards
+  and store mobile builds that lag the server. Removing/renaming a procedure or tightening
+  input breaks them silently (disabled buttons).
+- Mobile native surface: changes to native config change the `fingerprint` runtime and
+  need a store build; OTA updates only reach matching fingerprints.
+- Env vars at startup: `DATABASE_URL`, `MIKRO_CONFIG_FILE`, `MIKRO_VERSION`; boot also requires
+  `keys/private.pem` + `keys/public.pem`.
+- `ctl` command names and flags (`mikro <topic>:<command>`), used in ops runbooks.
+- WhatsApp webhook contract (Meta Cloud API payloads; Chatwoot echo).
+- `site` builds from `common/src/utils/calculateLoan.ts`, `loanCalculatorConstants.ts`,
+  `schemas/applicationForm.ts`; changing them changes the public website.
 
-## Mobile build & release architecture
+## Risk hotspots
 
-- **Android APK (internal):** GitHub Actions `build-android.yaml` on every
-  main push touching mobile — Linux, expo prebuild + Gradle, signed with
-  the debug keystore. Free and sufficient for internal distribution.
-- **iOS:** `build-ios.yaml` compiles ON a `macos-26` runner with
-  `eas build --local` (since 2026-07-04): EAS _cloud_ builds are rationed
-  by a per-account Free-plan quota (profile choice doesn't matter) and ran
-  dry mid-cycle. Local builds consume zero quota; EAS still owns Apple
-  signing — `--local` pulls the same remote credentials via `EXPO_TOKEN`.
-  macOS runners are free because the repo is PUBLIC; the old "no macOS
-  runner ever compiles iOS" rule (10x minutes multiplier) only applies to
-  private-repo billing — revisit if the repo goes private. Triggers:
-  manual dispatch (profile choice, default preview) or a v\* tag
-  (production; IPA attached to the Release). Unlike build-android it does
-  NOT run on every main push — each run ties up a macOS runner ~40-60 min.
-  JS-only changes: `eas update` (OTA, `runtimeVersion.policy: fingerprint`
-  gates native compatibility).
-- **What PRs check instead** (`pr-checks.yaml` → mobile-checks): mobile
-  typecheck, Jest, and `expo prebuild --platform all --no-install`, which
-  resolves every config plugin on Linux and catches broken native config
-  before any expensive build. (A plugin entry for a package that ships no
-  config plugin — e.g. expo-print — crashes prebuild and once crashed the
-  app at startup.)
-- **App IDs differ per platform:** iOS bundle id is `do.mikro.app`; Android
-  applicationId is `do_.mikro.app` because `do` is a Java keyword and expo
-  prebuild sanitizes it. Maestro flows take `APP_ID` (default iOS); Android
-  CI passes `-e APP_ID=do_.mikro.app`. Anything else that addresses the app
-  by id (adb commands, deep links) must respect this split.
-- Local EAS builds (`--local`) with the fingerprint runtime policy need a
-  clean git tree, or the fingerprint won't match what EAS computed and the
-  expo-updates configure phase fails. Prefer cloud builds for release
-  artifacts.
-- **Gradle needs more memory than the Expo template gives it.** The
-  expo-updates Kotlin/KSP compile exhausts the default
-  `-Xmx2048m -XX:MaxMetaspaceSize=512m` ("OutOfMemoryError: Metaspace",
-  seen locally and on CI). `android/gradle.properties` is GENERATED by
-  prebuild and gitignored — a local edit never reaches CI. The
-  build-android workflow bumps it after prebuild; new build environments
-  must do the same. The metaspace ceiling is the load-bearing part
-  (`-XX:MaxMetaspaceSize=1g`); heap is held at `-Xmx4g` on the 16GB hosted
-  runner (see the disk/OOM entry below) — a bigger machine can go higher.
+- `mods/apiserver/prisma/**`, integration `SCHEMA_SQL`: data loss / boot failure; prod
+  migrations were silently drifting until 2026-09-18.
+- `mods/common/src/config.ts`: strict schema; caused the 2026-09-18 outage.
+- Money math: `mods/common/src/utils/{paymentSplit,calculatePaymentStatus,calculateLoan}.ts`,
+  `mods/apiserver/src/api/payments/`, `mods/apiserver/src/accounting/`: mora, receipts, ledger;
+  history of phantom-mora and balance bugs.
+- `mods/apiserver/src/api/applications/` (most fix commits since April) and
+  `mods/dashboard/src/founder/copilot/`: guarded application lifecycle and conversion
+  (auto-disbursement).
+- `mods/agents/`, `mods/apiserver/src/api/jose/`: read untrusted WhatsApp text; can send
+  messages to customers.
+- `mods/apiserver/src/trpc/routers/protected.ts`: auth boundary.
+- `.github/workflows/{release,publish-apiserver,deploy-apiserver,build-*}.yaml`, `Dockerfile`:
+  release and deploy.
 
-- **build-android exhausts the hosted runner without help — disk first,
-  memory second.** It broke on every main push from ~2026-08-05 (the repo's
-  Gradle cache had grown big enough to be the thing filling the disk —
-  `actions/cache`'s `restore-keys: gradle-` re-saves the newest cache on
-  every exact-key miss, so an unscoped path only grows) until this was
-  fixed. Symptoms: `node_modules` + the generated `android/` project +
-  Gradle's dependency cache + KSP/Kotlin outputs + the APK overrun the
-  root partition, or the KSP/Kotlin compile's RAM spike plus the Gradle
-  heap gets the runner agent OOM-killed. Both show up as a dead runner —
-  sometimes an explicit "No space left on device", sometimes an opaque
-  **"runner lost communication with the server"** once the runner agent's
-  own diag log is the first write to fail. Either way NO step logs upload
-  (`gh run view --log` empty, the log blob 404s); the cause is only in the
-  job's `check-runs/<id>/annotations`. The workflow now:
-  1. **"Free disk space"** — deletes preinstalled toolchains this job never
-     touches (dotnet, GHC, CodeQL, gcloud, Azure CLI, the NDK bundle,
-     Docker images; ~10GB back) and adds an **8GB swapfile**. `/mnt` on the
-     current image is the SAME partition as `/` — the headroom is from the
-     deletes, not a separate volume; `GRADLE_USER_HOME=/mnt/gradle` is just
-     a tidy prefix for the cache + prune steps.
-  2. Caches only `$GRADLE_USER_HOME/caches/modules-2` + `wrapper`
-     (bounded), not the whole Gradle home.
-  3. Gradle heap `-Xmx4g` + `MaxMetaspaceSize=1g` + `--max-workers=2` to
-     keep peak RSS under the 16GB runner.
-  4. `timeout-minutes: 75` so a stuck build fails fast, and a best-effort
-     `continue-on-error` cache-prune step (never fails the build — an
-     earlier prune step that exited non-zero is why the first fix branch
-     never merged).
+## Release
 
-  **Do not `echo ... >> android/gradle.properties`** — Expo generates that
-  file with NO trailing newline (last line
-  `expo.inlineModules.watchedDirectories=[]`), so an append corrupts that
-  value and `expo-modules-autolinking`'s `mirror-kotlin-inline-modules`
-  then dies in `JSON.parse` ("Process 'command 'node'' finished with
-  non-zero exit value 1" at Gradle configuration time). Use an in-place
-  `sed` substitution, or put the setting on the `gradlew` CLI.
+- Every push to `main` touching `mods/**`/lockfile runs `release.yaml`: Lerna bumps from
+  conventional commits (feat → minor, fix → patch), writes CHANGELOG, tags `vX.Y.Z`.
+  Dashboard/CI-only changes need `workflow_dispatch` with `force_release`.
+- Tag → `publish-apiserver` (ghcr.io/psanders/mikro) → `deploy-apiserver` (droplet + smoke test).
+  Tag also builds dashboard (Tauri, attached to the Release) and iOS; Android APK builds on
+  main pushes touching mobile.
+- Squash-merge with conventional-commit titles. Merge one PR at a time; wait for `release.yaml` before the next merge (each merge cuts a release).
+- Prod `agents.yaml` is a manual copy on the droplet; changing it in the repo doesn't deploy it.
 
-  Any new job that runs `expo prebuild` + Gradle on `ubuntu-latest` needs
-  the same disk purge + swap.
+## Expert notes
 
-- **The GitHub Release is the consolidated build-outputs page.**
-  release.yaml creates it (title + "Build outputs" body) right after lerna
-  pushes the tag; downstream workflows only ATTACH assets to it —
-  build-dashboard via tauri-action, build-android via `gh release upload`
-  (it detects release commits by the v\* tag on HEAD). Deterministic links
-  (Docker image, EAS builds page) live in the body release.yaml writes.
-  Don't add another workflow that creates or rewrites the Release body, and
-  keep new build outputs reporting into that Release.
+### database-engineer
 
-## Design files (`designs/*.pen`)
+- SQLite via Prisma; client generated into `mods/apiserver/src/generated/prisma`.
+- If a DB got a change via `db push`, reconcile with `prisma migrate resolve --applied`.
 
-- Edit `.pen` files only through the Pencil MCP, never by hand. Layout and
-  `ui:` conventions are in `CLAUDE.md`.
-- New reusable components and variables go in `designs/mikro.lib.pen`, not in
-  an area file; area files reference them as `ui:<id>` / `$ui:<name>`.
-- Closing Pen can write its stale in-memory copy over a file changed on disk
-  (merge, checkout). Close Pen before switching branches, and re-check
-  `git status` after closing.
+### release-engineer
 
-## Deploy & smoke-test contracts
+- A workspace package the apiserver imports needs a `tsconfig` `references` entry and a
+  `COPY` in `mods/apiserver/Dockerfile` (current: common, agents, score).
+- Desktop dashboard updates via Tauri updater; v3.1.0 shipped no desktop build (skew risk).
 
-- The apiserver container requires the receipt-signing keypair at boot
-  (`keys/private.pem` + `keys/public.pem`, RSA-2048). Any environment that
-  boots the image (CI smoke test, droplet, local docker) must mount them;
-  the deploy-apiserver smoke test generates a throwaway pair with openssl.
-  If boot requirements grow, update that smoke step in the same PR.
-- Droplet deploys (deploy-apiserver, build-dashboard publish-updates) SSH
-  with `secrets.DEPLOY_SSH_KEY` as `secrets.DEPLOY_SSH_USER`. If auth fails
-  (`Permission denied (publickey)`), the fix is on the droplet
-  (`~/.ssh/authorized_keys`) or in the repo secret — not in the workflow.
-- **Every schema change ships a migration.** The container boots with
-  `prisma migrate deploy`, which only runs committed migrations — schema
-  changes applied with `prisma db push` exist only on the DB you pushed to,
-  and every fresh database (CI smoke test, new environment) breaks at
-  runtime. If a database already received the change via `db push`, mark
-  the reconciling migration as applied there with
-  `prisma migrate resolve --applied <migration>` instead of running it.
-- **A workspace package the apiserver imports needs two entries.** Add it to
-  `mods/apiserver/tsconfig.json` `references` (so `tsc -b` builds it first —
-  CI's "Build apiserver types" and the e2e job build only the apiserver) and
-  `COPY` its `package.json` + `dist` in `mods/apiserver/Dockerfile` (the image
-  only contains what's copied). Current set: `common`, `agents`, `score`.
+### security-engineer
+
+- WhatsApp WABA fans out to the Mikro app and Chatwoot separately; webhook callback URL is
+  config on Meta's side, not in the repo.
+
+### visual-designer
+
+- Pencil (`designs/*.pen`) is the source of truth for Ops dashboard and apps; edit only via
+  the Pencil MCP. Shared components/variables live only in `designs/mikro.lib.pen`
+  (refs `ui:<id>`, `$ui:<name>`, dark theme axis `ui:mode`). One board per area, numbered
+  sections, one canonical frame per screen + a table for states. Root `pencil.pen` is gone.
+- Pen.app: a changed lib component shows in importing files only after restart. Save via
+  File ▸ Save with the file's window focused, confirm mtime changed; close Pen before
+  switching branches (it can overwrite disk with a stale copy).
+
+## Decisions
+
+- 2026-10-21: No evaluator mobile app; evaluation lives in Ops (dashboard). Mobile is collectors only.
+- 2026-10-21: Designs are guidance: one canonical frame + table per screen, no state catalogs.
+- 2026-09: Staff Chatwoot replies are not captured in CX transcripts (PR #303).
+- 2026-07-04: iOS builds run `eas build --local` on GitHub macOS runners, not EAS cloud.
+- Merged branches are deleted (local + remote) once `git merge-base --is-ancestor <b> origin/main` passes.
