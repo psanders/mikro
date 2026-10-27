@@ -46,6 +46,8 @@ export interface LoanSnapshot {
   paymentFrequency: string;
   moraRate: number | null;
   startingDate: string | null;
+  /** First cuota due date; null on loans created before it was stored. */
+  firstDueDate: string | null;
   nickname: string | null;
   customerId: string;
   createdAt: string;
@@ -181,6 +183,7 @@ export function createCollectorSync(client: DbClient) {
         paymentFrequency: l.paymentFrequency,
         moraRate: l.moraRate != null ? amountToNumber(l.moraRate) : null,
         startingDate: l.startingDate ? new Date(l.startingDate).toISOString() : null,
+        firstDueDate: l.firstDueDate ? new Date(l.firstDueDate).toISOString() : null,
         nickname: l.nickname,
         customerId: l.customerId,
         createdAt: l.createdAt.toISOString(),

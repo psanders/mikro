@@ -42,7 +42,7 @@ export default class Create extends MutationCommand<typeof Create> {
     }),
     "starting-date": Flags.string({
       description:
-        "Starting date for payment cycles (ISO date, e.g. 2026-02-15). Defaults to loan creation date.",
+        "Cycle anchor date (YYYY-MM-DD); first installment is one period later. Defaults to creation date.",
       required: false
     }),
     nickname: Flags.string({

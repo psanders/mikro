@@ -7,7 +7,7 @@
  * leaves no trace; and the two roles that may renew can.
  */
 import { expect } from "chai";
-import type { RenewalActor } from "@mikro/common";
+import { getLoanDueDate, type RenewalActor } from "@mikro/common";
 import {
   createCancelLoanRenewal,
   createFinalizeLoanRenewal,
@@ -134,11 +134,12 @@ describe("loan renewal process", () => {
     return { customer, loan, collector, pay };
   }
 
-  const start = (loanId: number, actor = ADMIN) => createStartLoanRenewal(db)({ loanId }, actor);
+  const start = (loanId: number, actor = ADMIN, terms?: Record<string, unknown>) =>
+    createStartLoanRenewal(db)({ loanId, terms }, actor);
 
   /** Drive a renewal to SIGNED: contract generated, signed copy uploaded. */
-  async function toSigned(loanNumber: number) {
-    const r = await start(loanNumber);
+  async function toSigned(loanNumber: number, terms?: Record<string, unknown>) {
+    const r = await start(loanNumber, ADMIN, terms);
     await createGenerateRenewalContract(db, { renderContract: stubRender as never })(
       { id: r.id },
       ADMIN
@@ -394,6 +395,22 @@ describe("loan renewal process", () => {
       expect(completed).to.have.length(1);
       expect(Number(completed[0].amount)).to.equal(7_400);
       expect(completed[0].renewalId).to.equal(id);
+    });
+
+    it("finalized loan is due on the contract's first date", async () => {
+      const { loan } = await seedLoan();
+      const id = await toSigned(loan.loanId, {
+        paymentFrequency: "BIWEEKLY",
+        startingDate: "2026-11-10"
+      });
+      const quote = await createGetLoanRenewalQuote(db)({ id });
+
+      const out = await createFinalizeLoanRenewal(db)({ id, confirmedNet: quote.net }, REVIEWER);
+
+      const created = await db.loan.findUniqueOrThrow({ where: { loanId: out.newLoan.loanId } });
+      expect(created.firstDueDate!.toISOString()).to.equal("2026-11-15T00:00:00.000Z");
+      expect(created.startingDate!.toISOString()).to.equal("2026-11-01T00:00:00.000Z");
+      expect(getLoanDueDate(created, 0).toISOString()).to.equal("2026-11-15T00:00:00.000Z");
     });
 
     it("fails with NET_CHANGED when what is owed moved, writing nothing, then succeeds once re-confirmed", async () => {

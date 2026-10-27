@@ -56,7 +56,8 @@ export default class GenerateContract extends MutationCommand<typeof GenerateCon
       required: false
     }),
     "start-date": Flags.string({
-      description: "First-payment date (ISO date, e.g. 2026-02-15)",
+      description:
+        "First installment date (YYYY-MM-DD). BIWEEKLY snaps forward to the 15th or month-end; the contract prints the snapped date.",
       required: false
     }),
     "marital-status": Flags.string({
@@ -105,7 +106,7 @@ export default class GenerateContract extends MutationCommand<typeof GenerateCon
     const today = localDateString();
     const startDate = await promptTextIfMissing(
       flags["start-date"],
-      "First-payment date (YYYY-MM-DD)",
+      "First installment date (YYYY-MM-DD)",
       "start-date",
       { default: today }
     );

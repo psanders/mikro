@@ -14,6 +14,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import {
   buildLoanSnapshot,
+  buildRepaymentSchedule,
   evaluateSnapshot,
   runPortfolioHealthCheck,
   generateSpecMarkdown,
@@ -112,6 +113,27 @@ describe("collections eval — snapshot builder", () => {
         new Date(snap.ledger[i - 1].paidAt).getTime()
       );
     }
+  });
+});
+
+describe("collections eval — snapshot first due date (mikro/#385)", () => {
+  it("resolves the legacy first cuota from the anchor when none is stored", () => {
+    const snap = buildLoanSnapshot(baseInput());
+    // WEEKLY anchor Mon 2026-05-04 → first cuota one week later.
+    expect(snap.terms.firstDueDate).to.equal("2026-05-11T00:00:00.000Z");
+  });
+
+  it("reports and schedules from the stored first cuota", () => {
+    const input = baseInput();
+    const firstDueDate = new Date("2026-05-15T00:00:00.000Z");
+    const snap = buildLoanSnapshot({
+      ...input,
+      loan: { ...input.loan, paymentFrequency: "BIWEEKLY", firstDueDate }
+    });
+    expect(snap.terms.firstDueDate).to.equal("2026-05-15T00:00:00.000Z");
+    const schedule = buildRepaymentSchedule(snap);
+    expect(schedule[0].dueDate).to.equal("2026-05-15T00:00:00.000Z");
+    expect(schedule[1].dueDate).to.equal("2026-05-31T00:00:00.000Z");
   });
 });
 

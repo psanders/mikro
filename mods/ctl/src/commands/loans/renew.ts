@@ -41,7 +41,7 @@ export default class Renew extends MutationCommand<typeof Renew> {
       required: false
     }),
     "starting-date": Flags.string({
-      description: "Starting date for the new loan (YYYY-MM-DD)",
+      description: "First installment date of the new loan (YYYY-MM-DD)",
       required: false
     })
   };

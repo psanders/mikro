@@ -36,6 +36,7 @@ type LoanRow = {
   moraRate: unknown;
   createdAt: Date;
   startingDate: Date | null;
+  firstDueDate: Date | null;
   updatedAt: Date;
   closedAt: Date | null;
   nickname: string | null;
@@ -120,6 +121,7 @@ export async function fetchLoanSnapshotInput(
       status: loan.status,
       createdAt: new Date(loan.createdAt),
       startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
+      firstDueDate: loan.firstDueDate != null ? new Date(loan.firstDueDate) : null,
       updatedAt: new Date(loan.updatedAt),
       closedAt: loan.closedAt != null ? new Date(loan.closedAt) : null,
       nickname: loan.nickname

@@ -22,6 +22,7 @@ export interface LoanWithPaymentsForMora {
   paymentFrequency: string;
   createdAt: Date;
   startingDate: Date | null;
+  firstDueDate?: Date | null;
   termLength: number;
   /** Cuota size. When present (with payment amounts), cycle counting is money-based. */
   paymentAmount?: unknown;
@@ -50,6 +51,7 @@ export function toLoanPaymentData(loan: LoanWithPaymentsForMora): LoanPaymentDat
     paymentFrequency: loan.paymentFrequency,
     createdAt: new Date(loan.createdAt),
     startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
+    firstDueDate: loan.firstDueDate != null ? new Date(loan.firstDueDate) : null,
     termLength: loan.termLength,
     paymentAmount: loan.paymentAmount != null ? amountToNumber(loan.paymentAmount) : undefined,
     payments: installmentPayments.map((p) => ({

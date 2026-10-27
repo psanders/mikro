@@ -8,7 +8,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { expect } from "chai";
-import { clearConfigCache } from "@mikro/common";
+import { clearConfigCache, getLoanDueDate } from "@mikro/common";
 import {
   createTestDb,
   createAuthenticatedCaller,
@@ -179,6 +179,78 @@ describe("convertApplication collector assignment", () => {
     }
     expect(thrown).to.not.equal(undefined);
     expect(await db.customer.count()).to.equal(0);
+  });
+
+  describe("first due date (mikro/#385)", () => {
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+    async function convertWithTerms(terms: {
+      installments: number;
+      installmentAmount: number;
+      frequency: "BIWEEKLY" | "MONTHLY";
+      startDate: string;
+    }) {
+      const collector = await makeCollector();
+      const app = await makeApplication({ contractTerms: terms });
+      const result = await caller.convertApplication({
+        id: app.id,
+        principal: 5000,
+        termLength: terms.installments,
+        paymentAmount: terms.installmentAmount,
+        paymentFrequency: terms.frequency,
+        startingDate: "2026-10-01",
+        assignedCollectorId: collector.id
+      });
+      return db.loan.findUniqueOrThrow({ where: { loanId: result.loanId } });
+    }
+
+    it("stores firstDueDate from contractTerms", async () => {
+      const loan = await convertWithTerms({
+        installments: 6,
+        installmentAmount: 1000,
+        frequency: "BIWEEKLY",
+        startDate: "2026-11-15"
+      });
+
+      expect(iso(loan.firstDueDate!)).to.equal("2026-11-15");
+      expect(iso(loan.startingDate!)).to.equal("2026-10-01");
+      expect(iso(getLoanDueDate(loan, 5))).to.equal("2027-01-31");
+    });
+
+    it("monthly 31st first cuota keeps the 31st", async () => {
+      const loan = await convertWithTerms({
+        installments: 4,
+        installmentAmount: 1500,
+        frequency: "MONTHLY",
+        startDate: "2026-12-31"
+      });
+
+      expect(iso(loan.firstDueDate!)).to.equal("2026-12-31");
+      expect([0, 1, 2, 3].map((i) => iso(getLoanDueDate(loan, i)))).to.deep.equal([
+        "2026-12-31",
+        "2027-01-31",
+        "2027-02-28",
+        "2027-03-31"
+      ]);
+    });
+
+    it("leaves firstDueDate null for a contract uploaded without terms", async () => {
+      const collector = await makeCollector();
+      const app = await makeApplication();
+      const result = await caller.convertApplication({
+        id: app.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        startingDate: "2026-10-01",
+        assignedCollectorId: collector.id
+      });
+
+      const loan = await db.loan.findUniqueOrThrow({ where: { loanId: result.loanId } });
+      expect(loan.firstDueDate).to.equal(null);
+      expect(iso(loan.startingDate!)).to.equal("2026-10-01");
+    });
   });
 
   describe("auto-disbursement (mikro/#155)", () => {

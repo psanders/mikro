@@ -8,6 +8,7 @@ export function loanToData(
     paymentFrequency: string;
     createdAt: Date;
     startingDate?: Date | null;
+    firstDueDate?: Date | null;
     payments: Array<{ paidAt: Date; status?: string; kind?: string }>;
   },
   preferredPaymentDay?: string | null
@@ -17,6 +18,7 @@ export function loanToData(
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
     startingDate: loan.startingDate ?? undefined,
+    firstDueDate: loan.firstDueDate ?? undefined,
     payments: installmentPayments.map((p) => ({
       paidAt: p.paidAt,
       ...(p.status !== undefined ? { status: p.status } : {})

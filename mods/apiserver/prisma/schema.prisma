@@ -400,6 +400,9 @@ model Loan {
    */
   moraRate         Decimal?         @map("mora_rate")
   startingDate     DateTime?        @map("starting_date")
+  /// First cuota due date (UTC day). Null on loans created before this column: the engine
+  /// then derives it from startingDate (legacy anchor + 1 period).
+  firstDueDate     DateTime?        @map("first_due_date")
   nickname         String?
   /**
    * When the loan was closed by a renewal; anchors the mora freeze for RENEWED.

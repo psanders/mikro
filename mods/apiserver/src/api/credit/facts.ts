@@ -83,6 +83,7 @@ async function mikroHistory(db: PrismaClient, cedula: string, now: Date) {
         {
           paymentFrequency: l.paymentFrequency,
           createdAt: l.startingDate ?? l.createdAt,
+          firstDueDate: l.firstDueDate,
           paymentAmount: Number(l.paymentAmount),
           payments: l.payments.map((p) => ({
             paidAt: p.paidAt,

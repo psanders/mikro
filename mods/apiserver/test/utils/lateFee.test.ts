@@ -304,10 +304,9 @@ describe("computeAccruedMora", () => {
 
 describe("daysLateFromOldestDue", () => {
   it("returns 0 when missedCycles is 0", () => {
+    const start = new Date("2026-01-01");
     const d = daysLateFromOldestDue(
-      new Date("2026-01-01"),
-      "WEEKLY",
-      null,
+      { startingDate: start, createdAt: start, paymentFrequency: "WEEKLY" },
       2,
       0,
       new Date("2026-01-20")
@@ -316,10 +315,9 @@ describe("daysLateFromOldestDue", () => {
   });
 
   it("returns calendar days from oldest due to asOf", () => {
+    const start = new Date("2026-01-01T12:00:00Z");
     const d = daysLateFromOldestDue(
-      new Date("2026-01-01T12:00:00Z"),
-      "WEEKLY",
-      null,
+      { startingDate: start, createdAt: start, paymentFrequency: "WEEKLY" },
       0,
       1,
       new Date("2026-01-15T12:00:00Z")

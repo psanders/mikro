@@ -47,6 +47,7 @@ const loanForGroupingInputSchema = z.object({
   paymentFrequency: z.string(),
   createdAt: z.coerce.date(),
   startingDate: z.coerce.date().nullish(),
+  firstDueDate: z.coerce.date().nullish(),
   termLength: z.number().int().positive(),
   paymentAmount: z.number().positive().optional(),
   payments: z.array(groupingPaymentInputSchema),

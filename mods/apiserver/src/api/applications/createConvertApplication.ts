@@ -199,13 +199,18 @@ export function createConvertApplication(client: DbClient) {
         });
       }
 
-      const loan = await createCreateLoan(tx)({
+      // The signed contract printed the first cuota; the loan is due on it.
+      const loan = await createCreateLoan(
+        tx,
+        "contractTerms"
+      )({
         customerId: customer.id,
         principal: input.principal,
         termLength: input.termLength,
         paymentAmount: input.paymentAmount,
         paymentFrequency: input.paymentFrequency,
         startingDate: input.startingDate,
+        firstDueDate: signedTerms?.startDate,
         moraRate: input.moraRate
       });
 

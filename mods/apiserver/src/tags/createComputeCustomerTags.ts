@@ -7,7 +7,7 @@
  */
 import {
   getCycleMetrics,
-  getDueDateForCycle,
+  getLoanDueDate,
   daysLateFromOldestDue,
   toLoanPaymentData,
   MS_PER_DAY,
@@ -107,13 +107,7 @@ function daysToNextDue(
   asOf: Date
 ): number | null {
   if (termLength !== undefined && termLength > 0 && paymentsMade >= termLength) return null;
-  const loanStart = new Date(loan.startingDate ?? loan.createdAt);
-  const nextDue = getDueDateForCycle(
-    loanStart,
-    paymentsMade,
-    loan.paymentFrequency,
-    loan.customer.preferredPaymentDay ?? null
-  );
+  const nextDue = getLoanDueDate(loan, paymentsMade);
   const days = calendarDaysUntil(asOf, nextDue);
   return days >= 0 ? days : null;
 }
@@ -132,14 +126,7 @@ function daysLateForClassification(
   missedCycles: number,
   asOf: Date
 ): number {
-  return daysLateFromOldestDue(
-    new Date(loan.startingDate ?? loan.createdAt),
-    loan.paymentFrequency,
-    loan.customer.preferredPaymentDay ?? null,
-    paymentsMade,
-    missedCycles,
-    asOf
-  );
+  return daysLateFromOldestDue(loan, paymentsMade, missedCycles, asOf);
 }
 
 /**
