@@ -47,10 +47,10 @@ describe("getDueDateForCycle", () => {
     expect(result.toISOString().slice(0, 10)).to.equal("2026-01-15");
   });
 
-  it("BIWEEKLY: cycleIndex 2 from Jan 1 returns Feb 12", () => {
+  it("BIWEEKLY: cycleIndex 2 from Jan 1 returns Feb 15 (15th / month-end)", () => {
     const start = new Date("2026-01-01");
     const result = getDueDateForCycle(start, 2, "BIWEEKLY");
-    expect(result.toISOString().slice(0, 10)).to.equal("2026-02-12");
+    expect(result.toISOString().slice(0, 10)).to.equal("2026-02-15");
   });
 
   it("MONTHLY: cycleIndex 0 from Jan 15 returns Feb 15", () => {
@@ -118,13 +118,14 @@ describe("getCycleMetrics BIWEEKLY", () => {
     expect(metrics.cyclesElapsed).to.equal(1);
   });
 
-  it("should return 2 cycles on day 28", () => {
+  it("should return 2 cycles on the month-end due (Jan 31), 1 the day before", () => {
     const loan = createLoan({
       createdAt: new Date("2026-01-01"),
       paymentFrequency: "BIWEEKLY",
       payments: []
     });
-    const metrics = getCycleMetrics(loan, new Date("2026-01-29"));
+    expect(getCycleMetrics(loan, new Date("2026-01-30")).cyclesElapsed).to.equal(1);
+    const metrics = getCycleMetrics(loan, new Date("2026-01-31"));
     expect(metrics.cyclesElapsed).to.equal(2);
     expect(metrics.missedCycles).to.equal(2);
   });
@@ -135,7 +136,12 @@ describe("getCycleMetrics BIWEEKLY", () => {
       paymentFrequency: "BIWEEKLY",
       payments: [{ paidAt: new Date("2026-01-15") }]
     });
-    const metrics = getCycleMetrics(loan, new Date("2026-01-29"));
+    // Second cuota is due Jan 31 (month-end), so Jan 29 is still on time.
+    const before = getCycleMetrics(loan, new Date("2026-01-29"));
+    expect(before.cyclesElapsed).to.equal(1);
+    expect(before.paymentsMade).to.equal(1);
+    expect(before.missedCycles).to.equal(0);
+    const metrics = getCycleMetrics(loan, new Date("2026-01-31"));
     expect(metrics.cyclesElapsed).to.equal(2);
     expect(metrics.paymentsMade).to.equal(1);
     expect(metrics.missedCycles).to.equal(1);
@@ -148,12 +154,11 @@ describe("getCycleMetrics BIWEEKLY", () => {
       paymentFrequency: "BIWEEKLY",
       payments: []
     });
-    // 14 days from Jan 10 = Jan 24. On Jan 23 (day 13 from startingDate), 0 cycles.
-    const metrics = getCycleMetrics(loan, new Date("2026-01-23"));
-    expect(metrics.cyclesElapsed).to.equal(0);
-    // On Jan 24 (day 14), 1 cycle.
-    const metrics2 = getCycleMetrics(loan, new Date("2026-01-24"));
-    expect(metrics2.cyclesElapsed).to.equal(1);
+    // 14 days from Jan 10 = Jan 24, snapped forward to the next month-end: Jan 31.
+    expect(getCycleMetrics(loan, new Date("2026-01-24")).cyclesElapsed).to.equal(0);
+    expect(getCycleMetrics(loan, new Date("2026-01-30")).cyclesElapsed).to.equal(0);
+    const metrics = getCycleMetrics(loan, new Date("2026-01-31"));
+    expect(metrics.cyclesElapsed).to.equal(1);
   });
 });
 

@@ -242,6 +242,23 @@ describe("dueDates", () => {
     }
   });
 
+  describe("day boundary", () => {
+    it("rolls a cuota over at UTC midnight, whatever the process TZ", () => {
+      // WEEKLY anchor 10-25 → dues 11-01, 11-08, 11-15 (cuota 2).
+      const loanData: LoanPaymentData = {
+        paymentFrequency: "WEEKLY",
+        createdAt: d("2026-10-25"),
+        startingDate: d("2026-10-25"),
+        payments: []
+      };
+      expect(day(getLoanDueDate(loanData, 2))).to.equal("2026-11-15");
+      // 14 nov 20:30 AST: cuota 2 is due.
+      expect(getCycleMetrics(loanData, new Date("2026-11-15T00:30:00Z")).cyclesElapsed).to.equal(3);
+      // 14 nov 19:30 AST: not yet.
+      expect(getCycleMetrics(loanData, new Date("2026-11-14T23:30:00Z")).cyclesElapsed).to.equal(2);
+    });
+  });
+
   describe("contract clause", () => {
     const base = (startDate: string, frequency: PaymentFrequency, installments: number) =>
       ({

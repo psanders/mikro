@@ -257,14 +257,42 @@ describe("computeCustomerTags", () => {
       expect(result.dueTag).to.equal("due:1_3");
     });
 
-    it("tags a not-yet-elapsed installment due today (same calendar day) as due:today", () => {
+    it("counts an installment as due for its whole UTC due day (pre_mora, no due: tag)", () => {
       const start = new Date("2026-01-01T12:00:00Z");
-      // First due at start+7d (2026-01-08T12:00Z); asOf earlier that same day → cycle not yet elapsed.
-      const asOf = new Date("2026-01-08T06:00:00Z");
+      // First due is the UTC day 2026-01-08; any instant that day has the cycle elapsed.
       const loan = makeLoan({ startingDate: start });
-      const result = computeCustomerTags([loan], defaultPolicy, asOf);
+      const result = computeCustomerTags([loan], defaultPolicy, new Date("2026-01-08T06:00:00Z"));
+      expect(result.statusTag).to.equal("status:pre_mora");
+      expect(result.dueTag).to.be.null;
+    });
+
+    it("tags the day before the first installment as due:1_3", () => {
+      const start = new Date("2026-01-01T12:00:00Z");
+      const loan = makeLoan({ startingDate: start });
+      const result = computeCustomerTags([loan], defaultPolicy, new Date("2026-01-07T06:00:00Z"));
       expect(result.statusTag).to.equal("status:new");
-      expect(result.dueTag).to.equal("due:today");
+      expect(result.dueTag).to.equal("due:1_3");
+    });
+
+    it("counts days to the quincenal month-end due for a BIWEEKLY loan", () => {
+      // Anchor 2026-11-01 → first due 11-15, second due 11-30 (not 11-29).
+      const start = new Date("2026-11-01T00:00:00Z");
+      const loan = makeLoan({
+        startingDate: start,
+        paymentFrequency: "BIWEEKLY",
+        termLength: 10,
+        completedPayments: 1
+      });
+      const fourOut = computeCustomerTags([loan], defaultPolicy, new Date("2026-11-26T16:00:00Z"));
+      expect(fourOut.statusTag).to.equal("status:current");
+      expect(fourOut.dueTag).to.equal("due:4_7");
+      const dayBefore = computeCustomerTags(
+        [loan],
+        defaultPolicy,
+        new Date("2026-11-29T16:00:00Z")
+      );
+      expect(dayBefore.statusTag).to.equal("status:current");
+      expect(dayBefore.dueTag).to.equal("due:1_3");
     });
 
     it("emits no due: tag when the soonest installment is more than 7 days out (MONTHLY)", () => {

@@ -9,9 +9,11 @@
  * Loan #10029 (anonymized, from a real bug report): BIWEEKLY, cuota 1,200,
  * term 10, disbursed 2026-03-15. On 2026-08-05 the collector charged RD$76.00
  * of mora — 19 days from the then-oldest missed due (05 jul, the cuota-8 due
- * date). The same RD$1,200 closed cuota 8, so the oldest missed due became
- * 19 jul and gross fell to RD$68.00, leaving the statement printing
- * "68.00 generada − 76.00 pagada" with the difference clamped away.
+ * date). The same RD$1,200 closed cuota 8, so the oldest missed due moved
+ * forward and gross fell below what was collected, leaving the statement
+ * printing "generada < pagada" with the difference clamped away. On the
+ * quincenal schedule (15th / month-end) that oldest missed due is 31 jul and
+ * the unanchored gross is RD$24.00.
  */
 import { expect } from "chai";
 import {
@@ -57,7 +59,8 @@ const FEES: Array<[Date, number]> = [
 ];
 
 function accrued(opts: { anchored: boolean; asOf?: Date; reversed?: boolean }) {
-  const asOf = opts.asOf ?? on(8, 5, 23);
+  // 5 ago 23:00 AST as a UTC instant, so the value is the same in any TZ.
+  const asOf = opts.asOf ?? new Date("2026-08-06T03:00:00.000Z");
 
   const loanData: LoanPaymentData = {
     paymentFrequency: "BIWEEKLY",
@@ -99,10 +102,10 @@ function accrued(opts: { anchored: boolean; asOf?: Date; reversed?: boolean }) {
 describe("mora accrual window is frozen at charge time", () => {
   it("without an anchor, the payment shrinks the window it was charged against", () => {
     const r = accrued({ anchored: false });
-    expect(r.daysLate).to.equal(17);
-    expect(r.grossMoraAmount).to.equal(68);
+    expect(r.daysLate).to.equal(6);
+    expect(r.grossMoraAmount).to.equal(24);
     expect(r.collectedMora).to.equal(76);
-    // The 8.00 difference is clamped out of the net and disappears.
+    // The 52.00 difference is clamped out of the net and disappears.
     expect(r.moraAmount).to.equal(0);
   });
 
@@ -117,9 +120,9 @@ describe("mora accrual window is frozen at charge time", () => {
 
   it("reports the accrual start so the charge can persist it", () => {
     expect(accrued({ anchored: true }).accrualFrom?.getTime()).to.equal(CHARGE_ANCHOR.getTime());
-    // Unanchored falls back to the live oldest missed due (19 jul, midnight —
-    // due dates carry no time of day).
-    expect(accrued({ anchored: false }).accrualFrom?.getTime()).to.equal(on(7, 19, 0).getTime());
+    // Unanchored falls back to the live oldest missed due (31 jul, a UTC
+    // calendar day — due dates carry no time of day).
+    expect(accrued({ anchored: false }).accrualFrom?.getTime()).to.equal(Date.UTC(2026, 6, 31));
   });
 
   it("keeps accruing from the frozen anchor as time passes", () => {
@@ -132,8 +135,8 @@ describe("mora accrual window is frozen at charge time", () => {
 
   it("a reversed charge releases its anchor", () => {
     const r = accrued({ anchored: true, reversed: true });
-    expect(r.daysLate).to.equal(17);
-    expect(r.grossMoraAmount).to.equal(68);
+    expect(r.daysLate).to.equal(6);
+    expect(r.grossMoraAmount).to.equal(24);
     // The reversed fee is excluded from collected as well.
     expect(r.collectedMora).to.equal(0);
   });
