@@ -4,6 +4,7 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { handleCalculateLoan } from "../../src/tools/executor/calculateLoan.js";
+import { calculateLoanTool } from "../../src/tools/definitions.js";
 import type { ToolExecutorDependencies } from "../../src/tools/executor/types.js";
 
 describe("handleCalculateLoan", () => {
@@ -38,7 +39,6 @@ describe("handleCalculateLoan", () => {
 
     const result = await handleCalculateLoan(deps, {
       principal: "5000",
-      interestRate: "0.30",
       paymentFrequency: "WEEKLY",
       baseDuration: "10"
     });
@@ -46,15 +46,50 @@ describe("handleCalculateLoan", () => {
     expect(result.success).to.be.true;
     expect(result.message).to.include("RD$ 5000.00");
     expect(calculateLoanStub.calledOnce).to.be.true;
-    expect(
-      calculateLoanStub.calledWith({
-        principal: 5000,
-        interestRate: 0.3,
-        paymentFrequency: "WEEKLY",
-        baseDuration: 10,
-        adjustmentPerPeriod: undefined
-      })
-    ).to.be.true;
+    expect(calculateLoanStub.firstCall.args[0]).to.deep.equal({
+      principal: 5000,
+      paymentFrequency: "WEEKLY",
+      baseDuration: 10
+    });
+  });
+
+  it("should not forward a rate or adjustment the model sends anyway", async () => {
+    const calculateLoanStub = sinon.stub().resolves({
+      principal: 5000,
+      paymentFrequency: "WEEKLY",
+      baseDuration: 10,
+      baseInterestRate: 0.3,
+      adjustmentPerPeriod: 0.015,
+      minRate: 0.1,
+      maxRate: 0.6,
+      options: []
+    });
+    const deps = {
+      calculateLoan: calculateLoanStub
+    } as unknown as ToolExecutorDependencies;
+
+    await handleCalculateLoan(deps, {
+      principal: "5000",
+      interestRate: "0.50",
+      adjustmentPerPeriod: "0.01",
+      paymentFrequency: "WEEKLY",
+      baseDuration: "10"
+    });
+
+    expect(calculateLoanStub.firstCall.args[0]).to.not.have.any.keys(
+      "interestRate",
+      "adjustmentPerPeriod"
+    );
+  });
+
+  it("should define principal, paymentFrequency and baseDuration only, all required", () => {
+    const { parameters } = calculateLoanTool.function;
+    expect(Object.keys(parameters.properties)).to.deep.equal([
+      "principal",
+      "paymentFrequency",
+      "baseDuration"
+    ]);
+    expect(parameters.required).to.deep.equal(["principal", "paymentFrequency", "baseDuration"]);
   });
 
   it("should handle BIWEEKLY frequency argument", async () => {
@@ -84,7 +119,6 @@ describe("handleCalculateLoan", () => {
 
     const result = await handleCalculateLoan(deps, {
       principal: "5000",
-      interestRate: "0.30",
       paymentFrequency: "BIWEEKLY",
       baseDuration: "10"
     });
@@ -120,7 +154,6 @@ describe("handleCalculateLoan", () => {
 
     const result = await handleCalculateLoan(deps, {
       principal: "10000",
-      interestRate: "0.30",
       paymentFrequency: "MONTHLY",
       baseDuration: "6"
     });
@@ -138,10 +171,8 @@ describe("handleCalculateLoan", () => {
     try {
       await handleCalculateLoan(deps, {
         principal: "5000",
-        interestRate: "0.30",
         paymentFrequency: "DAILY",
-        baseDuration: "10",
-        adjustmentPerPeriod: "0.01"
+        baseDuration: "10"
       });
       expect.fail("Expected handleCalculateLoan to throw");
     } catch (error) {

@@ -10,6 +10,7 @@ import { parse as parseYaml } from "yaml";
 import { z } from "zod/v4";
 import { tagShapeSchema } from "./schemas/customerTag.js";
 import { PROVINCE_VALUES } from "./schemas/applicationForm.js";
+import { DEFAULT_LOAN_PRICING } from "./utils/calculateLoan.js";
 
 /** Supported LLM vendors. */
 export const LLM_VENDORS = ["openai", "anthropic", "google"] as const;
@@ -456,7 +457,45 @@ const evalsSchema = z
   .strict();
 export type QCobroPortfolioRule = z.infer<typeof qcobroPortfolioRuleSchema>;
 
-/** Past-due (mora) fee policy. See README "Past-due fee". */
+const rateField = z
+  .number({ error: "must be a decimal between 0 and 1 (write 0.30 for 30%)" })
+  .min(0, "must be a decimal between 0 and 1 (write 0.30 for 30%)")
+  .max(1, "must be a decimal between 0 and 1 (write 0.30 for 30%)");
+
+/**
+ * Loan quote price curve. See README "Loan pricing". Strict so a typo fails
+ * boot; `loansSchema` itself stays non-strict so older releases drop this key.
+ */
+const loanPricingSchema = z
+  .object({
+    /** Total interest as a decimal share of principal for a loan of `referenceWeeks` weeks (0.30 = 30%). Not an annual rate. */
+    referenceRate: rateField
+      .positive("must be a decimal between 0 and 1 (write 0.30 for 30%)")
+      .default(DEFAULT_LOAN_PRICING.referenceRate),
+    /** Loan length in weeks at which `referenceRate` applies. */
+    referenceWeeks: z
+      .number({ error: "must be a whole number of weeks greater than 0" })
+      .int("must be a whole number of weeks greater than 0")
+      .positive("must be a whole number of weeks greater than 0")
+      .default(DEFAULT_LOAN_PRICING.referenceWeeks),
+    /** Decimal added per week longer than `referenceWeeks`, subtracted per week shorter (0.015 = 1.5 points). */
+    adjustmentPerWeek: rateField.default(DEFAULT_LOAN_PRICING.adjustmentPerWeek),
+    /** Lowest total interest any quote can have. */
+    minRate: rateField.default(DEFAULT_LOAN_PRICING.minRate),
+    /** Highest total interest any quote can have. */
+    maxRate: rateField.default(DEFAULT_LOAN_PRICING.maxRate)
+  })
+  .strict()
+  .refine((p) => p.minRate <= p.referenceRate && p.referenceRate <= p.maxRate, {
+    // Only compare once every key parsed; a bad key already has its own message.
+    when: (payload) => payload.issues.length === 0,
+    error: (iss) => {
+      const p = iss.input as { minRate: number; referenceRate: number; maxRate: number };
+      return `minRate must be ≤ referenceRate ≤ maxRate (got ${p.minRate.toFixed(2)}, ${p.referenceRate.toFixed(2)}, ${p.maxRate.toFixed(2)})`;
+    }
+  });
+
+/** Past-due (mora) fee policy and loan quote pricing. See README "Past-due fee" and "Loan pricing". */
 export const loansSchema = z.object({
   /** Annualized-style rate applied as `rate * (daysLate/30) * cuota` (e.g. 0.10 = 10%). */
   defaultMoraRate: z.number().min(0).max(1).default(0.1),
@@ -474,7 +513,9 @@ export const loansSchema = z.object({
       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "moraEffectiveFrom must be YYYY-MM-DD"),
       z.null()
     ])
-    .optional()
+    .optional(),
+  /** Price curve for loan quotes (ctl, copilot). Optional; defaults to 30% at 10 weeks, ±1.5%/week, 10%–60%. */
+  pricing: loanPricingSchema.default(() => ({ ...DEFAULT_LOAN_PRICING }))
 });
 
 export type LoansConfig = z.infer<typeof loansSchema>;
@@ -589,7 +630,8 @@ const defaultLoansConfig = (): LoansConfig => ({
   moraCapInCuotas: 1,
   moraMinDop: 0,
   moraStopOnDefault: false,
-  moraEffectiveFrom: undefined
+  moraEffectiveFrom: undefined,
+  pricing: { ...DEFAULT_LOAN_PRICING }
 });
 
 export const mikroConfigSchema = z

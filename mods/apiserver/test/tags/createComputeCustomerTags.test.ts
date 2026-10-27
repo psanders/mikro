@@ -2,7 +2,7 @@
  * Copyright (C) 2026 by Mikro SRL. MIT License.
  */
 import { expect } from "chai";
-import type { LoansConfig } from "@mikro/common";
+import { DEFAULT_LOAN_PRICING, type LoansConfig } from "@mikro/common";
 import {
   computeCustomerTags,
   type LoanForTagEngine
@@ -16,7 +16,8 @@ const defaultPolicy: LoansConfig = {
   moraCapInCuotas: 1,
   moraMinDop: 0,
   moraStopOnDefault: false,
-  moraEffectiveFrom: undefined
+  moraEffectiveFrom: undefined,
+  pricing: DEFAULT_LOAN_PRICING
 };
 
 interface LoanFixtureInput {

@@ -86,7 +86,14 @@
     "moraCapInCuotas": 1,
     "moraMinDop": 0,
     "moraStopOnDefault": false,
-    "moraEffectiveFrom": null
+    "moraEffectiveFrom": null,
+    "pricing": {
+      "referenceRate": 0.3,
+      "referenceWeeks": 10,
+      "adjustmentPerWeek": 0.015,
+      "minRate": 0.1,
+      "maxRate": 0.6
+    }
   },
   "contract": {
     "creditor": {

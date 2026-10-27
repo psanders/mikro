@@ -78,13 +78,11 @@ export interface ToolExecutorDependencies {
     startingDate?: Date;
   }) => Promise<{ id: string; loanId: number }>;
 
-  /** Calculate loan options from base duration and interest */
+  /** Calculate loan options around a base duration, priced from the server's `loans.pricing` */
   calculateLoan: (params: {
     principal: number;
-    interestRate: number;
     paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
     baseDuration: number;
-    adjustmentPerPeriod?: number;
   }) => Promise<{
     principal: number;
     paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";

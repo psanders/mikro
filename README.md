@@ -65,6 +65,61 @@ receipts stay consistent.
 - Mora is **not** auto-posted to the accounting ledger; deposits are still
   recorded manually in the accounting module when appropriate.
 
+## Loan pricing
+
+Loan quotes (`mikro loans:calculate`, the founder copilot and the `calculateLoan` API)
+follow one price curve by loan length in weeks. The rate is the **total interest as a
+share of the principal over the whole loan**, not an annual rate.
+
+- `referenceRate` applies to a loan of `referenceWeeks` weeks; each week longer adds
+  `adjustmentPerWeek`, each week shorter subtracts it; the result is clamped to
+  `minRate`–`maxRate`.
+- Loan length in weeks: weekly = 1 week per payment, daily = 1/7, biweekly = 2,
+  monthly = 52/12. This is used for pricing only; due dates are unchanged.
+- The base duration only centers the list of options and does not change the price.
+
+| Key                 | Default | Meaning                                                      |
+| :------------------ | :------ | :----------------------------------------------------------- |
+| `referenceRate`     | `0.30`  | Total interest (decimal, 0.30 = 30%) at `referenceWeeks`     |
+| `referenceWeeks`    | `10`    | Loan length in weeks where `referenceRate` applies           |
+| `adjustmentPerWeek` | `0.015` | Added per week longer, subtracted per week shorter (1.5 pts) |
+| `minRate`           | `0.10`  | Lowest total interest any quote can have                     |
+| `maxRate`           | `0.60`  | Highest total interest any quote can have                    |
+
+```json
+"loans": {
+  "pricing": {
+    "referenceRate": 0.30,
+    "referenceWeeks": 10,
+    "adjustmentPerWeek": 0.015,
+    "minRate": 0.10,
+    "maxRate": 0.60
+  }
+}
+```
+
+The section is optional; leave it out to use the defaults. An unknown key, a value out of
+range, or `minRate ≤ referenceRate ≤ maxRate` not holding stops the server at boot.
+
+Example, RD$10,000 paid weekly with the defaults:
+
+| Weeks | Rate  | Total (RD$) | Payment/week (RD$) |
+| :---- | :---- | :---------- | :----------------- |
+| 7     | 25.5% | 12,550      | 1,800              |
+| 8     | 27.0% | 12,700      | 1,600              |
+| 9     | 28.5% | 12,850      | 1,450              |
+| 10    | 30.0% | 13,000      | 1,300              |
+| 11    | 31.5% | 13,150      | 1,200              |
+| 12    | 33.0% | 13,300      | 1,150              |
+| 13    | 34.5% | 13,450      | 1,050              |
+
+Add `loans.pricing` to the production `mikro.json` only after the release that reads it is
+live.
+
+The mikro.do simulator does not read this setting; it uses `site/src/lib/simulatorConfig.ts`.
+Changing `loans.pricing` makes Ops quotes differ from the public website until the site is
+updated.
+
 ### Seed data (accounts and categories)
 
 After `prisma db seed`, the database includes four **accounts** (all in DOP, zero

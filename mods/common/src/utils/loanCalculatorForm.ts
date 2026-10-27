@@ -50,7 +50,7 @@ export function calculateFromForm(form: LoanCalculatorForm): LoanCalculatorOutco
 
   // Backstop for what the checks above let through (e.g. "1e999" → Infinity):
   // never throw from here, the panel calls this during render.
-  const parsed = calculateLoanSchema.safeParse({
+  const parsed = calculateLoanSchema.required({ interestRate: true }).safeParse({
     principal,
     interestRate: ratePercent / 100,
     paymentFrequency: form.paymentFrequency,

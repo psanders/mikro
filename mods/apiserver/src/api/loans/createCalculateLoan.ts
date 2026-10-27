@@ -4,21 +4,33 @@
 import {
   withErrorHandlingAndValidation,
   calculateLoanSchema,
-  calculateLoanOptions,
+  priceLoanOptions,
   type CalculateLoanInput,
   type LoanOption,
+  type LoanPricing,
   type CalculateLoanResult
 } from "@mikro/common";
 
 export type { LoanOption, CalculateLoanResult };
 
 /**
- * Creates a validated function to calculate loan options from a base interest
- * rate with configurable per-period adjustments.
+ * Creates a validated function that prices loan options on the configured
+ * curve (`loans.pricing`). `interestRate`, `adjustmentPerPeriod`, `minRate`
+ * and `maxRate` from older clients are accepted and ignored.
  */
-export function createCalculateLoan() {
-  const fn = async (params: CalculateLoanInput): Promise<CalculateLoanResult> => {
-    return calculateLoanOptions(params);
+export function createCalculateLoan(pricing: LoanPricing) {
+  const fn = async (
+    params: CalculateLoanInput
+  ): Promise<CalculateLoanResult & { pricing: LoanPricing }> => {
+    return priceLoanOptions(
+      {
+        principal: params.principal,
+        paymentFrequency: params.paymentFrequency,
+        baseDuration: params.baseDuration,
+        optionsRange: params.optionsRange
+      },
+      pricing
+    );
   };
 
   return withErrorHandlingAndValidation(fn, calculateLoanSchema);
