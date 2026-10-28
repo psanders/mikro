@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.20.0](https://github.com/psanders/mikro/compare/v3.19.0...v3.20.0) (2026-10-28)
+
+### Features
+
+- **dashboard:** price the Ops calculator from the server's loan pricing ([#393](https://github.com/psanders/mikro/issues/393)) ([3a5380e](https://github.com/psanders/mikro/commit/3a5380efae611d0cef7d2b93d7ee6e010ad497fa))
+
 # [3.19.0](https://github.com/psanders/mikro/compare/v3.18.5...v3.19.0) (2026-10-27)
 
 ### Features
