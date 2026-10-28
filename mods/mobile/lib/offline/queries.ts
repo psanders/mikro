@@ -107,6 +107,7 @@ interface LoanRow {
   term_length: number;
   mora_rate: number | null;
   starting_date: string | null;
+  first_due_date: string | null;
   nickname: string | null;
   customer_id: string;
   created_at: string;
@@ -204,6 +205,7 @@ function toSnapshotInput(l: LoanRow, rows: SnapshotPaymentRow[], asOf: Date): Bu
       status: l.status as LoanStatus,
       createdAt: new Date(l.created_at),
       startingDate: l.starting_date ? new Date(l.starting_date) : null,
+      firstDueDate: l.first_due_date ? new Date(l.first_due_date) : null,
       updatedAt: new Date(l.updated_at),
       nickname: l.nickname
     },
@@ -487,6 +489,8 @@ export interface LoanDetail {
   paymentFrequency: string;
   moraRate: number | null;
   startingDate: string | null;
+  /** Raw synced `first_due_date`; null for legacy loans or an older server. */
+  firstDueDate: string | null;
   nickname: string | null;
   customerId: string;
   createdAt: string;
@@ -514,6 +518,7 @@ export function getLoanByLoanId(loanId: number): LoanDetail | null {
     payment_frequency: string;
     mora_rate: number | null;
     starting_date: string | null;
+    first_due_date: string | null;
     nickname: string | null;
     customer_id: string;
     created_at: string;
@@ -547,6 +552,7 @@ export function getLoanByLoanId(loanId: number): LoanDetail | null {
     paymentFrequency: row.payment_frequency,
     moraRate: row.mora_rate,
     startingDate: row.starting_date,
+    firstDueDate: row.first_due_date ?? null,
     nickname: row.nickname,
     customerId: row.customer_id,
     createdAt: row.created_at,
