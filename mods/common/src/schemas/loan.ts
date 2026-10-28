@@ -23,7 +23,10 @@ export const createLoanSchema = z.object({
   termLength: z.number().int().positive("Term length must be a positive integer"),
   paymentAmount: z.number().positive("Payment amount must be positive"),
   paymentFrequency: paymentFrequencyEnum,
+  /** Cycle anchor (legacy): the first cuota falls one period later. */
   startingDate: safeOptionalDate,
+  /** First cuota due date. When set, the loan is due on exactly this date (BIWEEKLY snaps to the 15th or month-end). */
+  firstDueDate: safeOptionalDate,
   nickname: z.string().max(100).optional(),
   type: loanTypeEnum.optional(),
   /** Optional mora rate override for this loan (e.g. 0.1 = 10%). Falls back to config `loans.defaultMoraRate`. */

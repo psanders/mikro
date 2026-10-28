@@ -115,13 +115,18 @@ export function createFinalizeLoanRenewal(
         });
       }
 
-      const created = await createCreateLoan(tx as unknown as DbClient)({
+      // The renewal contract printed this date as the first cuota
+      // (createGenerateRenewalContract: startingDate ?? generation time).
+      const created = await createCreateLoan(
+        tx as unknown as DbClient,
+        "renewal"
+      )({
         customerId: renewal.customerId,
         principal,
         termLength: renewal.termLength,
         paymentAmount: Number(renewal.paymentAmount),
         paymentFrequency: renewal.paymentFrequency,
-        startingDate: renewal.startingDate ?? undefined,
+        firstDueDate: renewal.startingDate ?? renewal.contractGeneratedAt ?? at,
         nickname: renewal.nickname ?? undefined,
         moraRate: renewal.moraRate == null ? undefined : Number(renewal.moraRate)
       });

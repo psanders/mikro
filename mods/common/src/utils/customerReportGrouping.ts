@@ -15,6 +15,7 @@ export interface LoanForGrouping {
   paymentFrequency: string;
   createdAt: Date;
   startingDate?: Date | null;
+  firstDueDate?: Date | null;
   termLength: number;
   /** Cuota size. When present (with payment amounts), progress counting is money-based. */
   paymentAmount?: number;
@@ -66,6 +67,7 @@ function toLoanPaymentData(
     paymentFrequency: loan.paymentFrequency,
     createdAt: loan.createdAt,
     startingDate: loan.startingDate ?? null,
+    firstDueDate: loan.firstDueDate ?? null,
     payments: loan.payments,
     paymentAmount: loan.paymentAmount,
     preferredPaymentDay,

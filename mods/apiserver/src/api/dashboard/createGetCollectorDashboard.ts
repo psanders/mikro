@@ -4,11 +4,12 @@
 import {
   amountToNumber,
   getCycleMetrics,
-  getDueDateForCycle,
+  getLoanDueDate,
   daysLateFromOldestDue,
   type DbClient,
   type Loan,
-  type LoanPaymentData
+  type LoanPaymentData,
+  type PaymentFrequency
 } from "@mikro/common";
 import { logger } from "../../logger.js";
 
@@ -115,6 +116,7 @@ export function createGetCollectorDashboard(client: DbClient) {
           paymentFrequency: l.paymentFrequency,
           createdAt: l.createdAt,
           startingDate: l.startingDate,
+          firstDueDate: l.firstDueDate,
           termLength: l.termLength,
           preferredPaymentDay: l.customer.preferredPaymentDay,
           paymentAmount: amountToNumber(l.paymentAmount),
@@ -127,26 +129,17 @@ export function createGetCollectorDashboard(client: DbClient) {
 
         const metrics = getCycleMetrics(loanData, now);
         const paid = paidLoanIds.has(l.id);
-        const loanStart = new Date(l.startingDate ?? l.createdAt);
+        const dueFields = {
+          ...loanData,
+          paymentFrequency: l.paymentFrequency as PaymentFrequency
+        };
 
         const daysOverdue =
           !paid && metrics.missedCycles > 0
-            ? daysLateFromOldestDue(
-                loanStart,
-                l.paymentFrequency,
-                l.customer.preferredPaymentDay ?? null,
-                metrics.paymentsMade,
-                metrics.missedCycles,
-                now
-              )
+            ? daysLateFromOldestDue(dueFields, metrics.paymentsMade, metrics.missedCycles, now)
             : 0;
 
-        const nextDue = getDueDateForCycle(
-          loanStart,
-          metrics.paymentsMade,
-          l.paymentFrequency,
-          l.customer.preferredPaymentDay ?? null
-        );
+        const nextDue = getLoanDueDate(dueFields, metrics.paymentsMade);
         const totalInstallmentPaid = l.payments.reduce((s, p) => s + amountToNumber(p.amount), 0);
         const remainingBalance = Math.max(
           0,

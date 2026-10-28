@@ -21,7 +21,7 @@
 // ESM-only `yaml` package — node/CLI-only dependencies with no place in a
 // bundle that must also run inside the mobile app offline.
 import { getCycleMetrics, type LoanPaymentData } from "../utils/calculatePaymentStatus.js";
-import { getLoanDueDate } from "../utils/dueDates.js";
+import { getLoanDueDate, resolveFirstDueDate } from "../utils/dueDates.js";
 import type { PaymentFrequency } from "../utils/calculateLoan.js";
 import { daysLateFromOldestDue, computeAccruedMora } from "../utils/lateFee.js";
 import type { PaymentKind, PaymentStatus } from "../schemas/payment.js";
@@ -71,6 +71,8 @@ export interface BuildSnapshotInput {
     status: LoanStatus;
     createdAt: Date;
     startingDate: Date | null;
+    /** First cuota due date; null/absent on loans created before it was stored. */
+    firstDueDate?: Date | null;
     updatedAt: Date;
     /** Set when the loan was closed by a renewal; freezes mora for RENEWED. */
     closedAt?: Date | null;
@@ -131,6 +133,10 @@ export interface LoanSnapshot {
     nickname: string | null;
     createdAt: string;
     startingDate: string | null;
+    /** ISO of the first cuota's due date (`resolveFirstDueDate`); never null. */
+    firstDueDate: string;
+    /** ISO of the stored `first_due_date` column; null for loans that predate it. */
+    storedFirstDueDate: string | null;
     moraPolicy: SnapshotMoraPolicy;
   };
   ledger: Array<
@@ -185,6 +191,7 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     paymentFrequency: loan.paymentFrequency,
     createdAt: new Date(loan.createdAt),
     startingDate: loan.startingDate != null ? new Date(loan.startingDate) : null,
+    firstDueDate: loan.firstDueDate != null ? new Date(loan.firstDueDate) : null,
     termLength: loan.termLength,
     paymentAmount: cuota,
     preferredPaymentDay: customer.preferredPaymentDay,
@@ -226,14 +233,10 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
     collectedLateFeePayments
   });
 
-  const nextDue = getLoanDueDate(
-    { ...loanData, paymentFrequency: loan.paymentFrequency as PaymentFrequency },
-    metrics.paymentsMade
-  );
+  const dueFields = { ...loanData, paymentFrequency: loan.paymentFrequency as PaymentFrequency };
+  const nextDue = getLoanDueDate(dueFields, metrics.paymentsMade);
   const daysOverdue = daysLateFromOldestDue(
-    loanStart,
-    loan.paymentFrequency,
-    customer.preferredPaymentDay,
+    dueFields,
     metrics.paymentsMade,
     metrics.missedCycles,
     asOf
@@ -294,6 +297,8 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
       nickname: loan.nickname,
       createdAt: new Date(loan.createdAt).toISOString(),
       startingDate: loan.startingDate != null ? new Date(loan.startingDate).toISOString() : null,
+      firstDueDate: resolveFirstDueDate(dueFields).toISOString(),
+      storedFirstDueDate: loanData.firstDueDate?.toISOString() ?? null,
       moraPolicy: policy
     },
     ledger,

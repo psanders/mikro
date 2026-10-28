@@ -3,13 +3,8 @@
  *
  * Past-due (mora) fee: one cuota's worth, daily-prorated over 30 calendar days.
  */
-import {
-  getCycleMetrics,
-  getDueDateForCycle,
-  MS_PER_DAY,
-  type LoanPaymentData
-} from "./calculatePaymentStatus.js";
-import { getLoanDueDate } from "./dueDates.js";
+import { getCycleMetrics, MS_PER_DAY, type LoanPaymentData } from "./calculatePaymentStatus.js";
+import { getLoanDueDate, type LoanDueDateFields } from "./dueDates.js";
 import type { PaymentFrequency } from "./calculateLoan.js";
 import type { LoansConfig } from "../config.js";
 
@@ -83,15 +78,13 @@ function parseEffectiveFrom(iso: string | null | undefined): Date | null {
  * Matches export-loan-situation `diasAtraso` when missedCycles > 0.
  */
 export function daysLateFromOldestDue(
-  loanStart: Date,
-  paymentFrequency: string,
-  preferredPaymentDay: string | null,
+  loan: LoanDueDateFields,
   paymentsMade: number,
   missedCycles: number,
   asOf: Date
 ): number {
   if (missedCycles <= 0) return 0;
-  const due = getDueDateForCycle(loanStart, paymentsMade, paymentFrequency, preferredPaymentDay);
+  const due = getLoanDueDate(loan, paymentsMade);
   return Math.max(0, Math.floor((asOf.getTime() - due.getTime()) / MS_PER_DAY));
 }
 

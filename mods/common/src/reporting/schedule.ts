@@ -40,6 +40,7 @@ export function buildRepaymentSchedule(snapshot: LoanSnapshot): RepaymentSchedul
   const { terms, ledger, asOf } = snapshot;
   const dueFields = {
     startingDate: terms.startingDate != null ? new Date(terms.startingDate) : null,
+    firstDueDate: terms.storedFirstDueDate != null ? new Date(terms.storedFirstDueDate) : null,
     createdAt: new Date(terms.createdAt),
     paymentFrequency: terms.paymentFrequency as PaymentFrequency
   };

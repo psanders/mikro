@@ -88,6 +88,7 @@ CREATE TABLE "loans" (
     "payment_amount" DECIMAL NOT NULL,
     "payment_frequency" TEXT NOT NULL,
     "starting_date" DATETIME,
+    "first_due_date" DATETIME,
     "nickname" TEXT,
     "mora_rate" DECIMAL,
     "started_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

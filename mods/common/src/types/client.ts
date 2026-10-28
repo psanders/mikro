@@ -162,6 +162,7 @@ export interface DbClient {
         paymentAmount: number;
         paymentFrequency: PaymentFrequency;
         startingDate?: Date | null;
+        firstDueDate?: Date | null;
         nickname?: string | null;
         type?: LoanType;
         moraRate?: number | null;

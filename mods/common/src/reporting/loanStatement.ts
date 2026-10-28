@@ -91,6 +91,7 @@ export const loanStatementInputSchema = z.object({
     status: loanStatusEnum,
     createdAt: z.coerce.date(),
     startingDate: z.coerce.date().nullable(),
+    firstDueDate: z.coerce.date().nullish(),
     updatedAt: z.coerce.date(),
     nickname: z.string().nullable()
   }),

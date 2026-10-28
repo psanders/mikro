@@ -333,7 +333,22 @@ export function CopilotDockContainer() {
   const handleCreateLoan = useCallback(
     (messageId: string, values: LoanFormValues) => {
       setLoanFormStatus((prev) => ({ ...prev, [messageId]: { status: "creating" } }));
-      const { generateContract: shouldGenerateContract, ...loanInput } = values;
+      const {
+        generateContract: shouldGenerateContract,
+        startingDate: inicio,
+        ...loanTerms
+      } = values;
+      // "Fecha de inicio" is the first cuota: the loan falls due on exactly the
+      // date the contract prints. Blank → today in DR time when a contract is
+      // printed; otherwise left out, so the server keeps its default.
+      const firstDueDate =
+        inicio ||
+        (shouldGenerateContract
+          ? new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santo_Domingo" }).format(
+              new Date()
+            )
+          : undefined);
+      const loanInput = firstDueDate ? { ...loanTerms, firstDueDate } : loanTerms;
       createLoan.mutate(loanInput, {
         onSuccess: () => {
           void utils.listFeedEvents.invalidate();
@@ -348,7 +363,7 @@ export function CopilotDockContainer() {
               installments: values.termLength,
               installmentAmount: values.paymentAmount,
               frequency: values.paymentFrequency,
-              startDate: values.startingDate || new Date().toISOString().slice(0, 10)
+              startDate: firstDueDate!
             },
             {
               onSuccess: (contract) => {

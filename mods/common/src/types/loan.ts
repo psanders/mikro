@@ -15,6 +15,8 @@ export interface Loan {
   paymentAmount: number;
   paymentFrequency: "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
   startingDate: Date | null;
+  /** First cuota due date; null on loans created before it was stored. */
+  firstDueDate?: Date | null;
   nickname: string | null;
   /** When set, overrides global default mora rate (0–1, e.g. 0.1). */
   moraRate: number | null;

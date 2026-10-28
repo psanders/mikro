@@ -229,6 +229,52 @@ describe("Loans Integration", () => {
     });
   });
 
+  describe("createLoan first due date (mikro/#385)", () => {
+    it("createLoan firstDueDate derives startingDate", async () => {
+      const customer = await createTestCustomer();
+
+      const created = await caller.createLoan({
+        customerId: customer.id,
+        principal: 5000,
+        termLength: 6,
+        paymentAmount: 1000,
+        paymentFrequency: "BIWEEKLY",
+        firstDueDate: "2026-11-15"
+      });
+
+      const loan = await db.loan.findUniqueOrThrow({ where: { id: created.id } });
+      expect(loan.firstDueDate!.toISOString()).to.equal("2026-11-15T00:00:00.000Z");
+      expect(loan.startingDate!.toISOString()).to.equal("2026-11-01T00:00:00.000Z");
+    });
+
+    it("createLoan without firstDueDate is unchanged", async () => {
+      const customer = await createTestCustomer();
+
+      const withStart = await caller.createLoan({
+        customerId: customer.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY",
+        startingDate: "2026-11-03"
+      });
+      const withoutStart = await caller.createLoan({
+        customerId: customer.id,
+        principal: 5000,
+        termLength: 10,
+        paymentAmount: 650,
+        paymentFrequency: "WEEKLY"
+      });
+
+      const a = await db.loan.findUniqueOrThrow({ where: { id: withStart.id } });
+      const b = await db.loan.findUniqueOrThrow({ where: { id: withoutStart.id } });
+      expect(a.firstDueDate).to.equal(null);
+      expect(a.startingDate!.toISOString()).to.equal("2026-11-03T00:00:00.000Z");
+      expect(b.firstDueDate).to.equal(null);
+      expect(b.startingDate).to.equal(null);
+    });
+  });
+
   describe("updateLoanStatus", () => {
     it("should update loan status to COMPLETED", async () => {
       const customer = await createTestCustomer();

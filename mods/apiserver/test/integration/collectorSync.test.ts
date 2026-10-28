@@ -87,6 +87,24 @@ describe("collectorSync Integration", () => {
     }
   });
 
+  it("carries each loan's firstDueDate column (mikro/#385)", async () => {
+    const legacy = await seedLoanWithPayment();
+    const admin = callerWithRoles(["ADMIN"]);
+    const dated = await admin.createLoan({
+      customerId: legacy.customerId,
+      principal: 5000,
+      termLength: 6,
+      paymentAmount: 1000,
+      paymentFrequency: "BIWEEKLY",
+      firstDueDate: "2026-11-15"
+    });
+
+    const result = await admin.collectorSync();
+    const byId = (n: number) => result.loans.find((l) => l.loanId === n)!;
+    expect(byId(legacy.loanId).firstDueDate).to.equal(null);
+    expect(byId(dated.loanId).firstDueDate).to.equal("2026-11-15T00:00:00.000Z");
+  });
+
   it("strips payment history for REVIEWER-only callers", async () => {
     const loan = await seedLoanWithPayment();
 
