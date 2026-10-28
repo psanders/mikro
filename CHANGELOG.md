@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.20.2](https://github.com/psanders/mikro/compare/v3.20.1...v3.20.2) (2026-10-28)
+
+### Bug Fixes
+
+- **mobile:** date the loan screen's cuotas the way the contract does ([#394](https://github.com/psanders/mikro/issues/394)) ([e713563](https://github.com/psanders/mikro/commit/e71356345a87df3780d6c8f44de1fc47165b9627)), closes [#386](https://github.com/psanders/mikro/issues/386)
+
 ## [3.20.1](https://github.com/psanders/mikro/compare/v3.20.0...v3.20.1) (2026-10-28)
 
 ### Bug Fixes
