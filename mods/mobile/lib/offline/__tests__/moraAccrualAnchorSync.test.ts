@@ -157,6 +157,7 @@ function buildSyncPayload(opts: { anchored: boolean }): CollectorSyncResult {
         paymentFrequency: "BIWEEKLY",
         moraRate: null,
         startingDate: LOAN_START.toISOString(),
+        firstDueDate: null,
         nickname: null,
         customerId: CUSTOMER_UUID,
         createdAt: LOAN_START.toISOString(),
