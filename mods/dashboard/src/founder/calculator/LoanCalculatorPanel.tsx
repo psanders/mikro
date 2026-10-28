@@ -3,16 +3,23 @@
  *
  * Loan calculator side panel (Pencil EzobQ sec-10: YtBtg, invalid state
  * V9f4nY). Admins and reviewers simulate terms from the feed; nothing is
- * saved. The options come from the shared `calculateLoanOptions`, the same
- * function behind the server's `calculateLoan`, so they match the copilot and
- * `ctl loans:calculate`.
+ * saved. The options come from the shared `priceLoanOptions` on the server's
+ * `getLoanPricing`, the same curve behind `calculateLoan`, so they match the
+ * copilot and `ctl loans:calculate`. No pricing, no prices: it never falls
+ * back to built-in defaults.
  */
 import { useMemo, useState } from "react";
 import { CircleAlert, Calculator } from "lucide-react";
 import type { PaymentFrequency } from "@mikro/common/schemas";
-import { calculateFromForm, type LoanCalculatorForm } from "@mikro/common/utils/loanCalculatorForm";
+import {
+  calculateFromForm,
+  parseLoanCalculatorForm,
+  type LoanCalculatorForm
+} from "@mikro/common/utils/loanCalculatorForm";
 import { DEFAULT_PAYMENT_ROUNDING_INCREMENT } from "@mikro/common/utils/loanCalculatorConstants";
 import { cn } from "../../lib/cn";
+import { trpc } from "../../lib/trpc";
+import { FeedErrorState } from "../components/FeedErrorState";
 import { SidePanel } from "../components/SidePanel";
 import { formatAmount } from "../components/format";
 import { INPUT_CLASS, PanelField, PanelSelect, SectionLabel } from "../applications/ui";
@@ -33,7 +40,6 @@ const PERIOD_NAMES: Record<PaymentFrequency, string> = {
 
 export const DEFAULT_CALCULATOR_FORM: LoanCalculatorForm = {
   principal: "",
-  ratePercent: "30",
   paymentFrequency: "WEEKLY",
   baseDuration: ""
 };
@@ -44,14 +50,19 @@ function formatRate(rate: number): string {
 
 export interface LoanCalculatorPanelProps {
   onClose: () => void;
-  /** Starting values (stories); defaults to 30% weekly with monto/plazo empty. */
+  /** Starting values (stories); defaults to weekly with monto/plazo empty. */
   initial?: LoanCalculatorForm;
 }
 
 export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelProps) {
   const [form, setForm] = useState<LoanCalculatorForm>(initial ?? DEFAULT_CALCULATOR_FORM);
   const [touched, setTouched] = useState(Boolean(initial));
-  const outcome = useMemo(() => calculateFromForm(form), [form]);
+  const pricing = trpc.getLoanPricing.useQuery();
+  const parsed = useMemo(() => parseLoanCalculatorForm(form), [form]);
+  const outcome = useMemo(
+    () => (pricing.data ? calculateFromForm(form, pricing.data) : null),
+    [form, pricing.data]
+  );
   const unit = FREQUENCIES.find((f) => f.value === form.paymentFrequency)!.unit;
 
   const set = (key: keyof LoanCalculatorForm) => (value: string) => {
@@ -59,7 +70,7 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
     setForm((prev) => ({ ...prev, [key]: value }) as LoanCalculatorForm);
   };
   // Before the first keystroke the empty monto is a prompt, not an error.
-  const error = touched && !outcome.ok ? outcome : null;
+  const error = touched && !parsed.ok ? parsed : null;
   const inputCls = (field: keyof LoanCalculatorForm) =>
     cn(
       INPUT_CLASS,
@@ -103,16 +114,6 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
             />
             {fieldError("principal")}
           </PanelField>
-          <PanelField label="Tasa total (%)">
-            <input
-              className={inputCls("ratePercent")}
-              inputMode="decimal"
-              value={form.ratePercent}
-              onChange={(e) => set("ratePercent")(e.target.value)}
-              data-testid="calc-rate"
-            />
-            {fieldError("ratePercent")}
-          </PanelField>
           <PanelField label="Frecuencia">
             <PanelSelect
               className={inputCls("paymentFrequency")}
@@ -140,9 +141,41 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
           </PanelField>
         </div>
 
+        <div className="flex flex-col gap-[6px]">
+          <span className="text-[12px] font-medium text-ds-muted">Tasa de referencia</span>
+          <span className="text-[13px] font-semibold text-brand-ink" data-testid="calc-reference">
+            {pricing.data
+              ? `${formatRate(pricing.data.referenceRate)} a ${pricing.data.referenceWeeks} semanas · ±${formatRate(pricing.data.adjustmentPerWeek)} por semana`
+              : pricing.isError
+                ? "No disponible"
+                : "Cargando…"}
+          </span>
+        </div>
+
         <div className="flex flex-col gap-[10px]">
           <SectionLabel>Opciones</SectionLabel>
-          {outcome.ok ? (
+          {!parsed.ok ? (
+            <div
+              className="flex h-[220px] flex-col items-center justify-center gap-2 rounded-[10px] border border-ds-border bg-ds-bg text-[13px] font-medium text-ds-muted"
+              data-testid="calc-empty"
+            >
+              <Calculator size={20} className="text-[#A9B6C8]" />
+              Completa los datos para ver las opciones.
+            </div>
+          ) : pricing.isError ? (
+            <FeedErrorState
+              title="No se pudo cargar la tasa"
+              onRetry={() => void pricing.refetch()}
+              className="py-10"
+            />
+          ) : !outcome?.ok ? (
+            <div
+              className="flex h-[220px] items-center justify-center rounded-[10px] border border-ds-border bg-ds-bg text-[13px] font-medium text-ds-muted"
+              data-testid="calc-loading"
+            >
+              Cargando tasa de referencia…
+            </div>
+          ) : (
             <table
               className="w-full border-separate border-spacing-0 overflow-hidden rounded-[10px] border border-ds-border text-[13px] font-medium"
               data-testid="calc-options"
@@ -186,23 +219,18 @@ export function LoanCalculatorPanel({ onClose, initial }: LoanCalculatorPanelPro
                 ))}
               </tbody>
             </table>
-          ) : (
-            <div
-              className="flex h-[220px] flex-col items-center justify-center gap-2 rounded-[10px] border border-ds-border bg-ds-bg text-[13px] font-medium text-ds-muted"
-              data-testid="calc-empty"
-            >
-              <Calculator size={20} className="text-[#A9B6C8]" />
-              Completa los datos para ver las opciones.
-            </div>
           )}
         </div>
 
-        {outcome.ok && (
-          <p className="text-[12px] font-medium leading-[1.45] text-ds-muted">
-            La tasa sube o baja {formatRate(outcome.result.adjustmentPerPeriod)} por cada período de
-            diferencia con el plazo base, entre {formatRate(outcome.result.minRate)} y{" "}
-            {formatRate(outcome.result.maxRate)}. La cuota se redondea hacia arriba a{" "}
-            {formatAmount(DEFAULT_PAYMENT_ROUNDING_INCREMENT)}.
+        {outcome?.ok && pricing.data && (
+          <p
+            className="text-[12px] font-medium leading-[1.45] text-ds-muted"
+            data-testid="calc-footnote"
+          >
+            La tasa sube o baja {formatRate(pricing.data.adjustmentPerWeek)} por cada semana de
+            diferencia con {pricing.data.referenceWeeks} semanas, entre{" "}
+            {formatRate(pricing.data.minRate)} y {formatRate(pricing.data.maxRate)}. La cuota se
+            redondea hacia arriba a {formatAmount(DEFAULT_PAYMENT_ROUNDING_INCREMENT)}.
           </p>
         )}
       </div>
