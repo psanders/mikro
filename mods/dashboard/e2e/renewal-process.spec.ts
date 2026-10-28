@@ -109,9 +109,12 @@ test("a reviewer renews a loan from the customer profile, start to finish", asyn
   await panel.getByTestId("renewal-save-terms").click();
   await expect(panel.getByTestId("renewal-net")).toHaveText("RD$9,400");
 
-  // A loan that does not cover what is owed cannot be saved.
-  await panel.getByTestId("renewal-principal").fill("2000");
-  await expect(panel.getByTestId("renewal-net-error")).toBeVisible();
+  // A loan that does not cover what is owed cannot be saved. The save's refresh
+  // can land after the fill and reset the form, so retry until the value sticks.
+  await expect(async () => {
+    await panel.getByTestId("renewal-principal").fill("2000");
+    await expect(panel.getByTestId("renewal-net-error")).toBeVisible({ timeout: 1000 });
+  }).toPass();
   await expect(panel.getByTestId("renewal-save-terms")).toBeDisabled();
   await panel.getByTestId("renewal-principal").fill("12000");
 
