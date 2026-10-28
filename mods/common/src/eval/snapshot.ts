@@ -135,6 +135,8 @@ export interface LoanSnapshot {
     startingDate: string | null;
     /** ISO of the first cuota's due date (`resolveFirstDueDate`); never null. */
     firstDueDate: string;
+    /** ISO of the stored `first_due_date` column; null for loans that predate it. */
+    storedFirstDueDate: string | null;
     moraPolicy: SnapshotMoraPolicy;
   };
   ledger: Array<
@@ -296,6 +298,7 @@ export function buildLoanSnapshot(input: BuildSnapshotInput): LoanSnapshot {
       createdAt: new Date(loan.createdAt).toISOString(),
       startingDate: loan.startingDate != null ? new Date(loan.startingDate).toISOString() : null,
       firstDueDate: resolveFirstDueDate(dueFields).toISOString(),
+      storedFirstDueDate: loanData.firstDueDate?.toISOString() ?? null,
       moraPolicy: policy
     },
     ledger,

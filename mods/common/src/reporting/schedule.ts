@@ -7,7 +7,7 @@
  * ledger, asOf) and does NOT recompute terms, due dates, or health — the loan
  * math lives only in the eval framework and the allocation helper.
  */
-import { getLoanDueDate, resolveFirstDueDate } from "../utils/dueDates.js";
+import { getLoanDueDate } from "../utils/dueDates.js";
 import type { PaymentFrequency } from "../utils/calculateLoan.js";
 import type { LoanSnapshot } from "../eval/snapshot.js";
 import { allocatePaymentsToCuotas } from "./allocation.js";
@@ -38,19 +38,12 @@ export interface RepaymentScheduleRow {
  */
 export function buildRepaymentSchedule(snapshot: LoanSnapshot): RepaymentScheduleRow[] {
   const { terms, ledger, asOf } = snapshot;
-  const legacyFields = {
+  const dueFields = {
     startingDate: terms.startingDate != null ? new Date(terms.startingDate) : null,
+    firstDueDate: terms.storedFirstDueDate != null ? new Date(terms.storedFirstDueDate) : null,
     createdAt: new Date(terms.createdAt),
     paymentFrequency: terms.paymentFrequency as PaymentFrequency
   };
-  // `terms.firstDueDate` is always resolved. When it is just the anchor's own
-  // derivation, keep the anchor fields: a legacy MONTHLY loan keeps the anchor's
-  // day of month (31 ene → 28 feb → 31 mar), which the resolved date alone loses.
-  const firstDueDate = new Date(terms.firstDueDate);
-  const dueFields =
-    resolveFirstDueDate(legacyFields).getTime() === firstDueDate.getTime()
-      ? legacyFields
-      : { ...legacyFields, firstDueDate };
   const asOfTime = new Date(asOf).getTime();
 
   const allocations = allocatePaymentsToCuotas({
