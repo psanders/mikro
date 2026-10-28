@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.20.1](https://github.com/psanders/mikro/compare/v3.20.0...v3.20.1) (2026-10-28)
+
+### Bug Fixes
+
+- copilot and renewal loans fall due on the contract's first cuota ([#392](https://github.com/psanders/mikro/issues/392)) ([8ce32ec](https://github.com/psanders/mikro/commit/8ce32ecd5f936f865425d6e7b39f0c23f917df18)), closes [#385](https://github.com/psanders/mikro/issues/385)
+
 # [3.20.0](https://github.com/psanders/mikro/compare/v3.19.0...v3.20.0) (2026-10-28)
 
 ### Features
