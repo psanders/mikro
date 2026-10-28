@@ -96,7 +96,13 @@ const MIGRATION_V4 = `
 ALTER TABLE customers ADD COLUMN map_url TEXT;
 `;
 
-const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2, MIGRATION_V3, MIGRATION_V4];
+// First cuota's due date as the server stores it (mikro/#385), so the loan
+// screen and the offline snapshot date cuotas the way the contract does.
+const MIGRATION_V5 = `
+ALTER TABLE loans ADD COLUMN first_due_date TEXT;
+`;
+
+const MIGRATIONS = [MIGRATION_V1, MIGRATION_V2, MIGRATION_V3, MIGRATION_V4, MIGRATION_V5];
 
 export function runMigrations(db: SQLiteDatabase): void {
   const result = db.getFirstSync<{ user_version: number }>("PRAGMA user_version");

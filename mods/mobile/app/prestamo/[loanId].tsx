@@ -12,9 +12,11 @@ import { CuotaRow } from "../../components/ui/CuotaRow";
 import { SectionLabel } from "../../components/ui/SectionLabel";
 import { KvRow } from "../../components/ui/KvRow";
 import { amountPastDue, cuotaRemainingToClose } from "@mikro/common/utils/calculatePaymentStatus";
+import { getLoanDueDate } from "@mikro/common/utils/dueDates";
 import { getRoles, canManagePayments } from "../../lib/auth";
 import { useLocalLoan, useLocalLoanSnapshot } from "../../lib/offline/hooks";
 import { useSyncContext } from "../../lib/offline/SyncProvider";
+import { loanDueDateFields } from "../../lib/loanDueDates";
 
 function formatRD(amount: number): string {
   return `RD$${amount.toLocaleString("es-DO")}`;
@@ -54,28 +56,6 @@ function formatShortDate(d: Date): string {
   return `${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]}`;
 }
 
-function getDueDateForCycle(startDate: Date, cycleIndex: number, freq: string): Date {
-  const start = new Date(startDate);
-  const periods = cycleIndex + 1;
-  switch (freq) {
-    case "DAILY":
-      return new Date(start.getTime() + periods * 86_400_000);
-    case "WEEKLY":
-      return new Date(start.getTime() + periods * 7 * 86_400_000);
-    case "BIWEEKLY":
-      return new Date(start.getTime() + periods * 14 * 86_400_000);
-    case "MONTHLY": {
-      const y = start.getUTCFullYear();
-      const m = start.getUTCMonth() + periods;
-      const day = start.getUTCDate();
-      const maxDay = new Date(Date.UTC(y + Math.floor(m / 12), (m % 12) + 1, 0)).getUTCDate();
-      return new Date(Date.UTC(y + Math.floor(m / 12), m % 12, Math.min(day, maxDay)));
-    }
-    default:
-      return new Date(start.getTime() + periods * 86_400_000);
-  }
-}
-
 export default function PrestamoDetalleScreen() {
   const { loanId } = useLocalSearchParams<{ loanId: string }>();
   const numericId = Number(loanId);
@@ -106,11 +86,7 @@ export default function PrestamoDetalleScreen() {
   const balance = d?.remainingBalance ?? 0;
   const progress = termLength > 0 ? paidCount / termLength : 0;
   const freq = loan?.paymentFrequency ?? snap?.terms.paymentFrequency ?? "DAILY";
-  const loanStart = snap
-    ? new Date(snap.terms.startingDate ?? snap.terms.createdAt)
-    : loan
-      ? new Date(loan.startingDate ?? loan.createdAt)
-      : null;
+  const dueFields = useMemo(() => loanDueDateFields(loan, snap?.terms), [loan, snap]);
 
   const displayName =
     snap?.customer.nickname ??
@@ -120,16 +96,15 @@ export default function PrestamoDetalleScreen() {
     `#${loanId}`;
   const subtitle = loan || snap ? `${displayName} · Préstamo #${loanId}` : `Préstamo #${loanId}`;
 
-  const endDate =
-    loanStart && termLength > 0 ? getDueDateForCycle(loanStart, termLength - 1, freq) : null;
+  const endDate = dueFields && termLength > 0 ? getLoanDueDate(dueFields, termLength - 1) : null;
   const daysRemaining = endDate
     ? Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / 86_400_000))
     : null;
 
   const nextDueDate = d?.nextDueDate
     ? new Date(d.nextDueDate)
-    : loanStart
-      ? getDueDateForCycle(loanStart, paidCount, freq)
+    : dueFields
+      ? getLoanDueDate(dueFields, paidCount)
       : null;
 
   const moraAmount = d?.moraAccrued ?? 0;
@@ -153,7 +128,7 @@ export default function PrestamoDetalleScreen() {
   const todayTotal = dueAmount + moraAmount;
 
   const cuotas = useMemo(() => {
-    if (!loanStart || termLength === 0) return [];
+    if (!dueFields || termLength === 0) return [];
     const now = new Date();
     const rows: {
       name: string;
@@ -163,7 +138,7 @@ export default function PrestamoDetalleScreen() {
     }[] = [];
 
     for (let i = 0; i < termLength; i++) {
-      const due = getDueDateForCycle(loanStart, i, freq);
+      const due = getLoanDueDate(dueFields, i);
       const isPaid = i < paidCount;
       const isOverdue = !isPaid && due.getTime() < now.getTime();
       // Money already applied to this cuota (partials accumulate in order),
@@ -179,7 +154,7 @@ export default function PrestamoDetalleScreen() {
       });
     }
     return rows;
-  }, [loanStart, termLength, paidCount, freq, paymentAmount, totalPaid]);
+  }, [dueFields, termLength, paidCount, paymentAmount, totalPaid]);
 
   const pills = [
     formatFreq(freq),

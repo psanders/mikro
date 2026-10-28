@@ -23,6 +23,7 @@ const LOAN_ROW = {
   payment_frequency: "WEEKLY",
   mora_rate: null as number | null,
   starting_date: "2026-06-01T00:00:00.000Z",
+  first_due_date: null as string | null,
   nickname: null as string | null,
   customer_id: "cust-1",
   created_at: "2026-06-01T00:00:00.000Z",
@@ -82,19 +83,23 @@ const PAYMENT_ROWS = [
 
 const AS_OF = new Date("2026-06-15T12:00:00.000Z"); // +14 days → 2 weekly cycles elapsed
 
-function useMockDb(moraConfigRow: { value: string } | null) {
+function useMockDb(
+  moraConfigRow: { value: string } | null,
+  loanRow: typeof LOAN_ROW = LOAN_ROW,
+  paymentRows: typeof PAYMENT_ROWS = PAYMENT_ROWS
+) {
   const getFirstSync = jest.fn((sql: string, params?: unknown[]) => {
     if (sql.includes("sync_meta") && sql.includes("mora_config")) return moraConfigRow;
     if (sql.includes("FROM loans l JOIN customers c")) {
       const loanId = (params as [number])[0];
-      return loanId === LOAN_ROW.loan_id ? LOAN_ROW : null;
+      return loanId === loanRow.loan_id ? loanRow : null;
     }
     throw new Error(`unexpected getFirstSync: ${sql}`);
   });
   const getAllSync = jest.fn((sql: string, params?: unknown[]) => {
     if (sql.includes("FROM payments WHERE loan_id = ?")) {
       const loanUuid = (params as [string])[0];
-      return loanUuid === LOAN_ROW.id ? PAYMENT_ROWS : [];
+      return loanUuid === loanRow.id ? paymentRows : [];
     }
     throw new Error(`unexpected getAllSync: ${sql}`);
   });
@@ -156,6 +161,21 @@ describe("buildLoanSnapshotLocal", () => {
   it("returns null for a loan not in the local mirror", () => {
     useMockDb(null);
     expect(buildLoanSnapshotLocal(404)).toBeNull();
+  });
+
+  it("counts missed cycles from the synced first_due_date", () => {
+    // Without first_due_date this start resolves its first cuota to 31 oct.
+    const quincenal = {
+      ...LOAN_ROW,
+      payment_frequency: "BIWEEKLY",
+      term_length: 5,
+      starting_date: "2026-10-10T00:00:00.000Z",
+      created_at: "2026-10-10T00:00:00.000Z",
+      first_due_date: "2026-10-15T00:00:00.000Z"
+    };
+    useMockDb(null, quincenal, []);
+    const snap = buildLoanSnapshotLocal(10099, new Date("2026-11-01T12:00:00.000Z"));
+    expect(snap!.derived.missedCycles).toBe(2); // 15 oct, 31 oct
   });
 });
 
