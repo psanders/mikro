@@ -28,14 +28,14 @@
     "@inquirer/prompts": "^7.1.0",
     "@mikro/common": "^3.20.1",
     "@oclif/core": "^4.14.0",
-    "@trpc/client": "^11.19.0",
+    "@trpc/client": "^11.24.0",
     "cliui": "^8.0.1",
     "figlet": "^1.12.0",
     "moment": "^2.31.0"
   },
   "devDependencies": {
     "@mikro/apiserver": "^3.20.1",
-    "@types/figlet": "^1.7.0",
+    "@types/figlet": "^1.12.0",
     "@types/node": "^22.20.5",
     "typescript": "^5.9.3"
   }
