@@ -153,6 +153,7 @@ export function createReceiptCardLayout(
           style: {
             width: "240px",
             height: "240px",
+            boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -177,6 +178,7 @@ export function createReceiptCardLayout(
         alignItems: "center",
         justifyContent: "center",
         width: "320px",
+        boxSizing: "border-box",
         borderLeft: "1px solid #E0E6EF",
         paddingLeft: "48px"
       },
@@ -195,6 +197,8 @@ export function createReceiptCardLayout(
     type: "div",
     props: {
       style: {
+        // satori sizes boxes as content-box; keep the padding inside the canvas.
+        boxSizing: "border-box",
         width: `${CARD_WIDTH}px`,
         height: `${CARD_HEIGHT}px`,
         display: "flex",
