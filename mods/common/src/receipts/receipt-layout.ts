@@ -231,6 +231,7 @@ export function createReceiptLayout(
               style: {
                 width: "120px",
                 height: "120px",
+                boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -280,6 +281,8 @@ export function createReceiptLayout(
     type: "div",
     props: {
       style: {
+        // satori sizes boxes as content-box; keep the padding inside the canvas.
+        boxSizing: "border-box",
         width: `${RECEIPT_WIDTH}px`,
         display: "flex",
         flexDirection: "column",
